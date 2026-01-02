@@ -1,0 +1,1784 @@
+//-------------------------------------------------------------------
+/*
+  Array  Animation = [
+      ["L_Wheel01_lift", ["joint_WheelLeftMain1_UP", 0, 2]],
+      ["L_Wheel02_lift", ["joint_WheelLeftMain2_UP", 0, 2]],
+      ["L_Wheel03_lift", ["joint_WheelLeftMain3_UP", 0, 2]],
+      ["L_Wheel04_lift", ["joint_WheelLeftMain4_UP", 0, 2]],
+      ["L_Wheel05_lift", ["joint_WheelLeftMain5_UP", 0, 2]],
+      ["L_Wheel06_lift", ["joint_WheelLeftMain6_UP", 0, 2]],
+      ["L_Wheel07_lift", ["joint_WheelLeftMain7_UP", 0, 2]],
+      ["L_Wheel08_lift", ["joint_WheelLeftMain8_UP", 0, 2]],
+      ["R_Wheel01_lift", ["joint_WheelRightMain1_UP", 0, 2]],
+      ["R_Wheel02_lift", ["joint_WheelRightMain2_UP", 0, 2]],
+      ["R_Wheel03_lift", ["joint_WheelRightMain3_UP", 0, 2]],
+      ["R_Wheel04_lift", ["joint_WheelRightMain4_UP", 0, 2]],
+      ["R_Wheel05_lift", ["joint_WheelRightMain5_UP", 0, 2]],
+      ["R_Wheel06_lift", ["joint_WheelRightMain6_UP", 0, 2]],
+      ["R_Wheel07_lift", ["joint_WheelRightMain7_UP", 0, 2]],
+      ["R_Wheel08_lift", ["joint_WheelRightMain8_UP", 0, 2]],
+      ["body_recoil_bf", ["Body", 0, 10]],
+      ["body_recoil_fb", ["Body", 10, 20]],
+      ["body_recoil_lr", ["Body", 20, 30]],
+      ["body_recoil_rl", ["Body", 30, 40]],
+      ["gun_a", ["GunA", 0, 1]],
+      ["gun_a_recoil", ["Weapon_A", 0, 30]],
+      ["gun_c_leftdn", ["Weapon_C", 6, 7]],
+      ["gun_c_leftup", ["Weapon_C", 2, 3]],
+      ["gun_c_rightdn", ["Weapon_C", 4, 5]],
+      ["gun_c_rightup", ["Weapon_C", 0, 1]],
+      ["luk1_open", ["Hat_Load", 0, 2]],
+      ["luk4_open", ["LoadHatch", 0, 2]],
+      ["luk_body_open", ["HING02", 1, 4], ["HATCH02", 1, 4]],
+      ["luk_main_commander", ["Body_commander", 0, 60]],
+      ["luk_main_open", ["Cupola_Hatch", 0, 4]],
+      ["turret_a", ["Turret_A", 0, 4]],
+      ["wheels_left", ["WheelLeftFront", 0, 27], ["WheelLeftMain1", 0, 27], ["WheelLeftMain2", 0, 27], ["WheelLeftMain3", 0, 27], ["WheelLeftMain4", 0, 27], ["WheelLeftMain5", 0, 27], ["WheelLeftMain6", 0, 27], ["WheelLeftMain7", 0, 27], ["WheelLeftMain8", 0, 27], ["WheelLeftRear", 0, 27]],
+      ["wheels_right", ["WheelRightFront", 0, 27], ["WheelRightMain1", 0, 27], ["WheelRightMain2", 0, 27], ["WheelRightMain3", 0, 27], ["WheelRightMain4", 0, 27], ["WheelRightMain5", 0, 27], ["WheelRightMain6", 0, 27], ["WheelRightMain7", 0, 27], ["WheelRightMain8", 0, 27], ["WheelRightRear", 0, 27]]
+    ];
+
+  Map    ConfigSets = new Map([
+      [ "Body_CrashedSet", [ "Body_Crashed" ] ],
+      [ "Body_NormalSet", [ "Body", "Body_2", "Driver", "HullDriver", "HullEngine", "HullGunlayer", "Luk_C", "Luk_D", "PetlyaLeft", "PetlyaRight", "Weapon_C" ] ],
+      [ "TrackLeft_CrashedSet", [ "TrackLeft_Crashed" ] ],
+      [ "TrackLeft_NormalSet", [ "GearLeftMain", "TrackLeft"] ],
+      [ "TrackRight_CrashedSet", [ "TrackRight_Crashed" ] ],
+      [ "TrackRight_NormalSet", [ "GearRightMain", "TrackRight" ] ],
+      [ "Turret_A_CrashedSet", ["Turret_A_Crashed" ] ],
+      [ "Turret_A_NormalSet", [ "TURRET" ] ]
+
+    ]);
+
+}
+*/
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CTankPzVIAusfEExplosion
+  extends CHeavyTankExplosion
+{
+  float  Damage   = 5.0;
+  float  Radius   = 1.0;
+}
+
+// Machine gun
+class CTankPzVIAusfEMachineGunBulletExplosion
+  extends CMachineGun127BulletExplosion  //     CMachineGun762792BulletExplosion
+{
+  float  Damage   = CPiercing::TankPzVIAusfEMachineGunDamage;
+}
+
+class CTankPzVIAusfEMachineGunBulletControl
+  extends CFakeMachineGunBulletControl
+{
+  String ExplosionId  = "TankPzVIAusfEMachineGunBulletExplosion";
+  Vector GravityAccel = CPiercing::BulletGravityVector;
+  float  BulletSpeed  = 650.0;
+  float  Mass         = 0.009;
+}
+
+class CTankPzVIAusfECoaxialMachineGun
+    extends CMachineGun, CPlayerWeapon
+{
+  final static String BulletPatternId  = "TankPzVIAusfEMachineGunBullet";
+
+  final static float  FireDeviation    = 0.05;
+
+  final static Array Ammo = [0];
+
+  final static Vector  GravityVector   = CPiercing::BulletGravityVector;
+  final static boolean HighTrajectory  = false;
+
+  Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>();
+
+  final static float    LockAngleHMin     = -5.0;
+  final static float    LockAngleHMax     =  5.0;
+  final static float    LockAngleVMin     = -5.0;
+  final static float    LockAngleVMax     =  5.0;
+  final static float    BlockedLockAngle  =  1.0;
+
+  final static int Slot = 1;
+
+  //  Gun parameters for behavior
+  final static int  FirePeriod        = 100; // ms
+  final static int  FirePeriodRandAdd = 10; // ms
+
+  final static boolean BurstFire      = true;
+  final static int  BurstTime         = 2400; // ms
+  final static int  BurstTimeRandAdd  = 0; // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["STRUCTURE"],[]], // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],[]]
+                              ];    /*    */
+}
+class CTankPzVIAusfEPlayerCoaxialMachineGun
+    extends CTankPzVIAusfECoaxialMachineGun
+{
+  final static float     FireDeviation  = 0.05;
+
+/*  void OnWeaponFire()
+  {
+    sendEvent(0.0f, SOID_MissionController, "IncreaseShoots", []);
+  }  */
+
+}
+class CTankPzVIAusfEMachineGun
+    extends CMachineGun, CPlayerWeapon
+{
+  final static String BulletPatternId = "TankPzVIAusfEMachineGunBullet";
+  final static float MinDistance      = 1;
+  final static float MaxDistance      = 400;
+  final static float     FireDeviation   = 0.05;
+
+  final static Array Ammo = [0];
+
+  final static Vector  GravityVector   = CPiercing::BulletGravityVector;
+  final static boolean HighTrajectory  = false;
+
+  final static float    LockAngleHMin     = -7.0;
+  final static float    LockAngleHMax     =  7.0;
+  final static float    LockAngleVMin     =  -7.0;
+  final static float    LockAngleVMax     =  20.0;
+  final static float    BlockedLockAngle  =   1.0;
+
+  Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>();
+
+  final static int Slot = 2;
+
+  // Gun parameters for behavior
+  final static int  FirePeriod        = 3000; // ms
+  final static int  FirePeriodRandAdd = 10; // ms
+
+  final static boolean BurstFire      = true;
+  final static int  BurstTime         = 3000; // ms
+  final static int  BurstTimeRandAdd  = 500; // ms
+
+  final static int  BurstDelay        = 2000; // ms
+  final static int  BurstDelayRandAdd = 500; // ms
+  // gun specific fire mask with priorities 
+  final static Array GunSpecificFireMask = [
+                                [["STRUCTURE"],[]], // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],[]]
+                              ];
+}
+/*   */
+class CTankPzVIAusfEPlayerMachineGun
+    extends CTankPzVIAusfEMachineGun
+{
+  final static float     FireDeviation  = 0.05;
+
+  void OnWeaponFire()
+  {
+   // sendEvent(0.0f, SOID_MissionController, "IncreaseShoots", []);
+  }
+
+}
+
+// Main cannon section
+// Main cannon animator
+class CTankPzVIAusfEGunTargetingAnimatorA
+  extends CTargetingAnimator
+{
+  String HorAnimName    = "turret_a";
+  String VerAnimName    = "gun_a";
+
+  float  LeftEndAngle   =  180.0;
+  float  RightEndAngle  = -180.0;
+  float  TopEndAngle    =  -6.5;
+  float  BottomEndAngle =  17.0;
+}
+// Main cannon bullet explosion
+class CTankPzVIAusfEGunCalibreBulletExplosion
+  extends CCalibreGun88BulletExplosion
+{
+  float  Damage   = CPiercing::TankPzVIAusfECalibreDamage;
+  float  FireDamage   = CPiercing::TankPzVIAusfECalibreFireDamage;
+  float     Radius     = CPiercing::TankPzVIAusfECalibreRadius;
+  //Component Debris     = new CTankPzVIAusfEGunCalibreBulletDebrisCloud();
+}
+
+class CTankPzVIAusfEGunCalibreBulletDebrisCloud
+{
+  int    DebrisQuantity  = CPiercing::TankPzVIAusfECalibreDebrisQuantity;
+  String DebrisPatternID = "TankPzVIAusfEGunCalibreBulletDebris";
+  float  DebrisSpeed     = 300.0;
+  float  DebrisSpeedDev  = 50.0;
+  Vector DebrisDir       = new Vector(0.0, 0.0, 1.0);
+  float  DebrisMinAngle  = 0.0;
+  float  DebrisMaxAngle  = 90.0;
+}
+
+class CTankPzVIAusfEGunCalibreBulletDebrisControl 
+{
+  Array     Classificator = [];
+  boolean   IsMotionBlur  = true;
+  float     MaxDistance   = CPiercing::TankPzVIAusfECalibreDebrisMaxDistance;
+  String    ExplosionId   = "TankPzVIAusfEGunCalibreBulletDebrisExplosion";
+  float     Mass          = 0.02;
+}
+
+class CTankPzVIAusfEGunCalibreBulletDebrisExplosion
+  extends CDebrisExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = CPiercing::TankPzVIAusfECalibreDebrisDamage;
+}
+
+class CTankPzVIAusfEGunSubcalibreBulletExplosion
+  extends CSubcalibreGun88BulletExplosion
+{
+  float  Damage   = CPiercing::TankPzVIAusfESubcalibreDamage;
+  float  FireDamage   = CPiercing::TankPzVIAusfESubcalibreFireDamage;
+}
+
+class CTankPzVIAusfEGunHEBulletExplosion
+  extends CHEGun88BulletExplosion
+{
+  float  Damage   = CPiercing::TankPzVIAusfEHEDamage;
+  float  FireDamage   = CPiercing::TankPzVIAusfEHEFireDamage;
+  float     Radius = CPiercing::TankPzVIAusfEHERadius;
+  Component Debris = new CTankPzVIAusfEGunHEBulletDebrisCloud();
+}
+
+class CTankPzVIAusfEGunHEBulletDebrisCloud 
+{
+  int    DebrisQuantity  = CPiercing::TankPzVIAusfEHEDebrisQuantity;
+  String DebrisPatternID = "TankPzVIAusfEGunHEBulletDebris";
+  float  DebrisSpeed     = 300.0;
+  float  DebrisSpeedDev  = 50.0;
+  Vector DebrisDir       = new Vector(0.8, 0.8, 1.0);
+  float  DebrisMinAngle  = 0.0;
+  float  DebrisMaxAngle  = 90.0;
+}
+class CTankPzVIAusfEGunHEBulletDebrisControl  
+{
+  Array     Classificator = [];
+  boolean   IsMotionBlur  = true;
+  float     MaxDistance   = CPiercing::TankPzVIAusfEHEDebrisMaxDistance;
+  String    ExplosionId   = "TankPzVIAusfEGunHEBulletDebrisExplosion";
+  float     Mass          = 0.02;
+}
+
+class CTankPzVIAusfEGunHEBulletDebrisExplosion
+  extends CDebrisExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = CPiercing::TankPzVIAusfEHEDebrisDamage;
+}
+class CTankPzVIAusfEGunCalibreBulletControl
+  extends CCalibreBulletControl
+{
+  String    ExplosionId  = "TankPzVIAusfEGunCalibreBulletExplosion";
+  float     BulletSpeed  = CPiercing::TankPzVIAusfECalibreBulletSpeed;
+  Vector    GravityAccel = CPiercing::ShellGravityVector;
+  float     MaxDistance           = CPiercing::TankPzVIAusfECalibreMaxDistance;
+  float     PenetrationPower      = CPiercing::TankPzVIAusfECalibrePenetrationPower;
+  Array     PenetrationByDistance = CPiercing::TankPzVIAusfECalibrePenetrationByDistance;
+  float     PenetrationModifierMin   = CPiercing::TankPzVIAusfECalibrePenetrationModifier[0];
+  float     PenetrationModifierMax   = CPiercing::TankPzVIAusfECalibrePenetrationModifier[1];
+/*  float     DamageModifierMin        = CPiercing::TankPzVIAusfECalibreDamageModifier[0];
+  float     DamageModifierMax        = CPiercing::TankPzVIAusfECalibreDamageModifier[1];   */
+}
+
+class CTankPzVIAusfEGunSubCalibreBulletControl
+  extends CSubcalibreBulletControl
+{
+  String    ExplosionId  = "TankPzVIAusfEGunSubcalibreBulletExplosion";
+  float     BulletSpeed  = CPiercing::TankPzVIAusfESubcalibreBulletSpeed;
+  Vector    GravityAccel = CPiercing::ShellGravityVector;
+  float     MaxDistance           = CPiercing::TankPzVIAusfESubcalibreMaxDistance;
+  float     PenetrationPower      = CPiercing::TankPzVIAusfESubcalibrePenetrationPower;
+  Array     PenetrationByDistance = CPiercing::TankPzVIAusfESubcalibrePenetrationByDistance;
+  float     PenetrationModifierMin   = CPiercing::TankPzVIAusfESubcalibrePenetrationModifier[0];
+  float     PenetrationModifierMax   = CPiercing::TankPzVIAusfESubcalibrePenetrationModifier[1];
+/*  float     DamageModifierMin        = CPiercing::TankPzVIAusfESubcalibreDamageModifier[0];
+  float     DamageModifierMax        = CPiercing::TankPzVIAusfESubcalibreDamageModifier[1]; */
+}
+
+class CTankPzVIAusfEGunHEBulletControl
+  extends CHEBulletControl
+{
+  String    ExplosionId  = "TankPzVIAusfEGunHEBulletExplosion";
+  float     BulletSpeed  = CPiercing::TankPzVIAusfEHEBulletSpeed;
+  Vector    GravityAccel = CPiercing::ShellGravityVector;
+  float     MaxDistance           = CPiercing::TankPzVIAusfEHEMaxDistance;
+  float     PenetrationPower      = CPiercing::TankPzVIAusfEHEPenetrationPower;
+  Array     PenetrationByDistance = CPiercing::TankPzVIAusfEHEPenetrationByDistance;
+}
+
+class CTankPzVIAusfECalibreAmmo
+{
+  final static String BulletPatternId = "TankPzVIAusfEGunCalibreBullet";
+  final static int    Ammunition      = 2000;
+  final static Array  TargetMask      = [[],["HUMAN", "VEHICLE", "AIR"]];
+  final static float  LoadingTime     = 0.0f;
+  // Cockpit UI parms
+  final static Array   VoiceID        = ["WeaponShellAP1","WeaponShellAP2","WeaponShellAP3","WeaponShellAP4"];
+  final static WString AmmoName       = CWeaponNames::str_PzVIAusfECalibreAP_ShortName;
+  final static WString UIName         = L""; // CWeaponNames::str_PzVIAusfECalibreAP_ShortName;
+  final static String  Material       = "TankShell_Pzgr40";
+  final static String  StatusMaterial = "TankShellFill";
+}
+
+class CTankPzVIAusfECalibreAmmoPlayer extends CTankPzVIAusfECalibreAmmo
+{
+  final static int    Ammunition      = 60;
+  final static float  LoadingTime     = 7.0f;
+}
+
+class CTankPzVIAusfESubCalibreAmmo
+{
+  final static String BulletPatternId = "TankPzVIAusfEGunSubCalibreBullet";
+  final static int    Ammunition      = 2000;
+  final static Array  TargetMask      = [[],["HUMAN", "VEHICLE", "BLD_WAR", "BLD_CIV", "AIR"]];
+  final static float  LoadingTime     = 0.0f;
+  // Cockpit UI parms
+  final static Array   VoiceID        = ["WeaponShellSubAP1","WeaponShellSubAP2","WeaponShellSubAP3","WeaponShellSubAP4"];
+  final static WString AmmoName       = CWeaponNames::str_PzVIAusfESubCalibreAP_ShortName;
+  final static WString UIName         = L"";  // CWeaponNames::str_PzVIAusfESubCalibreAP_ShortName;
+  final static String  Material       = "TankShell_PzGr39HL";
+  final static String  StatusMaterial = "TankShellFill";
+}
+
+class CTankPzVIAusfESubCalibreAmmoPlayer extends CTankPzVIAusfESubCalibreAmmo
+{
+  final static int    Ammunition      = 18;
+  final static float  LoadingTime     = 7.0f;
+}
+
+class CTankPzVIAusfEHEAmmo
+{
+  final static String BulletPatternId = "TankPzVIAusfEGunHEBullet";
+  final static int    Ammunition      = 2000;
+  final static Array  TargetMask      = [[],["HEAVYTANK", "TANK", "AIR"]];
+  final static float  LoadingTime     = 0.0f;
+  // Cockpit UI parms
+  final static Array   VoiceID        = ["WeaponShellHE1","WeaponShellHE2","WeaponShellHE3","WeaponShellHE4"];
+  final static WString AmmoName       = CWeaponNames::str_PzVIAusfECalibreHE_ShortName;
+  final static WString UIName         = L""; // CWeaponNames::str_PzVIAusfECalibreHE_ShortName;
+  final static String  Material       = "TankShell_SprGr43";
+  final static String  StatusMaterial = "TankShellFill";
+}
+
+class CTankPzVIAusfEHEAmmoPlayer extends CTankPzVIAusfEHEAmmo
+{
+  final static int    Ammunition      = 14;
+  final static float  LoadingTime     = 7.0f;
+}
+
+class CTankPzVIAusfEMachineGunAmmo
+{
+  final static String BulletPatternId = "TankPzVIAusfEMachineGunBullet";
+  final static int    Ammunition      = 1900;
+  final static Array  TargetMask      = [[],["AIR"]];
+  final static float  LoadingTime     = 0.0f;
+
+  // Cockpit UI parms
+  final static int RenderMode         = 1;
+  final static WString UIName         = L"";//CWeaponNames::str_PzVIAusfEMG_ShortName;
+  final static WString UIName2        = L"";//CWeaponNames::str_PzVIAusfEAmmoContainerName;
+  final static String  Material       = "German_MG_Frame";
+  final static String  StatusMaterial = "MachinGunFill";
+}
+
+class CTankPzVIAusfEAmmoContainer
+{
+  final static String Name = CWeaponNames::str_PzVIAusfEAmmoContainerName;
+  final static Array  Ammo = [
+                               [0, new CTankPzVIAusfEMachineGunAmmo()]
+                             ];
+
+}
+
+// Main cannon properties
+class CTankPzVIAusfEGun
+    extends CHeavyGun, CPlayerWeapon, CWeaponFireRecoil
+{
+  float InitBulletSpeed = 0.0f;
+  final static float   FireDeviation   = 0.05;
+  final static Vector  GravityVector   = CPiercing::ShellGravityVector;
+  final static boolean HighTrajectory  = false;
+
+  final static String BulletPatternId = "";
+  final static String FireSoundId     = "Pz6MainGunFireSound";
+  final static String FireEffectId    = "HeavyGunFireMuzzleEffect";
+  final static String AmmoLoadSoundId = "TankPzVIAusfE_GunLoadSound";
+  final static String AmmoLoadVoiceId = "";
+  final static String AmmoLoadedVoiceId = "";
+
+  event void OnWeaponFire()
+  {
+    Component Object = (new #GameController()).GetMission().GetObject(getIdentificator(this));
+    if (null != Object)
+      (new #EffectsArray()).CreateEffect("HeavyGunNoMuzzleGroundEffect", getPosition(Object), null);
+
+    CWeaponFireRecoil::OnWeaponFire();
+  }
+
+  final static Array Ammo = [
+                              new CTankPzVIAusfECalibreAmmo(),
+                              new CTankPzVIAusfESubCalibreAmmo(),
+                              new CTankPzVIAusfEHEAmmo()
+                            ];
+
+  //$TMP TEST DATA
+  final static Array AmmoTargetUse    = [
+                                          [0, [["HEAVYTANK"],[]], [[500.0, 25.0, 2000.0, 100.0], [[1000.0, 40.0], [1500.0, 80.0]]]],
+                                          [1, [["HEAVYTANK"],[]], [[500.0, 75.0, 2000.0, 0.0  ], [[1000.0, 60.0], [1500.0, 20.0]]]],
+                                          //TANK
+                                          [0, [["TANK"],     []], [[500.0, 35.0, 2000.0, 100.0], [[1000.0, 45.0], [1500.0, 90.0]]]],
+                                          [1, [["TANK"],     []], [[500.0, 65.0, 2000.0, 0.0  ], [[1000.0, 55.0], [1500.0, 10.0]]]],
+                                          //VEHICLE
+                                          [2, [["VEHICLE"],  []], [[500.0, 50.0, 2000.0, 100.0], [[1000.0, 90.0], [1500.0, 100.0]]]],
+                                          //HUMAN
+                                          [2, [["HUMAN"],    []], [[500.0, 15.0, 1000.0, 0.0],   [[]]]],
+                                          //BLD_WAR
+                                          [1, [["BLD_WAR"],  []], [[500.0, 90.0, 1000.0, 100.0], []]],
+                                          [2, [["BLD_WAR"],  []], [[500.0, 10.0, 1000.0, 0.0  ], []]],
+                                          //BLD_CIV
+                                          [2, [["BLD_CIV"],  []], [[500.0, 80.0, 1000.0, 100.0], []]]
+                                        ];
+
+  final static boolean CanFireInMove  = false;
+
+  final static float  LockAngleHMin   = -180.0;
+  final static float  LockAngleHMax   =  180.0;
+  final static float  LockAngleVMin   = -6.5;
+  final static float  LockAngleVMax   =   17.0;//33.0; Temp
+  final static float  BlockedLockAngle  =  4.0;
+
+  final static float DirectionSpeedH  = 6.5; // deg / sec  • horizontal
+  final static float DirectionSpeedV  = 3.5; // deg / sec  • vertical
+  // for damaged state
+  final static float DirectionDamagedSpeedH = 3.5;
+  final static float DirectionDamagedSpeedV = 3.5;
+
+  final static float DirectionLowSpeedH  = 1.0; // deg / sec   horizontal
+  final static float DirectionLowSpeedV  =  1.0; // deg / sec   vertical
+
+  Component DirectionSoundH  = new #Emitter<CTankHeavyTurretDirectionSoundH>();
+  Component DirectionSoundV  = new #Emitter<CTankHeavyTurretDirectionSoundV>();
+
+  final static int     Ammunition     = 2000;        // wrong value
+
+  // *** Gun parameters for behavior
+  final static boolean ManualLoad     = true;
+  final static boolean UseManualFirePeriod    = false;
+  final static int     FirePeriod        = 7000; // ms
+  final static int     FirePeriodRandAdd = 2000; // ms
+
+  final static boolean BurstFire      = false;
+  final static int  BurstTime         = 2000; // ms
+  final static int  BurstTimeRandAdd  = 0; // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+
+  final static int     Slot             = 0;
+  final static boolean Primary          = true; // GUN should be marked as Primary
+
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["GROUND"],[]],    // high priority mask: RestrictTo, Exclude
+                                [["STRUCTURE"],[]], // low priority target with a pulley in the middle
+                                [[],[]]             //
+                              ];
+
+  //Component FireAnimator = new #LineAnimator<CTankPzVIAusfEFireAnimation>();
+}
+
+class CTankPzVIAusfEPlayerGun
+    extends CTankPzVIAusfEGun
+{
+  final static float     FireDeviation   = 0.005;
+  final static String FireSoundId     = "PzVI_E_TankGunShootSound";
+  final static String AmmoLoadVoiceId = "TankPzVIAusfE_GunLoadVoice"; //
+  final static String AmmoLoadedVoiceId = "TankPzVIAusfE_GunLoadedVoice";  //
+  final static Array Ammo = [
+                              new CTankPzVIAusfECalibreAmmoPlayer(),
+                              new CTankPzVIAusfESubCalibreAmmoPlayer(),
+                              new CTankPzVIAusfEHEAmmoPlayer()
+                            ];
+
+  final static float DirectionSpeedH  = 6.5; // deg / sec  • horizontal
+  final static float DirectionSpeedV  = 2.5; // deg / sec  • vertical
+  // for damaged state
+  final static float DirectionDamagedSpeedH = 3.5;
+  final static float DirectionDamagedSpeedV = 3.5;
+
+  final static float DirectionLowSpeedH  = 1.0; // deg / sec   horizontal
+  final static float DirectionLowSpeedV  =  1.0; // deg / sec   vertical
+
+  int m_CurrentAmmoLoaded = 0;
+
+  event void OnWeaponFire()
+  {
+    CTankPzVIAusfEGun::OnWeaponFire();
+    sendEvent(0.0f, SOID_MissionController, "IncreaseShoots", []);
+//    logWarning("CTankT34_85_44PlayerGun::OnWeaponFire()");
+  }
+
+  void OnAmmoLoad(
+      int _AmmoID
+    )
+  {
+//    logWarning("OnAmmoLoad");
+    if (m_CurrentAmmoLoaded != _AmmoID)
+    {
+      m_CurrentAmmoLoaded = _AmmoID;
+      Component Mission = new #GameController().GetMission();
+      if (null != Mission)
+        Mission.GetObject(Mission.GetMainPlayerObjectID()).ReportAmmoLoad(Ammo[_AmmoID]);
+    }
+  }
+
+  void OnAmmoLoaded(
+      int _AmmoID
+    )
+  {
+    logWarning("OnAmmoLoaded");
+    Component Mission = new #GameController().GetMission();
+    if (null != Mission)
+      Mission.GetObject(Mission.GetMainPlayerObjectID()).ReportAmmoLoaded(Ammo[_AmmoID]);
+  }
+
+}
+// Machinegun section
+// Machinegun animator
+class CTankPzVIAusfETargetingAnimatorB
+  extends CTargetingAnimator
+{
+  String LeftUpAnimName    = "gun_c_leftup";
+  String LeftDownAnimName  = "gun_c_leftdn";
+  String RightUpAnimName   = "gun_c_rightup";
+  String RightDownAnimName = "gun_c_rightdn";
+
+  float  LeftEndAngle   = -7.0;
+  float  RightEndAngle  =  7.0;
+  float  TopEndAngle    =  -7.0;
+  float  BottomEndAngle =  7.0;
+}
+
+class CTankPzVIAusfEEngineSystem
+{
+  float    MaxPower      = 1600.0;  // maximum horse power
+  float    MinSpeed      = 800.0;   // minimum RPM
+  float    MaxSpeed      = 2730.0;  // maximum RPM
+  float    RunningTime   = 1.0;     // starter working time, sec
+
+  int AutoDriverLowRPMGear  = 1200;
+  int AutoDriverHighRPMGear = 2700;
+  int AutoDriverGearForRotation = 3;
+
+  float AutoDriverAngleDelta = 5.0f;
+  float AutoDriverSpeedDelta = 1.5f;
+  float AutoDriverMaxAngle   = 0.1f;
+  float AutoDriverAnglePower = 0.3f;
+
+                               /*R4    R3    R2    R1    N     I     II    III   IV    V     VI    VII   VIII   IX     X */
+  Array   GearsSwitchMinSpeed = [3.0f, 3.0f, 1.0f, 0.0f, 0.0f, 0.0f, 3.0f, 5.0f, 10.0f, 14.0f, 16.0f, 23.0f, 25.0f, 30.0f, 35.0f];
+
+  static Component EventHandler;
+
+  boolean  TwoTracksRotation = true; // возможность поворачивать враздрай
+  boolean  PlayReverseGearAnimation = false; //проигрывать анимацию возврата ручки передач в начальное значение
+
+  Array    GearNames     = [ L"R4", L"R3", L"R2", L"R1", L"N", L"I", L"II", L"III", L"IV", L"V", L"VI", L"VII", L"VIII", L"IX", L"X"];
+
+  // Gear box  ч         utilization rate  Factor    Factor   capacity   capacity.             sound of the engine                  reverse    animation animation
+  //                      before ч sine     *two.    Off*two. Lowerings повышени
+  //                                                              Turns   Turns
+  Array    Gears         = [
+                             [  -0.12,     11000.0,   8000.0,      0.1,      0.5,     new #Emitter<CTankPzVIAusfE_Gear04Sound>(), new #LineAnimator<CTankPzVIAusfEGear4Animator>(), true],
+                             [  -0.10,     14000.0,  10000.0,      0.1,      0.5,     new #Emitter<CTankPzVIAusfE_Gear03Sound>(), new #LineAnimator<CTankPzVIAusfEGear3Animator>(), true],
+                             [  -0.08,     17000.0,  12000.0,      0.1,      0.5,     new #Emitter<CTankPzVIAusfE_Gear02Sound>(), new #LineAnimator<CTankPzVIAusfEGear2Animator>(), true],
+                             [  -0.05,     20000.0,  12000.0,      0.1,      0.5,     new #Emitter<CTankPzVIAusfE_Gear01Sound>(), 0, true],
+                             [   0.00,     2000.0,   2000.0,       0.5,      0.5,     new #Emitter<CTankPzVIAusfE_IdleSound>(), new #LineAnimator<CTankPzVIAusfEGearReverseAnimator>(), true ],
+                             [   0.03,     20000.0,  18000.0,      1.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear01Sound>(), new #LineAnimator<CTankPzVIAusfEGearNormalAnimator>() ],
+                             [   0.08,     18000.0,  18000.0,      3.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear02Sound>(), new #LineAnimator<CTankPzVIAusfEGear2Animator>() ],
+                             [   0.12,     16000.0,  14000.0,      4.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear03Sound>(), new #LineAnimator<CTankPzVIAusfEGear3Animator>() ],
+                             [   0.18,     14000.0,  13000.0,      5.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear04Sound>(), new #LineAnimator<CTankPzVIAusfEGear4Animator>() ],
+                             [   0.28,     12500.0,  11500.0,      6.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear05Sound>(), new #LineAnimator<CTankPzVIAusfEGear5Animator>() ],
+                             [   0.40,      8100.0,   8000.0,      7.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear06Sound>(), new #LineAnimator<CTankPzVIAusfEGear6Animator>() ],
+                             [   0.50,      4000.0,   4000.0,      8.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear07Sound>(), new #LineAnimator<CTankPzVIAusfEGear7Animator>() ],
+                             [   0.65,      2000.0,   2000.0,      9.5,      0.5,     new #Emitter<CTankPzVIAusfE_Gear08Sound>(), new #LineAnimator<CTankPzVIAusfEGear7Animator>() ]
+                           ];
+
+  // power of engine by speed if brake is enable for single track or both tracks
+  //                          Speed  Power
+  Array     BrakePower   = [
+                             [ 0.0,  18000.0, 10.0, 7500.0 ],
+                             [
+                               [ 0.5, 15000.0 ],
+                               [ 2.0, 10000.0 ],
+                               [ 4.0, 9000.0 ],
+                               [ 6.0, 7000.0 ],
+                               [ 8.0, 5000.0 ]
+                             ]
+                           ];
+
+
+  // power for hand brake by speed
+  Array     HBrakePower  = [
+                             [ 0.0,  17000.0, 7.0, 10000.0 ]
+                           ];
+
+  Component GearOnSnd    = new #Emitter<CTankPzVIAusfE_GearOnSound>();
+  Component StartEng     = new #Emitter<CTankPzVIAusfE_StartEngineSound>();
+  Component StopEng      = new #Emitter<CTankPzVIAusfE_StopEngineSound>();
+  Component StarterSnd   = new #Emitter<CTankPzVIAusfE_StarterEngineSound>();
+  Component DieSnd       = new #Emitter<CTankPzVIAusfE_EngineDieSound>();
+
+  Component AccelerationAnimator = new #LineAnimator<CTankPzVIAusfEAccelerationAnimator>();
+  Component LeftClutchAnimator   = new #LineAnimator<CTankPzVIAusfELeftClutchAnimator>();
+  Component RightClutchAnimator  = new #LineAnimator<CTankPzVIAusfERightClutchAnimator>();
+  Component BreakAnimator        = new #LineAnimator<CTankPzVIAusfEBreakAnimator>();
+
+  float     BeginEngineSoundFreq   = 0.35;//0.364;
+  float     EngineSpeedScaleCoeff  = 1.0 / 2200.0; // 1.0 / 2900.0;
+  float     VehicleSpeedScaleCoeff = 1.0 / 2200.0;
+}
+
+//
+// Describe wheel types
+//
+
+class CTankPzVIAusfEMainWheel
+{
+  float  Mass        = 800.0;
+  Vector IT          = new Vector(0.109212, 0.109212, 0.107521);
+  float  Elasticity  = 0.1;
+  float  Friction    = FLT_MAX;
+  float  Friction1   = 1.0;
+}
+class CTankPzVIAusfEManualControl
+  extends CBaseManualControl
+{
+  // =========================================
+  // Tank properties
+  // =========================================
+
+  float  Mass                 = 40000.0;
+  Vector IT                   = new Vector(0.874482, 3.152529, 3.804275);
+  float  Elasticity           = 0.01;
+  float  Friction             = 0.1;
+
+  float  SuspensionHeight = 0.4;    // .607  cm
+  float  SuspensionPower  = 40000;  // kg
+
+  Vector GravityAccelerate    = new Vector(0.0, 0.0, -10.0);
+
+  // angular damping coefficients by axises X, Y and Z
+  Vector AngularDampingCoeff  = new Vector(0.0, 0.0, 0.5);
+  // linear damping coefficients by axises X, Y and Z
+  Vector LinearDampingCoeff   = new Vector(2.5, 2.7, 1.6);
+
+  // =========================================
+  // Wheels configuration
+  // =========================================
+
+  Array  Wheels               = [
+
+                                  // Left side
+
+                                  [ "WheelLeftMain1_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain2_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain3_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain4_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain5_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain6_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain7_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelLeftMain8_CS", new CTankPzVIAusfEMainWheel()  ],
+
+                                  // Right side
+
+                                  [ "WheelRightMain1_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain2_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain3_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain4_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain5_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain6_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain7_CS", new CTankPzVIAusfEMainWheel()  ],
+                                  [ "WheelRightMain8_CS", new CTankPzVIAusfEMainWheel()  ]
+
+                                ];
+ 
+  // =========================================
+  // Other systems
+  // =========================================
+
+  Component EngineSystem      = new CTankPzVIAusfEEngineSystem();
+
+  // =========================================
+  // Sounds
+  // =========================================
+
+//  Component LeftTrackSound    = new #Emitter<CTankPzVIAusfEMovementSound>();
+//  Component RightTrackSound   = new #Emitter<CTankPzVIAusfEMovementSound>();
+  Component LeftTrackSound    = new #Emitter<CTankPzVIAusfEMovementSound>();
+  Component RightTrackSound   = new #Emitter<CTankPzVIAusfE_TrackSound>();
+
+  float  BeginTrackSoundFreq  = 0.25;
+  float  TrackSpeedScaleCoeff = 1.0 / 12000.0;  
+}
+
+// Track animator
+class CTankPzVIAusfEBaseTrack
+{
+  String  JointName           = "";
+  String  TrackTexName        = "Textures/u_veh_PzVI_MAIN_track.tex";
+  String  WheelAnimName       = "";
+
+  Array   TrackTexScrollScale = [0.0, -0.20];//[0.0, -0.4];
+  float   WheelRotateScale    = 0.03;
+  float   RealTrackPathScale  = 2.0f;
+  boolean IsLeftTrack;
+
+  float   WheelRadius         = 0.396 + 0.045; //0.413 + 0.072 whell radius + track radius
+  float   WhellLiftDown       = 0.115;  //.09       // max down wheel offset   115
+  float   WhellLiftUp         = 0.140;   // .09     // max up wheel offset  140
+
+   float   TrackSoft           = 0.5;  //
+
+  // Collision mask [restrict], [exclude]
+  Array   CollisionMask = [[ CLASSIFICATOR_WALK_SURFACE], [CLASSIFICATOR_COLLISION_SHAPES]];// здесь exclude используется не как исключающий, а как дополнительный
+}
+
+class CTankPzVIAusfELeftTrack
+  extends CTankPzVIAusfEBaseTrack
+{
+  String  JointName     = "TrackLeft";
+//  String  TrackTexName        = "Textures/u_veh_TigerE1_Track_Lft.tex";
+  String  WheelAnimName = "wheels_left";
+  boolean IsLeftTrack = true;
+
+  Array   WhellsAnimation =
+  [
+    // joint name,            animation name,            down    up
+    //
+    ["WheelLeftMain1", "L_Wheel01_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain2", "L_Wheel02_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain3", "L_Wheel03_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain4", "L_Wheel04_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain5", "L_Wheel05_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain6", "L_Wheel06_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain7", "L_Wheel07_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelLeftMain8", "L_Wheel08_lift", WhellLiftDown, WhellLiftUp, WheelRadius]
+  ];
+}
+
+class CTankPzVIAusfERightTrack
+  extends CTankPzVIAusfEBaseTrack
+{
+  String  JointName     = "TrackRight";
+//  String  TrackTexName        = "Textures/u_veh_TigerE1_Track_RT.tex";
+  String  WheelAnimName = "wheels_right";
+  boolean IsLeftTrack   = false;
+
+  Array   WhellsAnimation =
+  [
+    // joint name,            animation name,            down    up
+    //
+    ["WheelRightMain1", "R_Wheel01_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain2", "R_Wheel02_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain3", "R_Wheel03_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain4", "R_Wheel04_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain5", "R_Wheel05_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain6", "R_Wheel06_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain7", "R_Wheel07_lift", WhellLiftDown, WhellLiftUp, WheelRadius],
+    ["WheelRightMain8", "R_Wheel08_lift", WhellLiftDown, WhellLiftUp, WheelRadius]
+  ];
+}
+
+
+ //Turret out animator
+   class CTankPzVIAusfETurretOutAnimator1
+{
+  String AnimationName = "turret_out1";
+  float  AnimationTime = 0.5;
+};
+
+
+// Fire Animator
+class CTankPzVIAusfEFireAnimation
+{
+  final static String  AnimationName     = "gun_a_recoil";
+  final static float   AnimationTime     = 0.8;
+}
+
+class CTankPzVIAusfEHatchBodyAnimator
+{
+  String AnimationName = "luk_body_open";
+  float  AnimationTime = 1.1;
+}
+
+//luk commander animator
+class CTankPzVIAusfEHatchCommanderAnimator
+{
+  String AnimationName = "luk_main_open";
+  float  AnimationTime = 2.0;
+}
+
+class CTankPzVIAusfECommanderOutAnimator
+{
+  String AnimationName = "luk_main_commander";
+  float  AnimationTime = 2.0;
+}
+
+// Inside animations
+class CTankPzVIAusfEOilPressAnimator
+{
+  String AnimationName = "oil_pressure";
+  float  AnimationTime = 1.0;
+}
+
+/*class CTankT34_85_44OilTempAnimator
+{
+  String AnimationName = "oil_temperature";
+  float  AnimationTime = 1.0;
+}
+  */
+class CTankPzVIAusfEWaterTempAnimator
+{
+  String AnimationName = "water_temperature";
+  float  AnimationTime = 1.0;
+}
+
+class CTankPzVIAusfEAccelerationAnimator
+{
+  String AnimationName = "acceleration";
+  float  AnimationTime = 1.0;
+}
+class CTankPzVIAusfETachometerAnimator
+{
+  String AnimationName = "tacho";
+  float  AnimationTime = 1.0;
+}
+class CTankPzVIAusfESpeedometerAnimator
+{
+  String AnimationName = "speed";
+  float  AnimationTime = 1.0;
+}
+class CTankPzVIAusfELeftClutchAnimator
+{
+  String AnimationName = "left_side_clutch";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfERightClutchAnimator
+{
+  String AnimationName = "right_side_clutch";
+  float  AnimationTime = 0.5;
+}
+//Gears animators
+class CTankPzVIAusfEGearNormalAnimator
+{
+  String AnimationName = "direction_normal";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGearReverseAnimator
+{
+  String AnimationName = "direction_reverse";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGear2Animator
+{
+  String AnimationName = "gear_2";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGear3Animator
+{
+  String AnimationName = "gear_3";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGear4Animator
+{
+  String AnimationName = "gear_4";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGear5Animator
+{
+  String AnimationName = "gear_5";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGear6Animator
+{
+  String AnimationName = "gear_6";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEGear7Animator
+{
+  String AnimationName = "gear_7";
+  float  AnimationTime = 0.5;
+}
+class CTankPzVIAusfEBreakAnimator
+{
+  String AnimationName = "mountain_brake";
+  float  AnimationTime = 0.5;
+}
+
+// Behavior
+class CTankPzVIAusfEBehaviorParams extends CBaseBehaviorParams
+{
+  float   MaxAttackSpeed     = 4.5;
+  float   CollisionAddRadius = 7.0;
+}
+
+class CTankPzVIAusfEBehavior extends CBaseTankBehavior
+{
+  final static Component SpecParams = new CTankPzVIAusfEBehaviorParams();
+
+  Array EnemyRankDangerByDistance =  [
+                                       [[ ["HEAVYTANK"],[] ], [ [ 0.0, 200.0, 1500.0, 100.0 ], [ [400.0, 150.0] ] ] ],
+                                       [[ ["TANK"],[] ],      [ [ 0.0, 150.0, 1500.0, 100.0 ], [ [400.0, 140.0] ] ] ], // [ Mask, PiercLinFunctionByDist]
+                                       [[ ["ANTITANK"],[] ],  [ [ 0.0, 150.0, 1500.0, 95.0 ], [ [400.0, 130.0] ] ] ],
+                                       [[ ["BTR"],[] ],       [ [ 0.0, 130.0, 1500.0, 30.0 ], [ [400.0, 125.0] ] ] ],
+                                       [[ ["BLD_WAR"],[] ],   [ [ 0.0, 100.0, 1500.0, 35.0 ], [ [400.0,  80.0] ] ] ],
+                                       [[ ["VEHICLE"],[] ],   [ [ 0.0,  10.0, 1500.0, 5.0 ],  [ [400.0,  10.0] ] ] ],
+                                       [[ ["HUMAN"],[] ],     [ [ 0.0,  35.0, 1500.0, 2.0 ],  [ [400.0,   5.0] ] ] ],
+                                       [[ ["BLD"],[] ],       [ [ 0.0,   0.0, 1500.0, 0.0 ],  [ [400.0,   0.0] ] ] ]
+                                     ]; // default Rank = distance if object not fit any mask
+
+  int      AttackStyle        = AttackStyle_LightTank;  //AttackStyle_LazyTank;  //AttackStyle_Tank;
+  boolean  CanMove            = true;
+  boolean  HasRouter          = false;
+  boolean  HasRadar           = true;
+  boolean  ForceFrontInAttack = true;
+  float  MinRotateRadius = 0; // unit can turn when staying
+  float   AttackDistanceMin = 10.0;
+  float   AttackDistanceMax = 2600.0;
+
+  // *** radar parameters
+
+  float MaxRadarDistance = 2600.0; // m     // tweaked from 3.5 11-11-08
+  float MinRadarDistance = 0.5;    // m
+  float MaxRadarAngle    = 180.0;
+
+  int    UpdateRadarPeriod        = 3000; // ms
+  int    UpdateRadarPeriodRandAdd = 1000; // ms
+
+  // *** movement physical parameters
+
+  // physical limitations
+  float   MaxRotateSpeed                = 1.5f;
+  Vector  MaxSpeed                      = new Vector( 6.4, 0, 0);   // m/s
+  Vector  MaxNegativeSpeed              = new Vector( 5.5, 0, 0);   // m/s
+  Vector  MaxAccelleration              = new Vector( 0.2, 0, 0);    // m/(s*s)
+  Vector  MaxNegativeAccelleration      = new Vector( 0.1, 0, 0);  // m/(s*s)
+  Vector  MaxBrakingAccelleration       = new Vector( 3.0, 0, 0);   // m/(s*s)
+  Vector  MaxAngleSpeed                 = new Vector(   0, 0, 1.0);    // [rad/s]
+  Vector  MaxAngleAccelleration         = new Vector(   0, 0, 0.5);  // [rad/(s*s)]
+  Vector  MaxAngleBrakingAccelleration  = new Vector(   0, 0, 2.0); //1);  // [rad/(s*s)]
+
+  // Router parameters
+
+}
+
+// ================================================
+// Device classes
+// ================================================
+
+class CTankPzVIAusfEHullDriverDevice
+  extends CHullDriverDevice
+{
+  String m_NormalSetId  = "";//"Body_NormalSet";
+  String m_CrashedSetId = "";//"Body_CrashedSet";
+
+  void HullDriverDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 30);
+    }
+  }
+
+  void HullDriverDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 0);
+    }
+
+  }
+}
+
+class CTankPzVIAusfEHullGunlayerDevice
+  extends CHullGunlayerDevice
+{
+  String m_NormalSetId  = "Body_NormalSet";
+  String m_CrashedSetId = "Body_CrashedSet";
+
+  void HullGunlayerDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 15);
+    }
+  }
+
+  void HullGunlayerDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 0);
+      Behavior.SetFireAbility(false, 0);
+      Behavior.SetAimAbility(false,0);
+    }
+
+    boolean TurretOut = (rand(0.0f, 1.0f) >= 0.5);
+
+    Component StateControl = _HostObject.GetObject("StateControl");
+    if (StateControl != null)
+    {
+      if ((1 == randnum(2)) || CPiercing::TankPzVIAusfEAlwaysDestroyTrack)
+        StateControl.SetDelayItemHP(_HostObject.GetItem("TrackLeft").Index, 0.0, 0);
+
+      if ((1 == randnum(2)) || CPiercing::TankPzVIAusfEAlwaysDestroyTrack)
+        StateControl.SetDelayItemHP(_HostObject.GetItem("TrackRight").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(_HostObject.GetItem("HullDriver").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(_HostObject.GetItem("HullEngine").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(_HostObject.GetItem("Turret_A").Index, 0.0, 0);
+
+//      StateControl.SetHitPoints(0.0);
+    }
+
+    if (TurretOut)
+    {
+      logWarning("[TurretOut] Is there section for Turret OUT animation!");
+     //  StateControl.SetCustomState(CUnitStateControl::USID_TurretOut, CUnitStateControl::US_TurretOut);
+    }
+
+  }
+}
+
+class CTankPzVIAusfEHullEngineDevice
+  extends CHullEngineDevice
+{
+  String m_NormalSetId  = "";//"Body_NormalSet";
+  String m_CrashedSetId = "";//"Body_CrashedSet";
+
+  void HullEngineDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 30);
+    }
+  }
+
+  void HullEngineDeviceDestroyed(Component _HostObject)
+  {
+    clearEventsForObject(getIdentificator(_HostObject));
+
+    Component IdleSound = _HostObject.GetObject("IdleSound");
+    if (IdleSound != null)
+    {
+      IdleSound.StopSoundPlaying(true);
+    }
+
+    Component StateControl = _HostObject.GetObject("StateControl");
+    if (StateControl != null)
+    {
+      // Change Item hit points after delay in N seconds. SetDelayItemHP(ItemIndex, HitPoints, Time)
+      StateControl.SetDelayItemHP(_HostObject.GetItem("HullGunlayer").Index, 0.0, 15+randnum(15));
+      StateControl.SetHitPoints(0.0);
+    }
+
+  }
+}
+
+class CTankPzVIAusfETrackLeftDevice
+  extends CTrackLeftDevice
+{
+  String m_NormalSetId  = "TrackLeft_NormalSet";
+  String m_CrashedSetId = "TrackLeft_CrashedSet";
+
+  void TrackLeftDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetBrakeAngle(1.5f);
+      Behavior.SetMoveAbility(false, 30);
+    }
+  }
+
+  void TrackLeftDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetBrakeAngle(1.5f);
+      Behavior.SetMoveAbility(false, 0);
+      //Behavior.ActivateMovement(false);
+    }
+  }
+}
+
+class CTankPzVIAusfETrackRightDevice
+  extends CTrackRightDevice
+{
+  String m_NormalSetId  = "TrackRight_NormalSet";
+  String m_CrashedSetId = "TrackRight_CrashedSet";
+
+  void TrackRightDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetBrakeAngle(-1.5f);
+      Behavior.SetMoveAbility(false, 30);
+    }
+  }
+
+  void TrackRightDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetBrakeAngle(-1.5f);
+      Behavior.SetMoveAbility(false, 0);
+      //Behavior.ActivateMovement(false);
+    }
+  }
+}
+
+class CTankPzVIAusfETurretDevice
+  extends CTurretDevice
+{
+  String m_NormalSetId  = "Turret_A_NormalSet";
+  String m_CrashedSetId = "Turret_A_CrashedSet";
+
+  void TurretDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 60);
+      Behavior.SetAimAbility(false, 30);
+    }
+  }
+
+  void TurretDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetFireAbility(false, 0);
+      Behavior.SetAimAbility(false, 0);
+      Behavior.SetMoveAbility(false, 0);
+    }
+
+        Component IdleSound = _HostObject.GetObject("IdleSound");
+    if (IdleSound != null)
+    {
+      IdleSound.StopSoundPlaying(true);
+    }
+
+
+    Component StateControl = _HostObject.GetObject("StateControl");
+    if (StateControl != null)
+    {
+      StateControl.SetHitPoints(0.0);
+    }
+
+  }
+}
+
+class CTankPzVIAusfERecoilController
+{
+  String FToBAnim   = "body_recoil_fb";
+  String BToFAnim   = "body_recoil_bf";
+  String RToLAnim   = "body_recoil_rl";
+  String LToRAnim   = "body_recoil_lr";
+  //String FToBAnim   = "body_recoil_bf";
+  //String BToFAnim   = "body_recoil_fb";
+  //String RToLAnim   = "body_recoil_rr";
+  //String LToRAnim   = "body_recoil_ll";
+
+  float  RecoilTime = 0.5;
+};
+
+class CTankPzVIAusfETurretSubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(0.0, 0.0, 1.0);
+  float  Friction         = 0.5;
+  float  Friction1        = 0.9;
+  float  Elasticity       = 0.2;
+}
+
+class CTankPzVIAusfESubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 1.2;
+  float  Friction1        = 0.2;
+  float  Elasticity       = 0.0;
+}
+
+// ================================================
+// Unit class
+// ================================================
+
+class CTankPzVIAusfEUnit
+    extends CTankUnit , CTankPlayerUnit, CWeaponConfig, CPushVehicleObject
+{
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["GROUND", "HEAVYTANK", "GER"];
+  final static float DefaultHitPoints = CHitPoints::TankPzVIAusfEUnitHitPoints;
+  
+  static category UnitType = CLASSIFICATOR_T34_HEAVY_TANK;
+
+  static Array PostExplosionID = [
+                                    ["", "TankPzVIAusfExplosion"]
+                                 ];
+
+  static Array Hatches = [
+                            [ "Luk_Driver",    "luk_body_open",      1.0 ],
+                            [ "Luk_Commander", "luk_main_open",      2.0 ],
+                            [ "Commander",  "luk_main_commander", 2.0 ]
+                         ];
+
+ Array   TurretOutAnimations = [
+                                    [ 1.0, new #LineAnimator<CTankPzVIAusfETurretOutAnimator1>() ]
+                                ];
+
+
+  static Array HatchesStates = [
+                                  [ "Normal", [ [ "Luk_Driver", 0.0 ], [ "Luk_Commander", 2.0 ], [ "Commander", 2.0 ] ] ],
+                                  [ "Attack", [ [ "Luk_Driver", 0.0 ], [ "Luk_Commander", 0.0 ], [ "Commander", 0.0 ] ] ]
+                               ];
+
+  final static String BodyJoint   = "Body";
+
+  final static String DefaultSurfaceControl = "PutonGroundLandingJoints";     // PutonGround LandingJoints     PutonGroundLandingJoints
+  final static Array  LandingJoints         = ["Corner_FL", "Corner_RL", "Corner_RR", "Corner_FR"];
+
+  static Array  SubstanceArmourWidth = [
+                                         [CMaterialStructure::MSID_ArmourTurretFWD,   CArmourPoints::TankPzVIAusfEUnitArmourTurretFWD  ],
+                                         [CMaterialStructure::MSID_ArmourTurretREAR,  CArmourPoints::TankPzVIAusfEUnitArmourTurretREAR ],
+                                         [CMaterialStructure::MSID_ArmourTurretTOP,   CArmourPoints::TankPzVIAusfEUnitArmourTurretTOP  ],
+                                         [CMaterialStructure::MSID_ArmourTurretLEFT,  CArmourPoints::TankPzVIAusfEUnitArmourTurretLEFT ],
+                                         [CMaterialStructure::MSID_ArmourTurretRIGHT, CArmourPoints::TankPzVIAusfEUnitArmourTurretRIGHT],
+                                         [CMaterialStructure::MSID_ArmourHullFWD,     CArmourPoints::TankPzVIAusfEUnitArmourHullFWD    ],
+                                         [CMaterialStructure::MSID_ArmourHullREAR,    CArmourPoints::TankPzVIAusfEUnitArmourHullREAR   ],
+                                         [CMaterialStructure::MSID_ArmourHullTOP,     CArmourPoints::TankPzVIAusfEUnitArmourHullTOP    ],
+                                         [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::TankPzVIAusfEUnitArmourHullBOTTOM ],
+                                         [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::TankPzVIAusfEUnitArmourHullRIGHT  ],
+                                         [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::TankPzVIAusfEUnitArmourHullLEFT   ]
+                                      ];
+
+   Array m_DamageTransfer = [ // From Item , To Item, Item HitPoints Percent
+                             ["HullDriver", "HullEngine", 0.1f],
+                             ["HullDriver", "HullGunlayer", 0.1f]
+                             ];
+/*  */
+
+  // Camera parameters
+  float MinHorAngle  = -1.575; //  360' -3.141592 was     -0.43
+  float MaxHorAngle  =  1.575; // was 0.43
+  float MinVertAngle = -1.575; // was      -0.75
+  float MaxVertAngle =  1.575;  // 60' 1.047199
+
+   // Critical Engine Speed
+  float m_CriticalEngineSpeed1 = 2780.0;
+  float m_TempIncreaseCoeff1   = 0.01;
+  float m_CriticalEngineSpeed2 = 2800.0;
+  float m_TempIncreaseCoeff2   = 0.1;
+  float m_CriticalEngineSpeed3 = 2900.0;
+  float m_TempIncreaseCoeff3   = 0.2;
+
+  float m_CriticalWaterTemp = 105.0f;
+  float m_CriticalOilTemp   = 100.0f;
+
+  boolean m_AITankCollisionShape = true;
+
+  int     m_CockpitStyle         = CS_Tiger;
+
+  float   m_RepairTime = 20.0f;
+  boolean m_ReadyToRepair = true;
+// REDUX: This silences the "Failed to get member variable LightOn" error jm
+  boolean LightOn = false;
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CTankPzVIAusfEUnit()
+  {
+    //SetupMesh(new #AnimatedObject<Cu_veh_PzVI_MAINModel>(), [400, 270, 170, 50, 5]);  
+    SetupExtendMesh("Cu_veh_PzVI_MAINModel", "Cu_veh_PzVI_MAIN_InsideModel");          
+    GetMeshComponent().SetLods([400, 270, 170, 50, 5]);                             
+
+    // Setup trucks
+    SetupTracks(
+      new #TrackAnimator<CTankPzVIAusfELeftTrack>(),
+      new #TrackAnimator<CTankPzVIAusfERightTrack>()
+    );
+
+    SetGunRecoilEffects(new #LineAnimator<CTankPzVIAusfEFireAnimation>());
+
+    // Engine effects setup
+    SetEngineComponents(
+        [
+          [ "Smoke_L", "PetrolAccelSmokeEffect", "EngineStart"],
+          [ "Smoke_R", "PetrolAccelSmokeEffect", "EngineStart"],
+          [ "Smoke_R", "TigerEngineSmokeEffect",      "Engine"     ],
+          [ "Smoke_L", "TigerEngineSmokeEffect",      "Engine"     ]
+        ]
+      );
+
+    SetHatchBodyEffects(new #LineAnimator<CTankPzVIAusfEHatchBodyAnimator>());
+    SetHatchCommanderEffects(new #LineAnimator<CTankPzVIAusfEHatchCommanderAnimator>(),
+                             new #LineAnimator<CTankPzVIAusfECommanderOutAnimator>());
+
+    SetHideInCockpitJoints(["Body_commander", "root_com", "Headphones"]);
+
+   // SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankPzVIAusfETachometerAnimator>(), 3600.0f, 0.0f);
+   // SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankPzVIAusfESpeedometerAnimator>(), 88.0f, 0.0f);
+   // SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankPzVIAusfEOilPressAnimator>(), 18.0f, 0.0f);
+    //SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEOilTempAnimator>(), 125.0f, 0.0f);
+    //SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>(), 125.0f, 0.0f);
+	SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>(), -40.0f, -60.0f);
+
+  // Setup turret out animator
+    SetTurretOutEffectsArray( TurretOutAnimations );
+
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    if (_PropMap.Get("IsManual", false))
+    {
+     // GetLeftTrack().EnableAutoCalcPath(false);
+      //GetRightTrack().EnableAutoCalcPath(false);  
+      EnableSurfaceControl(true);
+      // Engine effects setup
+      SetEngineComponents(
+          [
+            [ "Smoke_L", "PetrolAccelSmokeEffect", "EngineStart"],
+            [ "Smoke_R", "PetrolAccelSmokeEffect", "EngineStart"],
+            [ "Smoke_R", "TigerEngineSmokeEffect",  "Engine"     ],
+            [ "Smoke_L", "TigerEngineSmokeEffect",  "Engine"     ]
+          ]
+        );
+
+      // Setup Weapon
+      SetupAmmoContainer(new #AmmoContainer<CTankPzVIAusfEAmmoContainer>());
+      Component CoaxialMachineGun = new #Weapon2<CTankPzVIAusfEPlayerCoaxialMachineGun>();
+      Component MachineGun = new #Weapon2<CTankPzVIAusfEPlayerMachineGun>();
+      CoaxialMachineGun.SetAmmoContainer(GetObject("AmmoContainer"));
+      MachineGun.SetAmmoContainer(GetObject("AmmoContainer"));
+
+      SetupWeapon( "Weapon_A", new #Weapon<CTankPzVIAusfEPlayerGun>(),
+                  ["Fire_A1"], new #TargetingAnimator<CTankPzVIAusfEGunTargetingAnimatorA>());
+      SetupWeapon("Weapon_B", CoaxialMachineGun, "Fire_A1",
+        ["Fire_B1"], null);
+      SetupWeapon("Weapon_C", MachineGun,
+        ["Fire_C1"], new #TargetingAnimator2<CTankPzVIAusfETargetingAnimatorB>());
+
+      Component Game = new #GameController();
+      boolean IsMirror = _PropMap.Get("IsMirror", (Game.GetGameMode() == "Client"));
+      if (IsMirror)
+        SetIdleEffects(new #Emitter<CTankPzVIAusfEIdleSound>());
+
+        boolean isAutoShooter = true;
+        if(isFunctionExist(_Mission, "IsExpertMode", 0))
+            isAutoShooter = !_Mission.IsExpertMode();
+        if(isAutoShooter && !IsMirror )
+        {
+          Component AutoShooter = new #AutoShooter<CAutoShooter>();
+          setSlaveObject( AutoShooter, this );
+          AutoShooter.SetMachineGun( GetObject( "Weapon_B" ) );
+          AutoShooter.SetMainGun( GetObject( "Weapon_A" ) );
+          AutoShooter.SetEventHandler(this);
+          AutoShooter.Enable(true);
+          AutoShooter.SetUnitPriority(CUnitType::UnitPriority);
+          RegisterObject( "AutoShooter", AutoShooter );
+        }
+    }
+    else
+    {
+      // Setup Weapon
+      SetupAmmoContainer(new #AmmoContainer<CTankPzVIAusfEAmmoContainer>());
+      Component CoaxialMachineGun = new #Weapon2<CTankPzVIAusfECoaxialMachineGun>();
+      Component MachineGun = new #Weapon2<CTankPzVIAusfEMachineGun>();
+      CoaxialMachineGun.SetAmmoContainer(GetObject("AmmoContainer"));
+      MachineGun.SetAmmoContainer(GetObject("AmmoContainer"));
+
+      SetupWeapon( "Weapon_A", new #Weapon<CTankPzVIAusfEGun>(),
+                  ["Fire_A1"], new #TargetingAnimator<CTankPzVIAusfEGunTargetingAnimatorA>());
+      SetupWeapon("Weapon_B", CoaxialMachineGun, "Fire_A1",
+        ["Fire_B1"], null);
+      SetupWeapon("Weapon_C", MachineGun,
+        ["Fire_C1"], new #TargetingAnimator2<CTankPzVIAusfETargetingAnimatorB>());
+
+
+      SetupBehavior( new #VehicleBehavior<CTankPzVIAusfEBehavior>());
+
+      Component hatches = new #HatchesStateController();
+      hatches.AddHatches( Hatches );
+      hatches.AddStates( HatchesStates );
+      SetupHatches( hatches );
+      hatches.SetHatchesState( "Normal" );
+
+    // Creates and register unit state component
+    // MoveSound, TraceEffectId
+      SetMovementEffects(
+          new #Emitter<CTankPzVIAusfEMovementSound>(),
+          [
+            ["Smoke_R", "PzVIPetrolSmokeEffect"],
+            ["Smoke_L", "PzVIPetrolSmokeEffect"]
+          ]
+        );
+
+      SetIdleEffects(
+          new #Emitter<CTankPzVIAusfEIdleSound>()
+        );
+
+      SetAccelEffects(
+          new #Emitter<CTankPzVIAusfEAccelSound>(),
+          [
+            ["Smoke_R", "PetrolAccelSmokeEffect", new Vector (0.0, 0.0, 0.0)],
+            ["Smoke_L", "PetrolAccelSmokeEffect", new Vector (0.0, 0.0, 0.0)]
+          ]
+        );
+
+      GetLeftTrack().EnableAutoCalcPath(true);
+      GetRightTrack().EnableAutoCalcPath(true);
+    }
+
+    CPlayerUnit::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.0f);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127, 0.0f);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576, 0.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 0.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   0.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   0.5);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BUILDING, 0.0);
+
+    // create effects for tracks: [ HostId, Effectid, ZoneId ]  _CALIBREBULLET7576
+    SetTrackEffects(
+        _Mission,
+        [
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest01, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest01, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest02, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest02, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest03, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest03, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest04, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Forest04, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadForest, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadForest, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush01, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush01, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush02, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush02, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush03, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush03, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush04, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_Bush04, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_ShrubberyLarge, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_ShrubberyLarge, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_ShrubberyRegular, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_ShrubberyRegular, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_ShrubberyCasual, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_ShrubberyCasual, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_SpecialLongAloneTree, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_SpecialLongAloneTree, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_VillagePlanting01, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_VillagePlanting01, "Right" ],
+          ["Corner_RL", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_VillagePlanting02, "Left" ],
+          ["Corner_RR", "ForestComplexTraceEffect", CBaseZoneMap::ZMC_VillagePlanting02, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass01, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass01, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass02, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass02, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass03, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass03, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass04, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass04, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad01, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad01, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad02, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad02, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad03, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad03, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad04, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad04, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01Add, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01Add, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadObject, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadObject, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_AllPassable, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_AllPassable, "Right" ],
+          ["Corner_FL", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Left" ],
+          ["Corner_RL", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Left" ],
+          ["Corner_RR", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Right" ],
+          ["Corner_FR", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Right" ],
+          ["Corner_FL", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Left" ],
+          ["Corner_RL", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Left" ],
+          ["Corner_RR", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Right" ],
+          ["Corner_FR", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Right" ],
+          ["Corner_FL", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Left" ],
+          ["Corner_RL", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Left" ],
+          ["Corner_RR", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Right" ],
+          ["Corner_FR", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Right" ]
+        ]
+      );
+
+    CreateUnitItem(
+        "HullDriver",
+        CJointPoints::TankPzVIAusfEUnitHULL_DRIVERPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "HullDriver"
+      );
+    CreateUnitItem(
+        "HullGunlayer",
+        CJointPoints::TankPzVIAusfEUnitHULL_GUNLAYERPoints,
+        ["GenericDamageItemEffect", "HullGunLayerExplosionEffect"],
+        "HullGunlayer"
+      );
+    CreateUnitItem(
+        "HullEngine",
+        CJointPoints::TankPzVIAusfEUnitHULL_ENGINEPoints,
+        ["GenericDamageItemEffect", "GenericSmallFireEffect"],
+        "HullEngine"
+      );
+    CreateUnitItem(
+        "TrackLeft",
+        CJointPoints::TankPzVIAusfEUnitTRACK_LEFTPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "TrackLeft"
+      );
+    CreateUnitItem(
+        "TrackRight",
+        CJointPoints::TankPzVIAusfEUnitTRACK_RIGHTPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "TrackRight"
+      );
+    CreateUnitItem(
+        "Turret_A",
+        CJointPoints::TankPzVIAusfEUnitTURRETPoints,
+        ["GenericDamageItemEffect", "GenericLargeFirePostSmokeRefuseEffect"],
+        ["Turret_A_Crashed", "Turret_A_Crashed"],
+        "Turret_A"
+      );
+
+    GetObject("Weapon_A").SetFireAnimator(GetObject("GunRecoilAnimator"));
+    //logWarning("Weapon fire deviation for " + getIdentificator(this) + "=" + new String(GetObject("Weapon_A").FireDeviation));
+
+    LinkDeviceToUnitItem("HullDriver",   new CTankPzVIAusfEHullDriverDevice());
+    LinkDeviceToUnitItem("HullGunlayer", new CTankPzVIAusfEHullGunlayerDevice());
+    LinkDeviceToUnitItem("HullEngine",   new CTankPzVIAusfEHullEngineDevice());
+    LinkDeviceToUnitItem("TrackLeft",    new CTankPzVIAusfETrackLeftDevice());
+    LinkDeviceToUnitItem("TrackRight",   new CTankPzVIAusfETrackRightDevice());
+    LinkDeviceToUnitItem("Turret_A",     new CTankPzVIAusfETurretDevice());
+
+    AttachEffect2("Vapor_L", "PzVIETrackEffect", new Vector(0.65, 0.0, 0.0));
+    AttachEffect2("Vapor_R", "PzVIETrackEffect", new Vector(0.65, 0.0, 0.0));
+    AttachEffect2("Vapor_L", "PzVIETrackEffect", new Vector(-0.65, 0.0, 0.0));
+    AttachEffect2("Vapor_R", "PzVIETrackEffect", new Vector(-0.65, 0.0, 0.0));
+
+    SetupRecoilController(new #RecoilController<CTankPzVIAusfERecoilController>());
+
+    if ((new #GameController()).GetGameMode() != "Single")            // != "Single")
+       GetObject("Mesh").SetAnimateAlways(true);
+
+    if (!_PropMap.Get("IsManual", false))
+      SetupPhysicaleObject("CTankPzVIAusfESubstance", 60000.0, 0.0);
+
+    if (_PropMap.Get("IsManual", false))
+    {
+      GetObject("VoiceMessenger").AddSoundTable(CCockpit::TigerVoices);
+      SetAngleMessages(CCockpit::GermanAngleMessages);
+      m_TargetDirection = [[L"", ""],[L"", ""]];
+    
+   /*    Component PointDetector = new #PointCollisionDetector();
+      PointDetector.EnableDetector(true);
+      PointDetector.SetCollisionMask([CLASSIFICATOR_TERRAIN, CLASSIFICATOR_GROUND, CLASSIFICATOR_TERRAINFOREST],[]);
+      PointDetector.SetEventHandler(this);
+      setPositionable(PointDetector, GetMeshComponent());
+      RegisterObject("PointDetector", PointDetector);   */
+    }
+
+  }
+  // =======================================
+  // Collision control
+  // =======================================
+
+  Component CreateCollisionControl(String _ScriptClassName)
+  {
+    Component CollisionControl = new #CollisionControl2();
+    CollisionControl.SetCollisionMask(
+        [CLASSIFICATOR_WALK_SURFACE],
+        [ CLASSIFICATOR_DO_NOT_COLLISION_CHECK, CLASSIFICATOR_PHYSICS_CONTROLLABLE ]
+       );
+
+    loadFromScript(CollisionControl, _ScriptClassName);
+    RegisterObject("CollisionControl", CollisionControl);
+
+    return CollisionControl;
+  }
+
+  void Initialize(
+      Component   _Mission,
+      Component   _PropMap
+    )
+  {
+    CPlayerUnit::Initialize(_Mission, _PropMap);
+
+    // Put on ground tank object
+    boolean IsManual = _PropMap.Get("IsManual", false);
+    if (IsManual)
+    {
+      LinkModel();
+      PutonGround();
+      EnableSurfaceControl(false);
+      UnlinkModel();
+    }
+  }
+
+  // ======================================
+  // Vehicle controller
+  // ======================================
+  Component CreateVehicleController()
+  {
+    CTankPzVIAusfEEngineSystem::EventHandler = this;
+    return (new #TankVehicle<CTankPzVIAusfEManualControl>());
+  }
+
+  // ======================================
+  // AI Vehicle controller
+  // ======================================
+  Component CreateAIVehicleController()
+  {
+    return (new #AITankVehicle<CTankPzVIAusfEManualControl>());
+  }
+
+  // ======================================
+  // Manual control
+  // ======================================
+  Component CreateManualControl()
+  {
+    return new #ManualTankControl();
+  }
+
+  // ======================================
+  // Armour descriptor
+  // ======================================
+  Array GetArmourDescriptor()
+  {
+    return new Array ([
+                        [CMaterialStructure::MSID_ArmourTurretFWD,   CArmourPoints::TankPzVIAusfEUnitArmourTurretFWD  ],
+                        [CMaterialStructure::MSID_ArmourTurretREAR,  CArmourPoints::TankPzVIAusfEUnitArmourTurretREAR ],
+                        [CMaterialStructure::MSID_ArmourTurretTOP,   CArmourPoints::TankPzVIAusfEUnitArmourTurretTOP  ],
+                        [CMaterialStructure::MSID_ArmourTurretLEFT,  CArmourPoints::TankPzVIAusfEUnitArmourTurretLEFT ],
+                        [CMaterialStructure::MSID_ArmourTurretRIGHT, CArmourPoints::TankPzVIAusfEUnitArmourTurretRIGHT],
+                        [CMaterialStructure::MSID_ArmourHullFWD,     CArmourPoints::TankPzVIAusfEUnitArmourHullFWD    ],
+                        [CMaterialStructure::MSID_ArmourHullREAR,    CArmourPoints::TankPzVIAusfEUnitArmourHullREAR   ],
+                        [CMaterialStructure::MSID_ArmourHullTOP,     CArmourPoints::TankPzVIAusfEUnitArmourHullTOP    ],
+                        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::TankPzVIAusfEUnitArmourHullBOTTOM ],
+                        [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::TankPzVIAusfEUnitArmourHullRIGHT  ],
+                        [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::TankPzVIAusfEUnitArmourHullLEFT   ]
+                      ]);
+  }
+
+  event void ReadyToRepair()
+  {
+    m_ReadyToRepair = true;
+  }
+
+  event void ReloadAmmo()
+  {
+
+    if (!checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]) || !m_ReadyToRepair)
+      return;
+
+    Component AutoThingsUI = GetObject("AutoThingsUI");
+    if ( AutoThingsUI == null )
+      return;
+
+    if (AutoThingsUI.IsHandbrakeActive())
+    {
+      m_ReadyToRepair = false;
+      sendEvent(m_RepairTime, getIdentificator(this), "ReadyToRepair", []);
+
+      Component Weapon = GetObject("Weapon_A");
+      Weapon.SetAmmoQuantity(0, CTankPzVIAusfECalibreAmmoPlayer::Ammunition);
+      Weapon.SetAmmoQuantity(1, CTankPzVIAusfESubCalibreAmmoPlayer::Ammunition);
+      Weapon.SetAmmoQuantity(2, CTankPzVIAusfEHEAmmoPlayer::Ammunition);
+
+      Component StateControl = GetStateControl();
+      for (int i = 0; i < m_UnitItemsList.size(); i++)
+      {
+        Component Item = m_UnitItemsList[i];
+        StateControl.SetUnitItemHP(Item.Index, Item.HitPoints);
+        Item.CurrentHitPoints = Item.HitPoints;
+      }
+    }
+  }
+
+  // ======================================
+  // Point collision detector
+  // ======================================
+
+  // Call when tank deep in the water (Вызывается, когда танк глубоко заехал в воду)
+  event void OnPointCollisionDetect(String _ObjectID)
+  {
+    // Destroy HullEngine may be changed (убиваем движок, можно заменить на что-то другое)
+    SetUnitItemHPPercent("HullEngine", 0.0);
+    
+    GetObject("PointDetector").EnableDetector(false);
+  }
+
+
+  event void SetModelViewState( 
+      boolean _State 
+    )
+  {
+    // TMP
+  }
+
+  event void UpdateEngineLights(
+      boolean _Enable
+    )
+  {
+   Component Mesh = GetInsideMesh();
+//   Component LightOn = Mesh.GetJoint("Ignition_ON");    
+//   Component LightOff = Mesh.GetJoint("Ignition_OFF");   
+
+
+  //  if (null != LightOn)
+  //   setVisibleState(LightOn, _Enable);                // ***** CHANGED 11-13-08
+
+   // if (null != LightOff)
+  //    setVisibleState(LightOff, !_Enable);
+  }
+// REDUX: Using 'Component' as the type to fix the syntax error
+  void AddWingman(Component unit) { }
+}
+
+
