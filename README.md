@@ -86,4 +86,4 @@ Documentation created with the assistance of multiple AI systems, analyzing MEL 
 ## License
 
 Documentation preserved for educational and historical purposes.
-I also have included files from the ZeeWolf (zw) mod, this was a paywar mod made by the now gone ZeeWolf, his mod included, new maps, vehicles and physics. For completeness I have included the .scripts from Whirlwinds over Vietnam (WoV) because TvT is so very close to WoV, it was G5's tile prior to TvT and was the main base for TvT. Unlike TvT, WoV was fully formed and released as sich, TvT was not. It was released unfininshed to save it's publisher (it did not). Both companies ceased to exist.
+I also have included files from the ZeeWolf (zw) mod, this was a paywar mod made by the now gone ZeeWolf, his mod included, new maps, vehicles and physics. For completeness I have included the .scripts from Whirlwinds over Vietnam (WoV) because TvT is so very close to WoV, it was G5's title prior to TvT and was the main base for TvT. Unlike TvT, WoV was fully formed and released as sich, TvT was not. It was released unfininshed to save it's publisher (it did not). Both companies ceased to exist.
