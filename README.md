@@ -1,4 +1,4 @@
-🛡️ Project Redux: T-34 vs. Tiger Preservation
+Project Redux: T-34 vs. Tiger Preservation
 
 Welcome to the frontline. This repository is a community-driven effort to preserve, fix, and finally finish T-34 vs. Tiger. After the original developers and publishers ceased to exist, this game became "abandonware." We are here to ensure the "Cogs of War" keep turning.
 
