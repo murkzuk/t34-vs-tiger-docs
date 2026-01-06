@@ -1,3 +1,38 @@
+🛡️ Project Redux: T-34 vs. Tiger Preservation
+
+Welcome to the frontline. This repository is a community-driven effort to preserve, fix, and finally finish T-34 vs. Tiger. After the original developers and publishers ceased to exist, this game became "abandonware." We are here to ensure the "Cogs of War" keep turning.
+
+Our mission is to build an open community where anyone—from veteran modders to first-time players—can contribute to making this the definitive WW2 tank simulation.
+🤝 How You Can Participate
+
+You don't need to be a coder to help! We want this project to be as open as possible.
+
+    🕹️ Play & Report: Download the latest patch and tell us what works (and what doesn't) in the Issues Tab.
+
+    🔧 Troubleshooting: Found a fix for a crash or a driver error? Add it to our Confirmed Fixes list to help others.
+
+    📜 Script Tinkering: If you’ve tweaked a .script file for better physics or terrain, share your findings!.
+
+    🎨 Texture Work: Help us update the .dds textures for vehicles and environments.
+
+📂 Repository Roadmap
+
+To make this "mountain" easier to climb, we are going to organise the project into key areas:
+
+    Technical Manuals: Documentation for Maya 5.0 and the G5 Engine export pipeline.
+
+    Mission Scripting: Detailed guides on how missions are structured.
+
+    Legacy Assets: A collection of original and modded scripts from ZeeWolf (ZW) and Whirlwinds over Vietnam (WoV) for cross-referencing.
+
+    Engine Fixes: Tools like the 4GB patch (LAA) and 3D driver fixes.
+
+💡 Quick Start Troubleshooting
+
+Game won't start? If you get an "Unable to initialize 3D driver" error on older laptops or GPUs, try deleting D3D9.dll from your game folder. See our Confirmed Fix #1 for details.
+A Note on the Community
+
+We are building this for the love of the sims. Please be patient with one another, share what you know, and let's bring this game back to life together.
 # T-34 vs. Tiger - G5 Engine Export Documentation
 
 Documentation for exporting 3D assets from Maya 5.0 to the proprietary G5 game engine.
