@@ -1,0 +1,513 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC1M1Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/c1m1_Map.tex";
+
+  static String m_MissionBriefingPicMaterial = "C1M1BriefingPic";
+
+  static Array m_MissionObjectives = [
+                                       [MOTID_Primary, CC1M1Mission_Strings::Objective01, MOSID_InProgress, true],
+                                       [MOTID_Primary, CC1M1Mission_Strings::Objective02, MOSID_InProgress, true],
+                                       [MOTID_Primary, CC1M1Mission_Strings::Objective03, MOSID_InProgress, true]
+                                     ];
+
+  static WString ObjectivesText = CC1M1Mission_Strings::ObjectivesText;
+
+  boolean isDebug = true;
+  boolean isRadarUpdateDebug = false;
+  boolean Reinforce = false;
+
+  boolean isPhase1      = true;
+  boolean isPhase2      = false;
+  boolean isPhase2_AP   = false; // Active Part of Second Phase
+  boolean isPhase3      = false;
+  boolean GermanSupport = false;
+
+  int Penalty_count = 0;
+
+  Array m_NavpointsForPlayerMap = [
+      [
+        ["NavPointKrin"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+      ]
+
+
+      ];
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4100.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2399, 1484.0, 0.0), new Vector(6890.0, 5974.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+                                            [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  Array KillList_Primary1 = ["LeftAntiTank_1", "LeftAntiTank_2", "RightAntiTank_1", "RightAntiTank_2"];
+  Array KillList_Primary2 = ["FrontDzot_1", "FrontDzot_2", "FrontDzot_3"];
+  Array KillList_Primary3 = ["PopulatedDzot", "GermanTank_1", "GermanTank_2"];
+  Array ArtilleryPoints   = ["ArtPoint_1","ArtPoint_2","ArtPoint_3","ArtPoint_4","ArtPoint_5","ArtPoint_6"];
+
+  Array KillList_Reinforcement = [
+                                   "LeftAntiTank_1", "LeftAntiTank_2", "RightAntiTank_1", "RightAntiTank_2",
+                                   "FrontDzot_1", "FrontDzot_2", "FrontDzot_3"
+                                 ];
+
+  boolean MainPlayerStart = false;
+
+  // Position Watchers
+  Component CC1M1PW_SwitchToPhase2; // следит за границей между фазами 1 и 2
+  Component CC1M1PW_SwitchToPhase3; // следит за границей между фазами 2_AP и 3
+  Component CC1M1PW_PlayerTanks; // изменяет скорость CC1M1Gr_PlayerTanks до активной части второй фазы
+  Component CC1M1PW_76Tanks;     // изменяет скорость CC1M1Gr_76Tanks до второй фазы
+  Component CC1M1PW_AZLeftAntiTanks;  // cмотрит за зоной агрессии для CC1M1Gr_LeftAntiTanks
+  Component CC1M1PW_AZRightAntiTanks; // cмотрит за зоной агрессии для CC1M1Gr_RightAntiTanks
+  Component CC1M1PW_InfantryZone; // следит за зоной старта пехоты
+  // Position Watchers
+
+  String ScoutTank = ""; // Танк-разведчик
+
+  String RadarHide = "INVISIBLE_ON_RADAR";
+
+  Array m_Mask = [["ENEMY"], ["FRIEND", RadarHide]];
+
+  void CC1M1Mission()
+  {
+    // Construct mission
+    CSPMission("CC1M1Mission", "CC1M1Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC1M1Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC1M1Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky01Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare = new #LensFlare<CC1M1LensFlare>();
+
+    SetMissionWorldMatrices(new #WorldMatrices<CC1M1WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME,         "CC1M1LandscapeLayer"  ],
+        [LAYER_TERRAIN_ZONE,         "CC1M1TerrainZoneLayer"],
+        [LAYER_ROUTER_ZONE,          "CC1M1RouterZoneLayer" ],
+        [LAYER_MICROTEXTURE_MAP1,    "CC1M1MicroTextures1"  ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC1M1WaterHeights"    ]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // Call inherited
+    CSPMission::StartMission();
+
+    //Component console = new #GameController().GetObject(SOID_Console);
+    //console.disablebeh();
+    //console.showbehinf(true);
+
+    CC1M1PW_SwitchToPhase2 = new CC1M1PW_SwitchToPhase2();
+    CC1M1PW_SwitchToPhase2.Initialize(this, "CC1M1PW_SwitchToPhase2");
+
+    CC1M1PW_PlayerTanks = new CC1M1PW_PlayerTanks();
+    CC1M1PW_PlayerTanks.Initialize(this, "CC1M1PW_PlayerTanks");
+
+    CC1M1PW_76Tanks = new CC1M1PW_76Tanks();
+    CC1M1PW_76Tanks.Initialize(this, "CC1M1PW_76Tanks");
+
+    sendEvent(240.0, SOID_MissionController, "StartRussianGroups", []);
+    sendEvent(40.0,  SOID_MissionController, "DestroyBuildingWithFire", ["Village_Corral_8"]);
+    fireEvent(0.0, [], "SetRadarUnit", [m_Mask]);
+  }
+
+  /*event void DestroyBuildingWithFire(String _BuildingID)
+  {
+    logWarning("Call Fire. ObjectID = "+_BuildingID);
+    Matrix  Position = getPosition(GetObject(_BuildingID));
+    sendEvent(0.0, _BuildingID, "OnSuccessTouchTrigger", [11000]);
+    (new #GameController()).GetObject("ExplosionsArray").
+    CreateExplosion("CNavPointExplosion", Position, null, getIdentificator(this));
+  }*/
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+  }
+
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+    if (_IsWorkEngine && !MainPlayerStart)
+    {
+      StartRussianGroups();
+    }
+  }
+
+  event void StartRussianGroups()
+  {
+    if (!MainPlayerStart)
+    {
+      sendEvent(0.0, "CC1M1Gr_PlayerTanks",  "PopDelayedOrder", []);
+      sendEvent(0.0, "CC1M1Gr_76Tanks", "PopDelayedOrder", []);
+      sendEvent(0.0, "CC1M1Gr_LeftInfantryOne", "StartInfantryAttack", []);
+      sendEvent(0.0, "CC1M1Gr_RightInfantryOne", "StartInfantryAttack", []);
+      MainPlayerStart = true;
+    }
+  }
+
+  void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
+  {
+    // if (isDebug)
+    //  logMessage("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+
+    if (_ObjectID == "MainPlayerUnit")
+    {
+      if (_NavPointID == "NP_LeftInfantryTwo_Brighten")
+        sendEvent(0.0, "CC1M1Gr_LeftInfantryTwo", "OnOffBright", [false]);
+      else if (_NavPointID == "NP_RightInfantryTwo_Brighten")
+        sendEvent(0.0, "CC1M1Gr_RightInfantryTwo", "OnOffBright", [false]);
+      else if (_NavPointID == "NP_LeftInfantryThree_Brighten")
+        sendEvent(0.0, "CC1M1Gr_LeftInfantryThree", "OnOffBright", [false]);
+      else if (_NavPointID == "NP_RightInfantryThree_Brighten")
+        sendEvent(0.0, "CC1M1Gr_RightInfantryThree", "OnOffBright", [false]);
+    }
+  }
+
+  void OnObjectLeaveNavPoint(String _NavPointID, String _ObjectID)
+  {
+   // if (isDebug)
+   //   logMessage("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+
+    if (_ObjectID == "MainPlayerUnit")
+    {
+      if (_NavPointID == "NP_LeftInfantryTwo_Brighten")
+        sendEvent(0.0, "CC1M1Gr_LeftInfantryTwo", "OnOffBright", [true]);
+      else if (_NavPointID == "NP_RightInfantryTwo_Brighten")
+        sendEvent(0.0, "CC1M1Gr_RightInfantryTwo", "OnOffBright", [true]);
+      else if (_NavPointID == "NP_LeftInfantryThree_Brighten")
+        sendEvent(0.0, "CC1M1Gr_LeftInfantryThree", "OnOffBright", [true]);
+      else if (_NavPointID == "NP_RightInfantryThree_Brighten")
+        sendEvent(0.0, "CC1M1Gr_RightInfantryThree", "OnOffBright", [true]);
+    }
+  }
+
+  event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+
+    Component DeadThing = GetObject(_ObjectID);
+    if (null == DeadThing)
+    {
+  //    logError("Component 'DeadThing' == null");
+      return;
+    }
+
+    // if (isDebug)
+    //  logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String (DeadThing.GetLastDamager()));
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+    //  logWarning("CheckMadPlayer");
+    //  logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+   //   logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+     //   logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+       // logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+        //  logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+
+    int _IndexR  = KillList_Reinforcement.find(_ObjectID);
+
+    if(_IndexR != -1)
+    {
+      if(!Reinforce)
+      {
+    //    logWarning("Call_Reinforcement_Assault");
+        sendEvent(0.0, "CC1M1Gr_ReinforcementTanks", "StartFlankImmediateAttack", []);
+        sendEvent(0.0, "CC1M1Gr_LeftAntiTanks", "InitPhase2_AP", []);
+        sendEvent(0.0, "CC1M1Gr_RightAntiTanks", "InitPhase2_AP", []);
+   //     logWarning("Begin_Reinforcement_Assault");
+        Reinforce = true;
+      }
+    }
+
+    if (_ObjectID.IsStartsWith("LeftAntiTank") || _ObjectID.IsStartsWith("RightAntiTank"))
+    {
+      int _Index = KillList_Primary1.find(_ObjectID);
+
+//      if (_Index == -1 && isDebug)
+//        logError("Object ID=" + _ObjectID + " not find in KillList_Primary1:" + new String(KillList_Primary1));
+
+      if(_Index != -1)
+      {
+        KillList_Primary1.remove(_Index);
+        if (KillList_Primary1.size() <= 2)
+        {
+          if (!GermanSupport)
+          {
+            sendEvent(0.0, "CC1M1Gr_GermanTanks", "StartAttack", []);
+            GermanSupport = true;
+          }
+        }
+      }
+      if (KillList_Primary1.size() == 0)
+      {
+  //      if (isDebug)
+  //        logError("We congratulate!!! You have executed first problem");
+
+        SetObjectiveStatus(0, MOSID_Completed);
+      }
+    }
+    else if (_ObjectID.IsStartsWith("FrontDzot"))
+    {
+      int _Index = KillList_Primary2.find(_ObjectID);
+
+ //     if (_Index == -1 && isDebug)
+ //       logError("Object ID=" + _ObjectID + " not find in KillList_Primary2:" + new String(KillList_Primary2));
+
+      if(_Index != -1)
+      {
+        KillList_Primary2.remove(_Index);
+        if (KillList_Primary1.size() <= 1)
+        {
+          if (!GermanSupport)
+          {
+            sendEvent(0.0, "CC1M1Gr_GermanTanks", "StartAttack", []);
+            GermanSupport = true;
+          }
+        }
+      }
+
+      if (KillList_Primary2.size() == 0)
+      {
+//        if (isDebug)
+//        logError("We congratulate!!! You have executed second problem. And isPhase2_AP is "+new String(isPhase2_AP));
+
+        SetObjectiveStatus(1, MOSID_Completed);
+
+        if (isPhase2_AP)
+        {
+          fireEvent(0.0, [], "InitPhase3", []);
+          isPhase2_AP = false;
+          isPhase3    = true;
+        }
+      }
+    }
+    else if (_ObjectID == "PopulatedDzot" || _ObjectID.IsStartsWith("GermanTank"))
+    {
+      int _Index = KillList_Primary3.find(_ObjectID);
+
+ //     if (_Index == -1 && isDebug)
+//        logError("Object ID=" + _ObjectID + " not find in KillList_Primary3:" + new String(KillList_Primary3));
+
+      if(_Index != -1)
+        KillList_Primary3.remove(_Index);
+
+      if (KillList_Primary3.size() == 0)
+      {
+//        if (isDebug)
+//          logError("We congratulate!!! You have executed third problem");
+
+        SetObjectiveStatus(2, MOSID_Completed);
+      }
+    }
+
+    if (_ObjectID == "PopulatedDzot")
+      sendEvent(0.0, "CC1M1Gr_GermanTanks", "StartAttack", []);
+  }
+
+  //--------------------------
+  //  Initialization of Phases
+  //--------------------------
+  event void InitPhase2()
+  {
+ //   if (isDebug)
+ //   {
+ //     logError("Second Phase Begin");
+ //     logError(" Phase 1   : " + new String(isPhase1));
+//      logError(" Phase 2   : " + new String(isPhase2));
+//      logError(" Phase 2_AP: " + new String(isPhase2_AP));
+//      logError(" Phase 3   : " + new String(isPhase3));
+//    }
+    sendEvent(10.0,  SOID_MissionController, "DestroyBuildingWithFire", ["Village_House_3"]);
+
+    CC1M1PW_AZLeftAntiTanks = new CC1M1PW_AZLeftAntiTanks();
+    CC1M1PW_AZLeftAntiTanks.Initialize(this, "CC1M1PW_AZLeftAntiTanks");
+
+    CC1M1PW_AZRightAntiTanks = new CC1M1PW_AZRightAntiTanks();
+    CC1M1PW_AZRightAntiTanks.Initialize(this, "CC1M1PW_AZRightAntiTanks");
+
+    CC1M1PW_InfantryZone = new CC1M1PW_InfantryZone();
+    CC1M1PW_InfantryZone.Initialize(this, "CC1M1PW_InfantryZone");
+
+    CC1M1PW_SwitchToPhase3 = new CC1M1PW_SwitchToPhase3();
+    CC1M1PW_SwitchToPhase3.Initialize(this, "CC1M1PW_SwitchToPhase3");
+  }
+
+  event void InitPhase2_AP()
+  {
+ //   if (isDebug)
+ //   {
+ //     logError("Active Part of Second Phase Begin");
+ //     logError(" Phase 1   : " + new String(isPhase1));
+ //     logError(" Phase 2   : " + new String(isPhase2));
+ //     logError(" Phase 2_AP: " + new String(isPhase2_AP));
+ //      logError(" Phase 3   : " + new String(isPhase3));
+ //   }
+
+    sendEvent(10.0,  SOID_MissionController, "DestroyBuildingWithFire", ["AdministrativeBuilding"]);
+
+    if (ScoutTank != "")
+    {
+      Component DestroyObject = GetObject(ScoutTank);
+      if (DestroyObject != null)
+        DestroyObject.SetUnitItemHPPercent("HullGunlayer", 0.0);
+    }
+
+    Array PositionWatchers = [
+                               "CC1M1PW_PlayerTanks", "CC1M1PW_76Tanks",              // для движения танков
+                               "CC1M1PW_AZLeftAntiTanks", "CC1M1PW_AZRightAntiTanks", // для зон агрессии
+                               "CC1M1PW_InfantryZone"                                 // для зоны пехоты
+                             ];
+
+    ShutdownWatchers(PositionWatchers);
+  }
+
+  event void InitPhase3()
+  {
+//    if (isDebug)
+//    {
+//      logError("Third Phase Begin");
+//      logError(" Phase 1   : " + new String(isPhase1));
+//      logError(" Phase 2   : " + new String(isPhase2));
+//      logError(" Phase 2_AP: " + new String(isPhase2_AP));
+//      logError(" Phase 3   : " + new String(isPhase3));
+//    }
+
+    String ExplosionID = "GunPak40GunCalibreBulletExplosion";
+    float ArtilleryRadius = 2;
+
+    for (int i = 0; i < ArtilleryPoints.size(); i++)
+    {
+ //     logError(" Strike 1   for: " + new String(ArtilleryPoints[i]));
+      sendEvent(randnum(6), ArtilleryPoints[i], "ExplodeNavPointRadius", [ExplosionID, ArtilleryRadius]);
+    }
+
+    ShutdownWatchers(["CC1M1PW_SwitchToPhase3"]);
+
+    if (KillList_Primary2.size() != 0)
+    {
+      for (int i = 0; i < KillList_Primary2.size(); i++)
+        sendEvent(0.0 + randnum(3), KillList_Primary2[i], "DestroyObject", []);
+    }
+
+    sendEvent(0.0, "CC1M1Gr_ReinforcementTanks", "PopDelayedOrder", []);
+  }
+
+  //-----------------
+  // Shutdown Classes
+  //-----------------
+  void ShutdownWatchers(Array _Watchers)
+  {
+    Component TempPositionWatcher;
+
+    for (int i = 0; i < _Watchers.size(); i++)
+    {
+      TempPositionWatcher = GetObject(_Watchers[i]);
+      if (TempPositionWatcher != null)
+        ShutdownWatcher(TempPositionWatcher);
+    }
+  }
+
+  void ShutdownWatcher(Component _Watcher)
+  {
+    _Watcher.SetEventHandler(null);
+    _Watcher = null;
+  }
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+  //----------------
+  // Another Classes
+  //----------------
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+    else
+      logError("Component NavPoint with ID = " + _NavPointID + " - null!" );
+  }
+
+  event void Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+    float m_CurrentDistance;
+    Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+    Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+
+    if (null == Between_1 && null == Between_2)
+    {
+      logError("Component - null!");
+      return;
+    }
+
+    Vector m_Pos_1 = getPosition(Between_1).origin;
+    Vector m_Pos_2 = getPosition(Between_2).origin;
+
+    m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+//  logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + " distance = " + new String(m_CurrentDistance));
+  }
+}
