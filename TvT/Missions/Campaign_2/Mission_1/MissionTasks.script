@@ -1,0 +1,573 @@
+//    This code is copyright 2001 by G5 Software.
+//    Any unauthorized usage, either in part or in whole of this code
+//    is strictly prohibited. Violators WILL be prosecuted to the
+//    maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseZisTask extends CBaseAITask
+{
+  /*event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+                        )
+  {
+    CBaseAITask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+    if(GetMission().isDebug)
+    {
+      logWarning("[CBaseZisTask] OnExplosion  owner ID = " + _OwnerID );
+      (new #GameController().GetObject(SOID_Console)).logClassificatorsList(_OwnerID);
+    }
+
+    Component Owner = GetMission().GetObject(_OwnerID);
+    if (checkMask(Owner, ["HEAVYTANK", "FRIEND"], []))
+      GetMission().StartPhase2();
+
+
+    if (isFunctionExist(m_Group, "StartFightHiddenZis", 0))
+        m_Group.StartFightHiddenZis();
+  }
+
+  /*void OnHitByEnemy(String _EnemyID)
+  {
+    CBaseAITask::OnHitByEnemy(_EnemyID);
+
+    if(GetMission().isDebug)
+    {
+       logWarning("[CBaseZisTask] OnHitByEnemy  enemy ID = " + _EnemyID );
+       (new #GameController().GetObject(SOID_Console)).logClassificatorsList(_EnemyID);
+    }
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["HEAVYTANK", "FRIEND"], []))
+      GetMission().StartPhase2();
+
+    if (isFunctionExist(m_Group, "StartFightHiddenZis", 0))
+      m_Group.StartFightHiddenZis();
+  }
+  */
+}
+
+/////////////////////////////////////////////////////////////////////
+class C2M1SovietZisGroup  extends  BaseZisGroup
+{
+}
+
+class SovietZis1HiddenGroup  extends  BaseZisGroup
+{
+  boolean active = false;
+
+  void Init()
+  {
+    BaseZisGroup::Init();
+    StopFightGroup();
+  //  ShowGroup(false);
+    for (int i = 0; i < m_Units.size(); i++)
+      addClassificatorObject(m_Units[i], "INVISIBLE_ON_RADAR");
+
+    //if (GetMission().isDebug)
+    //{
+    //  logWarning("[Init]  GroupID = " + getIdentificator(user));
+    //  for (int i = 0; i < m_Units.size(); i++)
+    //      (new #GameController().GetObject(SOID_Console)).logClassificatorsList(m_Units[i]);
+    //}
+  }
+
+  event void StartFightHiddenZis()
+  {
+     //logWarning("[Ironweed] StartFightHiddenZis ENTER");
+
+    if (!active)
+    {
+      //logWarning("[Ironweed] StartFightHiddenZis active is FALSE = " + new String(active));
+      GetMission().SetObjectiveVisible(1, true);
+    // ShowGroup(true);
+
+      //if(GetMission().isDebug)
+      //{
+      //  logWarning("[Ironweed] StartFightHiddenZis");
+      //  logWarning("[Ironweed]  group ID = " + getIdentificator(user));
+      //}
+
+      for (int i = 0; i < m_Units.size(); i++)
+      {
+        removeClassificatorObject(m_Units[i], "INVISIBLE_ON_RADAR");
+      }
+
+      fireEvent(0.0, [], "SetRadarUnit", [GetMission().DefaultMask]);
+      StartFightGroup();
+      active = true;
+      //logWarning("[Ironweed] StartFightHiddenZis active is MUST BE TRUE = " + new String(active));
+    }
+  }
+
+   void OnUnitHitByEnemy(String _UnitID, String _OwnerID)
+  {
+    CBaseUnitGroup::OnUnitHitByEnemy(_UnitID, _OwnerID);
+
+    //if(GetMission().isDebug)
+    //  logWarning("SovietZisHiddenGroup = " + _UnitID + " has_damaged_from_OwnerID = " + _OwnerID);
+
+    Component Owner = GetMission().GetObject(_OwnerID);
+
+    if ((_OwnerID == "MPU_PZ6_1") || (_OwnerID == "MainPlayerUnit"))
+    {
+      sendEvent(0.0, SOID_MissionController, "StartPhase2", []);
+   //   sendEvent(0.0, "SovietZis1HiddenGroup", "StartFightHiddenZis", []);
+       fireEvent(0.0, [], "StartFightHiddenZis", []);
+   // sendEvent(0.0, getIdentificator(this), "StartFightHiddenZis", []);
+      //if(GetMission().isDebug)
+      //  logWarning("Hidden_Zis_AggressiveByHit");
+    }
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID)
+  {
+    CBaseUnitGroup::OnUnitExplosion(_UnitID, _OwnerID);
+
+    //if(GetMission().isDebug)
+    //  logWarning("SovietZis1HiddenGroup _UnitID = " + _UnitID + "has explosion from _OwnerID = "+ _OwnerID);
+
+    Component enemy = GetMission().GetObject(_OwnerID);
+    if(enemy == null)
+      return;
+
+    //if (!_isvisible)
+     // return;
+
+    if((_OwnerID == "MPU_PZ6_1") || (_OwnerID == "MainPlayerUnit"))
+    {
+    // ShowGroup(true);
+      //Component enemy = GetMission().GetObject(_OwnerID);
+      Component Owner = GetMission().GetObject(_OwnerID);
+
+      if (checkMask(Owner, ["HEAVYTANK", "FRIEND"], []))
+        {
+          sendEvent(0.0, SOID_MissionController, "StartPhase2", []);
+          fireEvent(0.0, [], "StartFightHiddenZis", []);
+          // sendEvent(0.0, "SovietZis1HiddenGroup", "StartFightHiddenZis", []);
+          //if(GetMission().isDebug)
+          //      logWarning("Hidden_Zis_AggressiveByExplosion");
+
+        }
+    }
+  }
+}
+
+class SovietZis2HiddenGroup  extends  SovietZis1HiddenGroup
+{
+ }
+
+/// MPU TASK
+class C2M1MPUTigerTask extends CBaseAITankTask, CC2M3Broken
+{
+  //boolean MoveToPhase1 = false;
+  //boolean ManeuverEscapeBomben = false;
+
+  void Init()
+  {
+    CBaseAITankTask::Init();
+    ActivateBehavior(true);
+    ActivateMovement(false);
+  }
+}
+//  void OnStopped()
+//  {
+//    if (MoveToPhase1)
+//      ActivateFire(true);
+//    if (ManeuverEscapeBomben)
+//      ActivateFire(true);
+//
+//    ActivateRadar(true);
+//    CBaseAITankTask::OnStopped();
+//  }
+
+  /*event void SetRadarUnit(Array _Mask)
+  {
+    Component Object = GetMission().GetObject(getIdentificator(user));
+
+    Component Behavior = GetBehavior();
+    if (null == Behavior)
+      return;
+
+    Component Content = GetMission().GetMission().GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(user));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    if (GetMission().isDebug)
+    {
+      logError(getIdentificator(user));
+      logWarning("       New Mask=" + new String(_Mask));
+      logWarning("    CurrentMask=" + new String(ObjRec[CBaseContent::INDEX_Properties]));
+      logWarning("    CurrentMask=" + new String(PropertiesMap.Get("BehRadarMask", _Mask)));
+    }
+
+    PropertiesMap.Set("BehRadarMask", _Mask);
+    Object.SetBehRadarMask(Behavior, PropertiesMap);
+
+    if (GetMission().isDebug)
+      logWarning( "   CurrentMask=" + new String(PropertiesMap.Get("BehRadarMask", _Mask)));
+  }
+}
+*/
+class KurtGerman_BtrHanomag extends CBaseAIBtrTask
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateMovement(false);
+    ActivateRadar(true);
+    ActivateFire(false);
+  }
+}
+
+class CC2M1GerMPU_Group extends CBaseUnitGroup
+{
+  boolean SupportAct  = false;
+  boolean SupportAct2 = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateMovement(true);
+    ActivateRadar(false);
+    ActivateFire(false);
+  }
+
+  event void StartMPU()
+  {
+    PopDelayedOrder();
+    //LogWarning("StartMPUchecked");
+  }
+
+  event void CheckDistance()
+  {
+    //logWarning("CheckDistance_btv_MPU&MPU_PZ6_1");
+    if(GetMission().Distance("NP_Zone_1", "MPU_PZ6_1") < GetMission().Distance("NP_Zone_1", "MainPlayerUnit"))
+    {
+      //logWarning("MovementForMPU_PZ6_1_forbidden_byDistanceChecker");
+      sendEvent(15.0, getIdentificator(user), "CheckDistance", []);
+    }
+    else
+    {
+      //CancelAllOrders();
+      Array PathS = ["NavPoint_PZ6_MoveToBegin_2_1", "NavPoint_PZ6_MoveToBegin_2_2", "NavPoint_PZ6_MoveToBegin_3", "NavPoint_PZ6_MoveToBegin_4"];
+
+      ActivateMovement(true);
+      ActivateRadar(false);
+      ActivateFire(false);
+
+      //logWarning("MovementForMPU_PZ6_1_allow_byDistanceChecker");
+      SetOrder_Move(PathS, 3.0, false, 0);
+      //logWarning("MovementForMPU_PZ6_1_byDistanceChecker_Begin");
+    }
+  }
+
+  event void StartPhase1()
+  {
+    if (!SupportAct)
+    {
+      Array PathS1 = ["NavPoint_PZ6_Begin_Look"];
+      //logWarning("BeforMovementForMPU_PZ6_StartPhase1");
+
+      ActivateRadar(true);
+      ActivateFire(true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      SetOrder_Move(PathS1, 2.0, false, 0);
+      //logWarning("MovementForMPU_PZ6_StartPhase1Begin");
+      SupportAct = true;
+    }
+  }
+
+  event void StartPhase2Act()
+  {
+    if (!SupportAct)
+    {
+      Array PathS1 = ["NavPoint_PZ6_Begin_Look"];
+      //logWarning("BeforMovementForMPU_PZ6_StartPhase1");
+
+      ActivateRadar(true);
+      ActivateFire(true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      SetOrder_Move(PathS1, 2.0, false, 0);
+      //logWarning("MovementForMPU_PZ6_StartPhase2Begin");
+      SupportAct = true;
+    }
+  }
+
+  event void StartPhase3Act()
+  {
+    if (!SupportAct2)
+    {
+      Array PathS1 = ["NavPoint_PZ6_Begin_Look"];
+      //logWarning("BeforMovementForMPU_PZ6_StartPhase1");
+
+      ActivateRadar(true);
+      ActivateFire(true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      SetOrder_Move(PathS1, 2.0, false, 0);
+      //logWarning("MovementForMPU_PZ6_StartPhase2Begin");
+      SupportAct2 = true;
+    }
+  }
+
+
+  //event void ManeuverEscapeBomben()
+  //{
+    //ManeuverEscapeBomben = true;
+    //ActivateFire(false);
+    //SetOrder_MoveToEx(GetNavPointBehPos("NavPoint_PZ6_Begin_3"), GetNavPointBehPos("NavPoint_PZ6_Begin_Look"), 5.0);
+  //}
+}
+
+ ////////////////IL2//////////
+class C2M1USRIL2Group extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    //ActivateGroup(false);
+  }
+
+  // called when Group queue orders is ended
+  void OnQueueOrdersEnd(String _OrderGroupID, Component _UnitTask)
+  {
+    CBaseUnitGroup::OnQueueOrdersEnd(_OrderGroupID, _UnitTask);
+    if (_OrderGroupID == "SpecialBombAttack")
+    {
+      _UnitTask.SetFrigidMode(true);
+      _UnitTask.ActivateBehavior(false);
+      _UnitTask.ShowUnit(false);
+    }
+  }
+
+  event void BombAttack()
+  {
+    //if(GetMission().isDebug)
+    //  logWarning("BombAttackCalled");
+
+    ActivateGroup(true);
+
+    SetOrderName("");
+    Array ApproachPoints = [GetNavPointBehPos("IL2AttackNP_03"),GetNavPointBehPos("IL2AttackNP_02"),GetNavPointBehPos("IL2AttackNP_01")];
+
+    SetFirstQueueOrders([
+      ["BombAttack", "SetOrder_MoveToEx", [ApproachPoints, 30.0f], ""],
+      ["BombAttack", "Bomben", [], ""]
+                        ]);
+
+    //if(GetMission().isDebug)
+    //  logWarning("BombAttackBegin");
+  }
+
+  void Bomben()
+  {
+    float Speed = 45.0;
+    float Time  = 5.0;
+
+    ClearFormation();
+    String Target1 = "IL2BombNPStart_01";
+    String Target2 = "IL2BombNPStart_02";
+    String Target3 = "IL2BombNPStart_03";
+    Vector AttackOut1 = GetNavPointBehPos("IL2BombNPEnd_01");
+    Vector AttackOut2 = GetNavPointBehPos("IL2BombNPEnd_02");
+    Vector AttackOut3 = GetNavPointBehPos("IL2BombNPEnd_03");
+
+    Component Behavior1 = GetUnitBehavior("USR_IL2_01");
+    Component Behavior2 = GetUnitBehavior("USR_IL2_02");
+    Component Behavior3 = GetUnitBehavior("USR_IL2_03");
+
+    if (Behavior1 != null && Behavior2 != null && Behavior3 != null)
+    {
+      Behavior1.setOrder_SpecialBombAttack(Behavior1.GetNowPosition(), Speed, Target1, Time, AttackOut1);
+      Behavior2.setOrder_SpecialBombAttack(Behavior2.GetNowPosition(), Speed, Target2, Time, AttackOut2);
+      Behavior3.setOrder_SpecialBombAttack(Behavior3.GetNowPosition(), Speed, Target3, Time, AttackOut3);
+    }
+  }
+}
+
+class GermanSoldierStay_Group1 extends CBaseUnitGroup            //стоящие у ганомага солдаты
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateGroup(false);
+  }
+}
+
+class T34Hidden_Group1 extends CBaseUnitGroup
+{
+  boolean AttackPlayer = false;
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+  }
+
+  event void AttackPlayer()
+  {
+    if(AttackPlayer)
+      return;
+
+    //if(GetMission().isDebug)
+    // logWarning("[Ironweed] T34Hidden_Group1 -> AttackPlayer");
+
+    PopDelayedOrder();
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+  }
+
+  /*
+ event void AttackPlayer()
+ {
+   if(AttackPlayer)
+      return;
+
+   if(GetMission().isDebug)
+    logWarning("[Ironweed] T34Hidden_Group1 -> AttackPlayer");
+
+   CancelAllOrders();
+   ActivateRadar(true);
+   SetOrder_Attack(GetMission().GermanKillList, m_EnemyReactionType);
+ }  */
+}
+
+class Sappers_Group  extends CBaseUnitGroup
+{
+  boolean SapperAlarm = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateFire", [false]);
+    ForEachUnitTask("ActivateMovement", [false]);
+    SetEnemyReactionType(ERT_PASSIVE);
+  }
+
+  event void AwaySappers()
+  {
+    ForEachUnitTask("ActivateMovement", [true]);
+    PopDelayedOrder();
+    SetEnemyReactionType(ERT_FRIGID);
+    SetFormation("CWedgeFormation", 12, true, true);
+    //if(GetMission().isDebug)
+    //  logWarning("SAPPERS AWAY!");
+  }
+
+  void OnEnemyTargeted(Component _UnitAlerted)
+  {
+    GetMission().AwaySappaersOnSee();
+  }
+}
+
+class RepairZis_Group  extends CBaseUnitGroup
+{
+  boolean SapperAlarm = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateFire", [false]);
+    ForEachUnitTask("ActivateMovement", [false]);
+    SetFormation("CWedgeFormation", 12, true, true);
+    SetEnemyReactionType(ERT_PASSIVE);
+
+   }
+
+  event void AwayRepair()
+  {
+    ForEachUnitTask("ActivateRadar", [true]);
+    ForEachUnitTask("ActivateMovement", [true]);
+    PopDelayedOrder();
+    SetEnemyReactionType(ERT_FRIGID);
+    SetFormation("CWedgeFormation", 12, true, true);
+
+    //if(GetMission().isDebug)
+    //  logWarning("REPAIR TEAM AWAY!");
+  }
+
+  void OnEnemyTargeted(Component _UnitAlerted)
+  {
+    GetMission().AwaySappaersOnSee();
+  }
+}
+
+class TaskSappers  extends CBaseAITask
+{
+ event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+              )
+  {
+    if (!m_Group.SapperAlarm)
+    {
+      //if(GetMission().isDebug)
+      //  logError(" OnExplosion - for Sappers team");
+
+      GetMission().AwaySappaersOnHit();
+      m_Group.SapperAlarm = true;
+     }
+  }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+    if (!m_Group.SapperAlarm)
+    {
+      GetMission().AwaySappaersOnHit();
+      m_Group.SapperAlarm = true;
+     }
+  }
+}
+
+class TaskRepairZiS  extends CBaseAITask
+{
+ event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+                        )
+  {
+    if (!m_Group.SapperAlarm)
+    {
+      //if(GetMission().isDebug)
+      //  logError(" OnExplosion - for Repair team");
+
+      GetMission().AwaySappaersOnHit();
+      m_Group.SapperAlarm = true;
+     }
+   }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+    if (!m_Group.SapperAlarm)
+    {
+      GetMission().AwaySappaersOnHit();
+      m_Group.SapperAlarm = true;
+    }
+  }
+}

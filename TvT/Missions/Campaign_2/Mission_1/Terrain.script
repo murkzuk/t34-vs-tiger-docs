@@ -1,0 +1,74 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M1Terrain extends CBaseTerrain, CBaseZoneMap
+{
+  CCM1Terrain()
+  {
+    if (!CDebugSettings::LoadWater)
+      WaterRegions = [];
+  }
+
+  void CreateForesRegions()
+  {
+    Component Materials = new #MaterialManager<CSTBaseForestC1Skin>();
+
+    RegisterForestRegion(
+      [ZMC_Forest01],
+      Materials,
+      "Missions\\Campaign_2\\Mission_1\\forest_c2m1.tex",
+      ["L1",   "L2",   "L2",   "L3",  "L3"   ],
+      [0.0,    8.0,    11.0,    13.0,   14.0 ],
+      [500.0,  500.0,  1000.0, 1500.0, 2000.0], // min distance, start fade
+      [1500.0, 1500.0, 2000.0, 2500.0, 2500.0]  // max distance, hide layer
+                        );
+
+    RegisterVerticalForest(
+      [ZMC_Forest01],
+      "textures\\foreststripe.tex",
+      [0.8],                        // number of rings of vertical forest
+      17.0f
+                          );
+
+    CBaseTerrain::CreateForesRegions();
+  }
+
+  // Terrain resources
+  String SkinClass  = "CC2M1TerrainSkin";
+
+  // Sea level for compute air density
+  float SeaLevel    = 450.0;
+  float BaseDensity = 0.125;
+
+  // Water regions description
+  Array  WaterRegions = [
+    new CWaterRegion(new Vector(23532.10, 29461.19, 1165.0), 1165.0)
+                        ];
+
+  Array WaterMirrorMasks = [
+    [[], [CLASSIFICATOR_SHADOW, CLASSIFICATOR_UI, CLASSIFICATOR_TERRAINPATCH]]
+                           ];
+
+  float TerrainShadowPower = 1.4; // OPTIMIZED: Enhanced shadow contrast
+  float NormalNoise        = 0.5; // OPTIMIZED: Enhanced terrain detail
+  boolean IsAntiLighting = true;
+  boolean IsPlanarWater  = true;
+}
+
+class CC2M1TerrainSkin extends CBaseTerrainSkin
+{
+  CC2M1TerrainSkin()
+  {
+    SetupTerrainMainMaterial("Missions/Campaign_2/Mission_1/lnd_c2m1.tex");
+
+    AppendMaterials(MissionSpecificMaterials);
+  }
+
+  Array MissionSpecificMaterials = [];
+}

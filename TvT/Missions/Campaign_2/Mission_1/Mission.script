@@ -1,0 +1,473 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M1Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/C2M1_Map.tex";
+
+  static String m_MissionBriefingPicMaterial = "C2M1BriefingPic";
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary, CC2M1Mission_Strings::Objective01, MOSID_InProgress, true],
+      [MOTID_Primary, CC2M1Mission_Strings::Objective02, MOSID_InProgress, false],
+      [MOTID_Primary, CC2M1Mission_Strings::Objective03, MOSID_InProgress, false]
+                               ];
+  static WString ObjectivesText = CC2M1Mission_Strings::ObjectivesText;
+  boolean isDebug  = true;
+
+  boolean MainPlayerStart       = false;
+  boolean MPU_Start             = false;
+
+  boolean Phase1  = false;
+  boolean Phase2  = false;
+  boolean Phase3  = false;
+
+  int Penalty_count = 0;
+
+  // Watchers
+  Component C2M1_MainPlayerUnit_Watcher;       // следит за разницей в растоянии игрока и второго танка
+  // Watchers
+
+
+    Array m_NavpointsForPlayerMap = [
+                            [
+                              ["NavPointKurt"],
+                               CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+                               new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+                            ],
+
+                            [
+                              ["NavPointBridge"],
+                               CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+                               new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+                            ]
+
+                                   ];
+
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4100.0;  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2502, 1582.0, 0.0), new Vector(6802.0, 5982.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  Array m_TargetHowitzerNavPoint1_1 = ["NavPoint_C2M1_Fire_1_1A", "NavPoint_C2M1_Fire_1_2A", "NavPoint_C2M1_Fire_1_3A", "NavPoint_C2M1_Fire_1_4A", "NavPoint_C2M1_Fire_1_5A", "NavPoint_C2M1_Fire_1_6A"];
+  Array m_TargetHowitzerNavPoint2_1 = ["NavPoint_C2M1_Fire_1_1B", "NavPoint_C2M1_Fire_1_2B", "NavPoint_C2M1_Fire_1_3B", "NavPoint_C2M1_Fire_1_4B", "NavPoint_C2M1_Fire_1_5B", "NavPoint_C2M1_Fire_1_6B"];
+  Array m_TargetHowitzerNavPoint3_1 = ["NavPoint_C2M1_Fire_1_1C", "NavPoint_C2M1_Fire_1_2C", "NavPoint_C2M1_Fire_1_3C", "NavPoint_C2M1_Fire_1_4C", "NavPoint_C2M1_Fire_1_5C", "NavPoint_C2M1_Fire_1_6C"];
+
+  Array m_TargetHowitzerNavPoint1_2 = ["NavPoint_C2M1_Fire_2_1A", "NavPoint_C2M1_Fire_2_2A", "NavPoint_C2M1_Fire_2_3A", "NavPoint_C2M1_Fire_2_4A", "NavPoint_C2M1_Fire_2_5A", "NavPoint_C2M1_Fire_2_6A"];
+  Array m_TargetHowitzerNavPoint2_2 = ["NavPoint_C2M1_Fire_2_1B", "NavPoint_C2M1_Fire_2_2B", "NavPoint_C2M1_Fire_2_3B", "NavPoint_C2M1_Fire_2_4B", "NavPoint_C2M1_Fire_2_5B", "NavPoint_C2M1_Fire_2_6B"];
+  Array m_TargetHowitzerNavPoint3_2 = ["NavPoint_C2M1_Fire_2_1C", "NavPoint_C2M1_Fire_2_2C", "NavPoint_C2M1_Fire_2_3C", "NavPoint_C2M1_Fire_2_4C", "NavPoint_C2M1_Fire_2_5C", "NavPoint_C2M1_Fire_2_6C"];
+  int m_TargetHowitzerPlace = 1;
+
+  final static Array DefaultMask = [["ENEMY", "MainMesh"], ["NEUTRAL", "AIR"]];
+  final static Array Mask        = [["ENEMY", "MainMesh"], ["NEUTRAL", "AIR", "INVISIBLE_ON_RADAR"]];
+
+  Array KillListZis1 =  ["SovietProtection_GunZis1", "SovietProtection_GunZis2", "SovietProtection_GunZis3"];
+  Array KillListZis2 =  ["SovietHidden_GunZis1", "SovietHidden_GunZis2"];
+  Array KillListT34  =  ["T3476Hidden1", "T3476Hidden2", "T3476Hidden3"];
+  Array GermanKillList = ["MPU_PZ6_1","MainPlayerUnit"];
+
+  void CC2M1Mission()
+  {
+    // Construct mission
+    CSPMission("C2M1Mission", "C2M1Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC2M1Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC2M1Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky07Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+ //   m_MissionLensFlare = new #LensFlare<CC2M1LensFlare>();
+
+    SetMissionWorldMatrices(new #WorldMatrices<CC2M1WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME, "CC2M1LandscapeLayer"      ],
+        [LAYER_TERRAIN_ZONE, "CC2M1TerrainZoneLayer"    ],
+        [LAYER_ROUTER_ZONE,  "CC2M1RouterZoneLayer"      ],
+        [LAYER_MICROTEXTURE_MAP1, "CC2M1MicroTextures1" ],
+        //["Landing Zone Texture",  "CM1LZTexture"     ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC2M1WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  // TODO
+  String GetMainRadioHomePoint()
+  {
+    return "";
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+
+    //sendEvent(30.0, SOID_MissionController, "StartWithTimeOut", []);
+//    sendEvent(160.0, SOID_MissionController, "StartFakeHowitzerFire", []);
+
+
+    //tmp
+    //Component console = new #GameController().GetObject(SOID_Console);
+    //console.showbehinf(true);
+    //console.disablebeh();
+    //tmp
+
+    C2M1_MainPlayerUnit_Watcher = new C2M1_MainPlayerUnit_Watcher();
+
+    C2M1_MainPlayerUnit_Watcher.Initialize(this, "C2M1_MainPlayerUnit_Watcher");
+    sendEvent(0.0,  SOID_MissionController, "DestroyBridge", ["Bridge_1"]);
+  }
+
+  event void DestroyBridge(String _BuildingID)
+  {
+    //logWarning("Call_Crush = "+_BuildingID);
+    Component Bridge =GetObject(_BuildingID);
+    if (Bridge != null)
+    {
+      Bridge.DestroySection(0);
+      Bridge.DestroySection(1);
+      Bridge.DestroySection(2);
+    }
+  }
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+
+  }
+
+  event void StartWithTimeOut()
+  {
+    //if(isDebug)
+    //  logError("[Ironweed]  StartWithTimeOut");
+
+    if (!MainPlayerStart)
+      StartMissionAnyone();
+  }
+
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+    if (_IsWorkEngine && !MainPlayerStart)
+      StartMissionAnyone();
+  }
+
+  void StartMissionAnyone()
+  {
+    MainPlayerStart = true;
+	
+	// =========  TEST BLOCK  =========
+    //logInfo("=== reached radio bark ===");
+
+    // play immediately – file-name FIRST, delay SECOND
+   // GetAudioPlayer().PlaySound2D("GOrder03.wav", 0.0);
+  //  GetAudioPlayer().PlaySound2D("str_RadioTest", 0.0); //wants the string key, not the raw file name, and the order of arguments is (key, delay):
+	CVoiceMessenger::GetVoiceMessenger().PlayMessage("RadioTest"); //jm
+	
+    sendEvent(0.0, "CC2M1GerMPU_Group", "StartMPU", []);
+    sendEvent(20.0, "CC2M1GerMPU_Group", "CheckDistance", []);
+  }
+
+  void OnObjectEnterNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //if(isDebug)
+    //  logWarning("Object " + _ObjectID + "  enter NavPoint " +  _NavPointID);
+
+    if(_NavPointID == "IL2AttackNP_01")
+      sendEvent(0.0, "MPU_PZ6_1", "ManeuverEscapeBomben", []);
+  }
+  void OnObjectLeaveNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //if(isDebug)
+    //  logWarning("Object " + _ObjectID + "  leave NavPoint " +  _NavPointID);
+  }
+
+  event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  event void OnObjectDestroyed( String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+    // TMP
+    Component DeadThing = GetObject(_ObjectID);
+    if (null == DeadThing)
+    {
+      //logError("Component 'DeadThing' == null");
+      return;
+    }
+
+    //if(isDebug)
+    // logWarning("Object destroyed: " + _ObjectID + " last damaged unit " + new String (DeadThing.GetLastDamager()));
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+      //logWarning("CheckMadPlayer");
+      //logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+      //logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+        //logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+          //logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+            //logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+
+    if(_ObjectID.IsStartsWith("SovietProtection_Gun"))
+    {
+      int _index = KillListZis1.find(_ObjectID);
+
+      if (_index != -1)
+        KillListZis1.remove(_index);
+
+      if(KillListZis1.size() == 2)
+        {
+          sendEvent(3.0, "GroupUnit_USRIL2", "BombAttack", []);
+          //logWarning("CallForBombAttack ");
+        }
+
+      if(KillListZis1.size() == 1)
+        fireEvent(0.0, [], "StartFightHiddenZis", []);
+
+    //SetObjectiveVisible(1, true);
+      if(KillListZis1.size() == 0)
+      {
+        StartPhase3();
+        CompleteObjective(0);
+      }
+    }
+    else if(_ObjectID.IsStartsWith("SovietHidden_Gun"))
+    {
+      int _index = KillListZis2.find(_ObjectID);
+
+      if (_index != -1)
+        KillListZis2.remove(_index);
+
+      if(KillListZis2.size() == 0)
+      {
+        StartPhase3();
+        CompleteObjective(1);
+      }
+    }
+    else if(_ObjectID.IsStartsWith("T3476Hidden"))
+    {
+      int _index = KillListT34.find(_ObjectID);
+
+      if (_index != -1)
+        KillListT34.remove(_index);
+
+      if(KillListT34.size() == 0)
+      {
+        CompleteObjective(2);
+      }
+    }
+  }
+
+
+  // --------------------------------------------------------------------------
+
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+    //else
+    //  logError("Component NavPoint with ID="+_NavPointID + " -- null !!!" );
+  }
+
+
+  event void StartFakeHowitzerFire()                            //////artfire beg
+  {
+    Array ArrayID_1;
+    Array ArrayID_2;
+
+    if (m_TargetHowitzerPlace == 4)
+      m_TargetHowitzerPlace = 1;
+
+    if (m_TargetHowitzerPlace == 1)
+    {
+      ArrayID_1 = m_TargetHowitzerNavPoint1_1;
+      ArrayID_2 = m_TargetHowitzerNavPoint1_2;
+    }
+    else if (m_TargetHowitzerPlace == 2)
+    {
+      ArrayID_1 = m_TargetHowitzerNavPoint2_1;
+      ArrayID_2 = m_TargetHowitzerNavPoint2_2;
+    }
+    else if (m_TargetHowitzerPlace == 3)
+    {
+      ArrayID_1 = m_TargetHowitzerNavPoint3_1;
+      ArrayID_2 = m_TargetHowitzerNavPoint3_2;
+    }
+
+    for ( int i = 0; i < ArrayID_1.size(); i++)
+      sendEvent(float(randnum(10)), SOID_MissionController, "FakeHowitzerDetonate", [ArrayID_1[i]]);
+
+    for ( int i = 0; i < ArrayID_2.size(); i++)
+      sendEvent(float(randnum(10)), SOID_MissionController, "FakeHowitzerDetonate", [ArrayID_2[i]]);
+
+    sendEvent( 10.0, SOID_MissionController, "StartFakeHowitzerFire", []);
+    m_TargetHowitzerPlace = m_TargetHowitzerPlace + 1;
+  }
+
+  event void FakeHowitzerDetonate(String _ObjectID)
+  {
+    int radius = 10;
+
+    Component Object = GetObject(_ObjectID);
+    if (null != Object)
+    {
+       Array Isection = GetIsectionWithAxis( DF_POINT|DF_SURFTYPE, [CLASSIFICATOR_TERRAIN], [], getPosition(Object).origin, AXIS_Z );
+       String SurfaceType = CLASSIFICATOR_GROUND;
+       Matrix Position = getPosition(Object);
+       Position.origin = Position.origin + new Vector(rand(-radius, radius), rand(-radius, radius), 0.0);
+
+      (new #ExplosionsArray()).CreateExplosion("GunZis3GunHEBulletExplosion", Position, null, "GOD");
+    }
+  }
+
+  void ShutdownWatcher(String _WatcherName)
+  {
+    Component Watcher = GetObject(_WatcherName);
+    if (Watcher != null)
+    {
+      Watcher.SetEventHandler(null);
+      Watcher = null;
+    }
+    //else
+    //  logError("Object with ID = " + _WatcherName + " does not exist.");
+  }
+
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+  float Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+     float m_CurrentDistance;
+     Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+     Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+     if ( null == Between_1 && null == Between_2)
+     {
+      //logError(" Component -- null");
+      return;
+     }
+       Vector m_Pos_1 = getPosition(Between_1).origin;
+       Vector m_Pos_2 = getPosition(Between_2).origin;
+
+     m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+    //logWarning("Distance between " + _BetweenID_1 + " and " + _BetweenID_2+ " forms " + new String (m_CurrentDistance));
+
+      //sendEvent( 20.0, SOID_MissionController, "Distance", [_BetweenID_1, _BetweenID_2] );
+      //logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + "  distance=" + new String(m_CurrentDistance));
+      return  m_CurrentDistance;
+  }
+
+  event void StartPhase1()
+  {
+    //if(isDebug)
+    //  logWarning("[Ironweed] StartPhase1");
+
+    if(Phase1)
+      return;
+
+    fireEvent(0.0, [], "StartPhase1", []);
+
+    Phase1 = true;
+  }
+
+  event void StartPhase2()
+  {
+    //if(isDebug)
+    //  logWarning("[Ironweed] StartPhase2");
+
+    if(Phase2)
+      return;
+
+    StartPhase1();
+    Phase2 = true;
+    sendEvent(0.0, "CC2M1GerMPU_Group", "StartPhase2Act", []);
+  }
+
+  //sendEvent(0.0, SOID_MissionController, "StartPhase3", []);
+  event void StartPhase3()
+  {
+    //if(isDebug)
+    //  logWarning("[Ironweed] StartPhase3");
+
+    if(Phase3)
+      return;
+
+    AwaySappaersOnSee();
+    GetMission().SetObjectiveVisible(2, true);
+
+    Phase3 = true;
+    ShutdownWatcher("C2M1_MainPlayerUnit_Watcher");
+    sendEvent(0.0, "T34Hidden_Group1", "AttackPlayer", []);
+    sendEvent(0.0, "CC2M1GerMPU_Group", "StartPhase3Act", []);
+  }
+
+  //fireEvent(0.0, [], "AwaySappaersOnHit", []);
+  //fireEvent(0.0, [], "AwaySappaersOnSee", []);
+  event void AwaySappaersOnHit()
+  {
+    fireEvent(0.0, [], "AwaySappers", []);
+    fireEvent(0.0, [], "AwayRepair", []);
+  }
+
+  event void AwaySappaersOnSee()
+  {
+    fireEvent(10.0, [], "AwaySappers", []);
+    fireEvent(20.0, [], "AwayRepair", []);
+  }
+}

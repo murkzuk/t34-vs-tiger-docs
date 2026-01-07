@@ -1,0 +1,53 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M1LensFlare
+{
+  Array FlaresMaterialID = [/*"sun",*/ "ring2", "ring", "flare1", "circle2", "circle2", "ring", "circle", "circle", "flare1", "circle", "circle2", "flare1", "circle", "circle", "flare1", "ring", "ring", "ring"];
+  Array FlaresSize       = [/* 15,*/   16,      12,     4,        7,         8,         8,      5,        2,        7,        3,        10,        18,       8,        5,        25,       27,     32,     34    ];
+  Array FlaresDist       = [/* 0,*/    0.01,    0.02,   0.3,      0.5,       0.7,       0.7,    1.2,      1.5,      1.6,      1.65,     1.7,       1.8,      1.9,      2.05,     2.2,      2.2,    2.3,    2.3   ];
+
+  Array FlaresColor      = [
+                             //new Color(1.0, 1.0, 1.0, 0.6),
+                             //new Color(1.0, 0.5, 0.2, 0.5),
+                             new Color(1.0, 0.5, 0.0, 0.4),
+                             new Color(1.0, 0.0, 0.0, 0.5),
+                             new Color(1.0, 1.0, 0.4, 0.2),
+                             new Color(0.8, 0.4, 0.9, 0.4),
+                             new Color(1.0, 1.0, 0.1, 0.7),
+                             new Color(0.0, 0.1, 0.9, 0.7),
+                             new Color(1.0, 0.1, 0.1, 0.1),
+                             new Color(0.2, 0.2, 1.0, 0.5),
+                             new Color(0.4, 0.5, 1.0, 0.5),
+                             new Color(0.4, 1.0, 0.4, 0.5),
+                             new Color(0.8, 0.4, 0.9, 0.5),
+                             new Color(1.0, 1.0, 0.1, 0.7),
+                             new Color(0.0, 0.1, 0.9, 0.7),
+                             new Color(1.0, 0.1, 0.1, 0.1),
+                             new Color(0.2, 0.2, 1.0, 0.5),
+                             new Color(0.4, 0.5, 1.0, 0.5),
+                             new Color(0.4, 1.0, 0.4, 0.5),
+                             new Color(0.8, 0.4, 0.9, 0.5)
+			                     ];
+
+  float FlareRelativeSize = 0.015;
+  float SunRadius         = 5.0;
+  float BlindingSpeed     = 4.0;
+  float MaxBlindness      = 50.0;
+  float FlareDepth        = 0.10;
+
+  boolean SunPosBlindness = true;
+  float PercentSunForBlind = 0.4;
+
+  //Blind color set in Atmosphere
+  boolean IsBlindColor = true;
+  int SunMaxPixels = 2500;
+
+  Component MatManager = new #MaterialManager<CLensFlareSkin>();
+}

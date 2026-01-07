@@ -1,0 +1,83 @@
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+class C2M1_MainPlayerUnit_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NP_Zone_1";                              // кто следит
+  final static Array  ControlPoints = ["MainPlayerUnit", "MPU_PZ6_1"];          // за кем следим
+
+  Component WhoWatches;
+  Component WhomWatches0;
+  Component WhomWatches1;
+
+  float distancePlayer = 0.0f;
+  float distancePZ6 = 0.0f;
+  float distbetween_MPUandPZ6 = 0.0f;
+
+
+  final static int PlayerUnitIdx        = 0;
+  final static int MPU_Idx              = 1;
+
+  int m_RegionMask = 0;
+
+  float Radius1 = 30.0f;
+  float Radius2 = 70.0f;
+
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+
+    WhoWatches   = GetMission().GetObject(Positionable);       // кто следит NP_Zone_1
+    WhomWatches0 = GetMission().GetObject(ControlPoints[0]);   // за кем следим MainPlayerUnit
+    WhomWatches1 = GetMission().GetObject(ControlPoints[1]);   // за кем следим CC2M1PZ6_UnitGroup
+
+    distancePlayer = (getPosition(WhoWatches).origin - getPosition(WhomWatches0).origin).Magnitude();
+    distancePZ6 = (getPosition(WhoWatches).origin - getPosition(WhomWatches1).origin).Magnitude();
+
+    /*
+      logWarning("CC2M1PZ6_Group_Watcher Initialize");
+      logMessage(" distancePlayer = " + new String(distancePlayer));
+      logMessage(" distancePZ6 = " + new String(distancePZ6));
+     */
+
+     GetMission().GetObject("C2M1_MainPlayerUnit_Watcher").SetUpdatePeriod(10000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(PlayerUnitIdx);
+
+    PointRegionChanged(_Watcher, PlayerUnitIdx, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    Array PointInfo0   = _PositionWatcher.GetPointInfo(PlayerUnitIdx);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(MPU_Idx);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+    distancePlayer = PointInfo0[INDEX_Distance];
+    distancePZ6 = PointInfo1[INDEX_Distance];
+    distbetween_MPUandPZ6 = (getPosition(WhomWatches0).origin - getPosition(WhomWatches1).origin).Magnitude();
+
+      //logWarning("[CC2M1PZ6_UnitGroup] Point region changed");
+      //logMessage(" Distance between Zone1 and Player       = " + new String(distancePlayer));
+      //logMessage(" Distance between Zone1 and MPU_PZ6_1  = " + new String(distancePZ6));
+      //logMessage(" Distance between Player and MPU_PZ6_1 = " + new String(distbetween_MPUandPZ6));
+
+    if(distancePlayer <= 400)
+      GetMission().StartPhase1();
+
+    if(distancePlayer <= 100)
+      GetMission().StartPhase3();
+  }
+}
+
