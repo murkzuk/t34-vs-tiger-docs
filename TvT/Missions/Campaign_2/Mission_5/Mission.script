@@ -1,0 +1,401 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M5Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/C2M5_Map.tex";
+
+  static String m_MissionBriefingPicMaterial = "C2M5BriefingPic";
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary, CC2M5Mission_Strings::Objective01, MOSID_InProgress, true],
+      [MOTID_Primary, CC2M5Mission_Strings::Objective02, MOSID_InProgress, false],
+      [MOTID_Primary, CC2M5Mission_Strings::Objective03, MOSID_InProgress, true]
+                               ];
+
+  static WString ObjectivesText = CC2M5Mission_Strings::ObjectivesText;
+
+  Array AirStrikePoints   = ["AirPoint_1","AirPoint_2","AirPoint_3","AirPoint_4","AirPoint_5","ArtPoint_6"];
+
+  boolean isDebug = true;
+
+  boolean Combat            = false;
+  boolean MainPlayerBegin   = false;
+  boolean StartRusAssault02 = false;
+  boolean RaidBegin         = false;
+  boolean DefCol            = false;
+  boolean SovArmour         = false;
+
+  int Penalty_count = 0;
+
+  Array SAUKilllist         = ["CC2M5GroupSU85_1", "CC2M5GroupSU85_2", "CC2M5GroupSU85_3", "CC2M5GroupSU85_4"];
+  Array AssaultKillist      = ["CC2M5Group03T_34_76_1", "CC2M5Group03T_34_76_2", "CC2M5Group03T_34_76_3"];
+  Array ColumnDefendKillist = ["CC2M5Group04T_34_76_1", "CC2M5Group04T_34_76_2", "CC2M5Group04T_34_76_3", "CC2M5Group05T_34_76_1", "CC2M5Group05T_34_76_2"];
+  Array RaidKillist         = ["CC2M5Group1T_IV_1", "CC2M5Group1T_IV_2", "CC2M5Group1T_IV_3"];
+  Array LastEffortsKillist  = ["CC2M5Group01T_34_85_1", "CC2M5Group01T_34_85_2", "CC2M5Group01T_34_85_3", "CC2M5Group02T_34_85_1", "CC2M5Group02T_34_85_2", "CC2M5Group02T_34_85_3"];
+  Array EagerKillist1       = ["CC2M5Group02T_34_85_1", "CC2M5Group02T_34_85_2", "CC2M5Group02T_34_85_3"];
+  Array EagerKillist2       = ["CC2M5Group01T_34_85_1", "CC2M5Group01T_34_85_2", "CC2M5Group01T_34_85_3"];
+
+  Array m_NavpointsForPlayerMap = [];
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4100.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2502, 1582.0, 0.0), new Vector(7002.0, 6082.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+  /*Array KillList_Primary1   = [];
+  Array KillList_Primary2   = [];
+  Array KillList_Secondary1 = [];
+  */
+
+  void CC2M5Mission()
+  {
+    // Construct mission
+    CSPMission("CC2M5Mission", "CC2M5Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC2M5Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC2M5Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky11Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare =  null;
+
+    SetMissionWorldMatrices(new #WorldMatrices<CC2M5WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME, "CC2M5LandscapeLayer"      ],
+        [LAYER_TERRAIN_ZONE, "CC2M5TerrainZoneLayer"    ],
+        [LAYER_ROUTER_ZONE,  "CC2M5RouterZoneLayer"     ],
+        [LAYER_MICROTEXTURE_MAP1, "CC2M5MicroTextures1" ],
+        //["Landing Zone Texture",  "CC2M5LZTexture"    ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC2M5WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+    sendEvent(20.0, SOID_MissionController, "StartFirst", []);
+    //Component console = new #GameController().GetObject(SOID_Console);
+    //console.disablebeh();
+    //console.showbehinf(true);
+  }
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+  }
+
+   event void StartFirst()
+  {
+//    if(isDebug)
+//      logWarning("StartFirstAdvance!");
+
+    if (!MainPlayerBegin)
+      StartOutPlayer();
+  }
+
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+    if (_IsWorkEngine && !MainPlayerBegin)
+      StartOutPlayer();
+  }
+
+   void StartOutPlayer()
+  {
+    MainPlayerBegin = true;
+    StartCombat();
+  }
+
+
+  void OnObjectEnterNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //logMessage("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+  }
+
+  void OnObjectLeaveNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //logWarning("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+  }
+
+  event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+
+    // TMP
+    Component DeadThing = GetObject(_ObjectID);
+    if (null == DeadThing)
+    {
+      //logError("Component 'DeadThing' == null");
+      return;
+    }
+    // TMP
+
+    //logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String (DeadThing.GetLastDamager()));
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+      //logWarning("CheckMadPlayer");
+      //logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+      //logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+        //logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+          //logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+            //logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+
+    int _Index   = SAUKilllist.find(_ObjectID);
+    int _IndexA  = AssaultKillist.find(_ObjectID);
+    int _IndexR  = RaidKillist.find(_ObjectID);
+    int _IndexD  = ColumnDefendKillist.find(_ObjectID);
+    int _IndexL  = LastEffortsKillist.find(_ObjectID);
+    int _IndexE1 = EagerKillist1.find(_ObjectID);
+    int _IndexE2 = EagerKillist2.find(_ObjectID);
+
+    if(_Index != -1)
+      SAUKilllist.remove(_Index);
+
+    if(_IndexE1 != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from EagerKillist1");
+      //logWarning("EagerKillist1 before removing = " + new String(EagerKillist1));
+      EagerKillist1.remove(_IndexE1);
+      sendEvent(0.0, "CC2M5Group02T_34_85", "ContinueAssault02", []);
+      //logError("EagerKillist1 after removing = " + new String(EagerKillist1));
+    }
+
+    if(_IndexE2 != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from EagerKillist1");
+      //logWarning("EagerKillist2 before removing = " + new String(EagerKillist2));
+      EagerKillist2.remove(_IndexE2);
+      sendEvent(0.0, "CC2M5Group01T_34_85", "ContinueAssault01", []);
+      //logError("EagerKillist2 after removing = " + new String(EagerKillist2));
+    }
+
+    if(_IndexR != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from RaidKillist");
+      //logWarning("RaidKillist before removing = " + new String(RaidKillist));
+      RaidKillist.remove(_IndexR);
+      //logError("RaidKillist after removing = " + new String(RaidKillist));
+    }
+
+    if(_IndexA != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from AssaultKillist");
+      //logWarning("AssaultKillist before removing = " + new String(AssaultKillist));
+      AssaultKillist.remove(_IndexA);
+      //logError("AssaultKillist after removing = " + new String(AssaultKillist));
+    }
+
+      if(_IndexD != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from ColumnDefendKillist");
+      //logWarning("AssaultKillist before removing = " + new String(ColumnDefendKillist));
+      ColumnDefendKillist.remove(_IndexD);
+      //logError("AssaultKillist after removing = " + new String(ColumnDefendKillist));
+    }
+
+      if(_IndexL != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from LastEffortsKillist");
+      //logWarning("LastEffortsKillist before removing = " + new String(LastEffortsKillist));
+      LastEffortsKillist.remove(_IndexL);
+      //logError("LastEffortsKillist after removing = " + new String(LastEffortsKillist));
+    }
+
+
+    if(SAUKilllist.size() == 0)
+    {
+//      if(isDebug)
+//        logWarning("SAUKilllist == 0");
+
+      SetObjectiveStatus(0, MOSID_Completed);
+      //SetObjectiveVisible(1, true);
+    }
+
+    if ((AssaultKillist.size() == 0) && (!StartRusAssault02))
+    {
+      //logWarning("StartRusAssault02 = " + new String(StartRusAssault02));
+//      if(StartRusAssault02)
+//        return;
+//      if(isDebug)
+//        logWarning("AssaultKillist == 0");
+
+      sendEvent(0.0, "CC2M5Group02T_34_85", "StartAssault02", []);
+      sendEvent(0.0, "CC2M5GerColumn", "StartRetreat", []);
+      StartRusAssault02 = true;
+    }
+
+    if((RaidKillist.size() == 0) && (!RaidBegin))
+    {
+      //logWarning("StartC2M5Group05Raid = " + new String(RaidBegin));
+//      if(RaidBegin)
+//        return;
+//      if(isDebug)
+//        logWarning("RaidKillist == 0");
+      sendEvent(0.0, "CC2M5Group05T_34_76", "StartC2M5Group05Raid", []);
+      SetObjectiveVisible(1, true);
+      RaidBegin = true;
+      //logWarning("PostStartC2M5Group05Raid = " + new String(RaidBegin));
+    }
+
+    if((ColumnDefendKillist.size() == 0) && (!DefCol))
+    {
+      //logWarning("Column_defended = " + new String(DefCol));
+//     if(DefCol)
+//        return;
+//      if(isDebug)
+//        logWarning("ColumnDefendKillist == 0");
+      //sendEvent(0.0, "CC2M5Group05T_34_76", "StartC2M5Group05Raid", []);
+      SetObjectiveStatus(1, MOSID_Completed);
+      DefCol = true;
+      //logWarning("ColumnSecured = " + new String(DefCol));
+    }
+
+    if((LastEffortsKillist.size() == 0) && (SAUKilllist.size() == 0) && (!SovArmour) && (DefCol) && (StartRusAssault02))
+    {
+      //logWarning("Column_defended = " + new String(SovArmour));
+//     if(DefCol)
+//        return;
+//      if(isDebug)
+//        logWarning("LastEffortsKillist == 0");
+      //sendEvent(0.0, "CC2M5Group05T_34_76", "StartC2M5Group05Raid", []);
+      SetObjectiveStatus(2, MOSID_Completed);
+      SovArmour = true;
+      //logWarning("LastEffortsVictory = " + new String(SovArmour));
+    }
+  }
+
+  //-----------------
+  //  Another classes
+  //-----------------
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+//    else
+//      logError("Component NavPoint with ID = " + _NavPointID + " - null!" );
+  }
+
+  void ShutdownWatcher(Component _Watcher)
+  {
+    _Watcher.SetEventHandler(null);
+    _Watcher = null;
+  }
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+  event void Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+    float m_CurrentDistance;
+    Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+    Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+
+    if (null == Between_1 && null == Between_2)
+    {
+      //logError("Component - null!");
+      return;
+    }
+
+    Vector m_Pos_1 = getPosition(Between_1).origin;
+    Vector m_Pos_2 = getPosition(Between_2).origin;
+
+    m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+    //logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + " distance = " + new String(m_CurrentDistance));
+  }
+  ////////////////////////////////////////////////////////////MainEvents
+  event void StartCombat()
+  {
+//    if(isDebug)
+//      logWarning("StartCombat");
+
+    if(Combat)
+      return;
+
+    Combat = true;
+
+    sendEvent(0.0, "CC2M5Group01T_34_85", "StartFirstAdvance", []);
+    sendEvent(0.0, "CC2M5Group03T_34_76", "StartFirstAdvance03", []);
+    sendEvent(3.0, "CC2M5GroupRusIl_2", "AirAttack", []);
+    sendEvent(4.0, "CC2M5Group04T_34_76", "StartFirstAdvance04", []);
+  }
+  /////////////////////////////////AirStrikeImitation
+  event void AirStrike()
+  {
+//    if (isDebug)
+//    {
+//      logWarning("AirStrikeBegin");
+//    }
+
+    String ExplosionID = "GunPak40GunCalibreBulletExplosion";
+    float AirBlowRadius = 2;
+
+    for (int i = 0; i < AirStrikePoints.size(); i++)
+    {
+      logWarning(" Strike 1   for: " + new String(AirStrikePoints[i]));
+      sendEvent(randnum(6), AirStrikePoints[i], "ExplodeNavPointRadius", [ExplosionID, AirBlowRadius]);
+    }
+  }
+}
