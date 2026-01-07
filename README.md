@@ -19,11 +19,11 @@ You don't need to be a coder to help! We want this project to be as open as poss
 
 To make this "mountain" easier to climb, we have organized the project into key areas:
 
-* **[Technical Manuals](./Documentation):** Maya 5.0 export manuals, engine specifications, and project analysis.
-* **[Development Tools](./Tools):** Scripts and utilities created for the Redux project.
+* **[Technical Manuals](./Documentation):** Engine specifications, and project analysis.
+* **[Development Tools](./Tools):** Scripts, Maya 5.0 export manuals and utilities created for the TvT by G5 (the developers).
 * **[Executables](./Executables):** The 4GB LAA patch (Zip) and essential engine fixes.
 * **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.
-* **[Stable Build (Pre001)](./Fixed%20Pre001):** The first verified "Fixed" script library for testing.
+* **[Stable Build (Pre001)](./Fixed%20Pre001):** The first verified "Fixed" pre0.001 and included in patch.
 * **[Consolidated Scripts](./concatenate%20scripts):** Mission scripts processed through 'cat' for easy debugging.
 * **[Original Logic](./TvT):** The base stock scripts for T-34 vs. Tiger.
 * **[ZeeWolf Legacy](./TvTZW):** Preservation of ZeeWolf (ZW) mod scripts and logic.
