@@ -1,0 +1,918 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMenuSkin
+{
+  Array Materials = [
+
+    new CUIOnDemandMaterial(
+      "None",
+      "Resources/cursor02.tex",
+      224,
+      224,
+      1,
+      1
+    ),
+
+    // ==========================================
+    // Main Menu
+    // ==========================================
+
+    new CUIOnDemandMaterial(
+      "USSRMenuBackground",
+      "Resources/MainMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "EscUSSRMenuBackground",
+      "Resources/MainMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "GermanMenuBackground",
+      "Resources/MenuBackground_Germany.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "MainMenuBackground",
+      "Resources/MainMenuBackground_1.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+     new CUIOnDemandMaterial(
+      "AudioMenuBackground",
+      "Resources/SettingsAudioMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+     new CUIOnDemandMaterial(
+      "GameSettingMenuBackground",
+      "Resources/SettingsGameMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+
+    new CUIOnDemandMaterial(
+      "ControlMenuBackground",
+      "Resources/SettingsControlsMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+
+     new CUIOnDemandMaterial(
+      "CreditsMenuBackground",
+      "Resources/CreditsMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "CreditsBackgroundMask",
+      "Resources/CreditsBackgroundMask.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "MultiPlayerLoadingBackground",
+      "Resources/MultiplayerMenuBackground3.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "MultiPlayerBackground",
+      "Resources/MultiplayerMenuBackground1.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "MultiPlayerJoinBackground",
+      "Resources/MultiplayerMenuBackground2.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+
+    new CUIOnDemandMaterial(
+      "MenuSettingBackground",
+      "Resources/SettingsMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "VideoMenuBackground",
+      "Resources/SettingsVideoMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "NewGame",
+      "Resources/Buttons1.tex",
+      0,
+      0,
+      255,
+      40
+    ),
+
+    new CUIOnDemandMaterial(
+      "MultiPlayer",
+      "Resources/Buttons1.tex",
+      0,
+      40,
+      255,
+      40
+    ),
+
+    new CUIOnDemandMaterial(
+      "Create",
+      "Resources/Buttons4.tex",
+      1,
+      100,
+      200,
+      50
+    ),
+
+    new CUIOnDemandMaterial(
+      "Join",
+      "Resources/Buttons4.tex",
+      1,
+      155,
+      200,
+      50
+    ),
+
+    new CUIOnDemandMaterial(
+      "Refresh",
+      "Resources/Buttons4.tex",
+      1,
+      205,
+      250,
+      50
+    ),
+
+    new CUIOnDemandMaterial(
+      "Options",
+      "Resources/Buttons1.tex",
+      0,
+      80,
+      255,
+      40
+    ),
+
+    new CUIOnDemandMaterial(
+      "Credits",
+      "Resources/Buttons1.tex",
+      0,
+      120,
+      255,
+      40
+    ),
+
+    new CUIOnDemandMaterial(
+      "Quit",
+      "Resources/Buttons1.tex",
+      0,
+      160,
+      255,
+      40
+    ),
+
+    new CUIOnDemandMaterial(
+      "QuitToMenu",
+      "Resources/Buttons6.tex",
+      0,
+      212,
+      256,
+      44
+    ),
+
+    new CUIOnDemandMaterial(
+      "Leave",
+      "Resources/Buttons3.tex",
+      0,
+      213,
+      154,
+      43
+    ),
+
+    new CUIOnDemandMaterial(
+      "Back",
+      "Resources/Buttons2.tex",
+      0,
+      216,
+      255,
+      41
+    ),
+
+     new CUIOnDemandMaterial(
+      "Back_R",
+      "Resources/Buttons5.tex",
+      0,
+      216,
+      255,
+      41
+    ),
+
+    new CUIOnDemandMaterial(
+      "Apply",
+      "Resources/Buttons3.tex",
+      0,
+      74,
+      255,
+      41
+    ),
+
+    new CUIOnDemandMaterial(
+      "Default",
+      "Resources/Buttons3.tex",
+      0,
+      120,
+      200,
+      47
+    ),
+
+    new CUIOnDemandMaterial(
+      "Restart",
+      "Resources/Buttons6.tex",
+      0,
+      120,
+      210,
+      47
+    ),
+
+    new CUIOnDemandMaterial(
+      "VideoSettings",
+      "Resources/Buttons2.tex",
+      0,
+      64,
+      256,
+      64
+    ),
+
+    new CUIOnDemandMaterial(
+      "AudioSettings",
+      "Resources/Buttons2.tex",
+      0,
+      0,
+      256,
+      64
+    ),
+
+    new CUIOnDemandMaterial(
+      "GameSettings",
+      "Resources/Buttons2.tex",
+      0,
+      128,
+      256,
+      64
+    ),
+
+    new CUIOnDemandMaterial(
+      "ControlsSettings",
+      "Resources/Buttons3.tex",
+      0,
+      0,
+      256,
+      64
+    ),
+
+    new CUIOnDemandMaterial(
+      "StartMission",
+      "Resources/Buttons3.tex",
+      0,
+      166,
+      255,
+      41
+    ),
+
+    new CUIOnDemandMaterial(
+      "Ready",
+      "Resources/Buttons5.tex",
+      0,
+      166,
+      255,
+      41
+    ),
+
+    new CUIOnDemandMaterial(
+      "Continue",
+      "Resources/Buttons5.tex",
+      0,
+      100,
+      255,
+      41
+    ),
+
+    new CUIOnDemandMaterial(
+      "Germany",
+      "Resources/Buttons4.tex",
+      0,
+      0,
+      255,
+      33
+    ),
+
+    new CUIOnDemandMaterial(
+      "USSR",
+      "Resources/Buttons4.tex",
+      0,
+      33,
+      255,
+      33
+    ),
+
+    new CUIOnDemand2Material(
+      "GridBackground",
+      "Resources/cursor02.tex",
+      1,
+      224,
+      32,
+      32
+    ),
+
+    new CUIOnDemand2Material(
+      "Grid2Background",
+      "Resources/cursor02.tex",
+      35,
+      224,
+      32,
+      32
+    ),
+
+    new CUIOnDemand2Material(
+      "Grid3Background",
+      "Resources/cursor02.tex",
+      69,
+      224,
+      32,
+      32
+    ),
+
+     new CUIOnDemandMaterial(
+      "USSRWinMenuBackground",
+      "Resources/MenuBackground_USSR_win.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+     new CUIOnDemandMaterial(
+      "USSRFailMenuBackground",
+      "Resources/MenuBackground_USSR_Loose.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+      new CUIOnDemandMaterial(
+      "GerWinMenuBackground",
+      "Resources/GermanWinMenuBackground.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+       new CUIOnDemandMaterial(
+      "GerFailMenuBackground",
+      "Resources/MenuBackground_Germany_Loose.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+      new CUIOnDemandMaterial(
+      "MPWinMenuBackground",
+      "Resources/MultiplayerMenuBackground3.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+      new CUIOnDemandMaterial(
+      "Settings",
+      "Resources/Buttons5.tex",
+      0,
+      0,
+      256,
+      50
+    ),
+
+     // for Esc menu
+
+    // ==========================================
+    // Yes / No Confirmation
+    // ==========================================
+
+    new CUIOnDemandMaterial(
+      "Background1",
+      "Resources/MainMenuBackground.tex",
+      1,
+      760,
+      10,
+      10
+    ),
+    new CUIOnDemandMaterial(
+      "YesButton",
+      "Resources/Buttons1.tex",
+      4,
+      8,
+      220,
+      40
+    ),
+    new CUIOnDemandMaterial(
+      "NoButton",
+      "Resources/Buttons1.tex",
+      4,
+      50,
+      220,
+      40
+    ),
+
+     new CUIOnDemandMaterial(
+      "Selected",
+      "Resources/selected.tex",
+      1,
+      1,
+      1,
+      1
+    ),
+
+
+
+
+    // ==========================================
+    // Scrollers
+    // ==========================================
+
+    new CUIOnDemandMaterial(
+        "VScrollerScroller",
+        "Resources/cursor02.tex",
+        64,
+        50,
+        33,
+        14
+      ),
+
+    new CUIOnDemandMaterial(
+        "VScrollerUp",
+        "Resources/cursor02.tex",
+        0,
+        48,
+        33,
+        20
+      ),
+
+    new CUIOnDemandMaterial(
+        "VScrollerDown",
+        "Resources/cursor02.tex",
+        0,
+        156,
+        33,
+        20
+      ),
+
+    new CUIOnDemandMaterial(
+        "VScrollerChoose",
+        "Resources/cursor02.tex",
+        0,
+        180,
+        41,
+        20
+      ),
+
+    new CUIOnDemandMaterial(
+        "VScrollerBack",
+        "Resources/cursor02.tex",
+        0,
+        97,
+        33,
+        30
+      ),
+
+    new CUIOnDemandMaterial(
+        "HScrollerScroller",
+        "Resources/cursor02.tex",
+        42,
+        48,
+        13,
+        33
+      ),
+
+    new CUIOnDemandMaterial(
+        "HScrollerLeft",
+        "Resources/cursor02.tex",
+        32,
+        0,
+        36,
+        33
+      ),
+
+    new CUIOnDemandMaterial(
+        "HScrollerRight",
+        "Resources/cursor02.tex",
+        156,
+        0,
+        36,
+        33
+      ),
+
+    new CUIOnDemandMaterial(
+        "HScrollerBack",
+        "Resources/cursor02.tex",
+        97,
+        0,
+        29,
+        33
+      ),
+
+    // ==========================================
+    // Cursor
+    // ==========================================
+
+    new CAnimatedMaterial(
+        "cursor",
+        ["cursor0", "cursor1", "cursor2", "cursor3"],
+        [100,       100,       100,        2000]
+      ),
+
+    new CUIMaterial(
+      "cursor0",
+      "Resources/cursor01.tex",
+      0,
+      0,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "cursor1",
+      "Resources/cursor01.tex",
+      32,
+      0,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "cursor2",
+      "Resources/cursor01.tex",
+      64,
+      0,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "cursor3",
+      "Resources/cursor01.tex",
+      96,
+      0,
+      32,
+      32
+    ),
+
+
+
+    new CUIOnDemandMaterial(
+      "Invisible",
+      "Resources/Buttons1.tex",
+      1,
+      1,
+      2,
+      2
+    ),
+
+    new CUIOnDemandMaterial(
+      "PreloadingBackground",
+      "Resources/MainMenuBackground_1.tex",
+      1,
+      1,
+      1024,
+      768
+    ),
+
+    new CUIOnDemandMaterial(
+      "ProgressBar",
+      "Resources/Buttons1.tex",
+      0,
+      214,
+      252,
+      42
+    ),
+
+    // ==========================================
+    // Briefing Pic Materials
+    // ==========================================
+
+    new CUIOnDemandMaterial(
+      "C1M1BriefingPic",
+      "Resources/Map1.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C1M2BriefingPic",
+      "Resources/Map2.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+
+    new CUIOnDemandMaterial(
+      "C1M3BriefingPic",
+      "Resources/Map3.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C1M4BriefingPic",
+      "Resources/Map4.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C1M5BriefingPic",
+      "Resources/Map5.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C1M6BriefingPic",
+      "Resources/Map6.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C2M1BriefingPic",
+      "Resources/Map7.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C2M2BriefingPic",
+      "Resources/Map8.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C2M3BriefingPic",
+      "Resources/Map9.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C2M4BriefingPic",
+      "Resources/Map10.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C2M5BriefingPic",
+      "Resources/Map11.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "C2M6BriefingPic",
+      "Resources/Map12.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "DM1BriefingPic",
+      "Resources/DM1Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "DM2BriefingPic",
+      "Resources/DM2Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "DM3BriefingPic",
+      "Resources/DM3Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+
+    new CUIOnDemandMaterial(
+      "DM4BriefingPic",
+      "Resources/DM4Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "DM5BriefingPic",
+      "Resources/DM5Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "DM6BriefingPic",
+      "Resources/DM6Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+
+
+    new CUIOnDemandMaterial(
+      "CF1BriefingPic",
+      "Resources/CF1Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "CF2BriefingPic",
+      "Resources/CF2Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "CF3BriefingPic",
+      "Resources/CF3Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "CF4BriefingPic",
+      "Resources/CF4Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "CF5BriefingPic",
+      "Resources/CF5Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIOnDemandMaterial(
+      "CF6BriefingPic",
+      "Resources/CF6Map.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    // ==========================================
+    // objective completion mark
+    // ==========================================
+
+    new CUIOnDemandMaterial(
+      "ObjectiveInProgress",
+      "Resources/cursor02.tex",
+      225,
+      1,
+      30,
+      30
+    ),
+
+    new CUIOnDemandMaterial(
+      "ObjectiveCompleted",
+      "Resources/cursor02.tex",
+      193,
+      1,
+      30,
+      30
+    ),
+
+    new CUIOnDemandMaterial(
+      "CheckBoxUnChecked",
+      "Resources/cursor02.tex",
+      225,
+      1,
+      30,
+      30
+    ),
+
+    new CUIOnDemandMaterial(
+      "CheckBoxChecked",
+      "Resources/cursor02.tex",
+      193,
+      1,
+      30,
+      30
+    )
+
+  ];
+}
+

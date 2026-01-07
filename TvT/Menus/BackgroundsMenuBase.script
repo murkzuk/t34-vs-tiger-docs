@@ -1,0 +1,49 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBackgroundsMenu
+{
+  static Array m_Backgrounds = ["MultiPlayerBackground", "USSRBackground", "GermanBackground"];
+  static Array m_EndMissionBackgrounds = [
+               [ "MultiPlayerEndBackground", "MultiPlayerEndBackground2" ],  //победа/поражение для мультиплеера
+               [ "USSRSuccessBackground", "USSRFailBackground" ],           //победа/поражение для СССР
+               [ "GermanSuccessBackground", "GermanFailBackground"]         //победа/поражение для Германии
+            ];
+
+
+  void SetBackground(
+      int _Number
+    )
+  {
+    for (int i = 0; i < m_Backgrounds.size(); i++)
+    {
+      Component Background = GetObject(m_Backgrounds[i]);
+      if (null != Background)
+        setVisibleState(Background, (i == _Number));
+    }
+  }
+
+  void SetBackground(
+      int _CampaignNumber,
+      int _MissionStatus
+    )
+  {
+    for (int i = 0; i < m_EndMissionBackgrounds.size(); i++)
+    {
+      for (int j = 0; j < m_EndMissionBackgrounds[j].size(); j++)
+      {
+        Component Background = GetObject(m_EndMissionBackgrounds[i][j]);
+        if (null != Background)
+          setVisibleState(Background, ((i == _CampaignNumber) && (j == _MissionStatus)));
+      }
+    }
+
+  }
+
+}

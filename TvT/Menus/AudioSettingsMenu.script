@@ -1,0 +1,52 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CAudioSettingsMenu
+  extends CBaseMenu, CAudioSettingsControls, CAudioOptionsMenuBase
+{
+  static String m_MenuClassName = "CAudioSettingsMenu";
+
+  void OnInitMenu()
+  {
+    CAudioOptionsMenuBase::OnInitMenu();
+
+    m_MenuController.SetDefaultCommands("", "BackButton");
+  }
+
+  void OnCloseMenu()
+  {
+    CAudioOptionsMenuBase::OnCloseMenu();
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("BackButton"  == _ID)
+      GoBack();
+    else
+    if ("ApplyButton" == _ID)
+      ApplySettings();
+
+    CAudioOptionsMenuBase::OnControlActivated(_ID);
+
+    CheckChanges();
+  }
+
+  //
+  // Service
+  //
+
+  void CheckChanges()
+  {
+    boolean IsChanged = CAudioOptionsMenuBase::CheckChanges();
+
+    GetObject("ApplyButton").SetDisabled(!IsChanged);
+  }
+}

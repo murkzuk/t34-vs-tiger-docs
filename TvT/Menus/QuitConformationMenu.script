@@ -1,0 +1,32 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CQuitConformationMenu
+  extends CBaseMenu, CQuitConformationControls
+{
+  static String m_MenuClassName = "CQuitConformationMenu";
+
+  void OnInitMenu()
+  {
+    m_MenuController.SetDefaultCommands("IDOK", "IDCANCEL");
+  }
+  
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("IDOK" == _ID)
+        (new #GameController()).QuitGame();
+
+    if ("IDCANCEL" == _ID)
+        GoBack();
+
+  }
+
+}

@@ -1,0 +1,31 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CGameEnvironmentMenu
+  extends CBaseMenu, CGameEnvironmentControls
+{
+  static String m_MenuClassName = "CMainMenu";
+
+  void OnInitMenu()
+  {
+    Component Game = new #GameController();
+    Component MenuController = Game.GetMenuController();
+    MenuController.SetDefaultCommands("Fly", "Back");
+  }
+  
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("Single" == _ID)
+      sendEvent(0, SOID_GameController, "BeginNewGame", []);
+    if ("Back" == _ID)
+      GoBack();
+  }
+}

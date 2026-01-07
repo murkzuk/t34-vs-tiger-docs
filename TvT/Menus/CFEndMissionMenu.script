@@ -1,0 +1,279 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCFEndMissionMenu
+  extends CBaseMenu, CCFEndMissionControls
+{
+  static String m_MenuClassName = "CCFEndMissionMenu";
+
+  Component m_GameController;
+  WString m_ChatText = L"Default Objective";
+
+  void OnInitMenu()
+  {
+    m_MenuController.SetDefaultCommands("", "BackButton");
+    m_GameController  = new #GameController();
+    Component Mission        = m_GameController.GetLoadedMission();
+
+    GetObject("MissionName").SetText(getStaticClassMember(Mission.GetClassName() + "_Strings", "MissionName"));
+
+    int RedTeamKills = 0;
+    int RedTeamLost = 0;
+    int BlueTeamKills = 0;
+    int BlueTeamLost = 0;
+    int RedTeamCount = 0;
+    int BlueTeamCount = 0;
+    Component Session = m_GameController.GetGameSession();
+    Array PlayersInfo = Session.GetPlayersInfo();
+    for (int i = 0; i < PlayersInfo.size(); i++)
+    {
+      if (0 == PlayersInfo[i].SessionTeam)
+      {
+        RedTeamKills = RedTeamKills + PlayersInfo[i].SessionKills;
+        RedTeamLost = RedTeamLost + PlayersInfo[i].SessionDeaths;
+        if (0 == PlayersInfo[i].SessionDeaths)
+          RedTeamCount++;
+      }
+      else
+      {
+        BlueTeamKills = BlueTeamKills + PlayersInfo[i].SessionKills;
+        BlueTeamLost = BlueTeamLost + PlayersInfo[i].SessionDeaths;
+        if (0 == PlayersInfo[i].SessionDeaths)
+          BlueTeamCount++;
+      }
+    }
+
+    GetObject("RedTeamKills").SetText(getLocalized("Menu", "str_KILLS") + L" " + new WString(RedTeamKills));
+    GetObject("RedTeamLost").SetText(getLocalized("Menu", "str_LOST") + L" " + new WString(RedTeamLost));
+    GetObject("BlueTeamKills").SetText(getLocalized("Menu", "str_KILLS") + L" " + new WString(BlueTeamKills));
+    GetObject("BlueTeamLost").SetText(getLocalized("Menu", "str_LOST") + L" " + new WString(BlueTeamLost));
+
+    Component RedTeamObjectives = GetObject("RedTeamObjectives");
+    Component BlueTeamObjectives = GetObject("BlueTeamObjectives");
+    RedTeamObjectives.ClearWithUnregister();
+    BlueTeamObjectives.ClearWithUnregister();
+    RedTeamObjectives.SetListScrollStep(CUIObjectiveElement::GetElementHeight());
+    BlueTeamObjectives.SetListScrollStep(CUIObjectiveElement::GetElementHeight());
+
+    Array Objectives = Mission.GetMissionObjectives();
+
+    Component Position = new CUIPosition(0.0, 0.0, 0.29, 14.0 / 768.0);
+    Array Props = [];
+
+    boolean RedCloseAllObjectives = true;
+    boolean BlueCloseAllObjectives = true;
+    for (int Index = 0; Index < Objectives.size(); Index++)
+    {
+      if (Objectives[Index][3])
+      {
+        String NewID = "ObjectivesElement_" + new String(Index + 1);
+        Component ObjectiveControl = CreateUIControl(NewID,
+                        "",
+                        "CUIObjectiveElement",
+                        Position,
+                        Props);
+
+        ObjectiveControl.SetObjectiveText(Objectives[Index][1]);
+        ObjectiveControl.SetObjectiveStatus(Objectives[Index][2]);
+
+        if (0 == Objectives[Index][4])
+        {
+          RedTeamObjectives.AddControl(NewID);
+          if (CMission::MOSID_Completed != Objectives[Index][2])
+            RedCloseAllObjectives = false;
+        }
+        else
+        {
+          BlueTeamObjectives.AddControl(NewID);
+          if (CMission::MOSID_Completed != Objectives[Index][2])
+            BlueCloseAllObjectives = false;
+        }
+      }
+    }
+
+    Component MissionResult = GetObject("MissionResult");
+    if (Mission.IsCFMissionCompleted() || (0 == RedTeamCount) || (0 == BlueTeamCount))
+    {
+      setVisibleState(GetObject("BackButton"), false);
+      setVisibleState(GetObject("ContinueButton"), true);
+//      GetObject("BackButton").SetDisabled(true);
+      if (RedCloseAllObjectives)
+      {
+        MissionResult.SetBitmapColors(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0));
+        MissionResult.SetText(getLocalized("Menu", "str_RED_TEAM_WIN"));
+      }
+      else
+      if (BlueCloseAllObjectives)
+      {
+        MissionResult.SetBitmapColors(new Color(0.0, 0.0, 1.0), new Color(0.0, 0.0, 1.0));
+        MissionResult.SetText(getLocalized("Menu", "str_BLUE_TEAM_WIN"));
+      }
+      else
+      if (0 == RedTeamCount)
+      {
+        MissionResult.SetBitmapColors(new Color(0.0, 0.0, 1.0), new Color(0.0, 0.0, 1.0));
+        MissionResult.SetText(getLocalized("Menu", "str_BLUE_TEAM_WIN"));
+      }
+      else
+      if (0 == BlueTeamCount)
+      {
+        MissionResult.SetBitmapColors(new Color(1.0, 0.0, 0.0), new Color(1.0, 0.0, 0.0));
+        MissionResult.SetText(getLocalized("Menu", "str_RED_TEAM_WIN"));
+      }
+
+      Component Game = new #GameController();
+      if ("Client" == Game.GetGameMode())
+      {
+        Game.GetGameSession().SetSessionStatus(CPlayerStat::CS_Connected, true);
+//        Game.GetGameSession().Server_LoadMissionCF(
+        GetObject("ContinueButton").SetDisabled(true);
+      }
+      else
+      {
+        CTeamPlayRoomMenu::m_RestartMission = true;
+        GetObject("ContinueButton").SetDisabled(false);
+      }
+
+    }
+    else
+    {
+      setVisibleState(MissionResult, false);
+      setVisibleState(GetObject("BackButton"), true);
+      setVisibleState(GetObject("ContinueButton"), false);
+    }
+
+    m_MenuController.SetDefaultCommands("SendMessage", "");
+
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("OnTimerTick", 0.0);
+    Timer.Enable(false);
+    RegisterObject("Timer", Timer);
+
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("Timer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("SendMessage" == _ID)
+    {
+      WString Message = GetObject("ChatString").GetText();
+      Component Mission = m_GameController.GetLoadedMission();
+      if ((null != Mission) && (!Message.isEmpty()))
+      {
+        GetObject("ChatString").SetText(L"Default Objective");
+        Mission.SendChatMessage(Message);
+      }
+    }
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("ChatText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("ChatText").ScrollDown();
+
+    if ("BackButton" == _ID)
+    {
+      m_MenuController.GetObject("Cursor").ShowCursor(false);
+
+      Component Game = new #GameController();
+      Game.EnableControl("GameMenu", false);
+      Game.RestoreCS();
+      new #MusicController().SetMenuState(CMusicController::MENU_Null);
+    }
+    else
+    if ("QuitButton" == _ID)
+    {
+        Component Game = new #GameController();
+        Component Mission        = Game.GetLoadedMission();
+        Component Session = Game.GetGameSession();
+//        Session.DeleteObject(Mission.GetMainPlayerObjectID());
+        if (Game.GetGameMode() == "Server")
+          Session.FireNetEvent("Server_KickAllPlayers", []);
+
+        Game.UnloadMission();
+
+        Session.CleanupPlayersInfo();
+        Game.CloseMultiplayer();
+        Game.DeleteSession();
+        Game.CreateMenuController();
+        Game.EnableControl("GameMenu", true);
+        sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+
+/*      Component Game = new #GameController();
+      Game.CloseMultiplayer();
+      Component Session = Game.GetGameSession();
+      Session.CleanupPlayersInfo();
+*/
+//      Invoke("MultiPlayerMenu");
+    }
+    else
+    if ("ContinueButton" == _ID)
+    {
+      Component Game = new #GameController();
+      Component GameClient = (new #GameController()).GetObject(SOID_GameClient);
+      Game.GetLoadedMission().ClearObjectives();
+      if (null != GameClient)
+      {
+/*        WString PlayerName = Game.GetLoadedMission().GetCurrentPlayer().GetName();
+        Component Session = Game.GetGameSession();
+        Component ServerDescriptor = Session.m_SessionInfo.m_Descriptor;
+
+        Game.UnloadMission();
+        Game.CloseMultiplayer();
+        Session.CleanupPlayersInfo();
+//        Game.EnableControl("GameMenu", false);
+        Game.ConnectToServer(ServerDescriptor, PlayerName, 0);
+*/
+      }
+      else
+      {
+        Game.GetGameSession().ClearPlayers();
+        Game.UnloadMission();
+        Game.LoadMission(Game.GetGameSession().GetMissionName(), true);
+        Game.GetGameSession().RestartCFMission();
+        Game.GetGameSession().ClearPlayers();
+        Component MenuController = Game.GetMenuController();
+        MenuController.LoadNewMenu("TeamPlayRoomMenu");
+        MenuController.GetObject("Cursor").ShowCursor(true);
+        MenuController.LockChangeInputMode(false);
+        Game.EnableControl("GameMenu", true);
+      }
+    }
+  }
+
+  void AddChatMessage(
+      WString _Message
+    )
+  {
+    if (m_ChatText.isEmpty())
+      m_ChatText = _Message;
+    else
+      m_ChatText = m_ChatText + L"\n" + _Message;
+
+    Component Chat = GetObject("ChatText");
+    Chat.SetText(m_ChatText);
+    Chat.SetSlaveScroller(GetObject("vs_scroll"));
+    Chat.Update();
+    Chat.ScrollDown();
+  }
+
+  void OnTimerTick(
+      float _TimeDelta
+    )
+  {
+    GetObject("ChatText").Update();
+  }
+}

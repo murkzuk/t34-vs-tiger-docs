@@ -1,0 +1,548 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated menu script file                         
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class CControlsSettingsControls
+{
+  static String m_ControlListClassFile = "Scripts/Menus/ControlsSettingsControls.script";
+  static String m_ControlListClassName = "CControlsSettingsControls";
+
+  static Array m_UIControls = [
+    [
+      "Background",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "ControlMenuBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", -0.010000000, false],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "BackButton",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.019531250,
+          0.912760437,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Back", false],
+        ["MaterialHilited", "Back", false],
+        ["FontName", "Arial", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(0.800000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["", ""], false],
+        ["Z", 0.020000000, true],
+        ["LeftIndent", 0.000000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "Apply",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.723632813,
+          0.908854246,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Apply", false],
+        ["MaterialHilited", "Apply", false],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Alignment", 0.500000000, true],
+        ["Text", ["", ""], false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), false],
+        ["Z", 0.020000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["LeftIndent", 0.000000000, true],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "ControlsList",
+      "",
+      "CUIListControl",
+      new CUIPosition(
+          0.103515625,
+          0.214843750,
+          0.768554688,
+          0.576822937
+        ),
+      [
+        ["ListCellPadding", 0.000000000, false],
+        ["Z", 0.010000000, true],
+        ["Hint", "", true]
+      ]
+    ],
+
+    [
+      "ControlsScroll",
+      "",
+      "CUIVerticalScrollBar",
+      new CUIPosition(
+          0.876953125,
+          0.139268011,
+          0.032499991,
+          0.682213068
+        ),
+      [
+        ["MaterialArrow1", "VScrollerUp", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["MaterialArrow2", "VScrollerDown", false],
+        ["MaterialScroll", "VScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["InitialScrollPos", 0, false],
+        ["ScrollRange", 3, false],
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.031500001, false],
+        ["ScrollerFixedHeight", 0.020000000, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "GridBack",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.081562452,
+          0.131406233,
+          0.330195278,
+          0.698202729
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "GridBack2",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.656757653,
+          0.131406233,
+          0.211171895,
+          0.699770153
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "TextControl",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.092968732,
+          0.145312443,
+          0.302226484,
+          0.033333320
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OC_ACTION"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "Frame1",
+      "FrameControl",
+      "CUIFrame",
+      new CUIPosition(
+          0.087812491,
+          0.143645808,
+          0.318671703,
+          0.036666665
+        ),
+      [
+        ["Z", -0.010000000, false],
+        ["Hint", "", true],
+        ["Thickness", 1.000000000, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false]
+      ]
+    ],
+
+    [
+      "Frame2",
+      "FrameControl",
+      "CUIFrame",
+      new CUIPosition(
+          0.427187443,
+          0.143645808,
+          0.218750089,
+          0.036666665
+        ),
+      [
+        ["Z", -0.010000000, false],
+        ["Hint", "", true],
+        ["Thickness", 1.000000000, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false]
+      ]
+    ],
+
+    [
+      "TextPrimKey",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.443085730,
+          0.144010365,
+          0.184296817,
+          0.036666665
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OC_PRIM_KEY"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "Frame3",
+      "FrameControl",
+      "CUIFrame",
+      new CUIPosition(
+          0.664960980,
+          0.143645808,
+          0.197578058,
+          0.036666665
+        ),
+      [
+        ["Z", -0.010000000, false],
+        ["Hint", "", true],
+        ["Thickness", 1.000000000, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false]
+      ]
+    ],
+
+    [
+      "BackGround1",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.418007463,
+          0.131406233,
+          0.233476520,
+          0.698202729
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "SecondaryText",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.665234327,
+          0.144010425,
+          0.193124935,
+          0.035000000
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OC_SEC_KEY"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "Frame4",
+      "FrameControl",
+      "CUIFrame",
+      new CUIPosition(
+          0.878065467,
+          0.171254858,
+          0.031249965,
+          0.647083223
+        ),
+      [
+        ["Z", -0.010000000, false],
+        ["Hint", "", true],
+        ["Thickness", 1.000000000, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false]
+      ]
+    ],
+
+    [
+      "Default",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.411249965,
+          0.908854127,
+          0.195312500,
+          0.061197914
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialNormal", "Default", false],
+        ["MaterialHilited", "Default", false],
+        ["MaterialPressed", "Default", false],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["LeftIndent", 0.000000000, true],
+        ["Alignment", 0.500000000, true],
+        ["Text", ["", ""], false],
+        ["IsMultiline", false, true],
+        ["NormalTextColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false]
+      ]
+    ],
+
+    [
+      "ScrollBack",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.872070313,
+          0.131406233,
+          0.043164063,
+          0.699770093
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "back_invert",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.083425999,
+          0.838557959,
+          0.831979930,
+          0.067241356
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "TextInvertScroll",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.103448264,
+          0.857366741,
+          0.189043358,
+          0.034326065
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_INVERT_SCROLL"], false],
+        ["TextColor", new Color(0.701961, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "TextInvertAxis",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.516128957,
+          0.855799317,
+          0.244660720,
+          0.037460793
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_INVERT_AXIS"], false],
+        ["TextColor", new Color(0.701961, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "CheckScroll",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.265850902,
+          0.857366681,
+          0.032836996,
+          0.032836996
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_DEFAULT_CHECKBOX_CAPTION"], true],
+        ["CaptionColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["Alignment", 0.500000000, true],
+        ["bChecked", false, true],
+        ["bEnabled", true, true]
+      ]
+    ],
+
+    [
+      "CheckAxis",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.713014364,
+          0.857366681,
+          0.032836996,
+          0.032836996
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_DEFAULT_CHECKBOX_CAPTION"], true],
+        ["CaptionColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["Alignment", 0.500000000, true],
+        ["bChecked", false, true],
+        ["bEnabled", true, true]
+      ]
+    ]
+  ];
+}

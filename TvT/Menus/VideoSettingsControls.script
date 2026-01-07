@@ -1,0 +1,1155 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated menu script file                         
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class CVideoSettingsControls
+{
+  static String m_ControlListClassFile = "Scripts/Menus/VideoSettingsControls.script";
+  static String m_ControlListClassName = "CVideoSettingsControls";
+
+  static Array m_UIControls = [
+    [
+      "Background",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "VideoMenuBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "BackButton",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.019531250,
+          0.912760437,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Back", false],
+        ["MaterialHilited", "Back", false],
+        ["FontName", "Arial", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(0.800000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["", ""], false],
+        ["Z", 0.020000000, true],
+        ["LeftIndent", 0.000000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "ApplyButton",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.723632813,
+          0.908854246,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Apply", false],
+        ["MaterialHilited", "Apply", false],
+        ["FontName", "Arial", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(0.800000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["", ""], false],
+        ["Z", 0.020000000, true],
+        ["LeftIndent", 0.000000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "s_device",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.176757798,
+          0.141927078,
+          0.212109357,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_DEVICE"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_resolution",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.176757798,
+          0.190104157,
+          0.211132795,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_RESOLUTION"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_model_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.174804673,
+          0.299479187,
+          0.212109357,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_MODELS_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_textures_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.175781235,
+          0.242187500,
+          0.211132795,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_TEXTURES_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_landscape_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.174804673,
+          0.355468750,
+          0.212109357,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_LANDSCAPE_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_forest_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.174804673,
+          0.414062500,
+          0.212109357,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_FOREST_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_grass_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.173828110,
+          0.470052034,
+          0.213085920,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_GRASS_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_water_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.176757798,
+          0.528645813,
+          0.211132795,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_WATER_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_shadows_detail",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.173828110,
+          0.584635377,
+          0.214062482,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_SHADOWS_DETAIL"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_antialias",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.176757798,
+          0.641666651,
+          0.211132795,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_ANTIALIASING"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_treeanim",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.175781235,
+          0.699062526,
+          0.211132795,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_FOREST_ANIMATION"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_fovdistpower",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.173828110,
+          0.754531264,
+          0.213085920,
+          0.038281251
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_FOREST_BY_DISTANCE"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "h_textures",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375080496,
+          0.239783645,
+          0.442578107,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 4, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_textures",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.413166463,
+          0.239783674,
+          0.362304688,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "h_models",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.297115386,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 10, true],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_models",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.395507813,
+          0.297075331,
+          0.381835938,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "h_landscape",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.354166687,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 10, true],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_landscape",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.395507813,
+          0.354166657,
+          0.381835938,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "h_forest",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.411458313,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 10, true],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_forest",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.415039063,
+          0.411458313,
+          0.364257813,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "h_grass",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.467447817,
+          0.442578107,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 10, true],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_grass",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.408203125,
+          0.467447877,
+          0.368164063,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "h_water",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.526041687,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 10, true],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_water",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.397460938,
+          0.526041627,
+          0.378906250,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "h_shadows",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.583333313,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 4, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "h_antialias",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.639062524,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 3, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "h_treeanim",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.696041703,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 5, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "h_fovdistpower",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.375976563,
+          0.752812505,
+          0.441601545,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 5, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_shadows",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.412109375,
+          0.583333254,
+          0.363281250,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "sb_antialias",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.408203125,
+          0.639062524,
+          0.367187500,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "sb_treeanim",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.410156250,
+          0.696041584,
+          0.365234375,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "sb_powdistpower",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.395507813,
+          0.752812445,
+          0.381835938,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "VideoMode",
+      "",
+      "CUIComboBox",
+      new CUIPosition(
+          0.395507813,
+          0.191526443,
+          0.403320313,
+          0.032552075
+        ),
+      [
+        ["Z", 0.029999999, false],
+        ["Hint", "", true],
+        ["ButtonMaterial", "VScrollerDown", false],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_DEFAULT_COMBOBOX_CAPTION"], true],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["bEnabled", true, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 1.000000000, true],
+        ["FrameZ", 0.000000000, false],
+        ["ListCellPadding", 0.000000000, false],
+        ["MaterialArrow1", "VScrollerUp", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "VScrollerDown", false],
+        ["MaterialScroll", "VScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 10, true],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.020000000, false],
+        ["ScrollerFixedHeight", 0.020000000, false],
+        ["MaterialFill", "GridBackground", false],
+        ["RenderLayer", 28, true],
+        ["ListAlignment", 0.000000000, true],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "VideoAdapter",
+      "",
+      "CUIComboBox",
+      new CUIPosition(
+          0.395507813,
+          0.143229157,
+          0.402343750,
+          0.032552075
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["ButtonMaterial", "VScrollerDown", false],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_DEFAULT_COMBOBOX_CAPTION"], true],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["bEnabled", true, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 1.000000000, true],
+        ["FrameZ", 0.000000000, false],
+        ["ListCellPadding", 0.000000000, false],
+        ["MaterialArrow1", "VScrollerUp", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "VScrollerDown", false],
+        ["MaterialScroll", "VScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 20, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.010000000, false],
+        ["ScrollerFixedHeight", 0.020000000, false],
+        ["MaterialFill", "GridBackground", false],
+        ["RenderLayer", 28, true],
+        ["ListAlignment", 0.000000000, true],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "WindowMode",
+      "",
+      "CUIComboBox",
+      new CUIPosition(
+          0.677418232,
+          0.811908782,
+          0.119881421,
+          0.032760415
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["ButtonMaterial", "VScrollerDown", false],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_DEFAULT_COMBOBOX_CAPTION"], true],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["bEnabled", true, true],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 1.000000000, true],
+        ["FrameZ", 0.000000000, false],
+        ["ListCellPadding", 0.000000000, false],
+        ["MaterialArrow1", "VScrollerUp", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "VScrollerDown", false],
+        ["MaterialScroll", "VScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 20, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.010000000, false],
+        ["ScrollerFixedHeight", 0.020000000, false],
+        ["MaterialFill", "GridBackground", false],
+        ["RenderLayer", 28, true],
+        ["ListAlignment", 0.500000000, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "TextWindowMode",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.212382093,
+          0.812066793,
+          0.453445107,
+          0.033361066
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_SCREEN_MODE"], false],
+        ["TextColor", new Color(0.701961, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "BackVidSet",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.173769176,
+          0.128906265,
+          0.650644839,
+          0.786097527
+        ),
+      [
+        ["Z", 0.001000000, false],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "LowTex",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.770613968,
+          0.861075878,
+          0.034999955,
+          0.034999955
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_DEFAULT_CHECKBOX_CAPTION"], true],
+        ["CaptionColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["Alignment", 0.500000000, true],
+        ["bChecked", false, false],
+        ["bEnabled", true, true]
+      ]
+    ],
+
+    [
+      "TextLowTex",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.211155385,
+          0.861418426,
+          0.550394297,
+          0.033333320
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_OV_LOW_QUALITY_TEXTURES"], false],
+        ["TextColor", new Color(0.701961, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ]
+  ];
+}

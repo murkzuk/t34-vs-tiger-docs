@@ -1,0 +1,193 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CGunNebelGun
+  extends CHeavyGun
+{
+  String CloudEffectId   = "";
+  float  InitBulletSpeed = 0.0;
+  float  FireDeviation   = 1.5;
+  String BulletPatternId = "";
+  Vector GravityVector   = CPiercing::ShellGravityVector;
+
+  final static boolean HighTrajectory  = true;
+
+  String    FireSoundId     = "";
+
+  final static Array Ammo = [
+                            ];
+
+  //$TMP TEST DATA
+  final static Array AmmoTargetUse    = [
+                                        ];
+
+  final static float    LockAngleHMin     = -29.0;
+  final static float    LockAngleHMax     =  29.0;
+  final static float    LockAngleVMin     = -3.5;
+  final static float    LockAngleVMax     =  22.0;
+  final static float    BlockedLockAngle  =  1.0;
+
+  final static float DirectionSpeedH  = 6.0; // deg / sec  • horizontal
+  final static float DirectionSpeedV  = 3.5; // deg / sec  • vertical
+
+  // *** Gun parameters for behavior
+  boolean SpecialWeapon  = false;
+
+  // *** Gun parameters for behavior
+  int  FirePeriod        = 10000;  // ms
+  int  FirePeriodRandAdd = 5000;   // ms
+
+  boolean BurstFire      = false;
+  int  BurstTime         = 2000; // ms
+  int  BurstTimeRandAdd  = 0; // ms
+
+  final static Array GunSpecificFireMask = [
+                              ];
+
+//  Component FireAnimator = new #LineAnimator<CGunPak40FireAnimation>();
+}
+
+// Behavior
+
+class CGunNebelUnitBehavior
+  extends CBaseGroundBehavior
+{
+  boolean  CanMove   = false;
+  boolean  HasRouter = false;
+  boolean  HasRadar  = false;
+
+  Array EnemyRankDangerByDistance =  [
+                                     ]; // default Rank = distance if object not fit any mask
+
+  // *** radar parameters
+
+  float  MaxRadarDistance = 1500; // m
+  float  MinRadarDistance = 5;    // m
+  float  MaxRadarAngle    = 30.0;
+
+  int    UpdateRadarPeriod        = 3000; // ms
+  int    UpdateRadarPeriodRandAdd = 1000; // ms
+
+  // *** movement physical parameters
+
+  // physical limitations
+  Vector MaxSpeed = new Vector( -1.0, 0, 0);
+  float  MinRotateRadius = 0; // unit can turn when staying
+}
+
+class CGunNebelwerferTargetingAnimatorA
+  extends CTargetingAnimator
+{
+  String HorAnimName    = "turret_a";
+  String VerAnimName    = "gun_a";
+
+  float  LeftEndAngle   = -29.0;
+  float  RightEndAngle  =  29.0;
+  float  TopEndAngle    =  -3.5;
+  float  BottomEndAngle =  22.0;
+}
+
+class CGunNebelSubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 0.4;
+  float  Friction1        = 0.4;
+  float  Elasticity       = 0.04;
+}
+
+class CGunNebelUnit extends CUnit, CPushObject
+{
+  final static float DefaultHitPoints = CHitPoints::GunNebelUnitHitPoints;
+  boolean   m_PassiveUnit           = true;
+  
+  static category UnitType = CLASSIFICATOR_T34_GUN;
+
+  static Array PrevExplosionID = [
+                                    [ "", "GunPak40Explosion" ]
+                                 ];
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["GROUND", "ANTITANK", "GER"];
+
+  final static String DefaultSurfaceControl = "PutonGroundLandingJoints";
+
+  static Array  LandingJoints = ["Corner_FL", "Corner_RL", "Corner_RR", "Corner_FR"];
+
+  boolean m_Objectdestroyed = false;
+
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+    // create new trigger
+    logWarning("Nebelwerfer damaged with Energy = "+new String(_Energy));
+
+    Component PhysicsController = GetPhysicsController();
+    if (null != PhysicsController)
+      PhysicsController.CreateTouchTrigger(0.0);
+
+    Component StateControl = GetStateControl();
+    if (null != StateControl)
+    {
+      float HitPoints = StateControl.GetHitPoints() - _Energy * EnergyToHP;
+      //logWarning("Pak40 sucsess touch _Energy = "+new String(_Energy)+" EnergytoHP = "+new String(EnergyToHP)+" and Pak40 have now HP = "+new String(HitPoints)+" and Pak40 has HP = " +new String(StateControl.GetHitPoints()) );
+      StateControl.SetHitPoints(HitPoints);
+
+      if ((HitPoints <= 0.0) && (!m_Objectdestroyed))
+      {
+        user.DestroyObject();
+        m_Objectdestroyed = true;
+        //logWarning("Pak40Unit destroyed");
+      }
+     }
+
+    // play touch sound
+    (new #SoundsArray()).CreateSound("TankCollisionTruckLowSpeedSound", getPosition(this));
+  }
+
+
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CGunNebelUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cu_stat_NebelwerferModel>(), [200, 100, 50, 3]);
+
+    // Setup Weapon
+    SetupWeapon("Gun", new #Weapon<CGunPak40Gun>(),
+      ["Gun"],
+     new #TargetingAnimator<CGunNebelwerferTargetingAnimatorA>());
+
+    PutonGround();
+    SetupBehavior( new #VehicleBehavior<CGunNebelUnitBehavior>());
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CUnit::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.00f);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 0.6);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   0.6);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   0.6);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BUILDING, 0.0);
+
+    SetupPhysicaleObject("CGunNebelSubstance", 1100.0*6, 0.0003);
+    SetModelLifeState(true);
+  }
+}

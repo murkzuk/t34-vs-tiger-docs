@@ -1,0 +1,559 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CTruckOpelBlitzExplosion
+  extends CHeavyTankExplosion
+{
+  float  Damage   = 5.0;
+  float  Radius   = 1.0;
+  float  AlarmRadius = 2.0f;
+}
+// Movement animator
+class CTruckOpelBlitzMovementAnimator
+{
+  String LineSpeedAnim = "wheels_rotate";
+  String TurnSpeedAnim = "wheels_turn";
+
+  boolean RotateAnim = true;
+
+  float MaxLineSpeed = 3.0;            // speed when wheel make full animation per one sec == length of circle
+  float MaxTurnSpeed = Math_HALFPI / 3.0;    // max angle in rotation mode
+}
+
+class CTruckOpelBlitzLeftDoorAnimator
+{
+  String AnimationName = "L_Door";
+  float  AnimationTime = 1.0;
+}
+class CTruckOpelBlitzRightDoorAnimator
+{
+  String AnimationName = "R_Door";
+  float  AnimationTime = 1.0;
+}
+class CTruckOpelBlitzBortDoorAnimator
+{
+  String AnimationName = "Bort";
+  float  AnimationTime = 1.0;
+}
+
+// Behavior
+class CTruckOpelBlitzBehaviorParams extends CBaseBehaviorParams
+{
+  float   MaxAttackSpeed    = 4.5;
+}
+
+class CTruckOpelBlitzBehavior extends CBaseTruckBehavior
+{
+  final static Component SpecParams = new CTruckOpelBlitzBehaviorParams();
+
+  boolean  CanMove   = true;
+  boolean  HasRouter = true;
+  boolean  HasRadar  = true;
+
+  float MaxRadarDistance = 300.0; // m
+  float MinRadarDistance = 5.0;   // m
+  float MaxRadarAngle    = 180.0;
+
+  // *** movement physical parameters
+
+  // physical limitations
+  float   MaxRotateSpeed                = 2.0f;
+  Vector  MaxSpeed                      = new Vector( 6.4, 0, 0);   // m/s
+  Vector  MaxNegativeSpeed              = new Vector( 2.0, 0, 0);   // m/s
+  Vector  MaxAccelleration              = new Vector( 0.3, 0, 0);    // m/(s*s)
+  Vector  MaxNegativeAccelleration      = new Vector( 0.1, 0, 0);  // m/(s*s)
+  Vector  MaxBrakingAccelleration       = new Vector( 3.0, 0, 0);   // m/(s*s)
+  Vector  MaxAngleSpeed                 = new Vector(   0, 0, 1.0);    // [rad/s]
+  Vector  MaxAngleAccelleration         = new Vector(   0, 0, 0.5);  // [rad/(s*s)]
+  Vector  MaxAngleBrakingAccelleration  = new Vector(   0, 0, 2.0); //1);  // [rad/(s*s)]
+
+  float  MinRotateRadius = 5; // unit can turn when staying
+}
+
+// ================================================
+// Device classes
+// ================================================
+
+class CTruckOpelBlitzHullDriverDevice
+  extends CHullDriverDevice
+{
+  String m_NormalSetId  = "Driver_NormalSet";
+  String m_CrashedSetId = "Driver_CrashedSet";
+
+  void HullDriverDeviceDestroyed(Component _HostObject)
+  {
+    logWarning("TruckOpelBlitzHullDriverDevice has been destroyed!");
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+//        Behavior.SetMoveAbility(false,600);
+          Behavior.ActivateMovement(false);
+    }
+    logWarning("TruckOpelBlitzHullDriverDevice has been destroyed! Getting Behavior component!");
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       logWarning("TruckOpelBlitzHullDriverDevice has been destroyed! Getting Mission component!");
+       Component Object = Mission.GetObject(getIdentificator(_HostObject));
+       if(Object != null)
+       {
+         logWarning("TruckOpelBlitzHullDriverDevice has been destroyed! Object component not eq null, sending 0.0 HP to HullEngine!");
+//         Object.SetUnitItemHPPercent("HullEngine", 0.0);
+       }
+    }
+  }
+}
+class CTruckOpelBlitzHullEngineDevice
+  extends CHullEngineDevice
+{
+  String m_NormalSetId  = "Body_NormalSet";
+  String m_CrashedSetId = "Body_CrashedSet";
+
+  void HullEngineDeviceDamaged(Component _HostObject)
+  {
+    Component StateControl = _HostObject.GetObject("StateControl");
+    if (StateControl != null)
+    {
+      StateControl.SetDelayItemHP(_HostObject.GetItem("HullEngine").Index, 0.0, 15);
+    }
+  }
+
+  void HullEngineDeviceDestroyed(Component _HostObject)
+  {
+    Component IdleSound = _HostObject.GetObject("IdleSound");
+    if (IdleSound != null)
+    {
+      IdleSound.StopSoundPlaying(true);
+    }
+
+    Component MoveSound = _HostObject.GetObject("MoveSound");
+    if (IdleSound != null)
+    {
+      MoveSound.StopSoundPlaying(true);
+    }
+
+    Component StateControl = _HostObject.GetObject("StateControl");
+    if (StateControl != null)
+    {
+      StateControl.SetHitPoints(0.0);
+    }
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       Component Object = Mission.GetObject(getIdentificator(_HostObject));
+       if(Object != null)
+       {
+         Component StateControl = _HostObject.GetObject("StateControl");
+         if (StateControl != null)
+         {
+            StateControl.SetDelayItemHP(_HostObject.GetItem("Damaged").Index, 0.0, 5);
+         }
+         Object.OnLifeStateChanged(false);
+         Object.SetUnitItemHPPercent("HullDriver", 0.0);
+         Object.SetUnitItemHPPercent("TrackLeft", 0.0);
+         Object.SetUnitItemHPPercent("TrackRight", 0.0);
+       }
+    }
+  }
+}
+class CTruckOpelBlitzTrackLeftDevice
+  extends CTrackLeftDevice
+{
+  String m_NormalSetId  = "TrackLeft_NormalSet";
+  String m_CrashedSetId = "TrackLeft_CrashedSet";
+
+  void TrackLeftDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      logWarning("TruckOpelBlitzTrackLeftDevice - ActivateMovement false");
+      Behavior.SetMoveAbility(false,600);
+//      Behavior.ActivateMovement(false);
+    }
+  }
+}
+class CTruckOpelBlitzTrackRightDevice
+  extends CTrackRightDevice
+{
+  String m_NormalSetId  = "TrackRight_NormalSet";
+  String m_CrashedSetId = "TrackRight_CrashedSet";
+
+  void TrackRightDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      logWarning("TruckOpelBlitzTrackRightDevice - ActivateMovement false");
+        Behavior.SetMoveAbility(false,600);
+//      Behavior.ActivateMovement(false);
+    }
+  }
+}
+class CTruckOpelBlitzDamagedDevice
+  extends CBulkDevice
+{
+  String m_NormalSetId  = "Damaged_NormalSet";
+  String m_CrashedSetId = "Damaged_CrashedSet";
+
+  void BulkDeviceDestroyed(Component _HostObject) // called when destroyed  TurretDevice
+  {
+     logWarning("TruckOpelBlitzDestroyed BULK");
+
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      logWarning("TruckOpelBlitzDamagedDevice - ActivateMovement false");
+      Behavior.SetMoveAbility(false);
+      Component StateControl = _HostObject.GetObject("StateControl");
+      if (StateControl != null)
+     {
+        StateControl.SetDelayItemHP(_HostObject.GetItem("HullDriver").Index, 0.0, 0);
+        StateControl.SetDelayItemHP(_HostObject.GetItem("HullEngine").Index, 0.0, 30);
+     }
+
+//      Behavior.ActivateMovement(false);
+    }
+  }
+}
+
+class CTruckOpelBlitzSubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 1.7; // to wheels axis
+  float  Friction1        = 1.9;
+  float  Elasticity       = 0.0;
+}
+
+// ================================================
+// Unit class
+// ================================================
+class CTruckOpelBlitzUnit extends CUnit, CPushVehicleObject
+{
+  final static float DefaultHitPoints = CHitPoints::TruckOpelBlitzUnitHitPoints;
+
+  static Array PostExplosionID = [
+                                    ["", "TruckOpelBlitzExplosion"]
+                                 ];
+                                 
+  static category UnitType = CLASSIFICATOR_T34_TRUCK;
+
+  final static Array AutomaticClassificators  = ["GROUND", "VEHICLE", "GER"];
+
+  final static String DefaultSurfaceControl = "PutonGroundLandingJoints";
+
+  static Array  LandingJoints = ["Corner_FL", "Corner_RL", "Corner_RR", "Corner_FR"];
+
+  void CTruckOpelBlitzUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cu_veh_OpelBlitzModel>(), [300, 170, 50, 3]);
+
+    // Setup animations
+    SetupAnimator(
+        "MoveAnim", new #MovementAnimator<CTruckOpelBlitzMovementAnimator>()
+      );
+
+    // Door animator
+    SetDoorEffects(
+        new #LineAnimator<CTruckOpelBlitzLeftDoorAnimator>(),
+        new #LineAnimator<CTruckOpelBlitzRightDoorAnimator>()
+      );
+
+//    SetupWeapon("Weapon_B", new #Weapon<CT80MachineGun>(),
+//      "Turret_A", ["Fire_B"],
+//      new #TargetingAnimator<CT80TargetingAnimatorB>());
+
+
+    // Creates and register unit state component
+    // MoveSound, TraceEffectId
+    SetMovementEffects(
+        new #Emitter<CTruckOpelBlitzMovementSound>(),
+        [
+          ["Vapor_RL", "GroundUnitTraceEffect"],
+          ["Vapor_RR", "GroundUnitTraceEffect"],
+          ["Smoke",   "PetrolSmokeEffect"]
+        ]
+      );
+
+    SetIdleEffects(
+        new #Emitter<CTruckOpelBlitzIdleSound>()
+      );
+
+    SetAccelEffects(
+        new #Emitter<CTruckOpelBlitzAccelSound>(),
+        [
+          ["Smoke", "PetrolAccelSmokeEffect"]
+        ]
+      );
+
+    SetupBehavior(new #VehicleBehavior<CTruckOpelBlitzBehavior>());
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+
+    CUnit::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.1);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.1);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,    1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,    1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,    1.6);
+
+    // create effects for tracks: [ HostId, Effectid, ZoneId ]
+    SetTrackEffects(
+        _Mission,
+        [
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest01, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest01, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest02 , "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest02 , "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest03   , "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest03   , "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest04, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest04, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadForest, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadForest, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush01, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush01, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush02, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush02, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush03, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush03, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush04, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush04, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyLarge, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyLarge, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyRegular, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyRegular, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyCasual, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyCasual, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_SpecialLongAloneTree, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_SpecialLongAloneTree, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting01, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting01, "Right" ],
+          ["Vapor_FL", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting02, "Left" ],
+          ["Vapor_FR", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting02, "Right" ],
+          ["Vapor_FL", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass01, "Left" ],
+          ["Vapor_FR", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass01, "Right" ],
+          ["Vapor_FL", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass02, "Left" ],
+          ["Vapor_FR", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass02, "Right" ],
+          ["Vapor_FL", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass03, "Left" ],
+          ["Vapor_FR", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass03, "Right" ],
+          ["Vapor_FL", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass04, "Left" ],
+          ["Vapor_FR", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass04, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad01, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad01, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad02, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad02, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad03, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad03, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad04, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad04, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01Add, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01Add, "Right" ],
+          ["Vapor_FL", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadObject, "Left" ],
+          ["Vapor_FR", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadObject, "Right" ],
+          ["Vapor_FL", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_AllPassable, "Left" ],
+          ["Vapor_FR", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_AllPassable, "Right" ],
+          ["Vapor_FL", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Left" ],
+          ["Vapor_FR", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Right" ],
+          ["Vapor_FL", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Left" ],
+          ["Vapor_FR", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Right" ],
+          ["Vapor_FL", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Left" ],
+          ["Vapor_FR", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Right" ]
+        ]
+      );
+
+    CreateUnitItem(
+        "HullDriver",
+        CJointPoints::TruckOpelBlitzUnitHULL_DRIVERPoints,
+        ["GenericDamageItemEffect", ""],
+        "HullDriver"
+      );
+    CreateUnitItem(
+        "HullEngine",
+        CJointPoints::TruckOpelBlitzUnitHULL_ENGINEPoints,
+//        ["GenericDamageItemEffect", "GenericSmallFireEffect"],
+        ["GenericSmallFireEffect", "HE7576_85_88BulletArmourHitEffect"],
+        "HullEngine"
+      );
+    CreateUnitItem(
+        "TrackLeft",
+        CJointPoints::TruckOpelBlitzUnitTRACK_LEFTPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "TrackLeft"
+      );
+    CreateUnitItem(
+        "TrackRight",
+        CJointPoints::TruckOpelBlitzUnitTRACK_RIGHTPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "TrackRight"
+      );
+
+    //  Getting Item ID for modificator
+    int DamagedID = CreateUnitItem(
+        "Damaged",
+        CJointPoints::TruckOpelBlitzUnitDAMAGEDPoints,
+        ["GenericDamageItemEffect", "HullGunLayerExplosionEffect"],
+        "Damaged"
+      );
+    LinkDeviceToUnitItem("HullDriver",   new CTruckOpelBlitzHullDriverDevice());
+    LinkDeviceToUnitItem("HullEngine",   new CTruckOpelBlitzHullEngineDevice());
+    LinkDeviceToUnitItem("TrackLeft",    new CTruckOpelBlitzTrackLeftDevice());
+    LinkDeviceToUnitItem("TrackRight",   new CTruckOpelBlitzTrackRightDevice());
+    LinkDeviceToUnitItem("Damaged",      new CTruckOpelBlitzDamagedDevice());
+
+    // Setting modificator for Item ID (UnitModificator * ItemModificator)
+    GetDamageHandler().SetItemDamageTypeModifier(
+      DamagedID,
+      CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,
+      0.0);
+    GetDamageHandler().SetItemDamageTypeModifier(
+      DamagedID,
+      CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,
+      0.0);
+
+    SetupPhysicaleObject("CTruckOpelBlitzSubstance", 3000.0, 0.15);
+  }
+
+  event void SetModelViewState(
+      boolean _State
+    )
+  {
+    // #TODO
+  }
+
+  event void OnSuccessTouchTrigger(
+    float _Energy
+    )
+  {
+    //$LOG
+    logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnSuccessTouchTrigger energy = " + new String(_Energy));
+    Component PhysicsController = GetPhysicsController();
+    if (null != PhysicsController)
+      PhysicsController.CreateTouchTrigger(0.0);
+
+    Component StateControl = GetStateControl();
+    if (null != StateControl)
+    {
+      float HitPoints = StateControl.GetHitPoints() - _Energy * EnergyToHP;
+      StateControl.SetHitPoints(HitPoints);
+
+      if (HitPoints <= 0.0)
+      {
+          user.SetUnitItemHPPercent("HullEngine", 0.0);
+           logWarning("TOCHTRIGGER KILL ENGINE  " );
+       }
+    }
+
+    Component SurfaceControl = GetSurfaceControl();
+    if (null != SurfaceControl)
+      SurfaceControl.EnableSurfaceControl(false);
+
+    // play touch sound
+    if(_Energy > MinEnergyToSound)
+    (new #SoundsArray()).CreateSound("TankCollisionBtrLowSpeedSound", getPosition(this));
+
+    Component Behavior = GetBehavior();
+    if (null != Behavior)
+    {
+      Behavior.ActivateMovement(false);
+      PhysicsController.EnableControl(true);
+      //$HACK
+      CurrentEventID = randnum(INT_MAX);
+      if (checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]))
+      {
+        logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " enabling Behavior after 7 sec");
+        sendEvent(7.0, getIdentificator(this), "OnBehaviorEnabled", [true, CurrentEventID]);
+      }
+    }
+
+    Vector m_Point = new Vector(0.0, 0.0, 0.05);
+    //PushTruck(_Energy*0.15, m_Point);
+    PhysicsController.AppendExternalForce(m_Point, new Vector(0.1, 0.1, 0.2));
+    logWarning("Push: " + new String(m_Point));
+  }
+
+  event void PushTruck(
+      float _Energy,
+      Vector _Point
+    )
+  {
+ //   if(checkMask(this, [], []))
+ //     return;
+
+   // SetSurfaceControl("None");
+    /////////// KillHuman();
+
+    Component PhysicsController = GetPhysicsController();
+    PhysicsController.EnableControl(true);
+    PhysicsController.Activate(true);
+
+//    Vector Force = (new Vector(15.0f, 15.0f, 15.0f) - (getPosition(user).origin - _Point))/3.0f;
+    Vector Force = (getPosition(user).origin - _Point);
+     logWarning("Force X: " + new String(Force.x));
+     logWarning("Force Y: " + new String(Force.y));
+
+    if (Force.x > 0)
+      Force.x = 4.0 - Force.x/2;
+    else
+      Force.x = -4.0 + Force.x/2;
+
+    if (Force.y > 0)
+      Force.y = 4.0 - Force.y/2;
+    else
+      Force.y = -4.0 + Force.y/2;
+
+    Force.z = 1.5f;
+
+    Force.x = Force.x/3;
+    Force.y =  Force.y/3;
+
+    logWarning("MODForce X: " + new String(Force.x));
+    logWarning("MODForce Y: " + new String(Force.y));
+
+    PhysicsController.AppendExternalForce(Force, new Vector(0.1, 0.3, 0.2));
+    logWarning("Push: " + new String(Force));
+
+             Component Behavior = GetBehavior();
+    if (checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]))
+    {
+   //    PhysicsController.Activate(false);
+  //     PhysicsController.EnableControl(false);
+      logWarning(" PUSHTRUCK CLASSIFICATOR_DEAD_OBJECT   " );
+
+        Component SurfaceControl = GetSurfaceControl();
+    if (null != SurfaceControl)
+    {
+      logWarning("PUSHTRUCK ENABLE SurfaceControl  " );
+
+      SurfaceControl.EnableSurfaceControl(true);
+//      PhysicsController.Activate(false);
+//      PhysicsController.EnableControl(false);
+    }
+
+    }
+     logWarning("PUSHTRUCK END " );
+
+  }
+}
+
+

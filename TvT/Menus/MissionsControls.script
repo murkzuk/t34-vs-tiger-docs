@@ -1,0 +1,243 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated menu script file                         
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class CMissionsControls
+{
+  static String m_ControlListClassFile = "Scripts/Menus/MissionsControls.script";
+  static String m_ControlListClassName = "CMissionsControls";
+
+  static Array m_UIControls = [
+    [
+      "USSRBackground",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "USSRMenuBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "GermanBackground",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "GermanMenuBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "MissionName",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.004926624,
+          0.147135407,
+          0.990146279,
+          0.042946670
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.041999999, false],
+        ["Text", ["Menu", "str_DEFAULT_STATIC_TEXT_CAPTION"], false],
+        ["TextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["Alignment", 0.500000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "Load",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.730468750,
+          0.912760437,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Continue", false],
+        ["MaterialHilited", "Continue", false],
+        ["FontName", "Arial", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(0.800000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["", ""], false],
+        ["Z", 0.020000000, true],
+        ["LeftIndent", 0.000000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "Back",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.019531250,
+          0.912760437,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Back", false],
+        ["MaterialHilited", "Back", false],
+        ["FontName", "Arial", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(0.800000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["", ""], false],
+        ["Z", 0.020000000, true],
+        ["LeftIndent", 0.000000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "MissionList",
+      "",
+      "CUIListControl",
+      new CUIPosition(
+          0.351562500,
+          0.419270843,
+          0.295898438,
+          0.207031295
+        ),
+      [
+        ["ListCellPadding", 0.010000000, false],
+        ["Z", 0.010000000, true],
+        ["Hint", "", true]
+      ]
+    ],
+
+    [
+      "Select Mission",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.349609375,
+          0.364583313,
+          0.300781250,
+          0.036458332
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_SELECT_MISSION"], false],
+        ["TextColor", new Color(0.921568, 0.552941, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "MissionListBack",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.341796875,
+          0.407552093,
+          0.316406250,
+          0.233072922
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.270588, 0.262745, 0.168627, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "SelectStringBack",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.341796875,
+          0.351562500,
+          0.316406250,
+          0.057291664
+        ),
+      [
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.270588, 0.262745, 0.168627, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ]
+  ];
+}

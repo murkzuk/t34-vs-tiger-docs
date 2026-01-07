@@ -1,0 +1,82 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CGameSettingsMenu
+  extends CBaseMenu, CGameSettingsControls
+{
+  static String m_MenuClassName = "CGameSettingsMenu";
+
+  void OnInitMenu()
+  {
+    Component GameSettings = new #GameSettings();
+
+    m_MenuController.SetDefaultCommands("", "BackButton");
+    GetObject("cb_GodMode").SetCheck(GameSettings.GetGodMode() );
+    GetObject("cb_UnlimAmmo").SetCheck(GameSettings.GetUnlimAmmo() );
+    GetObject("cb_TargetsOnMap").SetCheck(0 == GameSettings.GetOrientationMode());
+    GetObject("cb_EngineFire").SetCheck(1 == GameSettings.GetUserValue(L"EngineFire", 1));
+    GetObject("h_AIAim").SetScrollPos(GameSettings.GetDifficultyLevel());
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    Component GameSettings = new #GameSettings();
+
+    if ("BackButton" == _ID)
+    {
+      SetAIAim();
+      GoBack();
+    }
+    else
+    if ("cb_GodMode_Button" == _ID)
+    {
+      GetObject("cb_GodMode").ToggleCheck();
+      GameSettings.SetGodMode( GetObject("cb_GodMode").GetChecked() );
+    }
+    else
+    if ("cb_UnlimAmmo_Button" == _ID)
+    {
+      GetObject("cb_UnlimAmmo").ToggleCheck();
+      GameSettings.SetUnlimAmmo( GetObject("cb_UnlimAmmo").GetChecked() );
+    }
+    else
+    if ("cb_TargetsOnMap_Button" == _ID)
+    {
+      GetObject("cb_TargetsOnMap").ToggleCheck();
+      if (GetObject("cb_TargetsOnMap").GetChecked())
+        GameSettings.SetOrientationMode(0);
+      else
+        GameSettings.SetOrientationMode(1);
+    }
+    else
+    if ("cb_EngineFire_Button" == _ID)
+    {
+      GetObject("cb_EngineFire").ToggleCheck();
+      if (GetObject("cb_EngineFire").GetChecked())
+        GameSettings.SetUserValue(L"EngineFire", 1);
+      else
+        GameSettings.SetUserValue(L"EngineFire", 0);
+    }
+    else
+    if ("h_AIAim_Arrow1" == _ID)
+      GetObject("h_AIAim").ScrollDown();
+    else
+    if ("h_AIAim_Arrow2" == _ID)
+      GetObject("h_AIAim").ScrollUp();
+
+  }
+
+  void SetAIAim()
+  {
+    Component GameSettings = new #GameSettings();
+    GameSettings.SetDifficultyLevel(GetObject("h_AIAim").GetScrollPos());
+  }
+}

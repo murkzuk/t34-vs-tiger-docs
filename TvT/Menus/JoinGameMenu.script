@@ -1,0 +1,364 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CJoinGameMenu
+  extends CBaseMenu, CJoinGameControls
+{
+  static String m_MenuClassName = "CJoinGameMenu";
+
+  Component m_GameController;
+
+  static Array m_GameModeText = [
+                                  getLocalized("Menu", "str_ALL"),
+                                  getLocalized("Menu", "str_SKIRMISH"),
+                                  getLocalized("Menu", "str_TEAM")
+                                ];
+
+  static Array m_VehicleText = [
+                                  getLocalized("Menu", "str_VEHICLE_T34"),
+                                  getLocalized("Menu", "str_VEHICLE_TIGER")
+                                ];
+
+  Array m_MapNames;
+  Array m_CFMapNames;
+
+  boolean m_ConnectByIP = false;
+
+  static boolean IsRefreshServers = true;
+
+  Array m_Servers;
+
+  boolean m_InputEnabled = true;
+
+  void SetPlayerName(WString _PlayerName)
+  {
+      GetObject("PlayerName").SetText(_PlayerName);
+  }
+
+  void SetServerIP(String _ServerIP)
+  {
+    GetObject("CustomIP").SetText(new WString(_ServerIP));
+  }
+
+  void OnInitMenu()
+  {
+    Component GameType = GetObject("GameType");
+    GameType.SetItems(m_GameModeText);
+    GameType.SelectItem(0);
+    GameType.CloseList();
+
+    Component VehicleType = GetObject("VehicleType");
+    VehicleType.SetItems(m_VehicleText);
+    VehicleType.SelectItem(CMultiPlayerMenu::m_VehicleType);
+    VehicleType.CloseList();
+
+    Component VehicleNumber = GetObject("VehicleNumber");
+    if (1 == VehicleType.GetCurrentItem())
+      VehicleNumber.SetItems(CMultiPlayerMenu::GermanNumbers);
+    else
+      VehicleNumber.SetItems(CMultiPlayerMenu::USSRNumbersText);
+
+    VehicleNumber.SelectItem(CMultiPlayerMenu::m_VehicleNumber);
+    VehicleNumber.CloseList();
+
+    GetObject("PlayerName").SetText(CMultiPlayerMenu::m_PlayerName);
+
+    m_GameController  = new #GameController();
+
+    GetObject("ServersList").SetSlaveScroller(GetObject("ServersScroll"));
+    GetObject("ServersList").SetListScrollStep(25.0/ 768.0);
+
+    m_MapNames = [];
+    for (int i = 0; i < CMultiPlayerMenu::m_Maps.size(); i++)
+      m_MapNames.add(new WString(getStaticClassMember(CMultiPlayerMenu::m_Maps[i][0] + "_Strings", "MissionName")));
+
+    m_CFMapNames = [];
+    for (int i = 0; i < CMultiPlayerMenu::m_CFMaps.size(); i++)
+      m_CFMapNames.add(new WString(getStaticClassMember(CMultiPlayerMenu::m_CFMaps[i][0] + "_Strings", "MissionName")));
+
+//    m_GameController.ConnectToServerByIP("0.0.0.0", new WString(GetObject("PlayerName").GetText()), 0);
+    Component GameClient = (new #GameController()).GetObject(SOID_GameClient);
+    if (null != GameClient)
+      GameClient.CloseConnection();
+
+    m_InputEnabled = true;
+    RefreshServers();
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("Timer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    CMultiPlayerMenu::m_PlayerName = GetObject("PlayerName").GetText();
+
+    if (!_ID.IsStartsWith("GameType"))
+      GetObject("GameType").CloseList();
+    if (!_ID.IsStartsWith("VehicleType"))
+      GetObject("VehicleType").CloseList();
+    if (!_ID.IsStartsWith("VehicleNumber"))
+      GetObject("VehicleNumber").CloseList();
+
+    if ("BackButton" == _ID)
+    {
+//      (new #GameController()).DeleteSession();
+      GoBack();
+    }
+
+    if (!m_InputEnabled)
+      return;
+
+    if ("GameType_Button" == _ID)
+      GetObject("GameType").OpenList();
+    else
+    if (_ID.IsStartsWith("GameType_Item_"))
+    {
+      GetObject("GameType").SelectIDItem(_ID);
+      RefreshServers();
+    }
+    else
+    if ("VehicleType_Button" == _ID)
+      GetObject("VehicleType").OpenList();
+    else
+    if (_ID.IsStartsWith("VehicleType_Item_"))
+    {
+      GetObject("VehicleType").SelectIDItem(_ID);
+      CMultiPlayerMenu::m_VehicleType = GetObject("VehicleType").GetCurrentItem();
+
+      Component VehicleNumber = GetObject("VehicleNumber");
+      if (1 == GetObject("VehicleType").GetCurrentItem())
+        VehicleNumber.SetItems(CMultiPlayerMenu::GermanNumbers);
+      else
+        VehicleNumber.SetItems(CMultiPlayerMenu::USSRNumbersText);
+      VehicleNumber.SelectItem(0);
+      VehicleNumber.CloseList();
+      CMultiPlayerMenu::m_VehicleNumber = 0;
+    }
+    else
+    if ("VehicleNumber_Button" == _ID)
+      GetObject("VehicleNumber").OpenList();
+    else
+    if (_ID.IsStartsWith("VehicleNumber_Item_"))
+    {
+      GetObject("VehicleNumber").SelectIDItem(_ID);
+      CMultiPlayerMenu::m_VehicleNumber = GetObject("VehicleNumber").GetCurrentItem();
+    }
+    else
+    if ("VehicleNumber_Scroll_Arrow1" == _ID)
+      GetObject("VehicleNumber_List").ScrollUp(25.0/768.0);
+    else
+    if ("VehicleNumber_Scroll_Arrow2" == _ID)
+      GetObject("VehicleNumber_List").ScrollDown(25.0/768.0);
+    else
+    if (_ID.IsStartsWith("Server_"))
+    {
+      GetObject("ServersList").SelectItem(_ID);
+      m_ConnectByIP = false;
+    }
+    if ("CustomIP" == _ID)
+    {
+      GetObject("ServersList").SelectItem("");
+      m_ConnectByIP = true;
+    }
+    else
+    if ("ServersScroll_Arrow1" == _ID)
+      GetObject("ServersList").ScrollUp(25.0/768.0);
+    else
+    if ("ServersScroll_Arrow2" == _ID)
+      GetObject("ServersList").ScrollDown(25.0/768.0);
+
+    if ("RefreshButton" == _ID)
+      RefreshServers();
+    else
+    if ("JoinButton" == _ID)
+    {
+    logWarning("JoinButton");
+      Component GameSettings = new #GameSettings();
+      GameSettings.SetUserValue(L"Net_PlayerName", GetObject("PlayerName").GetText());
+      GameSettings.SetUserValue(L"Net_VehicleType", GetObject("VehicleType").GetCurrentItem());
+      GameSettings.SetUserValue(L"Net_VehicleNumber", GetObject("VehicleNumber").GetCurrentItem());
+
+      Component Timer = new #Timer();
+      RegisterObject("Timer", Timer);
+      Timer.SetEventHandler(this);
+      Timer.SetTickEvent("OnTimerTick", 2.0);
+      Timer.Enable(true);
+
+      ConnectToServer();
+      m_InputEnabled = false;
+//      sendEvent(2.0f, this, "EnableInput", []);
+    }
+  }
+
+  void ConnectToServer()
+  {
+    if (1 == GetObject("VehicleType").GetCurrentItem())
+    {
+      CGameSettings::PlayerUnitScript = "CTankPzVIAusfEUnit";
+      CGameSettings::PlayerNumber = CMultiPlayerMenu::GermanNumbers[GetObject("VehicleNumber").GetCurrentItem()];
+      logWarning("[JoinGammeMenu]1 PlayerUnitScript: " + CGameSettings::PlayerUnitScript +
+        "; PlayerNumber: " + CGameSettings::PlayerNumber);
+    }
+    else
+    {
+      CGameSettings::PlayerUnitScript = "CTankT34_85_44Unit";
+      CGameSettings::PlayerNumber = CMultiPlayerMenu::USSRNumbers[GetObject("VehicleNumber").GetCurrentItem()];
+    }
+
+    int iServer = GetObject("ServersList").GetCurrentItem();
+    if ((iServer >= 0) && (iServer < m_Servers.size()) && (!m_ConnectByIP))
+    {
+      m_GameController.ConnectToServer(m_Servers[iServer], new WString(GetObject("PlayerName").GetText()), 0);
+    }
+    else
+    {
+      //connect by ip
+      WString IPString = GetObject("CustomIP").GetText();
+      if (IsIP(IPString))
+      {
+        logWarning("Good IP");
+        m_GameController.ConnectToServerByIP(new String(IPString), new WString(GetObject("PlayerName").GetText()), 0);
+      }
+      else
+        logError("Bad IP: " + new String(IPString));
+    }
+  }
+
+  boolean IsIP(
+      WString _IPString
+    )
+  {
+    Array Tokens = _IPString.Tokenize(L".");
+    if (Tokens.size() != 4)
+      return false;
+
+    for (int i = 0; i < Tokens.size(); i++)
+    {
+      WString Token = Tokens[i];
+      int Digit = Token.ConvertToInt();
+      if ((Digit > 254) || (Digit < 0))
+        return false;
+    }
+
+    return true;
+  }
+
+  void RefreshServers()
+  {
+    Component WaitText = CreateUIControl("WaitText",
+                            "TextControl",
+                            "CUITextField",
+                            new CUIPosition(0.317382813, 0.6000, 0.356640607, 0.051302120),
+                            [["FontSize", 0.024000000, false]]);
+    WaitText.SetText(L"Please wait...");
+
+    if(!IsRefreshServers) return;
+
+    Component ServersList = GetObject("ServersList");
+    ServersList.ClearWithUnregister();
+    m_GameController.RefreshServersList(true);
+//    GetObject("Timer").Enable(true);
+  }
+
+  void OnTimerTick(
+      float _TimeDelta
+    )
+  {
+    GetObject("Timer").Enable(false);
+    UnregisterObject("Timer");
+    m_InputEnabled = true;
+//    m_GameController.ConnectToServerByIP("0.0.0.0", new WString(GetObject("PlayerName").GetText()), 0);
+    Component GameClient = (new #GameController()).GetObject(SOID_GameClient);
+    if (null != GameClient)
+      GameClient.CloseConnection();
+  }
+
+  void OnServersListChanged()
+  {
+    FillServersList();
+  }
+
+  void FillServersList()
+  {
+    Component ServersList = GetObject("ServersList");
+    Array Servers = m_GameController.GetServersList();
+
+    m_Servers.clear();
+    int GameType = GetObject("GameType").GetCurrentItem();
+    for (int i = 0 ; i < Servers.size(); i++)
+    {
+      if (0 == GameType)
+        m_Servers.add(Servers[i]);
+      if ( (1 == GameType) && (0 == Servers[i].SessionType) )
+        m_Servers.add(Servers[i]);
+      if ( (2 == GameType) && (1 == Servers[i].SessionType) )
+        m_Servers.add(Servers[i]);
+    }
+
+    Array Props = [
+                    ["SelectedColor",   new Color(186.0/255.0, 186.0/255.0 ,176.0/255.0),   false],
+                    ["NormalColor",     new Color(122.0/255.0, 122.0/255.0 ,103.0/255.0),     false],
+                    ["NameWidth", 0.28, false],
+                    ["IPWidth",   0.20, false],
+                    ["TypeWidth", 0.10, false],
+                    ["MapWidth",  0.23, false],
+                    ["StatusWidth", 0.08, false],
+                    ["PingWidth", 0.11, false],
+                    ["FontSize", 0.024, false]
+                  ];
+
+
+    Component Position = new CUIPosition(0.0, 0.0, ServersList.GetUIPosition().Width, 25.0 / 768.0);
+
+    for (int i = 0 ; i < m_Servers.size(); i++)
+    {
+      String NewID = "Server_" + new String(i);
+      Component Element = CreateUIControl(NewID,
+                            "BitmapButton",
+                            "CUIServerField",
+                            Position,
+                            Props);
+
+      Component iServer = m_Servers[i];
+
+      if (CServerDescriptor::ST_CaptureTheFlag == iServer.SessionType)
+        Element.SetText(
+                       iServer.SessionName,
+                       new WString(iServer.ServerIP),
+                       CMultiPlayerMenu::m_GameModeText[iServer.SessionType],
+                       m_CFMapNames[iServer.SessionMap - 1],
+                       L"Open",
+                       new WString(iServer.RoundTripLatencyMS)
+                     );
+      else
+        Element.SetText(
+                       iServer.SessionName,
+                       new WString(iServer.ServerIP),
+                       CMultiPlayerMenu::m_GameModeText[iServer.SessionType],
+                       m_MapNames[iServer.SessionMap - 1],
+                       L"Open",
+                       new WString(iServer.RoundTripLatencyMS)
+                     );
+
+      ServersList.AddControl(NewID);
+    }
+
+/*    Component WaitText = GetObject("WaitText");
+    if (isFunctionExist(WaitText, "UnregisterControl", 0))
+      WaitText.UnregisterControl();*/
+    UnregisterObject("WaitText");
+    if (m_ConnectByIP)
+      ServersList.SelectItem("");
+
+  }
+}

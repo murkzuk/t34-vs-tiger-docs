@@ -1,0 +1,126 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+class CFW190Explosion
+  extends CAirVehicleExplosion
+{
+  float  Damage   = 50.0;
+  float  Radius   = 10.0;
+}
+
+class CFW190BombDropper
+  extends CHeavyGun
+{
+  final static float  InitBulletSpeed = 0.0;
+  final static float  FireDeviation   = 0.30;
+
+  final static Vector GravityVector   = CWorldPhysics::GravityVector;
+
+  final static String  BulletPatternId  = "AirBomb";
+
+  //$tmp - keep fire effects for debug propose
+  //String    FireEffectId    = "";
+  //String    CloudEffectId   = "";
+  final static String    FireSoundId     = "";
+
+  final static int     Ammunition       = 20000;
+  final static int     TargetCameraFilter = ETC_FILTER_TV;
+
+  final static float   AmmoMass = 20.0;
+
+  final static float    LockAngleHMin     = 0.0;
+  final static float    LockAngleHMax     = 0.0;
+  final static float    LockAngleVMin     = 0.0;
+  final static float    LockAngleVMax     = 0.0;
+  final static float    BlockedLockAngle  =  0.0;
+
+  final static boolean  IsManualTargetable = false;
+  final static boolean  CheckObstacles     = false;
+  final static boolean  SelfTargeting      = true;
+
+  Component BurstFireSound  = null;
+
+  final static boolean SpecialWeapon  = true;
+
+  // *** Gun parameters for behavior
+  final static int  FirePeriod          = 1500; // ms
+  //int  FirePeriod2         = 50; // ms
+
+  final static int  FirePeriodRandAdd   = 0; // ms
+
+  final static boolean BurstFire        = false;
+
+  final static Array GunSpecificFireMask = [
+                                [[], []]
+                              ];
+
+  final static boolean ResetLockOnFire  = false;
+  final float          TargetingRange   = 1650;
+  final static int     AutoRepeatDelay  = 100;
+}
+
+class CFW190Unit
+  extends CUnit
+{
+
+  final static float DefaultHitPoints = CHitPoints::FW190UnitHitPoints;
+  
+  static category UnitType = CLASSIFICATOR_T34_AIR;
+
+  final static String DefaultSurfaceControl = "None";
+  static Array  LandingJoints = [""];
+
+
+  static String PrevExplosionID = "FW190Explosion";
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["AIR", "AIRPLANE", "FW"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CFW190Unit()
+  {
+    SetupMesh(new #AnimatedObject<Cu_air_FW_190Model>(), [500, 200, 100, 50, 7]);
+
+    SetMovementEffects(
+        new #Emitter<CPlaneMovementSound>(),
+        []
+      );
+
+    //$TMP WEAPON
+
+    // init and register weapon
+    Component Weapon =  new #Weapon<CFW190BombDropper>();
+    Component Mesh = GetMeshComponent();
+    Weapon.AttachToModel(Mesh, [Mesh]);
+
+    m_WeaponNames.add("WeaponID");
+    m_WeaponList.add(Weapon);
+    RegisterObject("WeaponID",Weapon);
+    //
+
+    SetupBehavior(new #VehicleBehavior<CBaseAirCraftBehavior>());
+  }
+  void Construct(
+    Component _Mission,
+    Component _PropMap
+    )
+  {
+
+    CUnit::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.1);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.1);
+
+  }
+
+}
+
+

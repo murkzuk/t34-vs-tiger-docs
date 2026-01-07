@@ -1,0 +1,35 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CSettingsMenu
+  extends CBaseMenu, CSettingsControls
+{
+  static String m_MenuClassName = "CSettingsMenu";
+
+  void OnInitMenu()
+  {
+    m_MenuController.SetDefaultCommands("", "BackButton");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("BackButton" == _ID)
+      GoBack();
+    if ("VideoSettingsButton" == _ID)
+      Invoke("VideoSettingsMenu");
+    if ("AudioSettingsButton" == _ID)
+      Invoke("AudioSettingsMenu");
+    if ("GameSettingsButton" == _ID)
+      Invoke("GameSettingsMenu");
+    if ("ControlsSettingsButton" == _ID)
+      Invoke("ControlsSettingsMenu");
+  }
+}

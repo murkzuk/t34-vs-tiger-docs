@@ -1,0 +1,141 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+class CGermanTankmanLoadTransportAnim
+{
+  final static String  AnimationName     = "load";
+  final static float   AnimationTime     = 1.0;
+}
+
+class CGermanTankmanUnloadTransportAnim
+{
+  final static String  AnimationName     = "unload";
+  final static float   AnimationTime     = 1.0;
+}
+
+//Rifle
+class CGermanTankmanBulletExplosion
+  extends CRifleBulletExplosion
+{
+  float  Damage   = 5.0;
+}
+
+class CGermanTankmanFakeBulletControl
+  extends CFakeRifleBulletControl
+{
+  String    ExplosionId  = "GermanTankmanBulletExplosion";
+  Component BulletRender = null; //new #StaticEffect<CRifleBulletEffect>();
+}
+
+class CGermanTankman
+  extends CRifle
+{
+  final static String BulletPatternId = "GermanTankmanFakeBullet";
+  final static String FireSoundId     = "98kRifleFireSound";
+
+  Component BurstFireSound  = null; //new #Emitter<CM60RifleFireSound>();
+
+  final static float LockAngleHMin = - 46;
+  final static float LockAngleHMax =   46;
+  final static float LockAngleVMin = - 46;
+  final static float LockAngleVMax =   46;
+
+  // *** Rifle parameters for behavior
+  final static int  FirePeriod        = 3200; // ms
+  final static int  FirePeriodRandAdd = 500;  // ms
+
+  final static float MinDistance      = 1;
+  final static float MaxDistance      = 250;
+
+  final static boolean BurstFire      = false;
+  final static int  BurstTime         = 2000; // ms
+  final static int  BurstTimeRandAdd  = 0;    // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+
+  final static int     AutoRepeatDelay  = 110;
+
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["HUMAN"],[]],  // high priority mask
+                                [["AIR"],  []],  // low priority mask
+                                [[],       []]   // low priority mask: RestrictTo, Exclude
+                              ];
+}
+
+class CGermanTankmanBehaviorParams extends CBaseBehaviorParams
+{
+  float MaxAttackSpeed    = 3.5;
+}
+
+class CGermanTankmanBehavior
+  extends CHumanBehavior
+{
+  final static Component SpecParams = new CGermanTankmanBehaviorParams();
+
+  boolean  CanMove   = true;
+  boolean  HasRouter = true;
+  boolean  HasRadar  = true;
+
+
+  // *** radar parameters
+
+  float  MaxRadarDistance = 600; // m
+  float  MinRadarDistance = 5;    // m
+
+  int    UpdateRadarPeriod        = 3000; // ms
+  int    UpdateRadarPeriodRandAdd = 1000; // ms
+}
+
+
+class CGermanTankmanUnit
+  extends CHumanUnit
+{
+  final static float DefaultHitPoints = CHitPoints::GermanTankmanUnitHitPoints;
+  
+  static category UnitType = CLASSIFICATOR_T34_SOLDER;
+
+//  final static boolean CanStayAttack = false;
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["GROUND", "HUMAN"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CGermanTankmanUnit()
+  {
+    SetupMesh(new #AnimatedObject<Chum_GermanTankmanModel>(), [30, 2]);
+
+    // Setup default substance id
+    SetupObjectSubstance(CSubstances::Body);
+
+    //$TODO animator
+    //GetObject("AnimWeapon").EnableAnimator(false);
+    SetupWeapon("Weapon", new #Weapon<CGermanTankman>(), ["Fire_A"], null);
+    SetupBehavior(new #HumanBehavior<CGermanTankmanBehavior>());
+
+    // Load additionals animations
+    LoadAnimations("ChumansAnimation");
+
+    //SetupLoadTransportAnimation(new #LineAnimator<CGermanTankmanLoadTransportAnim>(),
+    //                            new #LineAnimator<CGermanTankmanUnloadTransportAnim>()
+    //                            );
+
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CHumanUnit::Construct(_Mission, _PropMap);
+  }
+}

@@ -1,0 +1,146 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+class CSovietSoldierRifleLoadTransportAnim
+{
+  final static String  AnimationName     = "load";
+  final static float   AnimationTime     = 1.0;
+}
+
+class CSovietSoldierRifleUnloadTransportAnim
+{
+  final static String  AnimationName     = "unload";
+  final static float   AnimationTime     = 1.0;
+}
+
+//Rifle
+class CSovietSoldierRifleBulletExplosion
+  extends CRifleBulletExplosion
+{
+  float  Damage   = 5.0;
+}
+
+class CSovietSoldierRifleFakeBulletControl
+  extends CFakeRifleBulletControl
+{
+  String    ExplosionId  = "SovietSoldierRifleBulletExplosion";
+  Component BulletRender = null; //new #StaticEffect<CRifleBulletEffect>();
+}
+
+class CSovietSoldierRifle
+  extends CRifle
+{
+  final static String BulletPatternId = "SovietSoldierRifleFakeBullet";
+  final static String FireSoundId     = "MosinRifleFireSound";
+
+  Component BurstFireSound  = null; //new #Emitter<CM60RifleFireSound>();
+
+  final static float LockAngleHMin = - 46;
+  final static float LockAngleHMax =   46;
+  final static float LockAngleVMin = - 46;
+  final static float LockAngleVMax =   46;
+
+  // *** Rifle parameters for behavior
+  final static int  FirePeriod        = 3200; // ms
+  final static int  FirePeriodRandAdd = 500;  // ms
+
+  final static float MinDistance      = 1;
+  final static float MaxDistance      = 250;
+
+  final static boolean BurstFire      = false;
+  final static int  BurstTime         = 2000; // ms
+  final static int  BurstTimeRandAdd  = 0;    // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+
+  final static int     AutoRepeatDelay  = 110;
+  final static boolean   CanFireInMove   = false;
+
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["HUMAN"],[]],  // high priority mask
+                                [["AIR"],  []],  // low priority mask
+                                [[],       []]   // low priority mask: RestrictTo, Exclude
+                              ];
+}
+
+class CSovietSoldierRifleBehaviorParams extends CBaseBehaviorParams
+{
+  float MaxAttackSpeed    = 3.5;
+}
+
+class CSovietSoldierRifleBehavior
+  extends CHumanBehavior
+{
+  final static Component SpecParams = new CSovietSoldierRifleBehaviorParams();
+  
+  static category UnitType = CLASSIFICATOR_T34_SOLDER;
+
+  boolean  CanMove   = true;
+  boolean  HasRouter = true;
+  boolean  HasRadar  = true;
+
+
+  // *** radar parameters
+
+  float  MaxRadarDistance = 300; // m
+  float  MinRadarDistance = 5;    // m
+
+  float   AttackDistanceMin           =  50.0;
+  float   AttackDistanceMax           = 200.0;
+
+
+  int    UpdateRadarPeriod        = 3000; // ms
+  int    UpdateRadarPeriodRandAdd = 1000; // ms
+}
+
+
+class CSovietSoldierRifleUnit
+  extends CHumanUnit
+{
+  final static float DefaultHitPoints = CHitPoints::SovietSoldierRifleUnitHitPoints;
+
+//  final static boolean CanStayAttack = false;
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["GROUND", "HUMAN"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CSovietSoldierRifleUnit()
+  {
+    SetupMesh(new #AnimatedObject<Chum_SovietSoldierRifleModel>(), [30, 2]);
+
+    // Setup default substance id
+    SetupObjectSubstance(CSubstances::Body);
+
+    //$TODO animator
+    //GetObject("AnimWeapon").EnableAnimator(false);
+    SetupWeapon("Weapon", new #Weapon<CSovietSoldierRifle>(), ["Fire_A"], null);
+    SetupBehavior(new #HumanBehavior<CSovietSoldierRifleBehavior>());
+
+    // Load additionals animations
+    LoadAnimations("ChumansAnimation");
+
+    //SetupLoadTransportAnimation(new #LineAnimator<CGermanSoldierRifleLoadTransportAnim>(),
+    //                            new #LineAnimator<CGermanSoldierRifleUnloadTransportAnim>()
+    //                            );
+
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CHumanUnit::Construct(_Mission, _PropMap);
+  }
+}

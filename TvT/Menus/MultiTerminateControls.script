@@ -1,0 +1,190 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated menu script file                         
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class CTerminateControls
+{
+  static String m_ControlListClassFile = "Scripts/Menus/MultiTerminateControls.script";
+  static String m_ControlListClassName = "CTerminateControls";
+
+  static Array m_UIControls = [
+    [
+      "MultiPlayerEndBackground",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "MultiPlayerLoadingBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "MultiPlayerEndBackground2",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "MultiPlayerLoadingBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "frame1",
+      "FrameControl",
+      "CUIFrame",
+      new CUIPosition(
+          0.250976563,
+          0.479166687,
+          0.472851545,
+          0.342968673
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["Thickness", 1.000000000, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true]
+      ]
+    ],
+
+    [
+      "Quit2Button",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.012695313,
+          0.906250000,
+          0.150390625,
+          0.055989582
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialNormal", "Leave", false],
+        ["MaterialHilited", "Leave", false],
+        ["MaterialPressed", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.000000000, false],
+        ["LeftIndent", 0.000000000, true],
+        ["Alignment", 0.500000000, true],
+        ["Text", ["Menu", "str_DEFAULT_BUTTON_CAPTION"], true],
+        ["IsMultiline", false, true],
+        ["NormalTextColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false]
+      ]
+    ],
+
+    [
+      "EndObjBack",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.297851563,
+          0.195312500,
+          0.401562482,
+          0.302604169
+        ),
+      [
+        ["Z", 0.001000000, false],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ],
+
+    [
+      "WarningText",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.323692977,
+          0.278996855,
+          0.351446003,
+          0.200470224
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_SESSION_TERMINATED"], false],
+        ["TextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "Warning",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.432702988,
+          0.211598739,
+          0.124527201,
+          0.050000001
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_WARNING"], false],
+        ["TextColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, true],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ]
+  ];
+}

@@ -1,0 +1,335 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTeamPlayRoomMenu
+  extends CBaseMenu, CTeamPlayRoomControls
+{
+  static String m_MenuClassName = "CTeamPlayRoomMenu";
+
+  static boolean m_Client = false;
+  boolean m_ClientReady = false;
+  static boolean m_RestartMission = false;
+
+  Component m_GameController;
+
+  static Array m_GameModeText = [
+                                  getLocalized("Menu", "str_ALL"),
+                                  getLocalized("Menu", "str_SKIRMISH"),
+                                  getLocalized("Menu", "str_TEAM")
+                                ];
+
+  static Array m_VehicleText = [
+                                  getLocalized("Menu", "str_VEHICLE_T34"),
+                                  getLocalized("Menu", "str_VEHICLE_TIGER")
+                                ];
+
+  static Array m_TeamText = [
+                              L"Red team",    
+                              L"Blue team"
+                            ];
+
+  WString m_ChatText = L"";
+
+  int m_Team = 0;
+
+  void OnInitMenu()
+  {
+    Component VehicleType = GetObject("VehicleType");
+    VehicleType.SetItems(m_VehicleText);
+    VehicleType.SelectItem(CMultiPlayerMenu::m_VehicleType);
+    VehicleType.CloseList();
+
+    m_GameController  = new #GameController();
+
+    Component Session = m_GameController.GetGameSession();
+    m_Team = Session.GetPlayerTeam();
+    logWarning(new String(m_Team));
+      
+    Component Team = GetObject("Team");
+    Team.SetItems(m_TeamText);
+    Team.SelectItem(m_Team);
+    Team.CloseList();
+
+    Component VehicleNumber = GetObject("VehicleNumber");
+    VehicleNumber.SetItems(CMultiPlayerMenu::USSRNumbersText);
+    VehicleNumber.SelectItem(CMultiPlayerMenu::m_VehicleNumber);
+    VehicleNumber.CloseList();    
+
+    GetObject("PlayerName").SetText(CMultiPlayerMenu::m_PlayerName);
+
+    m_ClientReady = false;
+    if (m_Client)
+    {
+      GetObject("StartButton").SetMaterials("Ready", "Ready", "");
+    }
+    else
+    {
+      GetObject("StartButton").SetMaterials("StartMission", "StartMission", "");
+      m_GameController.GetGameSession().SetSessionStatus(CPlayerStat::CS_Ready, true);
+    }
+
+    GetObject("SessionName").SetText(new WString(m_GameController.GetGameSession().GetSessionInfo().m_Descriptor.SessionName));
+
+    for (int i = 1; i <= 16; i++)
+    {
+      setVisibleState(GetObject("GameCell" + new String(i)), false);
+      setVisibleState(GetObject("ReadyCell" + new String(i)), false);
+    }
+
+    Component Mission        = m_GameController.GetLoadedMission();
+    GetObject("MissionMap").SetMaterial(Mission.m_MissionBriefingPicMaterial);
+    GetObject("BriefingText").SetText(getStaticClassMember(Mission.GetClassName() + "_Strings", "BriefingText"));
+    GetObject("MissionName").SetText(getStaticClassMember(Mission.GetClassName() + "_Strings", "MissionName"));
+
+    m_MenuController.SetDefaultCommands("SendMessage", "");
+
+    // Setup timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("OnTimerTick", 0.1);
+    Timer.Enable(false);
+    RegisterObject("Timer", Timer);
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("Timer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if (!_ID.IsStartsWith("VehicleType"))
+      GetObject("VehicleType").CloseList();
+    if (!_ID.IsStartsWith("VehicleNumber"))
+      GetObject("VehicleNumber").CloseList();
+    if (!_ID.IsStartsWith("Team"))
+      GetObject("Team").CloseList();
+
+    if ("SendMessage" == _ID)
+    {
+      WString Message = GetObject("ChatString").GetText();
+      Component Mission = m_GameController.GetLoadedMission();
+      if ((null != Mission) && (!Message.isEmpty()))
+      {
+        GetObject("ChatString").SetText(L"");
+        Mission.SendChatMessage(Message);
+      }
+    }
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("ChatText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("ChatText").ScrollDown();
+    else
+    if ("BackButton" == _ID)
+    {
+      m_GameController.CloseMultiplayer();
+      Component Session = m_GameController.GetGameSession();
+      Session.CleanupPlayersInfo();
+      Invoke("MultiPlayerMenu");
+    }
+
+    if (m_ClientReady)
+      return;
+
+    if ("GameType_Button" == _ID)
+      GetObject("GameType").OpenList();
+    else
+    if (_ID.IsStartsWith("GameType_Item_"))
+    {
+      GetObject("GameType").SelectIDItem(_ID);
+      RefreshServers();
+    }
+    else
+    if ("Team_Button" == _ID)
+      GetObject("Team").OpenList();
+    else
+    if (_ID.IsStartsWith("Team_Item_"))
+    {
+      GetObject("Team").SelectIDItem(_ID);
+      m_Team = GetObject("Team").GetCurrentItem();
+      Component Session = m_GameController.GetGameSession();
+      logWarning(new String(m_Team));
+      Session.SetPlayerTeam(m_Team);
+      Session.SendPlayerInfo();
+    }
+    else
+    if ("VehicleType_Button" == _ID)
+      GetObject("VehicleType").OpenList();
+    else
+    if (_ID.IsStartsWith("VehicleType_Item_"))
+    {
+      GetObject("VehicleType").SelectIDItem(_ID);
+      CMultiPlayerMenu::m_VehicleType = GetObject("VehicleType").GetCurrentItem();
+
+      Component VehicleNumber = GetObject("VehicleNumber");
+      if (1 == GetObject("VehicleType").GetCurrentItem())
+        VehicleNumber.SetItems(CMultiPlayerMenu::GermanNumbers);
+      else
+        VehicleNumber.SetItems(CMultiPlayerMenu::USSRNumbersText);
+      VehicleNumber.SelectItem(0);
+      VehicleNumber.CloseList();
+      CMultiPlayerMenu::m_VehicleNumber = 0;
+    }
+    else
+    if ("VehicleNumber_Button" == _ID)
+      GetObject("VehicleNumber").OpenList();
+    else
+    if (_ID.IsStartsWith("VehicleNumber_Item_"))
+    {
+      GetObject("VehicleNumber").SelectIDItem(_ID);
+      CMultiPlayerMenu::m_VehicleNumber = GetObject("VehicleNumber").GetCurrentItem();
+    }
+    else
+    if ("VehicleNumber_Scroll_Arrow1" == _ID)
+      GetObject("VehicleNumber_List").ScrollUp(25.0/768.0);
+    else
+    if ("VehicleNumber_Scroll_Arrow2" == _ID)
+      GetObject("VehicleNumber_List").ScrollDown(25.0/768.0);
+    else
+    if ("StartButton" == _ID)
+    {
+      if (1 == GetObject("VehicleType").GetCurrentItem())
+      {
+        if(m_Team == 0)
+          CGameSettings::PlayerUnitScript = "CRedTankPzVIAusfEUnit";
+        else
+          CGameSettings::PlayerUnitScript = "CBlueTankPzVIAusfEUnit";
+        CGameSettings::PlayerNumber = CMultiPlayerMenu::GermanNumbers[GetObject("VehicleNumber").GetCurrentItem()];
+        logWarning("[TeamMenu]5 PlayerUnitScript: " + CGameSettings::PlayerUnitScript +
+        "; PlayerNumber: " + CGameSettings::PlayerNumber);
+      }
+      else
+      {
+        if(m_Team == 0)
+          CGameSettings::PlayerUnitScript = "CRedTankT34_85_44Unit";
+        else
+          CGameSettings::PlayerUnitScript = "CBlueTankT34_85_44Unit";
+        //CGameSettings::PlayerUnitScript = "CTankT34_85_44Unit";
+        CGameSettings::PlayerNumber = CMultiPlayerMenu::USSRNumbers[GetObject("VehicleNumber").GetCurrentItem()];
+        logWarning("[TeamMenu]5 PlayerUnitScript: " + CGameSettings::PlayerUnitScript +
+        "; PlayerNumber: " + CGameSettings::PlayerNumber);
+      }
+
+      if (m_Client)
+      {
+        m_ClientReady = true;
+        m_GameController.GetGameSession().SetSessionStatus(CPlayerStat::CS_Ready, true);
+      }
+      else
+      {
+//        if (m_RestartMission)
+//          m_GameController.GetGameSession().RestartCFMission();
+        m_GameController.GetGameSession().StartGameSession();
+      }
+
+    }
+
+  }
+
+  void AddChatMessage(
+      WString _Message
+    )
+  {
+//    logWarning("Team menu: " + new String(_Message));
+    if (m_ChatText.isEmpty())
+      m_ChatText = _Message;
+    else
+      m_ChatText = m_ChatText + L"\n" + _Message;
+
+    Component Chat = GetObject("ChatText");
+    Chat.SetText(m_ChatText);
+    Chat.SetSlaveScroller(GetObject("vs_scroll"));
+    Chat.Update();
+    Chat.ScrollDown();
+  }
+
+  void OnTimerTick(
+      float _TimeDelta
+    )
+  {
+    GetObject("ChatText").Update();
+
+    Component Session = m_GameController.GetGameSession();
+    Array PlayersInfo = Session.GetPlayersInfo();
+//    int PlayersCount = PlayersInfo.size();
+    boolean AllPlayersReady = true;
+    int RedTeamCount = 0;
+    int BlueTeamCount = 0;
+
+    for (int i = 0; i < PlayersInfo.size(); i++)
+    {
+      if (CPlayerStat::CS_Ready != PlayersInfo[i].SessionStatus)
+        AllPlayersReady = false;
+
+      if (0 == PlayersInfo[i].SessionTeam)
+      {
+        RedTeamCount++;
+        Component GameCell = GetObject("GameCell" + new String(RedTeamCount*2 - 1));
+        Component ReadyCell = GetObject("ReadyCell" + new String(RedTeamCount*2 - 1));
+        GameCell.SetText(new WString(PlayersInfo[i].Name));
+        if (CPlayerStat::CS_Ready != PlayersInfo[i].SessionStatus)
+        {
+          ReadyCell.SetTextColors(new Color(0.7, 0.7, 0.6), new Color(0.7, 0.7, 0.6));
+          ReadyCell.SetText(getLocalized("Menu", "str_WAIT"));
+        }
+        else
+        {
+          ReadyCell.SetTextColors(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0));
+          ReadyCell.SetText(getLocalized("Menu", "str_READY"));
+        }
+      }
+      else
+      {
+        BlueTeamCount++;
+        Component GameCell = GetObject("GameCell" + new String(BlueTeamCount*2));
+        Component ReadyCell = GetObject("ReadyCell" + new String(BlueTeamCount*2));
+        GameCell.SetText(new WString(PlayersInfo[i].Name));
+        if (CPlayerStat::CS_Ready != PlayersInfo[i].SessionStatus)
+        {
+          ReadyCell.SetTextColors(new Color(0.7, 0.7, 0.6), new Color(0.7, 0.7, 0.6));
+          ReadyCell.SetText(getLocalized("Menu", "str_WAIT"));
+        }
+        else
+        {
+          ReadyCell.SetTextColors(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0));
+          ReadyCell.SetText(getLocalized("Menu", "str_READY"));
+        }
+      }
+    }
+
+    for (int i = 1; i <= 8; i++)
+    {
+      setVisibleState(GetObject("GameCell" + new String(i*2 - 1)), (i <= RedTeamCount));
+      setVisibleState(GetObject("GameCell" + new String(i*2)), (i <= BlueTeamCount));
+      setVisibleState(GetObject("ReadyCell" + new String(i*2 - 1)), (i <= RedTeamCount));
+      setVisibleState(GetObject("ReadyCell" + new String(i*2)), (i <= BlueTeamCount));
+    }
+
+    Component SessionStatus = GetObject("SessionStatus");
+    if ((0 == BlueTeamCount) || (0 == RedTeamCount) || (!AllPlayersReady))
+    {
+      SessionStatus.SetTextColor(new Color(0.7, 0.7, 0.6));
+      SessionStatus.SetText(getLocalized("Menu", "str_WAIT"));
+    }
+    else
+    {
+      SessionStatus.SetTextColor(new Color(1.0, 1.0, 1.0));
+      SessionStatus.SetText(getLocalized("Menu", "str_READY"));
+    }
+
+    if (m_Client)
+      GetObject("StartButton").SetDisabled(m_ClientReady);
+    else
+      GetObject("StartButton").SetDisabled((0 == BlueTeamCount) || (0 == RedTeamCount) || (!AllPlayersReady));
+  }
+}

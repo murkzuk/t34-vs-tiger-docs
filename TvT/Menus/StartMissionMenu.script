@@ -1,0 +1,141 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CStartMissionBase
+{
+//  static WString CamaignName      = CCampaignNames::str_CAMPAIGN1;
+  static String  MissionClassName = "CC1M3Mission"; //$TMP
+
+  void FillMissionParams()
+  {
+    // MissionName - primary text element
+    Component MissionNameObj = GetObject("MissionName");
+    if (MissionNameObj != null)
+    {
+      MissionNameObj.SetText(
+          CMissionsMenu::CampaignName + L" - " +
+          getStaticClassMember(MissionClassName + "_Strings", "MissionName")
+        );
+    }
+
+    // MissionMap - briefing picture material
+    Component MissionMapObj = GetObject("MissionMap");
+    if (MissionMapObj != null)
+    {
+      MissionMapObj.SetMaterial(
+          getStaticClassMember(MissionClassName, "m_MissionBriefingPicMaterial")
+        );
+    }
+
+    // BriefingText - mission briefing content
+    Component BriefingTextObj = GetObject("BriefingText");
+    if (BriefingTextObj != null)
+    {
+      Component vsScrollObj = GetObject("vs_scroll");
+      if (vsScrollObj != null)
+      {
+        BriefingTextObj.SetSlaveScroller(vsScrollObj);
+      }
+      BriefingTextObj.SetText(getStaticClassMember(MissionClassName + "_Strings", "BriefingText"));
+    }
+
+    // MissionText - mission objectives
+    Component MissionTextObj = GetObject("MissionText");
+    if (MissionTextObj != null)
+    {
+      MissionTextObj.SetText(getStaticClassMember(MissionClassName, "ObjectivesText"));
+    }
+
+//    FillObjectivesList(0.0);
+  }
+}
+
+class CStartMissionMenu
+  extends CBaseMenu, CStartMissionControls, CStartMissionBase, CBackgroundsMenu
+{
+  static String m_MenuClassName = "CStartMissionMenu";
+  final static String m_Music = "";
+
+  void OnInitMenu()
+  {
+    SetBackground(CMissionsMenu::CampaignNumber);
+
+    m_MenuController.SetDefaultCommands("StartButton", "BackButton");
+
+    FillMissionParams();
+
+    // Setup timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("Update", 0.5);
+    Timer.Enable(true);
+    RegisterObject("TmpTimer", Timer);
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("TmpTimer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    CBaseMenu::OnControlActivated(_ID);
+
+    if ("BackButton" == _ID)
+      GoBack();
+    else
+    if ("StartButton" == _ID)
+      sendEvent(0, SOID_GameController, "BeginNewGame", [MissionClassName]);
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("BriefingText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("BriefingText").ScrollDown();
+  }
+
+
+  void FillObjectivesList(
+      float _Z
+    )
+  {
+    GetObject("ObjectivesList").ClearWithUnregister();
+    GetObject("ObjectivesList").SetListScrollStep(CUIObjectiveElement::GetElementHeight());
+
+    Array Objectives = getStaticClassMember(MissionClassName, "m_MissionObjectives");
+//    Array Objectives = new #GameController().GetLoadedMission().GetMissionObjectives();
+
+    Component Position = new CUIPosition(0.0, 0.0, 0.29, 14.0 / 768.0);
+    Array Props = [];
+
+    for (int Index = 0; Index < Objectives.size(); Index++)
+    {
+      String NewID = "ObjectivesElement_" + new String(Index + 1);
+      CreateUIControl(NewID,
+                      "",
+                      "CUIObjectiveElement",
+                      Position,
+                      Props);
+
+      GetObject(NewID).SetObjectiveText(Objectives[Index][1]);
+      GetObject(NewID).SetObjectiveStatus(Objectives[Index][2]);
+
+      GetObject("ObjectivesList").AddControl(NewID);
+    }
+  }
+
+  void Update(
+      float _DelatTime
+    )
+  {
+    GetObject("BriefingText").Update(); // render time update
+  }
+}

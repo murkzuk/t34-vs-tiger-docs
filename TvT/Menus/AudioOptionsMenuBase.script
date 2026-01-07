@@ -1,0 +1,122 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CAudioOptionsMenuBase
+{
+  float m_CurrentEffectsVolume;
+  float m_CurrentMusicVolume;
+
+  //
+  // Construction
+  //
+
+  CVideoOptionsMenuBase()
+  {
+  }
+
+  //
+  // CBaseMenu
+  //
+
+  void OnInitMenu()
+  {
+    GetSettings();
+    ApplySettings();
+    CheckChanges();
+  }
+
+  void OnCloseMenu()
+  {
+    CancelSettings();
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("h_effects_Arrow1" == _ID)
+      GetObject("h_effects").ScrollDown();
+    else
+    if ("h_effects_Arrow2" == _ID)
+      GetObject("h_effects").ScrollUp();
+    else
+    if ("h_music_Arrow1" == _ID)
+      GetObject("h_music").ScrollDown();
+    else
+    if ("h_music_Arrow2" == _ID)
+      GetObject("h_music").ScrollUp();
+
+    if (_ID.IsStartsWith("h_effects")    ||
+        _ID.IsStartsWith("h_music"))
+      SetSettings();
+
+    CheckChanges();
+  }
+
+  //
+  // Service
+  //
+
+  void GetSettings()
+  {
+    Component GameSettings = new #GameSettings();
+
+    m_CurrentEffectsVolume = GameSettings.GetSoundFxVolume();
+    m_CurrentMusicVolume   = GameSettings.GetMusicVolume();
+
+    Component Control;
+    Control = GetObject("h_effects");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentEffectsVolume);
+
+    Control = GetObject("h_music");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentMusicVolume);
+  }
+
+  void SetSettings()
+  {
+    m_CurrentEffectsVolume = GetObject("h_effects").GetScrollPhase();
+    m_CurrentMusicVolume   = GetObject("h_music").GetScrollPhase();
+  }
+
+  boolean CheckChanges()
+  {
+    Component GameSettings = new #GameSettings();
+
+    return (
+        m_CurrentEffectsVolume != GameSettings.GetSoundFxVolume() ||
+        m_CurrentMusicVolume   != GameSettings.GetMusicVolume()
+      );
+  }
+
+  void ApplySettings()
+  {
+    Component GameSettings = new #GameSettings();
+
+    if (m_CurrentEffectsVolume != GameSettings.GetSoundFxVolume())
+      GameSettings.SetSoundFxVolume(m_CurrentEffectsVolume);
+
+    if (m_CurrentMusicVolume != GameSettings.GetMusicVolume())
+      GameSettings.SetMusicVolume(m_CurrentMusicVolume);
+
+    GetSettings();
+  }
+
+  void CancelSettings()
+  {
+    GetSettings();
+  }
+
+  void ResetSettings()
+  {
+    new #GameSettings().SetDefaultVideoSettings();
+    GetSettings();
+  }
+}

@@ -1,0 +1,370 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CGunPak40FireAnimation
+{
+  final static String  AnimationName     = "gun_a_recoil";
+  final static float   AnimationTime     = 1.0;
+}
+
+class CGunPak40Explosion
+  extends CUnitExplosion
+{
+  float  Damage   = 5.0;
+  float  Radius   = 1.0;
+  String SoundId  = "GunPak40ExplosionSound";
+}
+
+class CGunPak40GunCalibreBulletExplosion
+  extends CCalibreGun7576BulletExplosion
+{
+  float  Damage   = CPiercing::GunPak40CalibreDamage;
+  float  FireDamage   = CPiercing::GunPak40CalibreFireDamage;
+  float     Radius     = CPiercing::GunPak40CalibreRadius;
+  //Component Debris     = new CGunPak40GunCalibreBulletDebrisCloud();
+}
+
+class CGunPak40GunCalibreBulletDebrisCloud
+{
+  int    DebrisQuantity  = CPiercing::GunPak40CalibreDebrisQuantity;
+  String DebrisPatternID = "GunPak40GunCalibreBulletDebris";
+  float  DebrisSpeed     = 300.0;
+  float  DebrisSpeedDev  = 50.0;
+  Vector DebrisDir       = new Vector(0.0, 0.0, 1.0);
+  float  DebrisMinAngle  = 0.0;
+  float  DebrisMaxAngle  = 90.0;
+}
+
+class CGunPak40GunCalibreBulletDebrisControl
+{
+  Array     Classificator = [];
+  boolean   IsMotionBlur  = true;
+  float     MaxDistance   = CPiercing::GunPak40CalibreDebrisMaxDistance;
+  String    ExplosionId   = "GunPak40GunCalibreBulletDebrisExplosion";
+  float     Mass          = 0.02;
+}
+
+class CGunPak40GunCalibreBulletDebrisExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = CPiercing::GunPak40CalibreDebrisDamage;
+}
+
+class CGunPak40GunSubcalibreBulletExplosion
+  extends CSubcalibreGun7576BulletExplosion
+{
+  float  Damage   = CPiercing::GunPak40SubcalibreDamage;
+  float  FireDamage   = CPiercing::GunPak40SubcalibreFireDamage;
+}
+
+class CGunPak40GunHEBulletExplosion
+  extends CHEGun7576BulletExplosion
+{
+  float  Damage   = CPiercing::GunPak40HEDamage;
+  float  FireDamage   = CPiercing::GunPak40HEFireDamage;
+
+  float     Radius = CPiercing::GunPak40HERadius;
+  //Component Debris = new CGunPak40GunHEBulletDebrisCloud();
+}
+
+class CGunPak40GunHEBulletDebrisCloud
+{
+  int    DebrisQuantity  = CPiercing::GunPak40HEDebrisQuantity;
+  String DebrisPatternID = "GunPak40GunHEBulletDebris";
+  float  DebrisSpeed     = 300.0;
+  float  DebrisSpeedDev  = 50.0;
+  Vector DebrisDir       = new Vector(0.0, 0.0, 1.0);
+  float  DebrisMinAngle  = 0.0;
+  float  DebrisMaxAngle  = 90.0;
+}
+class CGunPak40GunHEBulletDebrisControl
+{
+  Array     Classificator = [];
+  boolean   IsMotionBlur  = true;
+  float     MaxDistance   = CPiercing::GunPak40HEDebrisMaxDistance;
+  String    ExplosionId   = "GunPak40GunHEBulletDebrisExplosion";
+  float     Mass          = 0.02;
+}
+
+class CGunPak40GunHEBulletDebrisExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = CPiercing::GunPak40HEDebrisDamage;
+}
+class CGunPak40GunCalibreBulletControl
+  extends CCalibreBulletControl
+{
+  String    ExplosionId  = "GunPak40GunCalibreBulletExplosion";
+  Vector    GravityAccel = CPiercing::ShellGravityVector;
+  float     BulletSpeed  = CPiercing::GunPak40CalibreBulletSpeed;
+  float     MaxDistance           = CPiercing::GunPak40CalibreMaxDistance;
+  float     PenetrationPower      = CPiercing::GunPak40CalibrePenetrationPower;
+  Array     PenetrationByDistance = CPiercing::GunPak40CalibrePenetrationByDistance;
+}
+
+class CGunPak40GunSubCalibreBulletControl
+  extends CSubcalibreBulletControl
+{
+  String    ExplosionId  = "GunPak40GunSubcalibreBulletExplosion";
+  Vector    GravityAccel = CPiercing::ShellGravityVector;
+  float     BulletSpeed  = CPiercing::GunPak40SubcalibreBulletSpeed;
+  float     MaxDistance     = CPiercing::GunPak40SubcalibreMaxDistance;
+  float     PenetrationPower = CPiercing::GunPak40SubcalibrePenetrationPower;
+  Array     PenetrationByDistance = CPiercing::GunPak40SubcalibrePenetrationByDistance;
+}
+
+class CGunPak40GunHEBulletControl
+  extends CHEBulletControl
+{
+  String    ExplosionId  = "GunPak40GunHEBulletExplosion";
+  Vector    GravityAccel = CPiercing::ShellGravityVector;
+  float     BulletSpeed  = CPiercing::GunPak40HEBulletSpeed;
+  float     MaxDistance  = CPiercing::GunPak40HEMaxDistance;
+  float     PenetrationPower = CPiercing::GunPak40HEPenetrationPower;
+  Array     PenetrationByDistance = CPiercing::GunPak40HEPenetrationByDistance;
+}
+
+class CGunPak40CalibreAmmo
+{
+  final static String BulletPatternId = "GunPak40GunCalibreBullet";
+  final static int    Ammunition      = 2000;
+  final static Array  TargetMask      = [[],["HUMAN", "VEHICLE", "BLD_WAR", "BLD_CIV"]];
+  final static float  LoadingTime     = 0.0f;
+}
+
+class CGunPak40SubCalibreAmmo
+{
+  final static String BulletPatternId = "GunPak40GunSubCalibreBullet";
+  final static int    Ammunition      = 2000;
+  final static Array  TargetMask      = [[],["HUMAN", "VEHICLE", "BLD_WAR", "BLD_CIV"]];
+  final static float  LoadingTime     = 0.0f;
+}
+
+class CGunPak40HEAmmo
+{
+  final static String BulletPatternId = "GunPak40GunHEBullet";
+  final static int    Ammunition      = 2000;
+  final static Array  TargetMask      = [[],["HEAVYTANK", "TANK", "BLD_WAR", "BLD_CIV"]];
+  final static float  LoadingTime     = 0.0f;
+}
+class CGunPak40Gun
+  extends CHeavyGun
+{
+  String CloudEffectId   = "HeavyGunMuzzleCloudEffect";
+  float  InitBulletSpeed = 0.0;
+  float  FireDeviation   = 1.5;
+  String BulletPatternId = "";
+  Vector GravityVector   = CPiercing::ShellGravityVector;
+
+  final static boolean HighTrajectory  = false;
+
+  String    FireSoundId     = "Pak40GunFireSound";
+
+  final static Array Ammo = [
+                              new CGunPak40CalibreAmmo(),
+                              new CGunPak40SubCalibreAmmo(),
+                              new CGunPak40HEAmmo()
+                            ];
+
+  //$TMP TEST DATA
+  final static Array AmmoTargetUse    = [
+                                          //HEAVYTANK
+                                          [0, [["HEAVYTANK"],[]], [[500.0, 25.0, 2000.0, 100.0], [[1000.0, 40.0], [1500.0, 80.0]]]],
+                                          [1, [["HEAVYTANK"],[]], [[500.0, 75.0, 2000.0, 0.0  ], [[1000.0, 60.0], [1500.0, 20.0]]]],
+                                          //TANK
+                                          [0, [["TANK"],     []], [[500.0, 35.0, 2000.0, 100.0], [[1000.0, 45.0], [1500.0, 90.0]]]],
+                                          [1, [["TANK"],     []], [[500.0, 65.0, 2000.0, 0.0  ], [[1000.0, 55.0], [1500.0, 10.0]]]],
+                                          //VEHICLE
+                                          [2, [["VEHICLE"],  []], [[500.0, 50.0, 2000.0, 100.0], [[1000.0, 90.0], [1500.0, 100.0]]]],
+                                          //HUMAN
+                                          [2, [["HUMAN"],    []], [[500.0, 25.0, 1500.0, 0.0],   [[1000.0, 10.0]]]]//,
+                                          //BLD_WAR
+                                          //[0, [["BLD_WAR"],  []], [[500.0, 90.0, 1000.0, 100.0], []]],
+                                          //[2, [["BLD_WAR"],  []], [[500.0, 10.0, 1000.0, 0.0  ], []]],
+                                          //BLD_CIV
+                                          //[2, [["BLD_CIV"],  []], [[500.0, 80.0, 1000.0, 100.0], []]]
+                                        ];
+
+  final static float    LockAngleHMin     = -29.0;
+  final static float    LockAngleHMax     =  29.0;
+  final static float    LockAngleVMin     = -3.5;
+  final static float    LockAngleVMax     =  22.0;
+  final static float    BlockedLockAngle  =  1.0;
+
+  final static float DirectionSpeedH  = 6.0; // deg / sec  • horizontal
+  final static float DirectionSpeedV  = 3.5; // deg / sec  • vertical
+
+  // *** Gun parameters for behavior
+  boolean SpecialWeapon  = false;
+
+  // *** Gun parameters for behavior
+  int  FirePeriod        = 10000;  // ms
+  int  FirePeriodRandAdd = 5000;   // ms
+
+  boolean BurstFire      = false;
+  int  BurstTime         = 2000; // ms
+  int  BurstTimeRandAdd  = 0; // ms
+
+  final static Array GunSpecificFireMask = [
+//                                [["GROUND"],[]], // high priority mask: RestrictTo, Exclude
+//                                [["AIR"],[]]   // low priority mask
+                              ];
+
+  Component FireAnimator = new #LineAnimator<CGunPak40FireAnimation>();
+}
+
+// Behavior
+
+class CGunPak40UnitBehavior
+  extends CBaseGroundBehavior
+{
+  boolean  CanMove   = false;
+  boolean  HasRouter = false;
+  boolean  HasRadar  = true;
+
+  Array EnemyRankDangerByDistance =  [
+                                       [[ ["HEAVYTANK"],[] ], [ [ 0.0, 200.0, 1500.0, 30.0 ], [ [400.0, 150.0] ] ] ],
+                                       [[ ["TANK"],[] ],      [ [ 0.0, 150.0, 1500.0, 50.0 ], [ [400.0, 140.0] ] ] ], // [ Mask, PiercLinFunctionByDist]
+                                       [[ ["ANTITANK"],[] ],  [ [ 0.0, 150.0, 1500.0, 45.0 ], [ [400.0, 130.0] ] ] ],
+                                       [[ ["BTR"],[] ],       [ [ 0.0, 130.0, 1500.0, 30.0 ], [ [400.0, 125.0] ] ] ],
+                                       [[ ["BLD_WAR"],[] ],   [ [ 0.0, 100.0, 1500.0, 35.0 ], [ [400.0,  80.0] ] ] ],
+                                       [[ ["VEHICLE"],[] ],   [ [ 0.0,  10.0, 1500.0, 5.0 ],  [ [400.0,  10.0] ] ] ],
+                                       [[ ["HUMAN"],[] ],     [ [ 0.0,  35.0, 1500.0, 2.0 ],  [ [400.0,   5.0] ] ] ]
+                                     ]; // default Rank = distance if object not fit any mask
+
+  // *** radar parameters
+
+  float  MaxRadarDistance = 1500; // m
+  float  MinRadarDistance = 5;    // m
+  float  MaxRadarAngle    = 30.0;
+
+  int    UpdateRadarPeriod        = 3000; // ms
+  int    UpdateRadarPeriodRandAdd = 1000; // ms
+
+  // *** movement physical parameters
+
+  // physical limitations
+  Vector MaxSpeed = new Vector( -1.0, 0, 0);
+  float  MinRotateRadius = 0; // unit can turn when staying
+}
+
+class CGunPak40TargetingAnimatorA
+  extends CTargetingAnimator
+{
+  String HorAnimName    = "turret_a";
+  String VerAnimName    = "gun_a";
+
+  float  LeftEndAngle   = -29.0;
+  float  RightEndAngle  =  29.0;
+  float  TopEndAngle    =  -3.5;
+  float  BottomEndAngle =  22.0;
+}
+
+class CGunPak40Substance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 0.4;
+  float  Friction1        = 0.4;
+  float  Elasticity       = 0.04;
+}
+
+class CGunPak40Unit extends CUnit, CPushObject
+{
+  final static float DefaultHitPoints = CHitPoints::GunPak40UnitHitPoints;
+  boolean   m_PassiveUnit           = true;
+
+  static Array PrevExplosionID = [
+                                    [ "", "GunPak40Explosion" ]
+                                 ];
+                                 
+  static category UnitType = CLASSIFICATOR_T34_GUN;
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["GROUND", "ANTITANK", "GER"];
+
+  final static String DefaultSurfaceControl = "PutonGroundLandingJoints";
+
+  static Array  LandingJoints = ["Corner_FL", "Corner_RL", "Corner_RR", "Corner_FR"];
+
+  boolean m_Objectdestroyed = false;
+
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+    // create new trigger
+    logWarning("Pak40Unit damaged with Energy = "+new String(_Energy));
+
+    Component PhysicsController = GetPhysicsController();
+    if (null != PhysicsController)
+      PhysicsController.CreateTouchTrigger(0.0);
+
+    Component StateControl = GetStateControl();
+    if (null != StateControl)
+    {
+      float HitPoints = StateControl.GetHitPoints() - _Energy * EnergyToHP;
+      //logWarning("Pak40 sucsess touch _Energy = "+new String(_Energy)+" EnergytoHP = "+new String(EnergyToHP)+" and Pak40 have now HP = "+new String(HitPoints)+" and Pak40 has HP = " +new String(StateControl.GetHitPoints()) );
+      StateControl.SetHitPoints(HitPoints);
+
+      if ((HitPoints <= 0.0) && (!m_Objectdestroyed))
+      {
+        user.DestroyObject();
+        m_Objectdestroyed = true;
+        //logWarning("Pak40Unit destroyed");
+      }
+     }
+
+    // play touch sound
+    if(_Energy > MinEnergyToSound)
+      (new #SoundsArray()).CreateSound("TankCollisionTruckLowSpeedSound", getPosition(this));
+  }
+
+
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CGunPak40Unit()
+  {
+    SetupMesh(new #AnimatedObject<Cu_stat_pak40Model>(), [200, 100, 50, 3]);
+
+    // Setup Weapon
+    SetupWeapon("Weapon_A", new #Weapon<CGunPak40Gun>(),
+      ["Fire_A1"],
+      new #TargetingAnimator<CGunPak40TargetingAnimatorA>());
+
+    PutonGround();
+    SetupBehavior( new #VehicleBehavior<CGunPak40UnitBehavior>());
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CUnit::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.00f);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 0.6);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   0.6);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   0.6);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BUILDING, 0.0);
+
+    SetupPhysicaleObject("CGunPak40Substance", 1100.0*6, 0.0003);
+  }
+}

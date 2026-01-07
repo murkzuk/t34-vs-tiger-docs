@@ -1,0 +1,537 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CVideoOptionsMenuBase
+{
+  int     m_CurrentDeviceIndex;
+  int     m_CurrentModeIndex;
+  boolean m_CurrentWindowMode;
+  int     m_CurrentTextureDetail;
+  float   m_CurrentRenderDetail;
+  float   m_CurrentTerrainDetail;
+  float   m_CurrentForestDetail;
+  float   m_CurrentGrassDetail;
+  float   m_CurrentWaterDetail;
+  int     m_CurrentShadowDetail;
+  int     m_CurrentTreeAnim;
+  int     m_CurrentAntialiasing;
+  float   m_CurrentObjectDetail;  
+  boolean m_CurrentLowTextures;
+  int     m_CurrentFOVDistPower;
+
+  final static int TextureMinLOD = 4;
+
+  final Array m_FullScreenText = [getLocalized("Menu","str_SwitchNo"),
+                                  getLocalized("Menu","str_SwitchYes")];
+
+  final static Array DefaultElementProps = [
+      ["FontName",        "Arial",                              false],
+      ["FontSize",        CUISettings::TextListFontSize,        false],
+      ["SelectedColor",   CUISettings::TextListSelectedColor,   false],
+      ["NormalColor",     CUISettings::TextListNormalColor,     false],
+      ["HiSelectedColor", CUISettings::TextListHiSelectedColor, false],
+      ["HiNormalColor",   CUISettings::TextListHiNormalColor,   false]
+    ];
+  
+  //
+  // Construction
+  //
+
+  CVideoOptionsMenuBase()
+  {
+  }
+
+  //
+  // CBaseMenu
+  //
+
+  void OnInitMenu()
+  {
+    GetSettings();
+    ApplySettings();
+    CheckChanges();
+  }
+
+  void OnCloseMenu()
+  {
+    CancelSettings();
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+
+    if (!_ID.IsStartsWith("VideoAdapter"))
+    {
+      GetObject("VideoAdapter").CloseList();
+    }
+    if (!_ID.IsStartsWith("VideoMode"))
+    {
+      GetObject("VideoMode").CloseList();
+    }
+    if (!_ID.IsStartsWith("WindowMode"))
+    {
+      GetObject("WindowMode").CloseList();
+    }
+
+    if ("h_models_Arrow1" == _ID)
+      GetObject("h_models").ScrollDown();
+    else
+    if ("h_models_Arrow2" == _ID)
+      GetObject("h_models").ScrollUp();
+    else
+    if ("h_textures_Arrow1" == _ID)
+      GetObject("h_textures").ScrollDown();
+    else
+    if ("h_textures_Arrow2" == _ID)
+      GetObject("h_textures").ScrollUp();
+    else
+    if ("h_landscape_Arrow1" == _ID)
+      GetObject("h_landscape").ScrollDown();
+    else
+    if ("h_landscape_Arrow2" == _ID)
+      GetObject("h_landscape").ScrollUp();
+    else
+    if ("h_forest_Arrow1" == _ID)
+      GetObject("h_forest").ScrollDown();
+    else
+    if ("h_forest_Arrow2" == _ID)
+      GetObject("h_forest").ScrollUp();
+    else
+    if ("h_grass_Arrow1" == _ID)
+      GetObject("h_grass").ScrollDown();
+    else
+    if ("h_grass_Arrow2" == _ID)
+      GetObject("h_grass").ScrollUp();
+    else
+    if ("h_water_Arrow1" == _ID)
+      GetObject("h_water").ScrollDown();
+    else
+    if ("h_water_Arrow2" == _ID)
+      GetObject("h_water").ScrollUp();
+    else
+    if ("h_shadows_Arrow1" == _ID)
+      GetObject("h_shadows").ScrollDown();
+    else
+    if ("h_shadows_Arrow2" == _ID)
+      GetObject("h_shadows").ScrollUp();
+    else
+    if ("h_objects_Arrow1" == _ID)
+      GetObject("h_objects").ScrollDown();
+    else
+    if ("h_objects_Arrow2" == _ID)
+      GetObject("h_objects").ScrollUp();
+    else
+    if ("h_antialias_Arrow2" == _ID)
+      GetObject("h_antialias").ScrollUp();
+    else
+    if ("h_antialias_Arrow1" == _ID)
+      GetObject("h_antialias").ScrollDown();
+    else
+    if ("h_treeanim_Arrow2" == _ID)
+      GetObject("h_treeanim").ScrollUp();
+    else
+    if ("h_treeanim_Arrow1" == _ID)
+      GetObject("h_treeanim").ScrollDown();
+    else
+    if ("h_fovdistpower_Arrow2" == _ID)
+      GetObject("h_fovdistpower").ScrollUp();
+    else
+    if ("h_fovdistpower_Arrow1" == _ID)
+      GetObject("h_fovdistpower").ScrollDown();
+    else
+    if ("h_device_left" == _ID)
+      ChangeVideoMode(-1, 0);
+    else
+    if ("h_device_right" == _ID)
+      ChangeVideoMode(+1, 0);
+    else
+    if ("h_res_left" == _ID)
+      ChangeVideoMode(0, -1);
+    else
+    if ("h_res_right" == _ID)
+      ChangeVideoMode(0, +1);
+    else
+    if ("VideoAdapter_Caption" == _ID)
+      GetObject("VideoAdapter").OpenList();
+    else
+    if ("VideoMode_Caption" == _ID)
+      GetObject("VideoMode").OpenList();
+    else
+    if ("WindowMode_Caption" == _ID)
+      GetObject("WindowMode").OpenList();
+    else
+    if ("VideoAdapter_Button" == _ID)
+      GetObject("VideoAdapter").OpenList();
+    else
+    if ("VideoMode_Button" == _ID)
+      GetObject("VideoMode").OpenList();
+    else
+    if ("WindowMode_Button" == _ID)
+      GetObject("WindowMode").OpenList();
+    else
+    if (_ID.IsStartsWith("VideoAdapter_Item_"))
+    {
+      GetObject("VideoAdapter").SelectIDItem(_ID);
+      m_CurrentDeviceIndex = GetObject("VideoAdapter").GetCurrentItem();
+    }
+    else
+    if (_ID.IsStartsWith("VideoMode_Item_"))
+    {
+      GetObject("VideoMode").SelectIDItem(_ID);
+      m_CurrentModeIndex = GetObject("VideoMode").GetCurrentItem();
+    }
+    else
+    if (_ID.IsStartsWith("WindowMode_Item_"))
+    {
+      GetObject("WindowMode").SelectIDItem(_ID);
+      m_CurrentWindowMode = GetObject("WindowMode").GetCurrentItem();
+    }
+    else 
+    if ("VideoMode_Scroll_Arrow1" == _ID)
+      GetObject("VideoMode_List").ScrollUp(25.0/768.0);
+    else
+    if ("VideoMode_Scroll_Arrow2" == _ID)
+      GetObject("VideoMode_List").ScrollDown(25.0/768.0);
+    else
+    if ("LowTex_Button" == _ID)
+    {
+      GetObject("LowTex").ToggleCheck();
+      m_CurrentLowTextures   = GetObject("LowTex").GetChecked();
+    }
+
+    if (_ID.IsStartsWith("h_models")    ||
+        _ID.IsStartsWith("h_textures")  ||
+        _ID.IsStartsWith("h_landscape") ||
+        _ID.IsStartsWith("h_forest")    ||
+        _ID.IsStartsWith("h_grass")     ||
+        _ID.IsStartsWith("h_water")     ||
+        _ID.IsStartsWith("h_shadows")   ||
+        _ID.IsStartsWith("h_antialias") ||
+        _ID.IsStartsWith("h_treeanim")  ||
+        _ID.IsStartsWith("h_fovdistpower") ||
+        _ID.IsStartsWith("h_objects"))
+      SetSettings();
+
+    CheckChanges();
+  }
+
+  void ChangeVideoMode(
+      int _DeviceDelta,
+      int _ModeDelta
+    )
+  {
+    Component GameSettings = new #GameSettings();
+
+    Array DeviceList     = GameSettings.GetVideoDevicesList();
+    m_CurrentDeviceIndex = min(max(0, m_CurrentDeviceIndex + _DeviceDelta), DeviceList.size() - 1);
+
+    Array ModeList       = GameSettings.GetVideoModesList(m_CurrentDeviceIndex);
+    m_CurrentModeIndex   = min(max(0, m_CurrentModeIndex + _ModeDelta), ModeList.size() - 1);
+
+    Component DeviceTextControl = GetObject("s_device_value");
+    if (null != DeviceTextControl)
+      DeviceTextControl.SetText(DeviceList[m_CurrentDeviceIndex]);
+
+    Component ResolutionTextControl = GetObject("s_res_value");
+    if (null != ResolutionTextControl)
+    {
+      if (!m_CurrentWindowMode)
+        ResolutionTextControl.SetText(ModeList[m_CurrentModeIndex]);
+      else
+      {
+        int Width  = GameSettings.GetUserValue(L"ScreenWidth",  0);
+        int Height = GameSettings.GetUserValue(L"ScreenHeight", 0);
+
+        ResolutionTextControl.SetText(new WString(Width) + L" x " + new WString(Height));
+      }
+    }
+
+    Component DeviceComboLeftControl = GetObject("h_device_left");
+    if (null != DeviceComboLeftControl)
+      DeviceComboLeftControl.SetDisabled(m_CurrentWindowMode || m_CurrentDeviceIndex == 0);
+
+    Component DeviceComboRightControl = GetObject("h_device_right");
+    if (null != DeviceComboRightControl)
+      DeviceComboRightControl.SetDisabled(m_CurrentWindowMode || m_CurrentDeviceIndex == DeviceList.size() - 1);
+
+    Component ResolutionComboLeftControl = GetObject("h_res_left");
+    if (null != ResolutionComboLeftControl)
+      ResolutionComboLeftControl.SetDisabled(m_CurrentWindowMode || m_CurrentModeIndex == 0);
+
+    Component ResolutionComboRightControl = GetObject("h_res_right");
+    if (null != ResolutionComboRightControl)
+      ResolutionComboRightControl.SetDisabled(m_CurrentWindowMode || m_CurrentModeIndex == ModeList.size() - 1);
+  }
+
+  void ChangeWindowMode(
+      int _Delta
+    )
+  {
+    Component GameSettings = new #GameSettings();
+
+    // Set window mode
+    m_CurrentWindowMode = boolean(min(max(0, int(m_CurrentWindowMode) + _Delta), 1));
+
+    // Find closest ModeIndex
+    int ModeDelta = 0;
+
+    //UNUSED yet
+    /*
+    Component FullScreenTextControl = GetObject("FullScreenText");
+    if (null != FullScreenTextControl)
+      FullScreenTextControl.SetText(FullScreenText[int(m_CurrentWindowMode)]);
+
+    Component FullScreenComboLeftControl = GetObject("FullScreenComboLeft");
+    if (null != FullScreenComboLeftControl)
+      FullScreenComboLeftControl.SetDisabled(!m_CurrentWindowMode);
+
+    Component FullScreenComboRightControl = GetObject("FullScreenComboRight");
+    if (null != FullScreenComboRightControl)
+      FullScreenComboRightControl.SetDisabled(m_CurrentWindowMode);
+
+    if (!m_CurrentWindowMode)
+    {
+      final int CurrentWidth  = GameSettings.GetUserValue(L"ScreenWidth",  0);
+      final int CurrentHeight = GameSettings.GetUserValue(L"ScreenHeight", 0);
+
+      int MinError     = INT_MAX;
+      int MinErrorMode = m_CurrentModeIndex;
+
+      Array ModesList = GameSettings.GetVideoModesListDetailed(m_CurrentDeviceIndex);
+      for (int i = 0; i < ModesList.size(); i++)
+      {
+        Array ModeRecord = ModesList[i];
+        int   Error      = abs(ModeRecord[0] - CurrentWidth) + abs(ModeRecord[1] - CurrentHeight);
+
+        if (Error <= MinError)
+        {
+          MinError     = Error;
+          MinErrorMode = i;
+        }
+      }
+
+      ModeDelta = MinErrorMode - m_CurrentModeIndex;
+    }
+    */
+
+    // Update video mode
+    ChangeVideoMode(0, ModeDelta);
+  }
+
+  //
+  // Service
+  //
+
+  void GetSettings()
+  {
+    Component GameSettings = new #GameSettings();
+
+    m_CurrentDeviceIndex   = GameSettings.GetCurrentVideoDeviceIndex();
+    m_CurrentModeIndex     = GameSettings.GetCurrentVideoModeIndex(m_CurrentDeviceIndex);
+    m_CurrentWindowMode    = GameSettings.GetWindowMode();
+    m_CurrentRenderDetail  = GameSettings.GetRenderDetail();
+    m_CurrentTextureDetail = TextureMinLOD - GameSettings.GetTextureBestLOD();
+    m_CurrentTerrainDetail = GameSettings.GetTerrainDetail();
+    m_CurrentForestDetail  = GameSettings.GetForestDetail();
+    m_CurrentGrassDetail   = GameSettings.GetGrassDetail();
+    m_CurrentWaterDetail   = GameSettings.GetWaterDetail();
+    m_CurrentShadowDetail  = GameSettings.GetShadowDetail();
+
+    m_CurrentAntialiasing  = GameSettings.GetAntialiasing();
+    m_CurrentTreeAnim      = GameSettings.GetTreeAnim();
+    m_CurrentLowTextures   = GameSettings.GetLowTextures();
+    m_CurrentFOVDistPower  = GameSettings.GetUserValue(L"FOVDistPower", 0);
+    
+//    m_CurrentObjectDetail  = GameSettings.GetObjectsDetail();
+    m_CurrentObjectDetail  = m_CurrentRenderDetail;
+
+    Component VideoAdapter = GetObject("VideoAdapter");
+    Array DevicesList = GameSettings.GetVideoDevicesList();
+    VideoAdapter.SetItems(DevicesList);
+    VideoAdapter.SelectItem(m_CurrentDeviceIndex);
+    VideoAdapter.CloseList();
+
+    boolean IsNVIDIA = false;
+    for (int i = 0; i < DevicesList.size(); i++)
+    {
+      if (DevicesList[i].GetUpperString().HasSubstring(L"NVIDIA"))
+      {
+        IsNVIDIA = true;
+        break;
+      }
+    }
+
+    Component VideoMode = GetObject("VideoMode");
+    VideoMode.SetItems(GameSettings.GetVideoModesList(m_CurrentDeviceIndex));
+    VideoMode.SelectItem(m_CurrentModeIndex);
+    VideoMode.CloseList();
+
+    Component WindowMode = GetObject("WindowMode");
+    WindowMode.SetItems(m_FullScreenText);
+    WindowMode.SelectItem(m_CurrentWindowMode);
+    WindowMode.CloseList();
+
+    Component Control;
+    Control = GetObject("h_models");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentRenderDetail);
+
+    Control = GetObject("h_textures");
+    if (null != Control)
+      Control.SetScrollPos(m_CurrentTextureDetail);
+
+    Control = GetObject("h_landscape");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentTerrainDetail);
+
+    Control = GetObject("h_forest");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentForestDetail);
+
+    Control = GetObject("h_grass");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentGrassDetail);
+
+    Control = GetObject("h_water");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentWaterDetail);
+
+    Control = GetObject("h_shadows");
+    if (null != Control)
+      Control.SetScrollPos(m_CurrentShadowDetail);
+    
+
+    Control = GetObject("h_antialias");
+    if (IsNVIDIA)
+    {
+      Control.SetScrollPos(0);
+      Control.SetScrollRange(0);
+      GameSettings.SetAntialiasing(0);
+      GetObject("s_antialias").SetTextColor(new Color(0.3, 0.3, 0.3));
+    }
+    else
+      Control.SetScrollPos(m_CurrentAntialiasing);
+
+    Control = GetObject("h_treeanim");
+    if (null != Control)
+      Control.SetScrollPos(m_CurrentTreeAnim);
+    
+    Control = GetObject("h_objects");
+    if (null != Control)
+      Control.SetScrollPhase(m_CurrentObjectDetail);
+
+    GetObject("h_fovdistpower").SetScrollPos(m_CurrentFOVDistPower);
+
+    GetObject("LowTex").SetCheck(m_CurrentLowTextures);
+    ChangeWindowMode(0);
+  }
+
+  void SetSettings()
+  {
+    m_CurrentObjectDetail = m_CurrentRenderDetail  = GetObject("h_models").GetScrollPhase();
+    m_CurrentTextureDetail = GetObject("h_textures").GetScrollPos();
+    m_CurrentTerrainDetail = GetObject("h_landscape").GetScrollPhase();
+    m_CurrentForestDetail  = GetObject("h_forest").GetScrollPhase();
+    m_CurrentGrassDetail   = GetObject("h_grass").GetScrollPhase();
+    m_CurrentWaterDetail   = GetObject("h_water").GetScrollPhase();
+    m_CurrentShadowDetail  = GetObject("h_shadows").GetScrollPos();
+
+    m_CurrentAntialiasing  = GetObject("h_antialias").GetScrollPos();
+    m_CurrentTreeAnim      = GetObject("h_treeanim").GetScrollPos();
+    m_CurrentLowTextures   = GetObject("LowTex").GetChecked();
+    m_CurrentFOVDistPower  = GetObject("h_fovdistpower").GetScrollPos();
+
+//    m_CurrentObjectDetail  = GetObject("h_objects").GetScrollPhase();
+  }
+
+  boolean CheckChanges()
+  {
+    Component GameSettings = new #GameSettings();
+
+    return (
+        m_CurrentDeviceIndex   != GameSettings.GetCurrentVideoDeviceIndex() ||
+        m_CurrentModeIndex     != GameSettings.GetCurrentVideoModeIndex(m_CurrentDeviceIndex) ||
+        m_CurrentWindowMode    != GameSettings.GetWindowMode() ||
+        m_CurrentRenderDetail  != GameSettings.GetRenderDetail() ||
+        m_CurrentTextureDetail != TextureMinLOD - GameSettings.GetTextureBestLOD() ||
+        m_CurrentTerrainDetail != GameSettings.GetTerrainDetail() ||
+        m_CurrentForestDetail  != GameSettings.GetForestDetail() ||
+        m_CurrentGrassDetail   != GameSettings.GetGrassDetail() ||
+        m_CurrentWaterDetail   != GameSettings.GetWaterDetail() ||
+        m_CurrentShadowDetail  != GameSettings.GetShadowDetail() ||
+        m_CurrentLowTextures   != GameSettings.GetLowTextures() ||
+        m_CurrentFOVDistPower  != GameSettings.GetUserValue(L"FOVDistPower", 0) ||
+        m_CurrentAntialiasing  != GameSettings.GetAntialiasing() || 
+        m_CurrentTreeAnim      != GameSettings.GetTreeAnim()
+
+//        m_CurrentObjectDetail  != GameSettings.GetObjectsDetail()
+      );
+  }
+
+  void ApplySettings()
+  {
+    Component GameSettings = new #GameSettings();
+
+    if (m_CurrentWindowMode  != GameSettings.GetWindowMode() ||
+        m_CurrentDeviceIndex != GameSettings.GetCurrentVideoDeviceIndex() ||
+        m_CurrentModeIndex   != GameSettings.GetCurrentVideoModeIndex(
+                                  GameSettings.GetCurrentVideoDeviceIndex()))
+      GameSettings.SetVideoMode(m_CurrentDeviceIndex, m_CurrentModeIndex, m_CurrentWindowMode);
+
+    if (m_CurrentRenderDetail != GameSettings.GetRenderDetail())
+      GameSettings.SetRenderDetail(m_CurrentRenderDetail);
+
+    if (m_CurrentTextureDetail != TextureMinLOD - GameSettings.GetTextureBestLOD())
+      GameSettings.SetTextureBestLOD(TextureMinLOD - m_CurrentTextureDetail);
+
+    if (m_CurrentTerrainDetail != GameSettings.GetTerrainDetail())
+      GameSettings.SetTerrainDetail(m_CurrentTerrainDetail);
+
+    if (m_CurrentForestDetail != GameSettings.GetForestDetail())
+      GameSettings.SetForestDetail(m_CurrentForestDetail);
+
+    if (m_CurrentGrassDetail != GameSettings.GetGrassDetail())
+      GameSettings.SetGrassDetail(m_CurrentGrassDetail);
+
+    if (m_CurrentWaterDetail != GameSettings.GetWaterDetail())
+      GameSettings.SetWaterDetail(m_CurrentWaterDetail);
+
+    if (m_CurrentShadowDetail != GameSettings.GetShadowDetail())
+      GameSettings.SetShadowDetail(m_CurrentShadowDetail);
+
+
+    if (m_CurrentAntialiasing != GameSettings.GetAntialiasing())
+      GameSettings.SetAntialiasing(m_CurrentAntialiasing);
+    
+    if (m_CurrentTreeAnim != GameSettings.GetTreeAnim())
+      GameSettings.SetTreeAnim(m_CurrentTreeAnim);
+    
+//    if (m_CurrentObjectDetail != GameSettings.GetObjectsDetail())
+    GameSettings.SetObjectsDetail(m_CurrentObjectDetail);
+
+    GameSettings.SetLowTextures(m_CurrentLowTextures);
+
+    GameSettings.SetUserValue(L"FOVDistPower", m_CurrentFOVDistPower);
+
+    GetSettings();
+  }
+
+  void CancelSettings()
+  {
+    GetSettings();
+  }
+
+  void ResetSettings()
+  {
+    new #GameSettings().SetDefaultVideoSettings();
+    GetSettings();
+  }
+}

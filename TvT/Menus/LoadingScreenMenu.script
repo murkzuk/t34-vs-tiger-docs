@@ -1,0 +1,135 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CLoadingScreenMenu
+  extends CBaseMenu, CLoadingScreenControls, CStartMissionBase, CBackgroundsMenu
+{
+  static String m_MenuClassName = "CLoadingScreenMenu";
+  final static String m_Music = "";
+
+  Component m_Progress1  = null;
+  Component m_Progress2  = null;
+
+  void OnInitMenu()
+  {
+    MissionClassName = CStartMissionMenu::MissionClassName;
+
+    if (1 == CMissionsMenu::CampaignNumber)
+      new #MusicController().SetMenuState(CMusicController::MENU_RusMain);
+    else
+    if (2 == CMissionsMenu::CampaignNumber)
+      new #MusicController().SetMenuState(CMusicController::MENU_GerMain);
+
+    SetBackground(CMissionsMenu::CampaignNumber);
+    setVisibleState(GetObject("PressAnyKey"), false);
+
+    FillMissionParams();
+//    GetObject("MissionText").SetText(getStaticClassMember(MissionClassName, "ObjectivesText"));
+
+    Component Background = GetObject("Background");
+    m_Progress1 = GetObject("ScreenProgress");
+    m_Progress2 = GetObject("LoadingProgress");
+
+    String LevelName = (new #GameController()).GetProgressMissionName();
+    if ("" != LevelName)
+    {    
+//      GetObject("MissionText").SetText(getStaticClassMember(LevelName, "ObjectivesText"));
+      String SkinClass = getStaticClassMember(LevelName, "m_LoadingScreenSkin");
+      if ("" != SkinClass)
+      {    
+        Component Skin = createComponent("MaterialManager");
+        loadFromScript(Skin, SkinClass);
+
+        m_Background.SetMaterialManager(Skin);
+        m_Background.SetMaterial("LoadingScreenCore");
+
+        m_Progress1.SetMaterialManager(Skin);
+        m_Progress1.SetMaterial("LoadingScreenFill");
+        m_Progress1.SetFadeShowMode();
+      }
+
+      m_Progress2.SetTileSetShowMode();
+//      m_Progress2.EnableTileMode(true);
+//      m_Progress2.SetProgressShowMode();
+    }
+
+    m_Progress1.SetProgress(0);
+    m_Progress2.SetProgress(0);
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    sendEvent(0, SOID_GameController, "BeginMission", []);
+  }
+
+  void OnCloseMenu()
+  {
+    m_Progress1 = null;
+    m_Progress2 = null;
+  }
+
+  void FillObjectivesList(
+      float _Z
+    )
+  {
+    GetObject("ObjectivesList").ClearWithUnregister();
+    GetObject("ObjectivesList").SetListScrollStep(CUIObjectiveElement::GetElementHeight());
+
+    String LevelName = (new #GameController()).GetProgressMissionName();
+    Array Objectives = getStaticClassMember(LevelName, "m_MissionObjectives");
+//    Array Objectives = new #GameController().GetLoadedMission().GetMissionObjectives();
+
+    Component Position = new CUIPosition(0.0, 0.0, 0.29, 14.0 / 768.0);
+    Array Props = [];
+
+    for (int Index = 0; Index < Objectives.size(); Index++)
+    {
+      String NewID = "ObjectivesElement_" + new String(Index + 1);
+      CreateUIControl(NewID,
+                      "",
+                      "CUIObjectiveElement",
+                      Position,
+                      Props);
+
+      GetObject(NewID).SetObjectiveText(Objectives[Index][1]);
+      GetObject(NewID).SetObjectiveStatus(Objectives[Index][2]);
+
+      GetObject("ObjectivesList").AddControl(NewID);
+    }
+  }
+
+  void SetProgress(
+      int _Progress
+    )
+  {
+    if (_Progress == 1001)
+    {
+      setVisibleState(m_Progress1, false);
+      setVisibleState(m_Progress2, false);
+      setVisibleState(GetObject("PressAnyKey"), true);
+    }
+    else
+    if (_Progress == 1002)
+    {
+      setVisibleState(m_Progress1, false);
+      setVisibleState(m_Progress2, false);
+      setVisibleState(GetObject("PressAnyKey"), false);
+    }
+    m_Progress1.SetProgress(_Progress);
+    m_Progress2.SetProgress(_Progress);
+  }
+
+  void SetLabel(
+      WString _Text
+    )
+  {
+  }
+}

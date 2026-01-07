@@ -1,0 +1,143 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CEscapeMenu
+  extends CBaseMenu, CEscapeControls, CBackgroundsMenu
+{
+  static String m_MenuClassName = "CEscapeMenu";
+
+  static WString CamaignName      = CCampaignNames::str_CAMPAIGN1;
+  static String  MissionClassName = "CC1M1Mission"; //$TMP
+
+  void OnInitMenu()
+  {
+    MissionClassName = CStartMissionMenu::MissionClassName;
+
+    SetBackground(CMissionsMenu::CampaignNumber);
+    m_MenuController.SetDefaultCommands("", "BackButton");
+
+    GetObject("MissionName").SetText(
+        CamaignName + L" - " +
+        getStaticClassMember(MissionClassName + "_Strings", "MissionName")
+      );
+
+    GetObject("BriefingText").SetSlaveScroller(GetObject("vs_scroll"));
+    GetObject("BriefingText").SetText(getStaticClassMember(MissionClassName + "_Strings", "BriefingText"));
+
+    Component Mission = new #GameController().GetLoadedMission();
+    if (Mission == null)
+      logError("[CEscapeMenu] Mission component is null!");
+
+    GetObject("t_shoots").SetText(new WString(Mission.m_PlayerShoots));
+    GetObject("t_hits").SetText(new WString(Mission.m_PlayerHits));
+    int Accuracy = 0;
+    if (Mission.m_PlayerShoots > 0)
+      Accuracy = (Mission.m_PlayerHits* 100)/Mission.m_PlayerShoots;
+
+    GetObject("t_aquracy").SetText(new WString(Accuracy) + L"%");
+    GetObject("t_killed_tanks").SetText(new WString(Mission.m_PlayerVictims_Tanks));
+    GetObject("t_killed_firedots").SetText(new WString(Mission.m_PlayerVictims_FireDots));
+    GetObject("t_killed_bmp").SetText(new WString(Mission.m_PlayerVictims_BTRs));
+    GetObject("t_killed_auto").SetText(new WString(Mission.m_PlayerVictims_Autos));
+    GetObject("t_killed_people").SetText(new WString(Mission.m_PlayerVictims_Humans));
+
+    FillObjectivesList(0.0);
+
+    // Setup timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("Update", 0.5);
+    Timer.Enable(true);
+    RegisterObject("EscTimer", Timer);
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("EscTimer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    GetObject("BriefingText").Update();
+
+    if ("ControlsSettingsButton" == _ID)
+      Invoke("ControlsSettingsMenu");
+    else
+    if ("BackButton" == _ID)
+    {
+      m_MenuController.GetObject("Cursor").ShowCursor(false);
+
+      Component Game = new #GameController();
+      Game.EnableControl("GameMenu", false);
+      Game.RestoreCS();
+      if ("Single" == Game.GetGameMode())
+      {
+        Game.SwitchPause();
+      }
+      new #MusicController().SetMenuState(CMusicController::MENU_Null);
+    }
+    else
+    if ("QuitButton" == _ID)
+    {
+      Component Game = new #GameController();
+      Game.RestoreCS();
+      Game.SwitchPause();
+      Game.UnloadMission();
+      Game.CreateMenuController();
+      Game.EnableControl("GameMenu", true);
+      sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+    }
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("BriefingText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("BriefingText").ScrollDown();
+  }
+
+  void FillObjectivesList(
+      float _Z
+    )
+  {
+    GetObject("ObjectivesList").ClearWithUnregister();
+    GetObject("ObjectivesList").SetListScrollStep(CUIObjectiveElement::GetElementHeight());
+
+    Array Objectives = new #GameController().GetLoadedMission().GetMissionObjectives();
+
+    Component Position = new CUIPosition(0.0, 0.0, 0.29, 14.0 / 768.0);
+    Array Props = [];
+
+    for (int Index = 0; Index < Objectives.size(); Index++)
+    {
+      if (Objectives[Index][3])
+      {
+        String NewID = "ObjectivesElement_" + new String(Index + 1);
+        CreateUIControl(NewID,
+                        "",
+                        "CUIObjectiveElement",
+                        Position,
+                        Props);
+
+        GetObject(NewID).SetObjectiveText(Objectives[Index][1]);
+        GetObject(NewID).SetObjectiveStatus(Objectives[Index][2]);
+
+        GetObject("ObjectivesList").AddControl(NewID);
+      }
+    }
+  }
+
+  void Update(
+      float _DelatTime
+    )
+  {
+    GetObject("BriefingText").Update(); // render time update
+  }
+}

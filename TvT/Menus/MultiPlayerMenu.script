@@ -1,0 +1,530 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMultiPlayerMenu
+  extends CBaseMenu, CMultiPlayerControls
+{
+  static String m_MenuClassName = "CMultiPlayerMenu";
+
+  static WString m_PlayerName = L"Player";
+  static int    m_VehicleType = 0;
+  static int    m_VehicleNumber = 0;
+
+  Array m_MapNames = [];
+
+  static Array m_Maps = [
+                          ["CDM1Mission", 1],
+                          ["CDM2Mission", 2],
+                          ["CDM3Mission", 3],
+                          ["CDM4Mission", 4],
+                          ["CDM5Mission", 5],
+                          ["CDM6Mission", 6]
+                        ];
+
+  static Array m_CFMaps = [
+                            ["CCF1Mission", 1],
+                            ["CCF2Mission", 2],
+                            ["CCF3Mission", 3],
+                            ["CCF4Mission", 4],
+                            ["CCF5Mission", 5],
+                            ["CCF6Mission", 6]
+                          ];
+
+  int          m_MapNum = 0;
+
+  static Array m_GameModeText = [
+                                  getLocalized("Menu", "str_SKIRMISH"),
+                                  getLocalized("Menu", "str_TEAM")
+                                ];
+
+  static Array m_CellStatusText = [
+                                getLocalized("Menu", "str_OPEN"),
+                                getLocalized("Menu", "str_BOT"),
+                                getLocalized("Menu", "str_BOT_TIGER"),
+                                getLocalized("Menu", "str_CLOSE")
+                              ];
+
+  static Array m_VehicleText = [
+                                  getLocalized("Menu", "str_VEHICLE_T34"),
+                                  getLocalized("Menu", "str_VEHICLE_TIGER")
+                                ];
+                                
+  static Array m_BotLevelText = [
+                                  getLocalized("Menu", "str_BOTLEVEL_EASY"),
+                                  getLocalized("Menu", "str_BOTLEVEL_NORMAL"),
+                                  getLocalized("Menu", "str_BOTLEVEL_HARD")
+                                ];
+                                
+  float botLevel = 1;
+
+  static Array m_CellStatus = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+  static Array USSRNumbersText = [ L"01 01", L"01 02", L"01 03", L"01 04", L"11 19", L"17 11", L"22 13", L"22 14", L"22 18" ];
+
+  static Array GermanNumbers = [ "111", "112", "113", "114", "121", "122", "123", "124", "131", "132", "133", "134",
+                                 "142", "143", "211", "212", "213", "214", "221", "222", "223", "224",
+                                 "231", "232", "233", "234", "311", "312", "313", "314", "321", "322", "323", "324",
+                                 "331", "332", "333", "334", "354", "674" ];
+
+  static Array USSRNumbers = [ "01_01", "01_02", "01_03", "01_04", "11_19", "17_11", "22_13", "22_14", "22_18" ];
+
+  int m_GameMode = CServerDescriptor::ST_DeathMatch;
+
+  Component GameSettings = null;
+
+  void FillMap()
+  {
+    Array MapsList = m_Maps;
+    if (CServerDescriptor::ST_CaptureTheFlag == m_GameMode)
+      MapsList = m_CFMaps;
+
+    GetObject("MissionMap").SetMaterial(
+        getStaticClassMember(MapsList[m_MapNum][0], "m_MissionBriefingPicMaterial")
+      );
+
+    GetObject("BriefingText").SetSlaveScroller(GetObject("vs_scroll"));
+    GetObject("BriefingText").SetText(getStaticClassMember(MapsList[m_MapNum][0] + "_Strings", "BriefingText"));
+
+    int MaxPlayers = getStaticClassMember(MapsList[m_MapNum][0], "MaxPlayers");
+
+    for (int i = 1; i <= 16; i++)
+    {
+      Component GameCell = GetObject("GameCell" + new String(i));
+      if (i <= MaxPlayers)
+      {
+        setVisibleState(GameCell, true);
+        m_CellStatus[i-1] = 0;
+      }
+      else
+      {
+        setVisibleState(GameCell, false);
+        m_CellStatus[i-1] = 3;
+      }
+      GameCell.SetText(m_CellStatusText[m_CellStatus[i-1]]);
+    }
+  }
+
+  void SetPlayerName(WString _PlayerName)
+  {
+      GetObject("PlayerName").SetText(_PlayerName);
+  }
+
+  void SetSessionName(WString _SessionName)
+  {
+    GetObject("SessionName").SetText(_SessionName);
+  }
+
+//   void SetGameType(int _GameType)
+//   {
+//     Component GameType = GetObject("GameType");
+//     GameType.OpenList();
+//     OnControlActivated("GameType_Item_" + new String(_GameType));
+// //     GameType.SelectItem(_GameType);
+// //     GameType.CloseList();
+//     int sel = GetObject("GameType").GetCurrentItem();
+//
+//     logWarning("[Menu] SetGameType" + new String(sel));
+//   }
+
+  void SetGameType(String _GameType)
+  {
+    Component GameType = GetObject("GameType");
+    int Type = -1;
+    if(_GameType.IsStartsWith("Deathmatch"))
+      Type = 0;
+    else
+      Type = 1;
+    GameType.OpenList();
+    OnControlActivated("GameType_Item_" + new String(Type));
+
+    Component MapsList = GetObject("MapsList");
+    MapsList.OpenList();
+    Array Maps = MapsList.GetItems();
+
+    //logWarning("[Menu] _GameType" + _GameType);
+
+    for(int i = 0; i < Maps.size(); i++ )
+    {
+      if(_GameType.HasSubstring(Maps[i]))
+      {
+        OnControlActivated("MapsList_Item_" + new String(i));
+        break;
+      }
+    }
+  }
+
+  void SetMaxClients(int _MaxClient)
+  {
+    Array MapsList = m_Maps;
+    if (CServerDescriptor::ST_CaptureTheFlag == m_GameMode)
+      MapsList = m_CFMaps;
+
+    int MaxPlayers = getStaticClassMember(MapsList[m_MapNum][0], "MaxPlayers");
+    if(_MaxClient < MaxPlayers)
+      MaxPlayers = _MaxClient;
+    else
+      return;
+
+    for (int i = 1; i <= 16; i++)
+    {
+      Component GameCell = GetObject("GameCell" + new String(i));
+      if (i <= MaxPlayers)
+      {
+        setVisibleState(GameCell, true);
+        m_CellStatus[i-1] = 0;
+      }
+      else
+      {
+        setVisibleState(GameCell, false);
+        m_CellStatus[i-1] = 3;
+      }
+      GameCell.SetText(m_CellStatusText[m_CellStatus[i-1]]);
+    }
+  }
+
+
+  void OnInitMenu()
+  {
+    GameSettings = new #GameSettings();
+    m_PlayerName = GameSettings.GetUserValue(L"Net_PlayerName", L"Player");
+    
+
+    Component GameType = GetObject("GameType");
+    GameType.SetItems(m_GameModeText);
+    GameType.SelectItem(0);
+    GameType.CloseList();
+    
+    Component BotLevel = GetObject("botLevelCombo");
+    BotLevel.SetItems(m_BotLevelText);
+    BotLevel.SelectItem(1);
+    BotLevel.CloseList();
+
+    for (int i = 0; i < m_Maps.size(); i++)
+      m_MapNames.add(new WString(getStaticClassMember(m_Maps[i][0] + "_Strings", "MissionName")));
+
+    Component MapsList = GetObject("MapsList");
+    MapsList.SetItems(m_MapNames);
+    MapsList.SelectItem(0);
+    MapsList.CloseList();
+    
+    Component GameController = new #GameController();
+    
+    
+    if(GameController.IsDedicate())
+    {
+        Component Console = GameController.GetObject(SOID_Console);
+        if ((Console != null) && (CGameSettings::EnableConsole))
+          Console.Enable(false);
+    }
+
+    m_VehicleType = GameSettings.GetUserValue(L"Net_VehicleType", 0);
+    Component VehicleType = GetObject("VehicleType");
+    VehicleType.SetItems(m_VehicleText);
+    VehicleType.SelectItem(m_VehicleType);
+    VehicleType.CloseList();
+
+    m_VehicleNumber = GameSettings.GetUserValue(L"Net_VehicleNumber", 0);
+    Component VehicleNumber = GetObject("VehicleNumber");
+    m_VehicleType = GetObject("VehicleType").GetCurrentItem();
+    if (1 == VehicleType.GetCurrentItem())
+      VehicleNumber.SetItems(GermanNumbers);
+    else
+      VehicleNumber.SetItems(USSRNumbersText);
+
+    VehicleNumber.SelectItem(m_VehicleNumber);
+    VehicleNumber.CloseList();
+
+    GetObject("SessionName").SetText(GameSettings.GetUserValue(L"Net_SessionName", L"Server"));
+    GetObject("PlayerName").SetText(m_PlayerName);    
+    GetObject("TimeLimit").SetText(new WString(GameSettings.GetUserValue(L"Net_TimeLimit", 30)));
+    GetObject("FragLimit").SetText(new WString(GameSettings.GetUserValue(L"Net_FragLimit", 20)));
+
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("Update", 0.5);
+    Timer.Enable(true);
+    RegisterObject("TmpTimer", Timer);
+
+    FillMap();
+    CTeamPlayRoomMenu::m_RestartMission = false;
+    
+    if(GameController.IsDedicate())
+    {
+      setVisibleState(GetObject("PlayerName"),false);
+      setVisibleState(GetObject("BackButton"),false);
+      setVisibleState(GetObject("JoinButton"),false);      
+    }
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("TmpTimer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    m_PlayerName = GetObject("PlayerName").GetText();
+
+    if (!_ID.IsStartsWith("MapsList"))
+      GetObject("MapsList").CloseList();
+    if (!_ID.IsStartsWith("GameType"))
+      GetObject("GameType").CloseList();
+    if (!_ID.IsStartsWith("VehicleType"))
+      GetObject("VehicleType").CloseList();
+    if (!_ID.IsStartsWith("VehicleNumber"))
+      GetObject("VehicleNumber").CloseList();
+    if (!_ID.IsStartsWith("botLevelCombo"))
+      GetObject("botLevelCombo").CloseList();
+
+    if ("GameType_Button" == _ID)
+      GetObject("GameType").OpenList();
+    else
+    if (_ID.IsStartsWith("GameType_Item_"))
+    {
+      GetObject("GameType").SelectIDItem(_ID);
+      if (0 == GetObject("GameType").GetCurrentItem())
+        m_GameMode = CServerDescriptor::ST_DeathMatch;
+      else
+        m_GameMode = CServerDescriptor::ST_CaptureTheFlag;
+
+      logWarning("[Menu] " + _ID + " Mode: " + new String(m_GameMode));
+      int sel = GetObject("GameType").GetCurrentItem();
+      logWarning("  [Menu] SetGameType" + new String(sel));
+
+      m_MapNum = 0;
+
+      Array Maps = m_Maps;
+      if (CServerDescriptor::ST_CaptureTheFlag == m_GameMode)
+        Maps = m_CFMaps;
+
+      m_MapNames = [];
+      for (int i = 0; i < Maps.size(); i++)
+        m_MapNames.add(new WString(getStaticClassMember(Maps[i][0] + "_Strings", "MissionName")));
+
+      Component MapsList = GetObject("MapsList");
+      MapsList.SetItems(m_MapNames);
+      MapsList.SelectItem(0);
+      MapsList.CloseList();
+
+      FillMap();
+    }
+    else
+    if ("MapsList_Button" == _ID)
+      GetObject("MapsList").OpenList();
+    else
+    if (_ID.IsStartsWith("MapsList_Item_"))
+    {
+      GetObject("MapsList").SelectIDItem(_ID);
+      m_MapNum = GetObject("MapsList").GetCurrentItem();
+      FillMap();
+    }
+    else
+    if ("VehicleType_Button" == _ID)
+      GetObject("VehicleType").OpenList();
+    else
+    if (_ID.IsStartsWith("VehicleType_Item_"))
+    {
+      GetObject("VehicleType").SelectIDItem(_ID);
+      m_VehicleType = GetObject("VehicleType").GetCurrentItem();
+
+      Component VehicleNumber = GetObject("VehicleNumber");
+      if (1 == GetObject("VehicleType").GetCurrentItem())
+        VehicleNumber.SetItems(GermanNumbers);
+      else
+        VehicleNumber.SetItems(USSRNumbersText);
+      VehicleNumber.SelectItem(0);
+      VehicleNumber.CloseList();
+      m_VehicleNumber = 0;
+    }
+    else
+    if ("VehicleNumber_Button" == _ID)
+      GetObject("VehicleNumber").OpenList();
+    else
+    if (_ID.IsStartsWith("VehicleNumber_Item_"))
+    {
+      GetObject("VehicleNumber").SelectIDItem(_ID);
+      m_VehicleNumber = GetObject("VehicleNumber").GetCurrentItem();
+    }
+    else
+    if ("VehicleNumber_Scroll_Arrow1" == _ID)
+      GetObject("VehicleNumber_List").ScrollUp(25.0/768.0);
+    else
+    if ("VehicleNumber_Scroll_Arrow2" == _ID)
+      GetObject("VehicleNumber_List").ScrollDown(25.0/768.0);
+    else
+    if (_ID.IsStartsWith("GameCell"))
+    {
+      int CellNum = _ID.GetSubString(8,1).ConvertToInt();
+      if (m_GameMode == CServerDescriptor::ST_DeathMatch)
+      {
+        m_CellStatus[CellNum - 1] = m_CellStatus[CellNum - 1] + 1;
+        if (m_CellStatus[CellNum - 1] > 3)
+          m_CellStatus[CellNum - 1] = 0;
+      }
+      else
+      {
+        if (m_CellStatus[CellNum - 1] == 0)
+          m_CellStatus[CellNum - 1] = 3;
+        else
+          m_CellStatus[CellNum - 1] = 0;
+      }
+
+      GetObject(_ID).SetText(m_CellStatusText[m_CellStatus[CellNum - 1]]);
+    }
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("BriefingText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("BriefingText").ScrollDown();
+    else    
+    if ("botLevelCombo_Button" == _ID)
+      GetObject("botLevelCombo").OpenList();
+    else
+    if (_ID.IsStartsWith("botLevelCombo_Item_"))
+    {
+      GetObject("botLevelCombo").SelectIDItem(_ID);
+      botLevel = GetObject("botLevelCombo").GetCurrentItem();
+    }
+    else
+    if ("isExpert_Button" == _ID)
+      GetObject("isExpert").ToggleCheck();
+    
+    else
+    if ("BackButton" == _ID)
+      Invoke("MainMenu");
+    else
+    if ("JoinButton" == _ID)
+    {
+      Invoke("JoinGameMenu");
+    }
+    if ("CreateGameButton" == _ID)
+    {
+      Component GameController = new #GameController();
+      
+      if(GameController.IsDedicate())
+      {
+         Component Console = GameController.GetObject(SOID_Console);
+        if ((Console != null) && (CGameSettings::EnableConsole))
+          Console.Enable(true);
+      }
+
+      GameSettings.SetUserValue(L"Net_PlayerName", GetObject("PlayerName").GetText());
+      GameSettings.SetUserValue(L"Net_VehicleType", GetObject("VehicleType").GetCurrentItem());
+      GameSettings.SetUserValue(L"Net_VehicleNumber", GetObject("VehicleNumber").GetCurrentItem());
+
+      GameSettings.SetUserValue(L"Net_SessionName", GetObject("SessionName").GetText());
+      GameSettings.SetUserValue(L"Net_TimeLimit", GetObject("TimeLimit").GetText().ConvertToInt());
+      GameSettings.SetUserValue(L"Net_FragLimit", GetObject("FragLimit").GetText().ConvertToInt());
+
+      Array PlayerSlots;
+      for (int i = 0; i < m_CellStatus.size(); i++)
+      {
+        if (m_CellStatus[i] == 0)
+          PlayerSlots.add("MANUAL");
+        if (m_CellStatus[i] == 1)
+          PlayerSlots.add("BOT");
+        if (m_CellStatus[i] == 2)
+          PlayerSlots.add("BOT_TIGER");
+      }
+      logWarning("Slot: " + new String(PlayerSlots));
+  
+  
+      if(!GameController.IsDedicate())
+      {
+        if (1 == GetObject("VehicleType").GetCurrentItem())
+        {
+          CGameSettings::PlayerUnitScript = "CTankPzVIAusfEUnit";
+          CGameSettings::PlayerNumber = GermanNumbers[GetObject("VehicleNumber").GetCurrentItem()];
+          logWarning("[MultiPlayerMenu]3 PlayerUnitScript: " + CGameSettings::PlayerUnitScript +
+        "; PlayerNumber: " + CGameSettings::PlayerNumber);
+        }
+        else
+        {
+          CGameSettings::PlayerUnitScript = "CTankT34_85_44Unit";
+          CGameSettings::PlayerNumber = USSRNumbers[GetObject("VehicleNumber").GetCurrentItem()];
+          logWarning("[MultiPlayerMenu]4 PlayerUnitScript: " + CGameSettings::PlayerUnitScript +
+        "; PlayerNumber: " + CGameSettings::PlayerNumber);
+        }
+
+        CGameSettings::PlayerName = new String(GetObject("PlayerName").GetText());
+      }
+      setStaticClassMember(m_Maps[m_MapNum][0], "TimeLimit", GetObject("TimeLimit").GetText().ConvertToInt());
+      setStaticClassMember(m_Maps[m_MapNum][0], "FragLimit", GetObject("FragLimit").GetText().ConvertToInt());
+      setStaticClassMember(m_Maps[m_MapNum][0], "ExpertMode", GetObject("isExpert").GetChecked());
+      Component GameSettings = new #GameSettings();
+      GameSettings.SetDifficultyLevel(botLevel);
+
+
+      sendEvent(0.0f, SOID_GameController, "CreateAndStartSession", [GetObject("SessionName").GetText(), m_GameMode, m_Maps[m_MapNum][1], PlayerSlots, 0, MCM_Both, false, false]);
+
+/*      GameController.CreateSession(
+          GetObject("SessionName").GetText(),
+          m_GameMode,
+          m_Maps[m_MapNum][1],//MissionID,
+          PlayerSlots,
+          0,
+          MCM_Both,
+          false,
+          false
+        );
+*/
+
+/*
+//    GameController.ActivateCamera("", false);
+
+     Component Mission        = GameController.GetLoadedMission();
+
+//    if (null == Mission)
+//      return;
+
+    // insert default unit
+      if(!GameController.IsDedicate())
+        Mission.CreatePlayerObject();
+      else
+      {
+         Component Console = GetObject(SOID_Console);
+        if ((Console != null) && (CGameSettings::EnableConsole))
+          Console.Enable(true);
+      }
+//    Mission.CreateEditorObject();
+//    Mission.CreateCursorObject();
+      Mission.StartMission();
+
+
+    // Initialize history
+//    RegisterHistoryProvider((new #GameController()).GetObject("TerrainEditor").GetObject("LayerHistory"));
+
+
+
+      if(!GameController.IsDedicate())
+      {
+      GameController.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+      GameController.EnableControl(Mission.GetMainPlayerObjectID(), true);
+      GameController.ActivateCamera(SOID_MainCamera, false);
+      }
+
+
+//    GameController.ActivateCamera("", false);
+//    GameController.ActivateCamera("MissionEditor", true);
+*/
+    }
+  }
+
+  void Update(
+      float _DelatTime
+    )
+  {
+  if(!(new #GameController()).IsDedicate())
+    GetObject("BriefingText").Update(); // render time update
+  }
+
+}

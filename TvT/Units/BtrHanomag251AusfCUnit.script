@@ -1,0 +1,796 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CBtrHanomag251AusfCExplosion
+  extends CHeavyTankExplosion
+{
+  float  Damage   = 5.0;
+  float  Radius   = 1.0;
+  float  AlarmRadius = 2.0f;
+}
+
+// Machine gun
+class CBtrHanomag251AusfCMachineGunBulletExplosion
+  extends CMachineGun762792BulletExplosion
+{
+  float  Damage   = CPiercing::BtrHanomag251AusfCMachineGunDamage;
+}
+
+class CBtrHanomag251AusfCMachineGunBulletControl
+  extends CMachineGunBulletControl
+{
+  String ExplosionId = "BtrHanomag251AusfCMachineGunBulletExplosion";
+  //Vector GravityAccel = CWorldPhysics::GravityVector;
+}
+
+class CBtrHanomag251AusfCMachineGun
+    extends CMachineGun
+{
+  final static String BulletPatternId = "BtrHanomag251AusfCMachineGunBullet";
+
+//final static Vector GravityVector   = CWorldPhysics::GravityVector;
+//final static boolean HighTrajectory  = false;
+
+  Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>();
+
+  final static float    LockAngleHMin     = -25.0;
+  final static float    LockAngleHMax     =  25.0;
+  final static float    LockAngleVMin     = -8.0;
+  final static float    LockAngleVMax     =  20.0;
+  final static float    BlockedLockAngle  =  1.0;
+
+  // *** Gun parameters for behavior
+  final static int  FirePeriod        = 100; // ms
+  final static int  FirePeriodRandAdd = 10; // ms
+
+  final static boolean BurstFire      = true;
+  final static int  BurstTime         = 2400; // ms
+  final static int  BurstTimeRandAdd  = 0; // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["HUMAN"],[]] // low priority mask: RestrictTo, Exclude
+                                //[["AIR"],[]]
+                              ];
+}
+
+class CBtrHanomag251AusfCAnimatorA
+  extends CTargetingAnimator
+{
+  String HorAnimName    = "turret_a";
+  String VerAnimName    = "gun_a";
+
+  float  LeftEndAngle   = -25.0;
+  float  RightEndAngle  =  25.0;
+  float  TopEndAngle    = -8.0;
+  float  BottomEndAngle =  20.0;
+}
+
+// Movement animator
+
+class CBtrHanomag251AusfCMovementLeftDrivingWheelAnimator
+{
+  String LineSpeedAnim = "";//"wheels_left";
+  String TurnSpeedAnim = "wheels_turn";
+
+  boolean RotateAnim = true;
+
+  float MaxLineSpeed = 15.0*0.283*2.0*Math_PI;            // speed when wheel make full animation per one sec == length of circle
+  float MaxTurnSpeed = Math_HALFPI / 3.0;    // max angle in rotation mode
+}
+
+class CBtrHanomag251AusfCMovementRightDrivingWheelAnimator
+{
+  String LineSpeedAnim = "";//"wheels_right";
+  String TurnSpeedAnim = "wheels_turn";
+
+  boolean RotateAnim = true;
+
+  float MaxLineSpeed = 15.0*0.283*2.0*Math_PI;            // speed when wheel make full animation per one sec == length of circle
+  float MaxTurnSpeed = Math_HALFPI / 3.0;    // max angle in rotation mode
+}
+
+
+class CBtrHanomag251AusfCBaseTrack
+{
+  String  JointName           = "";
+  String  TrackTexName        = "Textures/u_veh_Sdkfz251C_track.tex";
+  String  WheelAnimName       = "";
+
+  Array   TrackTexScrollScale = [0.0, -0.4];
+  float   WheelRotateScale    = 0.04;
+  float   RealTrackPathScale  = 2.0f;
+  boolean IsLeftTrack;
+
+  float   WheelFWDRadius      = 0.436;         // driving wheel radius + track radius
+  float   WhellFWDLiftDown    = 0.052;         // max down wheel offset
+  float   WhellFWDLiftUp      = 0.043;         // max up wheel offset
+
+
+  float   WheelRadius         = 0.283 + 0.040; // wheel radius + track radius
+  float   WhellLiftDown       = 0.080;         // max down wheel offset
+  float   WhellLiftUp         = 0.020;         // max up wheel offset
+
+  // Collision mask [restrict], [exclude]
+  Array   CollisionMask = [[CLASSIFICATOR_WALK_SURFACE], []];
+}
+
+class CBtrHanomag251AusfCLeftTrack
+  extends CBtrHanomag251AusfCBaseTrack
+{
+  String  JointName     = "TrackLeft";
+  String  WheelAnimName = "wheels_left";
+  boolean IsLeftTrack = true;
+
+  Array   WhellsAnimation =
+  [
+    // joint name,            animation name,            down    up
+    //
+    ["WheelLeftFront", "L_Wheel_front_lift", WhellFWDLiftDown, WhellFWDLiftUp, WheelFWDRadius],
+    ["WheelLeftMain2", "L_Wheel02_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelLeftMain3", "L_Wheel03_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelLeftMain4", "L_Wheel04_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelLeftMain5", "L_Wheel05_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelLeftMain6", "L_Wheel06_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelLeftMain7", "L_Wheel07_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius]
+  ];
+}
+
+class CBtrHanomag251AusfCRightTrack
+  extends CBtrHanomag251AusfCBaseTrack
+{
+  String  JointName     = "TrackRight";
+  String  WheelAnimName = "wheels_right";
+  boolean IsLeftTrack   = false;
+
+  Array   WhellsAnimation =
+  [
+    // joint name,            animation name,            down    up
+    //
+    ["WheelRightFront", "R_Wheel_front_lift", WhellFWDLiftDown, WhellFWDLiftUp, WheelFWDRadius],
+    ["WheelRightMain2", "R_Wheel02_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelRightMain3", "R_Wheel03_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelRightMain4", "R_Wheel04_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelRightMain5", "R_Wheel05_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelRightMain6", "R_Wheel06_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius],
+    ["WheelRightMain7", "R_Wheel07_lift",     WhellLiftDown,    WhellLiftUp,    WheelRadius]
+  ];
+}
+
+class CBtrHanomag251AusfCLeftDoorAnimator
+{
+  String AnimationName = "L_Door";
+  float  AnimationTime = 1.0;
+}
+class CBtrHanomag251AusfCRightDoorAnimator
+{
+  String AnimationName = "R_Door";
+  float  AnimationTime = 1.0;
+}
+
+// Behavior
+
+class CBtrHanomag251AusfCBehaviorParams extends CBaseBehaviorParams
+{
+  float MaxAttackSpeed    = 3.5;
+}
+
+class CBtrHanomag251AusfCBehavior extends CBaseBTRBehavior
+{
+  final static Component SpecParams = new CBtrHanomag251AusfCBehaviorParams();
+
+  boolean  CanMove            = true;
+  boolean  HasRouter          = true;
+  boolean  HasRadar           = true;
+  boolean  ForceFrontInAttack = true;
+
+  // *** radar parameters
+
+  float MaxRadarDistance = 1000.0; // m
+  float MinRadarDistance = 5.0;    // m
+  float MaxRadarAngle    = 180.0;
+
+  int    UpdateRadarPeriod        = 3000; // ms
+  int    UpdateRadarPeriodRandAdd = 1000; // ms
+
+  float   AttackDistanceMin = 50.0;
+  float   AttackDistanceMax = 400.0;
+
+  // *** movement physical parameters
+
+  // physical limitations
+  float   MaxRotateSpeed                = 2.0f;
+  Vector  MaxSpeed                      = new Vector( 6.5, 0, 0);   // m/s
+  Vector  MaxNegativeSpeed              = new Vector( 2.0, 0, 0);   // m/s
+  Vector  MaxAccelleration              = new Vector( 0.2, 0, 0);    // m/(s*s)
+  Vector  MaxNegativeAccelleration      = new Vector( 0.1, 0, 0);  // m/(s*s)
+  Vector  MaxBrakingAccelleration       = new Vector(   7, 0, 0);   // m/(s*s)
+  Vector  MaxAngleSpeed                 = new Vector(   0, 0, 1);    // [rad/s]
+  Vector  MaxAngleAccelleration         = new Vector(   0, 0, 0.5);  // [rad/(s*s)]
+  Vector  MaxAngleBrakingAccelleration  = new Vector( 0, 0, 2); //1);  // [rad/(s*s)]
+
+  float  MinRotateRadius = 5; // unit can turn when staying
+
+}
+
+// ================================================
+// Device classes
+// ================================================
+
+class CBtrHanomag251AusfCHullDriverDevice
+  extends CHullDriverDevice
+{
+  String m_NormalSetId  = "Body_NormalSet";
+  String m_CrashedSetId = "Body_CrashedSet";
+
+  void HullDriverDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+        Behavior.SetMoveAbility(false, 0);
+//        Behavior.ActivateMovement(false);
+
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if(Object != null)
+      {
+        Object.SetUnitItemHPPercent("HullEngine", 0.0);
+      }
+    }
+  }
+}
+
+class CBtrHanomag251AusfCHullGunlayerDevice
+  extends CHullGunlayerDevice
+{
+  String m_NormalSetId  = "HullGunLayer_NormalSet";
+  String m_CrashedSetId = "HullGunLayer_CrashedSet";
+
+  void HullGunlayerDeviceDestroyed(Component _HostObject) // called when destroyed  HullDriverDevice
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+        Behavior.SetFireAbility(false, 0);
+//        Behavior.ActivateFire(false);
+  }
+}
+
+class CBtrHanomag251AusfCHullEngineDevice
+  extends CHullEngineDevice
+{
+  String m_NormalSetId  = "Body_NormalSet";
+  String m_CrashedSetId = "Body_CrashedSet";
+
+  void HullEngineDeviceDestroyed(Component _HostObject)
+  {
+    Component IdleSound = _HostObject.GetObject("IdleSound");
+    if (IdleSound != null)
+    {
+      IdleSound.StopSoundPlaying(true);
+    }
+
+    Component StateControl = _HostObject.GetObject("StateControl");
+    if (StateControl != null)
+    {
+      StateControl.SetHitPoints(0.0);
+    }
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       Component Object = Mission.GetObject(getIdentificator(_HostObject));
+       if(Object != null)
+       {
+         //Object.OnLifeStateChanged(false);
+         Object.SetUnitItemHPPercent("HullDriver", 0.0);
+         Object.SetUnitItemHPPercent("HullGunlayer", 0.0);
+         Object.SetUnitItemHPPercent("Damaged", 0.0);
+         Object.SetUnitItemHPPercent("Turret_A", 0.0);
+       }
+    }
+  }
+}
+
+class CBtrHanomag251AusfCTrackLeftDevice
+  extends CTrackLeftDevice
+{
+  String m_NormalSetId  = "TrackLeft_NormalSet";
+  String m_CrashedSetId = "TrackLeft_CrashedSet";
+
+  void TrackLeftDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+        Behavior.SetMoveAbility(false, 0);
+//        Behavior.ActivateMovement(false);
+  }
+}
+
+class CBtrHanomag251AusfCTrackRightDevice
+  extends CTrackRightDevice
+{
+  String m_NormalSetId  = "TrackRight_NormalSet";
+  String m_CrashedSetId = "TrackRight_CrashedSet";
+
+  void TrackRightDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+        Behavior.SetMoveAbility(false, 0);
+//        Behavior.ActivateMovement(false);
+  }
+}
+class CBtrHanomag251AusfCTurretDevice
+  extends CTurretDevice
+{
+  String m_NormalSetId  = "Turret_A_NormalSet";
+  String m_CrashedSetId = "Turret_A_CrashedSet";
+
+  void TurretDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+        Behavior.SetFireAbility(false, 0);
+//        Behavior.ActivateFire(false);
+
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       Component Object = Mission.GetObject(getIdentificator(_HostObject));
+       if(Object != null)
+       {
+         Object.SetUnitItemHPPercent("HullGunlayer", 0.0);
+       }
+    }
+  }
+}
+class CBtrHanomag251AusfCDamagedDevice
+  extends CBulkDevice
+{
+  String m_NormalSetId  = "Body_NormalSet";
+  String m_CrashedSetId = "Body_CrashedSet";
+
+  void BulkDeviceDestroyed(Component _HostObject) // called when destroyed  TurretDevice
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+        Behavior.ActivateBehavior(false);
+
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       Component Object = Mission.GetObject(getIdentificator(_HostObject));
+       if(Object != null)
+       {
+         Object.SetUnitItemHPPercent("HullDriver", 0.0);
+       }
+    }
+  }
+}
+
+class CBtrHanomag251AusfCSubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 0.5;
+  float  Friction1        = 0.95;
+  float  Elasticity       = 0.0;
+}
+
+class CBtrHanomag251AusfCManualControl
+  extends CConstraintProperties
+{
+  // =========================================
+  // Tank properties
+  // =========================================
+
+  float  Mass                 = 40000.0;
+  Vector IT                   = new Vector(0.874482, 3.152529, 3.804275);
+  float  Elasticity           = 0.0;  // Must be zero else tank will bouncing like ball
+  float  Friction             = 0.0;
+
+  float  SuspensionHeight = 0.3;    // cm
+  float  SuspensionPower  = 30000;  // kg
+  Vector GravityAccelerate    = CWorldPhysics::GravityVector;
+}
+
+// ================================================
+// Unit class
+// ================================================
+class CBtrHanomag251AusfCUnit extends CUnit, CPushVehicleObject
+{
+  final static float DefaultHitPoints = CHitPoints::BtrHanomag251AusfCUnitHitPoints;
+
+  static Array PostExplosionID = [
+                                    ["", "BtrHanomag251AusfCExplosion"]
+                                 ];
+                                 
+  static category UnitType = CLASSIFICATOR_T34_BTR;
+
+  final static Array AutomaticClassificators  = ["GROUND", "BTR", "GER"];
+
+  final static String DefaultSurfaceControl = "PutonGroundLandingJoints";
+
+  static Array  LandingJoints = ["Corner_FL", "Corner_RL", "Corner_RR", "Corner_FR"];
+
+  static Array  SubstanceArmourWidth = [
+                                         [CMaterialStructure::MSID_ArmourTurretFWD,   CArmourPoints::BtrHanomag251AusfCUnitArmourTurretFWD  ],
+                                         [CMaterialStructure::MSID_ArmourHullFWD,     CArmourPoints::BtrHanomag251AusfCUnitArmourHullFWD    ],
+                                         [CMaterialStructure::MSID_ArmourHullREAR,    CArmourPoints::BtrHanomag251AusfCUnitArmourHullREAR   ],
+                                         [CMaterialStructure::MSID_ArmourHullTOP,     CArmourPoints::BtrHanomag251AusfCUnitArmourHullTOP    ],
+                                         [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::BtrHanomag251AusfCUnitArmourHullBOTTOM ],
+                                         [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::BtrHanomag251AusfCUnitArmourHullRIGHT  ],
+                                         [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::BtrHanomag251AusfCUnitArmourHullLEFT   ]
+                                      ];
+  boolean m_AITankCollisionShape = true;
+
+  void CBtrHanomag251AusfCUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cu_veh_Hanomag_251CModel>(), [400, 270, 50, 5]);
+
+    // Setup animations
+    SetupAnimator(
+        "MoveAnimLeft", new #MovementAnimator<CBtrHanomag251AusfCMovementLeftDrivingWheelAnimator>()
+      );
+    SetupAnimator(
+        "MoveAnimRight", new #MovementAnimator<CBtrHanomag251AusfCMovementRightDrivingWheelAnimator>()
+      );
+
+    SetupTracks(
+      new #TrackAnimator<CBtrHanomag251AusfCLeftTrack>(),
+      new #TrackAnimator<CBtrHanomag251AusfCRightTrack>()
+    );
+
+    // Door animator
+    //SetDoorEffects(
+    //    new #LineAnimator<CBtrHanomag251AusfCLeftDoorAnimator>(),
+    //    new #LineAnimator<CBtrHanomag251AusfCRightDoorAnimator>()
+    //  );
+
+    SetupWeapon("Weapon_A", new #Weapon<CBtrHanomag251AusfCMachineGun>(),
+      ["Fire_A1"], new #TargetingAnimator<CBtrHanomag251AusfCAnimatorA>());
+
+    SetupBehavior( new #VehicleBehavior<CBtrHanomag251AusfCBehavior>());
+
+    // Creates and register unit state component
+    // MoveSound, TraceEffectId
+
+    SetMovementEffects(
+        new #Emitter<CBtrHanomag251AusfCMovementSound>(),
+        [
+          ["Vapor_L", "GroundUnitTraceEffect"],
+          ["Vapor_R", "GroundUnitTraceEffect"],
+          ["Smoke",   "PetrolSmokeEffect"]
+        ]
+      );
+
+    SetIdleEffects(
+        new #Emitter<CBtrHanomag251AusfCIdleSound>()
+      );
+
+    SetAccelEffects(
+        new #Emitter<CBtrHanomag251AusfCAccelSound>(),
+        [
+          ["Smoke", "PetrolAccelSmokeEffect", new Vector (0.0, 0.0, 0.0)]
+        ]
+      );
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CUnit::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.00f);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576, 1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,   1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,   1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 0.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   0.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   0.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576, 1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,   1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,   1.6);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BUILDING, 0.0);
+
+    // create effects for tracks: [ HostId, Effectid, ZoneId ]
+    SetTrackEffects(
+        _Mission,
+        [
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest01, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest01, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest02 , "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest02 , "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest03   , "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest03   , "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest04, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Forest04, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadForest, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadForest, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush01, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush01, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush02, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush02, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush03, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush03, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush04, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_Bush04, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyLarge, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyLarge, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyRegular, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyRegular, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyCasual, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_ShrubberyCasual, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_SpecialLongAloneTree, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_SpecialLongAloneTree, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting01, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting01, "Right" ],
+          ["Vapor_L", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting02, "Left" ],
+          ["Vapor_R", "ForestUnitTraceEffect", CBaseZoneMap::ZMC_VillagePlanting02, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass01, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass01, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass02, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass02, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass03, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass03, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass04, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_Grass04, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad01, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad01, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad02, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad02, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad03, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad03, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad04, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_OffRoad04, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01Add, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_Road01Add, "Right" ],
+          ["Vapor_L", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadObject, "Left" ],
+          ["Vapor_R", "RoadUnitTraceEffect", CBaseZoneMap::ZMC_RoadObject, "Right" ],
+          ["Vapor_L", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_AllPassable, "Left" ],
+          ["Vapor_R", "GroundUnitTraceEffect", CBaseZoneMap::ZMC_AllPassable, "Right" ],
+          ["Vapor_L", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Left" ],
+          ["Vapor_R", "TankWaterEffect", CBaseZoneMap::ZMC_Water01, "Right" ],
+          ["Vapor_L", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Left" ],
+          ["Vapor_R", "TankWaterEffect", CBaseZoneMap::ZMC_ShallowWater01, "Right" ],
+          ["Vapor_L", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Left" ],
+          ["Vapor_R", "TankWaterEffect", CBaseZoneMap::ZMC_BeachWater01, "Right" ]
+        ]
+      );
+
+    CreateUnitItem(
+        "HullDriver",
+        CJointPoints::BtrHanomag251AusfCUnitHULL_DRIVERPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "HullDriver"
+      );
+    CreateUnitItem(
+        "HullEngine",
+        CJointPoints::BtrHanomag251AusfCUnitHULL_ENGINEPoints,
+        ["GenericSmallFireEffect", "HE7576_85_88BulletArmourHitEffect"],
+        "HullEngine"
+      );
+    CreateUnitItem(
+        "TrackLeft",
+        CJointPoints::BtrHanomag251AusfCUnitTRACK_LEFTPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "TrackLeft"
+      );
+    CreateUnitItem(
+        "TrackRight",
+        CJointPoints::BtrHanomag251AusfCUnitTRACK_RIGHTPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "TrackRight"
+      );
+    CreateUnitItem(
+        "HullGunLayer",
+        CJointPoints::BtrHanomag251AusfCUnitHULL_GUNLAYERPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "HullGunlayer"
+      );
+    CreateUnitItem(
+        "Turret_A",
+        CJointPoints::BtrHanomag251AusfCUnitTURRETPoints,
+        ["GenericDamageItemEffect", "GenericDamageItemEffect"],
+        "Turret_A"
+      );
+
+    CreateUnitItem(
+        "Damaged",
+        CJointPoints::BtrHanomag251AusfCUnitDAMAGEDPoints,
+        ["GenericDamageItemEffect", "HullGunLayerExplosionEffect"],
+        "Damaged"
+      );
+
+    LinkDeviceToUnitItem("HullDriver",   new CBtrHanomag251AusfCHullDriverDevice());
+    LinkDeviceToUnitItem("HullGunlayer", new CBtrHanomag251AusfCHullGunlayerDevice());
+    LinkDeviceToUnitItem("HullEngine",   new CBtrHanomag251AusfCHullEngineDevice());
+    LinkDeviceToUnitItem("TrackLeft",    new CBtrHanomag251AusfCTrackLeftDevice());
+    LinkDeviceToUnitItem("TrackRight",   new CBtrHanomag251AusfCTrackRightDevice());
+    LinkDeviceToUnitItem("Turret_A",     new CBtrHanomag251AusfCTurretDevice());
+    LinkDeviceToUnitItem("Damaged",      new CBtrHanomag251AusfCDamagedDevice());
+
+    AttachEffect2("Vapor_L", "HanomagTrackEffect", new Vector(0.6, 0.0, 0.0));
+    AttachEffect2("Vapor_R", "HanomagTrackEffect", new Vector(0.6, 0.0, 0.0));
+    AttachEffect2("Vapor_L", "HanomagTrackEffect", new Vector(-0.6, 0.0, 0.0));
+    AttachEffect2("Vapor_R", "HanomagTrackEffect", new Vector(-0.6, 0.0, 0.0));
+
+    Component VehicleController = new #AITankVehicle<CBtrHanomag251AusfCManualControl>();
+    if (null == VehicleController)
+      logError("Cant setup type of vehicle control for " + getIdentificator(this));
+
+    RegisterObject("AIVehicleController", VehicleController);
+    VehicleController.SetEventHandler(this);
+
+    Component Mesh = GetMeshComponent();
+    Array BaseShapes = Mesh.GetCollisionShapes(Mesh.GetRootJoint(), false);
+    Component Body = VehicleController.CreateObject(Mesh, BaseShapes);
+
+    SetupPhysicaleObject("CBtrHanomag251AusfCSubstance", 17000.0, 0.0002);
+  }
+  event void OnSuccessTouchTrigger(
+    float _Energy
+    )
+  {
+    //$LOG
+    //logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnSuccessTouchTrigger energy = " + new String(_Energy));
+    Component PhysicsController = GetPhysicsController();
+    if (null != PhysicsController)
+      PhysicsController.CreateTouchTrigger(0.0);
+
+    Component StateControl = GetStateControl();
+    if (null != StateControl)
+    {
+      float HitPoints = StateControl.GetHitPoints() - _Energy * EnergyToHP;
+      StateControl.SetHitPoints(HitPoints);
+
+      if (HitPoints <= 0.0)
+        user.SetUnitItemHPPercent("HullEngine", 0.0);
+    }
+
+    Component SurfaceControl = GetSurfaceControl();
+    if (null != SurfaceControl)
+      SurfaceControl.EnableSurfaceControl(false);
+
+    // play touch sound
+    if(_Energy > MinEnergyToSound)
+      (new #SoundsArray()).CreateSound("TankCollisionBtrLowSpeedSound", getPosition(this));
+
+    Component Behavior = GetBehavior();
+    if (null != Behavior)
+    {
+      Behavior.ActivateMovement(false);
+      PhysicsController.EnableControl(true);
+      //$HACK
+      CurrentEventID = randnum(INT_MAX);
+      if (checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]))
+      {
+//        logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " enabling Behavior after 7 sec");
+        sendEvent(7.0, getIdentificator(this), "OnBehaviorEnabled", [true, CurrentEventID]);
+      }
+    }
+
+    Vector m_Point = new Vector(0.0, 0.0, 0.0);
+    //PushTruck(_Energy*0.15, m_Point);
+    PhysicsController.AppendExternalForce(m_Point, new Vector(0.0, 0.0, 0.0));
+//    logWarning("Push: " + new String(m_Point));
+  }
+
+  event void PushTruck(
+      float _Energy,
+      Vector _Point
+    )
+  {
+ //   if(checkMask(this, [], []))
+ //     return;
+
+    //SetSurfaceControl("None");
+    /////////// KillHuman();
+
+    //logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " PushTruck energy = " + new String(_Energy));
+
+    Component PhysicsController = GetPhysicsController();
+    PhysicsController.EnableControl(true);
+    PhysicsController.Activate(true);
+
+//    Vector Force = (new Vector(15.0f, 15.0f, 15.0f) - (getPosition(user).origin - _Point))/3.0f;
+    Vector Force = (getPosition(user).origin - _Point);
+//     logWarning("Force X: " + new String(Force.x));
+//     logWarning("Force Y: " + new String(Force.y));
+
+    if (Force.x > 0)
+      Force.x = 4.0 - Force.x/2;
+    else
+      Force.x = -4.0 + Force.x/2;
+
+    if (Force.y > 0)
+      Force.y = 4.0 - Force.y/2;
+    else
+      Force.y = -4.0 + Force.y/2;
+
+    Force.z = 2.5f;
+
+    Force.x = Force.x/3;
+    Force.y =  Force.y/3;
+
+    Component SurfaceControl = GetSurfaceControl();
+    if (null != SurfaceControl)
+      SurfaceControl.EnableSurfaceControl(false);
+
+    Component Behavior = GetBehavior();
+    if (null != Behavior)
+    {
+      Behavior.ActivateMovement(false);
+      PhysicsController.EnableControl(true);
+      //$HACK
+      CurrentEventID = randnum(INT_MAX);
+      if (checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]))
+      {
+//        logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " enabling Behavior after 7 sec");
+        sendEvent(5.0, getIdentificator(this), "OnBehaviorEnabled", [true, CurrentEventID]);
+      }
+    }
+
+//    logWarning("MODForce X: " + new String(Force.x));
+//    logWarning("MODForce Y: " + new String(Force.y));
+
+    PhysicsController.AppendExternalForce(Force, new Vector(0.1, 0.3, 0.2));
+//    logWarning("Push: " + new String(Force));
+  }
+
+  void Initialize(
+      Component   _Mission,
+      Component   _PropMap
+    )
+  {
+    CUnit::Initialize(_Mission, _PropMap);
+
+    if (null != GetBehavior())
+    {
+      GetBehavior().SetBehRadarMask(["FRIEND", "MainMesh"], ["NEUTRAL", "AIR", "AIRPLANE"], [], []);
+    }
+    else
+      logError("NULL Beh");
+  }
+
+  // ======================================
+  // Armour descriptor
+  // ======================================
+  Array GetArmourDescriptor()
+  {
+    return new Array ([
+                        [CMaterialStructure::MSID_ArmourTurretFWD,   CArmourPoints::BtrHanomag251AusfCUnitArmourTurretFWD  ],
+                        [CMaterialStructure::MSID_ArmourHullFWD,     CArmourPoints::BtrHanomag251AusfCUnitArmourHullFWD    ],
+                        [CMaterialStructure::MSID_ArmourHullREAR,    CArmourPoints::BtrHanomag251AusfCUnitArmourHullREAR   ],
+                        [CMaterialStructure::MSID_ArmourHullTOP,     CArmourPoints::BtrHanomag251AusfCUnitArmourHullTOP    ],
+                        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::BtrHanomag251AusfCUnitArmourHullBOTTOM ],
+                        [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::BtrHanomag251AusfCUnitArmourHullRIGHT  ],
+                        [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::BtrHanomag251AusfCUnitArmourHullLEFT   ]
+                      ]);
+  }
+  event void SetModelViewState(
+      boolean _State
+    )
+  {
+    // TMP
+  }
+}
+
+

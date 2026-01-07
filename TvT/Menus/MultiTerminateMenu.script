@@ -1,0 +1,58 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTerminateMenu
+  extends CBaseMenu, CTerminateControls, CBackgroundsMenu
+{
+  static String m_MenuClassName = "CTerminateMenu";
+
+
+  void OnInitMenu()
+  {
+
+    // Setup timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("Update", 0.5);
+    Timer.Enable(true);
+    RegisterObject("EscTimer", Timer);
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("EscTimer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if ("Quit2Button" == _ID)
+    {
+        Component Game = new #GameController();
+        Component Mission        = Game.GetLoadedMission();
+        Component Session = Game.GetGameSession();
+
+        Game.CloseMultiplayer();
+        Game.DeleteSession();
+        Game.CreateMenuController();
+        Game.EnableControl("GameMenu", true);
+        sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+        //Invoke("MultiPlayerMenu");
+
+    }
+  }
+
+
+  void Update(
+      float _DelatTime
+    )
+  {
+  }
+}

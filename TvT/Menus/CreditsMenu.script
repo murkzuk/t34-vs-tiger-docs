@@ -1,0 +1,75 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCreditsMenu
+  extends CBaseMenu, CCreditsControls
+{
+  static String m_MenuClassName = "CCreditsMenu";
+  final static String m_Music = CMusicController::MENU_Credits;
+
+  void OnInitMenu()
+  {
+    m_MenuController.SetDefaultCommands("", "BackButton");
+
+    WString CreditsText = L"";
+
+    // Loading credits text from Common.rsr
+    for (int i = 0; ; i++)
+    {
+      WString CreditsEntry = getLocalized("Credits", "cr" + new String(i));
+      if (L"" == CreditsEntry)
+        break;
+      CreditsText = CreditsText + CreditsEntry + L"\r\n";
+    }
+
+    GetObject("CreditsText").SetText(CreditsText);
+
+    Component Position = GetObject("CreditsText").GetUIPosition();
+    Position.Y = 0.8;
+    GetObject("CreditsText").SetPosition(Position);
+
+    // Setup timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("OnTimerTick", 0.0);
+    Timer.Enable(true);
+    RegisterObject("CreditsTimer", Timer);
+  }
+
+  void OnCloseMenu()
+  {
+    UnregisterObject("CreditsTimer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    CBaseMenu::OnControlActivated(_ID);
+
+    if ("BackButton" == _ID)
+      GoBack();
+  }
+
+  //
+  // Timer event
+  //
+
+  void OnTimerTick(
+      float _TimeDelta
+    )
+  {
+    Component CreditsText = GetObject("CreditsText");
+    Component Position    = CreditsText.GetUIPosition();
+    
+    Position.Y -= _TimeDelta * 0.05;
+
+    CreditsText.SetPosition(Position);
+  }
+}

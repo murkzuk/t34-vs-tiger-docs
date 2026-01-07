@@ -1,0 +1,354 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated menu script file                         
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class CGameSettingsControls
+{
+  static String m_ControlListClassFile = "Scripts/Menus/GameSettingsControls.script";
+  static String m_ControlListClassName = "CGameSettingsControls";
+
+  static Array m_UIControls = [
+    [
+      "Background",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.000000000,
+          0.000000000,
+          1.000000000,
+          1.000000000
+        ),
+      [
+        ["Material", "GameSettingMenuBackground", false],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["Z", 0.000000000, true],
+        ["Hint", "", true],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true]
+      ]
+    ],
+
+    [
+      "BackButton",
+      "BitmapButton",
+      "CUIButton",
+      new CUIPosition(
+          0.019531250,
+          0.912760437,
+          0.249023438,
+          0.053385414
+        ),
+      [
+        ["MaterialNormal", "Back", false],
+        ["MaterialHilited", "Back", false],
+        ["FontName", "Arial", false],
+        ["NormalTextColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), false],
+        ["HilitedTextColor", new Color(0.800000, 0.000000, 0.000000, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["", ""], false],
+        ["Z", 0.020000000, true],
+        ["LeftIndent", 0.000000000, true],
+        ["NormalMaterialColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedMaterialColor", new Color(1.000000, 0.729412, 0.000000, 1.000000), false],
+        ["Hint", "", true],
+        ["MaterialPressed", "", true],
+        ["IsMultiline", false, true]
+      ]
+    ],
+
+    [
+      "frame1",
+      "FrameControl",
+      "CUIFrame",
+      new CUIPosition(
+          0.181159407,
+          0.152343750,
+          0.610386431,
+          0.150260419
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["Thickness", 1.000000000, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true]
+      ]
+    ],
+
+    [
+      "cb_UnlimAmmo",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.379882813,
+          0.196614578,
+          0.313476563,
+          0.039062500
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_GS_UNLIM_AMMO"], false],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["bChecked", false, true],
+        ["bEnabled", true, true]
+      ]
+    ],
+
+    [
+      "cb_GodMode",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.379882813,
+          0.270833343,
+          0.315429688,
+          0.039062500
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_GS_GODMODE"], false],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["bChecked", false, true],
+        ["bEnabled", true, true]
+      ]
+    ],
+
+    [
+      "cb_TargetsOnMap",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.379882813,
+          0.346093774,
+          0.318359375,
+          0.039062500
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_TARGETS_ON_MAP"], false],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["bChecked", false, true],
+        ["bEnabled", true, true]
+      ]
+    ],
+
+    [
+      "cb_EngineFire",
+      "",
+      "CUICheckBox",
+      new CUIPosition(
+          0.379882813,
+          0.422656268,
+          0.319335938,
+          0.039062500
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["CheckedNormal", "CheckBoxChecked", false],
+        ["NonCheckedNormal", "CheckBoxUnChecked", false],
+        ["CheckButtonWidth", 0.000000000, true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["NormalButtonColor", new Color(1.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedButtonColor", new Color(0.000000, 0.000000, 1.000000, 1.000000), true],
+        ["Caption", ["Menu", "str_ENGINE_FIRE"], false],
+        ["CaptionColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["bChecked", false, true],
+        ["bEnabled", true, true]
+      ]
+    ],
+
+    [
+      "s_AIAim",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.272460908,
+          0.542708397,
+          0.454296857,
+          0.033072937
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_AI_AIM"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.500000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_Low",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.288085908,
+          0.629687548,
+          0.205273420,
+          0.033072937
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_LOW"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 0.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "s_High",
+      "TextControl",
+      "CUITextField",
+      new CUIPosition(
+          0.492187440,
+          0.630468845,
+          0.219921857,
+          0.033072937
+        ),
+      [
+        ["Z", 0.010000000, true],
+        ["Hint", "", true],
+        ["FontName", "Arial", true],
+        ["FontSize", 0.032000002, true],
+        ["Text", ["Menu", "str_HIGH"], false],
+        ["TextColor", new Color(0.705882, 0.686275, 0.603922, 1.000000), false],
+        ["Alignment", 1.000000000, false],
+        ["Shadow", 0.000000000, true],
+        ["IsMultiline", true, true]
+      ]
+    ],
+
+    [
+      "h_AIAim",
+      "",
+      "CUIHorizontalScrollBar",
+      new CUIPosition(
+          0.268554688,
+          0.584374964,
+          0.464062482,
+          0.042968750
+        ),
+      [
+        ["Z", 0.020000000, true],
+        ["Hint", "", true],
+        ["MaterialArrow1", "HScrollerLeft", false],
+        ["NormalTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["HilitedTextColor", new Color(0.000000, 0.000000, 0.000000, 1.000000), true],
+        ["MaterialArrow2", "HScrollerRight", false],
+        ["MaterialScroll", "HScrollerScroller", false],
+        ["NormalSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["HilitedSliderColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["ScrollRange", 2, false],
+        ["InitialScrollPos", 0, true],
+        ["IsScrollerSizeFixed", true, false],
+        ["ScrollerFixedWidth", 0.012695313, false],
+        ["ScrollerFixedHeight", 0.042968750, false],
+        ["Enabled", true, true]
+      ]
+    ],
+
+    [
+      "sb_AIAim",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.311523438,
+          0.584375083,
+          0.381835938,
+          0.042968750
+        ),
+      [
+        ["Z", 0.010000000, false],
+        ["Hint", "", true],
+        ["Material", "HScrollerBack", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", false, true],
+        ["FrameColor", new Color(1.000000, 1.000000, 1.000000, 1.000000), true],
+        ["FrameThickness", 1.000000000, true]
+      ]
+    ],
+
+    [
+      "GameSetBack",
+      "BitmapControl",
+      "CUIBitmap",
+      new CUIPosition(
+          0.257812500,
+          0.161458313,
+          0.482617170,
+          0.531770766
+        ),
+      [
+        ["Z", 0.001000000, false],
+        ["Hint", "", true],
+        ["Material", "GridBackground", false],
+        ["TexU", 0.000000000, true],
+        ["TexV", 0.000000000, true],
+        ["TexMagnifyX", 1.000000000, true],
+        ["TexMagnifyY", 1.000000000, true],
+        ["TexConstAspectRatio", false, true],
+        ["FrameEnabled", true, false],
+        ["FrameColor", new Color(0.227451, 0.247059, 0.000000, 1.000000), false],
+        ["FrameThickness", 2.000000000, false]
+      ]
+    ]
+  ];
+}

@@ -1,0 +1,148 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMissionsMenu
+  extends CBaseMenu, CMissionsControls, CBackgroundsMenu
+{
+  static String m_MenuClassName = "CMissionsMenu";
+  final static String m_Music = "";
+
+  static WString CampaignName  = L"";
+
+  static int   CampaignNumber  = 1;
+  static int   MissionNumber   = 1;
+
+  final static Array USSR_Missions = [
+                "CC1M1Mission",
+                "CC1M2Mission",
+                "CC1M3Mission",
+                "CC1M4Mission",
+                "CC1M5Mission",
+                "CC1M6Mission",
+                "CKurtenki2Mission"
+                
+            ];
+
+  final static Array Germany_Missions = [
+                "CC2M1Mission",
+                "CC2M2Mission",
+                "CC2M3Mission",
+                "CC2M4Mission",
+                "CC2M5Mission",
+                "CC2M6Mission"
+				
+
+      ];
+
+
+  final static Array DefaultElementProps = [
+      ["FontName",        "Arial",                              false],
+      ["FontSize",        CUISettings::TextListFontSize,        false],
+      ["SelectedColor",   new Color(1.000000, 1.000000, 1.000000, 1.000000),   false],
+      ["NormalColor",     new Color(0.666666, 0.647058, 0.564705, 1.000000),   false],
+      ["HiSelectedColor", new Color(1.000000, 1.000000, 1.000000, 1.000000),   false],
+      ["HiNormalColor",   new Color(0.666666, 0.647058, 0.564705, 1.000000),   false],
+      ["Alignment",       0.500000000,                          false]
+    ];
+
+  void OnInitMenu()
+  {
+    SetBackground(CampaignNumber);
+
+    if (1 == CampaignNumber)
+      new #MusicController().SetMenuState(CMusicController::MENU_RusMain);
+    else
+    if (2 == CampaignNumber)
+      new #MusicController().SetMenuState(CMusicController::MENU_GerMain);
+
+    Component Game = new #GameController();
+    Component MenuController = Game.GetMenuController();
+    MenuController.SetDefaultCommands("Load", "Back");
+
+    GetObject("MissionName").SetText(CampaignName);
+    UpdateMissionList();
+  }
+  
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    if (_ID.IsStartsWith("MissionList_"))
+    {
+      GetObject("MissionList").SelectItem(_ID);
+    }
+    if ("Load" == _ID)
+    {
+
+      final int iMission = GetObject("MissionList").GetCurrentItem();
+      MissionNumber = iMission;
+      if (-1 != iMission)
+      {
+        if (1 == CampaignNumber)
+          CStartMissionMenu::MissionClassName = USSR_Missions[iMission];
+        else
+        if (2 == CampaignNumber)
+          CStartMissionMenu::MissionClassName = Germany_Missions[iMission];
+        Invoke("StartMissionMenu");
+      }
+    }
+    if ("Back" == _ID)
+      GoBack();
+  }
+
+  void UpdateMissionList()
+  {
+    Component GameSettings = new #GameSettings();
+    Component PlayList = GetObject("MissionList");
+
+    PlayList.ClearWithUnregister();
+    PlayList.SetListScrollStep(32.7 / 768.0);
+    PlayList.SelectItemByIndex(-1);
+
+    Component Position = new CUIPosition(0.0, 0.0, PlayList.GetUIPosition().Width, 25.0 / 768.0);
+
+    int MissionsCount = 0;
+    if (1 == CampaignNumber)
+    {
+      MissionsCount = GameSettings.GetUserValue(L"USSRCampaign", 1);
+      if (MissionsCount > USSR_Missions.size())
+        MissionsCount = USSR_Missions.size();
+    }
+    else
+    if (2 == CampaignNumber)
+    {
+      MissionsCount = GameSettings.GetUserValue(L"GerCampaign", 1);
+      if (MissionsCount > Germany_Missions.size())
+        MissionsCount = Germany_Missions.size();
+    }
+
+    for (int i = 0; i < MissionsCount; i++)
+    {
+      final String NewID = "MissionList_" + new String(i);
+      Component Element = CreateUIControl(
+          NewID, 
+          "BitmapButton", 
+          "CUITextElement", 
+          Position, 
+          clone(DefaultElementProps)
+        );
+
+      if (1 == CampaignNumber)
+        Element.SetText(getStaticClassMember(USSR_Missions[i] + "_Strings", "MissionName"));
+      else
+      if (2 == CampaignNumber)
+        Element.SetText(getStaticClassMember(Germany_Missions[i] + "_Strings", "MissionName"));
+
+      Element.SetMaterials("None", "Grid3Background");
+      PlayList.AddControl(NewID);
+    }
+    
+    PlayList.SelectItemByIndex(MissionsCount-1);
+  }
+}

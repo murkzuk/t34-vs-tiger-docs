@@ -1,0 +1,211 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMultiEndMissionMenu
+  extends CBaseMenu, CMultiEndMissionControls, CBackgroundsMenu
+{
+  static String m_MenuClassName = "CMultiEndMissionMenu";
+
+  static WString CamaignName      = CCampaignNames::str_CAMPAIGN1;
+  static String  MissionClassName = "CC1M1Mission"; //$TMP
+
+  static int     MissionStatus = CMission::MOSID_InProgress;
+  
+  Component m_GameController;  
+  WString m_ChatText = L"Default Objective";
+
+  final static Array MissionResults = [
+      [L"Default Objective", /* invsible dummy  */                     new Color(1.0, 1.0, 1.0, 1.0)],
+      [getLocalized("Menu", "str_MISSSION_SUCCESS"),  new Color(1.0, 1.0, 1.0, 1.0)],
+      [getLocalized("Menu", "str_MISSSION_FAILED"),   new Color(1.0, 0.0, 0.0, 1.0)],
+      [getLocalized("Menu", "str_MISSSION_SUCCESS"),  new Color(1.0, 1.0, 1.0, 1.0)]
+    ];
+
+  void OnInitMenu()
+  {
+    MissionClassName = CStartMissionMenu::MissionClassName;
+
+    if (CMission::MOSID_Failed == MissionStatus)
+      SetBackground(CMissionsMenu::CampaignNumber, 1);
+    else
+      SetBackground(CMissionsMenu::CampaignNumber, 0);
+
+    logError("Campaing: " + new String(CMissionsMenu::CampaignNumber));
+
+    m_MenuController.SetDefaultCommands("", "BackButton");
+
+    GetObject("MissionName").SetText(
+        CamaignName + L" - " +
+        getStaticClassMember(MissionClassName + "_Strings", "MissionName")
+      );
+
+//    GetObject("BriefingText").SetSlaveScroller(GetObject("vs_scroll"));
+//    GetObject("BriefingText").SetText(getStaticClassMember(MissionClassName + "_Strings", "BriefingText"));
+
+    //$TMP
+    GetObject("t_shoots").SetText(L"0");
+    GetObject("t_hits").SetText(L"0");
+    GetObject("t_aquracy").SetText(L"0");
+
+    m_GameController = new #GameController();
+    Component Mission = m_GameController.GetLoadedMission();
+    if (Mission == null)
+      logError("[CEndMissionMenu] Mission component is null!");
+
+    GetObject("t_killed_tanks").SetText(new WString(Mission.m_PlayerVictims_Tanks));
+    GetObject("t_killed_firedots").SetText(new WString(Mission.m_PlayerVictims_FireDots));
+    GetObject("t_killed_bmp").SetText(new WString(Mission.m_PlayerVictims_BTRs));
+    GetObject("t_killed_auto").SetText(new WString(Mission.m_PlayerVictims_Autos));
+    GetObject("t_killed_people").SetText(new WString(Mission.m_PlayerVictims_Humans));
+
+    FillPalyersList();
+
+    // Setup timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("Update", 0.0);
+    Timer.Enable(true);
+    RegisterObject("EscTimer", Timer);
+
+    // mission status
+    GetObject("s_mission_result").SetText(MissionResults[MissionStatus][0]);
+    GetObject("s_mission_result").SetTextColor(MissionResults[MissionStatus][1]);
+    
+    m_MenuController.SetDefaultCommands("SendMessage", "");
+  }
+
+  void OnCloseMenu()
+  {
+    MissionStatus = CMission::MOSID_InProgress;
+
+    UnregisterObject("EscTimer");
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    GetObject("BriefingText").Update();
+    
+    if ("SendMessage" == _ID)
+    {
+      WString Message = GetObject("ChatString").GetText();
+      Component Mission = m_GameController.GetLoadedMission();
+      if ((null != Mission) && (!Message.isEmpty()))
+      {
+        GetObject("ChatString").SetText(L"Default Objective");
+        Mission.SendChatMessage(Message);
+      }
+    }
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("ChatText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("ChatText").ScrollDown();
+
+    if ("Quit2Button" == _ID)
+    {
+        Component Game = new #GameController();
+        Component Mission        = Game.GetLoadedMission();
+        Component Session = Game.GetGameSession();
+
+        if (Game.GetGameMode() == "Server")
+          Session.FireNetEvent("Server_KickAllPlayers", []);
+
+//        Session.DeleteObject(Mission.GetMainPlayerObjectID());
+        Game.UnloadMission();
+
+        Session.CleanupPlayersInfo();
+        Game.CloseMultiplayer();
+        Game.DeleteSession();
+        Game.CreateMenuController();
+        Game.EnableControl("GameMenu", true);
+        sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+//        Invoke("MultiPlayerMenu");
+
+/*      Component Game = new #GameController();
+//      Game.UnloadMission();
+      Game.CloseMultiplayer();
+      Component Session = Game.GetGameSession();
+      Session.CleanupPlayersInfo();
+      Invoke("MultiPlayerMenu");
+//      sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+*/
+    }
+    else
+    if ("RestartButton" == _ID)
+    {
+      String MissionClass = clone(new #GameController().GetLoadedMission().GetClassName());
+      sendEvent(0.0, SOID_GameController, "BeginNewGame", [MissionClass]);
+    }
+    else
+    if ("vs_scroll_Arrow1" == _ID)
+      GetObject("BriefingText").ScrollUp();
+    else
+    if ("vs_scroll_Arrow2" == _ID)
+      GetObject("BriefingText").ScrollDown();
+  }
+
+  void FillPalyersList()
+  {
+
+    GetObject("PlayersList").ClearWithUnregister();
+    GetObject("PlayersList").SetListScrollStep(CUIObjectiveElement::GetElementHeight());
+
+    Component Position = new CUIPosition(0.0, 0.0, GetObject("PlayersList").GetUIPosition().Width, 25.0 / 768.0);
+    Array Props = [
+//                    ["SelectedColor",   new Color(186.0/255.0, 186.0/255.0 ,176.0/255.0),   false],
+//                    ["NormalColor",     new Color(122.0/255.0, 122.0/255.0 ,103.0/255.0),     false],
+                    ["NameWidth", 0.8, false],
+                    ["StatusWidth",0.2, false],
+                    ["FontSize", 0.024, false]
+                  ];
+
+    Array PlayersInfo = (new #GameController()).GetGameSession().GetPlayersInfo();
+    for (int i = 0; i < PlayersInfo.size(); i++)
+    {
+      logWarning(new String(PlayersInfo[i].Name) + " " + new String(PlayersInfo[i].SessionFrags) + " " + new String(PlayersInfo[i].SessionKills) + " " + new String(PlayersInfo[i].SessionDeaths));
+      String NewID = "PalyerElement_" + new String(i + 1);
+      CreateUIControl(NewID,
+                      "BitmapButton",
+                      "CUIPlayerStatusField",
+                      Position,
+                      Props);
+
+      GetObject(NewID).SetText(new WString(PlayersInfo[i].Name), new WString(PlayersInfo[i].SessionFrags));
+      GetObject(NewID).SetZ(0.01f);
+      GetObject("PlayersList").AddControl(NewID);
+    }
+  }
+  
+  void AddChatMessage(
+      WString _Message
+    )
+  {
+    if (m_ChatText.isEmpty())
+      m_ChatText = _Message;
+    else
+      m_ChatText = m_ChatText + L"\n" + _Message;
+
+    Component Chat = GetObject("ChatText");
+    Chat.SetText(m_ChatText);
+    Chat.SetSlaveScroller(GetObject("vs_scroll"));
+    Chat.Update();
+    Chat.ScrollDown();
+  }
+
+  void Update(
+      float _DelatTime
+    )
+  {
+    GetObject("ChatText").Update();
+//    GetObject("BriefingText").Update(); // render time update
+  }
+}

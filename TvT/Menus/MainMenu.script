@@ -1,0 +1,39 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMainMenu
+  extends CBaseMenu, CMainControls
+{
+  static String m_MenuClassName = "CMainMenu";
+
+  void OnInitMenu()
+  {
+    m_MenuController.SetDefaultCommands("StartNewGameButton", "QuitButton");
+  }
+  
+  void OnControlActivated(
+      String _ID
+    )
+  {
+   logWarning(_ID);
+    if ("StartNewGameButton" == _ID)
+      Invoke("SingleMenu");
+    if ("MultiPlayerButton" == _ID)
+    {
+      CMissionsMenu::CampaignNumber = 0;
+      Invoke("MultiPlayerMenu");
+    }
+    if ("Options" == _ID)
+      Invoke("SettingsMenu");
+    if ("Credits" == _ID)
+      Invoke("CreditsMenu");
+    if ("QuitButton" == _ID)
+      OpenWindow("QuitConformationMenu");
+  }
+}
