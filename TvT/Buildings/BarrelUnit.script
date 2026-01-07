@@ -1,0 +1,143 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CBarrelExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 10.0;
+  float  Radius   = 5.0;
+  String SoundId  = "BarrelExplosionSound";
+  String EffectId = "BarrelExplosionEffect";
+}
+
+class CBarrelUnit
+  extends CGroundBuilding
+{
+
+  final static float DefaultHitPoints = CHitPoints::BarrelUnitHitPoints;
+
+  static String PrevDeathEffect = "";//"BarrelFireEffect";
+  static String PrevDeathSound  = "TankExplosionSound";
+  final static int  DeathEffectDelay = 1.5;
+
+  static String PostExplosionID = "HullGunLayerExplosionEffect";
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+  boolean m_Live = true;
+  boolean m_InFire = false;
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CBarrelUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cenv_BarrelModel>(), [150, 50, 5]);
+
+
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupDestroyPhysicsController function call");
+      return;
+    }
+
+    // Create physics controller
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, "CMetalSubstance");
+
+    // Initialize controller
+    PhysicsController.SetEventHandler(this);
+    PhysicsController.SetMass(2000.0f);
+    setSlaveObject(PhysicsController, Mesh);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    // Register object physics controller
+    RegisterObject("DestroyController", PhysicsController);
+
+    Array Shapes = Mesh.GetCollisionShapes(Mesh.GetRootJoint(), false);
+    if (Shapes.isEmpty())
+      logError("Empty shapes");
+
+    boolean IsValidBody = PhysicsController.CreateRigidBody("Root1", Mesh.GetRootJoint(), Shapes);
+
+    addClassificator(user, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+    addClassificator(user, CLASSIFICATOR_WALK_SURFACE);
+    addClassificator(user, CLASSIFICATOR_COLLISION_SHAPES);
+                           
+    PhysicsController.CreateTouchTrigger(0.0f);
+    PhysicsController.EnableControl(false);
+  }
+
+  event void OnPhysicsEnabled(
+      boolean _Enable
+    )
+  {
+    Component DestroyController = GetObject("DestroyController");
+    DestroyController.Activate(true);
+  }
+
+  event void OnSuccessTouchTrigger(
+    float _Energy
+    )
+  {
+    Component PhysicsController = GetObject("DestroyController");
+    if (null != PhysicsController)
+      PhysicsController.CreateTouchTrigger(0.0);
+
+    Component SurfaceControl = GetSurfaceControl();
+    if (null != SurfaceControl)
+      SurfaceControl.EnableSurfaceControl(false);
+
+    PhysicsController.EnableControl(true);
+    PhysicsController.Activate(true);
+
+    if (_Energy > 55000)
+    {
+      sendEvent(7.0f, getIdentificator(this), "DestroyObject", []);
+      if (!m_InFire)
+      {
+        if (!PrevDeathEffect.isEmpty())
+        {
+          Component EffectsArray = new #EffectsArray();
+          EffectsArray.CreateEffect(PrevDeathEffect, getPosition(this), this);
+        }
+
+        m_InFire = true;
+      }
+    }
+  }
+
+  event void DestroyObject()
+  {
+    logMessage(getIdentificator(this) + ": DestroyObject");
+
+    if(checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]))
+    {
+      Component RootJoint = GetMeshComponent().GetRootJoint();
+      Component EffectsArray = new #EffectsArray();
+      EffectsArray.CreateEffect(PostExplosionID, getPosition(RootJoint), this);
+
+      if ("" != PrevDeathSound)
+        (new #SoundsArray()).CreateSound(PrevDeathSound, getPosition(RootJoint));
+
+      setVisibleState(RootJoint, false);
+
+      addClassificator(this, CLASSIFICATOR_DEAD_OBJECT);
+      sendEvent(0.0, getIdentificator(GetMission()), "OnObjectDestroyed", [getIdentificator(this)]);
+    }
+  }
+
+}

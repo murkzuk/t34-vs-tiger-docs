@@ -1,0 +1,33 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CFencePoleUnit
+  extends CBaseDestructableFenceObject
+{
+  static String m_SectionName   = "CenterSection";
+  static String m_StartSection  = "CenterSection";
+  static String m_FinishSection = "CenterSection";
+
+  static String m_DamagedSectionName   = "CenterSection_Crashed";
+  static String m_DamagedStartSection  = "CenterSection_Crashed";
+  static String m_DamagedFinishSection = "CenterSection_Crashed";
+
+  static String DeathEffect = "WoodHE7576_85_88BulletHitRingEffect"; //"BuildingExplosionEffect";
+  static String PrevDeathSound = "FenceWickerDeathSound";
+
+  final static float DefaultHitPoints = CHitPoints::FenceWickerUnitHitPoints;
+
+  final static String SubstanceClass = "CWoodSubstance";
+
+  CFencePoleUnit()
+  {
+    //SetupMesh(new #GridObject<Cfence_WickerModel>(), [18]);
+    SetupMesh(new #GridObject<Cfence_PoleModel>(), [12]);
+  }
+}

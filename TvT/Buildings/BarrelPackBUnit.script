@@ -1,0 +1,75 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CBarrelPackBExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 10.0;
+  float  Radius   = 5.0;
+  String SoundId  = "BarrelPackBExplosionSound";
+  String EffectId = "BarrelPackBExplosionEffect";
+}
+
+class CBarrelPackBUnit
+  extends CGroundBuilding
+{
+
+  final static float DefaultHitPoints = CHitPoints::BarrelPackBUnitHitPoints;
+
+  static String PrevDeathEffect = "BarrelPackFireEffect";
+  static String PrevDeathSound  = "BarrelPackBFireSound";
+  final static int  DeathEffectDelay = 1.5;
+
+  static String PostExplosionID = "BarrelPackBExplosion";
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CBarrelPackBUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cenv_BarrelPackBModel>(), [200, 100, 6]);
+
+    // Creates and register unit state component
+    //   float HitPoints
+//    SetupStateControl(200.0, "BarrelPackBExplosion");
+      // BulletHitEffect, BulletHitSound, ExplosionEffect, ExplosionSound
+//                SetDamageEffects(
+//        "MetalBulletHitEffect", "MetalBulletHitSound",
+//        "MetalExplosionEffect", "MetalExplosionSound"
+//         );
+  }
+
+  event void DestroyObject()
+  {
+    // Create death effect & sound
+    Matrix Position1 = getPosition(this);
+    Position1.origin += Position1.multVec(new Vector(0.4, -0.4, -1.0));
+    (new #EffectsArray()).CreateEffect(PrevDeathEffect, Position1, this);
+
+    Matrix Position2 = getPosition(this);
+    Position2.origin += Position2.multVec(new Vector(-0.5, 0.6, -1.0));
+    (new #EffectsArray()).CreateEffect(PrevDeathEffect, Position2, this);
+
+    Matrix Position3 = getPosition(this);
+    Position3.origin += Position3.multVec(new Vector(-0.9, -0.4, -1.0));
+    (new #EffectsArray()).CreateEffect(PrevDeathEffect, Position3, this);
+
+    Matrix Position4 = getPosition(this);
+    Position4.origin += Position4.multVec(new Vector(0.9, 0.5, -1.0));
+    (new #EffectsArray()).CreateEffect(PrevDeathEffect, Position4, this);
+
+     CGroundBuilding::DestroyObject();
+  }
+}

@@ -1,0 +1,52 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CReloadUSSRUnit
+  extends CGroundBuilding
+{
+
+  final static float DefaultHitPoints = -1.0f;
+
+  static String PrevDeathEffect = "BarrelFireEffect";
+  static String PrevDeathSound  = "BarrelFireSound";
+  final static int  DeathEffectDelay = 1.5;
+
+  static String PostExplosionID = "BarrelExplosion";
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CReloadUSSRUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cbld_ReloadUSSRModel>(), [120, 50, 4]);
+  }
+
+  event void MissionStarted()
+  {
+    sendEvent(3.0f, getIdentificator(this), "OnTimerTick", []);
+  }
+
+  event void OnTimerTick()
+  {
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    Component PlayerUnit = Mission.GetObject(Mission.GetMainPlayerObjectID());
+    if (PlayerUnit != null)
+    {
+      if ((getPosition(GetMeshComponent()).origin - getPosition(PlayerUnit).origin).Magnitude() < 10.0f)
+        sendEvent(0.0f, getIdentificator(PlayerUnit), "ReloadAmmo", []);
+    }
+    sendEvent(3.0f, getIdentificator(this), "OnTimerTick", []);
+  }
+
+}

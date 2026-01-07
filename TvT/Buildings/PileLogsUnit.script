@@ -1,0 +1,80 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CPileLogsExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 5.0;
+  float  Radius   = 5.0;
+  String SoundId  = "WaterWell_1ExplosionSound";
+}
+
+class CPileLogsUnit
+  extends CComplexDestructibleBuilding
+{
+  final static float DefaultHitPoints = CHitPoints::Cbld_PileLogsModel;
+  static Array PrevExplosionID = [
+                                    [ "", "USRShedWoodExplosion" ]
+                                 ];
+  static Array PrevDeathEffect = [
+                                    ["", ""],
+                                    ["Base",           "BaseBuildingExplosionSmokeEffect"],
+                                    ["body_crashed_1", "ExplosionDustRingEffect"]
+                                 ];
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators = ["STRUCTURE"];
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CPileLogsUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cbld_PileLogsModel>(), [9]);
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CComplexDestructibleBuilding::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           1.6);
+
+    SetupDestroyController(
+      "CWoodSubstance",
+      2700.0,  // house mass
+      10000,  // damage energy: more than - damage trigger
+      ComputeTouchParams(100000.0, 1.0), // destroy energy: more than - destroy trigger
+        [
+          new CDestructibleBuildingItem("Body",              CDestructibleBuildingItem::NormalType),
+          new CDestructibleBuildingItem("Base",              CDestructibleBuildingItem::FixedType),
+          new CDestructibleBuildingItem("body_crashed_1",    CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("body_crashed_2",    CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("body_crashed_3",    CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("body_crashed_4",    CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("body_crashed_5",    CDestructibleBuildingItem::DamageType)
+        ]
+      );
+    SetCrashAnimationTime(0.6);
+  }
+}

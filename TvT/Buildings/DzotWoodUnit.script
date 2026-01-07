@@ -1,0 +1,226 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CDzotWoodUnitExplosion
+  extends CBuildingExplosion
+{
+  float Damage = 10.0;
+  float Radius = 5.0;
+
+  String SoundId = "BtrHanomag251AusfCMachineGunBullet";
+}
+
+
+class CDzotWoodCrashAnimation
+{
+  String AnimationName = "do_crash";
+  float  AnimationTime = 2.0;
+}
+
+// Machine gun
+class CDzotWoodMachineGunBulletExplosion
+  extends CMachineGun127BulletExplosion
+{
+  float Damage = CPiercing::DzotMachineGunDamage;
+}
+
+class CDzotWoodMachineGunBulletControl
+  extends CMachineGunBulletControl
+{
+  String ExplosionId = "BtrHanomag251AusfCMachineGunBulletExplosion";
+  Vector GravityAccel = CPiercing::BulletGravityVector;
+
+  float DamageModifierMin = CPiercing::DzotMachineGunDamageModifier[0];
+  float DamageModifierMax = CPiercing::DzotMachineGunDamageModifier[1];
+}
+
+class CDzotWoodMachineGun
+    extends CMachineGun
+{
+  final static String BulletPatternId = "BtrHanomag251AusfCMachineGunBullet";
+
+  final static Vector  GravityVector  = CPiercing::BulletGravityVector;
+  final static boolean HighTrajectory = false;
+
+  Component BurstFireSound = new #Emitter<CMG34MachineGunFireSound>();
+
+  final static float FireDeviation = 0.2;
+
+  final static float LockAngleHMin    = -30.0;
+  final static float LockAngleHMax    =  30.0;
+  final static float LockAngleVMin    = -15.0;
+  final static float LockAngleVMax    =  25.0;
+  final static float BlockedLockAngle =  1.0;
+
+  // *** Gun parameters for behavior
+  final static int FirePeriod        = 300; // ms
+  final static int FirePeriodRandAdd = 0;   // ms
+
+  final static boolean BurstFire     = true;
+
+  final static int BurstTime         = 2400; // ms
+  final static int BurstTimeRandAdd  = 0;    // ms
+
+  final static int BurstDelay        = 3000; // ms
+  final static int BurstDelayRandAdd = 2000; // ms
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["HUMAN"],   []], // high priority mask
+                                [["VEHICLE"], []], // low priority mask: RestrictTo, Exclude
+                                [["BTR"],     []], // low priority mask: RestrictTo, Exclude
+                                [[],          []] // low priority mask: RestrictTo, Exclude
+                                           ];
+}
+
+class CDzotWoodBehavior extends CBaseGroundBehavior
+{
+  boolean CanMove            = false;
+  boolean HasRouter          = false;
+  boolean HasRadar           = true;
+  boolean ForceFrontInAttack = true;
+
+  // *** radar parameters
+  Array EnemyRankDangerByDistance = [
+    [[ ["HEAVYTANK"],[] ], [ [ 0.0, 200.0, 1500.0, 30.0 ], [ [400.0, 150.0] ] ] ],
+    [[ ["TANK"],[] ],      [ [ 0.0, 150.0, 1500.0, 50.0 ], [ [400.0, 140.0] ] ] ], // [ Mask, PiercLinFunctionByDist]
+    [[ ["ANTITANK"],[] ],  [ [ 0.0, 150.0, 1500.0, 45.0 ], [ [400.0, 130.0] ] ] ],
+    [[ ["BTR"],[] ],       [ [ 0.0, 130.0, 1500.0, 30.0 ], [ [400.0, 125.0] ] ] ],
+    [[ ["BLD_WAR"],[] ],   [ [ 0.0, 100.0, 1500.0, 35.0 ], [ [400.0,  80.0] ] ] ],
+    [[ ["VEHICLE"],[] ],   [ [ 0.0,  10.0, 1500.0, 5.0 ],  [ [400.0,  10.0] ] ] ],
+    [[ ["HUMAN"],[] ],     [ [ 0.0,  35.0, 1500.0, 2.0 ],  [ [400.0,   5.0] ] ] ]
+                                    ]; // default Rank = distance if object not fit any mask
+
+  float MaxRadarDistance = 300; // m
+  float MinRadarDistance = 5;   // m
+
+  int UpdateRadarPeriod        = 3000; // ms
+  int UpdateRadarPeriodRandAdd = 1000; // ms
+
+  float AttackDistanceMin = 5.0;
+  float AttackDistanceMax = 300.0;
+
+  // *** movement physical parameters
+
+  // physical limitations
+  Vector MaxSpeed = new Vector( -1.0, 0, 0);
+  //float  MinRotateRadius = 0; // unit can turn when staying
+
+  // *** movement physical parameters
+
+  // physical limitations
+
+  //Vector  MaxAngleSpeed                 = new Vector(   0, 0, 1);    // [rad/s]
+  //Vector  MaxAngleAccelleration         = new Vector(   0, 0, 0.5);  // [rad/(s*s)]
+  //Vector  MaxAngleBrakingAccelleration  = new Vector( 0, 0, 2); //1);  // [rad/(s*s)]
+
+  //float  MinRotateRadius = 10; // unit can turn when staying
+}
+
+class CDzotWoodUnit
+//  extends CUnit
+//  extends CGroundBuilding
+  extends CComplexDestructibleBuilding
+{
+  final static String DefaultSurfaceControl = "PutonGround";
+
+  static Array LandingJoints = [""];
+
+  final static float DefaultHitPoints = CHitPoints::DzotWoodUnitHitPoints;
+
+  static Array PrevExplosionID = [
+    [ "", "USRHouseWoodExplosion" ]
+                                 ];
+  static Array PrevDeathEffect = [
+    ["",               "BaseBuildingExplosionEffect"]
+                                      ];
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators = ["GROUND", "BLD_WAR", "RU"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CDzotWoodUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cbld_DzotWoodModel>(), [5]);
+    //SetupCrashAnimator(new #LineAnimator<CDzotWoodCrashAnimation>());
+    // Setup Weapon
+    SetupWeapon("Weapon_A", new #Weapon<CDzotWoodMachineGun>(), ["Fire_A"], null);
+    SetupBehavior(new #VehicleBehavior<CDzotWoodBehavior>());
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CComplexDestructibleBuilding::Construct(_Mission, _PropMap);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576, 0.2);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,   0.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,   0.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 0.1);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   0.2);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   0.2);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576, 0.6);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,   0.8);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,   0.9);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BUILDING, 0.0);
+
+    SetupDestroyController(
+      "CWoodSubstance",
+      2700.0,  // house mass
+      10000,  // damage energy: more than - damage trigger
+      ComputeTouchParams(30000.0, 1.0), // destroy energy: more than - destroy trigger
+      [
+        new CDestructibleBuildingItem("Body",           CDestructibleBuildingItem::NormalType),
+        new CDestructibleBuildingItem("Base",           CDestructibleBuildingItem::FixedType)
+
+      ]
+    );
+    SetCrashAnimationTime(0.6);
+  }
+  event void OnHitPointsChanged( float v ) {
+    logError( "mhp: " + new String( m_MaxHitPoints ) + " v " + new String( v ) );
+
+    if( ( v / m_MaxHitPoints < 0.3 ) && !m_IsCrashing ) {
+     // DoCrashBuilding();
+    } else {
+      if( v / m_MaxHitPoints == 0 ) {
+        DoDestroyBuilding();
+        DoCrashBuilding();
+      }
+    }
+  }
+   event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+      logWarning( "LHP: Energy = " + new String(_Energy) + " and Energy to destroy = " + new String(m_DestroyEnergy));
+      logWarning( "LHPCrash: = " + new String(m_IsCrashing));
+    if( _Energy > m_DestroyEnergy ) {
+      DoDestroyBuilding();
+      logWarning("DoDestroy");
+            return;
+    }
+
+    if( !m_IsDestroing ) {
+      DoDestroyBuilding();
+      logWarning("DoDestroy");
+    } else {
+      logWarning("CallTouchTriggerFromC_Building");
+      CBuilding::OnSuccessTouchTrigger( _Energy );
+    }
+  }
+
+}

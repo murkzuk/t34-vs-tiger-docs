@@ -1,0 +1,96 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CUSRShedWood02Unit
+  extends CComplexDestructibleBuilding
+{
+  final static float DefaultHitPoints = CHitPoints::USRShedWoodUnitHitPoints;
+
+  static Array PostExplosionID = [
+                                    [ "", "USRShedWoodExplosion" ]
+                                 ];
+
+  static Array PrevDeathEffect = [
+                                    ["Base",          "BaseBuildingExplosionEffect"],
+                                    ["WallRear_03",   "BuildingSmokeRefuseEffect"],
+                                    ["WallFront_07",  "BuildingSmokeRefuseEffect"]
+                                 ];
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CUSRShedWood02Unit()
+  {
+    SetupMesh(new #AnimatedObject<Cbld_USRShedWood02Model>(), [310, 150, 10]);
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CComplexDestructibleBuilding::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         0.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    1.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      1.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      1.5);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 0.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   0.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   0.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         2.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           2.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           2.0);
+
+    SetupDestroyController(
+        "CWoodSubstance",
+        2700.0,  // house mass
+        10000,  // damage energy: more than - damage trigger
+        ComputeTouchParams(100000.0, 1.0), // destroy energy: more than - destroy trigger
+        [
+          new CDestructibleBuildingItem("Body",         CDestructibleBuildingItem::NormalType),
+          new CDestructibleBuildingItem("Base",         CDestructibleBuildingItem::FixedType),
+          new CDestructibleBuildingItem("Roof_08",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_07",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_06",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_05",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_04",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_03",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_02",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("Roof_01",      CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRight_01", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRight_02", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRight_03", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRear_05",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRear_04",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRear_03",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRear_01",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallRear_02",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallLeft_03",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallLeft_04",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallLeft_02",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallLeft_01",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_01", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_07", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_05", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_06", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_04", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_03", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("WallFront_02", CDestructibleBuildingItem::DamageType)
+        ]
+      );
+    SetCrashAnimationTime(0.7);
+  }
+}
+

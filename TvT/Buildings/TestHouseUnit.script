@@ -1,0 +1,167 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CTestHouseExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 10.0;
+  float  Radius   = 5.0;
+  String    SoundId  = "USRShedWoodExplosionSound";
+}
+
+class CTestHouseUnit
+  extends CGroundBuilding
+{
+
+  final static float DefaultHitPoints = CHitPoints::TestHouseUnitHitPoints;
+
+  static Array PrevExplosionID = [
+                                    [ "", "USRShedWoodExplosion" ]
+                                 ];
+
+  static Array PrevDeathEffect = [
+                                    ["", "BaseBuildingExplosionEffect"],
+                                    ["polySurface2",    "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface10",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface16",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface18",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface19",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface20",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface23",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface27",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface28",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface30",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface31",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface32",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface33",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface34",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface35",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface36",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface37",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface38",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface39",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface40",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface41",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface42",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface43",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface44",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface45",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface46",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface47",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface48",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface49",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface50",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface51",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface52",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface53",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface54",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface55",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface56",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface57",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface58",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface59",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["polySurface60",   "BaseBuildingExplosionSmokeEffect"],
+                                    ["_polySurface22",  "BaseBuildingExplosionSmokeEffect"],
+                                    ["_polySurface32",  "BaseBuildingExplosionSmokeEffect"],
+                                    ["_polySurface33",  "BaseBuildingExplosionSmokeEffect"],
+                                    ["_polySurface35",  "BaseBuildingExplosionSmokeEffect"],
+                                    ["_polySurface37",  "BaseBuildingExplosionSmokeEffect"]
+                                 ];
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CTestHouseUnit()
+  {
+    SetupMesh(new #AnimatedObject<CTest_HouseModel>(), [4]);
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CGroundBuilding::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    0.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    0.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    0.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576,    0.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,    0.1);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,    0.1);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,    0.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,    0.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,    0.6);
+
+    SetupDestroyController(
+        "CWoodSubstance",
+        4700.0,
+        ComputeTouchParams(4000.0, 2.0),
+        [
+          new CDestructibleBuildingItem("Body",           CDestructibleBuildingItem::NormalType),
+          new CDestructibleBuildingItem("polySurface2",   CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface10",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface16",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface18",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface19",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface20",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface23",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface27",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface28",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface30",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface31",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface32",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface33",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface34",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface35",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface36",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface37",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface38",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface39",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface40",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface41",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface42",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface43",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface44",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface45",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface46",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface47",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface48",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface49",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface50",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface51",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface52",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface53",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface54",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface55",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface56",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface57",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface58",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface59",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("polySurface60",  CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("_polySurface22", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("_polySurface32", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("_polySurface33", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("_polySurface35", CDestructibleBuildingItem::DamageType),
+          new CDestructibleBuildingItem("_polySurface37", CDestructibleBuildingItem::DamageType)
+        ]
+      );
+  }
+}
+

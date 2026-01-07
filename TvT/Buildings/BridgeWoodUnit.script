@@ -1,0 +1,86 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBridgeWoodUnit
+  extends CBaseDestructableFenceObject
+{
+  static String  m_SectionName     = "CenterSection";
+  static String  m_StartSection    = "StartSection";
+  static String  m_FinishSection   = "EndSection";
+
+  static String  m_DamagedSectionName     = "CenterSection_Crashed";
+  static String  m_DamagedStartSection    = "StartSection_Crashed";
+  static String  m_DamagedFinishSection   = "EndSection_Crashed";
+
+  static String  DeathEffect       = "BuildingExplosionEffect";
+
+  static int     m_InitSize        = 10;
+  
+  final static float DefaultHitPoints = CHitPoints::BridgeWoodUnitHitPoints;
+
+  final static String SubstanceClass = "CWoodSubstance";
+  final static float Mass       = 400.0f;
+  final static float TouchMass  = 1000.0f;
+  final static float TouchSpeed = 20.0f;
+
+
+  CBridgeWoodUnit()
+  {
+    SetupMesh(new #GridObject<Cbld_BridgeWoodModel>([200, 150, 100, 4]));
+  }
+
+  void SetupDestroyController(
+      String _SubstaceScriptClass,
+      float  _FenceMass,
+      float  _DestroyEnergy
+    )
+  {
+    CBaseDestructableFenceObject::SetupDestroyController(_SubstaceScriptClass, _FenceMass, _DestroyEnergy);
+    Component PhysicsController = GetObject("DestroyController");
+    PhysicsController.EnableControl(true);
+  }
+}
+
+/*
+// Unit Explosion
+class CBridgeWoodExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 100.0;
+  float  Radius   = 15.0;
+  String    SoundId  = "BridgeWoodExplosionSound";
+}
+
+class CBridgeWoodUnit
+  extends CGroundBuilding
+{
+
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CBridgeWoodUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cbld_BridgeWoodModel>(), [150, 100, 50, 1]);
+
+    // Creates and register unit state component
+    //   float HitPoints
+    //SetupStateControl(200.0, "BridgeWoodExplosion");
+      // BulletHitEffect, BulletHitSound, ExplosionEffect, ExplosionSound
+//                SetDamageEffects(
+//        "MetalBulletHitEffect", "MetalBulletHitSound",
+//        "MetalExplosionEffect", "MetalExplosionSound"
+//         );
+  }
+}*/

@@ -1,0 +1,90 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CBarrelPackAExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 100.0;
+  float  Radius   = 10.0;
+  String SoundId  = "BarrelPackAExplosionSound";
+  String EffectId = "BarrelPackAExplosionEffect";
+}
+
+class CBarrelPackAUnit
+  extends CGroundBuilding
+{
+
+  final static float DefaultHitPoints = CHitPoints::BarrelPackAUnitHitPoints;
+
+  static String PrevDeathEffect = "BarrelPackFireEffect";
+  static String PrevDeathSound  = "BarrelPackAFireSound";
+  final static int  DeathEffectDelay = 1.5;
+
+  static String PostExplosionID = "BarrelPackAExplosion";
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators  = ["STRUCTURE"];
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  void CBarrelPackAUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cenv_BarrelPackAModel>(), [150, 70, 5]);
+
+    // Creates and register unit state component
+    //   float HitPoints
+//    SetupStateControl(200.0, "BarrelPackAExplosion");
+      // BulletHitEffect, BulletHitSound, ExplosionEffect, ExplosionSound
+//                SetDamageEffects(
+//        "MetalBulletHitEffect", "MetalBulletHitSound",
+//        "MetalExplosionEffect", "MetalExplosionSound"
+//         );
+  }
+
+  event void DestroyObject()
+  {
+    // Create death effect & sound
+    Matrix Position1 = getPosition(this);
+    Position1.origin += Position1.multVec(new Vector(0.4, -0.4, -0.7));
+    (new #EffectsArray()).CreateEffect(PrevDeathEffect, Position1, this);
+
+    Matrix Position2 = getPosition(this);
+    Position2.origin += Position2.multVec(new Vector(-0.5, 0.6, -0.7));
+    (new #EffectsArray()).CreateEffect(PrevDeathEffect, Position2, this);
+
+      CGroundBuilding::DestroyObject();
+  }
+}
+
+ class CBarrelPackAGameUnit extends CBarrelPackAUnit
+ {
+  // Special for radar view
+  // This object GameObject
+
+  final static Array AutomaticClassificators  = ["STRUCTURE", "GROUND"];
+
+  event void OnHitByEnemy(
+      String _EnemyID
+    )
+  {
+    CBuildingStateControl::OnHitByEnemy(_EnemyID);
+    Component Mission = (new #GameController()).GetMission();
+    if (null == Mission)
+      return null;
+
+   Mission.OnHitByEnemyGameObject(getIdentificator(this), _EnemyID);
+  }
+
+ }
+
+

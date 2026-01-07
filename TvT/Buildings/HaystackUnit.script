@@ -1,0 +1,71 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Unit Explosion
+class CHaystackExplosion
+  extends CBuildingExplosion
+
+{
+  float  Damage   = 5.0;
+  float  Radius   = 5.0;
+  String    SoundId  = "";
+}
+
+class CHaystackUnit
+  extends CComplexDestructibleBuilding//CGroundBuilding
+{
+  final static float DefaultHitPoints = CHitPoints::Cbld_HaystackModel;
+  static Array PrevExplosionID = [
+                                    [ "", "USRShedWoodExplosion" ]
+                                 ];
+  static Array PrevDeathEffect = [
+                                    ["", "BaseBuildingExplosionSmokeEffect"]
+                                 ];
+
+  // Automatic classificators of this object
+  final static Array AutomaticClassificators = ["STRUCTURE"];
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CHaystackUnit()
+  {
+    SetupMesh(new #AnimatedObject<Cbld_HaystackModel>(), [5]);
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CGroundBuilding::Construct(_Mission, _PropMap);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.0);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,    0.0);
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      1.3);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, 1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           1.4);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           1.6);
+
+    SetupDestroyController(
+        "CWoodSubstance",
+        100.0,
+        ComputeTouchParams(4000.0, 2.0),
+        [
+          new CDestructibleBuildingItem("bld_Haystack",              CDestructibleBuildingItem::NormalType),
+          new CDestructibleBuildingItem("crashed",                   CDestructibleBuildingItem::FixedType)
+        ]
+      );
+  }
+}
