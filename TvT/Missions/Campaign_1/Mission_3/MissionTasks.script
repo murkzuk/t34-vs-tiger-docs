@@ -1,0 +1,1707 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+                                   //------------------------------------------------
+                                   //----------------   BASE TASKS   ----------------
+                                   //------------------------------------------------
+class CC1M3Split
+{
+  Array SplitPath(Vector _begin , Vector _end)
+  {
+    int   _counter = 0;
+    float _stepX   = (_begin - _end).Magnitude()/5;
+    Array _ResultArray;
+
+    if (_begin == _end)
+    {
+      logError("Vectors _begin == _end");
+      return null;
+    }
+
+    if (GetMission().isDebug)
+    {
+      logError("SplitPath for unit " + getIdentificator(user));
+      logError(" _stepX="+ new String(_stepX));
+      logError(" _begin="+ new String(_begin) + " _end="+ new String(_end));
+    }
+
+    for (float x = _stepX/2 ; x<(_begin - _end).Magnitude(); x+=_stepX)
+    {
+      _counter++;
+      if (_counter > 10)
+        break;
+
+      Vector dir = (_end - _begin);
+      dir.Normalize();
+      Vector Res = _begin + dir*x;
+
+      _ResultArray.add(Res);
+    }
+
+    _ResultArray.add(_end);
+
+    if (GetMission().isDebug)
+      logError(" _ResultArray=" + new String(_ResultArray));
+
+    return  _ResultArray;
+  }
+}
+
+class CC1M3Broken // перебежки
+{
+  Array BrokenPath(float _stepX, float _stepY, Vector _begin , Vector _end)
+  {
+    Array _ResultArray;
+    int  _counter = 0;
+
+    if (_stepX == 0)
+      _stepX = (_begin - _end).Magnitude()/10;
+
+    if (_stepY == 0)
+      _stepY = (_begin - _end).Magnitude()/10;
+
+    if (_begin == _end)
+    {
+      logError("Vectors _begin == _end");
+      return null;
+    }
+
+    /*if (GetMission().isDebug)
+    {
+      logError(" _stepY="+ new String(_stepY) + " _stepX="+ new String(_stepX));
+      logError(" _begin="+ new String(_begin) + " _end="+ new String(_end));
+    }*/
+
+    float y = _stepY;
+    for (float x = _stepX/2 ; x<(_begin - _end).Magnitude(); x+=_stepX)
+    {
+      _counter++;
+      if (_counter > 11)
+        break;
+
+      Vector dir = (_end - _begin);
+      dir.Normalize();
+      Vector Res = _begin + dir*rand(x-10.0, x+10.0) + new Vector(dir.y, dir.x, 0.0f)*rand(0.0, y);
+      y = -y;
+
+      _ResultArray.add(Res);
+    }
+
+    _ResultArray.add(_end);
+
+    //if (GetMission().isDebug)
+    //  logError(" _ResultArray=" + new String(_ResultArray));
+
+    return  _ResultArray;
+  }
+}
+
+class CC1M3OnUnreacheableUnitProcessingTask extends CBaseAITankTask, CC1M3Split
+{
+/*  void OnNoEnemy()
+  {
+    if(GetSelf().GetObject("Hatches") != null)
+    {
+      logWarning("#1 Normal hatches. OnNoEnemy");
+      GetSelf().GetObject("Hatches").SetHatchesState("Normal");
+    }
+  }
+
+  void OnEnemyTargeted()
+  {
+    if(GetSelf().GetObject("Hatches") != null)
+    {
+      logWarning("#2 Attack hatches. OnEnemyTargeted");
+      GetSelf().GetObject("Hatches").SetHatchesState("Attack");
+    }
+  }
+*/
+  void OnUnreacheable(Vector _Destination)
+  {
+    if (m_Group != null)
+      m_Group.PushOrder();
+
+    /*if (GetMission().isDebug)
+    {
+      logWarning("[OnUnreacheable]   Unit ID=" + getIdentificator(user) + " has Unreacheable...");
+      logWarning("[OnUnreacheable]   m_GroupID=" + new String(m_Group.m_GroupID));
+      logWarning("[OnUnreacheable]   _Destination=" + new String(_Destination));
+      logWarning("[OnUnreacheable]   m_Group.m_CurrentOrder.m_Order=" + new String(m_Group.m_CurrentOrder.m_Order));
+    }
+
+    if (m_Group.m_CurrentOrder.m_Order == "Patrol")
+    {*/
+    Component me = GetMission().GetObject(getIdentificator(user));
+    if (me == null)
+      logError("Component 'me' == null!!!");
+
+    Array ApproachPoints = SplitPath(getPosition(me).origin, _Destination);
+
+    SetFirstQueueOrders([
+      ["OnUnreacheable", "SetOrder_MoveToEx", [ApproachPoints, m_Group.m_CurrentOrder.m_MovingSpeed], ""],
+      ["OnUnreacheable", "EndOnUnreacheable", [], ""]
+                        ]);
+    /*}
+    else if (m_Group.m_CurrentOrder.m_Order == "Attack")
+    {
+      int _index = GetMission().GermanKillList.find(m_CurrentEnemy);
+      logError("       m_CurrentEnemy=" + m_CurrentEnemy);
+      logError("       GermanKillList=" + new String(GetMission().GermanKillList));
+      logError("  GermanKillListCount=" + new String(GetMission().GermanKillListCount));
+
+      if(_index != -1)
+      {
+       if (GetMission().GermanKillListCount[_index] > 10)
+       {
+         logError("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+         sendEvent(0.0f, m_CurrentEnemy, "DestroyObject", []);
+       }
+       else
+          GetMission().GermanKillListCount[_index]++;
+      }
+
+
+      if(m_CurrentEnemy != "")
+      {
+        Component Enemy = (new #GameController()).GetObject(m_CurrentEnemy);
+        Matrix Position = getPosition(Enemy);
+        Vector Dir = Position.xvec;
+        Dir.Normalize();
+        Vector PreloadedPosition = Position.origin + 20.0 * Dir;
+
+        logError("Dir=" + new String(Dir));
+        logError("20.0 * Dir=" + new String(20.0 * Dir));
+        logError("Position.origin=" + new String(Position.origin));
+        logError("PreloadedPosition=" + new String(PreloadedPosition));
+
+         SetFirstQueueOrders([
+               ["OnUnreacheableMoveAttack", "SetOrder_MoveTo", [ PreloadedPosition, m_Group.m_CurrentOrder.m_MovingSpeed], ""],
+               ["OnUnreacheableMoveAttack", "AttackEnemy", [m_CurrentEnemy], ""]
+                          ]);
+        AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+      }
+      else
+          AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+    }
+    else if (m_Group.m_CurrentOrder.m_Order == "OnUnreacheableMoveAttack")
+    {
+      AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+    }
+    else if (m_Group.m_CurrentOrder.m_Order == "OnUnreacheable")
+    {
+      AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+    }*/
+  }
+
+  void EndOnUnreacheable()
+  {
+  //  if (GetMission().isDebug)
+     // logWarning("EndOnUnreacheable");
+
+    if (m_Group != null)
+      m_Group.PopOrder();
+  }
+}
+
+                                   //------------------------------------------------
+                                   //----------------   USSR UNITS   ----------------
+                                   //------------------------------------------------
+
+class CC1M3RussianPanzer_Group1 extends CBaseUnitGroup
+{
+  Component CurrentOrder;
+  int NextPatrolPoint;
+
+  Array NavPoints = [
+    "NavPoint_RussianGroup1_Patrol_3_1", "NavPoint_RussianGroup1_Patrol_3_2",
+    "NavPoint_RussianGroup1_Patrol_4_1", "NavPoint_RussianGroup1_Patrol_4_2",
+    "NP_RussianGroup1_PreAttack_1", "NP_RussianGroup1_PreAttack_2"
+                    ];
+
+  float SpeedForKurtenki = 5.5f;
+  float SpeedForAttack   = 4.0f;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+    //ForEachUnitTask("ActivateRadar", [true]);
+  }
+
+  void Stop()
+  {
+    if (user.m_CurrentOrder.m_Order == "Patrol")
+    {
+    //  if (GetMission().isDebug)
+    //  {
+   //     logError("CC1M3RussianPanzer_Group1::Stop");
+   //     logWarning(" CurrentOrder: " + new String(user.m_CurrentOrder) + ", Order: " + new String(user.m_CurrentOrder.m_Order));
+   //     logWarning(" NextPatrolPoint: " + new String(user.m_CurrentOrder.m_NextPatrolPoint));
+   //     logWarning(" PatrolPath: " + new String(user.m_CurrentOrder.m_PatrolPath.size()));
+  //      logWarning(" MovingSpeed: " + new String(user.m_CurrentOrder.m_MovingSpeed));
+ //     }
+
+      CurrentOrder = new CGroupOrder(user.m_CurrentOrder);
+      NextPatrolPoint = user.m_CurrentOrder.m_NextPatrolPoint;
+      SetOrder_Stop();
+      GetMission().Russian1GroupStopped = true;
+    }
+  }
+
+  void Continue()
+  {
+    if(null != CurrentOrder)
+    {
+      if (CurrentOrder.m_Order == "Patrol")
+      {
+     //   if (GetMission().isDebug)
+     //   {
+     //     logError("CC1M3RussianPanzer_Group1::Continue Before");
+     //     logWarning(" CurrentOrder: " + new String(user.m_CurrentOrder) + ", Order " + new String(user.m_CurrentOrder.m_Order));
+     //     logWarning(" NextPatrolPoint: " + new String(user.m_CurrentOrder.m_NextPatrolPoint));
+     //     logWarning(" PatrolPath: " + new String(user.m_CurrentOrder.m_PatrolPath.size()));
+     //     logWarning(" MovingSpeed: " + new String(user.m_CurrentOrder.m_MovingSpeed));
+     //   }
+
+        user.m_CurrentOrder = new CGroupOrder(CurrentOrder);
+        user.m_CurrentOrder.m_NextPatrolPoint = NextPatrolPoint;
+        GetMission().Russian1GroupStopped = false;
+
+     //   if (GetMission().isDebug)
+     //   {
+    //      logError("CC1M3RussianPanzer_Group1::Continue After");
+    //      logWarning(" CurrentOrder: " + new String(user.m_CurrentOrder) + ", Order " + new String(user.m_CurrentOrder.m_Order));
+    //      logWarning(" NextPatrolPoint=" + new String(user.m_CurrentOrder.m_NextPatrolPoint));
+    //      logWarning(" PatrolPath=" + new String(user.m_CurrentOrder.m_PatrolPath.size()));
+    //      logWarning(" MovingSpeed=" + new String(user.m_CurrentOrder.m_MovingSpeed));
+    //    }
+
+        RepeatOrder();
+      }
+    }
+  }
+
+  void OnPathEndReached()
+  {
+    if (GetMission().isDebug)
+      logWarning("[CBaseUnitGroup::CC1M3RussianPanzer_Group1]End Patrol");
+
+    CBaseUnitGroup::OnPathEndReached();
+
+    MoveToAttackPosition();
+  }
+
+  void MoveToAttackPosition()
+  {
+ //   if (GetMission().isDebug)
+//      logWarning("[CC1M3RussianPanzer_Group1::MoveToAttackPosition] MoveToAttackPosition");
+
+    CancelAllOrders();
+    user.m_CurrentOrder.m_MovingSpeed = SpeedForKurtenki;  //for CC1M3OnUnreacheableUnitProcessingTask
+
+    //SetOrder_MoveTo(GetNavPointBehPos("NavPoint_Village_Kurtenki"), SpeedForKurtenki, true);
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component _UnitTaks = GetUnitTask(m_Units[i]);
+
+      if (null != _UnitTaks)
+        _UnitTaks.setOrder_MoveTo(GetNavPointBehPos(NavPoints[i + 4]), SpeedForKurtenki);
+    }
+  }
+
+  event void StopRussianAttack()
+  {
+  //  if (GetMission().isDebug)
+  //    logWarning("[CC1M3RussianPanzer_Group1] Soviet stop attack");
+
+    Component Temp = GetMission().GetObject("CC1M3DistanceForAttack");
+    if (Temp != null)
+      GetMission().ShutdownWatcher(Temp);
+
+    CancelAllOrders();
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    user.m_CurrentOrder.m_MovingSpeed = SpeedForKurtenki;  //for CC1M3OnUnreacheableUnitProcessingTask
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component _UnitTaks = GetUnitTask(m_Units[i]);
+      Array _DuckBlindArray = [GetNavPointBehPos(NavPoints[i]), GetNavPointBehPos(NavPoints[i + 2])];
+
+      if (null != _UnitTaks)
+        //_UnitTaks.SetOrder_MoveTo_Trace(GetNavPointBehPos(NavPoints[i]), "NavPoint_German_Patrol_3", SpeedForKurtenki);
+        _UnitTaks.SetOrder_MoveToEx(_DuckBlindArray, SpeedForKurtenki);
+    }
+  }
+}
+
+class CC1M3RussianPanzerGroup1Task extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+  void Init()
+  {
+    CBaseAITask::Init();
+    ActivateMovement(false);
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+                        )
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[CC1M3RussianPanzerGroup1Task::OnExplosion] OwnerID: " + _OwnerID + ", DamageType: " + new String(_DamageType));
+
+    if (_OwnerID.IsStartsWith("Russian"))
+      return;
+
+    Component _Owner = GetMission().GetObject(_OwnerID);
+    if (checkMask(_Owner, ["TANK"], []))
+    {
+      Component me = GetMission().GetObject(getIdentificator(user));
+//      if (me == null)
+//        logError("Component 'me' == null!!!");
+
+      Array ApproachPoints = BrokenPath(0, 0, getPosition(me).origin, getPosition(_Owner).origin);
+
+      SetFirstQueueOrders([
+        ["MoveToAttackBroken", "SetOrder_MoveToEx", [ApproachPoints, 4.0f], ""]
+                          ]);
+    }
+  }
+
+/*  void OnRadarUpdate()
+  {
+  }
+*/
+  event void ActivateUnit()
+  {
+    if (GetMission().isDebug)
+    {
+//      logWarning("CC1M3RussianPanzerGroup1Task::ActivateUnit");
+      (new #GameController().GetObject(SOID_Console)).logClassificatorsList(getIdentificator(user));
+    }
+
+    if(checkMask(GetMission().GetObject(getIdentificator(user)), ["InvisibleOnRadar"], []))
+      removeClassificatorObject(getIdentificator(user), "InvisibleOnRadar");
+
+    ActivateFire(true);
+    ActivateMovement(true);
+    m_Group.m_CurrentOrder.m_MovingSpeed = m_Group.SpeedForAttack;
+  }
+
+  event void StopEndBlind()
+  {
+ //   if (GetMission().isDebug)
+ //     logWarning("CC1M3RussianPanzerGroup1Task::StopEndBlind");
+
+    ActivateFire(false);
+    ActivateMovement(false);
+  }
+}
+
+class CC1M3RussianPanzer_Group2 extends CC1M3TankBase
+{
+  Array NavPoints = [
+    "NP_RussianGroup2_Stay_1", "NP_RussianGroup2_Stay_2",
+    "NP_RussianGroup2_PreAttack_1", "NP_RussianGroup2_PreAttack_2"
+                    ];
+
+  float SpeedForKurtenki = 5.5f;
+  float SpeedForAttack   = 4.0f;
+
+  void Init()
+  {
+    CC1M3TankBase::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+    //ForEachUnitTask("ActivateRadar", [true]);
+  }
+  event
+  void OnEnemyTargeted (Component _UnitAlerted)
+  {
+    String EnemyID = _UnitAlerted.GetTargetedEnemy();
+
+//    if (GetMission().isDebug)
+//      logWarning("[RussischPanzer_Group2::OnEnemyTargeted] EnemyID=" + EnemyID + "   UnitID=" + _UnitAlerted.GetIdentificator());
+
+    CBaseUnitGroup::OnEnemyTargeted(_UnitAlerted);
+  }
+
+  void OnPathEndReached()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[CBaseUnitGroup::CC1M3RussianPanzer_Group2]End Patrol");
+
+    MoveToAttackPosition();
+  }
+
+  void MoveToAttackPosition()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[CC1M3RussianPanzer_Group2::MoveToAttackPosition] MoveToAttackPosition");
+
+    CancelAllOrders();
+    user.m_CurrentOrder.m_MovingSpeed = SpeedForKurtenki; //for CC1M3OnUnreacheableUnitProcessingTask
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component _UnitTaks = GetUnitTask(m_Units[i]);
+
+      if (null != _UnitTaks)
+        _UnitTaks.SetOrder_MoveTo(GetNavPointBehPos(NavPoints[i + 2]), SpeedForKurtenki);
+    }
+  }
+
+  event void StopRussianAttack()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[CC1M3RussianPanzer_Group2] Soviet stop attack");
+
+    CancelAllOrders();
+    SetEnemyReactionType(ERT_DEFENSIVE);
+    user.m_CurrentOrder.m_MovingSpeed = SpeedForKurtenki; //for CC1M3OnUnreacheableUnitProcessingTask
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component _UnitTaks = GetUnitTask(m_Units[i]);
+
+      if (null != _UnitTaks)
+        _UnitTaks.SetOrder_MoveTo(GetNavPointBehPos(NavPoints[i]), SpeedForKurtenki);
+    }
+  }
+}
+
+class CC1M3RussianPanzerGroup2Task extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+
+  int CurrentIndex = -1;
+  boolean FirstDeflect = true;
+
+  event void StopDeflect()
+  {
+ //   if (GetMission().isDebug)
+ //       logWarning(" Stop Deflect for unit ID=" + getIdentificator(user) + " and call clearEventsForObject");
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    Component _Unit = GetMission().GetObject(getIdentificator(user));
+    if (_Unit != null)
+        clearEventsForObject(getIdentificator(user));
+  }
+
+  Vector GetStepPosition()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[CC1M3BaseTankTask::GetStepPosition] for UnitID=" + getIdentificator(user));
+    if (m_Group == null)
+        return;
+
+    CurrentIndex = m_Group.GetStepIndex(CurrentIndex);
+    return m_Group.GetStepPosition(CurrentIndex);
+  }
+
+  event void Deflect()
+  {
+ //   if (GetMission().isDebug)
+ //       logWarning("[CC1M3BaseTankTask::Deflect] for Unit=" + getIdentificator(user));
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    int time;
+/*    if(FirstDeflect)
+    {
+      logWarning(" FirstDeflect - true");
+      time = 0.0;
+      FirstDeflect = false;
+    }
+    else          */
+      time = rand(30.0f, 120.0f);
+
+    logWarning(" time = " + new String(time));
+
+    SetOrder_MoveTo(GetStepPosition(), m_Group.SpeedDeflect);
+    sendEvent(time, getIdentificator(user), "Deflect", []);
+  }
+
+  void Init()
+  {
+    CBaseAITask::Init();
+    ActivateMovement(false);
+  }
+
+  void OnEnemyTargeted()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::OnEnemyTargeted();
+
+    String TargetedEnemy = GetTargetedEnemy();
+
+//    if (GetMission().isDebug)
+//      logWarning("[CC1M3RussianPanzerGroup2Task::OnEnemyTargeted] TargetedEnemy=" + TargetedEnemy);
+
+    if(!GetMission().AttackAllRussian)
+    {
+      SetEnemyReactionType(ERT_DEFENSIVE);
+
+      if(TargetedEnemy.IsStartsWith("German_0"))
+      {
+        SetOrder_MoveTo_Trace(GetStepPosition(), TargetedEnemy, 10.0);
+        fireEvent(0.0, [], "Deflect", []);
+      }
+    }
+  }
+}
+
+                                   //------------------------------------------------
+                                   //----------   GERMAN UNITS: KURTENKI   ----------
+                                   //------------------------------------------------
+
+//--------------------------------------
+//---------   KURTENKI BTRS   ----------
+//--------------------------------------
+class CC1M3Gr_KurtenkiBTRScout extends CBaseUnitGroup
+{
+  String cl_MovingToKurtenki  = "MOVING_TO_KURTENKI";
+  String cl_MovingToVysochany = "MOVING_TO_VYSOCHANY";
+  String cl_CanNotMove        = "CAN_NOT_MOVE";
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    isManeuver = false;
+  }
+
+  void OnEnemyTargeted(Component _UnitAlerted)
+  {
+    CBaseUnitGroup::OnEnemyTargeted(_UnitAlerted);
+
+    String TargetedEnemy = _UnitAlerted.GetTargetedEnemy();
+//    if (GetMission().isDebug)
+//      logWarning("[" + _UnitAlerted.GetIdentificator() + "] Targeted enemy: " + TargetedEnemy);
+
+    if (checkMask(user, [], [cl_MovingToKurtenki, cl_MovingToVysochany]))
+      addClassificator(user, cl_MovingToKurtenki);
+
+    PopDelayedOrder();
+  }
+
+  event void GoTo(String _Destination)
+  {
+    if (checkMask(user, [cl_MovingToKurtenki], [cl_MovingToVysochany, cl_CanNotMove]))
+    {
+      isManeuver = true;
+
+      removeClassificator(user, cl_MovingToKurtenki);
+      addClassificator(user, cl_MovingToVysochany);
+
+      CancelAllOrders();
+
+      Array PathToVysochany = [
+                                "NP_BTRRetreat_1", "NP_BTRRetreat_2",
+                                "NP_BTRRetreat_3", "NP_BTRRetreat_4",
+                                "NP_BTRRetreat_5", "NP_BTRRetreat_6",
+                                "NP_BTRRetreat_7", "NP_BTRRetreat_8",
+                                "NP_BTRRetreat_1", "NavPoint_Village_Viso4ani"
+                              ];
+
+      sendEvent(rand(3.0, 5.0), getIdentificator(user), "GoToVillage", [PathToVysochany]);
+    }
+    else
+      logMessage("[" + getIdentificator(user) + "] can't move to " + _Destination);
+  }
+
+  event void GoToVillage(Array _Destination)
+  {
+    SetOrder_Move(_Destination, rand(3.9, 5.3), false);
+  }
+}
+
+class CC1M3Tsk_KurtenkiBTRScout extends CBaseAIBtrTask
+{
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    CBaseAIBtrTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+    if (m_Group != null)
+    {
+      if (checkMask(m_Group, [m_Group.cl_MovingToKurtenki], [m_Group.cl_MovingToVysochany, m_Group.cl_CanNotMove]))
+        CheckMovement();
+    }
+    else
+      logError(getIdentificator(user) + " need to have a Group");
+  }
+
+  event void CheckMovement()
+  {
+    Component Behavior = GetBehavior();
+    int TimeStop = Behavior.GetNoMoveTime();
+
+    if (m_Group != null)
+    {
+      if (TimeStop == -1)
+      {
+        if (checkMask(m_Group, [], [m_Group.cl_CanNotMove]))
+        {
+          addClassificator(m_Group, m_Group.cl_CanNotMove);
+
+          m_Group.CancelAllOrders();
+          OnStopped();
+
+          sendEvent(0.0, SOID_MissionController, "StartRetreat", ["Vysochany"]);
+        }
+      }
+      else if (TimeStop == 0)
+      {
+        if (m_Group.m_CurrentOrder != "Patrol")
+        {
+          PopOrder();
+          RepeatOrder();
+        }
+      }
+      else
+      {
+        if (m_Group.m_CurrentOrder != "" && m_Group.m_CurrentOrder != "Maneuver")
+          PushOrder();
+
+        SetOrder_StopNow();
+        OnStopped();
+
+        sendEvent(float(TimeStop), getIdentificator(user), "CheckMovement", []);
+      }
+    }
+    else
+      logError(getIdentificator(user) + " need to have a Group");
+  }
+}
+
+class CC1M3Gr_KurtenkiBTR extends CBaseUnitGroup
+{
+  String cl_MovingToVysochany = "MOVING_TO_VYSOCHANY";
+  String cl_MovingToGunPak    = "MOVING_TO_GUN_PAK";
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    isManeuver = false;
+  }
+
+  event void GoTo(String _Destination)
+  {
+    if (checkMask(user, [], [cl_MovingToVysochany, cl_MovingToGunPak]))
+    {
+      isManeuver = true;
+
+      Array DestinationPath;
+      if (_Destination == "GunPak")
+      {
+        addClassificator(user, cl_MovingToGunPak);
+
+        DestinationPath = [
+                            "NP_KurtenkiBTR_GunPakPoint"
+                          ];
+      }
+      else if (_Destination == "Vysochany")
+      {
+        addClassificator(user, cl_MovingToVysochany);
+
+        DestinationPath = [
+                            "NP_BTRRetreat_1", "NP_BTRRetreat_2",
+                            "NP_BTRRetreat_3", "NP_BTRRetreat_4",
+                            "NP_BTRRetreat_5", "NP_BTRRetreat_6",
+                            "NP_BTRRetreat_7", "NP_BTRRetreat_8",
+                            "NP_BTRRetreat_1", "NavPoint_Village_Viso4ani"
+                          ];
+      }
+      else
+      {
+ //       logError("[" + getIdentificator(user) + "] Not identified Destination: " + _Destination);
+        return;
+      }
+
+      SetOrder_Move(DestinationPath, 5.5, false);
+    }
+    else
+      logMessage("[" + getIdentificator(user) + "] can't move to " + _Destination);
+  }
+}
+//--------------------------------------
+//-------   KURTENKI GUN PAK 1  ---------
+//--------------------------------------
+class CC1M3Gr_KurtenkiGunPak_1 extends BaseZisGroup
+{
+}
+
+//--------------------------------------
+//-------   KURTENKI GUN PAK 2  ---------
+//--------------------------------------
+class CC1M3Gr_KurtenkiGunPak_2 extends BaseZisGroup
+{
+  void Init()
+  {
+    BaseZisGroup::Init();
+    ActivateRadar(true);
+  }
+}
+
+//--------------------------------------
+//---------   KURTENKI OPEL   ----------
+//--------------------------------------
+class CC1M3KurtGerman_OpelBlitz extends CBaseAITask, CC1M3Broken
+{
+  String Retreat = "RETREAT";
+
+  void Init()
+  {
+    CBaseAITask::Init();
+
+    ActivateRadar(true);
+    ActivateMovement(false);
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+ //   if (GetMission().isDebug)
+ //     logWarning("[KurtenkiOpel::OnExplosion] OwnerID: " + _OwnerID + " DamageType: " + new String(_DamageType));
+
+    Component _Owner = GetMission().GetObject(_OwnerID);
+    if (checkMask(_Owner, ["TANK"], []))
+      if (checkMask(user, [], [Retreat]))
+        sendEvent(7.0, getIdentificator(user), "OpelRetreat", []);
+  }
+
+  event void OpelRetreat()
+  {
+ //   if (GetMission().isDebug)
+ //     logWarning("[KurtenkiOpel::OpelRetreat]");
+
+    Component me = GetMission().GetObject(getIdentificator(user));
+    if (me == null)
+    {
+ //     logError("Component 'me' == null!!!");
+      return;
+    }
+
+    if (checkMask(me, [], [Retreat]))
+      addClassificator(me, Retreat);
+    else
+      return;
+
+    ActivateMovement(true);
+
+    Array ApproachPoints = ([
+                              GetNavPointBehPos("NavPoint_German_Patrol_4"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_3_2"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_3_1"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_3"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_2_1"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_2"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_1"),
+                              GetNavPointBehPos("NavPoint_German_Patrol_0"),
+                              GetNavPointBehPos("NavPoint_Village_Viso4ani")
+                            ]);
+
+    SetFirstQueueOrders([
+                          ["OpelRetreat", "SetOrder_MoveToEx", [ApproachPoints, 8.33], ""],
+                          ["OpelRetreat", "OpelRetreatComplete", [], ""]
+                        ]);
+
+//  logWarning("KurtenkiOpel::Opel_Really_Retreat");
+  }
+
+  void OpelRetreatComplete()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[KurtenkiOpel::OpelRetreatComplete]");
+
+    removeClassificator(user, Retreat);
+    ActivateMovement(false);
+  }
+}
+
+//--------------------------------------
+//-------   KURTENKI SOLDIERS   --------
+//--------------------------------------
+class CC1M3Gr_KurtenkiInfantryBase extends CBaseUnitGroup
+{
+  String m_RetreatPoint;
+  Vector m_RetreatVector;
+
+  float m_Radius = 10.0;
+  float m_Number;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    ActivateRadar(false);
+    m_RetreatVector = GetNavPointPos(m_RetreatPoint);
+  }
+
+  void OnPathEndReached()
+  {
+    CBaseUnitGroup::OnPathEndReached();
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+      sendEvent(rand(5.0), m_Units[i], "DestroyObject", []);
+  }
+
+  event void RetreatInfantry()
+  {
+ //   if (GetMission().isDebug)
+ //     logWarning(getIdentificator(user) + " retreat to " + m_RetreatPoint);
+
+    if (m_CurrentOrder.m_Order != "")
+      PushOrder();
+
+    m_CurrentOrder.m_Order = "MoveTo";
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component UnitTask = GetUnitTask(m_Units[i]);
+      Vector AddVector = new Vector(rand(m_Radius), rand(m_Radius), 0.0);
+
+      if (m_Number == 1.0)
+        UnitTask.SetOrder_MoveTo_Direct(m_RetreatVector + AddVector, rand(2.77, 3.05));
+      else
+        UnitTask.SetOrder_MoveTo(m_RetreatVector + AddVector, rand(2.77, 3.05));
+    }
+  }
+}
+
+class CC1M3Gr_KurtenkiInfantry1 extends CC1M3Gr_KurtenkiInfantryBase
+{
+  String m_RetreatPoint = "NP_KurtenkiInfantry1_RetreatPoint";
+  float m_Number = 1.0;
+}
+
+class CC1M3Gr_KurtenkiInfantry2 extends CC1M3Gr_KurtenkiInfantryBase
+{
+  String m_RetreatPoint = "NP_KurtenkiInfantry2_RetreatPoint";
+  float m_Number = 2.0;
+}
+
+                                 //------------------------------------------------
+                                 //-----------   GERMAN UNITS: COLUMN   -----------
+                                 //------------------------------------------------
+
+//--------------------------------------
+//------------   COLUMN   --------------
+//--------------------------------------
+class CC1M3GermanPanzer_Group extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+  }
+
+  event void Regroup()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("event void Regroup");
+    if (GetMission().GermanStartRecon)
+    {
+      ActivateMovement(true);
+      ActivateFire(true);
+      GetMission().GermanStartRecon = false;
+    }
+    RemoveUnit("German_05_OpelBlitz");
+    RemoveUnit("German_06_OpelBlitz");
+    RemoveUnit("German_04_Hanomag");
+    sendEvent(0.0, "CC1M3GermanOpel_Group", "WarningStop", []);
+    RefreshUnitsList();
+    SetFormation("CFrontFormation", 50.0, false, false);
+    RepeatOrder();
+  }
+
+  event void Attack()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("event void Attack");
+    //SetEnemyReactionType(ERT_AGGRESSIVE);
+    //UpdateGroupTargets();
+    SetOrder_Attack(["Russian2_T34_01", "Russian2_T34_02", "Russian1_T34_01", "Russian1_T34_02", "MainPlayerUnit"], ERT_AGGRESSIVE);
+    RefreshUnitsList();
+ //   logWarning("German_Attack_Begin");
+    //GetMission().FlagToAttack = true;
+  }
+
+  void OnEnemyTargeted(Component _UnitAlerted)
+  {
+//    if (GetMission().isDebug)
+//        logWarning("German OET");
+
+    String EnemyID = _UnitAlerted.GetTargetedEnemy();
+
+ //   logWarning("German Column OnEnemy Targeted. Target is: "+EnemyID);
+ //   logWarning("German Column OnEnemy Targeted. Check GermanStartRecon: " +new String(GetMission().GermanStartRecon));
+ //   logWarning("German Column OnEnemy Targeted. Check FlagToRegroup:    " +new String(GetMission().FlagToRegroup));
+ //   logWarning("German Column OnEnemy Targeted. Check FlagToAttack:     " +new String(GetMission().FlagToAttack));
+//    logWarning("German Column OnEnemy Targeted. Check EndGermanPatrol:  " +new String(GetMission().EndGermanPatrol));
+//    logWarning("German Column OnEnemy Targeted. Check WARNING_ABOUT_AT: " +new String(checkMask(user, [], ["WARNING_ABOUT_ATTACK"])));
+
+    if (GetMission().GermanStartRecon)
+    {
+      ActivateMovement(true);
+      ActivateFire(true);
+      GetMission().GermanStartRecon = false;
+    }
+
+    if (!GetMission().FlagToRegroup)
+    {
+ //     if (GetMission().isDebug)
+ //         logWarning("German OET NOT FlagToRegroup");
+      GetMission().FlagToRegroup = true;
+      sendEvent(0.0, "CC1M3GermanPanzer_Group", "Regroup", []);
+    }
+
+    if (!GetMission().FlagToAttack)
+        sendEvent(20.0, "CC1M3GermanPanzer_Group", "Attack", []);
+
+    if (!(EnemyID.IsStartsWith("Russian")) || GetMission().EndGermanPatrol || GetMission().FlagToAttack)
+    {
+      CBaseUnitGroup::OnEnemyTargeted(_UnitAlerted);
+ //     logWarning("CBaseUnitGroup OnEnemyTargeted BASE");
+    }
+
+ //   if (GetMission().isDebug)
+ //     logWarning("[CC1M3GermanPanzer_Group::OnEnemyTargeted] EnemyID=" + EnemyID);
+
+    if (checkMask(user, [], ["WARNING_ABOUT_ATTACK"]))
+    {
+      RemoveUnit("German_05_OpelBlitz");
+      RemoveUnit("German_06_OpelBlitz");
+      sendEvent(5.0, "CC1M3GermanPanzer_Group", "AttackRussianTank", []);
+    }
+  }
+
+  event void AttackRussianTank()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("CC1M3GermanPanzer_Group::AttackRussianTank");
+
+    Component OpelGroup = GetMission().GetObject("CC1M3GermanOpel_Group");
+    if (null != OpelGroup)
+    {
+      OpelGroup.RefreshUnitsList();
+      OpelGroup.ConstructOrder();
+    }
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+    CBaseUnitGroup::OnUnitHitByEnemy(_UnitID, _EnemyID);
+//    logWarning("OnUnitHitByEnemy unit: "+ _UnitID +", enemy: "+ _EnemyID + ", GermanStartRecon: " + new String(GetMission().GermanStartRecon));
+    if (GetMission().GermanStartRecon)
+    {
+//      if (GetMission().isDebug)
+//          logWarning("OnUnitHitByEnemy GermanStartRecon Activate MF");
+      ActivateMovement(true);
+      ActivateFire(true);
+      GetMission().GermanStartRecon = false;
+    }
+
+//    if (GetMission().isDebug)
+//        logWarning("CC1M3GPG OnUnitHitByEnemy ID: " + _UnitID + " from ID: " + _EnemyID + "WARNING_ABOUT_ATTACK");
+    addClassificatorObject("CC1M3GermanPanzer_Group", "WARNING_ABOUT_ATTACK");
+ //   if (GetMission().isDebug)
+ //       logWarning("CC1M3GermanPanzer_Group OnUnitHitByEnemy WARNING_ABOUT_ATTACK");
+    sendEvent(0.0, "CC1M3GermanPanzer_Group", "AttackRussianTank", []);
+    if (!GetMission().FlagToRegroup)
+    {
+      GetMission().FlagToRegroup = true;
+      sendEvent(0.0, "CC1M3GermanPanzer_Group", "PreBattle", []);  //!ssa Regroup
+    }
+  }
+
+  boolean Reactivate = false;
+
+  void OnStopped(Component _UnitTask)
+  {
+    CBaseUnitGroup::OnStopped(_UnitTask);
+
+//    if (GetMission().isDebug)
+//    {
+//      logWarning("CC1M3GermanPanzer_Group OnStopped");
+//      logWarning("order               is "+m_CurrentOrder.m_Order);
+//      logWarning("speed               is "+new String(m_CurrentOrder.m_MovingSpeed));
+//      logWarning("formation           is "+m_CurrentOrder.m_Formation);
+//      logWarning("distance            is "+new String(m_CurrentOrder.m_FormationDistance));
+//     logWarning("CyclePath           is "+new String(m_CurrentOrder.m_CyclePath));
+//      logWarning("NonSynchedPatrol    is "+new String(m_CurrentOrder.m_NonSynchedPatrol));
+//      logWarning("NextPatrolPoint     is "+new String(m_CurrentOrder.m_NextPatrolPoint));
+ //     logWarning("GuardRadius         is "+new String(m_CurrentOrder.m_GuardRadius));
+//      logWarning("TargetObjectID      is "+m_CurrentOrder.m_TargetObjectID);
+//      logWarning("ReferenceObjectID   is "+m_CurrentOrder.m_ReferenceObjectID);
+//      logWarning("EnemyReactionType   is "+new String(m_CurrentOrder.m_EnemyReactionType));
+//      logWarning("UniList             is " +new String(m_Units));
+//    }
+  }
+
+//start block
+ //==3==start  (mission task - group)
+  event void Intro()
+  {
+//    if (GetMission().isDebug)
+//    {
+//        logWarning("German MF_false" +new String(m_Units));
+//        logWarning("German group sendEvent " +new String(m_Units[0]));
+//    }
+    ActivateMovement(false);
+    ActivateFire(false);
+    GetMission().GermanStartRecon = true;
+    sendEvent(0.0, m_Units[0], "InUnit", []);
+  }
+//==3==end  (mission task - group)
+
+  event void Outro()
+  {
+//    if (GetMission().isDebug)
+//        logWarning("German Outro MF_true" +new String(m_Units));
+    ActivateMovement(true);
+    ActivateFire(true);
+    sendEvent(0.0, m_Units[0], "GermanWaitOn", []);
+  }
+
+  event void GermanWaitOff()
+  {
+//    if (GetMission().isDebug)
+//        logWarning("GermanWaitOff");
+    ActivateMovement(true);
+    ActivateFire(true);
+    GetMission().GermanStartRecon = false;
+  }
+
+  event void PreBattle()
+  {
+    if (GetMission().isDebug)
+        logWarning("PreBattle");
+    addClassificatorObject("CC1M3GermanPanzer_Group", "WARNING_ABOUT_ATTACK");
+    sendEvent(0.0, "CC1M3GermanPanzer_Group", "Regroup", []);
+    sendEvent(20.0, "CC1M3GermanPanzer_Group", "Attack", []);
+    GetMission().AttackRus2();
+    GetMission().AttackRus1();
+    GetMission().FlagToRegroup = true;
+    GetMission().FlagToAttack  = true;
+  }
+//end block
+}
+
+class CC1M3GermanPanzerTask extends CC1M3OnUnreacheableUnitProcessingTask
+{
+  boolean First_Blind_Attack = false;
+
+  void Init()
+  {
+    CBaseAITask::Init();
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+  }
+//start block
+//==4==start  (mission task - unit)
+  event void InUnit()
+  {
+    Array A2Points = [
+                       GetNavPointBehPos("NavPoint_German_Patrol_2_1"),
+                       GetNavPointBehPos("NavPoint_German_Patrol_3s")
+                     ];
+
+    SetFirstQueueOrders([
+                          ["GOrder2", "ActivateMovement", [true], ""],
+                          ["GOrder2", "SetOrder_MoveToEx", [A2Points, 4.0f], ""],
+                          ["GOrder2", "OutroMy", [], ""]
+                       ]);
+  }
+ //==4==end
+  event void OutroMy()
+  {
+//    if (GetMission().isDebug)
+//        logWarning("German group OutroMy");
+    ActivateMovement(false);
+    ActivateFire(false);
+    sendEvent(30.0, "CC1M3GermanPanzer_Group", "Outro", []);
+  }
+
+  event void GermanWaitOn()
+  {
+    ActivateMovement(false);
+    ActivateFire(false);
+    sendEvent(35.0, "CC1M3GermanPanzer_Group", "GermanWaitOff", []);
+  }
+//end block
+
+  event void SetRadarUnit(Array _Mask)
+  {
+    Component Object = GetMission().GetObject(getIdentificator(user));
+
+    Component Behavior = GetBehavior();
+    if (null == Behavior)
+      return;
+
+    Component Content = GetMission().GetMission().GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(user));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+//    if (GetMission().isDebug)
+//    {
+//      logError(getIdentificator(user));
+//      logWarning("New Mask    = " + new String(_Mask));
+//      logWarning("CurrentMask = " + new String(ObjRec[CBaseContent::INDEX_Properties]));
+//      logWarning("CurrentMask = " + new String(PropertiesMap.Get("BehRadarMask", _Mask)));
+ //   }
+
+    PropertiesMap.Set("BehRadarMask", _Mask);
+    Object.SetBehRadarMask(Behavior, PropertiesMap);
+
+//    if (GetMission().isDebug)
+//      logWarning( "CurrentMask = " + new String(PropertiesMap.Get("BehRadarMask", _Mask)));
+  }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+//    if (GetMission().isDebug)
+//    {
+//      logWarning("Unit with ID: " + getIdentificator(user) + " OnHitByEnemy from ID: " + _EnemyID);
+//      logWarning("PlayerDuckBlind = " + new String(GetMission().PlayerDuckBlind));
+//      ( new #GameController().GetObject(SOID_Console)).logClassificatorsList(_EnemyID);
+//    }
+
+    if (_EnemyID == "MainPlayerUnit" && !First_Blind_Attack)
+    {
+//      if (GetMission().isDebug)
+//        logWarning("Call SetRadarUnit and ActivateUnit  EnemyID = " + _EnemyID);
+      GetMission().AttackRus2();   //!ssa
+      GetMission().ActivateDuckBlind();
+      First_Blind_Attack = true;
+    }
+
+    if (!GetMission().AlreadyCreated && !GetMission().BlindSuccesfull)
+    {
+      GetMission().AlreadyCreated = true;
+
+      GetMission().CC1M3PosWatchDB_RusPz_Gr1 = new CC1M3PosWatchDB_RusPz_Gr1();
+      GetMission().CC1M3PosWatchDB_RusPz_Gr1.Initialize(GetMission(), "CC1M3PosWatchDB_RusPz_Gr1");
+
+      GetMission().CC1M3PosWatchDB_RusPz_Gr2 = new CC1M3PosWatchDB_RusPz_Gr2();
+      GetMission().CC1M3PosWatchDB_RusPz_Gr2.Initialize(GetMission(), "CC1M3PosWatchDB_RusPz_Gr2");
+    }
+
+    CBaseAITask::OnHitByEnemy(_EnemyID);
+  }
+
+  void OnRadarUpdate()
+  {
+    String _GermanTarget = GetTargetedEnemy();
+
+//    if (GetMission().isRadarUpdateDebug)
+//      logMessage("Current order: " + new String(m_Group.m_CurrentOrder.m_Order));
+
+    if (_GermanTarget.IsStartsWith("Russian") && !(GetMission().EndGermanPatrol))
+      return;
+
+//    if (GetMission().isRadarUpdateDebug)
+//      logWarning("m_CurrentEnemy: " + m_CurrentEnemy + ", and m_LastEnemy" + m_LastEnemy);
+    CBaseAITankTask::OnRadarUpdate();
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+                        )
+  {
+ //   if (GetMission().isDebug)
+ //   {
+  //    logWarning("OnExplosion::CC1M3GermanPanzerTask  OwnerID = " + _OwnerID + " DamageType = " + new String(_DamageType));
+  //    (new #GameController().GetObject(SOID_Console)).logClassificatorsList(getIdentificator(user));
+  //  }
+
+    OnHitByEnemy(_OwnerID); // типа посмотрим как оно будет
+  }
+}
+
+// special behavior for Tiget
+class CC1M3SpecialForTigerUnit extends  CC1M3GermanPanzerTask, CC1M3Split
+{
+  float Choose     = 0.8f;
+  float SpeedTiger = 5.5f;
+  float DistanceToTP;
+
+  Component Self;
+  Component TigerBehavior;
+
+  boolean CancellDefect   = false;
+  boolean HasOrderMoveToTP = false;
+
+  String MoveToStayPosition = "MOVE_TO_STAY_POSITION";
+  String MoveToNextPosition = "MOVE_TO_NEXT_POSITION";
+
+  int CurrentIndex = -1;
+  int StopTime;
+
+  float Xfactor = 20.0f; // множители для изменения эталонного квадрата
+  float Yfactor = 20.0f; // умножение дла проекции эталонного квадрата на поверхность
+
+  Array EthaIndices = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+  Vector Vcenter = new Vector(0.0f, 0.0f, 0.0f);
+
+  Array Ethalon = [
+     new Vector( 1.00f,  1.00f, 0.0f), // 00
+     new Vector(-1.00f,  1.00f, 0.0f), // 01
+     new Vector(-1.00f, -1.00f, 0.0f), // 02
+     new Vector( 1.00f, -1.00f, 0.0f), // 03
+
+     new Vector( 0.50f,  0.50f, 0.0f), // 04
+     new Vector(-0.50f,  0.50f, 0.0f), // 05
+     new Vector(-0.50f, -0.50f, 0.0f), // 06
+     new Vector( 0.50f, -0.50f, 0.0f), // 07
+
+     new Vector( 0.25f,  0.25f, 0.0f), // 08
+     new Vector(-0.25f,  0.25f, 0.0f), // 09
+     new Vector( 0.25f, -0.25f, 0.0f), // 10
+     new Vector(-0.25f, -0.25f, 0.0f), // 11
+
+     new Vector( 0.75f,  0.75f, 0.0f), // 12
+     new Vector(-0.75f,  0.75f, 0.0f), // 13
+     new Vector( 0.75f, -0.75f, 0.0f), // 14
+     new Vector(-0.75f, -0.75f, 0.0f)  // 15
+                  ];
+
+  int GetStepIndex(int _PrevIndex)
+  {
+    int Ind   = randnum(EthaIndices.size());
+    int Index = EthaIndices[Ind];
+    EthaIndices.remove(Ind);
+
+    if (_PrevIndex != -1)
+      EthaIndices.add(_PrevIndex);
+
+  //  if (GetMission().isDebug)
+  //  {
+ //     logMessage("[GetStepIndex] PrevIndex: " + new String(_PrevIndex));
+ //     logMessage("[GetStepIndex] Index: " + new String(Index));
+ //   }
+
+    return Index;
+  }
+
+  Vector GetStepPosition(int _Index)
+  {
+//    if (GetMission().isDebug)
+//      logMessage("[GetStepPosition] Index: " + new String(_Index));
+
+    Vector Result;
+    Result.x = Ethalon[_Index].y * Yfactor;
+    Result.y = - Ethalon[_Index].x * Xfactor;
+
+//    if (GetMission().isDebug)
+//      logMessage("[GetStepPosition] Result: " + new String(Result));
+
+    return Vcenter + Result;
+  }
+
+  void Init()
+  {
+    CBaseAITask::Init();
+
+    Self = GetSelf();
+    TigerBehavior = GetBehavior();
+    Vcenter = GetNavPointBehPos("NavPoint_Tiger_Stop");
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+  }
+
+  void OnStopped()
+  {
+ //   if (GetMission().isDebug)
+ //   {
+ //     logMessage("[TigerSpecial] Tiger stopped");
+ //     (new #GameController().GetObject(SOID_Console)).logClassificatorsList(getIdentificator(user));
+ //   }
+
+    if(checkMask(Self, [MoveToStayPosition], []))
+    {
+      removeClassificator(Self, MoveToStayPosition);
+    }
+
+    if(checkMask(Self, [MoveToNextPosition], []))
+    {
+      removeClassificator(Self, MoveToNextPosition);
+    }
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+
+    CBaseAITask::OnStopped();
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+                        )
+  {
+ //   if (GetMission().isDebug)
+ //     logMessage("[TigerSpecial] OnExplosion  OwnerID: " + _OwnerID + " DamageType: " + new String(_DamageType));
+
+    CC1M3GermanPanzerTask::OnHitByEnemy(_OwnerID); // типа посмотрим как оно будет
+
+    StopTime = TigerBehavior.GetNoMoveTime();
+    if (!CancellDefect)
+    {
+      if (StopTime == 0)
+      {
+        float DistanceToTP = GetMission().Distance("NavPoint_Tiger_Stop", "German_03_PzVI");
+
+   //     if (GetMission().isDebug)
+   //       logMessage("[TigerSpecial] I can move and distance to TP: " + new String(DistanceToTP));
+
+        if (DistanceToTP <= 100)
+        {
+          if (!HasOrderMoveToTP)
+          {
+   //         if (GetMission().isDebug)
+   //         logMessage("[TigerSpecial] I go to TP!");
+
+            HasOrderMoveToTP = true;
+            SetEnemyReactionType(ERT_PASSIVE);
+            addClassificator(Self, MoveToStayPosition);
+            SetOrder_MoveTo(GetNavPointBehPos("NavPoint_Tiger_Stop"), SpeedTiger);
+          }
+          else if (rand(0.0f, 1.0f) >= Choose)
+          {
+     //       if (GetMission().isDebug)
+    //          logMessage("[TigerSpecial] I defect around TP!");
+
+            SetEnemyReactionType(ERT_PASSIVE);
+            addClassificator(Self, MoveToNextPosition);
+            CurrentIndex = GetStepIndex(CurrentIndex);
+            SetOrder_MoveTo(GetStepPosition(CurrentIndex), SpeedTiger);
+          }
+        }
+      }
+      else
+      {
+        StopNow();
+        OnStopped();
+
+        if (StopTime == -1)
+        {
+    //      if (GetMission().isDebug)
+     //       logMessage("[TigerSpecial] I can not move!");
+
+          CancellDefect = true;
+        }
+        else
+        {
+ //         if (GetMission().isDebug)
+  //          logMessage("[TigerSpecial] I temporarily can not move");
+        }
+      }
+    }
+  }
+}
+
+class CC1M3SovietBaseTask extends CBaseAITask
+{
+  // пока так ... стоят не двигаются но могут стрелять
+  void Init()
+  {
+    CBaseAITask::Init();
+
+    ActivateMovement(false);
+    ActivateRadar(true);
+  }
+}
+
+class CC1M3GermanOpel_Group extends CBaseUnitGroup, CC1M3Broken
+{
+  event void ConstructOrder()
+  {
+    SetEnemyReactionType(ERT_FRIGID);
+    Component me = GetMission().GetObject(getIdentificator(user));
+//    if (me == null)
+//      logError("Component 'me' == null!!!");
+
+    Array ApproachPoints = BrokenPath(0, 0, getPosition(me).origin, GetNavPointBehPos("NavPoint_Opel_Stop"));
+
+    SetFirstQueueOrders([
+      ["MoveToAttackStayPosition", "SetOrder_MoveToEx", [ApproachPoints, 10.0f], ""],
+      ["MoveToAttackStayPosition", "EndOfMove", [], ""]
+                        ]);
+  }
+
+  void EndOfMove()
+  {
+    ForEachUnitTask("ActivateBehavior", [false]);
+  }
+
+  event void WarningStop()
+  {
+    SetEnemyReactionType(ERT_FRIGID);
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component UnitTask = GetUnitTask(m_Units[i]);
+
+      if (UnitTask != null)
+      {
+        Component Unit = GetMission().GetObject(m_Units[i]);
+        Vector AddVector = new Vector(rand(5.0, 7.0), rand(-5.0, -4.0), 0.0);
+        Vector Position = UnitTask.getPosition(Unit).origin;
+
+        UnitTask.SetOrder_MoveTo(AddVector + Position, 6.5);
+      }
+    }
+  }
+}
+
+class CC1M3TankBase extends CBaseUnitGroup
+{
+  float Xfactor = 100.0f;    //    множители для изменения эталонного квадрата
+  float Yfactor = 100.0f;    //    умножение дла проекции эталонного квадрата на поверхность
+  float SpeedDeflect = 4.0;
+  Vector Vcenter = new Vector(0.0f, 0.0f, 0.0f);
+
+  final static Array Ethalon =
+     [
+       new Vector(0.1f, 0.9f, 0.0f), // 01
+       new Vector(0.3f, 0.7f, 0.0f), // 02
+       new Vector(0.5f, 0.5f, 0.0f), // 03
+       new Vector(0.7f, 0.3f, 0.0f), // 04
+       new Vector(0.9f, 0.1f, 0.0f), // 05
+       new Vector(0.2f, 0.2f, 0.0f), // 06
+       new Vector(0.4f, 0.4f, 0.0f), // 07
+       new Vector(0.6f, 0.7f, 0.0f), // 08
+       new Vector(0.8f, 0.8f, 0.0f), // 09
+       new Vector(0.9f, 0.6f, 0.0f), // 10
+       new Vector(0.0f, 0.1f, 0.0f), // 11
+       new Vector(0.1f, 0.7f, 0.0f), // 12
+       new Vector(0.5f, 0.9f, 0.0f), // 13
+       new Vector(0.2f, 0.5f, 0.0f), // 14
+       new Vector(1.0f, 0.3f, 0.0f), // 15
+       new Vector(1.0f, 0.9f, 0.0f)  // 16
+  ];
+
+  Array EthaIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  Vector Vcenter = new Vector(0.0f, 0.0f, 0.0f); // реального квадрата
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    Vcenter = GetNavPointPos("NavPoint_Russian_Attack");
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+   CBaseUnitGroup::OnUnitDestroyed(_UnitID);
+   RefreshUnitsList();
+
+   Component mortal = GetMission().GetObject(_UnitID);
+   if ( checkMask(mortal, ["Defection"], []))
+    {
+     removeClassificatorObject(_UnitID, "Defection");
+     GetStepIndex(mortal.CurrentIndex);
+    }
+  }
+
+  // вычисление координат для перебежки
+  Vector GetStepPosition(int _Index)
+  {
+    //logError("_Index = " + new String(_Index));
+    //logError("Ethalon[_Index] = " + new String(Ethalon[_Index]));
+    //logError("Ethalon[_Index].x = " + new String(Ethalon[_Index].x));
+    //logError("Ethalon[_Index].y = " + new String(Ethalon[_Index].y));
+    //logError("Ethalon[_Index].x * Xfactor = " + new String(Ethalon[_Index].x * Xfactor));
+    //logError("Ethalon[_Index].y * Yfactor = " + new String(Ethalon[_Index].y * Yfactor));
+
+    Vector Result;
+    Result.x = Ethalon[_Index].x * Xfactor;
+    Result.y = Ethalon[_Index].y * Yfactor;
+    Result.z = 0.0f;
+
+    //logError("Vcenter = " + new String(Vcenter));
+    //logError("Vcenter + Result = " + new String(Vcenter + Result));
+
+    return Vcenter + Result;
+  }
+
+  int GetStepIndex(int _PrevIndex)
+  {
+    int Ind = randnum(EthaIndices.size());
+    int Index = EthaIndices[Ind];
+    EthaIndices.remove(Ind);
+    if (_PrevIndex != -1)
+        EthaIndices.add(_PrevIndex);
+    return Index;
+  }
+}
+
+
+class CC1M3BaseTankTask extends CBaseAITask
+{
+  int CurrentIndex = -1;
+  boolean FirstDeflect = true;
+
+  event void StopDeflect()
+  {
+  //  if (GetMission().isDebug)
+ //       logWarning(" Stop Deflect for unit ID=" + getIdentificator(user) + " and call clearEventsForObject");
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    Component _Unit = GetMission().GetObject(getIdentificator(user));
+    if (_Unit != null)
+        clearEventsForObject(getIdentificator(user));
+  }
+
+  Vector GetStepPosition()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[CC1M3BaseTankTask::GetStepPosition] for UnitID=" + getIdentificator(user));
+    if (m_Group == null)
+        return;
+
+    CurrentIndex = m_Group.GetStepIndex(CurrentIndex);
+    return m_Group.GetStepPosition(CurrentIndex);
+  }
+
+  event void Deflect()
+  {
+//    if (GetMission().isDebug)
+//        logWarning("[CC1M3BaseTankTask::Deflect] for Unit=" + getIdentificator(user));
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    int time = rand(30.0f, 120.0f);
+
+//    logWarning(" time = " + new String(time));
+
+    SetOrder_MoveTo(GetStepPosition(), m_Group.SpeedDeflect);
+    sendEvent(time, getIdentificator(user), "Deflect", []);
+  }
+}
+
+class CC1M3Gr_Protection_GunPak40_1 extends BaseZisGroup
+{
+}
+
+class CC1M3Gr_Protection_GunPak40_2 extends BaseZisGroup
+{
+}
+
+class CC1M3Gr_Protection_GunPak40_3 extends BaseZisGroup
+{
+}
+
+class CC1M3Gr_Protection_GunPak40_4 extends BaseZisGroup
+{
+}
+
+//-------------------------------
+//--------   USSR IL2   ---------
+//-------------------------------
+class C1M3USRIL2Group extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+  }
+
+  void OnQueueOrdersEnd(String _OrderGroupID, Component _UnitTask)
+  {
+    CBaseUnitGroup::OnQueueOrdersEnd(_OrderGroupID, _UnitTask);
+
+    if (_OrderGroupID == "SpecialBombAttack")
+    {
+      _UnitTask.SetFrigidMode(true);
+      _UnitTask.ActivateBehavior(false);
+      _UnitTask.ShowUnit(false);
+    }
+  }
+
+  event void BombAttack()
+  {
+    ActivateGroup(true);
+
+    SetOrderName("");
+    Array ApproachPoints = [
+                             GetNavPointBehPos("IL2AttackNP_01")
+                           ];
+
+    SetFirstQueueOrders([
+                          ["BombAttack", "SetOrder_MoveToEx", [ApproachPoints, 40.0f], ""],
+                          ["BombAttack", "Bomben", [], ""]
+                        ]);
+  }
+
+  void Bomben()
+  {
+    float Speed = 45.0;
+    float Time  = 3.0;
+
+    ClearFormation();
+
+    String Target1 = "IL2BombNPStart_01";
+    String Target2 = "IL2BombNPStart_02";
+    Vector AttackOut1 = GetNavPointBehPos("IL2BombNPEnd_01");
+    Vector AttackOut2 = GetNavPointBehPos("IL2BombNPEnd_02");
+
+    Component Behavior1 = GetUnitBehavior("USR_IL2_01");
+    Component Behavior2 = GetUnitBehavior("USR_IL2_02");
+
+    if (Behavior1 != null && Behavior2 != null)
+    {
+      Behavior1.setOrder_SpecialBombAttack(Behavior1.GetNowPosition(), Speed, Target1, Time, AttackOut1);
+      Behavior2.setOrder_SpecialBombAttack(Behavior2.GetNowPosition(), Speed, Target2, Time, AttackOut2);
+    }
+  }
+}

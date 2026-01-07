@@ -1,0 +1,475 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+//-----------------------------------
+//------   Speed Controllers   ------
+//-----------------------------------
+class CC1M3PlayerUnit_RussianPanzer_Group1 extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Kurtenki";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit", "CC1M3RussianPanzer_Group1"]; // за кем следим
+
+  Component WhoWatches;
+  Component WhomWatches0;
+  Component WhomWatches1;
+
+  float distancePlayer = 0.0f;
+  float distanceGroup1 = 0.0f;
+  float distbetween_MPandGr1 = 0.0f;
+
+  float PlayerSpeed = 0.0f;
+
+  final static int PlayerUnitIdx          = 0;
+  final static int RussianPanzerGroup1Idx = 1;
+
+  int m_RegionMask = 0;
+
+  float Radius1 = 30.0f;
+  float Radius2 = 70.0f;
+
+  boolean IsRing1(float _distance)
+  {
+    return ((_distance >= 0) && (_distance < Radius1));
+  }
+
+  boolean IsRing2(float _distance)
+  {
+    return ((_distance >= Radius1) && (_distance < Radius2));
+  }
+
+  boolean IsOut(float _distance)
+  {
+    return (_distance >= Radius2);
+  }
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+    WhoWatches   = GetMission().GetObject(Positionable);       // кто следит NavPoint_Village_Kurtenki
+    WhomWatches0 = GetMission().GetObject(ControlPoints[0]);   // за кем следим MainPlayerUnit
+    WhomWatches1 = GetMission().GetObject(ControlPoints[1]);   // за кем следим CC1M3RussianPanzer_Group1
+
+    distancePlayer = (getPosition(WhoWatches).origin - getPosition(WhomWatches0).origin).Magnitude();
+    distanceGroup1 = (getPosition(WhoWatches).origin - getPosition(WhomWatches1).origin).Magnitude();
+
+//    if (GetMission().isDebug)
+//    {
+//      logWarning("[CC1M3PlayerUnit_RussianPanzer_Group1]");
+//      logMessage(" distancePlayer = " + new String(distancePlayer));
+//      logMessage(" distanceGroup1 = " + new String(distanceGroup1));
+//    }
+
+    GetMission().GetObject("CC1M3PlayerUnit_RussianPanzer_Group1").SetUpdatePeriod(3000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(PlayerUnitIdx);
+
+    PointRegionChanged(_Watcher, PlayerUnitIdx, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    Array PointInfo0   = _PositionWatcher.GetPointInfo(PlayerUnitIdx);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(RussianPanzerGroup1Idx);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+    boolean PlayerAhead = true;
+
+    distancePlayer = PointInfo0[INDEX_Distance];
+    distanceGroup1 = PointInfo1[INDEX_Distance];
+
+    if (distancePlayer > distanceGroup1)
+      PlayerAhead = false;
+
+    PlayerSpeed = PointInfo0[INDEX_Speed];
+    distbetween_MPandGr1 = (getPosition(WhomWatches0).origin - getPosition(WhomWatches1).origin).Magnitude();
+
+    /*if (GetMission().isDebug)
+    {
+      logWarning("[CC1M3PlayerUnit_RussianPanzer_Group1] Point region changed");
+      logMessage(" Player speed = " + new String(PlayerSpeed));
+      logMessage(" Distance between Kurtenki and Player " + new String(distancePlayer));
+      logMessage(" Distance between Kurtenki and first Group " + new String(distanceGroup1));
+      logMessage(" Distance between Player and first Group " + new String(distbetween_MPandGr1));
+    }*/
+
+    if (IsRing1(distbetween_MPandGr1))
+    {
+      if (PlayerAhead)
+        WhomWatches1.ChangeMoveSpeed(PlayerSpeed);
+      else
+        WhomWatches1.ChangeMoveSpeed(abs(PlayerSpeed - 1.5));
+    }
+    else if (IsRing2(distbetween_MPandGr1))
+    {
+      if (PlayerAhead)
+        WhomWatches1.ChangeMoveSpeed(PlayerSpeed + 0.7);
+      else
+        WhomWatches1.ChangeMoveSpeed(3.0);
+    }
+    else if (IsOut(distbetween_MPandGr1))
+    {
+      if (PlayerAhead)
+        WhomWatches1.ChangeMoveSpeed(PlayerSpeed + 2.5);
+      else
+        WhomWatches1.ChangeMoveSpeed(0.001);
+    }
+    else
+      logError("[CC1M3PlayerUnit_RussianPanzer_Group1] Wrong distance");
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+class CC1M3PlayerUnit_RussianPanzer_Group2 extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Kurtenki";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit", "CC1M3RussianPanzer_Group2"]; // за кем следим
+
+  float distancePlayer = 0.0;
+  float distanceGroup2 = 0.0;
+
+  float PlayerSpeed = 0.0;
+
+  final static int PlayerUnitIdx          = 0;
+  final static int RussianPanzerGroup2Idx = 1;
+
+  Component WhoWatches;
+  Component WhomWatches0;
+  Component WhomWatches2;
+
+  int m_RegionMask = 0;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+    WhoWatches   = GetMission().GetObject(Positionable);     // кто следит NavPoint_Village_Kurtenki
+    WhomWatches0 = GetMission().GetObject(ControlPoints[0]); // за кем следим MainPlayerUnit
+    WhomWatches2 = GetMission().GetObject(ControlPoints[1]); // за кем следим CC1M3RussianPanzer_Group2
+
+    distancePlayer = (getPosition(WhoWatches).origin - getPosition(WhomWatches0).origin).Magnitude();
+    distanceGroup2 = (getPosition(WhoWatches).origin - getPosition(WhomWatches2).origin).Magnitude();
+
+//    if (GetMission().isDebug)
+//    {
+//      logWarning("[CC1M3PlayerUnit_RussianPanzer_Group2]");
+//      logMessage(" distancePlayer = " + new String(distancePlayer));
+//      logMessage(" distanceGroup2 = " + new String(distanceGroup2));
+//    }
+
+    GetMission().GetObject("CC1M3PlayerUnit_RussianPanzer_Group2").SetUpdatePeriod(3000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(PlayerUnitIdx);
+
+    PointRegionChanged(_Watcher, PlayerUnitIdx, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    Array PointInfo0   = _PositionWatcher.GetPointInfo(PlayerUnitIdx);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(RussianPanzerGroup2Idx);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+    float difference;
+
+    distancePlayer = PointInfo0[INDEX_Distance];
+    distanceGroup2 = PointInfo1[INDEX_Distance];
+
+    difference = distanceGroup2 - distancePlayer;
+
+    PlayerSpeed = PointInfo0[INDEX_Speed];
+
+    /*if (GetMission().isDebug)
+    {
+      logWarning("[CC1M3PlayerUnit_RussianPanzer_Group2] Point region changed");
+      logMessage(" Player speed = " + new String(PlayerSpeed));
+      logMessage(" Distance between Kurtenki and Player " + new String(distancePlayer));
+      logMessage(" Distance between Kurtenki and second Group " + new String(distanceGroup2));
+    }*/
+
+    if (difference >= 60.0)
+      WhomWatches2.ChangeMoveSpeed(PlayerSpeed + 2.5);
+    else if (difference >= 0.0)
+      WhomWatches2.ChangeMoveSpeed(PlayerSpeed);
+    else if (difference >= -30.0)
+      WhomWatches2.ChangeMoveSpeed(3.0);
+    else
+      WhomWatches2.ChangeMoveSpeed(0.001);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+//----------------------------------------
+//--   Duckblind Distance Controllers   --
+//----------------------------------------
+class CC1M3PosWatchDB_RusPz_Gr1 extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "Russian1_T34_01";                        // кто следимт
+  final static Array  ControlPoints = [
+    "German_01_PzIV", "German_02_PzVI", "German_03_PzVI", "German_04_Hanomag",  // за кем следим
+    "German_05_OpelBlitz", "German_06_OpelBlitz", "German_07_PzIV"
+                                      ];
+
+  final static float distance = 400;
+
+  Initialize(Component _Mission, String _Name)
+  {
+ //   if (GetMission().isDebug)
+//      logWarning("CC1M3PosWatchDB_RusPz_Gr1::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M3PosWatchDB_RusPz_Gr1").SetUpdatePeriod(1000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    for (int i = 0; i < ControlPoints.size(); i++)
+    {
+      Array PosInfoUpdate = _Watcher.GetPointInfo(i);
+      PointRegionChanged(_Watcher, i, PosInfoUpdate[INDEX_RegionMask]);
+    }
+
+    Array PositionInfo = _Watcher.GetPositionInfo();
+  }
+
+  void PointRegionChanged(
+      Component _PositionWatcher,
+      int       _Point,
+      int       _RegionMask
+                         )
+  {
+    Array PosInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    /*if (GetMission().isDebug)
+    {
+      logWarning("CC1M3PosWatchDB_RusPz_Gr1::PointRegionChanged");
+      logMessage(" Distance = " + new String(PosInfo[INDEX_Distance]));
+    }*/
+
+    if(PosInfo[INDEX_Distance] < distance)
+    {
+//      if (GetMission().isDebug)
+//        logWarning(" Start CC1M3RussianPanzer_Group1");
+
+      Component Temp = GetMission().GetObject("CC1M3PosWatchDB_RusPz_Gr2");
+      if (Temp != null)
+        GetMission().ShutdownWatcher(Temp);
+
+      GetMission().ShutdownWatcher(_PositionWatcher);
+
+      GetMission().ActivateDuckBlind();
+      GetMission().AttackAllRussian = true;
+    }
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+class CC1M3PosWatchDB_RusPz_Gr2 extends CPositionWatcher, CBaseUtilities //На случай, если первый танк сдох до того как вошел в засаду
+{
+  final static String Positionable  = "Russian1_T34_02";                       // кто следимт
+  final static Array  ControlPoints = [
+    "German_01_PzIV", "German_02_PzVI", "German_03_PzVI", "German_04_Hanomag", // за кем следим
+    "German_05_OpelBlitz", "German_06_OpelBlitz", "German_07_PzIV"
+                                      ];
+
+  final static float distance = 400;
+
+  Initialize(Component _Mission, String _Name)
+  {
+ //   if (GetMission().isDebug)
+ //     logWarning("CC1M3PosWatchDB_RusPz_Gr2::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M3PosWatchDB_RusPz_Gr2").SetUpdatePeriod(1000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    for (int i = 0; i < ControlPoints.size(); i++)
+    {
+      Array PosInfoUpdate = _Watcher.GetPointInfo(i);
+      PointRegionChanged(_Watcher, i, PosInfoUpdate[INDEX_RegionMask]);
+    }
+
+    Array PositionInfo = _Watcher.GetPositionInfo();
+  }
+
+  void PointRegionChanged(
+      Component _PositionWatcher,
+      int       _Point,
+      int       _RegionMask
+                         )
+  {
+    Array PosInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    /*if (GetMission().isDebug)
+    {
+      logWarning("CC1M3PosWatchDB_RusPz_Gr2::PointRegionChanged");
+      logMessage(" Distance = " + new String(PosInfo[INDEX_Distance]));
+    }*/
+
+    if(PosInfo[INDEX_Distance] < distance)
+    {
+//      if (GetMission().isDebug)
+//        logWarning(" Start CC1M3RussianPanzer_Group2");
+
+      Component Temp = GetMission().GetObject("CC1M3PosWatchDB_RusPz_Gr1");
+      if (Temp != null)
+        GetMission().ShutdownWatcher(Temp);
+
+      GetMission().ShutdownWatcher(_PositionWatcher);
+
+      GetMission().ActivateDuckBlind();
+      GetMission().AttackAllRussian = true;
+    }
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+//-----------------------------------------------------
+//--   Reaction Types Controller (before Kurtenki)   --
+//-----------------------------------------------------
+class CC1M3DistanceForAttack extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Kurtenki";                                                  // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit", "CC1M3RussianPanzer_Group1", "CC1M3RussianPanzer_Group2"]; // за кем следим
+
+  final static float distanceForPosWch   = 200;
+  final static float distanceForAggrMode = 70;
+
+  float distancePlayer = 0.0;
+  float distanceGroup1 = 0.0;
+  float distanceGroup2 = 0.0;
+
+  boolean StopShutdown = false;
+
+  Component RussianGroup1;
+  Component RussianGroup2;
+
+  float SpeedForKurtenki = 5.5f;
+
+  Initialize(Component _Mission, String _Name)
+  {
+ //   if (GetMission().isDebug)
+ //     logWarning("CC1M3DistanceForAttack::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M3DistanceForAttack").SetUpdatePeriod(1000);
+
+    RussianGroup1 = GetMission().GetObject("CC1M3RussianPanzer_Group1");
+    RussianGroup2 = GetMission().GetObject("CC1M3RussianPanzer_Group2");
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    Array PlayerInfo = _PositionWatcher.GetPointInfo(0);
+    Array Group1Info = _PositionWatcher.GetPointInfo(1);
+    Array Group2Info = _PositionWatcher.GetPointInfo(2);
+
+    distancePlayer = PlayerInfo[INDEX_Distance];
+    distanceGroup1 = Group1Info[INDEX_Distance];
+    distanceGroup2 = Group2Info[INDEX_Distance];
+
+    if(distancePlayer < distanceForAggrMode ||
+       distanceGroup1 < distanceForAggrMode ||
+       distanceGroup2 < distanceForAggrMode)
+    {
+  //    if (GetMission().isDebug)
+  //      logWarning("Russian set aggresive");
+
+      GetMission().ShutdownWatcher(_PositionWatcher);
+
+      RussianGroup1.SetEnemyReactionType(ERT_DEFENSIVE);
+      RussianGroup2.SetEnemyReactionType(ERT_DEFENSIVE);
+    }
+    else if (!StopShutdown && (distancePlayer < distanceForPosWch ||
+                               distanceGroup1 < distanceForPosWch ||
+                               distanceGroup2 < distanceForPosWch))
+    {
+  //    if (GetMission().isDebug)
+  //      logWarning("Stop position watchers");
+
+      StopShutdown = true;
+      GetMission().ShutdownWatchers("God");
+
+      RussianGroup1.m_CurrentOrder.m_MovingSpeed = SpeedForKurtenki;
+      RussianGroup2.m_CurrentOrder.m_MovingSpeed = SpeedForKurtenki;
+    }
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+//-------------------------------------------
+//---   BTRS & TRUCK RETREAT CONTROLLER   ---
+//-------------------------------------------
+class CC1M3PW_DistanceForBTRRetreat extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Kurtenki";            // кто следимт
+  final static Array  ControlPoints = [                                       // за кем следим
+                                        "MainPlayerUnit",
+                                        "Russian1_T34_01", "Russian1_T34_02",
+                                        "Russian2_T34_01", "Russian2_T34_02"
+                                      ];
+
+  final static Array RegionDefs = [100.0];
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+//    if (GetMission().isDebug)
+//      logWarning("Somebody cross line in " + new String(RegionDefs[0]) + " meters");
+
+    sendEvent(0.0, SOID_MissionController, "StartRetreat", ["Vysochany"]);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
