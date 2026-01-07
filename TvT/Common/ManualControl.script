@@ -1,0 +1,124 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseManualControl
+  extends CConstraintProperties
+{
+  // =========================================
+  // Tank properties
+  // =========================================
+
+  float  Mass                 = 4000.0;
+  Vector IT                   = new Vector(0.874482, 3.152529, 3.804275);
+  float  Elasticity           = 0.0;
+  float  Friction             = 0.5;
+  Vector GravityAccelerate    = CWorldPhysics::GravityVector;
+
+  // =========================================
+  // Tank body drop coefficients
+  // =========================================
+
+  // angular damping coefficients by axises X, Y and Z
+  Vector AngularDampingCoeff  = new Vector(0.0, 0.0, 1.0);
+  // linear damping coefficients by axises X, Y and Z
+  Vector LinearDampingCoeff   = new Vector(2.5, 2.7, 7.6);
+
+  // =========================================
+  // Wheels configuration
+  // =========================================
+
+  Array  Wheels               = [];
+
+  // =========================================
+  // Other systems
+  // =========================================
+
+  Component EngineSystem      = null;
+
+  // =========================================
+  // Sounds
+  // =========================================
+ 
+  Component LeftTrackSound    = null;
+  Component RightTrackSound   = null;
+
+  float  BeginTrackSoundFreq  = 0.2;
+  float  TrackSpeedScaleCoeff = 1.0 / 31.0;
+
+  // =========================================
+  // additional script properties
+  // =========================================
+
+  float  AdditionalMass       = 0.0;
+
+  // =========================================
+  // Service methods
+  // =========================================
+
+  void SetupSoundComponents(
+      Component _Mesh,
+      Component _Object
+    )
+  {
+    // engine system
+    {
+      Matrix EnginePosition = getPosition(_Mesh);
+      for (int i = 0; i < EngineSystem.Gears.size(); i++)
+      {
+        Component EngineSound = EngineSystem.Gears[i][5];
+        if (null != EngineSound)
+        {
+          setPosition(EngineSound, EnginePosition);
+          setPositionable(EngineSound, _Mesh);
+          _Object.RegisterObject("EngineSystem_GearSnd" + new String(i), EngineSound);
+        }
+      }
+
+      setPosition(EngineSystem.GearOnSnd, EnginePosition);
+      setPositionable(EngineSystem.GearOnSnd, _Mesh);
+      _Object.RegisterObject("EngineSystem_GearOnSnd", EngineSystem.GearOnSnd);
+
+      setPosition(EngineSystem.StartEng, EnginePosition);
+      setPositionable(EngineSystem.StartEng, _Mesh);
+      _Object.RegisterObject("EngineSystem_StartEngSnd", EngineSystem.StartEng);
+
+      setPosition(EngineSystem.StopEng, EnginePosition);
+      setPositionable(EngineSystem.StopEng, _Mesh);
+      _Object.RegisterObject("EngineSystem_StopEngSnd", EngineSystem.StopEng);
+
+      setPosition(EngineSystem.StarterSnd, EnginePosition);
+      setPositionable(EngineSystem.StarterSnd, _Mesh);
+      _Object.RegisterObject("EngineSystem_StarterSnd", EngineSystem.StarterSnd);
+
+      setPosition(EngineSystem.DieSnd, EnginePosition);
+      setPositionable(EngineSystem.DieSnd, _Mesh);
+      _Object.RegisterObject("EngineSystem_DieSnd", EngineSystem.DieSnd);
+    }
+
+    // track system
+    {
+      Matrix LeftTrackPosition  = getPosition(_Mesh);
+      Matrix RightTrackPosition = getPosition(_Mesh);
+
+      setPosition(LeftTrackSound, LeftTrackPosition);
+      setPositionable(LeftTrackSound, _Mesh);
+      _Object.RegisterObject("TrackSystem_LeftSound", LeftTrackSound);
+
+      setPosition(RightTrackSound, RightTrackPosition);
+      setPositionable(RightTrackSound, _Mesh);
+      _Object.RegisterObject("TrackSystem_RightSound", RightTrackSound);
+    }
+  }
+
+  void SetAdditionalMass(float _AdditionalMass)
+  {
+    AdditionalMass = _AdditionalMass;
+    SetHelicopterMass(HelicopterMass + AdditionalMass);
+  }
+}

@@ -1,0 +1,46 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMenuController
+  extends CBaseMenuController
+{
+  //
+  // Cursor control
+  //
+
+  void CreateCursor(
+      String _Material,
+      float  _X,
+      float  _Y,
+      float  _Width,
+      float  _Height
+    )
+  {
+    Component Cursor = new #CursorControl();
+    Cursor.SetPosition(0.5, 0.5);
+    Cursor.SetDimensions(0.0325, 0.0325 / 0.75);
+    Cursor.SetMaterial(_Material);
+    Cursor.SetMaterialManager(m_MaterialManager);
+    Cursor.SetEventHandler(this);
+    Cursor.SyncWithWindowsCursor(true);
+    Cursor.ShowCursor(true);
+    RegisterStaticObject("Cursor", Cursor);
+  }
+
+  void CreateDefaultCursor()
+  {
+    CreateCursor(
+        "cursor",
+        0.5,
+        0.5,
+        0.025,
+        0.025 / 0.75
+      );
+  }
+};

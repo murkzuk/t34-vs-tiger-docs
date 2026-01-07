@@ -1,0 +1,2834 @@
+//-------------------------------------------------------------------
+//
+//  
+//  
+//  
+//  
+//  line 667   CameraLink.SetMomentum(0.1f); // jeff testing to reduce camera shake, reduced from 2.5f
+//-------------------------------------------------------------------
+
+// Base class for all player units
+class CPlayerUnit
+  extends CCockpit, CObject, CExtendUnit, CPlayerStateControl, CDevicesController
+{
+  final static String DefaultSurfaceControl = "PutonGround";
+
+  final static String BodyJoint;
+  final static Array  TrackJoints;
+
+  Array m_JointsToHideInCockpit = [];
+
+  // Joint for cockip camera pilot
+  String  CockpitCameraPilot              = "CockpitCameraPilot";
+  String  CockpitCameraCoPilot            = "CockpitCameraCoPilot";
+
+  String  CockpitCameraGunnerLeft         = "CockpitCameraLeftGun";
+  String  CockpitCameraGunnerRight        = "CockpitCameraRightGun";
+
+  String  CockpitNearCameraGunnerLeft     = "CockpitNearCameraLeftGun";
+  String  CockpitNearCameraGunnerRight    = "CockpitNearCameraRightGun";
+
+  String  CockpitCameraGunnerLeftStatic   = "CockpitCameraLeftGunStatic";
+  String  CockpitCameraGunnerRightStatic  = "CockpitCameraRightGunStatic";
+
+  Color   m_CockpitDriverAmbient          = new Color(0.0, 0.0, 0.0);
+  Color   m_InfoMessage                   = new Color(0.0, 1.0, 0.0);
+
+  float   m_TotalExtraMass                = 0.0f;
+
+  boolean m_bAutipilotEnabled             = false;
+  boolean m_HatchBodyOpened               = false;
+  boolean m_ShowTextMessages              = true;
+  float   m_LastTime                      = 0.0f;
+  float   m_LastTime2                     = 0.0f;
+  float   m_CurrentTime                   = 0.0f;
+  float   m_DriverReportTime              = 0.0f;
+  float   m_DamageReportTime              = 0.0f;
+
+  String  m_TargetName                    = "";
+  int     m_CurrentTarget                 = 0;
+  boolean m_BlockInput                    = false;
+
+  // Camera parameters
+  float MinHorAngle;
+  float MaxHorAngle;
+  float MinVertAngle;
+  float MaxVertAngle;
+
+  float HitPointsdel;
+
+
+  Array m_CFGameEnemies = [];
+  Array m_CFGameFriends = [];
+
+  WString m_OrderStr = CGameMessages::msg_Order;
+  WString m_EnemyStr = L"Enemy";
+  Array   m_TurretToZeroMsg = [CGameMessages::msg_TurretToZeroMsg];
+  Array   m_TargetLockedMsg = [CGameMessages::msg_TargetLockedMsg01, CGameMessages::msg_TargetLockedMsg02];
+  Array   m_AmmoLoadMsg     = [CGameMessages::msg_AmmoLoadMsg];
+  Array   m_AmmoLoadedMsg   = [CGameMessages::msg_AmmoLoadedMsg];
+
+  Array   m_DriverSpeedUpMsg   = [CGameMessages::msg_DriverSpeedUpMsg];
+  Array   m_DriverSpeedDownMsg = [CGameMessages::msg_DriverSpeedDownMsg];
+  Array   m_DriverSpeedBackMsg = [CGameMessages::msg_DriverSpeedBackMsg];
+  Array   m_DriverStopMsg      = [CGameMessages::msg_DriverStopMsg];
+  Array   m_DriverRightMsg     = [CGameMessages::msg_DriverRightMsg];
+  Array   m_DriverLeftMsg      = [CGameMessages::msg_DriverLeftMsg];
+  Array   m_DriverSlowForwardMsg = [CGameMessages::msg_DriverSlowForwardMsg];
+  Array   m_DriverShortStopMsg = [CGameMessages::msg_DriverShortStopMsg];
+
+  Array   m_TankDamageMsg     = [CGameMessages::msg_TankDamageMsg];
+  Array   m_EngineHitMsg      = [CGameMessages::msg_DriverEngineHit];
+  Array   m_EngineDeadMsg     = [CGameMessages::msg_DriverEngineDead];
+  Array   m_EngineWarmMsg     = [CGameMessages::msg_DriverEngineWorm];
+  Array   m_EngineHotMsg      = [CGameMessages::msg_DriverEngineHot];
+  Array   m_EngineFireMsg     = [CGameMessages::msg_DriverEngineDead];
+  Array   m_TurretHitMsg      = [CGameMessages::msg_LoaderHit];
+  Array   m_TurretDeadMsg     = [CGameMessages::msg_LoaderTurretDmg];
+  Array   m_TrackLeftHitMsg   = [CGameMessages::msg_DriverLeftHit];
+  Array   m_TrackLeftDeadMsg  = [CGameMessages::msg_DriverLeftDead];
+  Array   m_TrackRightHitMsg  = [CGameMessages::msg_DriverRightHit];
+  Array   m_TrackRightDeadMsg = [CGameMessages::msg_DriverRightDead];
+  Array   m_DriverHitMsg      = [CGameMessages::msg_DriverHit];
+  Array   m_DriverDeadMsg     = [CGameMessages::msg_DriverKilled];
+  Array   m_GunnerHitMsg      = [CGameMessages::msg_GunnerHit];
+  Array   m_GunnerDeadMsg     = [CGameMessages::msg_GunnerKilled];
+
+
+  Array   m_DriverSpeedUpVoice   = ["DriverFast1", "DriverFast2", "DriverFast3", "DriverFast4"];
+  Array   m_DriverSpeedDownVoice = ["DriverSlow1", "DriverSlow2"];
+  Array   m_DriverSpeedBackVoice = ["DriverBack1", "DriverBack2"];
+  Array   m_DriverStopVoice      = ["DriverStop1", "DriverStop2"];
+  Array   m_DriverStayVoice      = ["DriverStay1"];
+  Array   m_DriverRightVoice     = ["DriverRight1", "DriverRight2"];
+  Array   m_DriverLeftVoice      = ["DriverLeft1", "DriverLeft2"];
+  Array   m_DriverSlowForwardVoice = ["DriverSlowForward1"];
+  Array   m_DriverShortStopVoice = ["DriverShortStop1"];
+
+  Array   m_TurretToZeroVoice = ["TurretToZero"];
+  Array   m_TargetLockedVoice = ["TargetLocked01", "TargetLocked02"];
+  Array   m_AmmoLoadVoice     = ["AmmoLoad1","AmmoLoad2","AmmoLoad3","AmmoLoad4","AmmoLoad5","AmmoLoad6"];
+  Array   m_AmmoLoadedVoice   = ["AmmoLoaded1","AmmoLoaded2","AmmoLoaded3","AmmoLoaded4","AmmoLoaded5"];
+  
+  Array   m_NoTargetVoice     = ["NoTarget1","NoTarget2","NoTarget3","NoTarget4","NoTarget5","NoTarget6"];
+
+  Array   m_TankDamageVoice     = ["DamageVoice1", "DamageVoice2"];
+  Array   m_EngineHitVoice      = ["DriverEngineHit"];
+  Array   m_EngineDeadVoice     = ["DriverEngineKilled1", "DriverEngineKilled2", "DriverEngineKilled3", "DriverEngineKilled4"];
+  Array   m_EngineWarmVoice     = ["EngineWarm"];
+  Array   m_EngineHotVoice      = ["EngineHot"];
+  Array   m_EngineFireVoice     = ["EngineFire"];
+  Array   m_TurretHitVoice      = ["TurretHit1","TurretHit2","TurretHit3"];
+  Array   m_TurretDeadVoice     = ["TurretKilled1","TurretKilled2","TurretKilled3"];
+  Array   m_TrackLeftHitVoice   = ["DriverLeftHit1", "DriverLeftHit2", "DriverLeftHit3", "DriverLeftHit4"];
+  Array   m_TrackLeftDeadVoice  = ["DriverLeftKilled1", "DriverLeftKilled2", "DriverLeftKilled3"];
+  Array   m_TrackRightHitVoice  = ["DriverRightHit1", "DriverRightHit2", "DriverRightHit3", "DriverRightHit4"];
+  Array   m_TrackRightDeadVoice = ["DriverRightKilled1", "DriverRightKilled2", "DriverRightKilled3"];
+  Array   m_DriverHitVoice      = ["DriverHit"];
+  Array   m_DriverDeadVoice     = ["DriverKilled1","DriverKilled2","DriverKilled3"];
+  Array   m_GunnerHitVoice      = ["GunnerHit1","GunnerHit2"];
+  Array   m_GunnerDeadVoice     = ["GunnerKilled1","GunnerKilled2"];
+  
+  Array   m_OrderVoice          = ["Order1","Order2","Order3","Order4","Order5"];
+
+  Array  m_TargetDirection =
+    [
+      [CGameMessages::msg_TargetOnRight, "TargetOnRight"],
+      [CGameMessages::msg_TargetOnLeft, "TargetOnLeft"]
+    ];
+
+  final static Array m_WeaponShellHEVoice         = ["WeaponShellHE1","WeaponShellHE2","WeaponShellHE3","WeaponShellHE4"];
+  final static Array m_WeaponShellAPVoice         = ["WeaponShellAP1","WeaponShellAP2","WeaponShellAP3","WeaponShellAP4"];
+  final static Array m_WeaponShellMachinegunVoice = ["WeaponShellMachinegun1","WeaponShellMachinegun2","WeaponShellMachinegun3","WeaponShellMachinegun4"];;
+  
+  Array  m_CommanderMessages =
+    [
+      ["Cu_stat_pak40Model",           CGameMessages::msg_TargetIsCannon,        CGameMessages::msg_WeaponShellHE, "TargetIsCannon", m_WeaponShellHEVoice, "CGunPak40Unit"],
+      ["Cu_stat_zis3Model",            CGameMessages::msg_TargetIsCannon,        CGameMessages::msg_WeaponShellHE, "TargetIsCannon", m_WeaponShellHEVoice, "CGunZis3Unit"],
+      ["Cu_veh_Hanomag_251CModel",     CGameMessages::msg_TargetIsAPC,           CGameMessages::msg_WeaponShellHE, "TargetIsAPC", m_WeaponShellHEVoice, "CBtrHanomag251AusfCUnit"],
+      ["Cu_veh_M3A1HalfTrackModel",    CGameMessages::msg_TargetIsAPC,           CGameMessages::msg_WeaponShellHE, "TargetIsAPC", m_WeaponShellHEVoice, "CBtrM3A1HalftruckUnit"],
+      ["Cu_veh_SAU_Stug40Model",       CGameMessages::msg_TargetIsSAU,           CGameMessages::msg_WeaponShellAP, "TargetIsSAU", m_WeaponShellAPVoice, "CSAUStuG40Unit"],
+      ["Cu_veh_SU85Model",             CGameMessages::msg_TargetIsSAU,           CGameMessages::msg_WeaponShellAP, "TargetIsSAU", m_WeaponShellAPVoice, "CSAUSU85Unit"],
+      ["Chum_GermanSoldierRifleModel", CGameMessages::msg_TargetIsHuman,         CGameMessages::msg_WeaponShellMachinegun, "TargetIsHuman", m_WeaponShellMachinegunVoice, ""],
+      ["Chum_GermanTankmanModel",      CGameMessages::msg_TargetIsHuman,         CGameMessages::msg_WeaponShellMachinegun, "TargetIsHuman", m_WeaponShellMachinegunVoice, ""],
+      ["Chum_SovietSoldierRifleModel", CGameMessages::msg_TargetIsHuman,         CGameMessages::msg_WeaponShellMachinegun, "TargetIsHuman", m_WeaponShellMachinegunVoice, ""],
+      ["Chum_SovietTankmanModel",      CGameMessages::msg_TargetIsHuman,         CGameMessages::msg_WeaponShellMachinegun, "TargetIsHuman", m_WeaponShellMachinegunVoice, ""],
+      ["Cbld_DotConcreteModel",        CGameMessages::msg_TargetIsDot,           CGameMessages::msg_WeaponShellHE, "TargetIsDot", m_WeaponShellHEVoice, ""],
+      ["Cbld_DzotWoodModel",           CGameMessages::msg_TargetIsDot,           CGameMessages::msg_WeaponShellHE, "TargetIsDot", m_WeaponShellHEVoice, ""],
+      ["Cu_veh_PzVI_MAINModel",        CGameMessages::msg_TargetIsHeavyTank,     CGameMessages::msg_WeaponShellAP, "TargetIsHeavyTank", m_WeaponShellAPVoice, "CTankPzVIAusfEUnit"],
+      ["Cu_veh_PzVI_LATEModel",        CGameMessages::msg_TargetIsHeavyTank,     CGameMessages::msg_WeaponShellAP, "TargetIsHeavyTank", m_WeaponShellAPVoice, "CTankPzVIAusfEUnit"],
+      ["Cu_veh_PzIVGModel",            CGameMessages::msg_TargetIsMediumTank,    CGameMessages::msg_WeaponShellAP, "TargetIsMediumTank", m_WeaponShellAPVoice, "CTankPzIVGUnit"],
+      ["Cu_veh_t34_85_44Model",        CGameMessages::msg_TargetIsT34Tank,       CGameMessages::msg_WeaponShellAP, "TargetIsT34Tank", m_WeaponShellAPVoice, "CTankT34_85_44Unit"],
+      ["Cu_veh_t34_76_42Model",        CGameMessages::msg_TargetIsT34Tank,       CGameMessages::msg_WeaponShellAP, "TargetIsT34Tank", m_WeaponShellAPVoice, "CTankT34_76_42Unit"],
+      ["Cu_veh_OpelBlitzModel",        CGameMessages::msg_TargetIsTruck,         CGameMessages::msg_WeaponShellAP, "TargetIsTruck", m_WeaponShellHEVoice, "CTruckOpelBlitzUnit"],
+      ["Cu_veh_zis5Model",             CGameMessages::msg_TargetIsTruck,         CGameMessages::msg_WeaponShellAP, "TargetIsTruck", m_WeaponShellHEVoice, "CTruckZis5Unit"]
+    ];
+
+  Array  m_PostDeathMessages =
+    [
+      ["CGunPak40Unit",            CGameMessages::msg_DeathPak40],
+      ["CGunZis3Unit",             CGameMessages::msg_DeathZis3],
+      ["CBtrHanomag251AusfCUnit",  CGameMessages::msg_DeathHanomag251],
+      ["CBtrM3A1HalftruckUnit",    CGameMessages::msg_DeathM3A1APC],
+      ["CSAUStuG40Unit",           CGameMessages::msg_DeathStuG40],
+      ["CSAUSU85Unit",             CGameMessages::msg_DeathSU85],
+      ["CTankPzVIAusfEUnit",       CGameMessages::msg_DeathPzVIE],
+      ["CTankPzIVGUnit",           CGameMessages::msg_DeathPzIVG],
+      ["CTankT34_85_44Unit",       CGameMessages::msg_DeathT348544],
+      ["CTankT34_76_42Unit",       CGameMessages::msg_DeathT347642],
+      ["CTruckOpelBlitzUnit",      CGameMessages::msg_DeathOpelBlitz],
+      ["CTruckZis5Unit",           CGameMessages::msg_DeathZis5]
+    ];
+
+  Array  m_AngleStrings =
+         [
+           [CGameMessages::msg_TargetOnFront, "Angle0"],
+           [CGameMessages::msg_SAngle10,  "Angle1"],
+           [CGameMessages::msg_SAngle20,  "Angle2"],
+           [CGameMessages::msg_SAngle30,  "Angle3"],
+           [CGameMessages::msg_SAngle40,  "Angle4"],
+           [CGameMessages::msg_SAngle50,  "Angle5"],
+           [CGameMessages::msg_SAngle60,  "Angle6"],
+           [CGameMessages::msg_SAngle70,  "Angle7"],
+           [CGameMessages::msg_SAngle80,  "Angle8"],
+           [CGameMessages::msg_SAngle90,  "Angle9"],
+           [CGameMessages::msg_SAngle100, "Angle10"],
+           [CGameMessages::msg_SAngle110, "Angle11"],
+           [CGameMessages::msg_SAngle120, "Angle12"],
+           [CGameMessages::msg_SAngle130, "Angle13"],
+           [CGameMessages::msg_SAngle140, "Angle14"],
+           [CGameMessages::msg_SAngle150, "Angle15"],
+           [CGameMessages::msg_SAngle160, "Angle16"],
+           [CGameMessages::msg_SAngle170, "Angle17"],
+           [CGameMessages::msg_TargetOnBack, "Angle18"],
+           [CGameMessages::msg_SAngle170, "Angle19"],
+           [CGameMessages::msg_SAngle160, "Angle20"],
+           [CGameMessages::msg_SAngle150, "Angle21"],
+           [CGameMessages::msg_SAngle140, "Angle22"],
+           [CGameMessages::msg_SAngle130, "Angle23"],
+           [CGameMessages::msg_SAngle120, "Angle24"],
+           [CGameMessages::msg_SAngle110, "Angle25"],
+           [CGameMessages::msg_SAngle100, "Angle26"],
+           [CGameMessages::msg_SAngle90,  "Angle27"],
+           [CGameMessages::msg_SAngle80,  "Angle28"],
+           [CGameMessages::msg_SAngle70,  "Angle29"],
+           [CGameMessages::msg_SAngle60,  "Angle30"],
+           [CGameMessages::msg_SAngle50,  "Angle31"],
+           [CGameMessages::msg_SAngle40,  "Angle32"],
+           [CGameMessages::msg_SAngle30,  "Angle33"],
+           [CGameMessages::msg_SAngle20,  "Angle34"],
+           [CGameMessages::msg_SAngle10,  "Angle35"]
+         ];
+
+  Array  m_DistanceStrings =
+         [
+           [CGameMessages::msg_Distance100,  "Distance100"],
+           [CGameMessages::msg_Distance200,  "Distance200"],
+           [CGameMessages::msg_Distance300,  "Distance300"],
+           [CGameMessages::msg_Distance400,  "Distance400"],
+           [CGameMessages::msg_Distance500,  "Distance500"],
+           [CGameMessages::msg_Distance600,  "Distance600"],
+           [CGameMessages::msg_Distance700,  "Distance700"],
+           [CGameMessages::msg_Distance800,  "Distance800"],
+           [CGameMessages::msg_Distance900,  "Distance900"],
+           [CGameMessages::msg_Distance1000, "Distance1000"],
+           [CGameMessages::msg_Distance1100, "Distance1100"],
+           [CGameMessages::msg_Distance1200, "Distance1200"],
+           [CGameMessages::msg_Distance1300, "Distance1300"],
+           [CGameMessages::msg_Distance1400, "Distance1400"],
+           [CGameMessages::msg_Distance1500, "Distance1500"],
+           [CGameMessages::msg_Distance1600, "Distance1600"]
+         ];
+
+
+  Array  m_InputFilter =
+      [
+        CTLCMD_SHOW_SIGHT,
+        CTLCMD_SIGHT_BRIGHTNESS_1,
+        CTLCMD_SIGHT_BRIGHTNESS_2,
+        CTLCMD_SIGHT_DISTANCE_1,
+        CTLCMD_SIGHT_DISTANCE_2,
+        CTLCMD_TOGGLE_SIGHT,
+        CTLCMD_TOGGLE_MFD2,
+        CTLCMD_TOGGLE_MFD1,
+        CTLCMD_SET_VIEW_BINOCUL,
+        CTLCMD_SET_VIEW_NEAREST,
+        CTLCMD_SET_VIEW_COCKPIT,
+        CTLCMD_SET_VIEW_PERSON1RD,
+        CTLCMD_SET_VIEW_PERSON3RD,
+        CTLCMD_CHANGE_PLAYER_SIT,
+        CTLCMD_CHANGE_GUNNER_SIT,
+        CTLCMD_CHANGE_COCKPIT_COLOR,
+        CTLCMD_CHANGE_SIT,
+        CTLCMD_SET_SIT_0,
+        CTLCMD_SET_SIT_1,
+        CTLCMD_SET_SIT_2,
+        CTLCMD_SET_SIT_3,
+        CTLCMD_GOVERNOR_SWITCH,
+        CTLCMD_CHANGE_MFD1_VIEW,
+        CTLCMD_CHANGE_MFD2_VIEW,
+        CTLCMD_SIGHT_UP,
+        CTLCMD_SIGHT_DOWN,
+        CTLCMD_FIRE_PRIMARY,
+        CTLCMD_FIRE_SECONDARY,
+        CTLCMD_NEXT_TARGET,
+        CTLCMD_OPEN_HATCH,
+        CTLCMD_SHOW_CURSOR,
+        CTLCMD_SHOW_CHAT,
+        CTLCMD_SEND_MESSAGE,
+        CTLCMD_POV_SIDE_NEAR,
+        CTLCMD_SHOW_TEXT_MESSAGES,
+        CTLCMD_SHOW_COCKPIT_PANEL1,
+        CTLCMD_SHOW_COCKPIT_PANEL2,
+        CTLCMD_SELF_DESTRUCTION
+      ];
+
+  Array m_PhysicsExcludeSet;
+
+  // ======================================
+  // IObject Interface functions
+  // ======================================
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    m_PhysicsExcludeSet.clear();
+    m_PhysicsExcludeSet.append([ CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_WATER ]);
+
+    // Construct base unit
+    CObject::Construct(_Mission, _PropMap);
+
+    // If manual unit setup manual control
+    boolean IsManual = _PropMap.Get("IsManual", false);
+    if (IsManual)
+    {
+      // Initialize collision control
+      CreateCollisionControl("CBaseCollisionControl");
+
+      // Setup vehicle controller
+      SetupVehicleController(_Mission);
+
+      // initialize manual control
+      SetupManualControl();
+
+      //
+      // Input Throughput setup
+      //
+      Component InputThroughputControl = new #InputThroughputControl();
+      InputThroughputControl.SetUpdateLayer(UPDATE_LAYER_SYSTEM);
+      InputThroughputControl.SetInputFilter(m_InputFilter);
+      InputThroughputControl.SetEventHandler(this);
+      RegisterObject("Throughput", InputThroughputControl);
+
+      // get cockpit mode
+      //m_ViewMode = (new #GameSettings()).GetCockpitMode();
+      //Sonra Games changes
+      if(isFunctionExist(_Mission, "IsExpertMode", 0))
+          m_CanChangeViewTo3rd = !_Mission.IsExpertMode();
+      
+      if(m_CanChangeViewTo3rd)
+		    m_ViewMode = CM_Person3rd;
+	    else
+		    m_ViewMode = CM_Cockpit;
+
+      // create player camera
+      SetupCamera();
+
+      Component Game = new #GameController();
+      boolean IsMirror = _PropMap.Get("IsMirror", (Game.GetGameMode() == "Client"));
+      
+      // create cockpit
+      if(!IsMirror)
+        SetupCockpit(GetCamera(), _Mission);
+    }
+    else
+    {
+      CreateCollisionControl("CBaseCollisionControl");
+
+      Component VehicleController = CreateAIVehicleController();
+      if (null == VehicleController)
+      {
+        logError("Cant setup type of vehicle control for " + getIdentificator(this));
+        return;
+      }
+
+      RegisterObject("AIVehicleController", VehicleController);
+      VehicleController.SetEventHandler(this);
+
+      // Create mesh
+      Component Mesh = GetMeshComponent();
+
+      // Create base object
+      Array BaseShapes = Mesh.GetCollisionShapes(Mesh.GetRootJoint(), false);
+      Component Body = VehicleController.CreateObject(Mesh, BaseShapes);
+
+      // Remove inside mesh because is behavior unit
+      BuildOnlyOutsideMesh();
+    }
+
+    //
+    // construct passangers
+    //
+
+    String Affiliation = _PropMap.Get("Affiliation", "NEUTRAL");
+
+
+    Component Vehicle = GetVehicleController();
+    if (Vehicle != null)
+      Vehicle.SetExcludeSet(m_PhysicsExcludeSet);
+
+  }
+
+  Component GetSlaveObject()
+  {
+    return GetGroupObject();
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    // Call inherited function
+    CObject::Initialize(_Mission, _PropMap);
+
+    boolean IsManual = _PropMap.Get("IsManual", false);
+    // Set special classificators
+    if (IsManual)
+      addClassificator(user, "PLAYERUNIT");
+
+    if (IsManual)
+    {
+      for (int i = 0; i < m_WeaponList.size(); i++)
+      {
+        if (m_WeaponList[i].ManualLoad)
+          m_WeaponList[i].AutoLoadAmmo(false);
+      }
+
+    }
+
+    // enable projectile camera notify for player unit
+    if (checkMask(user, [ "PLAYERUNIT" ], []))
+      for (int Weapon = 0; Weapon < m_WeaponList.size(); Weapon++)
+        m_WeaponList[Weapon].EnableProjectileCameraNotify(true);
+
+    if (_PropMap.Get("InstantWingman", false))
+    {
+      Component Behavior = GetBehavior();
+      if (Behavior != null)
+        Behavior.GetTaskScriptHost().SetInstantWingman();
+    }
+
+    _Mission.AddPlayerObject(getIdentificator(user));
+
+    // Initialize passangers
+    Component PropMap = new CPropertiesMap();
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    String HomePoint = (_PropMap.Get("HomePoint", ""));
+    if (HomePoint != "")
+    {
+      Component Behavior = GetBehavior();
+
+      if (Behavior != null)
+      {
+        Behavior.GetTaskScriptHost().InitHomePoint(HomePoint);
+      }
+      else
+      {
+        Component Pad = _Mission.GetObject(HomePoint);
+        if (isFunctionExist(Pad, "SetCurrentRechargeTransport", 1))
+          Pad.SetCurrentRechargeTransport(getIdentificator(user));
+      }
+    }
+
+    // finalize passangers
+    Component PropMap = new CPropertiesMap();
+
+    CObject::Finalize(_Mission, _PropMap);
+    CCockpit::Finalize(_Mission, _PropMap);
+
+    // Calculate unit mass
+    //CalculateAdditionalUnitMass();
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    (new #EffectsArray()).DeleteEffectByHost(GetMeshComponent());
+    CObject::Shutdown(_Mission);
+    CCockpit::Shutdown(_Mission);
+    CDevicesController::Shutdown(_Mission);
+  }
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CObject::GetDefaultProperties();
+
+    return Default;
+  }
+
+  Array GetPropStrings()
+  {
+    Array PropStrings = CObject::GetPropStrings();
+
+    return PropStrings;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CObject::SetProperties(_PropMap);
+  }
+
+  // ======================================
+  // Passangers methods
+  // ======================================
+
+  Component CreatePassanger(
+      Component _Mission,
+      String    _PassangerId,
+      String    _PassangerScriptClass,
+      String    _LinkId,
+      String    _Affilation,
+      boolean   _IsManual,
+      int       _Seat
+    )
+  {
+    if (_PassangerScriptClass == "")
+    {
+//      logWarning("Passanger script class " + _PassangerScriptClass + " not found");
+      return null;
+    }
+
+    Component Passanger = new #GameObject();
+
+    // Set unit identificator
+    setIdentificator(Passanger, getIdentificator(user) + _PassangerId);
+
+    // Load unit from script
+    if (!loadFromScript(Passanger, _PassangerScriptClass))
+    {
+      logError("Unable to load object from script: " + _ScriptClass);
+      return null;
+    }
+
+    Passanger.SetSeat(_Seat);
+    // constuct and register
+    Passanger.Construct(_Mission, new CPropertiesMap());
+    Passanger.SetAffiliation(_Affilation);
+
+    // register object in mission controller
+    _Mission.RegisterObject(getIdentificator(user) + _PassangerId, Passanger);
+
+    // Link object to outside link
+    {
+      Component Joint = GetOutsideMesh().GetJoint(_LinkId);
+      if (Joint != null)
+        Passanger.LinkToOutside(Joint);
+      else
+       logWarning("Cant find outside link joint " + _LinkId + " for " + _PassangerId);
+    }
+
+    // Link pilot object to inside link
+    if (_IsManual)
+    {
+      Component Joint = GetInsideMesh().GetJoint(_LinkId);
+      if (Joint != null)
+      {
+        Passanger.LinkToInside(Joint);
+        Passanger.LinkToFromEye(Joint);
+      }
+      else
+        logWarning("Cant find inside link joint " + _LinkId + " for " + _PassangerId);
+
+      // Need render this pilots only in user camera
+      Passanger.SetRenderToCamera(getIdentificator(user));
+    }
+    else
+    {
+      Passanger.BuildOnlyOutsideMesh();
+    }
+
+    removeClassificator(Passanger.GetMeshComponent(), "MainMesh");
+
+
+    m_PhysicsExcludeSet.add(getIdentificator(user) + _PassangerId);
+
+    return Passanger;
+  }
+
+  float GetPassangersMass()
+  {
+    float fMass = 0.0;
+
+    if (null != m_PilotObject)       fMass += m_PilotObject.GetMass();
+    if (null != m_CoPilotObject)     fMass += m_CoPilotObject.GetMass();
+    if (null != m_LeftGunnerObject)  fMass += m_LeftGunnerObject.GetMass();
+    if (null != m_RightGunnerObject) fMass += m_RightGunnerObject.GetMass();
+
+    return fMass;
+  }
+
+  // ======================================
+  // Behevior methods
+  // ======================================
+
+  void SetupBehavior(
+      Component _Behavior,
+      Component _PilotController
+    )
+  {
+    CObject::SetupBehavior(_Behavior);
+
+    // Setup behavior pilot controller
+    GetBehavior().SetPilotController(_PilotController);
+    setSlaveObject(_PilotController, GetVehicleController());
+    RegisterObject("BehaviorPilotController", _PilotController);
+  }
+
+  // ======================================
+  // Camera methods
+  // ======================================
+
+  void OnChangeCameraPosition()
+  {
+    GetCameraLink().SetChangePositionFlag();
+  }
+
+  Component GetCamera()
+  {
+    return GetObject("UnitCamera");
+  }
+
+  Component GetCameraLink()
+  {
+    return GetObject("CameraLink");
+  }
+
+  void SetupCamera()
+  {
+    Component UnitCamera = GetCamera();
+    if (UnitCamera != null)
+    {
+      logWarning("Camera already initialized");
+      return;
+    }
+
+    UnitCamera = new #Camera<CPlayerCamera>();
+    RegisterObject("UnitCamera", UnitCamera);
+
+    Component CameraLink = new #ObjectCameraLink();
+    setSlaveObject(CameraLink, UnitCamera);
+    CameraLink.SetTargetSurfaceMask(
+        [ CLASSIFICATOR_TERRAIN ],
+        [ ]
+      );
+
+    CameraLink.SetMouseSensitivity(0.001, 0.001);
+    CameraLink.UseSystemTime(true);
+
+    RegisterObject("CameraLink", CameraLink);
+
+    // Get mesh component
+    Component Mesh = GetMeshComponent();
+
+    // Setup camera collision control
+    Component CollisionControl = new #CameraCollisionControl<CPlayerCameraCollisionControl>();
+    setSlaveObject(CollisionControl, UnitCamera);
+    CollisionControl.SetEventHandler(this);
+    RegisterObject("CameraCollisionControl", CollisionControl);
+
+    // Initialize camera link
+
+    SetDefaultCameraViewMode();
+
+    float Radius = getBoundingSphere(Mesh)[1] + 2.5;
+    CameraLink.SetFPCControlSettings(
+          Radius,  // MinDistance
+          20.0,  // MaxDistance
+          20.0,    // DistanceSpeed
+          5.0,    // DefaultDistance
+          1.0,     // HorAngleSpeed
+          0.35,    // DefaultHorAngle
+          1.0,     // VertAngleSpeed
+          1.4      // DefaultVertAngl
+        );
+    CameraLink.SetMaxHeight(3.0f);
+    CameraLink.SetMomentum(0.01f); // jeff testing to reduce camera shake, reduced from 2.5f
+
+    CameraLink.SetCameraPosition(
+          CRDSYS_Origin,
+          new Vector(0.0, 0.0, 0.0),
+          -1.0,
+          0.0,
+          0.0
+        );
+    CameraLink.SetCameraViewTarget(
+          CRDSYS_Origin,
+          new Vector(0.0, 0.0, 0.0),
+          false,
+          -1.0,
+          true
+        );
+  }
+
+  GoToNextTarget()
+  {
+//    logWarning("Call GotoNexttarget");
+    Component Mission = new #GameController().GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    Component Object = null;
+    Component Game = new #GameController();
+    if ("Single" != Game.GetGameMode())
+    {
+      Component Session = Game.GetGameSession();
+      Array ObjectPointsList =  Mission.GetContent().GetObjectsList();
+
+
+//      if (m_CFGameEnemies.isEmpty())
+      m_CFGameEnemies.clear();
+      {
+        for (int i = 0; i < ObjectPointsList.size(); i++)
+        {
+          Array Object = ObjectPointsList[i];
+          if (("CTankPzVIAusfEUnit" == Object[CMissionContent::INDEX_ScriptClass]) || ("CTankT34_85_44Unit" == Object[CMissionContent::INDEX_ScriptClass]))
+          {
+            m_CFGameEnemies.add(Object[CMissionContent::INDEX_ObjectID]);
+          }
+/*          Component ObjectProps = new CPropertiesMap(Object[CMissionContent::INDEX_Properties]);
+          int SlotID = ObjectProps.Get("SlotID", -1);
+          if (-1 != SlotID)
+          {
+            m_CFGameEnemies.add(Object[CMissionContent::INDEX_ObjectID]);
+          }
+*/
+        }
+        m_CFGameEnemies.add(Mission.GetMainPlayerObjectID());
+      }
+
+      m_CurrentTarget++;
+      if (m_CurrentTarget >= m_CFGameEnemies.size())
+        m_CurrentTarget = 0;
+      Object = Mission.GetObject(m_CFGameEnemies[m_CurrentTarget]);
+
+    }
+    else
+    {
+      if (Mission.m_TourMissionObjects.isEmpty())
+        return;
+
+      m_CurrentTarget++;
+      if (m_CurrentTarget >= Mission.m_TourMissionObjects.size())
+        m_CurrentTarget = 0;
+      Object = Mission.GetObject(Mission.m_TourMissionObjects[m_CurrentTarget]);
+
+      while (!Object.IsVisible())
+      {
+        m_CurrentTarget++;
+        if (m_CurrentTarget >= Mission.m_TourMissionObjects.size())
+          m_CurrentTarget = 0;
+        Object = Mission.GetObject(Mission.m_TourMissionObjects[m_CurrentTarget]);
+      }
+    }
+
+    Component CameraLink = GetCameraLink();
+    Component Camera = GetCamera();
+    if ((CameraLink == null) || (null == Camera) || (null == Object))
+      return;
+
+//    logMessage("View Target: " + Mission.m_TourMissionObjects[m_CurrentTarget]);
+
+    Camera.SetZNear(1.5f);
+    CameraLink.SetCurrentFOV(1.13f);
+
+    setPositionable(CameraLink, Object);
+    CameraLink.SetControlState(1);
+
+    CameraLink.ForceLinkToObject(false);
+    CameraLink.SetDefaultZAxis(true);
+      // Disable part obeject control
+    CameraLink.EnablePartObjectControl(false);
+    Component CollisionControl = GetObject("CameraCollisionControl");
+    if (CollisionControl != null)
+    {
+      CollisionControl.EnableControl(true);
+      setPositionable(CollisionControl, Object);
+    }
+    m_MFD.DisableScreens();
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar == null)
+      return;
+
+    MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, L"", new Color(0.0, 0.0, 0.0), 0.0f);
+
+    Array ObjectPointsList =  Mission.GetContent().GetObjectsList();
+    for (int j = 0; j < ObjectPointsList.size(); j++)
+    {
+      Array ObjectInfo = ObjectPointsList[j];
+      if (ObjectInfo[CMissionContent::INDEX_ObjectID] == Mission.m_TourMissionObjects[m_CurrentTarget])
+      {
+        for (int i = 0; i < m_PostDeathMessages.size(); i++)
+        {
+          if (ObjectInfo[CMissionContent::INDEX_ScriptClass] == m_PostDeathMessages[i][0])
+            MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, m_PostDeathMessages[i][1], m_InfoMessage, 0.0f);
+        }
+      }
+    }
+  }
+
+  void SetDefaultCameraViewMode()
+  {
+    Component CameraLink = GetCameraLink();
+    Component Camera = GetCamera();
+    if (CameraLink == null)
+      return;
+
+    Component CommanderCameraLink = GetObject("CommanderCameraLink"); 
+    if(CommanderCameraLink != null)
+      CommanderCameraLink.SetMouseSensitivity(0.0004f, 0.0004f);
+
+    Camera.SetZNear(1.5f);
+
+    CameraLink.SetCurrentFOV(1.13f);
+
+    Component Mesh = GetMeshComponent();
+    Component TurretJoint = Mesh.GetJoint("Turret_A");
+
+    CameraLink.EnableShake(false);
+
+    for (int i = 0; i < m_JointsToHideInCockpit.size(); i++)
+    {
+      Component HideJoint = Mesh.GetJoint(m_JointsToHideInCockpit[i]);
+      if (null != HideJoint)
+        setVisibleState(HideJoint, !(CM_Cockpit == m_ViewMode));
+      else
+        logError("Can't hide/show joint: " + m_JointsToHideInCockpit[i]);
+    }
+
+    if ((UPS_Gunner == m_PlayerSit) && (null != TurretJoint))
+      CameraLink.SetPositionableJoint(TurretJoint, 1);
+    else
+      CameraLink.SetPositionableJoint(Mesh, 0);
+
+    if(CommanderCameraLink != null)
+      CommanderCameraLink.UseWorldCoordinates((UPS_Commander != m_PlayerSit));
+
+    CameraLink.EnableTrackIRControl(false);
+	if(CommanderCameraLink != null) //jm
+    CommanderCameraLink.EnableTrackIRControl(false);
+    // Setup object camera linker by modes
+    if (m_ViewMode == CM_Person3rd)
+    {
+      CameraLink.SetControlState(5);
+      CameraLink.ForceLinkToObject(false);
+      CameraLink.SetDefaultZAxis(true);
+      // Disable part obeject control
+      CameraLink.EnablePartObjectControl(false);
+
+    }
+    else
+    if (m_ViewMode == CM_Person1rd)
+    {
+
+      CameraLink.EnableTrackIRControl(false);
+      String JointName;
+      if (UPS_Commander == m_PlayerSit)
+      {
+        Component CameraJoint = Mesh.GetJoint("Commander_Camera");
+        Component CommanderCamera = GetObject("CommanderCamera");
+        CameraLink.SetCurrentFOV(m_CommanderFOV/*CommanderCamera.GetCamera().FOV*/);
+        setPositionable(CameraLink, CameraJoint);
+      }
+      else
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        Component CameraJoint = Mesh.GetJoint("Weapon_A_Camera");
+        Component GunLayerCamera = GetObject("GunLayerCamera");
+        CameraLink.SetCurrentFOV(m_GunnerFOV/*GunLayerCamera.GetCamera().FOV*/);
+        setPositionable(CameraLink, CameraJoint);
+      }
+      else
+      if (UPS_Driver == m_PlayerSit)
+      {
+        setPositionable(CameraLink, Mesh);
+      }
+
+      CameraLink.SetControlState(0);
+      CameraLink.ForceLinkToObject(true);
+    }
+    else
+    if (CM_Cockpit == m_ViewMode)
+    {
+      String JointName;
+      boolean FixedSight   = false;
+
+      Camera.SetZNear(0.8f);
+      CameraLink.EnableTrackIRControl(false);
+      if (UPS_Commander == m_PlayerSit)
+      {
+        JointName = CockpitCommanderCamera;
+        if (m_HatchCommanderOpened)
+        {
+          FixedSight = true;
+          Camera.SetZNear(0.2f);  // jm camera clip 0.9 fixed turret clipping
+          setPositionable(CameraLink, Mesh.GetJoint("Commander_Camera"));
+		  if (CommanderCameraLink != null) //jm
+          CommanderCameraLink.SetMouseSensitivity(0.002f, 0.002f);
+          CommanderCameraLink.EnableTrackIRControl(false);
+        }
+      }
+      else
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        JointName = CockpitGunnerCamera;
+      }
+      else
+      if (UPS_Driver == m_PlayerSit)
+      {
+        JointName = CockpitDriverCamera;
+      }
+
+      SetFixedSide(FixedSight, JointName);
+    }
+    else
+    if (CM_CockpitNearest == m_ViewMode)
+    {
+      String JointName;
+      boolean FixedSight   = false;
+
+      CameraLink.EnableTrackIRControl(false);
+      if (UPS_Commander == m_PlayerSit)
+      {
+        JointName = CockpitCommanderCamera;
+        FixedSight = true;
+        setPositionable(CameraLink, Mesh.GetJoint("Commander_Camera"));
+      }
+      else
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        if (m_CockpitStyle == CS_Tiger)
+        {
+          Camera.SetZNear(0.8f);
+          JointName = CockpitGunnerNearCamera;
+        }
+        else
+        {
+          JointName = CockpitGunnerCamera;
+          FixedSight = true;
+          setPositionable(CameraLink, Mesh.GetJoint("Weapon_A_Camera"));
+        }
+      }
+      else
+      if (UPS_Driver == m_PlayerSit)
+      {
+        if (m_CockpitStyle == CS_Tiger)
+        {
+          FixedSight = true;
+          JointName = "NearCameraDriver";
+          setPositionable(CameraLink, Mesh.GetJoint("NearCameraDriver"));
+        }
+        else
+        {
+          Camera.SetZNear(0.8f);
+          JointName = CockpitDriverNearCamera;
+        }
+      }
+
+      SetFixedSide(FixedSight, JointName);
+    }
+    else
+    if (CM_CockpitBinocular == m_ViewMode)
+    {
+      String JointName;
+      boolean FixedSight   = false;
+
+      if (UPS_Commander == m_PlayerSit)
+      {
+        JointName = CockpitCommanderCamera;
+        FixedSight = true;
+        setPositionable(CameraLink, Mesh.GetJoint("Commander_Camera"));
+        Component CommanderCamera = GetObject("CommanderCamera");
+        CameraLink.SetCurrentFOV(m_CommanderFOV/*CommanderCamera.GetCamera().FOV*/);
+      }
+      else
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        JointName = CockpitGunnerCamera;
+        FixedSight = true;
+        setPositionable(CameraLink, Mesh.GetJoint("Weapon_A_Camera"));
+        Component GunnerCamera = GetObject("GunLayerCamera");
+        CameraLink.SetCurrentFOV(m_GunnerFOV/*GunnerCamera.GetCamera().FOV*/);
+      }
+      else
+      if (UPS_Driver == m_PlayerSit)
+      {
+        Camera.SetZNear(0.8f);
+        JointName = CockpitDriverNearCamera;
+      }
+
+      SetFixedSide(FixedSight, JointName);
+    }
+
+    // Initialize camera collision control
+    Component CollisionControl = GetObject("CameraCollisionControl");
+    if (CollisionControl != null)
+      CollisionControl.EnableControl(CM_Person3rd == m_ViewMode);
+    if (m_ViewMode == CM_Person3rd)
+      setPositionable(CollisionControl, GetMeshComponent());
+  }
+
+  void SetFixedSide(
+      boolean _Enabled,
+      String _JointName
+    )
+  {
+    Component CameraLink = GetCameraLink();
+
+    if (_Enabled)
+    {
+      CameraLink.SetControlState(0);
+      CameraLink.ForceLinkToObject(true);
+    }
+    else
+    {
+      Component CameraJoint = GetMeshComponent().GetJoint(_JointName);
+      if (null == CameraJoint)
+      {
+        logError("Unable to find camera joint: " + _JointName);
+        CameraJoint = Mesh;
+      }
+      GetInsideMesh().SetAuxiliaryJoint(CameraJoint);
+      setPositionable(CameraLink, CameraJoint);
+      CameraLink.ForceLinkToObject(true);
+      CameraLink.SetCurrentFOV(1.13f);
+      CameraLink.SetControlState(3);
+      // Initialize part object controller
+      CameraLink.SetPartObject(GetInsideMesh());
+      CameraLink.EnablePartObjectControl(true);
+      CameraLink.SetJMCControlSettings
+        (
+          0.6,          // MinDistance
+          1.2,          // MaxDistance
+          0.2,          // DistanceSpeed
+          0.1,          // DefaultDistance
+          MinHorAngle,  // MinHorAngle
+          MaxHorAngle,  // MaxHorAngle
+          1.5,          // HorAngleSpeed
+          0.0,          // DefaultHorAngle
+          MinVertAngle, // MinVertAngle
+          MaxVertAngle, // MaxVertAngle
+          1.5,          // VertAngleSpeed
+          0.0,          // DefaultVertAngl
+          1.2           // Current Distance
+        );
+      CameraLink.EnableCameraSliding(
+          false,  // sliding state
+          0.0,    // slide to distance
+          0.0     // sliding speed
+          );
+    }
+  }
+
+  SetHideInCockpitJoints(
+      Array _Names
+    )
+  {
+    m_JointsToHideInCockpit = _Names;
+  }
+
+  // ======================================
+  // vehicle controller
+  // ======================================
+
+  Component CreateVehicleController()
+  {
+    return null;
+  }
+
+  Component GetVehicleController()
+  {
+    return GetObject("VehicleController");
+  }
+
+  Component CreateAIVehicleController() {
+    return null;
+  }
+
+  Component GetAIVehicleController() {
+    return GetObject("AIVehicleController");
+  }
+
+  void SetupVehicleController(
+      Component _Mission
+    )
+  {
+    // Create Vehicle controller
+    Component VehicleController = GetVehicleController();
+    if (null == VehicleController)
+    {
+      VehicleController = CreateVehicleController();
+      if (null == VehicleController)
+      {
+        logError("Cant setup type of vehicle control for " + getIdentificator(this));
+        return;
+      }
+      RegisterObject("VehicleController", VehicleController);
+    }
+
+    // Create mesh
+    Component Mesh = GetMeshComponent();
+
+    // Unlink all wheels
+    for (int i = 0; i < VehicleController.Wheels.size(); i++)
+    {
+      Component WheelJoint = Mesh.GetJoint(VehicleController.Wheels[i][0]);
+      Mesh.UnlinkJoint(WheelJoint);
+    }
+
+    // Create base object
+    Array BaseShapes = Mesh.GetCollisionShapes(Mesh.GetRootJoint(), false);
+    Component Body = VehicleController.CreateObject(Mesh, BaseShapes);
+
+    // Create wheel objects
+    for (int i = 0; i < VehicleController.Wheels.size(); i++)
+    {
+      Component WheelJoint  = Mesh.GetJoint(VehicleController.Wheels[i][0]);
+      Array     WheelShapes = Mesh.GetCollisionShapes(WheelJoint, false);
+      VehicleController.CreateWheel(
+          VehicleController.Wheels[i],
+          WheelJoint,
+          WheelShapes,
+          [ "FOREST" ]
+        );
+    }
+
+    VehicleController.SetAnimatedObject(GetInsideMesh());
+    VehicleController.SetEventHandler(this);
+    VehicleController.SetupSoundComponents(Mesh, this);
+  }
+
+  // Link physics model for use surface controller and other models
+  void LinkModel()
+  {
+    GetMeshComponent().LinkJoints();
+  }
+
+  // Initialize physics model for work
+  void UnlinkModel()
+  {
+    Component VehicleController = GetVehicleController();
+    if (VehicleController != null)
+    {
+      Component Mesh              = GetMeshComponent();
+      for (int i = 0; i < VehicleController.Wheels.size(); i++)
+      {
+        Component WheelJoint = Mesh.GetJoint(VehicleController.Wheels[i][0]);
+        Mesh.UnlinkJoint(WheelJoint);
+      }
+    }
+  }
+
+  // ======================================
+  // Manual control
+  // ======================================
+
+  Component CreateManualControl()
+  {
+    return null;
+  }
+
+  Component GetManualControl()
+  {
+    return GetObject("ManualControl");
+  }
+
+  void SetupManualControl()
+  {
+    // Create manual control
+    Component ManualControl = GetManualControl();
+    if (null == ManualControl)
+    {
+      ManualControl = CreateManualControl();
+      if (null == ManualControl)
+      {
+        logError("Cant setup type of manual control for " + getIdentificator(this));
+        return;
+      }
+      RegisterObject("ManualControl", ManualControl);
+    }
+
+    Component VehicleController = GetVehicleController();
+    if (null != VehicleController)
+      setSlaveObject(ManualControl, VehicleController);
+    else
+      logError("Cant setup manual control becouse vehicle controller not found");
+
+    // enable events
+//    VehicleController.EnableDropEvents(true);
+
+    // Set classificator for controllable object
+    addClassificator(user, CLASSIFICATOR_CONTROLLABLE);
+  }
+
+  event void EnableManualControl(
+      boolean _IsEnabled
+    )
+  {
+    Component ManualControl = GetManualControl();
+    if (null == ManualControl)
+      return;
+    ManualControl.EnableControl(_IsEnabled);
+  }
+
+  event void DisableInput()
+  {
+    m_BlockInput = true;
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+      VoiceMessenger.ClearDeque(true);
+
+    OnCockpitModeChanged(CM_Person3rd);
+    SetPlayerControlSit(UPS_Commander);
+    OnPlayerSitChanged(GetPlayerSit());
+    m_MFD.DisableScreens();
+    Component VehicleController = GetVehicleController();
+    if (null != VehicleController)
+      VehicleController.EnableEngine(false);
+    UpdateCursorAndMouse();
+    Component AutoThingsUI = GetObject("AutoThingsUI");
+    if( AutoThingsUI != null )
+      AutoThingsUI.Show(false);
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+      VoiceMessenger.ClearDeque(true);
+
+    Component AutoShooter = GetObject("AutoShooter");
+    AutoShooter.Enable(false);
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+    {
+      if(CEndMissionMenu::MissionStatus == CMission::MOSID_Failed)
+        MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, CGameMessages::str_msg_MissionEnd, new Color(1.0, 0.0, 0.0), 30.0f);
+        else        
+        if(CEndMissionMenu::MissionStatus == CMission::MOSID_Completed)
+          MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, CGameMessages::str_msg_MissionEndSuccess, new Color(0.0, 1.0, 0.0), 30.0f);
+          else
+            MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, CGameMessages::str_msg_MissionEndSuccess, new Color(0.0, 1.0, 0.0), 30.0f);
+      logWarning("MISSION END");
+    }
+
+    Component MessageChat = GetObject("MultiPlayerChatEditField");
+    if (MessageChat != null)
+    {
+      MessageChat.Enable(false);
+    }
+    Component HelpTextChat = GetObject("ChatText");
+    if (HelpTextChat != null)
+    {
+      HelpTextChat.Enable(false);
+    }
+
+    ReportMultiPlayers(10.0f);
+  }
+
+  void ChangeChatState()
+  {
+    boolean IsEnable = GetObject("MultiPlayerChatEditField").IsEnable();
+    m_BlockInput = !IsEnable;
+    GetObject("MultiPlayerChatEditField").Enable(!IsEnable);
+    GetObject("ChatText").Enable(!IsEnable);
+    logWarning("CHAT " + new String(IsEnable));
+  }
+
+  void SendChatMessage()
+  {
+    if(this.GetObject("MultiPlayerChatEditField").IsEnable())  //jm
+    {
+      WString Message = GetObject("MultiPlayerChatEditField").GetText();
+      if(Message.isEmpty()) return;
+      logWarning("[Chat] Send: " + new String(Message));
+      GetObject("MultiPlayerChatEditField").SetText(L"");
+
+      //sendEvent( 0.0, SOID_MissionController, "SendChatMessage", [Message]);
+      Component Mission = (new #GameController()).GetObject(SOID_MissionController);
+      Mission.SendChatMessage(Message);
+    }
+  }
+
+
+  // =======================================
+  // Input Throughput control
+  // =======================================
+
+  void OnInputCommand(
+      int _UserCommand
+    )
+  {
+    if ((new #GameController()).IsPaused())
+      return;
+      
+
+    if ((CTLCMD_NEXT_TARGET == _UserCommand) && m_BlockInput)
+    {
+      GoToNextTarget();
+    }
+
+    if ((CTLCMD_NEXT_TARGET == _UserCommand) && !m_BlockInput)
+    {
+      ReportMultiPlayers();
+    }
+
+    if(CTLCMD_SHOW_CHAT == _UserCommand)
+    {
+      ChangeChatState();
+    }
+
+    if(CTLCMD_SEND_MESSAGE == _UserCommand)
+    {
+      SendChatMessage();
+      ChangeChatState();
+    }
+
+    if (m_BlockInput)
+      return;
+
+    if (CTLCMD_SELF_DESTRUCTION == _UserCommand)
+    {
+      sendEvent(0, getIdentificator(this), "DamageItemPercent", ["HullGunlayer", 1.0f]);
+    }
+    else
+    if (CTLCMD_SHOW_TEXT_MESSAGES == _UserCommand)
+    {
+      m_ShowTextMessages = !m_ShowTextMessages;
+    }
+    else
+    if (CTLCMD_SHOW_COCKPIT_PANEL2 == _UserCommand)
+    {
+      GetObject("AutoThingsUI").ShowDriverPanel();
+    }
+    else
+    if (CTLCMD_SHOW_COCKPIT_PANEL1 == _UserCommand)
+    {
+      GetObject("AutoThingsUI").ShowCrewPanel();
+    }
+    else
+    if (CTLCMD_CHANGE_MFD1_VIEW == _UserCommand)
+    {
+      ChangeMFD(0);
+    }
+    else
+    if (CTLCMD_CHANGE_MFD2_VIEW == _UserCommand)
+    {
+      ChangeMFD(1);
+    }
+    else
+    if ((CTLCMD_SET_VIEW_COCKPIT == _UserCommand) && m_CanChangeView)
+    {
+      logWarning("CTLCMD_SET_VIEW_COCKPIT");
+
+/*      if (UPS_Driver == m_PlayerSit)
+        ChangeHatchBodyState(false);
+      else
+      if (UPS_Commander == m_PlayerSit)
+        ChangeHatchCommanderState(false);
+*/
+      OnCockpitModeChanged(CM_Cockpit);
+    }
+    else
+    if (CTLCMD_OPEN_HATCH == _UserCommand)
+    {
+      logWarning("CTLCMD_OPEN_HATCH");
+      if (UPS_Driver == m_PlayerSit)
+        ChangeHatchBodyState(true);
+      else
+      if (UPS_Commander == m_PlayerSit)
+        ChangeHatchCommanderState(true);        
+        
+      //SonarGames changes
+      if((UPS_Commander == m_PlayerSit && !m_HatchCommanderOpened && 
+            m_ViewMode == CM_CockpitBinocular || m_ViewMode == CM_Person1rd) ||
+         (UPS_Commander == m_PlayerSit && m_HatchCommanderOpened && 
+            m_ViewMode == CM_CockpitNearest)) //SG: added
+		OnCockpitModeChanged(CM_Cockpit);
+		
+//      OnCockpitModeChanged(CM_Cockpit);
+    }
+    else
+    if (CTLCMD_SET_VIEW_BINOCUL == _UserCommand)
+    {
+      logWarning("CTLCMD_SET_VIEW_BINOCUL");
+      //SonarGames changes
+      if(!(UPS_Commander == m_PlayerSit && !m_HatchCommanderOpened && m_ViewMode == CM_Cockpit) &&
+         !(UPS_Commander == m_PlayerSit && !m_HatchCommanderOpened && m_ViewMode == CM_CockpitNearest) 
+         || m_is3rdPerson) //SG: added
+		OnCockpitModeChanged(CM_CockpitBinocular);
+		
+/*      if (UPS_Driver == m_PlayerSit)
+        ChangeHatchBodyState(false);
+      else
+      if (UPS_Commander == m_PlayerSit)
+        ChangeHatchCommanderState(true);
+*/
+    }
+    else
+    if (CTLCMD_SET_VIEW_NEAREST == _UserCommand)
+    {
+      logWarning("CTLCMD_SET_VIEW_NEAREST");
+      //SonarGames changes
+      if(!(UPS_Commander == m_PlayerSit && m_HatchCommanderOpened && m_ViewMode == CM_Cockpit) &&
+         !(UPS_Commander == m_PlayerSit && m_HatchCommanderOpened && m_ViewMode == CM_CockpitBinocular) && 
+         !(UPS_Commander == m_PlayerSit && m_HatchCommanderOpened && m_ViewMode == CM_Person1rd)
+         || m_is3rdPerson) //SG: added
+		OnCockpitModeChanged(CM_CockpitNearest);
+		
+/*      if (UPS_Driver == m_PlayerSit)
+        ChangeHatchBodyState(false);
+      else
+      if (UPS_Commander == m_PlayerSit)
+        ChangeHatchCommanderState(false);
+*/
+    }
+    else
+    if ((CTLCMD_SET_VIEW_PERSON1RD == _UserCommand) && m_CanChangeView && m_CanChangeViewTo3rd)
+    {
+      logWarning("CTLCMD_SET_VIEW_PERSON1RD");
+      //SonarGames changes
+      if(!(UPS_Commander == m_PlayerSit && !m_HatchCommanderOpened && m_ViewMode == CM_Cockpit) &&
+         !(UPS_Commander == m_PlayerSit && !m_HatchCommanderOpened && m_ViewMode == CM_CockpitNearest) 
+         || m_is3rdPerson) //SG: added
+		OnCockpitModeChanged(CM_Person1rd);
+		
+/*      if (UPS_Driver == m_PlayerSit)
+        ChangeHatchBodyState(false);
+      else
+      if (UPS_Commander == m_PlayerSit)
+        ChangeHatchCommanderState(true);
+*/
+    }
+    else
+    if (CTLCMD_SET_VIEW_PERSON3RD == _UserCommand && m_CanChangeView && m_CanChangeViewTo3rd)
+    {
+      logWarning("CTLCMD_SET_VIEW_PERSON3RD");
+      (new #GameSettings()).SetCockpitMode(CM_Person3rd);
+      OnCockpitModeChanged(CM_Person3rd);
+
+      Component Settings = new #GameSettings();
+      Settings.SetCockpitDevicesColor(CCommonStrings::CockpitColorCombo.size() - 1);
+      OnCockpitColorChanged(Settings.GetCockpitDevicesColor());
+    }
+    if (CTLCMD_SET_SIT_0 == _UserCommand)
+    {
+      SetPlayerControlSit(UPS_Driver);
+      OnPlayerSitChanged(GetPlayerSit());
+
+    }
+    else
+    if (CTLCMD_SET_SIT_1 == _UserCommand)
+    {
+      SetPlayerControlSit(UPS_Gunner);
+      OnPlayerSitChanged(GetPlayerSit());
+
+    }
+    else
+    if (CTLCMD_SET_SIT_2 == _UserCommand)
+    {
+      SetPlayerControlSit(UPS_Commander);
+      OnPlayerSitChanged(GetPlayerSit());
+
+    }
+    else
+    if (CTLCMD_CHANGE_SIT == _UserCommand)
+    {
+      Array Sits = GetSits();
+      int SitPos = Sits.find(GetPlayerControlSit());
+      if ( -1 == SitPos )
+      {
+        logError("Invalid player sit!");
+      }
+
+      SetPlayerControlSit( Sits[ (SitPos + 1) % Sits.size()] );
+      OnPlayerSitChanged(GetPlayerSit());
+
+    }
+    else
+    if ((UPS_Commander == m_PlayerSit) && (CTLCMD_FIRE_PRIMARY == _UserCommand))
+    {
+      SetPreferedTarget(true);
+    }
+    else
+    if ((UPS_Commander == m_PlayerSit) && (CTLCMD_FIRE_SECONDARY == _UserCommand))
+    {
+      SetPreferedTarget(false);
+    }
+    else
+    if ((UPS_Commander == m_PlayerSit) && (CTLCMD_POV_SIDE_NEAR == _UserCommand))
+    {
+      TurretToZero();
+    }
+
+    // Update cockpit ambient
+    Color Ambient;
+
+    if (UPS_Driver == m_PlayerSit)
+      Ambient = m_CockpitDriverAmbient;
+    else
+      Ambient = new Color(0.0, 0.0, 0.0);
+
+    Component Mesh = GetInsideMesh();
+    Component MatManager = Mesh.GetMaterials();
+
+    for (int iMaterial = 0; iMaterial < MatManager.Materials.size(); iMaterial++)
+    {
+      MatManager.SetAmbientColor(
+          MatManager.Materials[iMaterial].MaterialID,
+          Ambient
+        );
+    }
+  }
+
+  void OnInputEnabled(
+      boolean _Enabled
+    )
+  {
+
+  }
+  boolean m_Engine_Flag = true;
+  event void ReportHitByEnemy(
+      String _ItemName,
+      float  _HitPoints,
+      float  _HitPointsDelta
+
+    )
+  {
+    HitPointsdel = _HitPointsDelta/_HitPoints;
+
+
+  if ( ("HullEngine" == _ItemName) && (_HitPoints <= 0) && m_Engine_Flag )
+  {
+
+    m_Engine_Flag = false;
+  }
+  else
+  {
+    if ((new #GameController()).GetGameTime() - m_DamageReportTime < 3.0f)
+     {
+      return;
+     }
+    if (_HitPointsDelta/_HitPoints < 0.05f)
+    {
+      return;
+    }
+  }
+
+    if (m_BlockInput)
+    {
+     return;
+    }
+    m_DamageReportTime = (new #GameController()).GetGameTime();
+
+    String  Voice   = m_TankDamageVoice[randnum(m_TankDamageVoice.size())];
+    WString Message = m_TankDamageMsg[randnum(m_TankDamageMsg.size())];
+
+
+    if (_HitPoints <= 0.0f)
+    {
+      logWarning(" HP <= 0   ReportHitByEnemy  Item name =" + _ItemName);
+
+      if ("HullGunlayer" == _ItemName)
+      {
+        Voice = m_GunnerDeadVoice[randnum(m_GunnerDeadVoice.size())];
+        Message = m_GunnerDeadMsg[randnum(m_GunnerDeadMsg.size())];
+
+      }
+      else
+      if ("Turret_A" == _ItemName)
+      {
+        Voice = m_TurretDeadVoice[randnum(m_TurretDeadVoice.size())];
+        Message = m_TurretDeadMsg[randnum(m_TurretDeadMsg.size())];
+
+      }
+      else
+      if ("HullDriver" == _ItemName)
+      {
+        Voice = m_DriverDeadVoice[randnum(m_DriverDeadVoice.size())];
+        Message = m_DriverDeadMsg[randnum(m_DriverDeadMsg.size())];
+
+      }
+      else
+      if ("HullEngine" == _ItemName)
+      {
+        Voice = m_EngineDeadVoice[randnum(m_EngineDeadVoice.size())];
+        Message = m_EngineDeadMsg[randnum(m_EngineDeadMsg.size())];
+
+      }
+      else
+      if ("TrackLeft" == _ItemName)
+      {
+        Voice = m_TrackLeftDeadVoice[randnum(m_TrackLeftDeadVoice.size())];
+        Message = m_TrackLeftDeadMsg[randnum(m_TrackLeftDeadMsg.size())];
+
+      }
+      else
+      if ("TrackRight" == _ItemName)
+      {
+        Voice = m_TrackRightDeadVoice[randnum(m_TrackRightDeadVoice.size())];
+        Message = m_TrackRightDeadMsg[randnum(m_TrackRightDeadMsg.size())];
+      }
+    }
+    else
+    {
+      logWarning(" HP > 0    ReportHitByEnemy  Item name =" + _ItemName);
+
+      if ("HullGunlayer" == _ItemName)
+      {
+        Voice = m_GunnerHitVoice[randnum(m_GunnerHitVoice.size())];
+        Message = m_GunnerHitMsg[randnum(m_GunnerHitMsg.size())];
+
+      }
+      else
+      if ("Turret_A" == _ItemName)
+      {
+        Voice = m_TurretHitVoice[randnum(m_TurretHitVoice.size())];
+        Message = m_TurretHitMsg[randnum(m_TurretHitMsg.size())];
+
+      }
+      else
+      if ("HullDriver" == _ItemName)
+      {
+        Voice = m_DriverHitVoice[randnum(m_DriverHitVoice.size())];
+        Message = m_DriverHitMsg[randnum(m_DriverHitMsg.size())];
+
+      }
+      else
+      if ("HullEngine" == _ItemName)
+      {
+        Voice = m_EngineHitVoice[randnum(m_EngineHitVoice.size())];
+        Message = m_EngineHitMsg[randnum(m_EngineHitMsg.size())];
+
+      }
+      else
+      if ("TrackLeft" == _ItemName)
+      {
+        Voice = m_TrackLeftHitVoice[randnum(m_TrackLeftHitVoice.size())];
+        Message = m_TrackLeftHitMsg[randnum(m_TrackLeftHitMsg.size())];
+
+      }
+      else
+      if ("TrackRight" == _ItemName)
+      {
+        Voice = m_TrackRightHitVoice[randnum(m_TrackRightHitVoice.size())];
+        Message = m_TrackRightHitMsg[randnum(m_TrackRightHitMsg.size())];
+
+      }
+    }
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_DRIVER, Message, m_InfoMessage, 2.0f);
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+      VoiceMessenger.PlaySound(Voice);
+  }
+
+  event void ReportDriver(
+      WString _Message,
+      String  _Voice,
+      float   _Time
+    )
+  {
+     logWarning(" ReportDriver  " );
+     logWarning( "_Voice = " + _Voice );
+    logWarning( "_Message = " +  new String(_Message));
+
+
+    if (m_DriverReportTime > _Time)
+      return;
+
+    if (m_BlockInput)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_DRIVER, _Message, m_InfoMessage, 2.0f);
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+      VoiceMessenger.PlaySound(_Voice);
+  }
+
+  event void ReportDriverSpeedUp(
+      float _Time,
+      float _Speed
+    )
+  {
+    m_DriverReportTime = _Time;
+
+//    if (_Speed > 0.0f)
+      sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverSpeedUpMsg[randnum(m_DriverSpeedUpMsg.size())], m_DriverSpeedUpVoice[randnum(m_DriverSpeedUpVoice.size())], _Time]);
+//    else
+//      sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverStopMsg[randnum(m_DriverStopMsg.size())], m_DriverStopVoice[randnum(m_DriverStopVoice.size())], _Time]);
+  }
+
+  event void ReportDriverSpeedDown(
+      float _Time,
+      float _Speed
+    )
+  {
+    m_DriverReportTime = _Time;
+
+    if (_Speed > 0.0f)
+      sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverSpeedDownMsg[randnum(m_DriverSpeedDownMsg.size())], m_DriverSpeedDownVoice[randnum(m_DriverSpeedDownVoice.size())], _Time]);
+    else
+      sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverSpeedBackMsg[randnum(m_DriverSpeedBackMsg.size())], m_DriverSpeedBackVoice[randnum(m_DriverSpeedBackVoice.size())], _Time]);
+//    if (_Speed < 0.0f)
+//      sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverSpeedBackMsg[randnum(m_DriverSpeedBackMsg.size())], m_DriverSpeedBackVoice[randnum(m_DriverSpeedBackVoice.size())], _Time]);
+//    else
+//      sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverStopMsg[randnum(m_DriverStopMsg.size())], m_DriverStopVoice[randnum(m_DriverStopVoice.size())], _Time]);
+  }
+
+  event void ReportDriverForward(
+      float _Time
+    )
+  {
+    m_DriverReportTime = _Time;
+    sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverSlowForwardMsg[randnum(m_DriverSlowForwardMsg.size())], m_DriverSlowForwardVoice[randnum(m_DriverSlowForwardVoice.size())], _Time]);
+  }
+
+  event void ReportDriverStop(
+      float _Time
+    )
+  {
+    m_DriverReportTime = _Time;
+    sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverStopMsg[randnum(m_DriverStopMsg.size())], m_DriverStopVoice[randnum(m_DriverStopVoice.size())], _Time]);
+  }
+
+  event void ReportDriverShortStop(
+      float _Time
+    )
+  {
+    m_DriverReportTime = _Time;
+    sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverShortStopMsg[randnum(m_DriverShortStopMsg.size())], m_DriverShortStopVoice[randnum(m_DriverShortStopVoice.size())], _Time]);
+  }
+
+  event void ReportDriverLeft(
+      float _Time,
+      float _Delta
+    )
+  {
+    m_DriverReportTime = _Time;
+    sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverLeftMsg[randnum(m_DriverLeftMsg.size())], m_DriverLeftVoice[randnum(m_DriverLeftVoice.size())], _Time]);
+  }
+
+  event void ReportDriverRight(
+      float _Time,
+      float _Delta
+    )
+  {
+    m_DriverReportTime = _Time;
+    sendEvent(0.4f, getIdentificator(this), "ReportDriver", [m_DriverRightMsg[randnum(m_DriverRightMsg.size())], m_DriverRightVoice[randnum(m_DriverRightVoice.size())], _Time]);
+  }
+
+  void ReportAmmoLoad(
+      Component _Ammo
+    )
+  {
+    if (m_BlockInput)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GUNNER, _Ammo.AmmoName + L" " + m_AmmoLoadMsg[randnum(m_AmmoLoadMsg.size())], m_InfoMessage, 2.0f);
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+    {
+      // VoiceMessenger.PlaySound(_Ammo.VoiceID[randnum(VoiceID.size())]); jm
+	  VoiceMessenger.PlaySound(_Ammo.VoiceID[randnum(_Ammo.VoiceID.size())]);
+      VoiceMessenger.PlaySound(m_AmmoLoadVoice[randnum(m_AmmoLoadVoice.size())]);
+    }
+  }
+
+  void ReportAmmoLoaded(
+      Component _Ammo
+    )
+  {
+    if (m_BlockInput)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GUNNER, _Ammo.AmmoName + L" " + m_AmmoLoadedMsg[randnum(m_AmmoLoadedMsg.size())], m_InfoMessage, 2.0f);
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+    {
+//      VoiceMessenger.PlaySound(_Ammo.VoiceID);
+      VoiceMessenger.PlaySound(m_AmmoLoadedVoice[randnum(m_AmmoLoadedVoice.size())]);
+    }
+  }
+
+  void OnTargetLocked()
+  {
+    if ("" == m_TargetName)
+      return;
+    if (m_BlockInput)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GUNNER, m_TargetLockedMsg[randnum(m_TargetLockedMsg.size())], m_InfoMessage, 2.0f);
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    VoiceMessenger.PlaySound(m_TargetLockedVoice[randnum(m_TargetLockedVoice.size())]);
+  }
+
+  void TurretToZero()
+  {
+    if (m_BlockInput)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_COMMANDER, m_TurretToZeroMsg[randnum(m_TurretToZeroMsg.size())], m_InfoMessage, 2.0f);
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    VoiceMessenger.PlaySound(m_TurretToZeroVoice[randnum(m_TurretToZeroVoice.size())]);
+
+    Component Mesh = GetMeshComponent();
+    Component AutoShooter = GetObject("AutoShooter");
+    if ((Mesh != null) && (AutoShooter != null))
+      AutoShooter.TurretToZero(getPosition(Mesh).xvec);
+  }
+
+  void ReportMultiPlayers()
+  {
+    ReportMultiPlayers(1.5f);
+  }
+
+  void ReportMultiPlayers(
+      float _Time
+    )
+  {
+    Component MessageInfoBar = GetObject("MultiPlayerInfoBar");
+    Component GameSession = (new #GameController()).GetGameSession();
+    if ((MessageInfoBar != null) && (GameSession != null))
+    {
+      Array PlayersInfo = GameSession.GetPlayersInfo();
+      if (CServerDescriptor::ST_CaptureTheFlag == GameSession.GetSessionInfo().GetSessionTypeID())
+      {
+        MessageInfoBar.SetMessage(0, L"Blue Team", new Color(0.0, 0.0, 0.9), _Time);
+        MessageInfoBar.SetMessage(2, L"Red Team", new Color(0.9, 0.0, 0.0), _Time);
+        int iBlueTeam = 0;
+        int iRedTeam = 0;
+        for (int i = 0; i < PlayersInfo.size(); i++)
+        {
+          int MessageSlot = 0;
+          Color MessageColor = new Color(0.0, 0.0, 1.0);
+          if (0 == PlayersInfo[i].SessionTeam)
+          {
+            iRedTeam++;
+            MessageSlot = iRedTeam*4 + 2;
+            if (PlayersInfo[i].SessionDeaths > 0)
+              MessageColor = new Color(0.4, 0.0, 0.0);
+            else
+              MessageColor = new Color(1.0, 0.0, 0.0);
+          }
+          else
+          {
+            iBlueTeam++;
+            MessageSlot = iBlueTeam*4;
+            if (PlayersInfo[i].SessionDeaths > 0)
+              MessageColor = new Color(0.0, 0.0, 0.4);
+          }
+
+          MessageInfoBar.SetMessage(MessageSlot, new WString(PlayersInfo[i].Name), MessageColor, _Time);
+          MessageInfoBar.SetMessage(MessageSlot + 1, new WString(PlayersInfo[i].SessionFrags), MessageColor, _Time);
+        }
+      }
+      else
+      {
+        for (int i = 0; i < PlayersInfo.size(); i++)
+        {
+          MessageInfoBar.SetMessage(i*4, new WString(PlayersInfo[i].Name), new Color(0.8, 0.0, 0.0), 1.5f);
+          MessageInfoBar.SetMessage(i*4 + 1, new WString(PlayersInfo[i].SessionFrags), new Color(0.8, 0.0, 0.0), 1.5f);
+        }
+      }
+
+    }
+  }
+
+  event void LookToTarget(
+      Component _Target,
+      float _Time
+    )
+  {
+    if (m_BlockInput)
+      return;
+//    logWarning(new String(_Time));
+    String TargetName = getIdentificator(_Target);
+    if ((_Time - m_CurrentTime > 10) || (TargetName != m_TargetName))
+    {
+      ReportTarget(_Target, (TargetName != m_TargetName), true);
+      m_CurrentTime = _Time;
+      m_TargetName = TargetName;
+    }
+  }
+
+  boolean ReportTarget(
+      Component _Target,
+      boolean   _NewTarget,
+      boolean   _FireNow
+    )
+  {
+    if (m_BlockInput)
+      return false;
+    if (_NewTarget)
+      AutoShooterReadyToFire(false);
+
+    Component Mesh = GetMeshComponent();
+    Component Commander = Mesh.GetJoint("Commander_Camera");
+    if ((_Target != null) && (Mesh != null))
+    {
+      String ObjectClassName = "";
+      if (isFunctionExist(_Target, "GetScriptClassName", 0))
+      {
+        ObjectClassName = _Target.GetScriptClassName();
+
+        Component MessageInfoBar = GetObject("MessageInfoBar");
+        if (MessageInfoBar != null)
+        {
+          WString AngleStr = L"";
+          Array CockpitVoiceMessage = [];
+//          logWarning("Target distace: " + new String((getPosition(Mesh).origin - getPosition(_Target).origin).Magnitude()));
+//          logWarning("Target distace round: " + new String(iround((getPosition(Mesh).origin - getPosition(_Target).origin).Magnitude()/100)));
+          int Distance = iround((getPosition(Mesh).origin - getPosition(_Target).origin).Magnitude()/100) - 1;
+          Array Angles = getSphericAngles(getPosition(Commander).xvec, getPosition(Mesh));
+          int Angle = -1 * iround(radianToDegree(Angles[0])/10);
+          if (Angle < 0 )
+            Angle = 36 - abs(Angle);
+
+          if (Distance < 0)
+            Distance = 0;
+          if (Distance > m_DistanceStrings.size() - 1)
+            Distance = m_DistanceStrings.size() - 1;
+
+
+          if ((0 != Angle) && (18 != Angle))
+          {
+            if (Angle < 18)
+            {
+              AngleStr = m_TargetDirection[0][0] + L" ";
+              CockpitVoiceMessage.add(m_TargetDirection[0][1]);
+            }
+            else
+            {
+              AngleStr = m_TargetDirection[1][0] + L" ";
+              CockpitVoiceMessage.add(m_TargetDirection[1][1]);
+            }
+          }
+          AngleStr = AngleStr + m_AngleStrings[Angle][0];
+          CockpitVoiceMessage.add(m_AngleStrings[Angle][1]);
+
+          WString DistanceStr = CGameMessages::msg_Distance + L" " + m_DistanceStrings[Distance][0];
+
+          WString CockpitMessage = AngleStr + L", " + m_EnemyStr + L", " + DistanceStr + L", " + m_OrderStr;
+          for (int i = 0; i < m_CommanderMessages.size(); i++)
+          {
+            if (ObjectClassName == m_CommanderMessages[i][0])
+            {
+              CockpitMessage = AngleStr + L", " + m_CommanderMessages[i][1] + L", " + DistanceStr + L", " + m_CommanderMessages[i][2];
+              if (_FireNow)
+                CockpitMessage = CockpitMessage + L", " + m_OrderStr;
+
+              CockpitVoiceMessage.add(m_CommanderMessages[i][3]);
+              CockpitVoiceMessage.add("Distance");
+              CockpitVoiceMessage.add(m_DistanceStrings[Distance][1]);
+              CockpitVoiceMessage.add(m_CommanderMessages[i][4][randnum(m_CommanderMessages[i][4].size())]);
+              break;
+            }
+          }
+          if (_FireNow)
+            CockpitVoiceMessage.add(m_OrderVoice[randnum(m_OrderVoice.size())]);
+          if (m_ShowTextMessages)
+            MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_COMMANDER, CockpitMessage , m_InfoMessage, 5.0f);
+          VoiceTargetReport(CockpitVoiceMessage, _FireNow);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void VoiceTargetReport(
+      Array _VoiceMessages,
+      boolean _FireNow
+    )
+  {
+    if (m_BlockInput)
+      return;
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+    {
+      VoiceMessenger.ClearDeque(true);
+      float ReportDuration = 0.0f;
+      for (int i = 0; i < _VoiceMessages.size(); i++)
+      {
+        if (_VoiceMessages[i] != "")
+        {
+          VoiceMessenger.PlaySound(_VoiceMessages[i]);
+          ReportDuration = ReportDuration + VoiceMessenger.GetSoundDuration(_VoiceMessages[i]);
+        }
+      }
+      if (_FireNow)
+        sendEvent(ReportDuration, getIdentificator(this), "AutoShooterReadyToFire", [true]);
+    }
+
+  }
+
+  event void AutoShooterReadyToFire(
+      boolean _Ready
+    )
+  {
+    Component AutoShooter = GetObject("AutoShooter");
+    AutoShooter.ReadyToFire(_Ready);
+  }
+
+  void ShooterFireTarget()
+  {
+    if (m_BlockInput)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null && m_ShowTextMessages)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_COMMANDER, m_OrderStr , m_InfoMessage, 1.0f);
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    int i = randnum(m_OrderVoice.size());
+    float ReportDuration = VoiceMessenger.GetSoundDuration(m_OrderVoice[i]);
+    VoiceMessenger.PlaySound(m_OrderVoice[i]);
+    sendEvent(ReportDuration, getIdentificator(this), "ShooterAllowFire", [true]);
+  }
+
+  event void ShooterAllowFire(
+      boolean _Allow
+    )
+  {
+    Component AutoShooter = GetObject("AutoShooter");
+    AutoShooter.ReadyToFire(_Allow);
+  }
+
+  void SetPreferedTarget(
+      boolean _AttackNow
+    )
+  {
+    if (m_BlockInput)
+      return;
+
+    Component Mesh = GetMeshComponent();
+    Component AutoShooter = GetObject("AutoShooter");
+
+    if ((Mesh == null) || (AutoShooter == null))
+      return;
+
+    Component Commander = Mesh.GetJoint("Commander_Camera");
+
+    Component Target = AutoShooter.FindPreferedTarget(getPosition(Commander).xvec);
+
+    if (null != Target)
+    {
+      String TargetName = getIdentificator(Target);
+      if (_AttackNow)
+      {
+        if (TargetName == m_TargetName)
+          ShooterFireTarget();
+        else
+        {
+          m_TargetName = TargetName;
+          ReportTarget(Target, true, true);
+        }
+      }
+      else
+      {
+        m_TargetName = TargetName;
+        ReportTarget(Target, true, false);
+      }
+    }
+    else
+    {
+      m_TargetName = "";
+      Component MessageInfoBar = GetObject("MessageInfoBar");
+      if (MessageInfoBar != null && m_ShowTextMessages)
+        MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_COMMANDER, CGameMessages::msg_NoTarget, m_InfoMessage, 5.0f);
+
+      VoiceTargetReport(m_NoTargetVoice[randnum(m_NoTargetVoice.size())], false);
+    }
+  }
+
+  void ChangeHatchBodyState(
+      boolean _Open
+    )
+  {
+    Component StateControl = GetObject("StateControl");
+    Component GameController = new #GameController();
+    if (null == GameController)
+      return;
+    if (GameController.GetGameTime() - m_LastTime < 1.0f)
+      return;
+
+    if (null != StateControl)
+    {
+//      if (m_HatchBodyOpened && !_Open)
+      if (m_HatchBodyOpened)
+      {
+        sendEvent(0.2, getIdentificator(this), "ChangeCommanderState", []);
+        StateControl.SetCustomState(USID_HatchBody ,US_HatchClose);
+        m_HatchBodyOpened = false;
+        if ("" != BodyHatchCloseSound)
+          (new #SoundsArray()).CreateSound(BodyHatchCloseSound, getPosition(this));
+        m_LastTime = GameController.GetGameTime();
+      }
+      else
+//      if (!m_HatchBodyOpened && _Open)
+      {
+        sendEvent(0.5, getIdentificator(this), "ChangeCommanderState", []);
+        StateControl.SetCustomState(USID_HatchBody ,US_HatchOpen);
+        m_HatchBodyOpened = true;
+        if ("" != BodyHatchOpenSound)
+          (new #SoundsArray()).CreateSound(BodyHatchOpenSound, getPosition(this));
+        m_LastTime = GameController.GetGameTime();
+      }
+    }
+  }
+
+  void ChangeHatchCommanderState(
+      boolean _Open
+    )
+  {
+    Component StateControl = GetObject("StateControl");
+    Component GameController = new #GameController();
+    if (null == GameController)
+      return;
+    if (GameController.GetGameTime() - m_LastTime2 < 1.5f)
+      return;
+
+    if (null != StateControl)
+    {
+
+//      if (m_HatchCommanderOpened && !_Open)
+      if (m_HatchCommanderOpened)
+      {
+        sendEvent(0.8, getIdentificator(this), "ChangeCommanderState", []);
+        StateControl.SetCustomState(USID_HatchCommander ,US_HatchClose);
+        m_HatchCommanderOpened = false;
+        if ("" != CommanderHatchCloseSound)
+          (new #SoundsArray()).CreateSound(CommanderHatchCloseSound, getPosition(this));
+        m_LastTime2 = GameController.GetGameTime();
+      }
+      else
+//      if (!m_HatchCommanderOpened && _Open)
+      {
+        sendEvent(0.3, getIdentificator(this), "ChangeCommanderState", []);
+        StateControl.SetCustomState(USID_HatchCommander ,US_HatchOpen);
+        m_HatchCommanderOpened = true;
+        if ("" != CommanderHatchOpenSound)
+          (new #SoundsArray()).CreateSound(CommanderHatchOpenSound, getPosition(this));
+        m_LastTime2 = GameController.GetGameTime();
+      }
+    }
+  }
+
+  event void ChangeCommanderState()
+  {
+    InitializeCockpitMode();
+//    Component Mesh = GetMeshComponent();
+//    setVisibleState(Mesh.GetJoint("l_Spine1"), !m_HatchCommanderOpened);
+  }
+
+  // =======================================
+  // Collision control
+  // =======================================
+
+  Component CreateCollisionControl(String _ScriptClassName)
+  {
+    Component CollisionControl = new #CollisionControl2();
+    CollisionControl.SetCollisionMask(
+        [],
+        [ CLASSIFICATOR_DO_NOT_COLLISION_CHECK, CLASSIFICATOR_PHYSICS_CONTROLLABLE ]
+      );
+
+    loadFromScript(CollisionControl, _ScriptClassName);
+    RegisterObject("CollisionControl", CollisionControl);
+
+    return CollisionControl;
+  }
+
+  Component GetCollisionControl()
+  {
+    return GetObject("CollisionControl");
+  }
+
+  // ===========================================================
+  // Local events
+  // ===========================================================
+
+  event void ShakeTank(
+      float     _Force
+    )
+  {
+    if (_Force > 0.0f)
+    {
+      m_ShakeCoeff = m_DefaultShakeForce;
+      sendEvent(0.2, getIdentificator(this), "MuteSound", []);
+
+      if ((CM_CockpitBinocular == m_ViewMode) || (CM_CockpitNearest == m_ViewMode) || (CM_Person1rd == m_ViewMode))
+      {
+        sendEvent(1.5, getIdentificator(this), "ReturnToBinocular", [m_ViewMode, m_PlayerSit]);
+        m_ViewMode = CM_Cockpit;
+        InitializeCockpitMode();
+      }
+    }
+  }
+
+  event void MuteSound()
+  {
+    if ((CM_Cockpit == m_ViewMode) || (CM_Person1rd == m_ViewMode))
+    {
+      m_TempSoundVolume = -0.01f;
+//      m_ShockSound.SetFrequencyMultiplier(0.1f);
+      m_ShockSound.PlaySoundBuffer(true);
+    }
+
+  }
+
+  event void ReturnToBinocular(
+      int _ViewMode,
+      int _PlayerSit
+    )
+  {
+    if ((CM_Cockpit == m_ViewMode) && (m_PlayerSit == _PlayerSit))
+    {
+      m_ViewMode = _ViewMode;
+      InitializeCockpitMode();
+    }
+  }
+
+/*  void OnHitPointsChanged(
+      int       _ItemIndex,
+      float     _HitPoints
+    )
+  {
+    CPlayerStateControl::OnHitPointsChanged(_ItemIndex, _HitPoints);
+    logError("Player hit!");
+    if (CM_Cockpit == m_ViewMode)
+    {
+      Component Item = m_UnitItemsList[_ItemIndex];
+      if (Item.HitPoints != 0.0f)
+      {
+        m_ShakeCoeff = 10.0f * _HitPoints / Item.HitPoints;
+      }
+      else
+        m_ShakeCoeff = 5.0f;
+    }
+  }*/
+/*  event void OnHitByEnemy(
+      String _EnemyID
+    )
+  {
+    CPlayerStateControl::OnHitByEnemy(_EnemyID);
+    if (CM_Cockpit == m_ViewMode)
+      m_ShakeCoeff = 10.0f;
+  }*/
+
+/*  event void OnAmmoLoad(
+      int _AmmoID
+    )
+  {
+    logWarning("OnAmmoLoad");
+    Component Mission = new #GameController().GetMission();
+    if (null != Mission)
+      Mission.GetObject(Mission.GetMainPlayerObjectID()).ReportAmmoLoad(_AmmoID);
+  }
+
+  event void OnAmmoLoaded(
+      int _AmmoID
+    )
+  {
+    logWarning("OnAmmoLoaded");
+    Component Mission = new #GameController().GetMission();
+    if (null != Mission)
+      Mission.GetObject(Mission.GetMainPlayerObjectID()).ReportAmmoLoaded(_AmmoID);
+  }
+*/
+
+  event void OnAmmoChanged(
+      Component _Weapon,
+      int       _AmmoQty,
+      int       _FiredAmmo,
+      boolean   _Unlimited
+   )
+  {
+    // check control mode
+    Component VehicleController = GetVehicleController();
+    if (null == VehicleController || !(new #GameSettings()).GetPayloadMode())
+      return;
+
+    m_TotalExtraMass -= _Weapon.AmmoMass * _FiredAmmo;
+
+    if (m_TotalExtraMass < 0.0)
+      m_TotalExtraMass = 0.0;
+
+    VehicleController.SetAdditionalMass(m_TotalExtraMass);
+  }
+
+  event void OnCursorShow(
+      boolean _CursorState
+    )
+  {
+    Component WeaponSelector = GetObject("WeaponSelector");
+    if (WeaponSelector != null)
+    {
+      WeaponSelector.SetMouseEnable(false); // $TMP = Enable if CameraLinkMouse Disabled
+      WeaponSelector.EnableExButton(0, !_CursorState);
+    }
+
+    Component CameraLink = GetObject("CameraLink");
+    if (CameraLink != null)
+      CameraLink.EnableMouseControl(!_CursorState);
+  }
+
+  event void ChangeTrackSpeed(
+      float _fLeftTrackPath,
+      float _fRightTrackPath,
+      float _fLeftTrackSpeed,
+      float _fRightTrackSpeed
+    )
+  {
+    UpdateTracks(_fLeftTrackPath, _fRightTrackPath);
+
+    // update track effects
+    SetTrackEffectScale("Left",  1.0 + _fLeftTrackSpeed  * 0.08);
+    SetTrackEffectScale("Right", 1.0 + _fRightTrackSpeed * 0.08);
+  }
+
+  event void SetFlyState()
+  {
+    sendEvent( 0.0, SOID_MissionController, "HelicSetFlyState", [getIdentificator(user)]);
+  }
+
+  event void SetLandState()
+  {
+    sendEvent( 0.0, SOID_MissionController, "HelicSetLandState", [getIdentificator(user)]);
+  }
+
+  // ===========================================================
+  //  Network wingman interaction
+  // ===========================================================
+
+  event void Player_AddWingman(
+      String _PlayerID,
+      String _WingmanID,
+      int    _WingmanRank
+    )
+  {
+    if ((_PlayerID == getIdentificator(user)) && checkMask(user, ["HOSTMODE"], []))
+    {
+      Component WingmenMenu = GetObject("WingmenMenu");
+      if (WingmenMenu != null)
+      {
+        WingmenMenu.AddWingman(_WingmanID, _WingmanRank);
+      }
+    }
+  }
+
+  event void Player_RemoveWingman(
+      String _PlayerID,
+      String _WingmanID
+    )
+  {
+    if ((_PlayerID == getIdentificator(user)) && checkMask(user, ["HOSTMODE"], []))
+    {
+      RemoveWingman(_WingmanID);
+    }
+  }
+
+  // ==========================================
+  // Second pilot
+  // ==========================================
+
+  // setup second pilot
+  void SetupSecondPilot(Component _SecondPilot)
+  {
+    RegisterObject("SecondPilot", _SecondPilot);
+
+    // Initialize second pilot by current vehicle controller
+    setSlaveObject(_SecondPilot, GetVehicleController());
+    _SecondPilot.EnableControl(true);
+    _SecondPilot.SetEventHandler(this);
+  }
+
+  Component GetSecondPilot()
+  {
+    return GetObject("SecondPilot");
+  }
+
+  event void OnMoveFinished()
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+    if (null != Mission)
+      Mission.OnMoveFinished();
+  }
+
+  // This event call if user can enable/disable autopilot
+  event void OnPilotState(boolean _IsEnabled)
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+    if (null != Mission)
+      Mission.OnPilotState(_IsEnabled);
+  }
+
+  // This event call if autopilot enable/disable programs
+  event void OnPilotEnabled(boolean _IsEnabled)
+  {
+    // save enabled flag
+    m_bAutipilotEnabled = _IsEnabled;
+
+  }
+
+  // ==========================================
+  // Unit items
+  // ==========================================
+  event void DamageItem(
+      String _ItemName
+    )
+  {
+    Component CommonStatusScreen = GetObject("CommonStatusScreen");
+    if( CommonStatusScreen == null )
+      return;
+
+    if (_ItemName == "Turret_A")
+      CommonStatusScreen.SetDamage("Turret_A", DDM_Damaged);
+    else
+    if (_ItemName == "TankBody")
+      CommonStatusScreen.SetDamage("TankBody", DDM_Damaged);
+    else
+    if (_ItemName == "TrackLeft")
+      CommonStatusScreen.SetDamage("TrackLeft", DDM_Damaged);
+    else
+    if (_ItemName == "TrackRight")
+      CommonStatusScreen.SetDamage("TrackRight", DDM_Damaged);
+  }
+
+  event void DestroyItem(
+      Component _Descriptor
+    )
+  {
+    boolean DestroyTurretNow = false;
+
+    logMessage(getIdentificator(this) + " DestroyItem (" + _Descriptor.ItemName + ")");
+
+    Component StateControl = GetStateControl();
+    if (_Descriptor.ItemName == "HullGunlayer")
+    {
+      if (StateControl != null)
+      {
+        if (1 == randnum(2))
+          StateControl.SetDelayItemHP(GetItem("TrackLeft").Index, 0.0, 0);
+
+        if (1 == randnum(2))
+          StateControl.SetDelayItemHP(GetItem("TrackRight").Index, 0.0, 0);
+
+        StateControl.SetDelayItemHP(GetItem("HullDriver").Index, 0.0, 0);
+        StateControl.SetDelayItemHP(GetItem("HullEngine").Index, 0.0, 0);
+        StateControl.SetDelayItemHP(GetItem("Turret_A").Index, 0.0, 0);
+        StateControl.SetHitPoints(0.0);
+      }
+
+      DestroyTurretNow = true;
+    }
+    else if (_Descriptor.ItemName == "HullEngine")
+    {
+      if (StateControl != null)
+      {
+        StateControl.SetDelayItemHP(GetItem("HullGunlayer").Index, 0.0, 7);
+        StateControl.SetHitPoints(0.0);
+      }
+      Component CommonStatusScreen = GetObject("CommonStatusScreen");
+      if( CommonStatusScreen != null )
+      {
+        CommonStatusScreen.SetDamage("HullEngine", DDM_Destroyed);
+      }
+    }
+    else if (_Descriptor.ItemName == "HullDriver")
+    {
+      Component CommonStatusScreen = GetObject("CommonStatusScreen");
+      if( CommonStatusScreen != null )
+      {
+        CommonStatusScreen.SetDamage("HullEngine", DDM_Destroyed);
+      }
+
+      Component AutoThingsUI = GetObject("AutoThingsUI");
+      if( AutoThingsUI != null )
+        AutoThingsUI.KillAutoDriver();
+
+      return;
+    }
+    else if (_Descriptor.ItemName == "Turret_A")
+    {
+
+/*      Component Mesh = GetMeshComponent();
+      if (null != Mesh)
+      {
+        Component Joint = Mesh.GetJoint("Turret_A_Crashed");
+        Mesh.UnlinkJoint(Joint);
+        logError("Turret unlinked");
+        Component PhysicsController = new #ObjectPhysicsController();
+        loadFromScript(PhysicsController, "CMetalSubstance");
+
+        PhysicsController.SetEventHandler(this);
+        PhysicsController.SetMass(500.0f);
+        setSlaveObject(PhysicsController, Joint);
+
+        Vector Sizes = getBoundingSize(Joint);
+        PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+        RegisterObject("TurretDestroyController", PhysicsController);
+
+        Array Shapes = Mesh.GetCollisionShapes(Joint, false);
+        boolean IsValidBody = PhysicsController.CreateRigidBody("TurretCrashed", Joint, Shapes);
+        if (IsValidBody)
+          PhysicsController.SetFixedBody("TurretCrashed", true);
+
+        addClassificator(Joint, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+        PhysicsController.SetIsectionModeAsSkipContacts();
+//        PhysicsController.CreateTouchTrigger(_DestroyEnergy);
+
+        PhysicsController.EnableControl(false);
+        PhysicsController.Activate(true);
+
+
+      }
+*/
+      Component WeaponSelector = GetObject("WeaponSelector");
+      if( WeaponSelector != null )
+      {
+        WeaponSelector.SetWeaponStatus(DDM_Destroyed);
+      }
+
+      Component CommonStatusScreen = GetObject("CommonStatusScreen");
+      if( CommonStatusScreen != null )
+      {
+        CommonStatusScreen.SetDamage("Turret_A", DDM_Destroyed);
+      }
+
+      Component AutoThingsUI = GetObject("AutoThingsUI");
+      if( AutoThingsUI != null )
+      {
+        AutoThingsUI.KillAutoShooter();
+        AutoThingsUI.KillAutoCommander();
+      }
+    }
+    else
+    {
+      return;
+    }
+
+    (new #GameSettings()).SetCockpitMode(CM_Person3rd);
+    OnCockpitModeChanged(CM_Person3rd);
+
+    Component Settings = new #GameSettings();
+    Settings.SetCockpitDevicesColor(CCommonStrings::CockpitColorCombo.size() - 1);
+    OnCockpitColorChanged(Settings.GetCockpitDevicesColor());
+
+    m_CanChangeView = false;
+
+    if (DestroyTurretNow)
+    {
+      if (rand(0.0f, 1.0f) >= 0.4)
+      {
+        logMessage("Turret out for main player unit");
+        StateControl.SetCustomState(USID_TurretOut, US_TurretOut);
+      }
+    }
+
+
+    // $TMP Create item explosion
+/*    if (_Descriptor.Explosions != null)
+    {
+      Matrix Position = getPosition(_Descriptor.Joint);
+      (new #GameController()).GetObject("ExplosionsArray").
+        CreateExplosion(_Descriptor.Explosions[0], Position, null, getIdentificator(this));
+    }*/
+
+    // If weapon disable it
+    /*for (int i = 0; i < m_WeaponList.size(); i++)
+      if (m_WeaponNames[i] == _Descriptor.ItemName)
+      {
+        m_WeaponList[i].Disable();
+      }*/
+
+    // Destroy children items
+    /*Component StateControl = GetStateControl();
+    if (StateControl != null)
+    {
+      Array Children = GetChildrenItems(_Descriptor);
+      logWarning("Children.size = " + new String(Children.size()));
+      for (int i = 0; i < Children.size(); i++)
+      {
+        logWarning(" Children[" + new String(i) + "] = " + new String(Children[i]));
+        StateControl.SetUnitItemHP(Children[i], 0);
+      }
+    }*/
+
+    // Set model state
+    //SetModelLifeState(_Descriptor, false); моделька выставляется в IntDevices.script
+
+
+  }
+
+  event void RestoreItem(
+      Component _Descriptor
+    )
+  {
+    logMessage(getIdentificator(this) + " RestoreItem (" + _Descriptor.ItemName + ")");
+
+    // If weapon reload it
+    for (int i = 0; i < m_WeaponList.size(); i++)
+      if (m_WeaponNames[i] == _Descriptor.ItemName)
+        m_WeaponList[i].ReloadAmmunition();
+
+    // Restore HP
+    Component StateControl = GetStateControl();
+    StateControl.SetUnitItemHP(_Descriptor.Index, _Descriptor.HitPoints);
+
+    // Set model state
+    SetModelLifeState(_Descriptor, true);
+  }
+
+  void SetModelLifeState(
+      Component _Descriptor,
+      boolean   _State
+    )
+  {
+    if (_State)
+      sendEvent(0.0, getIdentificator(this), "SetModelViewState", [_Descriptor, _State]);
+    else
+      sendEvent(1.0, getIdentificator(this), "SetModelViewState", [_Descriptor, _State]);
+  }
+
+  event void SetModelViewState(
+      Component _Descriptor,
+      boolean   _State
+    )
+  {
+    if (_Descriptor == null)
+    {
+      SetModelViewState(_State);
+    }
+    else
+    {
+      // Get mesh
+      Component Mesh = GetMeshComponent();
+      if (Mesh == null)
+        return;
+
+      // Search for damage state joint
+      Component Damaged = Mesh.GetJoint(
+        Mesh.GetJointName(_Descriptor.Joint) + "_Damaged");
+
+      if (Damaged != null)
+      {
+        setVisibleState(_Descriptor.Joint, _State);
+        setVisibleState(Damaged, !_State);
+      }
+    }
+  }
+
+  event void SetModelViewState(
+      boolean   _State
+    )
+  {
+    CObject::SetModelViewState(_State);
+
+    if (null != m_PilotObject)
+      m_PilotObject.SetModelViewState(_State);
+    if (null != m_CoPilotObject)
+      m_CoPilotObject.SetModelViewState(_State);
+    if (null != m_LeftGunnerObject)
+      m_LeftGunnerObject.SetModelViewState(_State);
+    if (null != m_RightGunnerObject)
+      m_RightGunnerObject.SetModelViewState(_State);
+  }
+
+  event void SetImmortalMode(
+      boolean _Mode
+    )
+  {
+    CObject::SetImmortalMode(_Mode);
+/*    if (null != m_PilotObject)
+      m_PilotObject.SetImmortalMode(_Mode);
+    if (null != m_CoPilotObject)
+      m_CoPilotObject.SetImmortalMode(_Mode);
+    if (null != m_LeftGunnerObject)
+      m_LeftGunnerObject.SetImmortalMode(_Mode);
+    if (null != m_RightGunnerObject)
+      m_RightGunnerObject.SetImmortalMode(_Mode);
+*/
+  }
+
+  event void DestroyObject()
+  {
+    CObject::DestroyObject();
+
+//    if (null != m_PilotObject)
+//      m_PilotObject.DestroyObject();
+//    if (null != m_CoPilotObject)
+//      m_CoPilotObject.DestroyObject();
+//    if (null != m_LeftGunnerObject)
+//      m_LeftGunnerObject.DestroyObject();
+//    if (null != m_RightGunnerObject)
+//      m_RightGunnerObject.DestroyObject();
+  }
+  // ==========================================
+  // Service methods
+  // ==========================================
+
+  // calculate weapons mass and other
+  void CalculateAdditionalUnitMass()
+  {
+    // check control mode
+    Component VehicleController = GetVehicleController();
+    if (null == VehicleController || !(new #GameSettings()).GetPayloadMode())
+      return;
+
+    // update helicopter mass
+    m_TotalExtraMass = GetPassangersMass();
+    for (int IndexWeapon = 0; IndexWeapon < m_WeaponList.size(); IndexWeapon++)
+      m_TotalExtraMass += m_WeaponList[IndexWeapon].GetWeaponMass();
+
+    VehicleController.SetAdditionalMass(m_TotalExtraMass);
+  }
+
+  void SetupPersonalNavPoint(
+      Component _Mission,
+      String    _ScriptClass
+    )
+  {
+    _Mission.CreateObject(
+        getIdentificator(user) + "_PersonalNP",
+        "NavPoint",
+        _ScriptClass,
+        getPosition(this),
+        [
+          ["Detect", false],
+          ["Range",  0.0],
+          ["Name",   ""],
+          ["Mask",   [[],[]]]
+        ]
+      );
+
+    Component Point = _Mission.GetObject(getIdentificator(user) + "_PersonalNP");
+    if (Point != null)
+      m_ChildMissionObjects.add(Point);
+  }
+
+  void SetBaseWeaponConfig()
+  {
+    for (int IndexWeapon = 0; IndexWeapon < m_WeaponList.size(); IndexWeapon++)
+      m_WeaponList[IndexWeapon].SetBaseEffects();
+  }
+
+  void SetNearWeaponConfig()
+  {
+    for (int IndexWeapon = 0; IndexWeapon < m_WeaponList.size(); IndexWeapon++)
+      m_WeaponList[IndexWeapon].SetNearEffects();
+  }
+
+  void SetEmptyWeaponConfig()
+  {
+    for (int IndexWeapon = 0; IndexWeapon < m_WeaponList.size(); IndexWeapon++)
+      m_WeaponList[IndexWeapon].SetEmptyEffects();
+  }
+
+  SetAngleMessages(
+      Array _Strings
+    )
+  {
+    for (int i = 0; i < _Strings.size(); i++)
+      m_AngleStrings[i][0] = _Strings[i];
+  }
+
+
+  // ==========================================
+  // Effects
+  // ==========================================
+  event void OnWeaponFire(
+      Vector _Origin,
+      Vector _Force
+    )
+  {
+    Component Recoil = GetRecoilController();
+    if (null != Recoil)
+      Recoil.ApplyImpulse(_Force);
+
+    Component CameraLink = GetCameraLink();
+    if ((null != CameraLink) && (CM_Cockpit == m_ViewMode))
+      CameraLink.EnableFireShake(true);
+  }
+
+  // ======================================
+  // Destroy object
+  // ======================================
+
+  event void KillUnit()
+  {
+    Component Behavior = GetObject("Behavior");
+    if (Behavior != null)
+    {
+      //Behavior.ActivateMovement(false);
+      //Behavior.ActivateFire(false);
+      Behavior.SetAimAbility(false,0);
+      Behavior.SetMoveAbility(false,0);
+      Behavior.SetFireAbility(false,0);
+    }
+    Component StateControl = GetObject("StateControl");
+    if (StateControl != null)
+    {
+      StateControl.SetDelayItemHP(GetItem("TrackLeft").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("TrackRight").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("HullDriver").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("HullEngine").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("HullGunlayer").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("Turret_A").Index, 0.0, 0);
+    }
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       Component Object = Mission.GetObject(getIdentificator(this));
+       if(Object != null)
+       {
+         Object.OnLifeStateChanged(false);
+       }
+    }
+  }
+
+
+}

@@ -1,0 +1,69 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMetricConverter
+{
+  //
+  // Constants
+  //
+
+  final static float Month_Seconds       = 20.0 * 10.0 * 60.0 * 60.0; // days * hours * minutes * seconds
+
+  final static float Mile_Metres         = 1609.0;
+
+  final static float NauticalMile_Metres = 1852.0000118528;
+
+  final static float Metres_Foots        = 3.2808;
+
+  //
+  // Methods
+  //
+
+  static float MonthsToSeconds(
+      float _Value
+    )
+  {
+    return _Value / Month_Seconds;
+  }
+
+  static float SecondsToMonths(
+      float _Value
+    )
+  {
+    return _Value * Month_Seconds;
+  }
+
+  static float MetresToMiles(
+      float _Value
+    )
+  {
+    return _Value / Mile_Metres;
+  }
+
+  static float MetresToNauticalMiles(
+      float _Value
+    )
+  {
+    return _Value / NauticalMile_Metres;
+  }
+
+  static float MetresToFoots(
+      float _Value
+    )
+  {
+    return _Value * Metres_Foots;
+  }
+
+  static float FootsToMetres(
+      float _Value
+    )
+  {
+    return _Value / Metres_Foots;
+  }
+}

@@ -1,0 +1,156 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CWorldMatrices
+{
+  final static float MatrixWidth  = 10000.0; // meters
+  final static float MatrixHeight = 10000.0; // meters
+}
+
+class CBaseMatrixLayer
+{
+}
+
+class CColorTableMaker
+{
+  Array ColorTable = [];
+
+  void BuildColorTable(
+      Array _Colors
+    )
+  {
+    if (ColorTable.isEmpty())
+      for (int i = 0; i < 256; i++)
+        ColorTable.add([i, GetColor(float(i) / 255.0, _Colors)]);
+  }
+
+  Color GetColor(
+      float _Factor,
+      Array _Colors
+    )
+  {
+    float Weight = 0.0;
+    for (int i = 0; i < _Colors.size(); i++)
+      Weight = Weight + GetWeight(_Factor, _Colors[i][0], _Colors[i][1]);
+
+    Color Result = new Color(0.0, 0.0, 0.0, 1.0);
+    for (int i = 0; i < _Colors.size(); i++)
+      Result = Result + (GetWeight(_Factor, _Colors[i][0], _Colors[i][1]) / Weight) * _Colors[i][2];
+
+    return Result;
+  }
+
+  float GetWeight(
+      float _Factor,
+      float _Center,
+      float _Range
+    )
+  {
+    if (_Factor >= (_Center - _Range) &&
+        _Factor <= (_Center + _Range))
+      return 1.0 - abs(_Factor - _Center) / _Range;
+
+    return 0.0;
+  }
+}
+
+class CLandscapeLayer
+  extends CColorTableMaker
+{
+  final static String  ImageFileName           = "";
+  final static int     ImageWidth              = 2049;
+  final static int     ImageHeight             = 2049;
+  final static int     BytesPerPixel           = 2;
+
+  final static float   FloatValueFactor        = 1.0;
+  final static boolean NodalLayer              = true;
+
+  final static String ClassName = "MatrixLayerHeightField";
+
+  CLandscapeLayer()
+  {
+    BuildColorTable([
+        [ 0.00, 0.25, new Color( 41.0 / 255.0, 131.0 / 255.0,  57.0 / 255.0, 0.0) ],
+        [ 0.25, 0.25, new Color(198.0 / 255.0, 231.0 / 255.0,  24.0 / 255.0, 0.0) ],
+        [ 0.50, 0.25, new Color(214.0 / 255.0, 115.0 / 255.0,  33.0 / 255.0, 0.0) ],
+        [ 0.75, 0.25, new Color(206.0 / 255.0, 140.0 / 255.0, 107.0 / 255.0, 0.0) ],
+        [ 1.00, 0.25, new Color(255.0 / 255.0, 231.0 / 255.0, 231.0 / 255.0, 0.0) ]
+      ]);
+  }
+}
+
+class CBaseWaterHeightsLayer  extends CColorTableMaker
+{
+  final static String  ImageFileName           = "";
+  final static int     ImageWidth              = 2049;
+  final static int     ImageHeight             = 2049;
+  final static int     BytesPerPixel           = 2;
+
+  final static float   FloatValueFactor        = 1.0;
+  final static boolean NodalLayer              = true;
+
+  final static String ClassName = "MatrixLayerHeightField";
+
+  CLandscapeLayer()
+  {
+    BuildColorTable([
+        [ 0.00, 0.25, new Color( 41.0 / 255.0, 131.0 / 255.0,  57.0 / 255.0, 0.0) ],
+        [ 0.25, 0.25, new Color(198.0 / 255.0, 231.0 / 255.0,  24.0 / 255.0, 0.0) ],
+        [ 0.50, 0.25, new Color(214.0 / 255.0, 115.0 / 255.0,  33.0 / 255.0, 0.0) ],
+        [ 0.75, 0.25, new Color(206.0 / 255.0, 140.0 / 255.0, 107.0 / 255.0, 0.0) ],
+        [ 1.00, 0.25, new Color(255.0 / 255.0, 231.0 / 255.0, 231.0 / 255.0, 0.0) ]
+      ]);
+  }
+}
+
+class CTerrainZoneLayer
+{
+  final static String ImageFileName           = "";
+  final static int    ImageWidth              = 2048;
+  final static int    ImageHeight             = 2048;
+  final static int    BytesPerPixel           = 1;
+
+  final static float  FloatValueFactor        = 1.0;
+
+  final static String ClassName = "TerrainZoneMap";
+}
+
+class CBaseBitmapLayer
+{
+  final static String ImageFileName           = "";
+  final static int    ImageWidth              = 1024;
+  final static int    ImageHeight             = 1024;
+  final static int    BytesPerPixel           = 1;
+
+  final static float  FloatValueFactor        = 1.0;
+
+
+  final static String ClassName = "MatrixLayerChar";
+}
+
+class CMicroTexLayer
+  extends CBaseBitmapLayer
+{
+/*  final static boolean  IsReadOnly            = true;
+  final static int      TexChannel            = CCHL_Red;
+
+  CMicroTexLayer()
+  {
+    BuildColorTable([
+        [  1.0 / 16.0, 1.1 / 16.0, new Color(   0.0 / 255.0,   0.0 / 255.0,   0.0 / 255.0, 0.0) ],
+        [  3.0 / 16.0, 1.1 / 16.0, new Color( 104.0 / 255.0,  11.0 / 255.0, 135.0 / 255.0, 0.0) ],
+        [  5.0 / 16.0, 1.1 / 16.0, new Color(  18.0 / 255.0,   0.0 / 255.0, 255.0 / 255.0, 0.0) ],
+        [  7.0 / 16.0, 1.1 / 16.0, new Color(   0.0 / 255.0,  35.0 / 255.0, 134.0 / 255.0, 0.0) ],
+        [  9.0 / 16.0, 1.1 / 16.0, new Color(   0.0 / 255.0,  77.0 / 255.0,  58.0 / 255.0, 0.0) ],
+        [ 11.0 / 16.0, 1.1 / 16.0, new Color(  39.0 / 255.0, 229.0 / 255.0, 182.0 / 255.0, 0.0) ],
+        [ 13.0 / 16.0, 1.1 / 16.0, new Color(   0.0 / 255.0, 139.0 / 255.0,  49.0 / 255.0, 0.0) ],
+        [ 15.0 / 16.0, 1.1 / 16.0, new Color(  92.0 / 255.0, 193.0 / 255.0,  47.0 / 255.0, 0.0) ]
+      ]);
+  }*/
+}

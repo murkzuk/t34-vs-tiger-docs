@@ -1,0 +1,370 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// class with color (and alpha channel) info for pixel for
+// terrain and zonemap textures and layers
+
+class BaseLandClass
+{
+  // label in editor's menu (to register class in menu see MenuConfig.ZoneEditorClasses)
+  String Label = "";
+
+  // color of main terrain texture
+  Color TerrainColor = new Color(0.0, 1.0, 0.0);
+
+  // color of second main terrain texture
+  Color TerrainColor2 = new Color(1.0, 0.0, 0.0);
+
+  // index of terrain microtexture
+  int MicroTextureIndex = 1;
+
+  // index of terrain second microtexture
+  int MicroTextureIndex2 = 1;
+
+  // color of ZoneMap layer (assume 8bit bmp int data)
+  int ZoneMapValue     = 13;
+
+  boolean ModifyZoneMapOnly = false;
+
+  boolean ModifyMicroTextureOnly = false;
+  //
+  // converted colors (with alpha channel)
+  //
+
+  Color MainTerrainColor;
+  Color MainTerrainColor2;
+
+  //
+  // Construct
+  //
+
+  BaseLandClass()
+  {
+    MainTerrainColor  = new Color(GetAlphaMixedColor(TerrainColor, MicroTextureIndex));
+    MainTerrainColor2 = new Color(GetAlphaMixedColor(TerrainColor2, MicroTextureIndex2));
+  }
+
+  //
+  // service methods
+  //
+
+  //$TMP  - should be global function
+  //color + alpha convertation
+
+  Color GetAlphaMixedColor(
+      Color Src,
+      int AlphaIndex
+    )
+  {
+    Color Res = new Color(Src);
+    float Scale = 1.0 / 8.0 ;
+    Res.a = Scale * AlphaIndex + Scale / 3.0;
+    return Res;
+  }
+
+}
+
+//$TMP test class
+class Forest01 extends BaseLandClass
+{
+  String Label = "Forest01";
+
+   // color of main terrain texture
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  // color of second main terrain texture
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  // color of ZoneMap layer (assume 8bit bmp int data)
+  int ZoneMapValue     = 11;
+}
+
+class Forest02 extends BaseLandClass
+{
+  String Label = "Forest02";
+
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  int ZoneMapValue     = 12;
+}
+
+class Forest03 extends BaseLandClass
+{
+  String Label = "Forest03";
+
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  int ZoneMapValue     = 13;
+}
+
+class Forest04 extends BaseLandClass
+{
+  String Label = "Forest04";
+
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  int ZoneMapValue     = 14;
+}
+
+class RoadForest extends BaseLandClass
+{
+  String Label = "RoadForest";
+  int ZoneMapValue = 20;
+  int MicroTextureIndex = 2;
+}
+
+class Bush01 extends BaseLandClass
+{
+  String Label = "Bush01";
+  int ZoneMapValue = 27;
+}
+
+class Bush02 extends BaseLandClass
+{
+  String Label = "Bush02";
+  int ZoneMapValue = 28;
+}
+
+class Bush03 extends BaseLandClass
+{
+  String Label = "Bush03";
+  int ZoneMapValue = 29;
+}
+
+class Bush04 extends BaseLandClass
+{
+  String Label = "Bush04";
+  int ZoneMapValue = 30;
+}
+
+class ShrubberyLarge extends BaseLandClass
+{
+  String Label = "ShrubberyLarge";
+  int ZoneMapValue = 49;
+}
+
+class ShrubberyRegular extends BaseLandClass
+{
+  String Label = "ShrubberyRegular";
+  int ZoneMapValue = 50;
+}
+
+class ShrubberyCasual extends BaseLandClass
+{
+  String Label = "ShrubberyCasual";
+  int ZoneMapValue = 51;
+}
+
+class SpecialLongAloneTree extends BaseLandClass
+{
+  String Label = "SpecialLongAloneTree";
+  int ZoneMapValue = 52;
+}
+
+class VillagePlanting01 extends BaseLandClass
+{
+  String Label = "VillagePlanting01";
+  int ZoneMapValue = 60;
+}
+
+class VillagePlanting02 extends BaseLandClass
+{
+  String Label = "VillagePlanting02";
+  int ZoneMapValue = 61;
+}
+
+class VillagePlanting03 extends BaseLandClass
+{
+  String Label = "VillagePlanting03";
+  int ZoneMapValue = 62;
+}
+
+class Grass01 extends BaseLandClass
+{
+  String Label = "Grass01";
+  int ZoneMapValue = 32;
+}
+
+class Grass02 extends BaseLandClass
+{
+  String Label = "Grass02";
+  int ZoneMapValue = 33;
+}
+
+class Grass03 extends BaseLandClass
+{
+  String Label = "Grass03";
+  int ZoneMapValue = 34;
+}
+
+class Grass04 extends BaseLandClass
+{
+  String Label = "Grass04";
+  int ZoneMapValue = 35;
+}
+
+class OffRoad01 extends BaseLandClass
+{
+  String Label = "OffRoad01";
+  int ZoneMapValue = 1;
+}
+
+class OffRoad02 extends BaseLandClass
+{
+  String Label = "OffRoad02";
+  int ZoneMapValue = 122;
+}
+
+class OffRoad03 extends BaseLandClass
+{
+  String Label = "OffRoad03";
+  int ZoneMapValue = 123;
+}
+
+class OffRoad04 extends BaseLandClass
+{
+  String Label = "OffRoad04";
+  int ZoneMapValue = 217;
+}
+
+class Road01 extends BaseLandClass
+{
+  String Label = "Road01";
+  int ZoneMapValue = 0;
+}
+
+class Road01Add extends BaseLandClass
+{
+  String Label = "Road01Add";
+  int ZoneMapValue = 39;
+}
+
+class RoadObject extends BaseLandClass
+{
+  String Label = "RoadObject";
+  int ZoneMapValue = 110;
+}
+
+class AllPassable extends BaseLandClass
+{
+  String Label = "AllPassable";
+  int ZoneMapValue = 111;
+}
+
+class Water01 extends BaseLandClass
+{
+  String Label = "Water01";
+
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  int ZoneMapValue     = 101;
+}
+
+class ShallowWater01 extends BaseLandClass
+{
+  String Label = "ShallowWater01";
+
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  int ZoneMapValue     = 102;
+}
+
+class BeachWater01 extends BaseLandClass
+{
+  String Label = "BeachWater01";
+
+  Color TerrainColor = new Color(0.0, 0.0, 0.0);
+
+  Color TerrainColor2 = new Color(0.0, 0.0, 1.0);
+
+  boolean ModifyZoneMapOnly = true;
+
+  int ZoneMapValue     = 103;
+}
+
+//Mirco texture
+class Micro0 extends BaseLandClass
+{
+  String Label = "Micro0";
+
+  int MicroTextureIndex = 0;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro1 extends BaseLandClass
+{
+  String Label = "Micro1";
+
+  int MicroTextureIndex = 1;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro2 extends BaseLandClass
+{
+  String Label = "Micro2";
+
+  int MicroTextureIndex = 2;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro3 extends BaseLandClass
+{
+  String Label = "Micro3";
+
+  int MicroTextureIndex = 3;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro4 extends BaseLandClass
+{
+  String Label = "Micro4";
+
+  int MicroTextureIndex = 4;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro5 extends BaseLandClass
+{
+  String Label = "Micro5";
+
+  int MicroTextureIndex = 5;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro6 extends BaseLandClass
+{
+  String Label = "Micro6";
+
+  int MicroTextureIndex = 6;
+  boolean ModifyMicroTextureOnly = true;
+}
+class Micro7 extends BaseLandClass
+{
+  String Label = "Micro7";
+
+  int MicroTextureIndex = 7;
+  boolean ModifyMicroTextureOnly = true;
+}
+

@@ -1,0 +1,530 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CObjectsGroup
+  extends IObject, CEditable
+{
+  //
+  // Constants
+  //
+
+  static Array DefaultContents = [];
+
+  //
+  // Construction
+  //
+
+  void CObjectsGroup()
+  {
+  }
+
+  //
+  // IObject
+  //
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+  }
+
+  //
+  // CEditable
+  //
+
+  Array GetDefaultProperties()
+  {
+    Array Default = [];
+
+    Default.append([
+        ["Contents", DefaultContents]
+      ]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    Array Contents = _PropMap.Get("Contents", DefaultContents);
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    BeginTransaction(Mission);
+
+    Ungroup();
+    AddObjects(Contents);
+
+    EndTransaction(Mission);
+
+    sendEvent(0.0, getIdentificator(this), "UpdateProperties", [Mission]);
+  }
+
+  Component GetBoundingInfo()
+  {
+    return this;
+  }
+
+  Component Clone(
+      String _CloneID,
+      Matrix _ClonePosition
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return null;
+
+    String ObjectID = getIdentificator(this);
+    Array  Record   = Mission.GetContent().FindObjectRecord(ObjectID);
+    if (Record.isEmpty())
+      return null;
+
+    Array CloneProps = [["Contents", GenerateObjectRecords()]];
+
+    Mission.CreateAndInitObject(
+        _CloneID,
+        Record[CMissionContent::INDEX_ComponentID],
+        Record[CMissionContent::INDEX_ScriptClass],
+        _ClonePosition,
+        CloneProps
+      );
+
+    Component Clone = Mission.GetObject(_CloneID);
+    if (null == Clone)
+    {
+      logError("Clone creation failed");
+      return null;
+    }
+
+    Mission.GetContent().CreateObjectRecord(
+        _CloneID,
+        Record[CMissionContent::INDEX_ComponentID],
+        Record[CMissionContent::INDEX_ScriptClass],
+        _ClonePosition,
+        CloneProps
+      );
+
+    return Clone;
+  }
+
+  //
+  // Interface
+  //
+
+  void AddObject(
+      Component _Object
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    BeginTransaction(Mission);
+
+    // Move object from mission to this group
+    (new #GameController()).FindObjectGroup(_Object).UnregisterObject(getIdentificator(_Object));
+    RegisterObject(getIdentificator(_Object), _Object);
+
+    EndTransaction(Mission);
+  }
+
+  void AddObjects(
+      Array _ObjectIDs
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    BeginTransaction(Mission);
+
+    Matrix  Position  = new Matrix(getPosition(this));
+    boolean IsDefault = false;
+    Component LastGroup;
+
+    for (int i = 0; i < _ObjectIDs.size(); i++)
+    {
+      Component Object = null;
+   
+      if (ST_ARRAY == getVariableType(_ObjectIDs[i]))
+      {
+        IsDefault = true;
+
+        Array  Record   = _ObjectIDs[i];
+        String ObjectID = getIdentificator(this) + "_" + Record[CMissionContent::INDEX_ObjectID];
+
+        // create object
+        Mission.CreateAndInitObject(
+            ObjectID,
+            Record[CMissionContent::INDEX_ComponentID],
+            Record[CMissionContent::INDEX_ScriptClass],
+            Record[CMissionContent::INDEX_Position],
+            Record[CMissionContent::INDEX_Properties]
+          );
+
+        Object = Mission.GetObject(ObjectID);
+
+        // create record
+        if (null != Object)
+          Mission.GetContent().CreateObjectRecord(
+              ObjectID,
+              Record[CMissionContent::INDEX_ComponentID],
+              Record[CMissionContent::INDEX_ScriptClass],
+              Record[CMissionContent::INDEX_Position],
+              clone((new CPropertiesMap(Record[CMissionContent::INDEX_Properties])).m_Properties)
+            );
+      }
+      else
+      {
+        Object = Mission.GetObject(_ObjectIDs[i]);
+      }
+
+      if (isIdentifiable(Object))
+      {
+        // Move object from mission to this group
+        LastGroup = (new #GameController()).FindObjectGroup(Object, LastGroup);
+        LastGroup.UnregisterObject(getIdentificator(Object));
+        RegisterObject(getIdentificator(Object), Object);
+      }
+      else        
+        if (CDebugSettings::LoadInteriorObjects) // $TMP supress error msg
+        {
+          logError("CObjectsGroup::AddObjects(): bad object[" + 
+            new String(i) + "] in group " + getIdentificator(this));
+        }
+    }
+
+    if (IsDefault)
+      setPosition(this, Position);
+
+    EndTransaction(Mission);
+  }
+
+  void Ungroup()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    Array Objects = GetObjectsList();
+    if (Objects.isEmpty())
+      return;
+
+    BeginTransaction(Mission);
+
+    for (int i = 0; i < Objects.size(); i++)
+    {
+      Component Object = Objects[i];
+
+      // Move object from this group to mission
+      Mission.RegisterObject(getIdentificator(Object), Object);
+      UnregisterObject(getIdentificator(Object));
+    }
+
+    EndTransaction(Mission);
+  }
+
+  boolean WriteScriptFile(
+      String _FileName
+    )
+  {
+    String ClassName = "C" + _FileName.GetPartPreceding(".script").GetPartFollowing("\\");
+
+    logWarning("Saving class " + ClassName + " to " + _FileName);
+
+    String ScriptContents =
+      CApplicationSettings::m_ScriptFileHeader +
+      "class " + ClassName + "\n" +
+      "  extends CObjectsGroup \n" +
+      "{\n" +
+      "  static Array DefaultContents = [ \n";
+
+    Array ObjectList = GenerateObjectRecords();
+    for (int iObject = 0; iObject < ObjectList.size(); iObject++)
+    {
+      Array ObjectDescr = ObjectList[iObject];
+
+      ScriptContents += "      [\n";
+
+      for (int i = 0; i < ObjectDescr.size() - 1; i++)
+        ScriptContents += getVariableScript("        ", ObjectDescr[i]) + ",\n";
+
+      ScriptContents += "        [\n";
+
+      Array CustomParams = ObjectDescr[ObjectDescr.size() - 1];
+      for (int iParam = 0; iParam < CustomParams.size(); iParam++)
+      {
+        String Suffix = "\n";
+        if (iParam + 1 != CustomParams.size())
+          Suffix = ",\n";
+
+        ScriptContents += getVariableScript("          ", CustomParams[iParam]) + Suffix;
+      }
+
+      ScriptContents += "        ]\n";
+      {
+        String Suffix = "\n";
+        if (iObject + 1 != ObjectList.size())
+          Suffix = ",\n\n";
+
+        ScriptContents += "      ]" + Suffix;
+      }
+    }
+
+    ScriptContents +=
+      "    ];\n" +
+      "}\n";
+
+    return saveStringToFile(_FileName, ScriptContents);
+  }
+
+  void OnDelete()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    Array Objects = GetObjectsList();
+    if (Objects.isEmpty())
+      return;
+
+    // Remove children records
+    for (int i = 0; i < Objects.size(); i++)
+    {
+      Component Object = Objects[i];
+
+      if (isFunctionExist(Object, "OnDelete", 0))
+        Object.OnDelete();
+
+      Mission.GetContent().DeleteObjectRecord(getIdentificator(Object));
+    }
+  }
+
+  boolean RenameObject(
+      String _ObjectID,
+      String _NewID
+    )
+  {
+    Component Object = GetObject(_ObjectID);
+    if (null != Object)
+    {
+      Component Mission = (new #GameController()).GetLoadedMission();
+      if (null != Mission)
+      {
+        BeginTransaction(Mission);
+
+        UnregisterObject(_ObjectID);
+        setIdentificator(Object, _NewID);
+        RegisterObject(_NewID, Object);
+
+        Array Record = Mission.GetContent().FindObjectRecord(_ObjectID);
+        if (!Record.isEmpty())
+          Record[CMissionContent::INDEX_ObjectID] = _NewID;
+
+        EndTransaction(Mission);
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  //
+  // Service
+  //
+
+  int       m_TransactionCounter = 0;
+  Component m_ParentGroup        = null; 
+  
+  void BeginTransaction(
+      Component _Mission
+    )
+  {
+    m_TransactionCounter++;
+
+    if (1 == m_TransactionCounter)
+    {
+      m_ParentGroup = (new #GameController()).FindObjectGroup(this);
+
+      if (isFunctionExist(m_ParentGroup, "BeginTransaction", 1))
+        m_ParentGroup.BeginTransaction(_Mission);
+
+      m_ParentGroup.UnregisterObject(getIdentificator(this));
+    }
+  }
+
+  void EndTransaction(
+      Component _Mission
+    )
+  {
+    m_TransactionCounter--;
+
+    if (0 == m_TransactionCounter)
+    {
+      m_ParentGroup.RegisterObject(getIdentificator(this), this);
+
+      if (isFunctionExist(m_ParentGroup, "EndTransaction", 1))
+        m_ParentGroup.EndTransaction(_Mission);
+          
+      UpdateProperties(_Mission);
+      OnPositionEdited();
+
+      m_ParentGroup = null;
+    }
+  }
+
+  event void UpdateProperties(
+      Component _Mission
+    )
+  {
+    Array Record = _Mission.GetContent().FindObjectRecord(getIdentificator(this));
+    if (Record.isEmpty())
+      return;
+
+    Component Properties = new CPropertiesMap(Record[CMissionContent::INDEX_Properties]);
+    if (null != Properties)
+    {
+      Array ObjectIDs = [];
+      Array Objects   = GetObjectsList();
+
+      for (int i = 0; i < Objects.size(); i++)
+      {
+        if (isIdentifiable(Objects[i]))
+          ObjectIDs.add(getIdentificator(Objects[i]));
+        else
+          logError("CObjectsGroup::UpdateProperties(): group " + 
+            getIdentificator(this) + ", bad object[" + new String(i) + "]");
+      }
+
+      Properties.m_Properties[Properties.Find("Contents")][CPropertiesMap::INDEX_PropertyIsDefault] = false;
+      Properties.Set("Contents", ObjectIDs);
+    }
+  }
+
+  event void OnPositionEdited()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    Array Objects = GetObjectsList();
+    if (Objects.isEmpty())
+      return;
+
+    // Update self record
+    {
+      Array Record = Mission.GetContent().FindObjectRecord(getIdentificator(this));
+
+      if (!Record.isEmpty())
+        Record[CMissionContent::INDEX_Position] = getPosition(this);
+    }
+
+    // Update children records
+    for (int i = 0; i < Objects.size(); i++)
+    {
+      Array Record = Mission.GetContent().FindObjectRecord(getIdentificator(Objects[i]));
+
+      if (!Record.isEmpty())
+        Record[CMissionContent::INDEX_Position] = getPosition(Objects[i]);
+
+      sendEvent(0.0, getIdentificator(Objects[i]), "OnPositionEdited", []);
+    }
+  }
+
+  Array GenerateObjectRecords()
+  {
+    Array Result = [];
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return Result;
+
+    Array Objects = GetObjectsList();
+    if (Objects.isEmpty())
+      return Result;
+
+    // Get group center
+    Vector GroupCenter = getBoundingSphere(this)[0];
+
+    // Get children records
+    Map ScriptClass = new Map();
+    for (int i = 0; i < Objects.size(); i++)
+    {
+      Array Record = clone(Mission.GetContent().FindObjectRecord(getIdentificator(Objects[i])));
+
+      int count=1;
+      if (Record[CMissionContent::INDEX_ScriptClass] != "CObjectsGroup")
+      {
+        if (ScriptClass.find(Record[CMissionContent::INDEX_ScriptClass]))
+        {
+          count = ScriptClass.getValue();
+          count++;
+          ScriptClass.setValue(count);
+        }
+        else
+        {
+          ScriptClass.insert(Record[CMissionContent::INDEX_ScriptClass], count);
+        }
+
+        String ObjectID = Record[CMissionContent::INDEX_ScriptClass];
+        ObjectID = ObjectID.GetPartFollowing("C");
+        ObjectID = ObjectID.GetPartPreceding("Unit");
+
+        // Adjust object ID
+        Record[CMissionContent::INDEX_ObjectID] = ObjectID+ "_" + new String(count);
+      }
+      else
+      {
+        // Adjust group objects ID
+        Record[CMissionContent::INDEX_ObjectID] = Record[CMissionContent::INDEX_ObjectID].GetPartFollowing(getIdentificator(this) + "_");
+        Record[CMissionContent::INDEX_ScriptClass] = "C" +
+            Record[CMissionContent::INDEX_ObjectID].GetPartFollowing(getIdentificator(this) + "_");
+        Record[CMissionContent::INDEX_Properties].clear();
+      }
+
+      // Adjust position
+      Matrix Position = Record[CMissionContent::INDEX_Position];
+      Position.origin = Position.origin - GroupCenter;
+
+      // Compact properties
+      CPropertiesMap::Compact(Record[CMissionContent::INDEX_Properties]);
+
+      // Append record
+      Result.add(Record);
+    }
+
+    return Result;
+  }
+}

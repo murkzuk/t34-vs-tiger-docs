@@ -1,0 +1,440 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseTargetPointer
+{
+  Component MatManager     = new #MaterialManager<CCockpitSkin>();
+
+  float TargetRange = 600.0f;
+  float TicksLength = 2.5f/256.0f;
+  float MaxMarks = 0.0f;
+  float MinMarks = 0.0f;
+  float MarkStep = 0.0f;
+  float TargetStep = 0.0f;
+
+  Array StepsArray = [];
+
+  Array Fonts = [
+      [ "Century Gothic", 0.04 ],
+      [ "Arial", 0.02]
+    ];
+
+  Array ColorsList = [new Color(0.0, 0.0, 0.0, 1.0), new Color(0.9, 0.8, 0.0, 1.0)];
+
+  float LineWidth = 1.0f;
+
+  boolean DrawBorderBox    = false;
+  boolean DrawBorderCircle = false;
+
+  Array TargetTrianglesLines = [];
+  Array DynamicLines = [];
+  Array DynamicText = [];
+  Array StaticText = [];
+  Array StaticLines = [];
+  Array TargetSector = [];
+
+  Array BlackBoxTexture = [ 0.0, 0.0, "C", "C", "C", "C", 1.0, 1.0, "black box",    0 ];
+}
+
+class CTargetPointerTZF9b extends CBaseTargetPointer
+{
+
+  float TargetRange = 2000.0f;
+  float TicksLength = 1.0f/256.0f;
+  float MaxMarks    = 40.0f;
+  float MinMarks    = 0.0f;
+  float MarkStep    = 2.5f/256.0f;
+  float TargetStep  = 3.6f/256.0f;
+
+  Array StepsArray = [0.0f, 2.0f/256.0f, 3.0f/256.0f, 2.4f/256.0f, 2.25f/256.0f];
+
+  boolean DrawBorderCircle = true;
+
+  Array TargetTrianglesLines = [
+//    left part
+      [ -8.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  4.0 /256.0, LineWidth],
+      [ -8.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  4.0 /256.0, LineWidth],
+
+      [ -16.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  4.0 /256.0, LineWidth],
+      [ -16.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  4.0 /256.0, LineWidth],
+
+      [ -24.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  4.0 /256.0, LineWidth],
+      [ -24.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  4.0 /256.0, LineWidth],
+//    central part
+      [ 0.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N",  4.0 / 256.0, 8.0 /256.0, LineWidth],
+      [ 0.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -4.0 / 256.0, 8.0 /256.0, LineWidth],
+      [ -4.0 / 256.0, 8.0 /256.0, "C", "C", "N", "N", 8.0 / 256.0, 0.0 /256.0, LineWidth],
+      [ 0.0 / 256.0, 10.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  70.0 /256.0, LineWidth],
+//    right part
+      [ 8.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  4.0 /256.0, LineWidth],
+      [ 8.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  4.0 /256.0, LineWidth],
+
+      [ 16.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  4.0 /256.0, LineWidth],
+      [ 16.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  4.0 /256.0, LineWidth],
+
+      [ 24.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  4.0 /256.0, LineWidth],
+      [ 24.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  4.0 /256.0, LineWidth]
+    ];
+
+  Array StaticLines = [
+      [ 46.5 / 256.0, -28.5 /256.0, "C", "C", "N", "N", 4.0 / 256.0,  -3.0 /256.0, LineWidth],
+      [ -9.0 / 256.0, 54.0 /256.0, "C", "C", "N", "N", -0.9 / 256.0,  5.0 /256.0, LineWidth]
+    ];
+
+  Array LensTexture = [ 0.0, 0.0, "C", "C", "C", "C", 0.18, 0.18, "GunnerLensTiger", 0 ];
+  Array MarksTexture = [ 0.0, 0.0, "C", "C", "C", "C", 0.13, 0.13, "GunnerMarksTiger", 0, new Color(1.0f, 0.0f, 1.0f, 1.0f), 0.5f, 0.5f ];
+  Array TargetSector = [ 0.0, 0.05, "C", "C", "C", "C", 0.3f, -Math_HALFPI - 0.15f, -Math_HALFPI + 0.15f, "black box", 0 ];
+}
+
+class CTargetPointerTZF9bVirtual extends CTargetPointerTZF9b
+{
+  boolean DrawBorderCircle = false;
+  Array LensTexture = [];
+}
+
+class CCommanderPointerScreenTiger extends CBaseTargetPointer
+{
+  float TargetRange = 2000.0f;
+  float TicksLength = 2.5f/256.0f;
+  float MaxMarks = 25.0f;
+  float MinMarks = 0.0f;
+  float MarkStep = 5.0f/256.0f;
+  float TargetStep = 1.0f/256.0f;
+
+  boolean DrawBorderBox = true;
+
+  float ShiftRight = 0.0f / 256.0f;
+  float ShiftY = -28.0 / 256.0f;
+
+  Array StaticLines = [
+//    cross
+      [ ShiftRight - 2.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+//    up
+      [ ShiftRight - 2.0 / 256.0, ShiftY + 10.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 2.0 / 256.0, ShiftY - 10.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight - 2.0 / 256.0, ShiftY - 20.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+//    left
+      [ ShiftRight - 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight - 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight - 50.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 60.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight - 70.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 80.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+//    right
+      [ ShiftRight + 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight + 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight + 50.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 60.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight + 70.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 80.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth]
+    ];
+
+  Array LensTexture = [ 0.0, -0.1, "C", "C", "C", "C", 0.2, 0.2, "CommanderLensT34", 0 ];
+}
+
+class CCommanderPointerScreenTigerVirtual extends CCommanderPointerScreenT34
+{
+  boolean DrawBorderBox = false;
+
+  float ShiftRight = 0.0f;
+  float ShiftY = 0.0f;
+  Array StaticLines = [
+      [ ShiftRight - 2.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+//    up
+      [ ShiftRight - 2.0 / 256.0, ShiftY + 10.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 2.0 / 256.0, ShiftY - 10.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight - 2.0 / 256.0, ShiftY - 20.0 / 256.0, "C", "C", "N", "N",  4.0 / 256.0, 0.0 / 256.0, LineWidth],
+//    left
+      [ ShiftRight - 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight - 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight - 50.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 60.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight - 70.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight - 80.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+//    right
+      [ ShiftRight + 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight + 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight + 50.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 60.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth],
+      [ ShiftRight + 70.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -4.0 / 256.0, LineWidth],
+      [ ShiftRight + 80.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -8.0 / 256.0, LineWidth]
+    ];
+
+  Array LensTexture = [];
+}
+
+class CCockpitViewTiger extends CBaseTargetPointer
+{
+  boolean DrawBorderBox = true;
+  Array LensTexture = [ 0.0, -1.0, "C", "C", "C", "C", 1.6, 1.6, "CockpitViewTiger", 0 ];
+}
+
+class CTargetPointerScreen_TSH15 extends CBaseTargetPointer
+{
+  float TargetRange = 600.0f;
+  float TicksLength = 2.5f/256.0f;
+  float MaxMarks = 25.0f;
+  float MinMarks = 0.0f;
+  float MarkStep = 2.5f/256.0f;
+  float TargetStep = 3.6f/256.0f;
+
+  Array StepsArray = [0.0f, 7.2f/256.0f, 5.4f/256.0f, 4.8f/256.0f, 4.0f/256.0f, 3.6f/256.0f];
+
+  boolean DrawBorderCircle = true;
+
+  Array TargetTrianglesLines = [
+//    left part
+      [ -10.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  2.0 /256.0, LineWidth],
+      [ -20.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  3.5 /256.0, LineWidth],
+      [ -20.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  3.5 /256.0, LineWidth],
+
+      [ -30.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  2.0 /256.0, LineWidth],
+      [ -40.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  3.5 /256.0, LineWidth],
+      [ -40.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  3.5 /256.0, LineWidth],
+
+      [ -50.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  2.0 /256.0, LineWidth],
+      [ -60.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  3.5 /256.0, LineWidth],
+      [ -60.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  3.5 /256.0, LineWidth],
+//    central part
+      [ 0.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N",  5.0 / 256.0, 8.5 /256.0, LineWidth],
+      [ 0.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -5.0 / 256.0, 8.5 /256.0, LineWidth],
+      [ 0.0 / 256.0, 5.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  50.0 /256.0, LineWidth],
+//    right part
+      [ 10.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  2.0 /256.0, LineWidth],
+      [ 20.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  3.5 /256.0, LineWidth],
+      [ 20.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  3.5 /256.0, LineWidth],
+
+      [ 30.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  2.0 /256.0, LineWidth],
+      [ 40.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  3.5 /256.0, LineWidth],
+      [ 40.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  3.5 /256.0, LineWidth],
+
+      [ 50.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 0.0 / 256.0,  2.0 /256.0, LineWidth],
+      [ 60.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", 2.0 / 256.0,  3.5 /256.0, LineWidth],
+      [ 60.0 / 256.0, 0.0 /256.0, "C", "C", "N", "N", -2.0 / 256.0,  3.5 /256.0, LineWidth]
+    ];
+
+
+  Array DynamicLines = [
+//    BROG
+      [ -53.0 / 256.0, - 25.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 27.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 30.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 32.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 35.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 37.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 40.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 42.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 45.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 47.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 50.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 52.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 55.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 57.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 60.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 62.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 65.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 67.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 70.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 72.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 75.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 77.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 80.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 82.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -53.0 / 256.0, - 85.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ -50.0 / 256.0, - 87.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+//    DT
+      [ 40.0 / 256.0, - 25.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ 43.0 / 256.0, - 32.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ 40.0 / 256.0, - 37.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ 43.0 / 256.0, - 42.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ 40.0 / 256.0, - 47.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ 43.0 / 256.0, - 52.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ 40.0 / 256.0, - 57.5 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth]
+   ];
+
+  Array DynamicText = [
+      [ -60.0 / 256.0, - 27.5 / 256.0, "C", "C", "N", "N", 1, L" 0" ],
+      [ -38.0 / 256.0, - 30.0 / 256.0, "C", "C", "N", "N", 1, L" 4" ],
+      [ -60.0 / 256.0, - 32.5 / 256.0, "C", "C", "N", "N", 1, L" 6" ],
+      [ -38.0 / 256.0, - 35.0 / 256.0, "C", "C", "N", "N", 1, L" 8" ],
+      [ -60.0 / 256.0, - 37.5 / 256.0, "C", "C", "N", "N", 1, L"10" ],
+      [ -38.0 / 256.0, - 40.0 / 256.0, "C", "C", "N", "N", 1, L"12" ],
+      [ -60.0 / 256.0, - 42.5 / 256.0, "C", "C", "N", "N", 1, L"14" ],
+      [ -38.0 / 256.0, - 45.0 / 256.0, "C", "C", "N", "N", 1, L"16" ],
+      [ -60.0 / 256.0, - 47.5 / 256.0, "C", "C", "N", "N", 1, L"18" ],
+      [ -38.0 / 256.0, - 50.0 / 256.0, "C", "C", "N", "N", 1, L"20" ],
+      [ -60.0 / 256.0, - 52.5 / 256.0, "C", "C", "N", "N", 1, L"22" ],
+      [ -38.0 / 256.0, - 55.0 / 256.0, "C", "C", "N", "N", 1, L"24" ],
+      [ -60.0 / 256.0, - 57.5 / 256.0, "C", "C", "N", "N", 1, L"26" ],
+      [ -38.0 / 256.0, - 60.0 / 256.0, "C", "C", "N", "N", 1, L"28" ],
+      [ -60.0 / 256.0, - 62.5 / 256.0, "C", "C", "N", "N", 1, L"30" ],
+      [ -38.0 / 256.0, - 65.0 / 256.0, "C", "C", "N", "N", 1, L"32" ],
+      [ -60.0 / 256.0, - 67.5 / 256.0, "C", "C", "N", "N", 1, L"34" ],
+      [ -38.0 / 256.0, - 70.0 / 256.0, "C", "C", "N", "N", 1, L"36" ],
+      [ -60.0 / 256.0, - 72.5 / 256.0, "C", "C", "N", "N", 1, L"38" ],
+      [ -38.0 / 256.0, - 75.0 / 256.0, "C", "C", "N", "N", 1, L"40" ],
+      [ -60.0 / 256.0, - 77.5 / 256.0, "C", "C", "N", "N", 1, L"42" ],
+      [ -38.0 / 256.0, - 80.0 / 256.0, "C", "C", "N", "N", 1, L"44" ],
+      [ -60.0 / 256.0, - 82.5 / 256.0, "C", "C", "N", "N", 1, L"46" ],
+      [ -38.0 / 256.0, - 85.0 / 256.0, "C", "C", "N", "N", 1, L"48" ],
+      [ -60.0 / 256.0, - 87.5 / 256.0, "C", "C", "N", "N", 1, L"50" ],
+      [ -38.0 / 256.0, - 90.0 / 256.0, "C", "C", "N", "N", 1, L"52" ],
+
+      [ 34.0 / 256.0, -27.5 / 256.0, "C", "C", "N", "N", 1, L" 0" ],
+      [ 55.0 / 256.0, -35.0 / 256.0, "C", "C", "N", "N", 1, L" 4" ],
+      [ 34.0 / 256.0, -40.0 / 256.0, "C", "C", "N", "N", 1, L" 6" ],
+      [ 55.0 / 256.0, -45.0 / 256.0, "C", "C", "N", "N", 1, L" 8" ],
+      [ 34.0 / 256.0, -50.0 / 256.0, "C", "C", "N", "N", 1, L"10" ],
+      [ 55.0 / 256.0, -55.0 / 256.0, "C", "C", "N", "N", 1, L"12" ],
+      [ 34.0 / 256.0, -60.0 / 256.0, "C", "C", "N", "N", 1, L"15" ]
+   ];
+
+/*  Array StaticText = [
+      [ -60.0 / 256.0,  - 25.0 / 256.0, "C", "C", "N", "N", 0, getLocalized("TargetPointer", "str_BROG")],
+      [ 40.0 / 256.0, -25.0  / 256.0, "C", "C", "N", "N", 0, getLocalized("TargetPointer", "str_DT")]
+   ];
+*/
+  Array StaticLines = [
+      [ -70.0 / 256.0, -25.0 / 256.0, "C", "C", "N", "N", 140.0 / 256.0, 0.0 / 256.0, LineWidth]
+   ];
+
+  Array LensTexture = [ 0.0, 0.0, "C", "C", "C", "C", 0.18, 0.18, "GunnerLensT34", 0 ];
+  Array MarksTexture = [];
+}
+
+class CTargetPointerScreen_TSH15Virtual extends CTargetPointerScreen_TSH15
+{
+  boolean DrawBorderCircle = false;
+  Array LensTexture = [];
+}
+
+class CCommanderPointerScreenT34 extends CBaseTargetPointer
+{
+  float TargetRange = 600.0f;
+  float TicksLength = 5.0f/256.0f;
+  float MaxMarks = 25.0f;
+  float MinMarks = 0.0f;
+  float MarkStep = 5.0f/256.0f;
+  float TargetStep = 1.0f/256.0f;
+
+  boolean DrawBorderBox = true;
+
+  float ShiftRight = 0.0 / 256.0f;
+  float ShiftY = -25.0 / 256.0f;
+
+  Array StaticLines = [
+//    cross
+      [ ShiftRight - 5.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N",  10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 5.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, 10.0 / 256.0, LineWidth],
+//    up
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 10.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 20.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 25.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, 10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 30.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 40.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 40.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, 5.0 / 256.0, LineWidth],
+//    left
+      [ ShiftRight - 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 15.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 25.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 35.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 45.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+//    right
+      [ ShiftRight + 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 15.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight + 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 25.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight + 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 35.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight + 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 45.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth]
+    ];
+
+  Array LensTexture = [ 0.0, -0.1, "C", "C", "C", "C", 0.16, 0.16, "CommanderLensT34", 0 ];
+}
+
+class CCommanderPointerScreenT34Virtual extends CCommanderPointerScreenT34
+{
+  boolean DrawBorderBox = false;
+
+  float ShiftRight = 0.0f;
+  float ShiftY = 0.0f;
+  Array StaticLines = [
+//    cross
+      [ ShiftRight - 5.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N",  10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 5.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, 10.0 / 256.0, LineWidth],
+//    up
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 10.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 20.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 25.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, 10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 30.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 5.0 / 256.0, ShiftY - 40.0 / 256.0, "C", "C", "N", "N", 10.0 / 256.0, 0.0 / 256.0, LineWidth],
+      [ ShiftRight + 0.0 / 256.0, ShiftY - 40.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, 5.0 / 256.0, LineWidth],
+//    left
+      [ ShiftRight - 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 15.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 25.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 35.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight - 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight - 45.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+//    right
+      [ ShiftRight + 10.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 15.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight + 20.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 25.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight + 30.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 35.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth],
+
+      [ ShiftRight + 40.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -5.0 / 256.0, LineWidth],
+      [ ShiftRight + 45.0 / 256.0, ShiftY + 0.0 / 256.0, "C", "C", "N", "N", 0.0 / 256.0, -10.0 / 256.0, LineWidth]
+    ];
+
+  Array LensTexture = [];
+}
+
+class CCockpitViewT34 extends CBaseTargetPointer
+{
+  boolean DrawBorderBox = true;
+  Array LensTexture = [ 0.0, -1.0, "C", "C", "C", "C", 1.13, 1.13, "CockpitViewT34", 0 ];
+}
+ 

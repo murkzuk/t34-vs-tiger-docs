@@ -1,0 +1,233 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CUISettings
+{
+  // Text List settings
+
+  final static float TextListFontSize         = 0.018554688 * 1.8;
+
+  final static Color TextListSelectedColor    = new Color(0.7,      0.7,      1.0);
+  final static Color TextListNormalColor      = new Color(0.866667, 0.866667, 0.866667);
+  final static Color TextListHiSelectedColor  = new Color(0.8,      0.8,      1.0);
+  final static Color TextListHiNormalColor    = new Color(1.0,      1.0,      1.0);
+}
+
+class CSpecialSettings
+{
+
+  //
+  // 3D Driver settings
+  //
+
+  final static boolean IsEnabledScreenEffects = true;
+
+  // Dividers for create special render targets
+  final static Array SpecRenderTargetTexConfig = [
+      1,
+      4,
+      4
+    ];
+
+  final static Array RenderTargetTexConfig = [
+      512,
+      512
+    ];
+
+  //
+  // Bloom effect settings
+  //
+  
+  final static float BloomScale               = 0.26;
+  final static float LuminanceCoefficient     = 0.57;
+  final static float MiddleGrayCoefficient    = 0.10;
+  final static float WhiteCutoffCoefficient   = 0.31;
+
+  //
+  // Settings ranges
+  //
+
+  final static int  TextureBestLODRange = 4;
+  final static int  MaxLightsQtyRange   = 4;
+  final static int  ShadowDetailRange   = 4;
+  
+  //
+  // Shadow settings
+  //
+
+  final static Array StencilShadowSettings  = [
+      [ [], [CLASSIFICATOR_SHADOW] ],
+      [ [], ["INVENTORY_ITEM"]     ],
+      [ [], ["INVENTORY_ITEM"]     ],
+      [ [], ["INVENTORY_ITEM"]     ],
+      [ [], ["INVENTORY_ITEM"]     ] // CLASSIFICATOR_MAIN_GEOMETRY, 
+    ];
+
+  final static Array ShadowDetailValues     = [
+      [ 0, 16   ],
+      [ 1, 512  ],
+      [ 2, 512  ],
+      [ 3, 1024 ],
+      [ 4, 1024 ]
+    ];
+
+  final static Array MirrorDetailValues     = [
+      [ 128,  0.0 ],
+      [ 256,  0.0 ],
+      [ 512,  0.0 ],
+      [ 1024, 0.0 ]
+    ];
+
+  final static Array WaterDetailValues      = [
+      [ 128,  0.0 ],
+      [ 256,  0.0 ],
+      [ 512,  0.0 ],
+      [ 1024, 0.0 ]
+    ];
+
+  //
+  // Editor settings
+  //
+
+  static Array SpecObjectsVisibleState = [
+      [ CBaseSoundZone::SPEC_CLASS, false ],
+      [ CNavPoint::SPEC_CLASS,      false ],
+      [ CSoundEmitter::SPEC_CLASS,  false ],
+      [ CEffectEmitter::SPEC_CLASS, false ],
+      [ CTerrainPatch::SPEC_CLASS,  false ]
+    ];
+
+  static boolean IsSpecObjectsVisible(
+      String _ObjectsClass
+    )
+  {
+    Map VisibleState = new Map(SpecObjectsVisibleState);
+
+    if (VisibleState.find(_ObjectsClass))
+      return VisibleState.getValue();
+
+    return false;
+  }
+
+  //
+  // Current settings
+  //
+
+  boolean m_IsGameStarted          = false;
+  boolean m_IsInOnGameStartedCall  = false;
+
+  int     m_CurrentShadowDetail    = -1;
+  float   m_CurrentMirrorDetail    = -1.0;
+  float   m_CurrentWaterDetail     = -1.0;
+  float   m_CurrentTerrainDetail   = -1.0;
+
+  boolean m_LightTerrainPatches    = false;
+  boolean m_GenerateTerrainShadows = false; //false
+  Array   m_TerrainShadowsMasks    = [];
+
+  //
+  // Event handlers
+  //
+
+  void OnGameStarted()
+  {
+    m_IsInOnGameStartedCall = true;
+
+    m_IsGameStarted = true;
+    OnSettingsChanged();
+
+    m_IsInOnGameStartedCall = false;
+  }      
+
+  void OnSettingsChanged()
+  {
+    if (!m_IsGameStarted)
+      return;
+
+    // Update terrain detail settings
+    float TerrainDetail = GetTerrainDetail();
+    if (false == m_IsInOnGameStartedCall)
+    {
+      if (m_CurrentTerrainDetail != TerrainDetail)
+      {
+        Component Mission = (new #GameController()).GetLoadedMission();
+        if (null != Mission)
+        {
+          Component Terrain = Mission.GetMissionTerrain();
+          if (null != Terrain)
+            Terrain.OnTerrainDetailChanged();
+        }
+      }
+    }
+    m_CurrentTerrainDetail = TerrainDetail;
+
+    // Update mirror detail settings
+    float MirrorDetail = GetWaterDetail();      //$TMP
+    if (m_CurrentMirrorDetail != MirrorDetail)
+    {
+      int Index = iround(float(MirrorDetailValues.size() - 1) * MirrorDetail);
+      (new #MirrorRender()).InitRenderTargets(
+          MirrorDetailValues[Index][0], 
+          MirrorDetailValues[Index][1]
+        );
+
+      (new #MirrorRender()).InitContentMasks(
+          [
+            [[], [ CLASSIFICATOR_SHADOW ]]
+          ]
+        );
+
+      m_CurrentMirrorDetail = MirrorDetail;
+    }      
+
+    // Update water detail settings
+    float WaterDetail = GetWaterDetail();
+    if (m_CurrentWaterDetail != WaterDetail)
+    {
+      int Index = iround(float(WaterDetailValues.size() - 1) * WaterDetail); 
+      (new #WaterRender()).InitRenderTargets(
+          WaterDetailValues[Index][0], 
+          WaterDetailValues[Index][1]
+        );
+
+      (new #WaterRender()).InitContentMasks(
+          [
+            [[], [ CLASSIFICATOR_SHADOW ]]
+          ]
+        );
+
+      m_CurrentWaterDetail = WaterDetail;
+    }      
+
+    // Update shadow detail settings
+    int ShadowDetail = GetShadowDetail();
+    if (m_CurrentShadowDetail != ShadowDetail)
+    {
+      if (ShadowDetail >= ShadowDetailValues.size())
+        ShadowDetail = ShadowDetailValues.size() - 1;
+      
+//      (new #ShadowMapArray()).InitRenderTargets(
+//          ShadowDetailValues[ShadowDetail][0],
+//          ShadowDetailValues[ShadowDetail][1]
+//        );
+
+//      (new #ShadowMapArray()).InitContentMasks(
+//          [
+//            [[], []]
+//          ]
+//        );
+
+      (new #ShadowRender()).EnableShadowsRender(
+          ShadowDetail > 0
+        );
+
+      m_CurrentShadowDetail = ShadowDetail;
+    }      
+  }      
+}

@@ -1,0 +1,34 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CShadowsChange
+{
+  static void InitializeShadowsChange()
+  {
+    Cu_air_FW_190Model::LodForShadowChange          = 2.5f;
+    Cu_air_IL2MModel::LodForShadowChange            = 2.5f;
+
+    Cu_stat_pak40Model::LodForShadowChange          = 2.5f;
+    Cu_stat_zis3Model::LodForShadowChange           = 2.5f;
+    Cu_stat_NebelwerferModel::LodForShadowChange    = 2.5f;
+
+    Cu_veh_Hanomag_251CModel::LodForShadowChange    = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_M3A1HalfTrackModel::LodForShadowChange   = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+
+    Cu_veh_OpelBlitzModel::LodForShadowChange       = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_zis5Model::LodForShadowChange            = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+
+    Cu_veh_PzIVGModel::LodForShadowChange           = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_PzVI_MAINModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_t34_76_42Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
+    Cu_veh_t34_85_44Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
+    Cu_veh_SAU_Stug40Model::LodForShadowChange      = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_SU85Model::LodForShadowChange            = 3.0f;
+  }
+}

@@ -1,0 +1,392 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPassangerUnit
+  extends CUnit, CExtendUnit
+{
+  static final float Mass = 80.0;
+
+  static final int MT_Outside = 0;
+  static final int MT_Inside  = 1;
+  static final int MT_FromEye = 2;
+  static final int MT_None    = 3;
+
+  int m_Seat = 0;
+
+  // ==================================
+  // Construction
+  // ==================================
+  
+  CPassangerUnit()
+  {
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    // Call inherited function
+    CUnit::Construct(_Mission, _PropMap);
+
+    // Setup animator
+    SetupAnimator("Animator", CreateAnimator());
+    // Initialize linkers for inside and outside meshes
+    InitializeLinkers();
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CUnit::Initialize(_Mission, _PropMap);
+
+    Component Animator = GetAnimator();
+
+    Animator.Initialize(GetOutsideMesh());
+
+    if (GetInsideMesh() != null)
+      Animator.Initialize(GetInsideMesh());
+    if (GetFromEyeMesh() != null)
+      Animator.Initialize(GetFromEyeMesh());
+
+    Component GroupObject = GetGroupObject();
+
+    setPositionable(Animator, GroupObject);
+    setSlaveObject(Animator,  GroupObject);
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CUnit::SetProperties(_PropMap);
+  }  
+
+  void SetSeat(
+      int _Seat
+    )
+  {
+    m_Seat = _Seat;
+  }
+
+  float GetMass()
+  {
+    return Mass;
+  }
+
+  void SetupPassangerMesh(
+      String _OutsideModel,
+      String _InsideModel,
+      String _FromEyeModel
+    )
+  {
+    SetupExtendMesh(_OutsideModel, _InsideModel);
+
+    // Create from eye mesh
+    Component FromEyeMesh = new #PartObject();
+    loadFromScript(FromEyeMesh, _FromEyeModel);
+    addClassificator(FromEyeMesh, "FromEyeMesh");
+
+    // Eliminate view matrix for eye mesh
+    FromEyeMesh.EnableViewMatrix(false);
+    FromEyeMesh.SetLightsSelectionMode(LSM_LocalLights);
+    FromEyeMesh.SetLightsFlags("", LF_Local | LF_Context, true);
+    FromEyeMesh.SetupSelfLightsReference();
+
+    // Disable renders by default
+    FromEyeMesh.EnableRenderOnlyToCamera(getIdentificator(user), true);
+    FromEyeMesh.EnableShadowOnlyToCamera(getIdentificator(user), true);
+
+    FromEyeMesh.EnableRenderToCamera(getIdentificator(user),  false);
+    FromEyeMesh.EnableShadowToCamera(getIdentificator(user),  false);
+
+    // Set near layer for object
+    FromEyeMesh.SetRenderLayer(PRIMLAYER_NEAR);
+
+    // Register from eye mesh
+    RegisterObject("FromEyeMesh", FromEyeMesh);
+
+    // Set slave objects
+    m_GroupObject.SetSlaveObjects(
+        [ GetOutsideMesh(), GetInsideMesh(), FromEyeMesh ] 
+      );
+  }
+
+  Component GetFromEyeMesh()
+  {
+    return GetObject("FromEyeMesh");      
+  }
+
+  void BuildOnlyOutsideMesh()
+  {
+    // check meshes
+    boolean bHaveInsideMesh  = (null != GetInsideMesh());
+    boolean bHaveFromEyeMesh = (null != GetFromEyeMesh());
+    if (!bHaveInsideMesh && !bHaveFromEyeMesh)
+      return;
+
+    // Set slave object as outside mesh
+    m_GroupObject.SetSlaveObjects(
+        [ GetOutsideMesh() ] 
+      );
+
+    // Unregister meshes
+    if (bHaveInsideMesh)
+    {
+      UnregisterObject("InsideMesh");
+      UnregisterObject("CockpitInsideLink");
+    }
+    if (bHaveFromEyeMesh)
+    {
+      UnregisterObject("FromEyeMesh");
+      UnregisterObject("CockpitFromEyeLink");
+    }
+
+  }
+
+  // ======================================
+  // Animation controls
+  // ======================================
+
+  void LoadAnimations(
+      String _script
+    )
+  {
+    Component Mesh = GetInsideMesh();
+    if (Mesh != null)
+      Mesh.LoadAnimations(_script);
+    else
+      logError("Cant load animations. The model without mesh");
+
+    Mesh = GetOutsideMesh();
+    if (Mesh != null)
+      Mesh.LoadAnimations(_script);
+    else
+      logError("Cant load animations. The model without mesh");
+
+    Mesh = GetFromEyeMesh();
+    if (Mesh != null)
+      Mesh.LoadAnimations(_script);
+    else
+      logError("Cant load animations. The model without mesh");
+  }
+
+  void SwitchModels(
+      String _CameraId,
+      int    _Type
+    )
+  {
+    Component OutsideMesh = GetOutsideMesh();
+    OutsideMesh.EnableRenderToCamera(_CameraId, MT_Outside == _Type);
+    OutsideMesh.EnableShadowToCamera(_CameraId, MT_Outside == _Type);
+    
+    Component InsideMesh  = GetInsideMesh();
+    InsideMesh.EnableRenderToCamera(_CameraId, MT_Inside == _Type);
+    InsideMesh.EnableShadowToCamera(_CameraId, MT_Inside == _Type);
+
+    Component FromEyeMesh = GetFromEyeMesh();
+    FromEyeMesh.EnableRenderToCamera(_CameraId, MT_FromEye == _Type);
+    FromEyeMesh.EnableShadowToCamera(_CameraId, MT_FromEye == _Type);
+  }
+
+  void SetRenderToCamera(String _CameraId)
+  {
+    Component InsideMesh = GetInsideMesh();
+    if (null != InsideMesh)
+    {
+      InsideMesh.EnableRenderOnlyToCamera(_CameraId, true);
+      InsideMesh.EnableShadowOnlyToCamera(_CameraId, true);
+    }
+    
+    Component FromEyeMesh = GetFromEyeMesh();
+    if (null != FromEyeMesh)
+    {
+      FromEyeMesh.EnableRenderOnlyToCamera(_CameraId, true);
+      FromEyeMesh.EnableShadowOnlyToCamera(_CameraId, true);
+    }
+  }
+
+  void LinkToOutside(Component _Joint)
+  {
+    Component Linker = GetOutsideLink();
+    Component Mesh   = GetOutsideMesh();
+
+    if (Mesh != null)
+      setPosition(Mesh, getPosition(_Joint));
+    if (Linker != null)
+      setPositionable(Linker, _Joint);
+  }
+
+  void LinkToInside(Component _Joint)
+  {
+    Component Linker = GetInsideLink();
+    Component Mesh   = GetInsideMesh();
+
+    if (Mesh != null)
+      setPosition(Mesh, getPosition(_Joint));
+    if (Linker != null)
+      setPositionable(Linker, _Joint);
+  }
+
+  void LinkToFromEye(Component _Joint)
+  {
+    Component Linker = GetFromEyeLink();
+    Component Mesh   = GetFromEyeMesh();
+
+    if (Mesh != null)
+      setPosition(Mesh, getPosition(_Joint));
+    if (Linker != null)
+      setPositionable(Linker, _Joint);
+  }
+
+  void SetExtraSlaveObjects(
+      Array _Objects
+    )
+  {
+    Array Objects = [ GetOutsideMesh(), GetInsideMesh(), GetFromEyeMesh() ];
+    Objects.append(_Objects);
+
+    GetGroupObject().SetSlaveObjects(Objects);
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+
+  Component GetAnimator()
+  {
+    return GetObject("Animator");
+  }
+
+  Component CreateAnimator()
+  {
+    return null;
+  }
+
+  // ==================================
+  // Events
+  // ==================================
+
+  event void EnableAnimators(
+      boolean _IsEnabled
+    )
+  {
+    GetAnimator().EnableControl(_IsEnabled);
+  }
+
+  event void ShowAnimDebugInfo(
+      boolean _Show
+    )
+  {
+    GetAnimator().ShowDebugInfo(_Show);
+  }    
+
+  // ==================================
+  // Linkers
+  // ==================================
+
+  Component GetInsideLink()
+  {
+    return GetObject("CockpitInsideLink");
+  }
+
+  Component GetOutsideLink()
+  {
+    return GetObject("CockpitOutsideLink");
+  }
+
+  Component GetFromEyeLink()
+  {
+    return GetObject("CockpitFromEyeLink");
+  }
+
+  void InitializeLinkers()
+  {
+    Component CockpitInsideLink  = new #ObjectObjectLink();
+    Component CockpitOutsideLink = new #ObjectObjectLink();
+    Component CockpitFromEyeLink = new #ObjectObjectLink();
+
+    CockpitInsideLink.SetUpdateLayer(UPDATE_LAYER_FIGHT);
+    CockpitFromEyeLink.SetUpdateLayer(UPDATE_LAYER_FIGHT);
+
+    setSlaveObject(CockpitInsideLink,  GetInsideMesh());
+    setSlaveObject(CockpitOutsideLink, GetOutsideMesh());
+    setSlaveObject(CockpitFromEyeLink, GetFromEyeMesh());
+
+    RegisterObject("CockpitInsideLink",  CockpitInsideLink);
+    RegisterObject("CockpitOutsideLink", CockpitOutsideLink);
+    RegisterObject("CockpitFromEyeLink", CockpitFromEyeLink);
+  }
+}
+
+class CPilotUnit
+  extends CPassangerUnit
+{
+  // ==================================
+  // Services
+  // ==================================
+
+  Component CreateAnimator()
+  {
+    return new #StateAnimator<CPilotAnimator>();
+  }
+
+  // ==================================
+  // Events
+  // ==================================
+
+  event void SetThrottlePhase(
+      float _Phase
+    )
+  {
+    GetAnimator().SetThrottlePhase(_Phase);
+  }
+
+  event void SetRudderPhase(
+      float _Phase
+    )
+  {
+    GetAnimator().SetRudderPhase(_Phase);
+  }
+
+  event void SetBankTangagePhase(
+      float _Bank,
+      float _Tangage
+    )
+  {
+    GetAnimator().SetBankTangagePhase(_Bank, _Tangage);
+  }
+}
+
+class CGunnerUnit
+  extends CPassangerUnit
+{
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CPassangerUnit::Initialize(_Mission, _PropMap);
+    setPositionable(GetAnimator(), GetOutsideMesh());
+  }
+
+  // ==================================
+  // Services
+  // ==================================
+
+  Component CreateAnimator()
+  {    
+    if (m_Seat % 2 == 0)
+    return new #StateAnimator<CLeftGunnerAnimator>();
+    else
+    return new #StateAnimator<CRightGunnerAnimator>();
+  }
+}

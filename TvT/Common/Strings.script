@@ -1,0 +1,589 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCommonStrings
+{
+  final static Array CockpitColorCombo =  [     getLocalized("Common", "CockpitColor1"),
+                                                getLocalized("Common", "CockpitColor2")
+                                          ];
+
+  //$TMP
+  final static WString str_DefaultPlayerName     = getLocalized("Common", "str_DefaultPlayerName");
+  final static WString str_TooManyDefaultNames   = getLocalized("Common", "str_TooManyDefaultNames");
+
+  final static Array  BotNamesArray             = [
+                                                    getLocalized("Common", "BotName1"),
+                                                    getLocalized("Common", "BotName2"),
+                                                    getLocalized("Common", "BotName3"),
+                                                    getLocalized("Common", "BotName4"),
+                                                    getLocalized("Common", "BotName5"),
+                                                    getLocalized("Common", "BotName6"),
+                                                    getLocalized("Common", "BotName7"),
+                                                    getLocalized("Common", "BotName8"),
+                                                    getLocalized("Common", "BotName9"),
+                                                    getLocalized("Common", "BotName10"),
+                                                    getLocalized("Common", "BotName11"),
+                                                    getLocalized("Common", "BotName12"),
+                                                    getLocalized("Common", "BotName13"),
+                                                    getLocalized("Common", "BotName14"),
+                                                    getLocalized("Common", "BotName15"),
+                                                    getLocalized("Common", "BotName16")
+                                                  ];
+
+    //
+  // Player menu
+  //
+
+  final static WString Ltn1Rank = getLocalized("Common", "Rank0");
+
+  final static Array RankTable      =     [
+                                            [ getLocalized("Common", "Rank1_1"), getLocalized("Common", "Rank1_2"),
+                                              getLocalized("Common", "Rank1_3"), getLocalized("Common", "Rank1_4")  ],
+                                            [ getLocalized("Common", "Rank2_1"), getLocalized("Common", "Rank2_2"),
+                                              getLocalized("Common", "Rank2_3"), getLocalized("Common", "Rank2_4")  ],
+                                            [ getLocalized("Common", "Rank3_1"), getLocalized("Common", "Rank3_2"),
+                                              getLocalized("Common", "Rank3_3"), getLocalized("Common", "Rank3_4")  ],
+                                            [ getLocalized("Common", "Rank4_1"), getLocalized("Common", "Rank4_2"),
+                                              getLocalized("Common", "Rank4_3"), getLocalized("Common", "Rank4_4")  ]
+                                          ];
+
+  final static WString str_MaxPlayers            = getLocalized("Common", "str_MaxPlayers");
+  final static WString str_Players               = getLocalized("Common", "str_Players");
+  final static WString str_PlayerStatistics      = getLocalized("Common", "str_PlayerStatistics");
+  final static WString str_Rank                  = getLocalized("Common", "str_Rank");
+}
+
+class CCampaignNames
+{
+  final static WString str_CAMPAIGN1 = getLocalized("Campaigns", "str_CAMPAIGN1");
+  final static WString str_CAMPAIGN2 = getLocalized("Campaigns", "str_CAMPAIGN2");
+}
+
+class CWeaponNames
+{
+  // weapon names
+  final static WString str_T34_42Gun_ShortName              = getLocalized("Weapon", "str_T344276mmMainGun");
+  final static WString str_T34_42CalibreHE_ShortName        = getLocalized("Weapon", "str_T344276mmCalibreHE");
+  final static WString str_T34_42CalibreAP_ShortName        = getLocalized("Weapon", "str_T344276mmCalibreAP");
+  final static WString str_T34_42SubCalibreAP_ShortName     = getLocalized("Weapon", "str_T344276mmSubCalibreAP");
+  final static WString str_T34_42CoaxialDT_ShortName        = getLocalized("Weapon", "str_T3442CoaxialDT");
+  final static WString str_T34_42BowDT_ShortName            = getLocalized("Weapon", "str_T3442BowDT");
+  // T-34-85 mod.1944
+  final static WString str_T34_44Gun_ShortName              = getLocalized("Weapon", "str_T344485mmMainGun");
+  final static WString str_T34_44CalibreHE_ShortName        = getLocalized("Weapon", "str_T344485mmCalibreHE");
+  final static WString str_T34_44CalibreAP_ShortName        = getLocalized("Weapon", "str_T344485mmCalibreAP");
+  final static WString str_T34_44SubCalibreAP_ShortName     = getLocalized("Weapon", "str_T344485mmSubCalibreAP");
+  final static WString str_T34_44CoaxialDT_ShortName        = getLocalized("Weapon", "str_T3444CoaxialDT");
+  final static WString str_T34_44BowDT_ShortName            = getLocalized("Weapon", "str_T3444BowDT");
+  final static WString str_T34_44AmmoContainerName          = getLocalized("Weapon", "str_T3444AmmoContainer");
+  final static WString str_T34_44DT_ShortName               = getLocalized("Weapon", "str_T3444DT");
+  // Pz.6 mod.E
+  final static WString str_PzVIAusfEGun_ShortName           = getLocalized("Weapon", "str_T6E88mmMainGun");
+  final static WString str_PzVIAusfECalibreHE_ShortName     = getLocalized("Weapon", "str_T6E88mmCalibreHE");
+  final static WString str_PzVIAusfECalibreAP_ShortName     = getLocalized("Weapon", "str_T6E88mmCalibreAP");
+  final static WString str_PzVIAusfESubCalibreAP_ShortName  = getLocalized("Weapon", "str_T6E88mmSubCalibreAP");
+  final static WString str_PzVIAusfECoaxialMG_ShortName     = getLocalized("Weapon", "str_T6ECoaxialMG");
+  final static WString str_PzVIAusfEBowMG_ShortName         = getLocalized("Weapon", "str_T6EBowMG");
+  final static WString str_PzVIAusfEAmmoContainerName       = getLocalized("Weapon", "str_T6EAmmoContainer");
+  final static WString str_PzVIAusfEMG_ShortName            = getLocalized("Weapon", "str_T6EMG");
+}
+
+class CGameMessages
+{
+  final static WString str_msg_MissionEnd = getLocalized("Messages", "str_msg_MissionEnd");
+  final static WString str_msg_MissionEndSuccess = getLocalized("Messages", "str_msg_MissionEndSuccess");
+
+  //$TMP
+  final static WString str_msg_NormalSpeed = getLocalized("Common", "str_msg_NormalSpeed");
+  final static WString str_msg_Pause       = getLocalized("Common", "str_msg_Pause");
+
+  //multiplayer messages
+  final static WString msg_PlayerLeftGame      = getLocalized("Messages",   "str_PlayerLeftGame");
+  final static WString msg_PlayerJoinGame      = getLocalized("Messages",   "str_PlayerJoinGame");
+  final static WString msg_PlayerKilledBy      = getLocalized("Messages",   "str_PlayerKilledBy");
+
+  // Death messages
+  final static WString msg_DeathPak40      = getLocalized("Messages",   "str_DeathPak40");
+  final static WString msg_DeathZis3       = getLocalized("Messages",   "str_DeathZis3");
+  final static WString msg_DeathHanomag251 = getLocalized("Messages",   "str_DeathHanomag251");
+  final static WString msg_DeathM3A1APC    = getLocalized("Messages",   "str_DeathM3A1APC");
+  final static WString msg_DeathStuG40     = getLocalized("Messages",   "str_DeathStuG40");
+  final static WString msg_DeathSU85       = getLocalized("Messages",   "str_DeathSU85");
+  final static WString msg_DeathPzVIE      = getLocalized("Messages",   "str_DeathPzVIE");
+  final static WString msg_DeathPzIVG      = getLocalized("Messages",   "str_DeathPzIVG");
+  final static WString msg_DeathT348544    = getLocalized("Messages",   "str_DeathT348544");
+  final static WString msg_DeathT347642    = getLocalized("Messages",   "str_DeathT347642");
+  final static WString msg_DeathOpelBlitz  = getLocalized("Messages",   "str_DeathOpelBlitz");
+  final static WString msg_DeathZis5       = getLocalized("Messages",   "str_DeathZis5");
+
+  // Damage messages
+
+  final static WString  msg_TankDamageMsg    = getLocalized("Messages",   "str_TankDamageMsg");
+  final static WString msg_DriverEngineHit   = getLocalized("Messages",   "str_DriverEngineHit");
+  final static WString msg_DriverEngineDead  = getLocalized("Messages",   "str_DriverEngineDead");
+  final static WString msg_DriverEngineWorm  = getLocalized("Messages",   "str_DriverEngineWorm");
+  final static WString msg_DriverEngineHot   = getLocalized("Messages",   "str_DriverEngineHot");
+  final static WString msg_DriverEngineDead  = getLocalized("Messages",   "str_DriverEngineDead");
+  final static WString msg_LoaderHit         = getLocalized("Messages",   "str_LoaderHit");
+  final static WString msg_LoaderTurretDmg   = getLocalized("Messages",   "str_LoaderTurretDmg");
+  final static WString msg_DriverLeftHit     = getLocalized("Messages",   "str_DriverLeftHit");
+  final static WString msg_DriverLeftDead    = getLocalized("Messages",   "str_DriverLeftDead");
+  final static WString msg_DriverRightHit    = getLocalized("Messages",   "str_DriverRightHit");
+  final static WString msg_DriverRightDead   = getLocalized("Messages",   "str_DriverRightDead");
+  final static WString msg_DriverHit         = getLocalized("Messages",   "str_DriverHit");
+  final static WString msg_DriverKilled      = getLocalized("Messages",   "str_DriverKilled");
+  final static WString msg_GunnerHit         = getLocalized("Messages",   "str_GunnerHit");
+  final static WString msg_GunnerKilled      = getLocalized("Messages",   "str_GunnerKilled");
+
+
+  // Russian Commander messages
+  final static WString msg_SNoTarget               = getLocalized("Messages", "str_SNoTarget");
+  final static WString msg_STargetOnFront          = getLocalized("Messages", "str_STargetOnFront");
+  final static WString msg_STargetOnBack           = getLocalized("Messages", "str_STargetOnBack");
+  final static WString msg_STargetOnLeft           = getLocalized("Messages", "str_STargetOnLeft");
+  final static WString msg_STargetOnRight          = getLocalized("Messages", "str_STargetOnRight");
+  final static WString msg_TurretToZeroMsg         = getLocalized("Messages", "str_TurretToZeroMsg");
+  final static WString msg_TargetLockedMsg01       = getLocalized("Messages", "str_TargetLockedMsg01");
+  final static WString msg_TargetLockedMsg02       = getLocalized("Messages", "str_TargetLockedMsg02");
+  final static WString msg_AmmoLoadMsg             = getLocalized("Messages", "str_AmmoLoadMsg");
+  final static WString msg_AmmoLoadedMsg           = getLocalized("Messages", "str_AmmoLoadedMsg");
+
+  final static WString msg_DriverSpeedUpMsg        = getLocalized("Messages", "str_DriverSpeedUpMsg");
+  final static WString msg_DriverSpeedDownMsg      = getLocalized("Messages", "str_DriverSpeedDownMsg");
+  final static WString msg_DriverSpeedBackMsg      = getLocalized("Messages", "str_DriverSpeedBackMsg");
+  final static WString msg_DriverStopMsg           = getLocalized("Messages", "str_DriverStopMsg");
+  final static WString msg_DriverRightMsg          = getLocalized("Messages", "str_DriverRightMsg");
+  final static WString msg_DriverLeftMsg           = getLocalized("Messages", "str_DriverLeftMsg");
+  final static WString msg_DriverSlowForwardMsg    = getLocalized("Messages", "str_DriverSlowForwardMsg");
+  final static WString msg_DriverShortStopMsg      = getLocalized("Messages", "str_DriverShortStopMsg");
+
+  final static WString msg_SAngle10                = getLocalized("Messages", "str_SAngle10");
+  final static WString msg_SAngle20                = getLocalized("Messages", "str_SAngle20");
+  final static WString msg_SAngle30                = getLocalized("Messages", "str_SAngle30");
+  final static WString msg_SAngle40                = getLocalized("Messages", "str_SAngle40");
+  final static WString msg_SAngle50                = getLocalized("Messages", "str_SAngle50");
+  final static WString msg_SAngle60                = getLocalized("Messages", "str_SAngle60");
+  final static WString msg_SAngle70                = getLocalized("Messages", "str_SAngle70");
+  final static WString msg_SAngle80                = getLocalized("Messages", "str_SAngle80");
+  final static WString msg_SAngle90                = getLocalized("Messages", "str_SAngle90");
+  final static WString msg_SAngle100               = getLocalized("Messages", "str_SAngle100");
+  final static WString msg_SAngle110               = getLocalized("Messages", "str_SAngle110");
+  final static WString msg_SAngle120               = getLocalized("Messages", "str_SAngle120");
+  final static WString msg_SAngle130               = getLocalized("Messages", "str_SAngle130");
+  final static WString msg_SAngle140               = getLocalized("Messages", "str_SAngle140");
+  final static WString msg_SAngle150               = getLocalized("Messages", "str_SAngle150");
+  final static WString msg_SAngle160               = getLocalized("Messages", "str_SAngle160");
+  final static WString msg_SAngle170               = getLocalized("Messages", "str_SAngle170");
+
+  final static WString msg_GAngle0                 = getLocalized("Messages", "str_GAngle0");
+  final static WString msg_GAngle10                = getLocalized("Messages", "str_GAngle10");
+  final static WString msg_GAngle20                = getLocalized("Messages", "str_GAngle20");
+  final static WString msg_GAngle30                = getLocalized("Messages", "str_GAngle30");
+  final static WString msg_GAngle40                = getLocalized("Messages", "str_GAngle40");
+  final static WString msg_GAngle50                = getLocalized("Messages", "str_GAngle50");
+  final static WString msg_GAngle60                = getLocalized("Messages", "str_GAngle60");
+  final static WString msg_GAngle70                = getLocalized("Messages", "str_GAngle70");
+  final static WString msg_GAngle80                = getLocalized("Messages", "str_GAngle80");
+  final static WString msg_GAngle90                = getLocalized("Messages", "str_GAngle90");
+  final static WString msg_GAngle100               = getLocalized("Messages", "str_GAngle100");
+  final static WString msg_GAngle110               = getLocalized("Messages", "str_GAngle110");
+  final static WString msg_GAngle120               = getLocalized("Messages", "str_GAngle120");
+  final static WString msg_GAngle130               = getLocalized("Messages", "str_GAngle130");
+  final static WString msg_GAngle140               = getLocalized("Messages", "str_GAngle140");
+  final static WString msg_GAngle150               = getLocalized("Messages", "str_GAngle150");
+  final static WString msg_GAngle160               = getLocalized("Messages", "str_GAngle160");
+  final static WString msg_GAngle170               = getLocalized("Messages", "str_GAngle170");
+  final static WString msg_GAngle180               = getLocalized("Messages", "str_GAngle180");
+  final static WString msg_GAngle190               = getLocalized("Messages", "str_GAngle190");
+  final static WString msg_GAngle200               = getLocalized("Messages", "str_GAngle200");
+  final static WString msg_GAngle210               = getLocalized("Messages", "str_GAngle210");
+  final static WString msg_GAngle220               = getLocalized("Messages", "str_GAngle220");
+  final static WString msg_GAngle230               = getLocalized("Messages", "str_GAngle230");
+  final static WString msg_GAngle240               = getLocalized("Messages", "str_GAngle240");
+  final static WString msg_GAngle250               = getLocalized("Messages", "str_GAngle250");
+  final static WString msg_GAngle260               = getLocalized("Messages", "str_GAngle260");
+  final static WString msg_GAngle270               = getLocalized("Messages", "str_GAngle270");
+  final static WString msg_GAngle280               = getLocalized("Messages", "str_GAngle280");
+  final static WString msg_GAngle290               = getLocalized("Messages", "str_GAngle290");
+  final static WString msg_GAngle300               = getLocalized("Messages", "str_GAngle300");
+  final static WString msg_GAngle310               = getLocalized("Messages", "str_GAngle310");
+  final static WString msg_GAngle320               = getLocalized("Messages", "str_GAngle320");
+  final static WString msg_GAngle330               = getLocalized("Messages", "str_GAngle330");
+  final static WString msg_GAngle340               = getLocalized("Messages", "str_GAngle340");
+  final static WString msg_GAngle350               = getLocalized("Messages", "str_GAngle350");
+
+  final static WString msg_NoTarget               = getLocalized("Messages", "str_NoTarget");
+  final static WString msg_TargetOnFront          = getLocalized("Messages", "str_TargetOnFront");
+  final static WString msg_TargetOnBack           = getLocalized("Messages", "str_TargetOnBack");
+  final static WString msg_TargetOnLeft           = getLocalized("Messages", "str_TargetOnLeft");
+  final static WString msg_TargetOnRight          = getLocalized("Messages", "str_TargetOnRight");
+
+  final static WString msg_TargetIsHuman          = getLocalized("Messages", "str_TargetIsHuman");
+  final static WString msg_TargetIsLightTank      = getLocalized("Messages", "str_TargetIsLightTank");
+  final static WString msg_TargetIsMediumTank     = getLocalized("Messages", "str_TargetIsMediumTank");
+  final static WString msg_TargetIsT34Tank        = getLocalized("Messages", "str_TargetIsT34Tank");
+  final static WString msg_TargetIsHeavyTank      = getLocalized("Messages", "str_TargetIsHeavyTank");
+  final static WString msg_TargetIsAPC            = getLocalized("Messages", "str_TargetIsAPC");
+  final static WString msg_TargetIsSAU            = getLocalized("Messages", "str_TargetIsSAU");
+  final static WString msg_TargetIsCannon         = getLocalized("Messages", "str_TargetIsCannon");
+  final static WString msg_TargetIsDot            = getLocalized("Messages", "str_TargetIsDot");
+  final static WString msg_TargetIsTruck          = getLocalized("Messages", "str_TargetIsTruck");
+
+  final static WString msg_WeaponShellHE          = getLocalized("Messages", "str_WeaponShellHE");
+  final static WString msg_WeaponShellAP          = getLocalized("Messages", "str_WeaponShellAP");
+  final static WString msg_WeaponShellSubAP       = getLocalized("Messages", "str_WeaponShellSubAP");
+  final static WString msg_WeaponShellMachinegun  = getLocalized("Messages", "str_WeaponShellMachinegun");
+  
+  final static WString msg_ActiveHandbrake        = getLocalized("Messages", "str_ActiveHandbrake");
+
+  final static WString msg_Distance               = getLocalized("Messages", "str_Distance");
+  final static WString msg_Order                  = getLocalized("Messages", "str_Order");
+
+  final static WString msg_Distance100            = getLocalized("Messages", "str_Distance100");
+  final static WString msg_Distance200            = getLocalized("Messages", "str_Distance200");
+  final static WString msg_Distance300            = getLocalized("Messages", "str_Distance300");
+  final static WString msg_Distance400            = getLocalized("Messages", "str_Distance400");
+  final static WString msg_Distance500            = getLocalized("Messages", "str_Distance500");
+  final static WString msg_Distance600            = getLocalized("Messages", "str_Distance600");
+  final static WString msg_Distance700            = getLocalized("Messages", "str_Distance700");
+  final static WString msg_Distance800            = getLocalized("Messages", "str_Distance800");
+  final static WString msg_Distance900            = getLocalized("Messages", "str_Distance900");
+  final static WString msg_Distance1000           = getLocalized("Messages", "str_Distance1000");
+  final static WString msg_Distance1100           = getLocalized("Messages", "str_Distance1100");
+  final static WString msg_Distance1200           = getLocalized("Messages", "str_Distance1200");
+  final static WString msg_Distance1300           = getLocalized("Messages", "str_Distance1300");
+  final static WString msg_Distance1400           = getLocalized("Messages", "str_Distance1400");
+  final static WString msg_Distance1500           = getLocalized("Messages", "str_Distance1500");
+  final static WString msg_Distance1600           = getLocalized("Messages", "str_Distance1600");
+
+  final static WString msg_FriendlyFireWarning    = getLocalized("Messages", "str_FriendlyFireWarning");
+  final static WString msg_FriendlyFireFailed     = getLocalized("Messages", "str_FriendlyFireFailed");
+  final static WString msg_GremanReinfWarning     = getLocalized("Messages", "str_GremanReinfWarning");
+  final static WString msg_RusAdvanceWarning      = getLocalized("Messages", "str_RusAdvanceWarning");
+}
+
+class CActionNames
+{
+  //  $TODO: Change these strings to real action names!
+
+  // mouse axis control
+  final static WString str_ROTATE_LR_AXIS_DELTA        = getLocalized("Action", "str_ROTATE_LR_AXIS_DELTA");  //  Поворот влево/вправо, ось, мышь
+  final static WString str_ROTATE_UD_AXIS_DELTA        = getLocalized("Action", "str_ROTATE_UD_AXIS_DELTA");     //  Поворот вверх/вниз, ось, мышь
+//  final static WString str_MOVE_UD_AXIS_DELTA          = "CP Control axis";  //  Сдвиг вверх/вниз, ось, мышь
+//  final static WString str_MOVE_LR_AXIS_DELTA          = "Rudder pedals";    //  Сдвиг влево/вправо, ось, мышь
+
+  // joystick axis
+  final static WString str_ROTATE_LR_AXIS_ABS          = getLocalized("Action", "str_ROTATE_LR_AXIS_ABS");      //  Поворот влево/вправо, ось, джойстик
+  final static WString str_MOVE_FB_AXIS_ABS            = getLocalized("Action", "str_MOVE_FB_AXIS_ABS");         //  Сдвиг вперед/назад, ось, джойстик
+  final static WString str_MOVE_LR_AXIS_ABS            = getLocalized("Action", "str_MOVE_LR_AXIS_ABS");             //  Сдвиг влево/вправо, ось, джойстик
+//  final static WString str_MOVE_UD_AXIS_ABS            = "Move ud axis abs";           //  Сдвиг вверх/вниз, ось, джойстик
+
+  // helicopter manual control                                              //  Дальше кнопки если не указано иное.
+  final static WString str_FORWARD                     = getLocalized("Action", "str_FORWARD");     //  Вперед
+  final static WString str_BACKWARD                    = getLocalized("Action", "str_BACKWARD");    //  Назад
+  final static WString str_LEFT                        = getLocalized("Action", "str_LEFT");      //  Поворот налево
+  final static WString str_RIGHT                       = getLocalized("Action", "str_RIGHT");     //  Поворот направо
+  final static WString str_UP                          = getLocalized("Action", "str_UP");       //  Вверх
+  final static WString str_DOWN                        = getLocalized("Action", "str_DOWN");       //  Вниз
+  final static WString str_STRAFE_LEFT                 = getLocalized("Action", "str_STRAFE_LEFT");      //  Стрейф влево
+  final static WString str_STRAFE_RIGHT                = getLocalized("Action", "str_STRAFE_RIGHT");     //  Стрейф вправо
+  final static WString str_BLADES_SPEED                = getLocalized("Action", "str_BLADES_SPEED");     //  Скорость винтов
+  final static WString str_INCSPEED                    = getLocalized("Action", "str_INCSPEED");      //  Увел. скорость
+  final static WString str_DECSPEED                    = getLocalized("Action", "str_DECSPEED");      //  Уменьш. скорость
+  final static WString str_MAXSPEED                    = getLocalized("Action", "str_MAXSPEED");    //  Установить макс. скорость
+  final static WString str_STOP                        = getLocalized("Action", "str_STOP");    //  Остановитьс
+
+  // target lock control
+  final static WString str_NEXT_TARGET                 = getLocalized("Action", "str_NEXT_TARGET");    // См. в кавычках
+  final static WString str_NEAREST_TARGET              = getLocalized("Action", "str_NEAREST_TARGET"); // См. в кавычках
+  final static WString str_NEXT_FRIEND                 = getLocalized("Action", "str_NEXT_FRIEND");   // См. в кавычках
+  final static WString str_NEAREST_FRIEND              = getLocalized("Action", "str_NEAREST_FRIEND");  // См. в кавычках. "target" обрезаетс
+
+  // cockpit control
+  final static WString str_NEXT_NAVPOINT               = getLocalized("Action", "str_NEXT_NAVPOINT");        // См. в кавычках
+  final static WString str_MAP_ZOOM                    = getLocalized("Action", "str_MAP_ZOOM");          // См. в кавычках
+  final static WString str_MAP_ZOOM_IN                 = getLocalized("Action", "str_MAP_ZOOM_IN");          // См. в кавычках
+  final static WString str_MAP_ZOOM_OUT                = getLocalized("Action", "str_MAP_ZOOM_OUT");         // См. в кавычках
+  final static WString str_CHANGE_TARGET_CAMERA        = getLocalized("Action", "str_CHANGE_TARGET_CAMERA"); // См. в кавычках. "camera" обрезаетс
+  final static WString str_OUTMAP_MODE                 = getLocalized("Action", "str_OUTMAP_MODE");          // См. в кавычках
+  final static WString str_OUTRADAR_MODE               = getLocalized("Action", "str_OUTRADAR_MODE");        // См. в кавычках
+  final static WString str_CHANGE_MFD1_VIEW            = getLocalized("Action", "str_CHANGE_MFD1_VIEW"); // См. в кавычках. "change" обрезаетс
+  final static WString str_CHANGE_MFD2_VIEW            = getLocalized("Action", "str_CHANGE_MFD2_VIEW");// См. в кавычках. "change" обрезаетс
+
+  final static WString str_TOGGLE_RADAR_FILTER_HIGH    = getLocalized("Action", "str_TOGGLE_RADAR_FILTER_HIGH");    // См. в кавычках (new Krant's stuff)
+  final static WString str_TOGGLE_RADAR_FILTER_MEDIUM  = getLocalized("Action", "str_TOGGLE_RADAR_FILTER_MEDIUM");  // См. в кавычках (new Krant's stuff)
+  final static WString str_TOGGLE_RADAR_FILTER_LOW     = getLocalized("Action", "str_TOGGLE_RADAR_FILTER_LOW");     // См. в кавычках (new Krant's stuff)
+  final static WString str_TRIM_ENABLE                 = getLocalized("Action", "str_TRIM_ENABLE");
+  final static WString str_TRIM_DISABLE                = getLocalized("Action", "str_TRIM_DISABLE");
+
+  // special sim controls
+  final static WString str_LOCK_HEIGHT                 = getLocalized("Action", "str_LOCK_HEIGHT");        // См. в кавычках
+  final static WString str_ENGINE_CONTROL              = getLocalized("Action", "str_ENGINE_CONTROL");    // См. в кавычках
+  final static WString str_GEAR_CONTROL                = getLocalized("Action", "str_GEAR_CONTROL");         // Шасси вверх/вниз
+  final static WString str_EJECT_PLAYER                = getLocalized("Action", "str_EJECT_PLAYER");       // См. в кавычках
+
+  final static WString str_SPEED                       = getLocalized("Action", "str_SPEED");     // Ось для изм. скорости (троттл)
+
+  final static WString str_COLLECTIVE_PITCH_UP         = getLocalized("Action", "str_COLLECTIVE_PITCH_UP");   // [NUMPAD INS]
+  final static WString str_COLLECTIVE_PITCH_DOWN       = getLocalized("Action", "str_COLLECTIVE_PITCH_DOWN");   // [NUMPAD DEL]
+
+  // weapon / fire control
+  final static WString str_FIRE_PRIMARY                = getLocalized("Action", "str_FIRE_PRIMARY"); // См. в кавычках
+  final static WString str_FIRE_SECONDARY              = getLocalized("Action", "str_FIRE_SECONDARY");       // См. в кавычках
+  final static WString str_PREV_WEAPON                 = getLocalized("Action", "str_PREV_WEAPON");          // Выбрать пред. оружие
+  final static WString str_NEXT_WEAPON                 = getLocalized("Action", "str_NEXT_WEAPON");         // Выбрать след. оружие
+  final static WString str_CHANGE_WEAPON               = getLocalized("Action", "str_CHANGE_WEAPON");       // Ось для выбора оружия (например, мышиное колесо)
+  final static WString str_DROP_FLARES                 = getLocalized("Action", "str_DROP_FLARES");    // См. в кавычках
+  final static WString str_ACTIVATE_EXTWEAPON          = getLocalized("Action", "str_ACTIVATE_EXTWEAPON");// См. в кавычках
+  final static WString str_CHANGE_FIRE_MODE            = getLocalized("Action", "str_CHANGE_FIRE_MODE");    // См. в кавычках
+  final static WString str_ENABLE_LIGHT                = getLocalized("Action", "str_ENABLE_LIGHT");
+  final static WString str_OPEN_HATCH                  = getLocalized("Action", "str_OPEN_HATCH");
+
+  final static WString str_SET_VIEW_BINOCULAR          = getLocalized("Action", "str_SET_VIEW_BINOCULAR");
+  final static WString str_SET_VIEW_PERSON1RD          = getLocalized("Action", "str_SET_VIEW_PERSON1RD");
+  final static WString str_CENTER_MAP                  = getLocalized("Action", "str_CENTER_MAP");
+
+  // player camera manual control
+  final static WString str_POV_ROTATE_AXIS             = getLocalized("Action", "str_POV_ROTATE_AXIS");         // Управление видом. Штуковина (POV) на джойстике.
+  final static WString str_POV_SIDE_L                  = getLocalized("Action", "str_POV_SIDE_L");      // Управление видом, кнопки на дополнительной (Num Lock) клавиатуре.
+  final static WString str_POV_SIDE_LT                 = getLocalized("Action", "str_POV_SIDE_LT");
+  final static WString str_POV_SIDE_LB                 = getLocalized("Action", "str_POV_SIDE_LB");
+  final static WString str_POV_SIDE_R                  = getLocalized("Action", "str_POV_SIDE_R");
+  final static WString str_POV_SIDE_RT                 = getLocalized("Action", "str_POV_SIDE_RT");
+  final static WString str_POV_SIDE_RB                 = getLocalized("Action", "str_POV_SIDE_RB");
+  final static WString str_POV_SIDE_T                  = getLocalized("Action", "str_POV_SIDE_T");
+  final static WString str_POV_SIDE_B                  = getLocalized("Action", "str_POV_SIDE_B");
+  final static WString str_POV_SIDE_NEAR               = getLocalized("Action", "str_POV_SIDE_NEAR");
+}
+
+class CDeviceNames
+{
+  final static Array DeviceNames =
+  [
+    getLocalized("Device", "Device1"),
+    getLocalized("Device", "Device2"),
+    getLocalized("Device", "Device3")
+  ];
+
+  //  $TODO: Review these strings
+  final static Array DeviceObjectNames =
+  [
+      //  Mouse
+      [
+        getLocalized("Device", "Mouse001"),
+        getLocalized("Device", "Mouse002"),
+        getLocalized("Device", "Mouse003"),
+        getLocalized("Device", "Mouse004"),
+        getLocalized("Device", "Mouse005"),
+        getLocalized("Device", "Mouse006"),
+        getLocalized("Device", "Mouse007"),
+        getLocalized("Device", "Mouse008"),
+        getLocalized("Device", "Mouse009"),
+        getLocalized("Device", "Mouse010"),
+        getLocalized("Device", "Mouse011")
+      ],
+
+      //  Keyboard
+      [
+        getLocalized("Device", "Kbd001"),
+        getLocalized("Device", "Kbd002"),
+        getLocalized("Device", "Kbd003"),
+        getLocalized("Device", "Kbd004"),
+        getLocalized("Device", "Kbd005"),
+        getLocalized("Device", "Kbd006"),
+        getLocalized("Device", "Kbd007"),
+        getLocalized("Device", "Kbd008"),
+        getLocalized("Device", "Kbd009"),
+        getLocalized("Device", "Kbd010"),
+        getLocalized("Device", "Kbd011"),
+        getLocalized("Device", "Kbd012"),           /* - on main keyboard */
+        getLocalized("Device", "Kbd013"),
+        getLocalized("Device", "Kbd014"),           /* backspace */
+        getLocalized("Device", "Kbd015"),
+        getLocalized("Device", "Kbd016"),
+        getLocalized("Device", "Kbd017"),
+        getLocalized("Device", "Kbd018"),
+        getLocalized("Device", "Kbd019"),
+        getLocalized("Device", "Kbd020"),
+        getLocalized("Device", "Kbd021"),
+        getLocalized("Device", "Kbd022"),
+        getLocalized("Device", "Kbd023"),
+        getLocalized("Device", "Kbd024"),
+        getLocalized("Device", "Kbd025"),
+        getLocalized("Device", "Kbd026"),
+        getLocalized("Device", "Kbd027"),
+        getLocalized("Device", "Kbd028"),           /* Enter on main keyboard */
+        getLocalized("Device", "Kbd029"),
+        getLocalized("Device", "Kbd030"),
+        getLocalized("Device", "Kbd031"),
+        getLocalized("Device", "Kbd032"),
+        getLocalized("Device", "Kbd033"),
+        getLocalized("Device", "Kbd034"),
+        getLocalized("Device", "Kbd035"),
+        getLocalized("Device", "Kbd036"),
+        getLocalized("Device", "Kbd037"),
+        getLocalized("Device", "Kbd038"),
+        getLocalized("Device", "Kbd039"),
+        getLocalized("Device", "Kbd040"),
+        getLocalized("Device", "Kbd041"),           /* accent grave */
+        getLocalized("Device", "Kbd042"),
+        getLocalized("Device", "Kbd043"),
+        getLocalized("Device", "Kbd044"),
+        getLocalized("Device", "Kbd045"),
+        getLocalized("Device", "Kbd046"),
+        getLocalized("Device", "Kbd047"),
+        getLocalized("Device", "Kbd048"),
+        getLocalized("Device", "Kbd049"),
+        getLocalized("Device", "Kbd050"),
+        getLocalized("Device", "Kbd051"),
+        getLocalized("Device", "Kbd052"),           /* . on main keyboard */
+        getLocalized("Device", "Kbd053"),           /* / on main keyboard */
+        getLocalized("Device", "Kbd054"),
+        getLocalized("Device", "Kbd055"),           /* * on numeric keypad */
+        getLocalized("Device", "Kbd056"),           /* left Alt */
+        getLocalized("Device", "Kbd057"),
+        getLocalized("Device", "Kbd058"),
+        getLocalized("Device", "Kbd059"),
+        getLocalized("Device", "Kbd060"),
+        getLocalized("Device", "Kbd061"),
+        getLocalized("Device", "Kbd062"),
+        getLocalized("Device", "Kbd063"),
+        getLocalized("Device", "Kbd064"),
+        getLocalized("Device", "Kbd065"),
+        getLocalized("Device", "Kbd066"),
+        getLocalized("Device", "Kbd067"),
+        getLocalized("Device", "Kbd068"),
+        getLocalized("Device", "Kbd069"),
+        getLocalized("Device", "Kbd070"),           /* Scroll Lock */
+        getLocalized("Device", "Kbd071"),
+        getLocalized("Device", "Kbd072"),
+        getLocalized("Device", "Kbd073"),
+        getLocalized("Device", "Kbd074"),           /* - on numeric keypad */
+        getLocalized("Device", "Kbd075"),
+        getLocalized("Device", "Kbd076"),
+        getLocalized("Device", "Kbd077"),
+        getLocalized("Device", "Kbd078"),           /* + on numeric keypad */
+        getLocalized("Device", "Kbd079"),
+        getLocalized("Device", "Kbd080"),
+        getLocalized("Device", "Kbd081"),
+        getLocalized("Device", "Kbd082"),
+        getLocalized("Device", "Kbd083"),           /* . on numeric keypad */
+        getLocalized("Device", "Kbd084"),           /* <> or \| on RT 102-key keyboard (Non-U.S.) */
+        getLocalized("Device", "Kbd085"),
+        getLocalized("Device", "Kbd086"),
+        getLocalized("Device", "Kbd087"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd088"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd089"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd090"),           /* (Japanese keyboard)            */
+        getLocalized("Device", "Kbd091"),           /* /? on Brazilian keyboard */
+        getLocalized("Device", "Kbd092"),           /* (Japanese keyboard)            */
+        getLocalized("Device", "Kbd093"),           /* (Japanese keyboard)            */
+        getLocalized("Device", "Kbd094"),           /* (Japanese keyboard)            */
+        getLocalized("Device", "Kbd095"),           /* Numpad . on Brazilian keyboard */
+        getLocalized("Device", "Kbd096"),           /* = on numeric keypad (NEC PC98) */
+        getLocalized("Device", "Kbd097"),           /* Previous Track (DIK_CIRCUMFLEX on Japanese keyboard) */
+        getLocalized("Device", "Kbd098"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd099"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd100"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd101"),           /* (Japanese keyboard)            */
+        getLocalized("Device", "Kbd102"),           /*                     (NEC PC98) */
+        getLocalized("Device", "Kbd103"),           /*                     (Japan AX) */
+        getLocalized("Device", "Kbd104"),           /*                        (J3100) */
+        getLocalized("Device", "Kbd105"),           /* Next Track */
+        getLocalized("Device", "Kbd106"),           /* Enter on numeric keypad */
+        getLocalized("Device", "Kbd107"),
+        getLocalized("Device", "Kbd108"),           /* Mute */
+        getLocalized("Device", "Kbd109"),           /* Calculator */
+        getLocalized("Device", "Kbd110"),           /* Play / Pause */
+        getLocalized("Device", "Kbd111"),           /* Media Stop */
+        getLocalized("Device", "Kbd112"),           /* Volume - */
+        getLocalized("Device", "Kbd113"),           /* Volume + */
+        getLocalized("Device", "Kbd114"),           /* Web home */
+        getLocalized("Device", "Kbd115"),           /* , on numeric keypad (NEC PC98) */
+        getLocalized("Device", "Kbd116"),           /* / on numeric keypad */
+        getLocalized("Device", "Kbd117"),
+        getLocalized("Device", "Kbd118"),           /* right Alt */
+        getLocalized("Device", "Kbd119"),           /* Pause */
+        getLocalized("Device", "Kbd120"),           /* Home on arrow keypad */
+        getLocalized("Device", "Kbd121"),           /* UpArrow on arrow keypad */
+        getLocalized("Device", "Kbd122"),           /* PgUp on arrow keypad */
+        getLocalized("Device", "Kbd123"),           /* LeftArrow on arrow keypad */
+        getLocalized("Device", "Kbd124"),           /* RightArrow on arrow keypad */
+        getLocalized("Device", "Kbd125"),           /* End on arrow keypad */
+        getLocalized("Device", "Kbd126"),           /* DownArrow on arrow keypad */
+        getLocalized("Device", "Kbd127"),           /* PgDn on arrow keypad */
+        getLocalized("Device", "Kbd128"),           /* Insert on arrow keypad */
+        getLocalized("Device", "Kbd129"),           /* Delete on arrow keypad */
+        getLocalized("Device", "Kbd130"),           /* Left Windows key */
+        getLocalized("Device", "Kbd131"),           /* Right Windows key */
+        getLocalized("Device", "Kbd132"),           /* AppMenu key */
+        getLocalized("Device", "Kbd133"),           /* System Power */
+        getLocalized("Device", "Kbd134"),           /* System Sleep */
+        getLocalized("Device", "Kbd135"),           /* System Wake */
+        getLocalized("Device", "Kbd136"),           /* Web Search */
+        getLocalized("Device", "Kbd137"),           /* Web Favorites */
+        getLocalized("Device", "Kbd138"),           /* Web Refresh */
+        getLocalized("Device", "Kbd139"),           /* Web Stop */
+        getLocalized("Device", "Kbd140"),           /* Web Forward */
+        getLocalized("Device", "Kbd141"),           /* Web Back */
+        getLocalized("Device", "Kbd142"),           /* My Computer */
+        getLocalized("Device", "Kbd143"),           /* Mail */
+        getLocalized("Device", "Kbd144")           /* Media Select */
+      ],
+
+      //  Joystick
+      [
+        getLocalized("Device", "Joy001"),       //  Position axes
+        getLocalized("Device", "Joy002"),
+        getLocalized("Device", "Joy003"),
+        getLocalized("Device", "Joy004"),       //  Rotation axes (aka Rudders)
+        getLocalized("Device", "Joy005"),
+        getLocalized("Device", "Joy006"),
+        getLocalized("Device", "Joy007"),
+        getLocalized("Device", "Joy008"),
+        getLocalized("Device", "Joy009"),
+        getLocalized("Device", "Joy010"),
+        getLocalized("Device", "Joy011"),
+        getLocalized("Device", "Joy012"),
+        getLocalized("Device", "Joy013"),
+        getLocalized("Device", "Joy014"),
+        getLocalized("Device", "Joy015"),
+        getLocalized("Device", "Joy016"),
+        getLocalized("Device", "Joy017"),
+        getLocalized("Device", "Joy018"),
+        getLocalized("Device", "Joy019"),
+        getLocalized("Device", "Joy020"),
+        getLocalized("Device", "Joy021"),
+        getLocalized("Device", "Joy022"),
+        getLocalized("Device", "Joy023"),
+        getLocalized("Device", "Joy024"),
+        getLocalized("Device", "Joy025"),
+        getLocalized("Device", "Joy026"),
+        getLocalized("Device", "Joy027"),
+        getLocalized("Device", "Joy028"),
+        getLocalized("Device", "Joy029"),
+        getLocalized("Device", "Joy030"),
+        getLocalized("Device", "Joy031"),
+        getLocalized("Device", "Joy032"),
+        getLocalized("Device", "Joy033"),
+        getLocalized("Device", "Joy034"),
+        getLocalized("Device", "Joy035"),
+        getLocalized("Device", "Joy036"),
+        getLocalized("Device", "Joy037"),
+        getLocalized("Device", "Joy038"),
+        getLocalized("Device", "Joy039"),
+        getLocalized("Device", "Joy040"),
+        getLocalized("Device", "Joy041"),
+        getLocalized("Device", "Joy042"),
+        getLocalized("Device", "Joy043"),
+        getLocalized("Device", "Joy044")
+      ]
+    ];
+
+}

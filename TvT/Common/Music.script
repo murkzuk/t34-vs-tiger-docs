@@ -1,0 +1,102 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMusicController
+{
+  final static String MENU_Main = "Main";
+  final static String MENU_Credits = "Credits";
+  final static String MENU_RusMain = "RusMain";
+  final static String MENU_GerMain = "GerMain";
+  final static String MENU_RusVict = "RusVict";
+  final static String MENU_RusDef = "RusDef";
+  final static String MENU_GerVict = "GerVict";
+  final static String MENU_GerDef = "GerDef";
+
+  final static String MENU_Null = "";
+
+  String  CurrentMusicState     = "";
+
+  boolean MenuMusicLoaded       = false;
+  boolean MissionMusicLoaded    = false;
+
+  // unload menu music
+  void UnloadMenuMusic()
+  {
+    UnloadMusic(MENU_Main);
+
+    MenuMusicLoaded = false;
+  }
+                                                             
+  void LoadMenuMusic()
+  {
+    // Get music path
+    String MusicPath = new #GameSettings().GetMusicPath();
+
+    UnloadMenuMusic();
+
+    LoadMusic(MusicPath + "Music/Menu.wav", MENU_Main);
+    LoadMusic(MusicPath + "Music/Credits.wav", MENU_Credits);
+    LoadMusic(MusicPath + "Music/RusTema.wav", MENU_RusMain);
+    LoadMusic(MusicPath + "Music/GermTema.wav", MENU_GerMain);
+    LoadMusic(MusicPath + "Music/RusVict.wav", MENU_RusVict);
+    LoadMusic(MusicPath + "Music/RusDef.wav", MENU_RusDef);
+    LoadMusic(MusicPath + "Music/GerVict.wav", MENU_GerVict);
+    LoadMusic(MusicPath + "Music/GerDef.wav", MENU_GerDef);
+
+    MenuMusicLoaded = true;
+  }
+
+  void SetMenuState(
+      String _State
+    )
+  {
+    if (!MenuMusicLoaded)
+    {
+      StopAllMusic(false);
+      LoadMenuMusic();
+    }
+
+    // play music
+    if (CurrentMusicState != _State)
+    {
+      StopAllMusic(true);
+      CurrentMusicState = _State;
+      PlayMusic(_State, true);
+    }
+
+    logMessage("Play music: " + _State);
+  }
+
+  String GetMenuState()
+  {
+    return CurrentMusicState;
+  }
+
+/*  CMusicController()
+  {
+    RestoreSettings();
+    //Play(0);
+  }
+
+  void SetDefaultPlaylist()
+  {
+    this.Playlist = DefaultPlaylist;
+  }
+
+  void RestoreSettings()
+  {
+    this.Playlist = new #GameSettings().GetUserValue(L"MusicPlaylist", DefaultPlaylist);
+  }
+
+  void SaveSettings()
+  {
+    new #GameSettings().SetUserValue(L"MusicPlaylist", this.Playlist);
+  }
+*/
+}

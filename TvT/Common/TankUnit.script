@@ -1,0 +1,104 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTankUnit
+  extends CUnit
+{
+  final static String DefaultNumberMaterialName = "";
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CUnit::GetDefaultProperties();
+
+    Default.add([ "Number",  DefaultNumberMaterialName]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CUnit::SetProperties(_PropMap);
+
+    String Number   = _PropMap.Get("Number", DefaultNumberMaterialName);
+
+    Component Mesh = GetMeshComponent();
+    Component MeshMaterials = Mesh.GetMaterials();
+    if(MeshMaterials != null)
+    {
+      if(Number != DefaultNumberMaterialName)
+      {
+        Component NumberMaterials = new #MaterialManager<CNumberModelSkin>();
+        Component MainTexture     = NumberMaterials.GetMainTexture(Number);
+        if(MainTexture != null)
+        {
+          String NumberMaterial = Mesh.MaterialsNameId["NumberMaterial"];
+          MeshMaterials.SetMainTexture(NumberMaterial, MainTexture);
+        }
+        else
+          logError("MainTexture == null");
+      }
+      else
+        logError("Number == DefaultNumberMaterialName");
+    }
+    else
+      logError("MeshMaterials == null");
+    //$LOG
+    //logMessage("number " + Number);
+  }
+}
+
+class CTankPlayerUnit
+  extends CPlayerUnit
+{
+  final static String DefaultNumberMaterialName = "";
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CPlayerUnit::GetDefaultProperties();
+
+    Default.add([ "Number",  DefaultNumberMaterialName]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CPlayerUnit::SetProperties(_PropMap);
+
+    String Number   = _PropMap.Get("Number", DefaultNumberMaterialName);
+
+    Component Mesh = GetMeshComponent();
+    Component MeshMaterials = Mesh.GetMaterials();
+    if(MeshMaterials != null)
+    {
+      if(Number != DefaultNumberMaterialName)
+      {
+        Component NumberMaterials = new #MaterialManager<CNumberModelSkin>();
+        Component MainTexture     = NumberMaterials.GetMainTexture(Number);
+        if(MainTexture != null)
+        {
+          String NumberMaterial = Mesh.MaterialsNameId["NumberMaterial"];
+          MeshMaterials.SetMainTexture(NumberMaterial, MainTexture);
+        }
+        else
+          logError("MainTexture == null");
+      }
+      else
+        logError("Number == DefaultNumberMaterialName");
+    }
+    else
+      logError("MeshMaterials == null");
+    //$LOG
+    //logMessage("number " + Number);
+  }
+}

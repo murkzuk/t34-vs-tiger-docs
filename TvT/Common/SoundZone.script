@@ -1,0 +1,224 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2002 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseSoundZone 
+  extends CBaseSysObject
+{
+  final static String  SPEC_CLASS = "Sound zones";
+  // ======================================
+  // Default sound zone properties
+  // ======================================
+
+  final static float   DefaultRadius      = 100.0;
+  final static float   DefaultMinDistance = 10.0;
+
+  Vector               DefaultDimensions = new Vector(100.0, 100.0, 100.0);
+
+  // ======================================
+  // CBaseSoundZone properties
+  // ======================================
+
+  String m_PositionableName = "";
+
+  // ======================================
+  // IObject Interface functions
+  // ======================================
+
+  // Initialization
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {  
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Hide();
+  }
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CEditable::GetDefaultProperties();
+
+    if (SHAPE_SPHERE == GetShape())
+      Default.append([
+          [ "Radius", DefaultRadius]
+        ]);
+    else 
+    if (SHAPE_BOX == GetShape())
+      Default.append([
+          [ "Dimensions", DefaultDimensions]
+        ]);
+
+    Default.append([
+        [ "MinDistance", DefaultMinDistance]
+      ]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CEditable::SetProperties(_PropMap);
+
+    SetPositionableObject(_PropMap.Get("Positionable", ""));
+
+    if (SHAPE_SPHERE == GetShape())
+      SetRadius(_PropMap.Get("Radius", DefaultRadius));
+    else 
+    if (SHAPE_BOX == GetShape())
+      SetDimensions(_PropMap.Get("Dimensions", DefaultDimensions));
+    else 
+      logWarning("CBaseSoundZone::SetProperties() : not implemented sound zone shape type..");
+
+    SetMinDistance(_PropMap.Get("MinDistance", DefaultMinDistance));
+
+    ClearEffects();
+
+    // load effects
+    Array Effects = _PropMap.Get("Effects", []);
+    for (int i = 0; i < Effects.size(); i++)
+    {
+      if ("" != Effects[i])
+      {
+        Component Effect = new #SoundEffect();
+        if (loadFromScript(Effect, Effects[i]))
+          AppendEffect(Effect);
+      }
+    }
+
+    UpdateVisualEffects();
+    // register zone in sound driver
+    Register();    
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {    
+    //place here course need initialized positionable object
+    SetProperties(_PropMap);    
+
+    OnSpecObjectVisibleStateChanged();
+  }
+
+  // ======================================
+  // Service functions
+  // ======================================
+
+  void SetPositionableObject(
+      String _Name
+    )
+  {
+    m_PositionableName = _Name;
+    setPositionable(this, new #GameController().GetLoadedMission().GetObject(m_PositionableName));
+  }  
+
+  void UpdateVisualEffects()
+  {
+    if (NPDM_Box == GetShape())
+      m_Boundings[1] = GetDimensions();
+    else
+      m_Boundings[1] = new Vector(GetRadius(), GetRadius(), GetRadius());
+
+    CBaseSysObject::UpdateEffects();
+  }
+
+  void SetSize(
+      Vector _Size
+    )
+  {
+    Component Content = new #GameController().GetLoadedMission().GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CMissionContent::INDEX_Properties]);
+
+    if (SHAPE_BOX == GetShape())
+    {
+      Vector Dim = PropertiesMap.Get("Dimensions", DefaultDimensions);
+
+      if (0.0f != _Size.x)
+        Dim.x = _Size.x;
+
+      if (0.0f != _Size.y)
+        Dim.y = _Size.y;
+
+      if (0.0f != _Size.z)
+        Dim.z = _Size.z;
+
+      PropertiesMap.Set("Dimensions", Dim);
+    }
+
+    else if (SHAPE_SPHERE == GetShape())
+      PropertiesMap.Set("Radius", max(max(_Size.x, _Size.y), _Size.z));
+
+    else 
+      logWarning("CBaseSoundZone::SetSize() : not implemented sound zone shape type..");
+
+    SetProperties(PropertiesMap);
+  }
+
+}
+
+class CBoxSoundZone 
+  extends CBaseSoundZone
+{
+  final static Array  SysEffects = [ 
+                                     "SoundZoneCenter", 
+                                     "BoxSoundZoneBounds"
+                                   ];
+
+  final static Array  EffectsSrc = [ 
+                                     "CSoundZoneCenterEffect", 
+                                     "CBoxSoundZoneBoundsEffect"
+                                   ];
+
+  void CBoxSoundZone()
+  {
+    SetShape(SHAPE_BOX);
+  }
+}
+
+class CSphereSoundZone 
+  extends CBaseSoundZone
+{
+  final static Array  SysEffects = [ 
+                                     "SoundZoneCenter", 
+                                     "SphereSoundZoneBounds"
+                                   ];
+
+  final static Array  EffectsSrc = [ 
+                                     "CSoundZoneCenterEffect", 
+                                     "CSphereSoundZoneBoundsEffect"
+                                   ];
+
+  void CSphereSoundZone()
+  {
+    SetShape(SHAPE_SPHERE);
+  }
+}

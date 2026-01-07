@@ -1,0 +1,265 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPiercing
+{
+
+  final static Vector BulletGravityVector = new Vector(0.0, 0.0, -20.0);
+  final static Vector ShellGravityVector  = new Vector(0.0, 0.0, -10.0);
+
+  // Pz4
+  final static float TankPzIVAusfGCalibreBulletSpeed       = 790.0*0.8;
+  final static float TankPzIVAusfGCalibrePenetrationPower  = 98.0 / 100.0;
+  final static Array TankPzIVAusfGCalibrePenetrationByDistance = [[100.0, 98.0 / 98.0, 2000.0, 63.0 / 98.0], [[500.0, 91.0 / 98.0], [1000.0, 82.0 / 98.0], [1500.0, 72.0 / 98.0]]];
+  final static float TankPzIVAusfGCalibreDamage            = 100.0;
+  final static float TankPzIVAusfGCalibreFireDamage        = 100.0;
+  final static float TankPzIVAusfGCalibreDebrisDamage      = 100.0;
+  final static int   TankPzIVAusfGCalibreDebrisQuantity    = 12;
+  final static float TankPzIVAusfGCalibreDebrisMaxDistance = 12.0;
+  final static float TankPzIVAusfGCalibreRadius            = 1.0;
+  final static float TankPzIVAusfGCalibreMaxDistance       = 2500.0;
+
+  final static float TankPzIVAusfGSubcalibreBulletSpeed      = 950.0*0.8;
+  final static float TankPzIVAusfGSubcalibrePenetrationPower = 131.1 / 100.0;
+  final static Array TankPzIVAusfGSubcalibrePenetrationByDistance = [[100.0, 131.1 / 131.1, 2000.0, 57.8 / 131.1], [[500.0, 111.0 / 131.1], [1000.0, 93.0 / 131.1], [1500.0, 75.4 / 131.1]]];
+  final static float TankPzIVAusfGSubcalibreDamage           = 100.0;
+  final static float TankPzIVAusfGSubcalibreFireDamage       = 100.0;
+  final static float TankPzIVAusfGSubcalibreMaxDistance      = 2500.0;
+
+  final static float TankPzIVAusfGHEBulletSpeed       = 590.0*0.8;
+  final static float TankPzIVAusfGHEPenetrationPower  = 20.0 / 100.0;
+  final static Array TankPzIVAusfGHEPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 15.0 / 20.0], [[500.0, 16.0 / 20.0], [1000.0, 16.0 / 20.0], [1500.0, 15.0 / 20.0]]];
+  final static float TankPzIVAusfGHEDamage            = 100.0;
+  final static float TankPzIVAusfGHEDebrisDamage      = 100.0;
+  final static int   TankPzIVAusfGHEDebrisQuantity    = 35;
+  final static float TankPzIVAusfGHEDebrisMaxDistance = 12.0;
+  final static float TankPzIVAusfGHERadius            = 2.0;
+  final static float TankPzIVAusfGHEFireDamage        = 100.0;
+  final static float TankPzIVAusfGHEMaxDistance       = 2500.0;
+
+  final static float TankPzIVAusfGMachineGunDamage    = 95.0;
+
+  // PZ6
+  final static float TankPzVIAusfECalibreBulletSpeed      = 770.0*0.8;
+  final static float TankPzVIAusfECalibrePenetrationPower = 120.0 / 100.0;
+  final static Array TankPzVIAusfECalibrePenetrationByDistance = [[100.0, 120.0 / 120.0, 2000.0, 84.0 / 120.0], [[500.0, 110.0 / 120.0], [1000.0, 100.0 / 120.0], [1500.0, 93.0 / 120.0]]];
+  final static Array TankPzVIAusfECalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankPzVIAusfECalibreDamage           = 100.0;
+  final static float TankPzVIAusfECalibreFireDamage       = 100.0;
+  final static float TankPzVIAusfECalibreDebrisDamage     = 100.0;
+  final static Array TankPzVIAusfECalibreDamageModifier   = [1.2, 1.55];
+  final static int   TankPzVIAusfECalibreDebrisQuantity    = 20;
+  final static float TankPzVIAusfECalibreDebrisMaxDistance = 15.0;
+  final static float TankPzVIAusfECalibreRadius           = 2.0;
+  final static float TankPzVIAusfECalibreMaxDistance      = 2500.0;
+
+  final static float TankPzVIAusfESubcalibreBulletSpeed      = 930.0*0.8;
+  final static float TankPzVIAusfESubcalibrePenetrationPower = 170.0 / 100.0;
+  final static Array TankPzVIAusfESubcalibrePenetrationByDistance = [[100.0, 170.0 / 170.0, 2000.0, 94.3 / 170.0], [[500.0, 146.0 / 170.0], [1000.0, 127.3 / 170.0], [1500.0, 109.2 / 170.0]]];
+  final static Array TankPzVIAusfESubcalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankPzVIAusfESubcalibreDamage           = 100.0;
+  final static float TankPzVIAusfESubcalibreFireDamage       = 100.0;
+  final static Array TankPzVIAusfESubcalibreDamageModifier   = [0.9, 1.35];
+  final static float TankPzVIAusfESubcalibreMaxDistance      = 2500.0;
+
+  final static float TankPzVIAusfEHEBulletSpeed      = 770.0*0.8;
+  final static float TankPzVIAusfEHEPenetrationPower = 25.0 / 100.0;
+  final static Array TankPzVIAusfEHEPenetrationByDistance = [[100.0, 25.0 / 25.0, 2000.0, 20.0 / 25.0], [[500.0, 25.0 / 25.0], [1000.0, 22.0 / 25.0], [1500.0, 22.0 / 25.0]]];
+  final static float TankPzVIAusfEHEDamage           = 100.0;
+  final static float TankPzVIAusfEHEDebrisDamage     = 100.0;
+  final static int   TankPzVIAusfEHEDebrisQuantity    = 50;
+  final static float TankPzVIAusfEHEDebrisMaxDistance = 15.0;
+  final static float TankPzVIAusfEHERadius           = 2.5;
+  final static float TankPzVIAusfEHEFireDamage       = 100.0;
+  final static float TankPzVIAusfEHEMaxDistance      = 2500.0;
+
+  final static float TankPzVIAusfEMachineGunDamage   = 95.0;
+
+  final static boolean TankPzVIAusfEAlwaysDestroyTrack   = false;
+
+  // T34_76_42
+  final static float TankT34_76_42CalibreBulletSpeed      = 655.0*0.8;
+  final static float TankT34_76_42CalibrePenetrationPower = 80.0 / 100.0;
+  final static Array TankT34_76_42CalibrePenetrationByDistance = [[100.0, 80.0 / 80.0, 2000.0, 53.0 / 80.0], [[500.0, 70.0 / 80.0], [1000.0, 63.0 / 80.0], [1500.0, 58.0 / 80.0]]];
+  final static Array TankT34_76_42CalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankT34_76_42CalibreDamage           = 100.0;
+  final static float TankT34_76_42CalibreFireDamage       = 100.0;
+  final static float TankT34_76_42CalibreDebrisDamage     = 100.0;
+  final static Array TankT34_76_42CalibreDamageModifier   = [0.8, 1.0];
+  final static int   TankT34_76_42CalibreDebrisQuantity    = 12;
+  final static float TankT34_76_42CalibreDebrisMaxDistance = 12.0;
+  final static float TankT34_76_42CalibreRadius           = 1.0;
+  final static float TankT34_76_42CalibreMaxDistance      = 2500.0;
+
+  final static float TankT34_76_42SubcalibreBulletSpeed      = 965.0*0.8;
+  final static float TankT34_76_42SubcalibrePenetrationPower = 102.0 / 100.0;
+  final static Array TankT34_76_42SubcalibrePenetrationByDistance = [[100.0, 102.0 / 102.0, 2000.0, 42.0 / 102.0], [[500.0, 86.7 / 102.0], [1000.0, 71.2 / 102.0], [1500.0, 52.0 / 102.0]]];
+  final static Array TankT34_76_42SubcalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankT34_76_42SubcalibreDamage           = 100.0;
+  final static float TankT34_76_42SubcalibreFireDamage       = 100.0;
+  final static Array TankT34_76_42SubcalibreDamageModifier   = [0.8, 1.0];
+  final static float TankT34_76_42SubcalibreMaxDistance      = 2500.0;
+
+  final static float TankT34_76_42HEBulletSpeed      = 655.0*0.8;
+  final static float TankT34_76_42HEPenetrationPower = 20.0 / 100.0;
+  final static Array TankT34_76_42HEPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 15.0 / 20.0], [[500.0, 16.0 / 20.0], [1000.0, 16.0 / 20.0], [1500.0, 15.0 / 20.0]]];
+  final static float TankT34_76_42HEDamage           = 100.0;
+  final static float TankT34_76_42HEDebrisDamage     = 100.0;
+  final static int   TankT34_76_42HEDebrisQuantity    = 35;
+  final static float TankT34_76_42HEDebrisMaxDistance = 12.0;
+  final static float TankT34_76_42HERadius           = 2.0;
+  final static float TankT34_76_42HEFireDamage       = 100.0;
+  final static float TankT34_76_42HEMaxDistance      = 2500.0;
+
+  final static float TankT34_76_42MachineGunDamage   = 95.0;
+
+  final static boolean TankT34_76_42AlwaysDestroyTrack   = false;
+
+  // T34_85_44
+  final static float TankT34_85_44CalibreBulletSpeed      = 800.0*0.8;
+  final static float TankT34_85_44CalibrePenetrationPower = 115.0 / 100.0;
+  final static Array TankT34_85_44CalibrePenetrationByDistance = [[100.0, 115.0 / 115.0, 2000.0, 85.0 / 115.0], [[500.0, 105.0 / 115.0], [1000.0, 100.0 / 115.0], [1500.0, 92.0 / 115.0]]];
+  final static Array TankT34_85_44CalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankT34_85_44CalibreDamage           = 100.0;
+  final static float TankT34_85_44CalibreFireDamage       = 100.0;
+  final static float TankT34_85_44CalibreDebrisDamage     = 100.0;
+  final static Array TankT34_85_44CalibreDamageModifier   = [0.9, 1.1];
+  final static int   TankT34_85_44CalibreDebrisQuantity    = 18;
+  final static float TankT34_85_44CalibreDebrisMaxDistance = 13.5;
+  final static float TankT34_85_44CalibreRadius           = 1.5;
+  final static float TankT34_85_44CalibreMaxDistance      = 2500.0;
+
+  final static float TankT34_85_44SubcalibreBulletSpeed      = 1050.0*0.8;
+  final static float TankT34_85_44SubcalibrePenetrationPower = 180.0 / 100.0;
+  final static Array TankT34_85_44SubcalibrePenetrationByDistance = [[100.0, 180.0 / 180.0, 2000.0, 91.7 / 180.0], [[500.0, 153.7 / 180.0], [1000.0, 130.0 / 180.0], [1500.0, 110.0 / 180.0]]];
+  final static Array TankT34_85_44SubcalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankT34_85_44SubcalibreDamage           = 100.0;
+  final static float TankT34_85_44SubcalibreFireDamage       = 100.0;
+  final static Array TankT34_85_44SubcalibreDamageModifier   = [0.8, 1.0];
+  final static float TankT34_85_44SubcalibreMaxDistance      = 2500.0;
+
+  final static float TankT34_85_44HEBulletSpeed      = 793.0*0.8;
+  final static float TankT34_85_44HEPenetrationPower = 20.0 / 100.0;
+  final static Array TankT34_85_44HEPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 16.0 / 20.0], [[500.0, 20.0 / 20.0], [1000.0, 18.0 / 20.0], [1500.0, 18.0 / 20.0]]];
+  final static float TankT34_85_44HEDamage           = 100.0;
+  final static float TankT34_85_44HEDebrisDamage     = 100.0;
+  final static int   TankT34_85_44HEDebrisQuantity    = 45;
+  final static float TankT34_85_44HEDebrisMaxDistance = 13.5;
+  final static float TankT34_85_44HERadius           = 2.5;
+  final static float TankT34_85_44HEFireDamage       = 100.0;
+  final static float TankT34_85_44HEMaxDistance      = 2500.0;
+
+  final static float TankT34_85_44MachineGunDamage   = 95.0;
+
+  final static boolean TankT34_85_44AlwaysDestroyTrack   = false;
+
+  // SAU StuG.40
+  final static float SAUStuG40CalibreBulletSpeed      = 732.0*0.8;
+  final static float SAUStuG40CalibrePenetrationPower = 115.0 / 100.0;
+  final static Array SAUStuG40CalibrePenetrationByDistance = [[100.0, 115.0 / 115.0, 2000.0, 85.0 / 115.0], [[500.0, 105.0 / 115.0], [1000.0, 100.0 / 115.0], [1500.0, 92.0 / 115.0]]];
+  final static float SAUStuG40CalibreDamage           = 100.0;
+  final static float SAUStuG40CalibreFireDamage       = 100.0;
+  final static float SAUStuG40CalibreDebrisDamage     = 100.0;
+  final static int   SAUStuG40CalibreDebrisQuantity    = 12;
+  final static float SAUStuG40CalibreDebrisMaxDistance = 12.0;
+  final static float SAUStuG40CalibreRadius           = 1.0;
+  final static float SAUStuG40CalibreMaxDistance      = 2500.0;
+
+  final static float SAUStuG40SubcalibreBulletSpeed      = 933.0*0.8;
+  final static float SAUStuG40SubcalibrePenetrationPower = 180.0 / 100.0;
+  final static Array SAUStuG40SubcalibrePenetrationByDistance = [[100.0, 180.0 / 180.0, 2000.0, 91.7 / 180.0], [[500.0, 153.7 / 180.0], [1000.0, 130.0 / 180.0], [1500.0, 110.0 / 180.0]]];
+  final static float SAUStuG40SubcalibreDamage           = 100.0;
+  final static float SAUStuG40SubcalibreFireDamage       = 100.0;
+  final static float SAUStuG40SubcalibreMaxDistance      = 2500.0;
+
+  final static float SAUStuG40HEBulletSpeed      = 450.0*0.8;
+  final static float SAUStuG40HEPenetrationPower = 20.0 / 100.0;
+  final static Array SAUStuG40HEPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 16.0 / 20.0], [[500.0, 20.0 / 20.0], [1000.0, 18.0 / 20.0], [1500.0, 18.0 / 20.0]]];
+  final static float SAUStuG40HEDamage           = 100.0;
+  final static float SAUStuG40HEDebrisDamage     = 85.0;
+  final static int   SAUStuG40HEDebrisQuantity    = 35;
+  final static float SAUStuG40HEDebrisMaxDistance = 12.0;
+  final static float SAUStuG40HERadius           = 2.0;
+  final static float SAUStuG40HEFireDamage       = 100.0;
+  final static float SAUStuG40HEMaxDistance      = 2500.0;
+
+  // GunPak40
+  final static float GunPak40CalibreBulletSpeed      = 732.0*0.8;
+  final static float GunPak40CalibrePenetrationPower = 135.0 / 100.0;
+  final static Array GunPak40CalibrePenetrationByDistance = [[100.0, 135.0 / 135.0, 2000.0, 89.0 / 135.0], [[500.0, 135.0 / 135.0], [1000.0, 120.0 / 135.0], [1500.0, 100.0 / 135.0]]];
+  final static float GunPak40CalibreDamage           = 100.0;
+  final static float GunPak40CalibreFireDamage       = 100.0;
+  final static float GunPak40CalibreDebrisDamage     = 100.0;
+  final static int   GunPak40CalibreDebrisQuantity    = 12;
+  final static float GunPak40CalibreDebrisMaxDistance = 12.0;
+  final static float GunPak40CalibreRadius           = 1.0;
+  final static float GunPak40CalibreMaxDistance      = 2500.0;
+
+  final static float GunPak40SubcalibreBulletSpeed      = 933.0*0.8;
+  final static float GunPak40SubcalibrePenetrationPower = 150.0 / 100.0;
+  final static Array GunPak40SubcalibrePenetrationByDistance = [[100.0, 150.0 / 150.0, 2000.0, 90.1 / 150.0], [[500.0, 150.0 / 150.0], [1000.0, 130.0 / 150.0], [1500.0, 110.0 / 150.0]]];
+  final static float GunPak40SubcalibreDamage           = 100.0;
+  final static float GunPak40SubcalibreFireDamage       = 100.0;
+  final static float GunPak40SubcalibreMaxDistance      = 2500.0;
+
+  final static float GunPak40HEBulletSpeed      = 450.0*0.8;
+  final static float GunPak40HEPenetrationPower = 20.0 / 100.0;
+  final static Array GunPak40HEPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 15.0 / 20.0], [[500.0, 16.0 / 20.0], [1000.0, 16.0 / 20.0], [1500.0, 15.0 / 20.0]]];
+  final static float GunPak40HEDamage           = 100.0;
+  final static float GunPak40HEDebrisDamage     = 85.0;
+  final static int   GunPak40HEDebrisQuantity    = 35;
+  final static float GunPak40HEDebrisMaxDistance = 12.0;
+  final static float GunPak40HERadius           = 2.0;
+  final static float GunPak40HEFireDamage       = 100.0;
+  final static float GunPak40HEMaxDistance      = 2500.0;
+
+  // GunZis3
+  final static float GunZis3CalibreBulletSpeed      = 732.0*0.8;
+  final static float GunZis3CalibrePenetrationPower = 80.0 / 100.0;
+  final static Array GunZis3CalibrePenetrationByDistance = [[100.0, 80.0 / 80.0, 2000.0, 50.0 / 80.0], [[500.0, 70.0 / 80.0], [1000.0, 60.0 / 80.0], [1500.0, 50.0 / 80.0]]];
+  final static float GunZis3CalibreDamage           = 100.0;
+  final static float GunZis3CalibreFireDamage       = 100.0;
+  final static float GunZis3CalibreDebrisDamage     = 100.0;
+  final static int   GunZis3CalibreDebrisQuantity    = 12;
+  final static float GunZis3CalibreDebrisMaxDistance = 12.0;
+  final static float GunZis3CalibreRadius           = 1.0;
+  final static float GunZis3CalibreMaxDistance      = 2500.0;
+
+  final static float GunZis3SubcalibreBulletSpeed      = 933.0*0.8;
+  final static float GunZis3SubcalibrePenetrationPower = 120.0 / 100.0;
+  final static Array GunZis3SubcalibrePenetrationByDistance = [[100.0, 120.0 / 120.0, 2000.0, 44.0 / 120.0], [[500.0, 90.0 / 120.0], [1000.0, 60.0 / 120.0], [1500.0, 54.0 / 120.0]]];
+  final static float GunZis3SubcalibreDamage           = 100.0;
+  final static float GunZis3SubcalibreFireDamage       = 100.0;
+  final static float GunZis3SubcalibreMaxDistance      = 2500.0;
+
+  final static float GunZis3HEBulletSpeed      = 450.0*0.8;
+  final static float GunZis3HEPenetrationPower = 20.0 / 100.0;
+  final static Array GunZis3HEPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 16.0 / 20.0], [[500.0, 20.0 / 20.0], [1000.0, 18.0 / 20.0], [1500.0, 18.0 / 20.0]]];
+  final static float GunZis3HEDamage           = 100.0;
+  final static float GunZis3HEDebrisDamage     = 100.0;
+  final static int   GunZis3HEDebrisQuantity    = 35;
+  final static float GunZis3HEDebrisMaxDistance = 12.0;
+  final static float GunZis3HERadius           = 2.0;
+  final static float GunZis3HEFireDamage       = 100.0;
+  final static float GunZis3HEMaxDistance      = 2500.0;
+
+  // Halftruck
+  final static float BtrM3A1HalftruckMachineGunBulletSpeed           = 870.0*0.8;
+  final static float BtrM3A1HalftruckMachineGunPenetrationPower      = 20.0 /100.0;
+  final static Array BtrM3A1HalftruckMachineGunPenetrationByDistance = [[100.0, 20.0 / 20.0, 2000.0, 7.0 / 20.0], [[500.0, 16.6 / 20.0], [1000.0, 12.9 / 20.0], [1500.0, 10.0 / 20.0]]];;
+  final static float BtrM3A1HalftruckMachineGunDamage                = 115.0;
+  final static float BtrM3A1HalftruckMachineGunMaxDistance           = 1500.0;
+
+  // Hanomag
+  final static float BtrHanomag251AusfCMachineGunDamage = 95.0;
+
+  // Dzot
+  final static float DzotMachineGunDamage         = 95.0;
+  final static Array DzotMachineGunDamageModifier = [1.0, 1.2];
+}

@@ -1,0 +1,638 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPlayerStat
+{
+  WString  Name                = L"";
+  int     ImageID              = 0;
+
+  WString  Rank                = L"";
+
+  int     AirUnitsDestroyed    = 0;
+  int     GroundUnitsDestroyed = 0;
+  int     NavalUnitsDestroyed  = 0;
+
+  int     MultiplayerDeath     = 0;
+  int     MultiplayerKills     = 0;
+
+  int     CampaignStatus       = 0;
+
+  // session info
+  int     SessionKills         = 0;
+  int     SessionDeaths        = 0;
+  int     SessionFrags         = 0;
+  int     SessionTeam          = -1;
+  int     SessionStatus        = CS_None;
+
+  // constants
+  final static int CS_None      = 0;
+  final static int CS_Connected = 1;
+  final static int CS_Ready     = 2;
+  final static int CS_Playing   = 3;
+  final static int CS_Hangar    = 4;
+  final static int CS_Dead      = 5;
+
+
+  CPlayerStat(
+      Array _Info
+    )
+  {
+    Name                 = _Info[0];
+    ImageID              = _Info[1];
+    Rank                 = _Info[2];
+    AirUnitsDestroyed    = _Info[3];
+    GroundUnitsDestroyed = _Info[4];
+    NavalUnitsDestroyed  = _Info[5];
+    MultiplayerDeath     = _Info[6];
+    MultiplayerKills     = _Info[7];
+    SessionKills         = _Info[8];
+    SessionDeaths        = _Info[9];
+    SessionFrags         = _Info[10];
+    CampaignStatus       = _Info[11];
+    SessionTeam          = _Info[12];
+    SessionStatus        = _Info[13];
+  }
+}
+
+
+class CPlayerInfo
+{
+  // player info
+  WString  Name                = L"";
+  int     ImageID              = 0;
+
+  // global stat
+  int     AirUnitsDestroyed    = 0;
+  int     GroundUnitsDestroyed = 0;
+  int     NavalUnitsDestroyed  = 0;
+
+  // MP stat
+  int     MultiplayerDeath     = 0;
+  int     MultiplayerKills     = 0;
+
+  // session info
+  int     SessionKills         = 0;
+  int     SessionDeaths        = 0;
+  int     SessionFrags         = 0;
+
+  // connection info
+  int     SessionTeam          = -1;
+  int     SessionStatus        = CPlayerStat::CS_None;
+
+  boolean SaveEnabled          = false;
+
+  // mission info
+/*
+  Array   MissionStatus        = [
+      // [completed on diff level 0, completed on diff level 1, completed on difflevel 2, completed on difflevel 3]
+      [ // campaign 1
+        [true,  false, false, false], // mission 1
+        [false, true,  false, false], // mission 2
+        [false, false, true,  false], // mission 3
+        [false, false, false, true ], // mission 4
+        [true,  false, false, false], // mission 5
+        [false, true,  false, false], // mission 6
+        [false, false, true,  false], // mission 7
+        [false, false, false, true ]  // mission 8
+      ],
+      [ // campaign 1
+        [false, true, false, false], // mission 1
+        [false, true, false, false], // mission 2
+        [false, true, false, false], // mission 3
+        [false, true, false, false], // mission 4
+        [false, true, false, false], // mission 5
+        [false, true, false, false], // mission 6
+        [false, true, false, false], // mission 7
+        [false, true, false, false]  // mission 8
+      ],
+      [ // campaign 3
+        [false, false, true, false], // mission 1
+        [false, false, true, false], // mission 2
+        [false, false, true, false], // mission 3
+        [false, false, true, false], // mission 4
+        [false, false, true, false], // mission 5
+        [false, false, true, false], // mission 6
+        [false, false, true, false], // mission 7
+        [false, false, true, false]  // mission 8
+      ],
+      [ // campaign 4
+        [false, false, false, true], // mission 1
+        [false, false, false, true], // mission 2
+        [false, false, false, true], // mission 3
+        [false, false, false, true], // mission 4
+        [false, false, false, true], // mission 5
+        [false, false, false, true]  // mission 6
+      ]
+    ];
+*/
+/*
+  Array   MissionStatus        = [
+      // [completed on diff level 0, completed on diff level 1, completed on difflevel 2, completed on difflevel 3]
+      [ // campaign 1
+        [true, true, true, true], // mission 1
+        [true, true, true, true], // mission 2
+        [true, true, true, true], // mission 3
+        [true, true, true, true], // mission 4
+        [true, true, true, true], // mission 5
+        [true, true, true, true], // mission 6
+        [true, true, true, true], // mission 7
+        [true, true, true, true]  // mission 8
+      ],
+      [ // campaign 1
+        [true, true, true, true], // mission 1
+        [true, true, true, true], // mission 2
+        [true, true, true, true], // mission 3
+        [true, true, true, true], // mission 4
+        [true, true, true, true], // mission 5
+        [true, true, true, true], // mission 6
+        [true, true, true, true], // mission 7
+        [true, true, true, true]  // mission 8
+      ],
+      [ // campaign 3
+        [true, true, true, true], // mission 1
+        [true, true, true, true], // mission 2
+        [true, true, true, true], // mission 3
+        [true, true, true, true], // mission 4
+        [true, true, true, true], // mission 5
+        [true, true, true, true], // mission 6
+        [true, true, true, true], // mission 7
+        [true, true, true, true]  // mission 8
+      ],
+      [ // campaign 4
+        [true, true, true, true], // mission 1
+        [true, true, true, true], // mission 2
+        [true, true, true, true], // mission 3
+        [true, true, true, true], // mission 4
+        [true, true, true, true], // mission 5
+        [true, true, true, true]  // mission 6
+      ]
+    ];
+ */   
+  Array   MissionStatus        = [
+      // [completed on diff level 0, completed on diff level 1, completed on difflevel 2, completed on difflevel 3]
+      [ // campaign 1
+        [false, false, false, false], // mission 1
+        [false, false, false, false], // mission 2
+        [false, false, false, false], // mission 3
+        [false, false, false, false], // mission 4
+        [false, false, false, false], // mission 5
+        [false, false, false, false], // mission 6
+        [false, false, false, false], // mission 7
+        [false, false, false, false]  // mission 8
+      ],
+      [ // campaign 1
+        [false, false, false, false], // mission 1
+        [false, false, false, false], // mission 2
+        [false, false, false, false], // mission 3
+        [false, false, false, false], // mission 4
+        [false, false, false, false], // mission 5
+        [false, false, false, false], // mission 6
+        [false, false, false, false], // mission 7
+        [false, false, false, false]  // mission 8
+      ],
+      [ // campaign 3
+        [false, false, false, false], // mission 1
+        [false, false, false, false], // mission 2
+        [false, false, false, false], // mission 3
+        [false, false, false, false], // mission 4
+        [false, false, false, false], // mission 5
+        [false, false, false, false], // mission 6
+        [false, false, false, false], // mission 7
+        [false, false, false, false]  // mission 8
+      ],
+      [ // campaign 4
+        [false, false, false, false], // mission 1
+        [false, false, false, false], // mission 2
+        [false, false, false, false], // mission 3
+        [false, false, false, false], // mission 4
+        [false, false, false, false], // mission 5
+        [false, false, false, false]  // mission 6
+      ]
+    ];
+
+  final static Array TreeCampaign = [
+      [ [], [0],    [0],    [0], [2, 3], [2, 3], [4], [6] ], // campaign 1
+      [ [],  [], [0, 1], [0, 1],    [3],    [2], [5], [6] ], // campaign 2
+      [ [], [0],    [0],    [2],    [2],    [4], [5], [6] ], // campaign 3
+      [ [], [0],    [0],    [2],    [2], [3, 4]           ]  // campaign 4
+    ];
+
+  CPlayerInfo()
+  {
+  }
+
+  CPlayerInfo(
+      WString _Name
+    )
+  {
+    Name = _Name;
+    Load();
+  }
+
+
+  Save()
+  {
+    //$TMP
+    return;
+    Component GameSettings = new #GameSettings();
+    if (GameSettings == null)
+      return;
+
+    if (!SaveEnabled)
+      return;
+
+    GameSettings.SavePlayerValue(Name, L"ImageID", ImageID);
+
+    GameSettings.SavePlayerValue(Name, L"AirUnitsDestroyed",    AirUnitsDestroyed);
+    GameSettings.SavePlayerValue(Name, L"GroundUnitsDestroyed", GroundUnitsDestroyed);
+    GameSettings.SavePlayerValue(Name, L"NavalUnitsDestroyed",  NavalUnitsDestroyed);
+
+    GameSettings.SavePlayerValue(Name, L"MultiplayerDeath",     MultiplayerDeath);
+    GameSettings.SavePlayerValue(Name, L"MultiplayerKills",     MultiplayerKills);
+
+    for (int Campaign = 0; Campaign < MissionStatus.size(); Campaign++)
+      for (int Mission = 0; Mission < MissionStatus[Campaign].size(); Mission++)
+      {
+        int Value = 0;
+
+        for (int Level = 0; Level < MissionStatus[Campaign][Mission].size(); Level++)
+          Value += int(MissionStatus[Campaign][Mission][Level]) << Level;
+
+        GameSettings.SavePlayerValue(
+          Name + L"\\Campaign_" + new WString(Campaign), L"Mission_" + new WString(Mission), Value);
+      }
+  }
+
+  Load()
+  {
+    //$TMP
+    return;
+    Component GameSettings = new #GameSettings();
+    if (GameSettings == null)
+      return;
+
+    ImageID              = GameSettings.LoadPlayerValue(Name, L"ImageID",              ImageID);
+
+    AirUnitsDestroyed    = GameSettings.LoadPlayerValue(Name, L"AirUnitsDestroyed",    AirUnitsDestroyed);
+    GroundUnitsDestroyed = GameSettings.LoadPlayerValue(Name, L"GroundUnitsDestroyed", GroundUnitsDestroyed);
+    NavalUnitsDestroyed  = GameSettings.LoadPlayerValue(Name, L"NavalUnitsDestroyed",  NavalUnitsDestroyed);
+
+    MultiplayerDeath     = GameSettings.LoadPlayerValue(Name, L"MultiplayerDeath",     MultiplayerDeath);
+    MultiplayerKills     = GameSettings.LoadPlayerValue(Name, L"MultiplayerKills",     MultiplayerKills);
+
+    for (int Campaign = 0; Campaign < MissionStatus.size(); Campaign++)
+      for (int Mission = 0; Mission < MissionStatus[Campaign].size(); Mission++)
+      {
+        int Value = 0;
+
+        for (int Level = 0; Level < MissionStatus[Campaign][Mission].size(); Level++)
+          Value += int(MissionStatus[Campaign][Mission][Level]) << Level;
+
+        Value = GameSettings.LoadPlayerValue(
+          Name + L"\\Campaign_" + new WString(Campaign), L"Mission_" + new WString(Mission), Value);
+
+        for (int Level = 0; Level < MissionStatus[Campaign][Mission].size(); Level++)
+          MissionStatus[Campaign][Mission][Level] = boolean(Value & (1 << Level));
+      }
+  }
+
+  Array Export()
+  {
+    // pack campaign status
+    Array CmpStatus;
+    int   Result = 0;
+    for (int CmpIndex = 0; CmpIndex < 4; CmpIndex++)
+    {
+      Array Status = GetCampaignStatus(CmpIndex);
+      for (int DiffIndex = 0; DiffIndex < 4; DiffIndex++)
+      {
+        int PackIndex = CmpIndex * 4 + DiffIndex;
+        if (Status[DiffIndex])
+          Result |= (1 << PackIndex);
+      }
+    }
+
+    return [
+             Name,
+             ImageID,
+             GetRank(),
+             AirUnitsDestroyed,
+             GroundUnitsDestroyed,
+             NavalUnitsDestroyed,
+             MultiplayerDeath,
+             MultiplayerKills,
+             SessionKills,
+             SessionDeaths,
+             SessionFrags,
+             Result,
+             SessionTeam,
+             SessionStatus
+           ];
+  }
+
+  void InitializeSession()
+  {
+    SessionKills  = 0;
+    SessionDeaths = 0;
+    SessionFrags  = 0;
+  }
+
+  void CompleteMission(
+      int _Campaign,
+      int _Mission,
+      int _Difficulty
+    )
+  {
+    MissionStatus[_Campaign][_Mission][_Difficulty] = true;
+    Save();
+  }
+
+  Array GetMissionStatus(
+      int _Campaign,
+      int _Mission
+    )
+  {
+    return MissionStatus[_Campaign][_Mission];
+  }
+
+  Array GetCampaignStatus(
+      int _Campaign
+    )
+  {
+    Array CampaignStatus = [true,  true,  true,  true];
+    Array StatusForCheck = [false, false, false, false];
+
+    for (int Mission = 0; Mission < MissionStatus[_Campaign].size(); Mission++)
+    {
+      Array MissionStatus = GetMissionStatus(_Campaign, Mission);
+      for (int Index = 0; Index < MissionStatus.size(); Index++)
+      {
+        boolean Stat = false;
+        for (int i = Index; i < MissionStatus.size(); i++)
+          Stat |= MissionStatus[i];
+
+        CampaignStatus[Index] &= Stat;
+        StatusForCheck[Index] |= MissionStatus[Index];
+      }
+    }
+
+    for (int Index = 0; Index < CampaignStatus.size(); Index++)
+      CampaignStatus[Index] &= StatusForCheck[Index];
+
+    return CampaignStatus;
+  }
+
+  int GetCampaignsCompleted()
+  {
+    int Result = 0;
+    for (int Campaign = 0; Campaign < MissionStatus.size(); Campaign++)
+      if (IsCampaignCompleted(Campaign))
+        Result++;
+    return Result;
+  }
+
+  int GetMissionsCompleted()
+  {
+    int Result = 0;
+    for (int Campaign = 0; Campaign < MissionStatus.size(); Campaign++)
+      for (int Mission = 0; Mission < MissionStatus[Campaign].size(); Mission++)
+        if (IsMissionCompleted(Campaign, Mission))
+          Result++;
+    return Result;
+  }
+
+
+  boolean IsMissionCompleted(
+      int _Campaign,
+      int _Mission
+    )
+  {
+    Array Status = GetMissionStatus(_Campaign, _Mission);
+    boolean Result = false;
+    for (int Index = 0; Index < Status.size(); Index++)
+      Result |= Status[Index];
+    return Result;
+  }
+
+  boolean IsCampaignCompleted(
+      int _Campaign
+    )
+  {
+    if (/*CGameSettings::IsDemoBuild*/true)
+      return false;
+
+    // check the last mission in campaign
+    return IsMissionCompleted(_Campaign, TreeCampaign[_Campaign].size() - 1);;
+  }
+
+  boolean IsMissionEnabled(
+      int _Campaign,
+      int _Mission
+    )
+  {
+    if (CGameSettings::IsDemoBuild)
+    {
+      return 
+        (_Campaign == 0 && _Mission == 0) ||
+        (_Campaign == 1 && _Mission == 4) ||
+        (_Campaign == 1 && _Mission == 5);
+    }
+
+    Array TreeMissions = TreeCampaign[_Campaign];
+    boolean Result = true;
+    for (int Index = 0; Index < TreeMissions[_Mission].size(); Index++)
+      Result &= IsMissionCompleted(_Campaign, TreeMissions[_Mission][Index]);
+    return Result;
+  }
+
+  //
+  // get statistics informations
+  //
+
+  int GetGroundUnitsDestroyed()
+  {
+    return GroundUnitsDestroyed;
+  }
+
+  int GetAirUnitsDestroyed()
+  {
+    return AirUnitsDestroyed;
+  }
+
+  int GetNavalUnitsDestroyed()
+  {
+    return NavalUnitsDestroyed;
+  }
+
+  int GetMultiplayerDeath()
+  {
+    return MultiplayerDeath;
+  }
+
+  int GetMultiplayerKills()
+  {
+    return MultiplayerKills;
+  }
+
+  //
+  // set statistics informations
+  //
+
+  void AddGroundUnitsDestroyed()
+  {
+    GroundUnitsDestroyed++;
+    Save();
+  }
+
+  void AddAirUnitsDestroyed()
+  {
+    AirUnitsDestroyed++;
+    Save();
+  }
+
+  void AddNavalUnitsDestroyed()
+  {
+    NavalUnitsDestroyed++;
+    Save();
+  }
+
+  void AddMultiplayerDeath()
+  {
+    SessionDeaths++;
+
+    MultiplayerDeath++;
+    Save();
+  }
+
+  void AddMultiplayerKills()
+  {
+    SessionKills++;
+    SessionFrags++;
+
+    MultiplayerKills++;
+    Save();
+  }
+
+  void AddSelfDestruction()
+  {
+    SessionFrags--;
+
+    AddMultiplayerDeath();
+  }
+
+  //
+  // get / set player info
+  //
+
+  int GetImageID()
+  {
+    return ImageID;
+  }
+
+  void SetImageID(int _ImageID)
+  {
+    ImageID = _ImageID;
+    Save();
+  }
+
+  WString GetName()
+  {
+    return Name;
+  }
+
+  boolean SetName(WString _Name)
+  {
+    if (Name == _Name || _Name == L"")
+      return false;
+
+    WString OldName = Name;
+    Name = _Name;
+    Save();
+
+    // delete old player
+    (new #GameSettings()).DeletePlayer(OldName);
+
+    return true;
+  }
+
+  // get player rank
+  WString GetRank()
+  {
+    WString Rank = CCommonStrings::Ltn1Rank;
+
+    // check
+    for (int Campaign = 0; Campaign < 4; Campaign++)
+      if (IsCampaignCompleted(Campaign))
+      {
+        Array TreeMissions = TreeCampaign[Campaign];
+        Rank = CCommonStrings::RankTable[Campaign][0];
+        for (int Diff = 1; Diff < 4; Diff++)
+        {
+          boolean Status = true;
+          for (int IndexMission = 0; IndexMission < TreeMissions.size(); IndexMission++)
+            for (int Index = 0; Index < TreeMissions[IndexMission].size(); Index++)
+              Status &= MissionStatus[Campaign][TreeMissions[IndexMission][Index]][Diff];
+
+          // change rank
+          if (Status)
+            Rank = CCommonStrings::RankTable[Campaign][Diff];
+        }
+      }
+
+    return Rank;
+  }
+}
+
+
+class CPlayerSettings
+{
+  static Component m_CurrentPlayer = null;
+
+  CPlayerSettings()
+  {
+    if (m_CurrentPlayer == null)
+    {
+      m_CurrentPlayer = new CPlayerInfo((new #GameSettings()).
+        GetUserValue(L"CurrentPlayer", CCommonStrings::str_DefaultPlayerName));
+    }
+  }
+
+  Component GetCurrentPlayer()
+  {
+    return m_CurrentPlayer;
+  }
+
+  void SetCurrentPlayer(
+      WString _PlayerName
+    )
+  {
+    m_CurrentPlayer = new CPlayerInfo(_PlayerName);
+    (new #GameSettings()).SetUserValue(L"CurrentPlayer", _PlayerName);
+  }
+
+  Array GetPlayersList()
+  {
+    return (new #GameSettings()).GetPlayersList();
+  }
+
+  void DeletePlayer(
+      WString _Name
+    )
+  {
+    (new #GameSettings()).DeletePlayer(_Name);
+    if (_Name == GetCurrentPlayer().GetName())
+    {
+      Array Players = GetPlayersList();
+      WString PlayerName = CCommonStrings::str_DefaultPlayerName;
+      if (Players.size() > 0)
+        PlayerName = Players[0];
+      SetCurrentPlayer(PlayerName);
+    }
+  }
+}

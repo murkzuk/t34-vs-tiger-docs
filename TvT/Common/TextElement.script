@@ -1,0 +1,90 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+//
+// Selectible Text control
+//
+
+class CUITextElement
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.02;
+  
+  Color SelectedColor   = new Color(1.0, 1.0, 1.0);
+  Color NormalColor     = new Color(0.8, 0.8, 0.8);
+  Color HiSelectedColor = new Color(0.7, 0.7, 1.0);
+  Color HiNormalColor   = new Color(0.5, 0.5, 1.0);
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetMaterials("Invisible", "Invisible");
+    SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+    SetAlignment(_PropMap.Get("Alignment", 0.0) );
+
+    SetText(L"Text");
+
+    SelectedColor   = _PropMap.Get("SelectedColor",   new Color(1.0, 1.0, 1.0));
+    NormalColor     = _PropMap.Get("NormalColor",     new Color(0.8, 0.8, 0.8));
+    HiSelectedColor = _PropMap.Get("HiSelectedColor", new Color(0.7, 0.7, 1.0));
+    HiNormalColor   = _PropMap.Get("HiNormalColor",   new Color(0.5, 0.5, 1.0));
+
+    SetTextColors(NormalColor, HiNormalColor);
+
+    SetBitmapColors(new Color(1.0, 1.0, 1.0), new Color(1.0, 1.0, 1.0));
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return [];
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  void SetSelectedItemState(
+      boolean _Selected
+    )
+  {
+    if (_Selected)
+      SetTextColors(SelectedColor, HiSelectedColor);
+    else
+      SetTextColors(NormalColor, HiNormalColor);
+
+    CBaseUIControl::SetSelectedItemState(_Selected);
+  }  
+}

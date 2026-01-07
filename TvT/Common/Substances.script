@@ -1,0 +1,149 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+//   Physical parametrs material ( Substances )
+//
+
+class CBaseSubstance
+  extends CConstraintProperties
+{
+  //
+  // Base substance properties
+  //
+
+  final static int SelfId = DefaultSubstanceId; // Substance integer ID
+
+
+  float Penetration       = 0.0;   // Проникающая способность материала,
+                                   //!  0.0 - материал абсолютно твердый,
+                                   //!  1.0 - материал абсолютно мягкий.
+
+  float Friction          = 0.5;   // Коэффициент трения. Значения должны лежать в диапазоне
+                                   //!  от 0.0 до FLT_MAX. Где 0.0 - обозначает полное отсутствие
+                                   //!  трения, а FLT_MAX соответственно бесконечную силу трения.
+
+  float Elasticity        = 0.3;   // Коэффициент упругости. Значения должны лежать в диапазоне
+                                   //!  от 0.0 до 1.0. Где 0.0 - обозначает что тело полностью
+                                   //!  поглощает энергию, а 1.0 - полностью отражает.
+
+  float LinearDamping     = 0.0;   // Коэффициент сопротивления поступательному движению.
+                                   //!  от 0.0 до FLT_MAX. Где 0.0 - обозначает отсутствие
+                                   //!  сопротивления, а FLT_MAX соответственно максимальное сопротивление.
+  float AngularDamping    = 0.0;   // Коэффициент сопротивления вращательному движению.
+                                   //!  от 0.0 до FLT_MAX. Где 0.0 - обозначает отсутствие
+                                   //!  сопротивления, а FLT_MAX соответственно максимальное сопротивление.
+
+  //
+  // Base physics properties
+  //
+
+  Vector  GravityAccelerate = CWorldPhysics::GravityVector;
+
+  //
+  // Substance effects
+  //
+
+  String BulletHitEffect = "";  // Идентификатор эффекта, возникающего при попадании пули.
+  String BulletHitSound  = "";  // Идентификатор звука, возникающего при попадании пули.
+
+  String ExplosionEffect = "";  // Идентификатор эффекта, возникающего при воздействии взрыва.
+  String ExplosionSound  = "";  // Идентификатор звука, возникающего при воздействии взрыва.
+
+  String CollisionEffect = "";  // Идентификатор эффекта, возникающего при столкновении.
+  String CollisionSound  = "";  // Идентификатор звука, возникающего при столкновении.
+}
+
+class CMetalSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Metal; //Substance ID
+
+  String BulletHitEffect = "MetalBulletHitEffect";
+}
+
+class CGlassSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Glass; //Substance ID
+}
+
+class CPlasticSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Plastic; //Substance ID
+}
+
+class CWoodSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Wood; //Substance ID
+
+  float Elasticity        = 0.0;
+  String BulletHitEffect = "WoodBulletHitEffect";
+}
+
+class CStoneSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Stone; //Substance ID
+
+  String BulletHitEffect = "StoneBulletHitEffect";
+}
+
+class CGroundSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Ground; //Substance ID
+}
+
+class CWaterSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Water; //Substance ID
+}
+
+class CSoftSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Soft; //Substance ID
+}
+
+class CBodySubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Body; //Substance ID
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 1.7;
+  float  Friction1        = 1.9;
+  float  Elasticity       = 0.01;
+}
+
+class CForestSubstance extends CBaseSubstance
+{
+  final static int SelfId = CMaterialStructure::MSID_Forest; //Substance ID
+}
+
+class CSubstances
+{
+  final static Component Metal        = new CMetalSubstance();
+  final static Component Glass        = new CGlassSubstance();
+  final static Component Plastic      = new CPlasticSubstance();
+  final static Component Wood         = new CWoodSubstance();
+  final static Component Stone        = new CStoneSubstance();
+  final static Component Soft         = new CSoftSubstance();
+  final static Component Body         = new CBodySubstance();
+  final static Component Ground       = new CGroundSubstance();
+  final static Component Water        = new CWaterSubstance();
+  final static Component Forest       = new CForestSubstance();
+
+  final static Array PhysicsTable = [
+      [ CMaterialStructure::MSID_Metal,   Metal   ],
+      [ CMaterialStructure::MSID_Glass,   Glass   ],
+      [ CMaterialStructure::MSID_Plastic, Plastic ],
+      [ CMaterialStructure::MSID_Wood,    Wood    ],
+      [ CMaterialStructure::MSID_Stone,   Stone   ],
+      [ CMaterialStructure::MSID_Soft,    Soft    ],
+      [ CMaterialStructure::MSID_Body,    Body    ],
+      [ CMaterialStructure::MSID_Ground,  Ground  ],
+      [ CMaterialStructure::MSID_Water,   Water   ],
+      [ CMaterialStructure::MSID_Forest,  Forest  ]
+    ];
+}

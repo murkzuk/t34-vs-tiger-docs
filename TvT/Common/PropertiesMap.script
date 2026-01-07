@@ -1,0 +1,170 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPropertiesMap
+{
+  final static int INDEX_PropertyName      = 0;
+  final static int INDEX_PropertyValue     = 1;
+  final static int INDEX_PropertyIsDefault = 2;
+
+  Array m_Properties = [];
+
+  void CPropertiesMap(
+      Array   _Properties
+    )
+  {
+    CPropertiesMap(_Properties, false);
+  }
+
+  void CPropertiesMap(
+      Array   _Properties,
+      boolean _IsDefault
+    )
+  {
+    m_Properties = _Properties;
+
+    // Check format
+    for (int Index = 0; Index < m_Properties.size(); Index++)
+      while (m_Properties[Index].size() < 3)
+        m_Properties[Index].add(_IsDefault);
+  }
+
+  void LogPropertiesList()
+  {
+    for (int Index = 0; Index < m_Properties.size(); Index++)
+      logMessage("  " + m_Properties[Index][INDEX_PropertyName] +
+                 ": " + new String(m_Properties[Index][INDEX_PropertyValue]));
+  }
+
+  Array GetPropertyNamesList()
+  {
+    Array NamesList;
+
+    for (int Index = 0; Index < m_Properties.size(); Index++)
+      NamesList.add(m_Properties[Index][INDEX_PropertyName]);
+
+    return NamesList;
+  }
+
+  void DelByIndex(
+      int _Index
+    )
+  {
+    m_Properties.remove(_Index);
+  }
+
+  void Assign(
+      Component _PropMap
+    )
+  {
+    m_Properties = new Array(_PropMap.m_Properties);
+  }
+
+  boolean IsDefaultValue(
+      int _Index
+    )
+  {
+    return m_Properties[_Index][INDEX_PropertyIsDefault];
+  }
+
+  void DropDefault(
+      String  _Name
+    )
+  {
+    int Index = Find(_Name);
+    if (Index != -1)
+      m_Properties[Index][INDEX_PropertyIsDefault] = false;
+  }
+
+  variant Get(
+      String  _Name,
+      variant _Default
+    )
+  {
+    int Index = Find(_Name);
+    if (Index != -1)
+    {
+      if (IsDefaultValue(Index))
+        m_Properties[Index][INDEX_PropertyValue] = _Default;
+
+      return m_Properties[Index][INDEX_PropertyValue];
+    }
+
+    m_Properties.add([_Name, _Default, true]);
+    return _Default;
+  }
+
+  void Set(
+      String  _Name,
+      variant _Value
+    )
+  {
+    int Index = Find(_Name);
+    if (Index != -1)
+    {
+      if (!IsDefaultValue(Index))
+        m_Properties[Index][INDEX_PropertyValue] = _Value;
+    }
+    else
+      m_Properties.add([_Name, _Value, false]);
+  }
+
+  void Del(
+      String  _Name
+    )
+  {
+    int Index = Find(_Name);
+    if (Index != -1)
+      DelByIndex(Index);
+  }
+
+  static Array Compact(
+      Array _Properties
+    )
+  {
+    int iProp = 0;
+    while (iProp < _Properties.size())
+    {
+      if (_Properties[iProp].size() <= INDEX_PropertyIsDefault)
+      {
+        iProp++;
+        continue;
+      }
+
+      if (getVariableType(_Properties[iProp][INDEX_PropertyIsDefault]) != ST_BOOL)
+      {
+        logError("CPropertiesMap::Compact: Damn!");
+        iProp++;
+        continue;
+      }
+
+      if (_Properties[iProp][INDEX_PropertyIsDefault])
+        _Properties.remove(iProp);
+      else
+      {
+        _Properties[iProp].remove(INDEX_PropertyIsDefault);
+        iProp++;
+      }
+    }
+
+    return _Properties;
+  }
+
+  // service function
+
+  int Find(
+      String _PropName
+    )
+  {
+    for (int Index = 0; Index < m_Properties.size(); Index++)
+      if (_PropName == m_Properties[Index][INDEX_PropertyName])
+        return Index;
+    return -1;
+  }
+}

@@ -1,0 +1,1150 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CMaterialStructure
+{
+  final static int MSID_Default      = DefaultSubstanceId;
+  final static int MSID_Metal        = 0;
+  final static int MSID_Glass        = 1;
+  final static int MSID_Plastic      = 2;
+  final static int MSID_Wood         = 3;
+  final static int MSID_Stone        = 4;
+  final static int MSID_Soft         = 5;
+  final static int MSID_Body         = 6;
+  final static int MSID_Water        = 7;
+  final static int MSID_Ground       = 8;
+  final static int MSID_MainUnitBody = 9;
+  final static int MSID_Forest       = 10;
+  final static int MSID_Bush         = 11;
+  final static int MSID_Fence        = 23;
+
+  final static int MSID_ArmourTurretFWD   = 12;
+  final static int MSID_ArmourTurretREAR  = 13;
+  final static int MSID_ArmourTurretTOP   = 14;
+  final static int MSID_ArmourTurretLEFT  = 15;
+  final static int MSID_ArmourTurretRIGHT = 16;
+  final static int MSID_ArmourHullFWD     = 17;
+  final static int MSID_ArmourHullREAR    = 18;
+  final static int MSID_ArmourHullTOP     = 19;
+  final static int MSID_ArmourHullBOTTOM  = 20;
+  final static int MSID_ArmourHullRIGHT   = 21;
+  final static int MSID_ArmourHullLEFT    = 22;
+
+  boolean LoadOnDemand   = false;
+
+  String  AlphaMode      = "DISABLE";
+  int     LightingModel  = LMDL_Default;
+
+  String  MaterialID     = "";
+  String  TextureName    = "";
+  String  BumpTexName    = "";
+  String  MicroTexName   = "";
+  String  SpecTexName    = "";
+  String  EmisTexName    = "";
+  String  LMapTexName    = "";
+  String  EnvrTexName    = "";
+  String  HMapTexName    = "";
+
+  int     u0             = 0;
+  int     v0             = 0;
+  int     du             = 0; // 0 - texture width
+  int     dv             = 0; // 0 - texture height
+
+  Color   Ambient        = new Color(0.0, 0.0, 0.0);
+  Color   Diffuse        = new Color(0.0, 0.0, 0.0);
+  Color   Specular       = new Color(0.0, 0.0, 0.0);
+  Color   Emissive       = new Color(0.0, 0.0, 0.0);
+  float   Power          = 0.0;
+
+  boolean DoubleSided    = false;
+
+  float   MTexTilingU    = 1.0;
+  float   MTexTilingV    = 1.0;
+
+  float   BTexTilingU    = 1.0;
+  float   BTexTilingV    = 1.0;
+
+  float   Glossiness     = 0.0;
+  float   Fresnel        = 1.0;
+  float   Parallax       = 0.0;
+
+  int     SubstanceID    = MSID_Default;
+
+  void PreloadResources()
+  {
+    Component TextureManager = new #TextureManager();
+    if (null == TextureManager)
+      return;
+
+    if ("" != TextureName)  TextureManager.PreloadTexture(TextureName);
+    if ("" != BumpTexName)  TextureManager.PreloadTexture(BumpTexName);
+    if ("" != MicroTexName) TextureManager.PreloadTexture(MicroTexName);
+    if ("" != SpecTexName)  TextureManager.PreloadTexture(SpecTexName);
+    if ("" != EmisTexName)  TextureManager.PreloadTexture(EmisTexName);
+    if ("" != LMapTexName)  TextureManager.PreloadTexture(LMapTexName);
+    if ("" != EnvrTexName)  TextureManager.PreloadTexture(EnvrTexName);
+    if ("" != HMapTexName)  TextureManager.PreloadTexture(HMapTexName);
+  }
+  
+  boolean IsArmored()
+  {
+    return (SubstanceID >= MSID_ArmourTurretFWD &&
+            SubstanceID <= MSID_ArmourHullLEFT);
+  }
+}
+
+class CModelMaterial
+  extends CMaterialStructure
+{
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _AlphaMode,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    AlphaMode      = _AlphaMode;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+  }
+
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+  }
+
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided,
+      int     _SubstanceID
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+    SubstanceID    = _SubstanceID;
+  }
+
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided,
+      float   _Glossiness,
+      int     _SubstanceID
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+    Glossiness     = _Glossiness;
+    SubstanceID    = _SubstanceID;
+  }
+
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided,
+      float   _Glossiness,
+      float   _Fresnel,
+      int     _SubstanceID
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+    Glossiness     = _Glossiness;
+    Fresnel        = _Fresnel;
+    SubstanceID    = _SubstanceID;
+  }
+
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided,
+      float   _Glossiness,
+      float   _Fresnel,
+      float   _Parallax,
+      int     _SubstanceID
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+    Glossiness     = _Glossiness;
+    Fresnel        = _Fresnel;
+    Parallax       = _Parallax;
+    SubstanceID    = _SubstanceID;
+  }
+  
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _HMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided,
+      float   _Glossiness,
+      float   _Fresnel,
+      float   _Parallax,
+      int     _SubstanceID
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    HMapTexName    = _HMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+    Glossiness     = _Glossiness;
+    Fresnel        = _Fresnel;
+    Parallax       = _Parallax;
+    SubstanceID    = _SubstanceID;
+  }
+
+  CModelMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _BumpTexName,
+      String  _MicroTexName,
+      String  _SpecTexName,
+      String  _EmisTexName,
+      String  _LMapTexName,
+      String  _HMapTexName,
+      String  _AlphaMode,
+      int     _LightingModel,
+      float   _MTexTilingU,
+      float   _MTexTilingV,
+      float   _BTexTilingU,
+      float   _BTexTilingV,
+      Color   _Ambient,
+      Color   _Diffuse,
+      Color   _Specular,
+      Color   _Emissive,
+      float   _SpecPower,
+      boolean _DoubleSided,
+      float   _Glossiness,
+      float   _Fresnel,
+      float   _Parallax,
+      int     _SubstanceID,
+      String  _EnvrTexName
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    BumpTexName    = _BumpTexName;
+    MicroTexName   = _MicroTexName;
+    SpecTexName    = _SpecTexName;
+    EmisTexName    = _EmisTexName;
+    LMapTexName    = _LMapTexName;
+    HMapTexName    = _HMapTexName;
+    AlphaMode      = _AlphaMode;
+    LightingModel  = _LightingModel;
+    MTexTilingU    = _MTexTilingU;
+    MTexTilingV    = _MTexTilingV;
+    BTexTilingU    = _BTexTilingU;
+    BTexTilingV    = _BTexTilingV;
+    Ambient        = _Ambient;
+    Diffuse        = new Color(1.0, 1.0, 1.0, _Diffuse.a);
+    Specular       = _Specular;
+    Emissive       = _Emissive;
+    Power          = _SpecPower;
+    DoubleSided    = _DoubleSided;
+    Glossiness     = _Glossiness;
+    Fresnel        = _Fresnel;
+    Parallax       = _Parallax;
+    SubstanceID    = _SubstanceID;
+    EnvrTexName    = _EnvrTexName;
+  }
+}
+
+
+class CUIMaterial 
+  extends CMaterialStructure
+{
+  CUIMaterial(
+      String _MaterialID,
+      String _TextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+    DoubleSided = true;
+  }
+}
+
+
+class CUIMaterial2
+  extends CMaterialStructure
+{
+  float us = -0.5;
+  float vs = -0.5;
+    
+  CUIMaterial2(
+      String _MaterialID,
+      String _TextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+    DoubleSided = true;
+  }
+}
+
+
+class CUIOnDemandMaterial extends CUIMaterial
+{
+  CUIOnDemandMaterial(
+      String _MaterialID,
+      String _TextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    LoadOnDemand = true;
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    u0           = _u0;
+    v0           = _v0;
+    du           = _du;
+    dv           = _dv;
+    DoubleSided  = true;
+  }
+}
+
+class CUIOnDemand2Material
+  extends CMaterialStructure
+{
+  float us = -0.5;
+  float vs = -0.5;
+    
+  CUIOnDemand2Material(
+      String _MaterialID,
+      String _TextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    LoadOnDemand = true;
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    u0           = _u0;
+    v0           = _v0;
+    du           = _du;
+    dv           = _dv;
+    DoubleSided  = true;
+  }
+}
+
+class CEffectMaterial 
+  extends CMaterialStructure
+{
+  CEffectMaterial(
+      Component _Material
+    )
+  {
+    MaterialID   = _Material.MaterialID;
+    TextureName  = _Material.TextureName;
+    AlphaMode    = _Material.AlphaMode;
+    u0           = _Material.u0;
+    v0           = _Material.v0;
+    du           = _Material.du;
+    dv           = _Material.dv;
+    Diffuse      = _Material.Diffuse;
+    DoubleSided  = _Material.DoubleSided;
+  }
+
+  CEffectMaterial(
+      String _MaterialID,
+      String _AlphaMode
+    )
+  {
+    MaterialID   = _MaterialID;
+    AlphaMode    = _AlphaMode;
+    u0           = 0;
+    v0           = 0;
+    du           = 0;
+    dv           = 0;
+    Diffuse      = new Color(1.0, 1.0, 1.0);
+    DoubleSided  = true;
+  }
+
+  CEffectMaterial(
+      String _MaterialID,
+      String _TextureName,
+      String _AlphaMode,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    AlphaMode    = _AlphaMode;
+    u0           = _u0;
+    v0           = _v0;
+    du           = _du;
+    dv           = _dv;
+    Diffuse      = new Color(1.0, 1.0, 1.0);
+    DoubleSided  = true;
+  }
+
+  CEffectMaterial(
+      String _MaterialID,
+      String _TextureName,
+      Color  _Diffuse,
+      String _AlphaMode,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    Diffuse      = _Diffuse;
+    AlphaMode    = _AlphaMode;
+    u0           = _u0;
+    v0           = _v0;
+    du           = _du;
+    dv           = _dv;
+    Diffuse      = new Color(1.0, 1.0, 1.0);
+    DoubleSided  = true;
+  }
+
+  CEffectMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      Color   _Diffuse,
+      String  _AlphaMode,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv,
+      boolean _DoubleSided
+    )
+  {
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    Diffuse      = _Diffuse;
+    AlphaMode    = _AlphaMode;
+    u0           = _u0;
+    v0           = _v0;
+    du           = _du;
+    dv           = _dv;
+    Diffuse      = new Color(1.0, 1.0, 1.0);
+    DoubleSided  = _DoubleSided;
+  }
+}
+
+class CLensFlareMaterial 
+  extends CMaterialStructure
+{
+  CLensFlareMaterial(
+      String _MaterialID,
+      String _TextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+    DoubleSided = true;
+  }
+}
+
+class CAnimatedMaterial
+  extends CMaterialStructure
+{
+  String MaterialType = "Animated";
+  String MaterialID   = "";
+  Array  Materials    = [];
+  Array  Pauses       = [];
+
+  CAnimatedMaterial(
+      String _MaterialID,
+      Array  _Materials,
+      Array  _Pauses
+    )
+  {
+    MaterialID = _MaterialID;
+    Materials  = _Materials;
+    Pauses     = _Pauses;
+  }
+}
+
+class CWaterMaterial 
+  extends CMaterialStructure
+{
+  CWaterMaterial(
+      String  _MaterialID,
+      Color   _Diffuse,
+      Color   _Specular,
+      float   _Power,
+      String  _MicroTexture,
+      String  _PenaTexture
+    )
+  {
+    MaterialID   = _MaterialID;
+    Diffuse      = _Diffuse;
+    Specular     = _Specular;
+    Power        = _Power;
+
+    MicroTexName = _MicroTexture;
+    SpecTexName  = _PenaTexture;
+  }
+
+  CWaterMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      Color   _Diffuse
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    Diffuse     = _Diffuse;
+  }
+
+  CWaterMaterial(
+      String  _MaterialID,
+      String  _TextureName
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+  }
+}
+
+class CWaterParticleMaterial 
+  extends CMaterialStructure
+{
+  CWaterParticleMaterial(
+      String _MaterialID,
+      String _TextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+  }
+}
+
+class CTerrainMaterial
+  extends CMaterialStructure
+{
+  Array   MicroTextures   = [];
+
+  Color   Diffuse         = new Color(1.0, 1.0, 1.0);
+  
+  boolean IsMainCacheable = true;
+  boolean IsBumpCacheable = true;
+
+  CTerrainMaterial(
+      String _MaterialID,
+      String _SMicrTexName,
+      Array  _VMicrTexName
+    )
+  {
+    MaterialID      = _MaterialID;
+    MicroTexName    = _SMicrTexName;
+    MicroTextures   = _VMicrTexName;
+  }
+}
+
+class CTerrainPatchMaterial
+  extends CTerrainMaterial
+{
+  boolean IsMainCacheable = false;
+
+  CTerrainPatchMaterial(
+      String _MaterialID,
+      String _SMicrTexName,
+      Array  _VMicrTexName
+    )
+  {
+    MaterialID      = _MaterialID;
+    MicroTexName    = _SMicrTexName;
+    MicroTextures   = _VMicrTexName;
+  }
+}  
+
+class CTerrainEffectMaterial 
+  extends CMaterialStructure
+{
+  CTerrainEffectMaterial(
+      String _MaterialID,
+      String _TextureName
+    )
+  {
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    Diffuse      = new Color(1.0, 1.0, 1.0);
+  }
+}
+
+class CGeometryCursorMaterial
+  extends CMaterialStructure
+{
+  CGeometryCursorMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv,
+      Color   _Diffuse
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    u0             = _u0;
+    v0             = _v0;
+    du             = _du;
+    dv             = _dv;
+    Diffuse        = _Diffuse;
+
+    AlphaMode      = "NORMAL";
+  }                
+}
+
+class CForestBillboardMaterial 
+  extends CMaterialStructure
+{
+  CForestBillboardMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+
+    AlphaMode   = "KEYCOLOR";
+    Diffuse     = new Color(1.0, 1.0, 1.0);
+    Ambient     = new Color(0.3, 0.3, 0.3);
+  }
+}
+
+class CForestShadowMaterial 
+  extends CMaterialStructure
+{
+  CForestShadowMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+
+    AlphaMode   = "NORMAL";
+    Diffuse     = new Color(1.0, 1.0, 1.0);
+    Ambient     = new Color(0.3, 0.3, 0.3);
+  }
+}
+
+class CForestPlaneMaterial
+  extends CMaterialStructure
+{
+  CForestPlaneMaterial(
+      String  _MaterialID,
+      String  _MicroTexName,
+      String  _AlphaMode
+    )
+  {
+    MaterialID   = _MaterialID;
+    MicroTexName = _MicroTexName;
+    Diffuse      = new Color(1.0, 1.0, 1.0);
+    Ambient      = new Color(0.3, 0.3, 0.3);
+    AlphaMode    = _AlphaMode;
+  }
+}
+
+
+class CGrassBillboardMaterial 
+  extends CMaterialStructure
+{
+  CGrassBillboardMaterial(
+      String  _MaterialID,
+      String  _TextureName
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+  }
+}
+
+
+class CRoadMaterial2
+  extends CMaterialStructure
+{
+  CRoadMaterial2(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _MicroTexName
+    )
+  {
+    MaterialID   = _MaterialID;
+    TextureName  = _TextureName;
+    MicroTexName = _MicroTexName;
+  }
+}
+
+
+class CStaticTerrainMaterial 
+  extends CMaterialStructure
+{
+  CStaticTerrainMaterial(
+      String  _MaterialID,
+      String  _TextureName
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+
+    Diffuse     = new Color(1.0, 1.0, 1.0);
+    Ambient     = new Color(0.3, 0.3, 0.3);
+  }                
+
+  CStaticTerrainMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      String  _MicroTexName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv,
+      String  _AlphaMode
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    MicroTexName   = _MicroTexName;
+    u0             = _u0;
+    v0             = _v0;
+    du             = _du;
+    dv             = _dv;
+    AlphaMode      = _AlphaMode;
+
+    Diffuse        = new Color(1.0, 1.0, 1.0, 1.0);
+    Ambient        = new Color(0.1, 0.1, 0.1);
+  }
+}
+
+class CStaticWaterMaterial
+  extends CMaterialStructure
+{
+  Map TextureName = new Map();
+
+  CStaticWaterMaterial(
+      String  _MaterialID,
+      Map     _TextureName,
+      String  _MicroTexName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv,
+      String  _AlphaMode
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    MicroTexName   = _MicroTexName;
+    u0             = _u0;
+    v0             = _v0;
+    du             = _du;
+    dv             = _dv;
+    AlphaMode      = _AlphaMode;
+
+    Diffuse        = new Color(1.0, 1.0, 1.0, 1.0);
+    Ambient        = new Color(0.1, 0.1, 0.1);
+  }
+}
+
+class CSpriteMaterial
+  extends CMaterialStructure
+{
+  CSpriteMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+
+    Diffuse     = new Color(1.0, 1.0, 1.0);
+    AlphaMode   = "KEYCOLOR";
+  }
+
+  CSpriteMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv,
+      String  _AlphaMode
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+    u0          = _u0;
+    v0          = _v0;
+    du          = _du;
+    dv          = _dv;
+
+    Diffuse     = new Color(1.0, 1.0, 1.0);
+    AlphaMode   = _AlphaMode;
+  }
+}
+
+class CRoadMaterial
+  extends CMaterialStructure
+{
+  CRoadMaterial(
+      String  _MaterialID,
+      String  _TextureName,
+      int     _u0,
+      int     _v0,
+      int     _du,
+      int     _dv
+    )
+  {
+    MaterialID     = _MaterialID;
+    TextureName    = _TextureName;
+    u0             = _u0;
+    v0             = _v0;
+    du             = _du;
+    dv             = _dv;
+
+    AlphaMode      = "NORMAL";
+    Diffuse        = new Color(1.0, 1.0, 1.0); 
+  }                
+
+  CRoadMaterial(
+      String _MaterialID,
+      String _MainTextureName,
+      String _MicrTextureName,
+      int    _u0,
+      int    _v0,
+      int    _du,
+      int    _dv
+    )
+  {
+    MaterialID   = _MaterialID;
+    TextureName  = _MainTextureName;
+    MicroTexName = _MicrTextureName;
+    u0           = _u0;
+    v0           = _v0;
+    du           = _du;
+    dv           = _dv;
+    DoubleSided  = true;
+  }
+}
+
+class CSubstanceMaterial
+  extends CMaterialStructure
+{
+  CSubstanceMaterial(
+      String _MaterialID,
+      int    _SubstanceID
+    )
+  {
+    MaterialID  = _MaterialID;
+    SubstanceID = _SubstanceID;
+  }
+}
+
+class CNumberMaterial 
+  extends CMaterialStructure
+{
+  CNumberMaterial(
+      String  _MaterialID,
+      String  _TextureName
+    )
+  {
+    MaterialID  = _MaterialID;
+    TextureName = _TextureName;
+
+    Diffuse     = new Color(1.0, 1.0, 1.0);
+    Ambient     = new Color(0.0, 0.0, 0.0);
+    
+    AlphaMode      = "NORMAL";
+  } 
+}

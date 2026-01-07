@@ -1,0 +1,248 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Common class (interface) for client and server
+class CSession
+{
+  // Player slot control
+  void SetPlayerSlotID(
+      int _PlayerSlot
+    )
+  {
+    m_PlayerSlotID = _PlayerSlot;
+  }
+
+  int GetPlayerSlotID()
+  {
+    return m_PlayerSlotID;
+  }
+
+  int GetPlayerID()
+  {
+    return m_PlayerID;
+  }
+
+  // Player team control
+  void SetPlayerTeam(
+      int _PlayerTeam
+    )
+  {
+    m_PlayerTeam = _PlayerTeam;
+  }
+
+  int GetPlayerTeam()
+  {
+    return m_PlayerTeam;
+  }
+
+  // Player info control
+  Array GetPlayersInfo()
+  {
+    Array PlayersInfo = [];
+    for (int Index = 0; Index < m_PlayersInfo.size(); Index++)
+      PlayersInfo.add(new CPlayerStat(m_PlayersInfo[Index][1]));
+    return PlayersInfo;
+  }
+
+  void CachePlayingPlayersInfo()
+  {
+    if (m_PlayersInfoCache.size() != 0)
+    {
+      return;
+    }
+
+    m_PlayersInfoCache = GetPlayingPlayersInfo();
+  }
+
+  void DeCachePlayingPlayersInfo()
+  {
+    m_PlayersInfoCache.clear();
+    m_UsePlayersInfoCache = false;
+  }
+
+  Array GetPlayingPlayersInfo()
+  {
+    if (m_UsePlayersInfoCache)
+    {
+      return m_PlayersInfoCache;
+    }
+
+    Array PlayersInfo = [];
+
+    for (int Index = 0; Index < m_PlayersInfo.size(); Index++)
+    {
+      Component Stat = new CPlayerStat(m_PlayersInfo[Index][1]);
+      if ((CPlayerStat::CS_Playing == Stat.SessionStatus)
+          || (CPlayerStat::CS_Dead == Stat.SessionStatus))
+        PlayersInfo.add(Stat);
+    }
+    return PlayersInfo;
+  }
+  
+  int GetPlayerIDbyName(String _Name)
+  {
+    Array PlayersInfo = GetPlayersInfo();
+    for (int Index = 0; Index < PlayersInfo.size(); Index++)
+    {
+      if((new String(PlayersInfo[Index].Name)) == _Name)
+        return m_PlayersInfo[Index][0];
+    }
+    
+    return -1;
+  }
+
+  void SendPlayerInfo()
+  {
+    logError("Pure function call");
+  }
+
+  // Server info control
+  Component GetSessionInfo()
+  {
+    return m_SessionInfo;
+  }
+
+  // Mirror control service functions
+  void CreateObjectMirror(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    logError("Pure function call");
+  }
+
+  // Service functions
+  Component GetThisPlayerInfoComponent()
+  {
+    return (new CPlayerSettings()).m_CurrentPlayer;
+  }
+
+  void SetSessionStatus(
+      int     _Status,
+      boolean _SendInfo
+    )
+  {
+    GetThisPlayerInfoComponent().SessionStatus = _Status;
+    if (_SendInfo)
+      SendPlayerInfo();
+  }
+
+  Array GetThisPlayerInfo()
+  {
+    // Get player info
+    Component CurrentPlayer = GetThisPlayerInfoComponent();
+
+    // Set slot
+    CurrentPlayer.SessionTeam = m_PlayerTeam;
+
+    // Get player info
+    return CurrentPlayer.Export();
+  }
+
+  Component GetPlayerInfo(
+      int _ID
+    )
+  {
+    // Find player info record in array
+    int ArrayIndex = FindPlayerInfo(_ID);
+    if (ArrayIndex == -1)
+      return null;
+
+    // Return player info
+    return new CPlayerStat(m_PlayersInfo[ArrayIndex][1]);
+  }
+
+  void SetPlayerInfo(
+      int   _ID,
+      Array _Info
+    )
+  {
+    // Find player info record in array
+    int ArrayIndex = FindPlayerInfo(_ID);
+
+    // Update or add player info
+    if (ArrayIndex != -1)
+    {
+      m_PlayersInfo[ArrayIndex][1] = _Info;
+/*      if (m_UsePlayingPlayersInfoCache)
+      {
+
+      }*/
+    }
+    else
+      m_PlayersInfo.add([_ID, _Info]);
+
+    // Fire event
+    fireEvent(0.0, [], "OnPlayersInfoChanged", []);
+  }
+
+  void DelPlayerInfo(
+      int   _ID
+    )
+  {
+    // Find player info record in array
+    int ArrayIndex = FindPlayerInfo(_ID);
+
+    // Update or add player info
+    if (ArrayIndex != -1)
+    {
+      m_PlayersInfo.remove(ArrayIndex);
+    }
+
+    // Fire event
+    fireEvent(0.0, [], "OnPlayersInfoChanged", []);
+  }
+
+  int FindPlayerInfo(
+      int _ID
+    )
+  {
+    for (int Index = 0; Index < m_PlayersInfo.size(); Index++)
+      if (m_PlayersInfo[Index][0] == _ID)
+        return Index;
+
+    return -1;
+  }
+
+  void CleanupPlayersInfo()
+  {
+    m_PlayersInfo.clear();
+  }
+
+  void LogPlayersInformation()
+  {
+//     for (int i = 0; i < m_PlayersInfo.size(); i++)
+//     {
+//       int PlayerID = m_PlayersInfo[i][0];
+//       CPlayerStat PlayerInfo = new CPlayerStat(m_PlayersInfo[i][1]);
+// 
+//       logWarning("PLAYER INFO (" + new String(i) + "):");
+//       logMessage(PlayerInfo.Rank + " " + PlayerInfo.Name + ", PlayerID = " + new String(PlayerID));
+//     }
+
+    logWarning("LOCAL PLAYER: PlayerID = " + new String(m_PlayerID) + ", slot = " + new String(m_PlayerSlotID));
+  }
+
+  // Members
+  Component m_SessionInfo  = null;
+
+  int       m_PlayerSlotID = -1;
+  int       m_PlayerTeam   = -1;
+  int       m_PlayerID     = SERVER_PLAYER_ID;
+  Array     m_PlayersInfo  = [];
+
+  boolean   m_UsePlayersInfoCache = false;
+  Array     m_PlayersInfoCache    = [];
+}
+
+
+

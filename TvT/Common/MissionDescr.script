@@ -1,0 +1,50 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// Base class for multimplayer mission
+class CMissionDescriptor
+{
+  int GetMaximumPlayers()
+  {
+    return invokeClassFunction(m_MissionName, "GetPlayerSlotsQty", []);
+  }
+
+  String GetThumbName()
+  {
+    return m_ThumbName;
+  }
+
+  //
+  // data from resources
+  // 
+
+  WString GetMapName()
+  {
+    return str_MapName;
+  }
+
+  WString GetWeather()
+  {
+    return str_Weather;
+  }
+
+  WString GetLandscape()
+  {
+    return str_Landscape;
+  }
+
+  WString GetDescription()
+  {
+    return str_Description;
+  }
+
+
+  String  m_MissionName;
+  String  m_ThumbName;
+}

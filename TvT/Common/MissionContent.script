@@ -1,0 +1,588 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMissionContent extends CBaseContent
+{
+  final static String DefaultCinemaID     = "Default";
+  final static String CinemaStartKey      = "KEY_START";
+
+  // Source content component
+  Component m_SourceContent = null;
+  Map       m_Cinemas;
+  Map       m_RecordIndex;  
+
+  //
+  // Contruction and initialization
+  //
+
+  CMissionContent(
+      Component _Content
+    )
+  {
+    m_SourceContent = _Content;
+
+    Array ObjectList = m_SourceContent.GetMissionObjectList();
+    for (int Index = ObjectList.size() - 1; Index >= 0 ; Index--)
+    {
+      m_RecordIndex.insert(ObjectList[Index][INDEX_ObjectID], Index);
+    }
+    // Load default cinemas
+    LoadCinemas(m_SourceContent.GetMissionCameraScriptList());
+  }
+
+  //
+  // Content object methods
+  //
+
+  Array FindObjectRecord(
+      String _ObjectID
+    )
+  {
+    int Index = FindObjectRecordIndex(_ObjectID);
+    if (INDEX_NotFound != Index)
+      return m_SourceContent.GetMissionObjectList()[Index];
+    return [];
+  }
+
+  int FindObjectRecordIndex(
+      String _ObjectID
+    )
+  {
+    Array ObjectList = m_SourceContent.GetMissionObjectList();
+
+    int LastRecordIndex = -1;
+    if (m_RecordIndex.find(_ObjectID))
+      LastRecordIndex = m_RecordIndex.getValue();
+
+    if (LastRecordIndex >= 0 &&
+        LastRecordIndex < ObjectList.size())
+      if (ObjectList[LastRecordIndex][INDEX_ObjectID] == _ObjectID)
+        return LastRecordIndex;
+
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+      if (ObjectList[Index][INDEX_ObjectID] == _ObjectID)
+      {
+        m_RecordIndex.insert(_ObjectID, Index);
+        return Index;
+      }
+
+    return INDEX_NotFound;
+  }
+
+  void CreateObjectRecord(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    Array ObjectList = m_SourceContent.GetMissionObjectList();
+    ObjectList.add([_ObjectID, _ComponentID, _ScriptClass, _Position, _Properties]);
+  }
+
+  void DeleteObjectRecord(
+      String _ObjectID
+    )
+  {
+    int Index = FindObjectRecordIndex(_ObjectID);
+    if (INDEX_NotFound != Index)
+      m_SourceContent.GetMissionObjectList().remove(Index);
+  }
+
+  int GetObjectRecordsQty()
+  {
+    return m_SourceContent.GetMissionObjectList().size();
+  }
+
+  Array GetObjectRecord(
+      int _Index
+    )
+  {
+    return m_SourceContent.GetMissionObjectList()[_Index];
+  }
+  
+  Array GetObjectsList()
+  {
+    return m_SourceContent.GetMissionObjectList();
+  }
+
+  Array GetObjectsCompactedList()
+  {
+    Array List = clone(GetObjectsList());
+
+    // we'll remove property entries with default flag
+    // and all those flags
+    for (int iRecord = 0; iRecord < List.size(); iRecord++)
+      CPropertiesMap::Compact(List[iRecord][INDEX_Properties]);
+
+    return List;
+  }
+
+  //
+  // Cinema methods
+  //
+
+  Array GetDefaultCinemaProperties()
+  {
+    return [
+        ["IngameCinema", false],
+        ["Test", "xyz"]
+      ];
+  }
+
+  void LoadCinemas(
+      Array _CameraScriptList
+    )
+  {
+    m_Cinemas.clear();
+
+    String CinemaID    = DefaultCinemaID;
+    Array  CinemaProps = GetDefaultCinemaProperties();
+
+    m_Cinemas.insert(CinemaID, [[], []]);
+
+    for (int i = 0; i < _CameraScriptList.size(); i++)
+    {
+      Array KeyFrame = _CameraScriptList[i];
+      
+      if (KeyFrame[1] == CinemaStartKey)
+      {
+        CinemaID = KeyFrame[2][0][1];
+
+        if (KeyFrame[2].size() > 1)
+        {
+          CinemaProps = clone(KeyFrame[2][1]);
+          
+          Array Default = GetDefaultCinemaProperties();
+          for (int iDefProp = 0; iDefProp < Default.size(); iDefProp++)
+            for (int iProp = 0; iProp < CinemaProps.size(); iProp++)
+            {
+              if (CinemaProps[iProp][0] == Default[iDefProp][0])
+                break;
+              else
+              if (iProp == (CinemaProps.size() - 1))
+                CinemaProps.add(Default[iDefProp]);
+            }
+        }
+        else
+          CinemaProps = GetDefaultCinemaProperties();
+
+        m_Cinemas.insert(CinemaID, [[], []]);
+        m_Cinemas[CinemaID][INDEX_CinemaProps] = clone(CinemaProps);
+
+        continue;
+      }
+      
+      m_Cinemas[CinemaID][INDEX_CinemaFrames].add(KeyFrame);
+    }
+  }
+
+  Array GetCinemas()
+  {
+    Array CameraScriptList = [];
+
+    m_Cinemas.gotoBegin();
+    while (!m_Cinemas.isAtEnd())
+    {
+      CameraScriptList.add(
+          [
+            0.000000,
+            CinemaStartKey,
+            [
+              ["CinemaID", m_Cinemas.getKey()],
+              m_Cinemas.getValue()[INDEX_CinemaProps]
+            ]
+          ]
+        );
+
+      CameraScriptList.append(m_Cinemas.getValue()[INDEX_CinemaFrames]);
+
+      m_Cinemas.gotoNext();
+    }
+
+    return CameraScriptList;
+  }
+
+  Array GetCinemaList()
+  {
+    Array CinemaList = [];
+
+    m_Cinemas.gotoBegin();
+    while (!m_Cinemas.isAtEnd())
+    {
+      CinemaList.add(m_Cinemas.getKey());
+      m_Cinemas.gotoNext();
+    }
+    
+    return CinemaList;
+  }
+
+  Array GetCinema(
+      String _CinemaID
+    )
+  {
+    return m_Cinemas[_CinemaID][INDEX_CinemaFrames];
+  }
+
+  void SetCinema(
+      String _CinemaID,
+      Array  _Cinema
+    )
+  {
+    m_Cinemas[_CinemaID][INDEX_CinemaFrames] = _Cinema;
+  }
+
+  Array GetCinemaProperties(
+      String _CinemaID
+    )
+  {
+    return m_Cinemas[_CinemaID][INDEX_CinemaProps];
+  }
+
+  void SetCinemaProperties(
+      String _CinemaID,
+      Array  _Properties
+    )
+  {
+    m_Cinemas[_CinemaID][INDEX_CinemaProps] = _Properties;
+  }
+  
+  boolean IsCinemaExist(
+      String _CinemaID
+    )
+  {
+    return m_Cinemas.find(_CinemaID);
+  }
+
+  void DeleteCinema(
+      String _CinemaID
+    )
+  {
+    m_Cinemas.remove(_CinemaID);
+  }
+
+  void AddCinema(
+      String _CinemaID
+    )
+  {
+    m_Cinemas.insert(_CinemaID, [clone(GetDefaultCinemaProperties()), []]);
+  }
+
+  Array GetCameraScriptList()
+  {
+    return GetCinemas();
+  }
+
+  //
+  // Trigger methods
+  //
+
+  Array GetTriggersList()
+  {
+    return m_SourceContent.GetTriggersList();
+  }
+
+  boolean AddTrigger(
+      String _TriggerID,
+      int    _EventType,
+      String _EventObject,
+      String _TriggerInfo
+    )
+  {
+    if (INDEX_NotFound != FindTriggerIndex(_TriggerID))
+      return false;
+
+    GetTriggersList().add([_TriggerID, _EventType, _EventObject, [], [], [], _TriggerInfo]);
+    return true;
+  }
+
+  void UpdateTrigger(
+      String _TriggerID,
+      int    _EventType,
+      String _EventObject,
+      String _TriggerInfo
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+
+    if (INDEX_NotFound == Index)
+      return;
+      
+    Array TriggerRecord = GetTriggersList()[Index];
+    TriggerRecord[INDEX_EventType]   = _EventType;
+    TriggerRecord[INDEX_EventObjID]  = _EventObject;
+    TriggerRecord[INDEX_TriggerInfo] = _TriggerInfo;
+  }
+  
+  void RemoveTrigger(
+      String _TriggerID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound != Index)
+      GetTriggersList().remove(Index);
+  }
+
+  Array FindTrigger(
+      String _TriggerID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound != Index)
+      return GetTriggersList()[Index];
+    
+    return [];
+  }  
+  
+  int FindTriggerIndex(
+      String _TriggerID
+    )
+  {
+    Array TriggersList = GetTriggersList();
+
+    for (int Index = 0; Index < TriggersList.size(); Index++)
+      if (TriggersList[Index][INDEX_TriggerID] == _TriggerID)
+        return Index;
+
+    return INDEX_NotFound;
+  }
+
+  String GetTriggerNewActionID(
+      String _TriggerID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound == Index)
+      return "";
+
+    return ("Action" + new String(GetTriggersList()[Index][INDEX_Actions].size() + 1));
+  }
+
+  Array GetTriggerActionsList(
+      String _TriggerID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound == Index)
+      return [];
+
+    return GetTriggersList()[Index][INDEX_Actions];
+  }
+
+  boolean AddTriggerAction(
+      String  _TriggerID,
+      String  _ActionID,
+      int     _ActionRunState,
+      int     _ActionType,
+      float   _ActionDelay,
+      String  _ActionObject,
+      variant _ActionProp1,
+      variant _ActionProp2
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound == Index)
+      return false;
+
+    if (INDEX_NotFound != FindTriggerAction(Index, _ActionID))
+      return false;
+
+    GetTriggersList()[Index][INDEX_Actions].add([_ActionID, _ActionRunState, _ActionType,
+      _ActionDelay, _ActionObject, _ActionProp1, _ActionProp2]);
+  }
+
+  void UpdateTriggerAction(
+      String  _TriggerID,
+      String  _ActionID,
+      int     _ActionRunState,
+      int     _ActionType,
+      float   _ActionDelay,
+      String  _ActionObject,
+      variant _ActionProp1,
+      variant _ActionProp2
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound == Index)
+      return;
+
+    int ActionIndex = FindTriggerAction(Index, _ActionID);
+    if (INDEX_NotFound == ActionIndex)
+      return;
+
+    Array ActionRecord = GetTriggersList()[Index][INDEX_Actions][ActionIndex];
+    ActionRecord[INDEX_ActionRunState] = _ActionRunState;
+    ActionRecord[INDEX_ActionType]     = _ActionType;
+    ActionRecord[INDEX_ActionDelay]    = _ActionDelay;
+    ActionRecord[INDEX_ActionObjID]    = _ActionObject;
+
+    ActionRecord.remove(INDEX_ActionProp1);
+    ActionRecord.insert(INDEX_ActionProp1, _ActionProp1);
+
+    ActionRecord.remove(INDEX_ActionProp2);
+    ActionRecord.insert(INDEX_ActionProp2, _ActionProp2);
+  }
+
+  void RemoveTriggerAction(
+      String _TriggerID,
+      String _ActionID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    
+    if (INDEX_NotFound == Index)
+      return;
+
+    int ActionIndex = FindTriggerAction(Index, _ActionID);
+    if (INDEX_NotFound != ActionIndex)
+      GetTriggersList()[Index][INDEX_Actions].remove(ActionIndex);
+  }
+
+  int FindTriggerAction(
+      int    _TriggerIndex,
+      String _ActionID
+    )
+  {
+    Array TriggerActions = GetTriggersList()[_TriggerIndex][INDEX_Actions];
+    for (int i = 0; i < TriggerActions.size(); i++)
+      if (TriggerActions[i][INDEX_ActionID] == _ActionID)
+        return i;
+
+    return INDEX_NotFound;
+  }
+  
+  boolean AddSpawnerMask(
+      String _TriggerID,
+      String _SpawnerMask
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+
+    if (INDEX_NotFound == Index ||
+        INDEX_NotFound != FindSpawnerMaskIndex(Index, _SpawnerMask))
+      return false;
+      
+    GetTriggersList()[Index][INDEX_SpawnerMasks].add(_SpawnerMask);
+    return true;
+  }
+
+  void RemoveSpawnerMask(
+      String _TriggerID,
+      String _SpawnerMask
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    if (INDEX_NotFound == Index)
+      return;
+
+    int MaskIndex = FindSpawnerMaskIndex(Index, _SpawnerMask);
+    if (INDEX_NotFound != MaskIndex)
+      GetTriggersList()[Index][INDEX_SpawnerMasks].remove(MaskIndex);
+  }
+
+  int FindSpawnerMaskIndex(
+      int    _TriggerIndex,
+      String _SpawnerMask
+    )
+  {
+    Array TriggersList = GetTriggersList();
+
+    for (int i = 0; i < TriggersList[_TriggerIndex][INDEX_SpawnerMasks].size(); i++)
+      if (TriggersList[_TriggerIndex][INDEX_SpawnerMasks][i] == _SpawnerMask)
+        return i;
+
+    return INDEX_NotFound;
+  }
+
+  boolean AddCondition(
+      String _TriggerID,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID,
+      String _CompareFunction,
+      int    _CompareValue,
+      String _ActionID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+
+    if (INDEX_NotFound == Index ||
+        INDEX_NotFound != FindCondition(Index, _CheckObjectType, _CheckObjectID, _CheckStateID))
+      return false;
+
+    GetTriggersList()[Index][INDEX_Conditions].add([
+      _CheckObjectType, _CheckObjectID, _CheckStateID, _CompareFunction, _CompareValue, _ActionID]);
+    return true;
+  }
+
+  void UpdateCondition(
+      String _TriggerID,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID,
+      String _CompareFunction,
+      int    _CompareValue,
+      String _ActionID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    if (INDEX_NotFound == Index)
+      return;
+
+    int CondIndex = FindCondition(Index, _CheckObjectType, _CheckObjectID, _CheckStateID);
+    if (INDEX_NotFound != CondIndex)
+    {
+      Array Condition = GetTriggersList()[Index][INDEX_Conditions][CondIndex];
+      Condition[INDEX_CompareFunction] = _CompareFunction;
+      Condition[INDEX_CompareValue   ] = _CompareValue;
+      Condition[INDEX_CondActionID   ] = _ActionID;
+    }
+  }
+
+  void RemoveCondition(
+      String _TriggerID,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID
+    )
+  {
+    int Index = FindTriggerIndex(_TriggerID);
+    if (INDEX_NotFound == Index)
+      return;
+
+    int CondIndex = FindCondition(Index, _CheckObjectType, _CheckObjectID, _CheckStateID);
+    if (INDEX_NotFound != CondIndex)
+      GetTriggersList()[Index][INDEX_Conditions].remove(CondIndex);
+  }
+
+  int FindCondition(
+      int    _TriggerIndex,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID
+    )
+  {
+    Array Conditions = GetTriggersList()[_TriggerIndex][INDEX_Conditions];
+
+    for (int i = 0; i < Conditions.size(); i++)
+      if (Conditions[i][INDEX_CheckObjectType] == _CheckObjectType &&
+          Conditions[i][INDEX_CheckObjectID  ] == _CheckObjectID   &&
+          Conditions[i][INDEX_CheckStateID   ] == _CheckStateID      )
+        return i;
+
+    return INDEX_NotFound;
+  }
+}

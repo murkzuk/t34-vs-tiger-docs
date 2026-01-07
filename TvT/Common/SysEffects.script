@@ -1,0 +1,546 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CSysEffectColorTable
+{
+  Color NavPointCenter          = new Color(0.0,  0.75, 0.0,  1.0);
+  Color NavPointBounds          = new Color(0.0,  1.0,  0.0,  0.05);
+
+  Color PersonalNavPointBounds  = new Color(0.0,  0.4,  0.4, 0.4);
+
+  Color SoundZoneCenter         = new Color(0.0,  0.75, 0.75, 1.0);
+  Color SoundZoneBounds         = new Color(0.0,  1.0,  1.0,  0.05);
+
+  Color SoundEmitterCenter      = new Color(0.0,  0.0,  0.75, 1.0);
+  Color SoundEmitterBounds      = new Color(0.0,  0.0,  1.0,  0.1);
+
+  Color EffectEmitterCenter     = new Color(0.75, 0.5,  0.0,  1.0);
+
+  Color InteractiveObjectCenter = new Color(0.75, 0.0,  0.75, 1.0);
+  Color InteractiveObjectBounds = new Color(0.75, 0.0,  0.75, 1.0);
+
+  Color EnvironmentMapCenter    = new Color(0.75, 0.75, 0.0,  1.0);
+  Color EnvironmentMapBounds    = new Color(0.75, 0.75, 0.0,  1.0);
+
+  Color EditorCursorCenter      = new Color(1.0,  0.0,  0.0,  1.0);
+  Color EditorCursorBounds      = new Color(0.5,  0.0,  1.0,  0.5);
+}
+
+
+//
+// NavPoint effects
+//
+
+class CNavPointEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CNavPointCenterEffect extends CSysEffectColorTable
+{
+  CNavPointCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        NavPointCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        NavPointCenter
+      );
+  }
+}
+
+class CBoxNavPointBoundsEffect extends CSysEffectColorTable
+{
+  CBoxNavPointBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_BOX,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        NavPointBounds
+      );
+  }
+}
+
+class CSphereNavPointBoundsEffect extends CSysEffectColorTable
+{
+  CSphereNavPointBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_SPHERE,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        NavPointBounds
+      );
+  }
+}
+
+class CZAxisCylNavPointBoundsEffect extends CSysEffectColorTable
+{
+  CZAxisCylNavPointBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_CYLINDER,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 100.0),
+        "Bounds",
+        NavPointBounds
+      );
+  }
+}
+
+class CPersonalNavPointCenterEffect extends CSysEffectColorTable
+{
+  void CPersonalNavPointCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_BILLBOARD_ZAXIS,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 2000.0),
+        "Center",
+        NavPointCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_PLANE_XY,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(10.0, 10.0, 10.0),
+        "Bounds",
+        NavPointCenter
+      );
+  }
+}
+
+class CPersonalNavPointBoundsEffect extends CSysEffectColorTable
+{
+  void CPersonalNavPointBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_CYLINDER,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 2000.0),
+        "Bounds",
+        PersonalNavPointBounds
+      );
+  }
+}
+
+class CPlayerSpawnNavPointBoundsEffect extends CSysEffectColorTable
+{
+  CPlayerSpawnNavPointBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CNavPointEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_CYLINDER,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 10.0),
+        "Bounds",
+        NavPointBounds
+      );
+  }
+}
+
+//
+// Emitter effects
+//
+
+class CSoundEmitterEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CSoundEmitterCenterEffect extends CSysEffectColorTable
+{
+  CSoundEmitterCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CSoundEmitterEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        SoundEmitterCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        SoundEmitterCenter
+      );
+  }
+}
+
+class CSoundEmitterMinBoundsEffect extends CSysEffectColorTable
+{
+  CSoundEmitterMinBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CSoundEmitterEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_SPHERE,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        SoundEmitterBounds
+      );
+  }
+}
+
+class CSoundEmitterMaxBoundsEffect extends CSysEffectColorTable
+{
+  CSoundEmitterMaxBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CSoundEmitterEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_SPHERE,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        SoundEmitterBounds
+      );
+  }
+}
+
+//
+// Effect emitter effects
+//
+
+class CEffectEmitterEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CEffectEmitterCenterEffect extends CSysEffectColorTable
+{
+  CEffectEmitterCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CEffectEmitterEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        EffectEmitterCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        EffectEmitterCenter
+      );
+  }
+}
+
+//
+// Interactive Object effects
+//
+
+class CInteractiveObjectEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CInteractiveObjectCenterEffect extends CSysEffectColorTable
+{
+  CInteractiveObjectCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CInteractiveObjectEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        InteractiveObjectCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        InteractiveObjectCenter
+      );
+  }
+}
+
+class CInteractiveObjectBoundsEffect extends CSysEffectColorTable
+{
+  CInteractiveObjectBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CInteractiveObjectEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        InteractiveObjectBounds
+      );
+  }
+}
+
+//
+// Environment Map effects
+//
+
+class CEnvironmentMapEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CEnvironmentMapCenterEffect extends CSysEffectColorTable
+{
+  CEnvironmentMapCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CEnvironmentMapEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        EnvironmentMapCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        EnvironmentMapCenter
+      );
+  }
+}
+
+class CEnvironmentMapBoundsEffect extends CSysEffectColorTable
+{
+  CEnvironmentMapBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CEnvironmentMapEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        EnvironmentMapBounds
+      );
+  }
+}
+
+
+//
+// Editor Cursor effects
+//
+
+class CEditorCursorEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Direction",  // material id
+          "NORMAL"      // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",     // material id
+          "ADDITIVE"    // transparency
+        )
+    ];
+}
+
+class CEditorCursorDirectionEffect extends CSysEffectColorTable
+{
+  CEditorCursorDirectionEffect()
+  {
+    SetSkinClass(new #MaterialManager<CEditorCursorEffectSkin>());
+    
+    CreateParticle(
+        EPPID_STATIC_LINE_XAXIS,
+        new Vector(0.5, 0.0, 0.0),
+        new Vector(0.5, 0.0, 0.0),
+        "Direction",
+        EditorCursorCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 0.05),
+        "Direction",
+        EditorCursorCenter
+      );
+  }
+}
+
+class CEditorCursorBoundsEffect extends CSysEffectColorTable
+{
+  CEditorCursorBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CEditorCursorEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_SPHERE,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        EditorCursorBounds
+      );
+  }
+}
+
+//
+// Sound zone effects
+//
+
+class CSoundZoneEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CSoundZoneCenterEffect extends CSysEffectColorTable
+{
+  CSoundZoneCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CSoundZoneEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        SoundZoneCenter
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        SoundZoneCenter
+      );
+  }
+}
+
+class CBoxSoundZoneBoundsEffect extends CSysEffectColorTable
+{
+  CBoxSoundZoneBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CSoundZoneEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_BOX,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        SoundZoneBounds
+      );
+  }
+}
+
+class CSphereSoundZoneBoundsEffect extends CSysEffectColorTable
+{
+  CSphereSoundZoneBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CSoundZoneEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_SPHERE,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        SoundZoneBounds
+      );
+  }
+}

@@ -1,0 +1,54 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseRouterMap extends CBaseZoneMap
+{
+  Array WaterZones       = [
+                             ZMC_Water01,
+                             ZMC_ShallowWater01,
+                             ZMC_BeachWater01,
+                             ZMC_AllPassable
+                           ];
+
+  Array RoadZones        = [
+                             ZMC_Road01,
+                             ZMC_RoadObject,
+                             ZMC_AllPassable
+                           ];
+
+  Array PassableZones    = [
+                             ZMC_Forest01,
+                             ZMC_Forest02,
+                             ZMC_Forest03,
+                             ZMC_Grass01,
+                             ZMC_OffRoad01,
+                             ZMC_OffRoad02,
+                             ZMC_OffRoad03
+                           ];
+
+  Array NonPassableZones = [
+                           ];
+}
+
+class CC1RouterMap extends CBaseRouterMap
+{
+}
+
+class CC2RouterMap extends CBaseRouterMap
+{
+}
+
+class CC3RouterMap extends CBaseRouterMap
+{
+}
+
+class CC4RouterMap extends CBaseRouterMap
+{
+}
+

@@ -1,0 +1,64 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CSerializeableGroup
+  extends ISerializeable
+{
+  // interface
+
+  Array GetExportList()
+  {
+    return [];
+  }
+
+  void ImportItem(
+      String _Item,
+      Component _Storage
+    )
+  {
+  }
+
+  void ExportItem(
+      String _Item,
+      Component _Storage
+    )
+  {
+  }
+
+  // ISerializeable
+
+  void Import(
+      Component _Storage
+    )
+  {
+    int ItemsQty = _Storage.ImportValue();
+    
+    for (int iItem = 0; iItem < ItemsQty; iItem++)
+    {
+      String Item = _Storage.ImportValue();
+      ImportItem(Item, _Storage);
+    }
+  }
+
+  void Export(
+      Component _Storage
+    )
+  {
+    Array Items = GetExportList();
+
+    _Storage.ExportValue(Items.size());
+
+    for (int iItem = 0; iItem < Items.size(); iItem++)
+    {
+      String Item = Items[iItem];
+      _Storage.ExportValue(Item);
+      ExportItem(Item, _Storage);
+    }
+  }
+}

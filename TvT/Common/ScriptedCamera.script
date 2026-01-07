@@ -1,0 +1,233 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CScriptedCameraCollisionControl
+{
+  float CollisionRadius = 3.0;
+  Array CollisionMask   = [
+                            [ CLASSIFICATOR_PROHIBITED ],
+                            [ ]
+                          ];
+}
+
+class CScriptedCameraCam extends CCamera
+{
+}
+
+class CScriptedCamera
+{
+  String  m_StdFontName  = "Arial";
+  float   m_StdFontSize  = 0.025;//0.022;
+  boolean m_DoActivation = true;
+
+
+  CScriptedCamera()
+  {
+    addClassificator(user, CLASSIFICATOR_NOTVISIBLEONRADAR);
+    addClassificator(user, CLASSIFICATOR_NOTEDITABLE);
+    addClassificator(user, CLASSIFICATOR_CONTROLLABLE);
+  }
+
+  void Construct(
+      Component _Mission
+    )
+  {
+    // camera
+    Component Camera = new #Camera<CScriptedCameraCam>();
+    SetPositionProvider(Camera);
+    RegisterObject("Camera", Camera);
+
+    // camera behavior
+    Component Behavior = new #CameraBehavior();
+    setSlaveObject(Behavior, Camera);
+    Behavior.SetEventHandler(this);
+    RegisterObject("Behavior", Behavior);
+
+    // input controller
+    Component InputThroughputControl = new #InputThroughputControl();
+    InputThroughputControl.SetInputFilter([CTLCMD_MENU_ESCAPE]);
+    InputThroughputControl.SetEventHandler(this);
+    RegisterObject("Throughput", InputThroughputControl);
+
+    // cinema screen
+    Component CinemaScreen = new #CinemaScreen();
+    CinemaScreen.SetAspectRatio(1.0);
+    CinemaScreen.SetFadingFactor(1.0);
+    RegisterObject("CinemaScreen", CinemaScreen);
+
+    // cinema text
+ //   Component CinemaText = new #CinemaText();
+ //   CinemaText.SetPosition(0.2, 0.9);
+ //   CinemaText.SetDimensions(0.6, 0.075);
+ //   CinemaText.SetFont(m_StdFontName, m_StdFontSize);
+ //   CinemaText.SetColor(
+ //       new Color(0.6, 0.6, 0.6),
+ //       new Color(0.0, 0.0, 0.0, 0.2)
+ //     );
+ //   CinemaText.SetAlignment(0.0);
+ //   CinemaText.SetPauses(0.03f, 0.03f, 2.0f, 0.05f); // char, space, dot, comma
+ //   RegisterObject("CinemaText", CinemaText);
+
+    // collision control
+    Component CollisionControl = new #CameraCollisionControl<CScriptedCameraCollisionControl>();
+    setSlaveObject(CollisionControl, Camera);
+    RegisterObject("CollisionControl", CollisionControl);
+  }
+
+  void OnInputCommand(
+      int _Command
+    )
+  {
+    if (CTLCMD_MENU_ESCAPE == _Command)
+    {
+      Component Behavior = GetObject("Behavior");
+      if (Behavior != null)
+      {
+        Behavior.StopCameraScript();
+        fireEvent(0.0, [], "OnCinemaInterrupted", [(new #GameController()).GetLoadedMission().m_CurrentCinemaID]);
+      }
+    }
+  }
+
+  void OnInputEnabled(
+      boolean _Enabled
+    )
+  {
+    Component CollisionControl = GetObject("CollisionControl");
+    if (CollisionControl != null)
+      CollisionControl.EnableControl(_Enabled);
+  }
+
+  void EnableLoop(
+      boolean _IsLooped
+    )
+  {
+    Component Behavior = GetObject("Behavior");
+    if (Behavior == null)
+      return;
+
+    Behavior.EnableLoop(_IsLooped);
+  }
+
+  boolean StartScript(
+      Array _KeyFramesList,
+      float _StartFrom
+    )
+  {
+    StartScript(_KeyFramesList, _StartFrom, -1, -1);
+  }
+  
+  boolean StartScript(
+      Array _KeyFramesList,
+      float _StartFrom,
+      int   _StartIndex,
+      int   _EndIndex
+    )
+  {
+    Component Behavior = GetObject("Behavior");
+    if (Behavior == null)
+      return false;
+
+    if (m_DoActivation)
+      (new #GameController()).ActivateObject("ScriptedCamera", true, false);
+
+    if (_StartIndex == -1)
+      Behavior.LoadKeyFramesList(_KeyFramesList);
+    else
+      Behavior.LoadKeyFramesList(_KeyFramesList, _StartIndex, _EndIndex);
+
+    Behavior.StartCameraScript(_StartFrom);
+
+    return true;
+  }
+
+  void StopScript()
+  {
+    Component Behavior = GetObject("Behavior");
+    if (Behavior != null)
+      Behavior.StopCameraScript();
+  }
+
+  float GetCinemaTime()
+  {
+    return GetObject("Behavior").GetCinemaTime();
+  }
+
+  void OnFadeLevelChanged(
+      float _FadeLevel
+    )
+  {
+    Component CinemaScreen = GetObject("CinemaScreen");
+    if (CinemaScreen != null)
+      CinemaScreen.SetFadingFactor(_FadeLevel);
+  }
+
+  void OnStartTextShow(
+      float   _ShowTime,
+      WString _Text
+    )
+  {
+    Component CinemaText = GetObject("CinemaText");
+    if (CinemaText != null)
+    {
+      CinemaText.SetText(_Text);
+      CinemaText.StartScroll(_ShowTime);
+    }
+  }
+
+  void OnFOVChanged(
+      float _FOV
+    )
+  {
+    Component Camera = GetObject("Camera");
+    if (Camera != null)
+      Camera.SetFOV(_FOV);
+  }
+
+  void OnAspectRatioChanged(
+      float _AspectRatio
+    )
+  {
+    Component CinemaScreen = GetObject("CinemaScreen");
+    if (CinemaScreen != null)
+      CinemaScreen.SetAspectRatio(_AspectRatio);
+  }
+
+  void OnSendEvent(
+      String _ObjectID,
+      String _Event,
+      String _Parameters
+    )
+  {
+    // $TODO remove usage of executeString 
+    executeString("sendEvent(0.0, \"" + _ObjectID + "\", \"" + _Event + "\", " + _Parameters + ");");
+  }
+
+  //
+  // Debug info events
+  //
+
+  event void EnableDebugInfo(
+      boolean _IsEnabled
+    )
+  {
+    Component Behavior = GetObject("Behavior");
+    if (Behavior != null)
+      Behavior.EnableDebugInfo(_IsEnabled);
+  }
+
+  event void UpdateCinema(
+      Array _KeyFramesList
+    )
+  {
+    Component Behavior = GetObject("Behavior");
+    if (Behavior != null)
+      Behavior.LoadKeyFramesList(_KeyFramesList);
+  }
+}

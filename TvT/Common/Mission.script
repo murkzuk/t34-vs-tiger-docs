@@ -1,0 +1,2912 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Base class for all missions
+//
+
+class CMission
+  extends CSerializeableGroup, CBaseUtilities, CPlayerSettings
+{
+  // Quantity loaded object before update progress bar
+  int m_SkipRenderFrames                            = 5;
+
+  // =======================================
+  // Base Constants
+  // =======================================
+
+  final static String MainMissionObjectID           = "MainMissionObject";
+
+  final static String CINEMA_Start                  = "MissionStart";
+  final static String CINEMA_End                    = "MissionEnd";
+
+  final static String LAYER_TERRAIN_NAME            = "Terrain";
+  final static String LAYER_TERRAIN_ZONE            = "TerrainZone";
+  final static String LAYER_ROUTER_ZONE             = "RouterZoneMap";
+  final static String LAYER_TERRAIN_WATERHEIGHTS    = "WaterHeights";
+
+  final static String LAYER_MICROTEXTURE_MAP1       = "MicroTextures1";
+  final static String LAYER_MICROTEXTURE_MAP2       = "MicroTextures2";
+
+  final static int ETID_NavigationPoint             = 0; // Event types
+  final static int ETID_VisualDetection             = 1;
+  final static int ETID_SoundDetection              = 2;
+  final static int ETID_VorSDetection               = 3; // Visual & Sound
+  final static int ETID_ObjectStateChange           = 4;
+  final static int ETID_TriggerStateChange          = 5;
+  final static int ETID_TriggerActivation           = 6;
+  final static int ETID_TriggerDirect               = 7;
+  final static int ETID_None                        = 8; // must be LAST type in list
+
+  final static int ATID_PlayCinema                  = 0;
+  final static int ATID_SendMessage                 = 1;
+  final static int ATID_SetObjectState              = 2;
+  final static int ATID_SetObjectActive             = 3;
+  final static int ATID_SetTriggerActive            = 4;
+  final static int ATID_SetTriggerActivationsCount  = 5;
+  final static int ATID_SendEvent                   = 6;
+  final static int ATID_FireEvent                   = 7;
+
+  final static int OTID_GameObject                  = 0; // Condition object types
+  final static int OTID_Trigger                     = 1;
+
+  // Mission objective types
+  final static int MOTID_Primary                    = 0;
+  final static int MOTID_Secondary                  = 1;
+
+  // Mission objective statuses
+  final static int MOSID_InProgress                 = 0;
+  final static int MOSID_Completed                  = 1;
+  final static int MOSID_Failed                     = 2;
+  final static int MOSID_FullCompleted              = 3;
+
+  // =======================================
+  // Base mission properties
+  // =======================================
+
+
+
+  float         m_StartTime           = 60.0 * 60.0 * 14 + 60.0 * 25; // 14:25 time in secs
+
+  float         m_RealStartTime       = m_StartTime;                  // internal
+
+  String        m_MissionObjectClass  = "";
+  Component     m_MissionContentClass = null;
+
+  Array         m_MissionTriggersList = [];
+  Map           m_ClassToComponentMap;
+
+  int           m_ObjectsShowMode   = OSM_Game;
+  String        m_CurrentGamePartID = "";
+  String        m_CurrentCinemaID   = "";
+  boolean       m_IsIngameCinema    = true;
+
+  Array         m_PlayerObjectsIDList = [];
+  Array         m_PlayerGroupEnemies  = [];
+
+  static String m_LoadingScreenSkin = "";
+
+  static String m_BasePhysicsClass  = "CBasePhysicsController";
+
+  static String m_MissionBriefingPicMaterial = "";
+
+  static Array  m_MissionObjectives = [];
+
+  static WString ObjectivesText = L"Objectives\ntext";
+
+  static Array m_TourMissionObjects = [];
+  //ᯨ᮪ ⨯ ꥪ⮢    "ன" ᫥ 襭 ᨨ
+  static Array m_TourObjects = [
+                                  "CBtrHanomag251AusfCUnit",
+                                  "CBtrM3A1HalftruckUnit",
+                                  "CGunPak40Unit",
+                                  "CGunZis3Unit",
+                                  "CSAUStuG40Unit",
+                                  "CSAUSU85Unit",
+                                  "CTankT34_76_42Unit",
+                                  "CTankT34_85_44Unit",
+                                  "CTankPzIVGUnit",
+                                  "CTankPzVIAusfEUnit",
+                                  "CTruckOpelBlitzUnit",
+                                  "CTruckZis5Unit"
+                                ];
+
+  //ꥪ  砥  ᯨ᮪ "ᬮ" ᫥ 襭 ᨨ
+  static Array m_NonTourObjects = [];
+
+
+  boolean       m_MissionFailed     = false;
+
+  // =======================================
+  // Mission object properties
+  // =======================================
+
+  Component m_MissionTerrain       = null;
+  Component m_MissionAtmosphere    = null;
+  Component m_MissionSky           = null;
+  Component m_MissionZoneMap       = null;
+  Component m_MissionWorldMatrices = null;
+  Component m_MissionForestParms   = null;
+  Component m_MissionRoadsParms    = null;
+  Component m_MissionMicroTex1     = null;
+
+  Component  m_MissionRouterPrecalculatedGraph = null;
+  Array      m_MissionRouterMaps   = [];
+
+  String     m_TerrainMapTextureName;
+  Array      m_NavpointsForPlayerMap;
+
+  Component  m_MissionLensFlare    = null;
+
+  Array      m_MissionRespawnPlaces = [];
+  Array      m_MissionFreeRespawnPlaces = [];
+
+  //String     m_PlayerName          = "MainPlayerUnit";
+
+  int m_PlayerShoots           = 0;
+  int m_PlayerHits             = 0;
+  int m_PlayerVictims_Tanks    = 0;
+  int m_PlayerVictims_FireDots = 0;
+  int m_PlayerVictims_BTRs     = 0;
+  int m_PlayerVictims_Autos    = 0;
+  int m_PlayerVictims_Humans   = 0;
+
+  // Free camera variables
+  boolean    m_AutoPilotEnabled    = true;
+
+  float      m_CompleteDelay       = 30.0;
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+
+  CMission(
+      String _MissionObjectClass,
+      String _MissionContentClass
+    )
+  {
+    SetGeometryTreeConfig([AXIS_X, AXIS_Y, AXIS_X, AXIS_Y, AXIS_Z]);
+
+    m_MissionObjectClass  = _MissionObjectClass;
+    m_MissionContentClass = new CMissionContent(createScriptClass(_MissionContentClass));
+
+    DefineSpecialContentRecord("Atmosphere");
+    DefineSpecialContentRecord(LAYER_TERRAIN_NAME);
+  }
+
+  void Construct(
+      boolean _CreateObjects
+    )
+  {
+    ClearObjectives();
+    // Get game controller
+    Component GameController = new #GameController();
+
+    int ProgressBarValue = 0;
+    int ProgressBarSize  = 14;
+    if (_CreateObjects)
+      ProgressBarSize += m_MissionContentClass.GetObjectRecordsQty();
+
+    if(GameController.GetGameMode() != "Single")
+      PrepareForMultiPlayer();
+
+    // Create effects
+    RegisterObject("EffectsArray", new #EffectsArray<CEffectsArray>());
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    RegisterObject("BulletsArray",    new #BulletsArray<CBulletsArray>());
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    RegisterObject("ExplosionsArray", new #ExplosionsArray<CExplosionsArray>());
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    RegisterObject("SoundsArray", new #SoundsArray<CSoundsArray>());
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    RegisterObject("DialogsManager",  new #GameObject<CDialogsManager>());
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    // Scripted camera
+    Component ScriptedCamera = new #GameObject<CScriptedCamera>();
+    if (ScriptedCamera != null)
+    {
+      ScriptedCamera.Construct(this);
+      RegisterObject("ScriptedCamera", ScriptedCamera);
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    // Free player camera
+    Component FreeCamera = new #GameObject<CFreePlayerCamera>();
+    if (FreeCamera != null)
+    {
+      FreeCamera.Construct(this);
+      RegisterObject("FreeCamera", FreeCamera);
+    }
+
+    RegisterObject("UnitsCollisionControl", new #UnitsCollisionControl());
+
+    // Create atmosphere
+    setSlaveObject(m_MissionAtmosphere, m_MissionSky);
+    RegisterObject("Atmosphere", m_MissionAtmosphere);
+    (new #EffectsArray()).SetWind(m_MissionAtmosphere);
+
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    // Create matrix layers
+    RegisterObject("WorldMatrices", m_MissionWorldMatrices);
+    Component TerrainLayer       = m_MissionWorldMatrices.GetLayer(LAYER_TERRAIN_NAME);
+    Component ZoneTerrainLayer   = m_MissionWorldMatrices.GetLayer(LAYER_TERRAIN_ZONE);
+    Component WaterTerrainLayer  = m_MissionWorldMatrices.GetLayer(LAYER_TERRAIN_WATERHEIGHTS);
+    Component MicroTexturesLayer = m_MissionWorldMatrices.GetLayer(LAYER_MICROTEXTURE_MAP1);
+    SetMissionZoneMap(ZoneTerrainLayer);
+    SetMissionMicroTex1(MicroTexturesLayer);
+
+    (new #GameSettings()).SetLoadTextures(CDebugSettings::LoadTextures);
+
+    // Create terrain
+    if (CDebugSettings::LoadForest)
+      m_MissionTerrain.CreateForesRegions();
+    m_MissionTerrain.Initialize(ZoneTerrainLayer, m_MissionAtmosphere, TerrainLayer, WaterTerrainLayer, MicroTexturesLayer);
+    m_MissionTerrain.SetPhysicsTable();
+    addClassificator(m_MissionTerrain, CLASSIFICATOR_INFINITE_GEOMETRY);
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+    Component PerlinNoise = new #PerlinNoiseTerrain();
+    RegisterObject("TerrainPerlinNoise", PerlinNoise);
+    m_MissionTerrain.SetPerlinNoise(PerlinNoise);
+    m_MissionTerrain.InitPerlinNoise();
+
+    //Create LensFlare
+    //m_MissionLensFlare =  new #LensFlare<CLensFlare>();
+
+
+    // those registerobjects are needed for behavior - may be this is subj to fix
+    //      .
+
+    RegisterObject(LAYER_TERRAIN_NAME, m_MissionTerrain);
+    RegisterObject(LAYER_TERRAIN_ZONE, ZoneTerrainLayer);
+    RegisterObject("RouterPrecalculatedGraph", m_MissionRouterPrecalculatedGraph);
+
+    for (int iMap = 0; iMap < m_MissionRouterMaps.size(); iMap++)
+      RegisterObject(m_MissionRouterMaps[iMap][0], m_MissionRouterMaps[iMap][1]);
+
+    // Create sky
+    RegisterObject("Sky", m_MissionSky);
+    addClassificator(m_MissionSky, "SKY");
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    // forest
+    if (m_MissionForestParms != null)
+    {
+      Component Forest = new #STForest();
+      addClassificator(Forest, "FOREST");
+      addClassificator(Forest, CLASSIFICATOR_INFINITE_GEOMETRY);
+      Forest.SetZoneMap(ZoneTerrainLayer);
+      Forest.SetHeightMap(TerrainLayer);
+      RegisterObject("Forest", Forest);
+
+      // create tree object controller
+      Component TreeController =new #TreeObjectController();
+      RegisterObject("TreeController", TreeController);
+
+      Forest.SetTreeController      (TreeController);
+      Forest.SetForestTreeController(TreeController);
+      Forest.SetTerrainShadowPower  (m_MissionTerrain.GetTerrainShadowPower());
+      Forest.SetAntiSunEnabled      (m_MissionTerrain.GetAntiSunEnabled());
+
+      logMessage( "Forest Creation" );
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+    // grass
+    if (CDebugSettings::LoadGrass)
+    {
+      Component Grass = GetObject("Grass");
+      addClassificator(Grass, "GRASS");
+      Grass.SetZoneMap(m_MissionZoneMap);
+      Grass.SetHeightMap(TerrainLayer);
+      Grass.Initialize(m_MissionAtmosphere);
+      Grass.SetTerrainShadowPower(m_MissionTerrain.GetTerrainShadowPower());
+      Grass.SetAntiSunEnabled(m_MissionTerrain.GetAntiSunEnabled());
+
+      Grass.SetPerlinNoise(PerlinNoise);
+
+      Grass.SetNoiseSize  (m_MissionTerrain.GetNoiseSize());
+      Grass.SetNormalNoise(m_MissionTerrain.GetNormalNoise());
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+
+    // roads
+    if (m_MissionRoadsParms != null)
+    {
+      Component Roads = new #RoadObject();
+      addClassificator(Roads, "ROADS");
+      Roads.SetZoneMap(ZoneTerrainLayer);
+      Roads.SetHeightMap(TerrainLayer);
+      RegisterObject("Roads", Roads);
+      Roads.SetTerrainShadowPower(m_MissionTerrain.GetTerrainShadowPower());
+      Roads.SetAntiSunEnabled(m_MissionTerrain.GetAntiSunEnabled());
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+
+
+    // Create mission content
+    if (_CreateObjects)
+    {
+      m_TourMissionObjects.clear();
+
+      int PrevProgress = ProgressBarValue;
+      for (int Index = 0; Index < m_MissionContentClass.GetObjectRecordsQty(); Index++)
+      {
+        Array Record = m_MissionContentClass.GetObjectRecord(Index);
+
+        // Check component id
+        String GoodID = GetComponentID(Record[CMissionContent::INDEX_ScriptClass]);
+        if ((""     != GoodID) &&
+            (GoodID != Record[CMissionContent::INDEX_ComponentID]))
+        {
+          logWarning("Wrong component id detected for: " + Record[CMissionContent::INDEX_ObjectID]);
+          logWarning(" replaced " + Record[CMissionContent::INDEX_ComponentID] + " with " + GoodID);
+          Record[CMissionContent::INDEX_ComponentID] = GoodID;
+        }
+
+        if (!CDebugSettings::LoadInteriorObjects &&
+            "InteriorObject" == Record[CMissionContent::INDEX_ComponentID])
+          continue;
+
+        Component PropMap = new CPropertiesMap(Record[CMissionContent::INDEX_Properties]);
+//         if(IsMirror() && PropMap.Get("IsLoadOnClient", false) == false)
+//           continue;
+
+        // create object
+        CreateGlobalObject(
+            Record[CMissionContent::INDEX_ObjectID],
+            Record[CMissionContent::INDEX_ComponentID],
+            Record[CMissionContent::INDEX_ScriptClass],
+            Record[CMissionContent::INDEX_Position],
+            Record[CMissionContent::INDEX_Properties]
+          );
+
+/*       $TMP // Hide cinematic object
+        if ("GameObject"        == Record[CMissionContent::INDEX_ComponentID] ||
+            "InteractiveObject" == Record[CMissionContent::INDEX_ComponentID] ||
+            "InteriorObject"    == Record[CMissionContent::INDEX_ComponentID])
+        {
+          Component Object = GetObject(Record[CMissionContent::INDEX_ObjectID]);
+          if (Object != null)
+            Object.SetIngameState(Object.m_IsIngame && Object.m_ShowInAllCinemas);
+        }*/
+
+        int ObjectIndex = m_TourObjects.find(Record[CMissionContent::INDEX_ScriptClass]);
+        if ((-1 != ObjectIndex) && (-1 == m_NonTourObjects.find(Record[CMissionContent::INDEX_ObjectID])))
+          m_TourMissionObjects.add(Record[CMissionContent::INDEX_ObjectID]);
+
+        // Update progress bar
+        ProgressBarValue++;
+        if (ProgressBarValue > PrevProgress + m_SkipRenderFrames)
+        {
+          PrevProgress = ProgressBarValue;
+          // Render bar
+          GameController.UpdateLoadProgress(ProgressBarValue, ProgressBarSize, 0);
+        }
+      }
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue, ProgressBarSize, 0);
+
+    m_ClassToComponentMap.clear();
+
+    // initialize qtree structures: patches, roads, etc.
+    m_MissionTerrain.InitQuadTree();
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 0);
+  }
+
+  boolean IsSingle()
+  {
+    return ((new #GameController()).GetGameMode() == "Single");
+  }
+
+  boolean IsHost()
+  {
+    return ((new #GameController()).GetGameMode() != "Client");
+  }
+
+  boolean IsMirror()
+  {
+    return ((new #GameController()).GetGameMode() == "Client");
+  }
+
+  void StartMission()
+  {
+    SetObjectsShowMode(OSM_Game, "");
+
+    fireEvent(0.0, [], "RefreshAllNavpoints", []);
+
+    fireEvent(0.0, [], "MissionStarted", []);
+
+    // apply cur time
+
+    m_RealStartTime = m_StartTime - getGameTimeInSeconds();
+
+    Component PlayerUnit = GetObject(GetMainPlayerObjectID());
+    Component CollisionControl = GetObject("UnitsCollisionControl");
+    if ((PlayerUnit != null) && (CollisionControl != null))
+    {
+      CollisionControl.RegisterObject(PlayerUnit.GetMeshComponent(), null, 5.0f, Math_PI, false);
+    }
+  }
+
+  void Shutdown()
+  {
+    ClearObjectives();
+    if (null == m_MissionContentClass)
+      return;
+
+    // Shutdown mission content
+    for (int Index = 0; Index < m_MissionContentClass.GetObjectRecordsQty(); Index++)
+    {
+      Array Record = m_MissionContentClass.GetObjectRecord(Index);
+      Component Object = GetObject(Record[CMissionContent::INDEX_ObjectID]);
+      if (null != Object)
+      {
+        if (isFunctionExist(Object, "Shutdown", 1))
+          Object.Shutdown(this);
+        shutdownComponent(Object);
+//          DeleteObject(Record[CMissionContent::INDEX_ObjectID]);
+       }
+//      m_MissionContentClass.DeleteObjectRecord(Record[CMissionContent::INDEX_ObjectID]);
+    }
+    shutdownComponent(m_MissionContentClass);
+  }
+
+  void ClearObjectives()
+  {
+    for (int i = 0; i < m_MissionObjectives.size(); i++)
+      m_MissionObjectives[i][2] = MOSID_InProgress;
+  }
+
+  void PrepareForMultiPlayer()
+  {
+    //no rand modefier for bullets
+    CPiercing::TankPzVIAusfECalibrePenetrationModifier[0] = CPiercing::TankPzVIAusfESubcalibrePenetrationModifier[1];
+    CPiercing::TankT34_76_42CalibrePenetrationModifier[0] = CPiercing::TankT34_76_42CalibrePenetrationModifier[1];
+    CPiercing::TankT34_85_44CalibrePenetrationModifier[0] = CPiercing::TankT34_85_44CalibrePenetrationModifier[1];
+    CPiercing::TankPzVIAusfEAlwaysDestroyTrack            = true;
+    CPiercing::TankT34_76_42AlwaysDestroyTrack            = true;
+    CPiercing::TankT34_85_44AlwaysDestroyTrack            = true;
+    CPiercing::TankPzVIAusfECalibreDamageModifier[0]      = CPiercing::TankPzVIAusfECalibreDamageModifier[1];
+    CPiercing::TankPzVIAusfESubcalibreDamageModifier[0]   = CPiercing::TankPzVIAusfESubcalibreDamageModifier[1];
+    CPiercing::TankT34_85_44CalibreDamageModifier[0]      = CPiercing::TankT34_85_44CalibreDamageModifier[1];
+    CPiercing::TankT34_85_44SubcalibreDamageModifier[0]   = CPiercing::TankT34_85_44SubcalibreDamageModifier[1];
+  }
+
+  // Initialize objects
+  void Initialize()
+  {
+    // Get game controller
+    Component GameController = new #GameController();
+
+    // Return init frames quantity
+    boolean IsTerrainMainTexLoadedFromCache =
+      isTextureLoadedFromCache(m_MissionTerrain.GetTerrainTexture());
+
+    int InitFramesQty = 0;
+    if (!IsTerrainMainTexLoadedFromCache)
+    {
+      Component GameSettings = new #GameSettings();
+      InitFramesQty = m_MissionTerrain.GetLightTerrainFramesQty(
+          GameSettings.m_GenerateTerrainShadows,
+          GameSettings.m_LightTerrainPatches
+        );
+    }
+
+    // Compute progress bat values
+    int ProgressBarValue   = 0;
+    int ProgressBarSize    = CBaseZoneMap::FillZoneMapTasks1.size() +
+                             CBaseZoneMap::FillZoneMapTasks2.size() +
+                             6 + InitFramesQty + m_MissionContentClass.GetObjectRecordsQty();
+
+    // Update zone map
+    if (!CDebugSettings::SkipRouterMapGeneration)
+    {
+      Component ZoneTerrainLayer  = m_MissionWorldMatrices.GetLayer(LAYER_ROUTER_ZONE);
+      Component TerrainZoneEditor = new #TerrainZoneEditor();
+      TerrainZoneEditor.SetZoneMap(ZoneTerrainLayer);
+      TerrainZoneEditor.SetTerrain(m_MissionWorldMatrices.GetLayer(LAYER_TERRAIN_NAME));
+
+      for (int TaskNum = 0; TaskNum < CBaseZoneMap::FillZoneMapTasks1.size(); TaskNum++)
+      {
+        TerrainZoneEditor.UpdateZoneMap(
+            CBaseZoneMap::FillZoneMapTasks1[TaskNum].FillColor,
+            CBaseZoneMap::FillZoneMapTasks1[TaskNum].FillFlags,
+            CBaseZoneMap::FillZoneMapTasks1[TaskNum].ObjectMask[0],
+            CBaseZoneMap::FillZoneMapTasks1[TaskNum].ObjectMask[1],
+            CBaseZoneMap::FillZoneMapTasks1[TaskNum].ZoneMask[0],
+            CBaseZoneMap::FillZoneMapTasks1[TaskNum].ZoneMask[1]
+          );
+        GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+      }
+      for (int TaskNum = 0; TaskNum < CBaseZoneMap::FillZoneMapTasks2.size(); TaskNum++)
+      {
+        TerrainZoneEditor.UpdateZoneMap(
+            CBaseZoneMap::FillZoneMapTasks2[TaskNum].FillColors,
+            CBaseZoneMap::FillZoneMapTasks2[TaskNum].Deviations,
+            CBaseZoneMap::FillZoneMapTasks2[TaskNum].ZoneMask[0],
+            CBaseZoneMap::FillZoneMapTasks2[TaskNum].ZoneMask[1]
+          );
+        GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+      }
+
+      // $TMP - fix for C1M1
+
+      TerrainZoneEditor.FixWaterZones(CBaseZoneMap::ZMC_BeachWater01, CBaseZoneMap::ZMC_ShallowWater01, GetMissionTerrain());
+    }
+
+    Component GameSettings = new #GameSettings();
+
+    // $TMP roads
+    if (m_MissionRoadsParms != null)
+    {
+      if (CDebugSettings::LoadRoads)
+        GetObject("Roads").Initialize(m_MissionRoadsParms, [], []);
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+
+    // Finalize objects
+    int PrevProgress = ProgressBarValue;
+    for (int Index = 0; Index < m_MissionContentClass.GetObjectRecordsQty(); Index++)
+    {
+      Array Record = m_MissionContentClass.GetObjectRecord(Index);
+
+      // Intialize created object
+      FinalizeObject(
+          Record[CMissionContent::INDEX_ObjectID],
+          Record[CMissionContent::INDEX_Properties]
+        );
+
+      // Update progress bar
+      ProgressBarValue++;
+      if (ProgressBarValue > PrevProgress + m_SkipRenderFrames)
+      {
+        PrevProgress = ProgressBarValue;
+        // Render bar
+        GameController.UpdateLoadProgress(ProgressBarValue, ProgressBarSize, 1);
+      }
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue, ProgressBarSize, 1);
+
+    // Create array NavPoint`s for navigation
+    CreateGroupAllVillageNavPoints();
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+
+    // Precalculate light table
+    //m_MissionTerrain.PrecalculateLightTable();
+
+    // Light terrain texture and generate shadows
+    if (!IsTerrainMainTexLoadedFromCache)
+    {
+/*      m_MissionTerrain.LightTerrainTexture(
+          GameSettings.m_GenerateTerrainShadows,
+          GameSettings.m_LightTerrainPatches,
+          GameSettings.m_TerrainShadowsMasks
+        ); */
+      for (int Index = 0; Index < InitFramesQty; Index++)
+        GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+    }
+
+
+    for (int iMap = 0; iMap < m_MissionRouterMaps.size(); iMap++)
+    {
+      if (!CDebugSettings::SkipRouterMapGeneration)
+      {
+        m_MissionRouterMaps[iMap][1].GenerateRouterMap(
+            GetMissionRouterZoneMap(),
+            GetMissionTerrain(),
+            m_MissionRouterMaps[iMap][2],
+            m_MissionRouterMaps[iMap][3]
+          );
+      }
+      else
+      {
+        m_MissionRouterMaps[iMap][1].GenerateRouterMap(
+            GetMissionRouterZoneMap(),
+            GetMissionTerrain(),
+            m_MissionRouterMaps[iMap][2],
+            [[0.0,0.0,1.0,1.0]] // empty working zone
+          );
+      }
+    }
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+
+    // forest
+    if (m_MissionForestParms != null)
+      GetObject("Forest").Initialize(m_MissionForestParms);
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+
+    // Update grass shading
+    Component Grass = GetObject("Grass");
+    if (Grass != null)
+      Grass.UpdateLight();
+    GameController.UpdateLoadProgress(ProgressBarValue++, ProgressBarSize, 1);
+  }
+
+  // =======================================
+  // Objects management functions
+  // =======================================
+
+  boolean CreateObject(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    if (_ComponentID.isEmpty())
+      return false;
+
+    // Check ID duplication
+    if (GetObject(_ObjectID) != null)
+    {
+      logError("Duplicate identificator: " + _ObjectID);
+      return false;
+    }
+
+    // Create unit component
+    Component Object = createComponent(_ComponentID);
+    if (Object == null)
+    {
+      logError("Unable to create component: " + _ComponentID);
+      return false;
+    }
+
+    // Set unit identificator
+    setIdentificator(Object, _ObjectID);
+
+    // Load unit from script
+    if (!loadFromScript(Object, _ScriptClass))
+    {
+      logError("Unable to load object from script: " + _ScriptClass);
+      return false;
+    }
+
+    // Init unit position
+    _Position.normalize();
+    setPosition(Object, _Position);
+
+    // Create properties map object
+    Component Properties = new CPropertiesMap(_Properties);
+
+    // call object to create internal components
+    Object.Construct(this, Properties);
+
+    // register object in mission controller
+    RegisterObject(_ObjectID, Object);
+
+    // initialize objects
+    Object.Initialize(this, Properties);
+
+    // add object to special lists
+    if (checkMask(Object, ["RESPAWNPOINT"],[]))
+       m_MissionRespawnPlaces.add([_ObjectID, false, ""]);
+
+    return true;
+  }
+
+  Array GenerateHostProps(
+      Array _Properties
+    )
+  {
+    // Create array copy
+    Array Properties = new Array(_Properties);
+
+    // update properties
+    Component Props = new CPropertiesMap(Properties);
+    Props.Set("IsMirror", false);
+
+    // return new array
+    return Properties;
+  }
+
+  Array GenerateMirrorProps(
+      Array _Properties
+    )
+  {
+    // Create array copy
+    Array Properties = new Array(_Properties);
+
+    // update properties
+    Component Props = new CPropertiesMap(Properties);
+    Props.Set("IsMirror", true);
+
+    // return new array
+    return Properties;
+  }
+
+  Array GenerateBotProps(
+      Array _Properties
+    )
+  {
+    // Create array copy
+    Array Properties = new Array(_Properties);
+
+    // return new array
+    return Properties;
+  }
+
+  boolean CreateGlobalObject(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    // $LOG
+    //logWarning("[Mission] CreateGlobalObject(" + _ObjectID + ") " + new String(_Properties));
+
+    // Create host object
+    boolean result = CreateObject(
+                                _ObjectID,
+                                _ComponentID,
+                                _ScriptClass,
+                                _Position,
+                                GenerateHostProps(_Properties)
+                              );
+    if(!result) return false;
+
+    // Get session
+    Component Session = (new #GameController()).GetGameSession();
+    if (Session == null)
+      return true;
+
+    // Create mirror object
+    Session.CreateObjectMirror(
+        _ObjectID,
+        _ComponentID,
+        _ScriptClass,
+        _Position,
+        _Properties
+      );
+
+    return true;
+  }
+
+  void FinalizeObject(
+      String _ObjectID,
+      Array  _Properties
+    )
+  {
+    Component Object = GetObject(_ObjectID);
+    if (null != Object)
+      Object.Finalize(this, new CPropertiesMap(_Properties));
+  }
+
+  boolean CreateAndInitObject(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    if (CreateGlobalObject(_ObjectID, _ComponentID, _ScriptClass, _Position, _Properties))
+    {
+      FinalizeObject(_ObjectID, _Properties);
+      return true;
+    }
+    return false;
+  }
+
+  void DeleteObject(
+      String _ObjectID
+    )
+  {
+    Component Object = UnregisterObject(_ObjectID);
+    if (Object != null)
+    {
+      Object.Shutdown(this);
+      shutdownComponent(Object);
+    }
+  }
+
+  event void ReRegisterObject(
+      String _ObjectID
+    )
+  {
+    // reregister object
+    RegisterObject(_ObjectID, UnregisterObject(_ObjectID));
+  }
+
+  void SetObjectsShowMode(
+      int     _ObjectsShowMode,
+      String  _CinemaID
+    )
+  {
+    //$TODO optimize
+    //$TMP not used
+    return;
+
+    if (!_CinemaID.isEmpty() &&
+        !m_MissionContentClass.IsCinemaExist(_CinemaID))
+    {
+      logError("SetObjectsShowMode: Cinema " + _CinemaID + " not found");
+      return;
+    }
+
+    m_ObjectsShowMode = _ObjectsShowMode;
+    m_CurrentCinemaID = _CinemaID;
+    m_IsIngameCinema  = true;
+
+    if (m_MissionContentClass.IsCinemaExist(_CinemaID))
+    {
+      Component CinemaProps = new CPropertiesMap(m_MissionContentClass.GetCinemaProperties(_CinemaID));
+      m_IsIngameCinema = CinemaProps.Get("IngameCinema", true);
+    }
+
+    UpdateAllShowModes();
+  }
+
+  void UpdateAllShowModes()
+  {
+    for (int Index = 0; Index < m_MissionContentClass.GetObjectRecordsQty(); Index++)
+    {
+      Array Record = m_MissionContentClass.GetObjectRecord(Index);
+      Component Object = GetObject(Record[CMissionContent::INDEX_ObjectID]);
+      if (null != Object)
+        Object.UpdateIngameState();
+    }
+  }
+
+  Array GetObjects(
+      Array _RestrictTo,
+      Array _Exclude
+    )
+  {
+    Array Result = [];
+
+    if (null != m_MissionContentClass)
+      for (int Index = 0; Index < m_MissionContentClass.GetObjectRecordsQty(); Index++)
+      {
+        Array Record = m_MissionContentClass.GetObjectRecord(Index);
+        Component Object = GetObject(Record[CMissionContent::INDEX_ObjectID]);
+        if (checkMask(Object, _RestrictTo, _Exclude))
+          Result.add(Object);
+      }
+
+    return Result;
+  }
+
+  boolean RenameObject(
+      String _ObjectID,
+      String _NewID
+    )
+  {
+    Component Object = GetObject(_ObjectID);
+    if (null != Object)
+    {
+      UnregisterObject(_ObjectID);
+      setIdentificator(Object, _NewID);
+      RegisterObject(_NewID, Object);
+
+      Array Record = GetContent().FindObjectRecord(_ObjectID);
+      if (!Record.isEmpty())
+        Record[CMissionContent::INDEX_ObjectID] = _NewID;
+
+      return true;
+    }
+
+    return false;
+  }
+
+  String GenerateFreeObjectID()
+  {
+    String ObjectID = "_" + new String(randnum(INT_MAX));
+    Array Record    = GetContent().FindObjectRecord(ObjectID);
+    while (!Record.isEmpty())
+    {
+      ObjectID = "_" + new String(randnum(INT_MAX));
+      Record = GetContent().FindObjectRecord(ObjectID);
+    }
+    return ObjectID;
+  }
+
+  // =======================================
+  // Mission/objectives completion
+  // =======================================
+
+  Array GetMissionObjectives()
+  {
+    return m_MissionObjectives;
+  }
+
+  event void CompleteObjective(
+      int _Objective
+    )
+  {
+    SetObjectiveStatus(_Objective, MOSID_Completed);
+  }
+
+  event void FailObjective(
+      int _Objective
+    )
+  {
+    SetObjectiveStatus(_Objective, MOSID_Failed);
+  }
+
+  void SetObjectiveVisible(
+      int     _Objective,
+      boolean _Status
+    )
+  {
+    if (_Objective < 0 ||
+        _Objective >= m_MissionObjectives.size())
+    {
+      logError("Invalid objective index in CMission::SetObjectiveVisible(int, boolean): " + new String(_Objective));
+      return;
+    }
+
+    logMessage("[Mission::SetObjectiveVisible] _Objective=" + new String(_Objective) + "  _Status = " + new String(_Status));
+    m_MissionObjectives[_Objective][3] = _Status;
+  }
+
+  void SetObjectiveStatus(
+      int _Objective,
+      int _Status
+    )
+  {
+    if (_Objective < 0 ||
+        _Objective >= m_MissionObjectives.size())
+    {
+      logError("Invalid objective index in CMission::SetObjectiveStatus(int, int): " + new String(_Objective));
+      return;
+    }
+
+    logMessage("[Mission::SetObjectiveStatus] _Objective=" + new String(_Objective) + "  _Status = " + new String(_Status));
+
+    if (m_MissionObjectives[_Objective][2] == _Status)
+      return;
+
+    m_MissionObjectives[_Objective][2] = _Status;
+
+    if (MOSID_Completed == _Status && false == m_MissionObjectives[_Objective][3])
+      logError("Trying to complete invisible objective " + new String(_Objective));
+
+    Component GameSession = (new #GameController()).GetGameSession();
+    if (GameSession != null)
+    {
+      if ((CServerDescriptor::ST_CaptureTheFlag == GameSession.GetSessionInfo().GetSessionTypeID()) && (IsCFMissionCompleted()))
+      {
+        GetObject(GetMainPlayerObjectID()).DisableInput();
+        sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+      }
+    }
+    else
+    {
+      if (IsMissionFullCompleted() && !m_MissionFailed)
+        sendEvent(0.0, SOID_MissionController, "CompleteMissionStatus", [MOSID_FullCompleted]);
+      else
+      if (IsMissionCompleted() && (MOTID_Primary == m_MissionObjectives[_Objective][0]) && !m_MissionFailed)
+      {
+        CEndMissionMenu::MissionStatus = MOSID_Completed;
+        sendEvent(m_CompleteDelay, SOID_MissionController, "CompleteMissionStatus", [MOSID_Completed]);
+      }
+    }
+  }
+
+  int GetObjectiveStatus(
+      int _Objective
+    )
+  {
+    if (_Objective < 0 ||
+        _Objective >= m_MissionObjectives.size())
+    {
+      logError("Invalid objective index in CMission::GetObjectiveStatus(int): " + new String(_Objective));
+      return;
+    }
+
+    return m_MissionObjectives[_Objective][2];
+  }
+
+  boolean IsCFMissionCompleted()
+  {
+    int BlueTeamObj = 0;
+    int RedTeamObj = 0;
+    for (int i = 0; i < m_MissionObjectives.size(); i++)
+    {
+      logWarning(new String(m_MissionObjectives[i][1]));
+
+      if (0 == m_MissionObjectives[i][4])
+        if (MOSID_Completed != m_MissionObjectives[i][2])
+          RedTeamObj++;
+
+      if ((MOSID_Completed != m_MissionObjectives[i][2]) && (1 == m_MissionObjectives[i][4]))
+        BlueTeamObj++;
+    }
+
+    return ((0 == BlueTeamObj) || (0 == RedTeamObj));
+  }
+
+  boolean IsMissionFullCompleted()
+  {
+    for (int i = 0; i < m_MissionObjectives.size(); i++)
+    {
+      logMessage("[Mission::IsMissionFullCompleted]");
+      logMessage("    m_MissionObjectives[" + new String(i)+ "] = " + new String(MOSID_Completed != m_MissionObjectives[i][2]));
+    }
+
+    for (int i = 0; i < m_MissionObjectives.size(); i++)
+      if (MOSID_Completed != m_MissionObjectives[i][2])
+        return false;
+
+    return true;
+  }
+
+  boolean IsMissionCompleted()
+  {
+    for (int i = 0; i < m_MissionObjectives.size(); i++)
+      if (MOTID_Primary == m_MissionObjectives[i][0])
+        if (MOSID_Completed != m_MissionObjectives[i][2])
+          return false;
+
+    return true;
+  }
+
+  void CompleteMission(
+      float _Delay
+    )
+  {
+
+    for (int i = 0; i < m_MissionObjectives.size(); i++)
+    {
+      if (MOTID_Primary == m_MissionObjectives[i][0] && MOSID_Completed != m_MissionObjectives[i][2])
+        logError("Trying to complete mission with uncompleted primary objective " + new String(i));
+      if (MOTID_Primary == m_MissionObjectives[i][0] && true != m_MissionObjectives[i][3])
+        logError("Trying to complete mission with invisible primary objective " + new String(i));
+    }
+
+    if (IsMissionCompleted() && !m_MissionFailed)
+      sendEvent(_Delay, SOID_MissionController, "CompleteMissionStatus", [MOSID_Completed]);
+
+  }
+
+  void FailMission(
+      float _Delay
+    )
+  {
+    m_MissionFailed = true;
+    CEndMissionMenu::MissionStatus = MOSID_Failed;
+    sendEvent(_Delay, SOID_MissionController, "CompleteMissionStatus", [MOSID_Failed]);
+  }
+
+  event void CompleteMissionStatus(
+      int _Status
+    )
+  {
+    if (m_MissionFailed && _Status == MOSID_Completed)
+      return;
+
+    DisableBehavior();
+    CEndMissionMenu::MissionStatus = _Status;
+
+    GetObject(GetMainPlayerObjectID()).DisableInput();
+
+    return;
+
+/*    Component MenuController = new #GameController().GetMenuController();
+    MenuController.LockChangeInputMode(false);
+
+    if (_Status == MOSID_Completed)
+    {
+      Component GameController = new #GameController();
+      if (GameController.IsPaused())
+        return;
+      GameController.SwitchPause();
+      GameController.SaveCS();
+    }
+
+    MenuController.GetObject("Cursor").ShowCursor(true);
+    MenuController.LoadNewMenu("EndMissionMenu");
+    new #GameController().EnableControl("GameMenu", true);
+*/
+  }
+
+  event void CloseMission(
+      int _Status
+    )
+  {
+    if (m_MissionFailed && _Status == MOSID_Completed)
+      return;
+
+    CEndMissionMenu::MissionStatus = _Status;
+    Component MenuController = new #GameController().GetMenuController();
+    MenuController.LockChangeInputMode(false);
+
+    if (_Status == MOSID_Completed)
+    {
+      Component GameController = new #GameController();
+      if (GameController.IsPaused())
+        return;
+      GameController.SwitchPause();
+      //GameController.SaveCS();
+    }
+
+    MenuController.GetObject("Cursor").ShowCursor(true);
+    if (IsSingle())
+      MenuController.LoadNewMenu("EndMissionMenu");
+    else
+    {
+      Component GameSession = (new #GameController()).GetGameSession();
+      if ((GameSession != null) && (CServerDescriptor::ST_CaptureTheFlag == GameSession.GetSessionInfo().GetSessionTypeID()))
+        MenuController.LoadNewMenu("CFEndMissionMenu");
+      else
+        MenuController.LoadNewMenu("MultiEndMissionMenu");
+    }
+    new #GameController().EnableControl("GameMenu", true);
+
+  }
+
+  event void TerminateMission()
+  {
+    Component Game = new #GameController();
+
+    // unblock escape menu
+    Game.BlockEscapeMenu(false, false);
+
+    // Send message to clients
+    if (Game.GetGameMode() == "Client")
+    {
+      // Close mission on this host
+      Component MainMenu = Game.GetObject("MainMenu");
+
+      CMission::CloseMission(MOSID_Failed);
+ 
+      Component MenuController = Game.GetMenuController();
+    
+      Game.CreateMainMenu();
+      MenuController.LoadNewMenu("TerminateMenu");
+    }
+    
+  }
+  
+  String GetClassName()
+  {
+    return classname;
+  }
+
+  // =======================================
+  // Mission property methods
+  // =======================================
+
+  void SetMissionForest(Component _Forest)
+  {
+    m_MissionForestParms = _Forest;
+  }
+
+  void SetMissionGrass(Component _Grass)
+  {
+    m_MissionGrassParms = _Grass;
+  }
+
+
+  void SetMissionWorldMatrices(
+      Component _WorldMatrices,
+      Array     _Layers
+    )
+  {
+    m_MissionWorldMatrices = _WorldMatrices;
+
+    for (int i = 0; i < _Layers.size(); i++)
+      m_MissionWorldMatrices.AddLayer(_Layers[i][0], _Layers[i][1]);
+  }
+
+  Component GetMissionWorldMatrices()
+  {
+    return m_MissionWorldMatrices;
+  }
+
+  void SetMissionZoneMap(
+      Component _ZoneMap
+    )
+  {
+    m_MissionZoneMap = _ZoneMap;
+  }
+
+  Component GetMissionZoneMap()
+  {
+    return m_MissionZoneMap;
+  }
+
+  void SetMissionMicroTex1(
+      Component _MicroTex1
+    )
+  {
+    m_MissionMicroTex1 = _MicroTex1;
+  }
+
+  Component GetMissionMicroTex1()
+  {
+    return m_MissionMicroTex1;
+  }
+
+  Component GetMissionRouterZoneMap()
+  {
+    if (null != m_MissionWorldMatrices)
+      return m_MissionWorldMatrices.GetLayer(LAYER_ROUTER_ZONE);
+    return null;
+  }
+
+  Component GetMissionObjectList()
+  {
+    return m_MissionContentClass.GetObjectsList();
+  }
+
+  void SetMissionTerrain(
+      Component _Terrain
+    )
+  {
+    m_MissionTerrain = _Terrain;
+    addClassificator(m_MissionTerrain, "CAMERA_COLLISION");
+  }
+
+  Component GetMissionTerrain()
+  {
+    return m_MissionTerrain;
+  }
+
+  void SetMissionAtmosphere(
+      Component _Atmosphere
+    )
+  {
+    m_MissionAtmosphere = _Atmosphere;
+  }
+
+  Component GetMissionAtmosphere()
+  {
+    return m_MissionAtmosphere;
+  }
+
+  void SetMissionSky(
+      Component _Sky
+    )
+  {
+    m_MissionSky = _Sky;
+  }
+
+  Component GetMissionSky()
+  {
+    return m_MissionSky;
+  }
+
+  void SetMissionRoadsParms(Component _RoadsParms)
+  {
+    m_MissionRoadsParms = _RoadsParms;
+  }
+
+  Component GetMissionRoadsParms()
+  {
+    return m_MissionRoadsParms;
+  }
+
+  Component GetContent()
+  {
+    return m_MissionContentClass;
+  }
+
+  String GetMissionObjectClassName()
+  {
+    return m_MissionObjectClass;
+  }
+
+  String GetTerrainMapTextureName()
+  {
+    return m_TerrainMapTextureName;
+  }
+
+  String GetNavpointsForPlayerMap()
+  {
+    return m_NavpointsForPlayerMap;
+  }
+
+  event void SetNavpointColor(
+      String _NavpointName,
+      Color  _Color
+    )
+  {
+    Component MainPlayerUnit = GetObject(GetMainPlayerObjectID());
+    if (null != MainPlayerUnit)
+    {
+      Component TerrainMap = MainPlayerUnit.GetObject("C_TerrainMap");
+      if (null != TerrainMap)
+        TerrainMap.SetNavpointColor(_NavpointName, _Color);
+    }
+
+  }
+
+  void SetRouterPrecalculatedGraph(Component _RouterPrecalculatedGraph)
+  {
+    m_MissionRouterPrecalculatedGraph = _RouterPrecalculatedGraph;
+  }
+
+  Component GetRouterPrecalculatedGraph()
+  {
+    return m_MissionRouterPrecalculatedGraph;
+  }
+
+  void SetRouterMap(
+      String    _RouterMapID,
+      Component _RouterMap,
+      int       _CellSize,
+      Array     _WorkingZones
+    )
+  {
+    m_MissionRouterMaps.add([_RouterMapID, _RouterMap, _CellSize, _WorkingZones]);
+  }
+
+  boolean IsPlayerObjectID(
+      String _ID
+    )
+  {
+    Array IDList = GetPlayerObjectsIDList();
+    for (int i = 0; i < IDList.size(); i++)
+      if (IDList[i] == _ID)
+        return true;
+    return false;
+  }
+
+  Array GetPlayerObjectsIDList()
+  {
+    /* // AddPlayerObject used to fill
+    if (!m_PlayerObjectsIDList.isEmpty())
+      return m_PlayerObjectsIDList;
+
+
+    Array ObjectList = GetMissionObjectList();
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      // Check object properties
+      Component Properties = new CPropertiesMap(ObjectList[Index][CMissionContent::INDEX_Properties]);
+      if (Properties.Get("IsPlayer", false))
+        m_PlayerObjectsIDList.add(ObjectList[Index][CMissionContent::INDEX_ObjectID]);
+    }
+    */
+    return m_PlayerObjectsIDList;
+  }
+
+  void AddPlayerObject(
+      String _ID
+    )
+  {
+    m_PlayerObjectsIDList.add(_ID);
+  }
+
+/* - not used
+  Array GetTeamPlayerObjectsIDList(
+      String _Affiliation
+    )
+  {
+    Array TheList = [];
+
+    Array ObjectList = GetMissionObjectList();
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      Component Properties = new CPropertiesMap(ObjectList[Index][CMissionContent::INDEX_Properties]);
+      if (Properties.Get("IsPlayer", false)
+          && Properties.Get("IsManual", false))
+      {
+        Component Object = (new #GameController()).GetObject(ObjectList[Index][CMissionContent::INDEX_ObjectID]);
+        if (Object != null)
+        {
+          if (checkMask(Object, [_Affiliation], []))
+          {
+            TheList.add(ObjectList[Index][CMissionContent::INDEX_ObjectID]);
+          }
+        }
+      }
+    }
+
+    return TheList;
+  }
+*/
+  String GetMainPlayerObjectID()
+  {
+    //return "MainPlayerUnit";
+    //logWarning("GetMainPlayer return: " + CGameSettings::PlayerName);
+    return CGameSettings::PlayerName;
+  }
+
+  String GetMainRadioHomePoint()
+  {
+    return "";
+  }
+
+  Component GetMissionLensFlare()
+  {
+    return m_MissionLensFlare;
+  }
+
+
+
+  // =======================================
+  // Special methods
+  // =======================================
+
+  String GetCurrentActiveObjectID()
+  {
+    if ((new #GameController()).IsFreeCameraMode())
+      return "FreeCamera";
+    else
+      return GetMainPlayerObjectID();
+  }
+
+  void DefineSpecialContentRecord(
+      String _RecordID
+    )
+  {
+    if (CMissionContent::INDEX_NotFound == m_MissionContentClass.FindObjectRecordIndex(_RecordID))
+      m_MissionContentClass.CreateObjectRecord(_RecordID, "", "", IdentityMatrix, []);
+  }
+
+  void SaveBinaryContent()
+  {
+    logWarning("Saving binary content of " + m_MissionObjectClass + "...");
+
+    Map MatrixLayers = m_MissionWorldMatrices.GetLayers();
+
+    MatrixLayers.gotoBegin();
+    while (!MatrixLayers.isAtEnd())
+    {
+      Component Layer    = MatrixLayers.getValue();
+      String    FileName = Layer.ImageFileName;
+
+      if (saveToFile(Layer, FileName, SFF_AsIs))
+        logMessage(" saved " + MatrixLayers.getKey());
+      else
+        logError(" can't save layer " + MatrixLayers.getKey() + " to '" + FileName + "'. Read only?");
+
+      MatrixLayers.gotoNext();
+    }
+
+    // Main Texture
+    Component TerrainTexture = m_MissionTerrain.GetTerrainTexture();
+    if (TerrainTexture != null)
+    {
+      if (saveToFile(TerrainTexture, ""))
+        logMessage(" main terrain texture saved");
+      else
+        logError(" can't save main terrain texture");
+    }
+
+  }
+
+  void CreatePlayerObject()
+  {
+    if (null != GetObject(GetMainPlayerObjectID()) /*|| (new #GameController()).IsDedicate()*/)
+      return;
+
+    //generate player-object name for multiplayer
+    CGameSettings::PlayerName = GenerateFreeObjectID();
+
+    // Create player objects
+    //Matrix InitPlace = new Matrix(new Vector(4334.0 + randnum(10), 5960.4 + randnum(10), 612.5));
+    String SpawnID = GetFreeSpawnPlace(GetMainPlayerObjectID());
+    Matrix InitPlace =  new Matrix(new Vector(0.0 , 0.0, 0.0));
+    //logWarning("Create player in spawn:" + SpawnID);
+    if(SpawnID != "")
+    {
+      InitPlace = getPosition(GetObject(SpawnID));
+      SetRespawnState(SpawnID, true, GetMainPlayerObjectID());
+    }
+
+    int Slot     = -1;
+    int PlayerID = -1;
+    Component Session = (new #GameController()).GetGameSession();
+    if (Session != null)
+    {
+      Slot     = Session.GetPlayerSlotID();
+      PlayerID = Session.GetPlayerID();
+    }
+
+    logWarning("[Missin] CreatePlayerObject0 (" + new String(GetMainPlayerObjectID()) + ")");
+    logMessage("  [Missin] Unit: " + CGameSettings::PlayerUnitScript);
+    logMessage("  [Missin] PlayerNumber: " + CGameSettings::PlayerNumber);
+
+    CreateAndInitObject(
+        GetMainPlayerObjectID(),
+        "GameObject",
+        CGameSettings::PlayerUnitScript,
+        InitPlace,
+        [
+          ["Number", CGameSettings::PlayerNumber],
+          ["IsPlayer", true],
+          ["IsManual", true],
+          ["IsUnit",   true],
+          ["Affiliation", "FRIEND"],
+          ["SlotID", Slot],
+          ["PlayerID", PlayerID]
+        ]
+      );
+
+    if ((new #GameController()).GetGameMode() == "Server")
+    {
+      GetContent().CreateObjectRecord(GetMainPlayerObjectID(), "GameObject",
+      CGameSettings::PlayerUnitScript, InitPlace,
+      [
+          ["Number", CGameSettings::PlayerNumber],
+          ["IsPlayer", true],
+          ["IsManual", true],
+          ["IsUnit",   true],
+          ["Affiliation", "FRIEND"],
+          ["SlotID", Slot],
+          ["PlayerID", PlayerID]
+        ]);
+    }
+
+    Component Player = GetObject(GetMainPlayerObjectID());
+    if (Player != null)
+    {
+      if (isFunctionExist(Player, "SetupPhrasesList", 1))
+        Player.SetupPhrasesList(PlayerVoiceClass);
+    }
+  }
+
+  void CreatePlayerObject(Matrix _Place)
+  {
+//     if (null != GetObject(GetMainPlayerObjectID()))
+//       return;
+    //if((new #GameController()).IsDedicate())
+    //return;
+
+    //generate player-object name for multiplayer
+//    CGameSettings::PlayerName = GenerateFreeObjectID();
+
+    int Slot     = -1;
+    int PlayerID = -1;
+    Component Session = (new #GameController()).GetGameSession();
+    if (Session != null)
+    {
+      Slot     = Session.GetPlayerSlotID();
+      PlayerID = Session.GetPlayerID();
+    }
+
+    // Create player objects
+    logWarning("[Missin] CreatePlayerObject (" + new String(GetMainPlayerObjectID()) + ")");
+    logMessage("  [Missin] Unit: " + CGameSettings::PlayerUnitScript);
+    logMessage("  [Missin] PlayerNumber: " + CGameSettings::PlayerNumber);
+    CreateAndInitObject(
+        GetMainPlayerObjectID(),
+        "GameObject",
+        CGameSettings::PlayerUnitScript,
+        _Place,
+        [
+          ["Number", CGameSettings::PlayerNumber],
+          ["IsPlayer", true],
+          ["IsManual", true],
+          ["IsUnit",   true],
+          ["Affiliation", "FRIEND"],
+          ["SlotID", Slot],
+          ["PlayerID", PlayerID]
+        ]
+      );
+
+
+    if ((new #GameController()).GetGameMode() == "Server")
+    {
+      GetContent().CreateObjectRecord(GetMainPlayerObjectID(), "GameObject",
+      CGameSettings::PlayerUnitScript, _Place,
+      [
+          ["Number", CGameSettings::PlayerNumber],
+          ["IsPlayer", true],
+          ["IsManual", true],
+          ["IsUnit",   true],
+          ["Affiliation", "FRIEND"],
+          ["SlotID", Slot],
+          ["PlayerID", PlayerID]
+        ]);
+    }
+    logWarning("Component Player from Mission creating...");
+    Component Player = GetObject(GetMainPlayerObjectID());
+    if (Player != null)
+    {
+      if (isFunctionExist(Player, "SetupPhrasesList", 1))
+        Player.SetupPhrasesList(PlayerVoiceClass);
+      String SessionType = Session.GetSessionInfo().GetSessionTypeID();
+      logWarning("Component Player from Mission was created. GameMode is "+SessionType);
+      //$Sonar Games
+//       if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+//       {
+//         Component AutoThingsUI = GetObject("AutoThingsUI");   //KILL Autogunner Autocommander
+//         logWarning("StartMission was called. And AutoThingsUI is "+new String(AutoThingsUI));
+//         if( AutoThingsUI != null )
+//         {
+//           AutoThingsUI.KillAutoShooter();
+//           AutoThingsUI.KillAutoCommander();
+//           logWarning("ENTER UIKILL");
+//         }
+//       }
+    }
+  }
+
+  void CreateEditorObject()
+  {
+    Component MissionEditor = new #GameObject<CMissionEditor>();
+    MissionEditor.Construct(this);
+    setIdentificator(MissionEditor, "MissionEditor");
+    setPosition(MissionEditor, IdentityMatrix);
+    RegisterObject("MissionEditor", MissionEditor);
+
+    Component TerrainEditor = new #GameObject<CTerrainEditor>();
+    TerrainEditor.Construct(this);
+    TerrainEditor.Initialize(this);
+    setIdentificator(TerrainEditor, "TerrainEditor");
+    setPosition(TerrainEditor, IdentityMatrix);
+    RegisterObject("TerrainEditor", TerrainEditor);
+  }
+
+  void CreateCursorObject()
+  {
+    Component EditorCursor = new #Locator<CEditorCursor>();
+    setIdentificator(EditorCursor, "EditorCursor");
+    setPosition(EditorCursor, IdentityMatrix);
+    RegisterObject("EditorCursor", EditorCursor);
+  }
+
+  Component GetEditorCursor()
+  {
+    return GetObject("EditorCursor");
+  }
+
+  Array GetClassToComponentMap(
+      Array _Map,
+      Array _ObjectInsertList
+    )
+  {
+    for (int i = 0; i < _ObjectInsertList.size(); i++)
+      if (getVariableType(_ObjectInsertList[i][1]) == ST_ARRAY)
+        _Map = GetClassToComponentMap(_Map, _ObjectInsertList[i][1]);
+      else
+        _Map.add([_ObjectInsertList[i][1].m_ScriptClass, _ObjectInsertList[i][1].m_ComponentID]);
+
+    return _Map;
+  }
+
+  String GetComponentID(
+      String _ScriptClass
+    )
+  {
+    if (m_ClassToComponentMap.size() == 0)
+    {
+      Array ClassToComponent = GetClassToComponentMap([], CEditorApplication::ObjectInsertList);
+      for (int i = ClassToComponent.size() - 1; i >= 0 ; i--)
+        m_ClassToComponentMap.insert(ClassToComponent[i][0], ClassToComponent[i][1]);
+    }
+
+    if (m_ClassToComponentMap.find(_ScriptClass))
+      return m_ClassToComponentMap.getValue();
+
+    return "";
+  }
+
+  event void SwitchToPlayerCamera()
+  {
+    Component PlayerUnit = GetObject(GetMainPlayerObjectID());
+    if (checkMask(PlayerUnit, [], [CLASSIFICATOR_DEAD_OBJECT]))
+      (new #GameController()).ActivateObject(GetMainPlayerObjectID(), true, true);
+  }
+
+  void SwitchToFreeCamera(
+      boolean _Switch
+    )
+  {
+    GetObject("FreeCamera").SetPosition(getPosition(GetObject(GetMainPlayerObjectID())));
+    (new #GameController()).ActivateObject("FreeCamera", _Switch, false);
+    (new #GameController()).ActivateObject(GetMainPlayerObjectID(), !_Switch, false);
+
+    Component PlayerUnit = GetObject(GetMainPlayerObjectID());
+    PlayerUnit.GetObject("ManualControl").EnableVehicleControl(true);
+
+/*    if (!PlayerUnit.GetSecondPilot().IsEnabledAutopilot())
+    {
+      OnPilotState(true);
+      m_AutoPilotEnabled = false;
+    }
+    else
+    {
+      if (!_Switch)
+        OnPilotState(m_AutoPilotEnabled);
+      else
+        m_AutoPilotEnabled = true;
+    }
+*/
+  }
+
+  int GetDifficultyLevel()
+  {
+    return (new #GameSettings()).GetDifficultyLevel();
+  }
+
+  // Behavior operations
+  String  BehavioredComponentID = "GameObject";
+  boolean IsBehaviorActive      = true;
+
+  void EnableBehavior()
+  {
+    Array ObjectList = GetMissionObjectList();
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      Component Object = GetObject(ObjectList[Index][CMissionContent::INDEX_ObjectID]);
+      if ((Object != null) && isFunctionExist(Object, "EnableBehavior", 2))
+        Object.EnableBehavior(true, false);
+    }
+
+    IsBehaviorActive = true;
+  }
+
+  void DisableBehavior()
+  {
+    Array ObjectList = GetMissionObjectList();
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      Component Object = GetObject(ObjectList[Index][CMissionContent::INDEX_ObjectID]);
+      if ((Object != null) && isFunctionExist(Object, "EnableBehavior", 2))
+        Object.EnableBehavior(false, false);
+    }
+
+    IsBehaviorActive = false;
+  }
+
+
+  // =======================================
+  // Scripted camera
+  // =======================================
+
+  void CreateCameraScriptRecord(
+      String  _CinemaID,
+      float   _Time,
+      String  _Operation,
+      Array   _Properties
+    )
+  {
+    Array CameraScriptList = m_MissionContentClass.GetCinema(_CinemaID);
+
+    for (int i = 0; i < CameraScriptList.size(); i++)
+    {
+      if (abs(CameraScriptList[i][0] - _Time) < FLT_EPSILON)
+      {
+        String ListOp = CameraScriptList[i][1];
+        if (_Operation == ListOp)
+        {
+          logError("Operation duplication (" + _Operation + ") for time " + new String(_Time));
+          return;
+        }
+
+        // check for operations coexistability
+        if (((KEY_MOVE == _Operation) && (KEY_STAY == ListOp)) ||
+            ((KEY_STAY == _Operation) && (KEY_MOVE == ListOp)) ||
+            ((KEY_END == _Operation) && ((KEY_STICKTO == ListOp) || (KEY_FOLLOW == ListOp))) ||
+            ((KEY_STICKTO == _Operation) && ((KEY_END == ListOp) || (KEY_FOLLOW == ListOp))) ||
+            ((KEY_FOLLOW == _Operation) && ((KEY_END == ListOp) || (KEY_STICKTO == ListOp))))
+        {
+          logError("Operations " + new String(_Operation) + " and " + new String(ListOp) + " cannot be applied to the same time frame");
+          logError("Operation " + new String(_Operation) + " for time " + new String(_Time) + " was not added to Camera Script List");
+          return;
+        }
+
+        continue;
+      }
+    }
+
+    CameraScriptList.add(
+        [ _Time, _Operation, _Properties]);
+  }
+
+  void DeleteCameraScriptRecord(
+      String  _CinemaID,
+      float   _Time,
+      String  _Operation
+    )
+  {
+    Array CameraScriptList = m_MissionContentClass.GetCinema(_CinemaID);
+
+    for (int i = 0; i < CameraScriptList.size(); i++)
+    {
+      if ((abs(CameraScriptList[i][0] - _Time) < FLT_EPSILON)
+          && (CameraScriptList[i][1] == _Operation))
+      {
+        CameraScriptList.remove(i);
+        return;
+      }
+    }
+  }
+
+  boolean m_InCameraScript       = false;
+  String  m_ObjectToActivate     = "";
+
+  event boolean CycleCameraScript(
+      String _CinemaID,
+      float  _StartFrom,
+      String _ActivateThen
+    )
+  {
+    return PlayCameraScript(_CinemaID, _StartFrom, _ActivateThen, -1, -1, true);
+  }
+
+  event boolean PlayCameraScript(
+      String _CinemaID,
+      float  _StartFrom,
+      String _ActivateThen
+    )
+  {
+    return PlayCameraScript(_CinemaID, _StartFrom, _ActivateThen, -1, -1, false);
+  }
+
+  event boolean PlayCameraScript(
+      String  _CinemaID,
+      float   _StartFrom,
+      String  _ActivateThen,
+      int     _StartIndex,
+      int     _EndIndex,
+      boolean _IsLooped
+    )
+  {
+    if (!m_MissionContentClass.IsCinemaExist(_CinemaID))
+      return false;
+
+    Component ScriptedCamera = GetObject("ScriptedCamera");
+    if (ScriptedCamera == null)
+    {
+      logError("No script camera controller in mission");
+      return false;
+    }
+
+    m_ObjectToActivate = _ActivateThen;
+    m_InCameraScript   = true;
+
+    fireEvent(0.0, [], "OnCinemaStart", [_CinemaID]);
+
+    ScriptedCamera.EnableLoop(_IsLooped);
+
+    fireEvent(0.0, [], "OnCinemaPlay", [_CinemaID, _StartFrom, _StartIndex, _EndIndex]);
+
+    return true;
+  }
+
+  event void StopCameraScript()
+  {
+    Component ScriptedCamera = GetObject("ScriptedCamera");
+    if (ScriptedCamera == null)
+    {
+      logError("No script camera controller in mission");
+      return;
+    }
+
+    ScriptedCamera.StopScript();
+  }
+
+  event void OnCameraScriptDone()
+  {
+    if (m_InCameraScript)
+    {
+      fireEvent(0.0, [], "OnCinemaStop", []);
+
+      m_InCameraScript = false;
+
+      if (m_ObjectToActivate.isEmpty())
+      {
+        (new #GameController()).ActivateObject("ScriptedCamera", false, false);
+      }
+      else
+      {
+        (new #GameController()).ActivateObject(m_ObjectToActivate, true, true);
+        m_ObjectToActivate = "";
+      }
+
+      sendEvent(0, SOID_GameController, "OnCinemaEnd", []);
+    }
+  }
+
+  event void OnCinemaPlay(
+      String  _CinemaID,
+      float   _StartFrom,
+      int     _StartIndex,
+      int     _EndIndex
+    )
+  {
+    Component ScriptedCamera = GetObject("ScriptedCamera");
+    if (ScriptedCamera == null)
+    {
+      logError("No script camera controller in mission");
+      return;
+    }
+
+    ScriptedCamera.StartScript(
+        m_MissionContentClass.GetCinema(_CinemaID),
+        _StartFrom,
+        _StartIndex,
+        _EndIndex
+      );
+  }
+
+  Array   ObjectPositions;
+  boolean m_IsObjectPositionsResetEnabled = false;
+
+  event void OnCinemaStart(
+      String _CinemaID
+    )
+  {
+    // Save objects positions and clear their events
+    if (m_IsObjectPositionsResetEnabled)
+    {
+      ObjectPositions.clear();
+      Array Objects = GetObjects([], []);
+      for (int i = 0; i < Objects.size(); i++)
+      {
+        if (!isPositionable(Objects[i]))
+          continue;
+
+        ObjectPositions.add([Objects[i], getPosition(Objects[i])]);
+        clearEventsForObject(getIdentificator(Objects[i]));
+      }
+    }
+
+    SetObjectsShowMode(OSM_Cinema, _CinemaID);
+  }
+
+  static boolean ObjectsShowModeResetEnabled = true;
+
+  event void OnCinemaStop()
+  {
+    if (m_IsObjectPositionsResetEnabled)
+    {
+      // Restore objects positions and clear their events
+      for (int i = 0; i < ObjectPositions.size(); i++)
+      {
+        setPosition(ObjectPositions[i][0], ObjectPositions[i][1]);
+        clearEventsForObject(getIdentificator(ObjectPositions[i][0]));
+      }
+      ObjectPositions.clear();
+    }
+
+    if (ObjectsShowModeResetEnabled)
+      SetObjectsShowMode(OSM_Game, "");
+  }
+
+  //
+  // Service
+  //
+
+  void FillTerrainTexture(
+      boolean _FillWithObjects
+    )
+  {
+    if (_FillWithObjects)
+      m_MissionTerrain.FillTerrainTexture([[[], ["SKY"]]]);
+    else
+      m_MissionTerrain.FillTerrainTexture([]);
+  }
+
+  void FillWaterTexture()
+  {
+    m_MissionTerrain.FillWaterTexture();
+  }
+
+  void RefineWaterTexture()
+  {
+    m_MissionTerrain.RefineWaterTexture();
+  }
+
+  void RefineRivers()
+  {
+    m_MissionTerrain.RefineRivers();
+  }
+
+  void FillPatchesTextures(
+      boolean _FillWithObjects
+    )
+  {
+    if (_FillWithObjects)
+      m_MissionTerrain.FillPatchesTextures([[[], ["SKY"]]]);
+    else
+      m_MissionTerrain.FillPatchesTextures([]);
+  }
+
+  void LightTerrainTexture()
+  {
+    Component GameSettings = new #GameSettings();
+    if(!isFunctionExist(m_MissionTerrain, "LightTerrainTexture", 3)) return;
+    m_MissionTerrain.LightTerrainTexture(
+        GameSettings.m_GenerateTerrainShadows,
+        GameSettings.m_LightTerrainPatches,
+        GameSettings.m_TerrainShadowsMasks
+      );
+    m_MissionTerrain.InvalidateTerrainTexCache();
+  }
+
+  void ReloadTerrainTexture()
+  {
+    m_MissionTerrain.ReloadTerrainTexture();
+  }
+
+  void ReloadPatchesTextures()
+  {
+    m_MissionTerrain.ReloadPatchesTextures();
+  }
+
+  //
+  //Sirvice functions for respawning
+  //
+
+  Array GetRespawnPlacesIDList()
+  {
+    return m_MissionRespawnPlaces;
+  }
+
+  void SetRespawnState(
+      String  _RespawnID,
+      boolean _Busy,
+      String  _UsurperID
+    )
+  {
+    Component Game = new #GameController();
+    if (Game.GetGameMode() == "Client")
+    {
+      Game.GetGameSession().FireNetEvent(
+          "Server_SetRespawnState",
+          [ _RespawnID, _Busy, _UsurperID ]
+        );
+    }
+    else
+    {
+      Server_SetRespawnState(-1, _RespawnID, _Busy, _UsurperID);
+    }
+  }
+
+  event void Server_SetRespawnState(
+      int      _ClientID,
+      String  _RespawnID,
+      boolean _Busy,
+      String  _UsurperID
+     )
+  {
+    //logWarning("Server_SetRespawnState");
+    //logWarning("  Respawn = " + _RespawnID + ", Usurper = " + _UsurperID + " _Busy = " + new String(_Busy));
+    //logWarning("  Before: " + new String(m_MissionRespawnPlaces));
+
+    for (int i = 0; i < m_MissionRespawnPlaces.size(); i++)
+      if (m_MissionRespawnPlaces[i][0] == _RespawnID)
+      {
+        m_MissionRespawnPlaces[i][1] = _Busy;
+        m_MissionRespawnPlaces[i][2] = _UsurperID;
+
+        //logWarning("  After: " + new String(m_MissionRespawnPlaces));
+
+        return;
+      }
+
+    // Insert new respawn place
+    m_MissionRespawnPlaces.add([_RespawnID, _Busy, _UsurperID]);
+
+    //logWarning("  After SetRespawnState: " + new String(m_MissionRespawnPlaces));
+  }
+
+  void FreeRespawnsByUsurper(
+      String _UsurperID
+    )
+  {
+    Component Game = new #GameController();
+    if (Game.GetGameMode() == "Client")
+    {
+      Game.GetGameSession().FireNetEvent(
+          "Server_FreeRespawnsByUsurper",
+          [ _UsurperID ]
+        );
+    }
+    else
+    {
+      Server_FreeRespawnsByUsurper(-1, _UsurperID);
+    }
+  }
+
+  event void Server_FreeRespawnsByUsurper(
+      int    _ClientID,
+      String _UsurperID
+    )
+  {
+    for (int i = 0; i < m_MissionRespawnPlaces.size(); i++)
+      if (m_MissionRespawnPlaces[i][2] == _UsurperID)
+      {
+        m_MissionRespawnPlaces[i][1] = false;
+        m_MissionRespawnPlaces[i][2] = "";
+      }
+
+    //logWarning("After free by " + _UsurperID + ": " + new String(m_MissionRespawnPlaces));
+  }
+
+  boolean GetRespawnState(
+      String _RespawnID
+     )
+  {
+    //logWarning("GetRespawnState: " + new String(_RespawnID));
+    for (int i = 0; i < m_MissionRespawnPlaces.size(); i++)
+      if (m_MissionRespawnPlaces[i][0] == _RespawnID)
+      {
+        /*if (m_MissionRespawnPlaces[i][2] != "")
+        {
+          // Check object on Respawn
+          Component UsurperObject = GetObject(m_MissionRespawnPlaces[i][2]);
+          if (null == UsurperObject)
+          {
+            m_MissionRespawnPlaces[i][1] = false;
+            m_MissionRespawnPlaces[i][2] = "";
+          }
+        }*/
+
+        //logMessage("  m_MissionRespawnPlaces[i][0]: " + new String(m_MissionRespawnPlaces[i][0]));
+        //logMessage("  isBisy: " + new String(m_MissionRespawnPlaces[i][1]));
+
+        // Return Respawn status
+        return m_MissionRespawnPlaces[i][1];
+      }
+
+    return false;  // unknown Respawn is not busy
+  }
+
+  String GetRespawnUsurper(
+      String _RespawnID
+     )
+  {
+    for (int i = 0; i < m_MissionRespawnPlaces.size(); i++)
+      if (m_MissionRespawnPlaces[i][0] == _RespawnID)
+      {
+        if (m_MissionRespawnPlaces[i][2] != "")
+        {
+          // Check object on Respawn
+          Component UsurperObject = GetObject(m_MissionRespawnPlaces[i][2]);
+          if (null == UsurperObject)
+          {
+            m_MissionRespawnPlaces[i][1] = false;
+            m_MissionRespawnPlaces[i][2] = "";
+          }
+        }
+
+        return m_MissionRespawnPlaces[i][2];
+      }
+
+    return "";
+  }
+
+  void PrepareRespawnPlace(
+      boolean _IsCanRespawn,
+      String  _ObjectId,
+      String  _RespawnPlaceId
+    )
+  {
+    Component Game = new #GameController();
+
+    boolean IsHostPlayer = (_ObjectId == GetMainPlayerObjectID());
+
+    if (Game.GetGameMode() == "Client")
+    {
+      // Send message to server
+      Game.GetGameSession().FireNetEvent(
+          "Server_PrepareRespawnPlace",
+          [ _IsCanRespawn, _ObjectId, _RespawnPlaceId, IsHostPlayer ]
+        );
+    }
+    else
+    {
+      Server_PrepareRespawnPlace(-1, _IsCanRespawn, _ObjectId, _RespawnPlaceId, IsHostPlayer);
+    }
+  }
+
+  event void Server_PrepareRespawnPlace(
+      int     _ClientID,
+      boolean _IsCanRespawn,
+      String  _ObjectId,
+      String  _RespawnPlaceId,
+      boolean _IsPlayer
+    )
+  {
+    if (_IsPlayer && GetRespawnState(_RespawnPlaceId))
+    {
+      // $LOG
+//      logWarning(_ObjectId + ": i'm player, Respawn busy...");
+
+      String UsurperID = GetRespawnUsurper(_RespawnPlaceId);
+      if (UsurperID != "")
+      {
+        Component Task = GetUnitTask(UsurperID);
+        if (Task != null)
+        {
+          // $LOG
+//          logWarning(_ObjectId + ": usurper is AI object...");
+
+          if (Task.m_RespawnSequence && (Task.m_RespawnTarget == _RespawnPlaceId))
+          {
+            if (Task.m_SafeRespawn)
+            {
+              // $LOG
+//              logWarning(_ObjectId + ": rerouting stupid usurper...");
+
+              Task.RespawnReroute();
+              SetRespawnState(_RespawnPlaceId, false, "");
+            }
+          }
+        }
+      }
+    }
+
+    // Check state of Respawn place
+    if (!GetRespawnState(_RespawnPlaceId))
+    {
+      // $LOG
+//      logWarning(_ObjectId + ": Respawn is free to use...");
+
+      // Reserve Respawn
+      Server_SetRespawnState(-1, _RespawnPlaceId, true, _ObjectId);
+
+      // Send messages for all hosts
+      Component Game = new #GameController();
+      if (Game.GetGameMode() != "Single")
+      {
+        Game.GetGameSession().FireNetEvent(
+            "Object_PrepareRespawnPlace",
+            [ _IsCanRespawn, _ObjectId, _RespawnPlaceId ]
+          );
+      }
+
+      // Send message to him
+      Object_PrepareRespawnPlace(_IsCanRespawn, _ObjectId, _RespawnPlaceId);
+    }
+  }
+
+  event void Object_PrepareRespawnPlace(
+      boolean _IsCanRespawn,
+      String  _ObjectId,
+      String  _RespawnPlaceId
+    )
+  {
+    // Check object
+    Component Object = GetObject(_ObjectId);
+    if (null == Object)
+      return;
+
+    Object.PrepareRespawnState(_IsCanRespawn, _RespawnPlaceId);
+  }
+
+  void UnlockPlace(
+      String _PlaceId,
+      String _ObjectId
+    )
+  {
+    Component Game = new #GameController();
+    if (Game.GetGameMode() == "Client")
+    {
+      Game.GetGameSession().FireNetEvent(
+          "Server_UnlockPlace",
+          [ _PlaceId, _ObjectId ]
+        );
+    }
+    else
+    {
+      Server_UnlockPlace(-1, _PlaceId, _ObjectId);
+    }
+  }
+
+  event void Server_UnlockPlace(
+      int    _ClientID,
+      String _PlaceId,
+      String _ObjectId
+    )
+  {
+    String UsurperId = GetRespawnUsurper(_PlaceId);
+    if (UsurperId == _ObjectId)
+    {
+      // We need unlock place
+      Server_SetRespawnState(_ClientID, _PlaceId, false, "");
+    }
+  }
+
+  void AddFreeRespawn(
+      String _Location
+    )
+  {
+    m_MissionFreeRespawnPlaces.add(_Location);
+  }
+
+  //
+  // Events
+  //
+
+  event void OnObjectDestroyed(
+      String _ObjectID
+    )
+  {
+    Component GC = new #GameController();
+    String GameMode = GC.GetGameMode();
+
+    if (GameMode == "Single")
+    {
+      String MainPlayerID = GetMainPlayerObjectID();
+      if (_ObjectID == MainPlayerID)
+      {
+        FailMission(0.0);
+      }
+
+      Component DeadThing = GetObject(_ObjectID);
+      if (DeadThing == null)
+      {
+        logError("[CMission] Component 'DeadThing' == null");
+        return;
+      }
+
+      String Killer = DeadThing.GetLastDamager();
+      if (Killer == MainPlayerID)
+      {
+        if (checkMask(DeadThing, ["TANK"],[]) || checkMask(DeadThing, ["HEAVYTANK"],[]))
+          m_PlayerVictims_Tanks++;
+        else if (checkMask(DeadThing, ["ANTITANK"],[]) || checkMask(DeadThing, ["BLD_WAR"],[]))
+          m_PlayerVictims_FireDots++;
+        else if (checkMask(DeadThing, ["BTR"],[]))
+          m_PlayerVictims_BTRs++;
+        else if (checkMask(DeadThing, ["VEHICLE"],[]))
+          m_PlayerVictims_Autos++;
+        else if (checkMask(DeadThing, ["HUMAN"],[]))
+          m_PlayerVictims_Humans++;
+      }
+    }
+  }
+
+  //
+  //  Team messages
+  //
+
+  event void SendBroadcastCockpitMessage(
+      WString  _Message,
+      Color    _Color
+    )
+  {
+    SendBroadcastCockpitMessage(_Message, _Color, "");
+  }
+
+  event void SendBroadcastCockpitMessage(
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    Component GC = new #GameController();
+    String GameMode = GC.GetGameMode();
+
+    if (GameMode == "Single")
+      fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+    else
+    if (GameMode == "Server")
+      Server_BroadcastCockpitMessage(-1, _Message, _Color, _SoundId);
+    else
+    if (GameMode == "Client")
+    {
+      Component Session = GC.GetGameSession();
+      Session.FireNetEvent("Server_BroadcastCockpitMessage", [_Message, _Color, _SoundId]);
+    }
+    else
+      logError("Non-determined game mode in SendBroadcastCockpitMessage");
+  }
+
+  event void Server_BroadcastCockpitMessage(
+      int      _ClientID,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    Component Session = (new #GameController()).GetGameSession();
+    Session.FireNetEvent("Client_BroadcastCockpitMessage", [_Message, _Color, _SoundId]);
+    fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+  }
+
+  event void Client_BroadcastCockpitMessage(
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+  }
+
+  event void SendTeamCockpitMessage(
+      String   _Team,
+      WString  _Message,
+      Color    _Color
+    )
+  {
+    SendTeamCockpitMessage(_Team, _Message, _Color, "");
+  }
+
+  event void SendTeamCockpitMessage(
+      String   _Team,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    Component GC = new #GameController();
+    String GameMode = GC.GetGameMode();
+
+    if (GameMode == "Single")
+    {
+      Component Player = GC.GetObject(GetMainPlayerObjectID());
+      if ((Player != null) && (checkMask(Player, [_Team], []) || (_Team == "NEUTRAL")))
+        fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+    }
+    else
+    if (GameMode == "Client")
+    {
+      Component Session = GC.GetGameSession();
+      Session.FireNetEvent("Server_TeamCockpitMessage", [_Team, _Message, _Color, _SoundId]);
+    }
+    else
+    if (GameMode == "Server")
+      Server_TeamCockpitMessage(-1, _Team, _Message, _Color, _SoundId);
+    else
+      logError("Non-determined game mode in SendTeamCockpitMessage");
+  }
+
+  event void Server_TeamCockpitMessage(
+      int      _ClientID,
+      String   _Team,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    Component Session = (new #GameController()).GetGameSession();
+    Session.FireNetEvent("Client_TeamCockpitMessage", [_Team, _Message, _Color, _SoundId]);
+    Client_TeamCockpitMessage(_Team, _Message, _Color, _SoundId);
+  }
+
+  event void Client_TeamCockpitMessage(
+      String   _Team,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    Component Player = (new #GameController()).GetObject(GetMainPlayerObjectID());
+    if ((Player != null) && (checkMask(Player, [_Team], []) || (_Team == "NEUTRAL")))
+      fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+  }
+
+  event void SendPersonalCockpitMessage(
+      String   _PlayerID,
+      WString  _Message,
+      Color    _Color
+    )
+  {
+    SendPersonalCockpitMessage(_PlayerID, _Message, _Color, "");
+  }
+
+  event void SendPersonalCockpitMessage(
+      String   _PlayerID,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+//    if (_PlayerID == GetMainPlayerObjectID())
+      fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+/*
+    else
+    {
+      Component GC = new #GameController();
+      String GameMode = GC.GetGameMode();
+
+      if (GameMode == "Client")
+      {
+        Component Session = GC.GetGameSession();
+        Session.FireNetEvent("Server_PersonalCockpitMessage", [_PlayerID, _Message, _Color, _SoundId]);
+      }
+      else
+      if (GameMode == "Server")
+        Server_PersonalCockpitMessage(-1, _PlayerID, _Message, _Color, _SoundId);
+    }
+*/
+  }
+
+  event void Server_PersonalCockpitMessage(
+      int      _ClientID,
+      String   _PlayerID,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+//    if (_PlayerID == GetMainPlayerObjectID())
+      fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+/*
+    else
+    {
+      Component Session = (new #GameController()).GetGameSession();
+      Session.FireNetEvent("Client_PersonalCockpitMessage", [_PlayerID, _Message, _Color, _SoundId]);
+    }
+*/
+  }
+
+  event void Client_PersonalCockpitMessage(
+      String   _PlayerID,
+      WString  _Message,
+      Color    _Color,
+      String   _SoundId
+    )
+  {
+    if (_PlayerID == GetMainPlayerObjectID())
+      fireEvent(0.0, [], "SendCockpitMessage", [_Message, _Color, _SoundId]);
+  }
+
+  Array FindObjectListRecord(String _UnitID)
+  {
+    Array ObjectList = GetMissionObjectList();
+
+    //logWarning("FindObjectListRecord: " + _UnitID);
+
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      //logWarning("check: " + new String(ObjectList[Index][CMissionContent::INDEX_ObjectID]));
+      if(ObjectList[Index][CMissionContent::INDEX_ObjectID] == _UnitID)
+        return ObjectList[Index];
+    }
+    logWarning("return null");
+    return new Array([]);
+  }
+
+  int GetPlayerSlotIDByUnitID(
+      String _UnitID
+    )
+  {
+    if((new #GameController()).GetGameMode() == "Single")
+    {
+      Component Unit = GetObject(_UnitID);
+      if (Unit == null)
+        return -1;
+
+      if (isFunctionExist(Unit, "GetPlayerSlotID", 0))
+        return Unit.GetPlayerSlotID();
+
+      return -1;
+    }
+    else
+    {
+      Array ObjectRecord = FindObjectListRecord(_UnitID);
+      if(ObjectRecord.isEmpty()) return -1;
+
+      Array PropMap = ObjectRecord[INDEX_Properties];
+      if(PropMap.isEmpty()) return -1;
+
+      Component Properties = new CPropertiesMap(PropMap);
+      return Properties.Get("SlotID", -1);
+    }
+  }
+
+
+  void FreePlayerSlot(
+      int _Slot
+    )
+  {
+    Array ObjectList     = GetMissionObjectList();
+
+    // create multiplayer bots
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      // check object properties
+      Component Properties = new CPropertiesMap(ObjectList[Index][CMissionContent::INDEX_Properties]);
+      int Slot = Properties.Get("SlotID", -1);
+      if (_Slot == Slot)
+      {
+        Properties.Set("SlotID", -1);
+        break;
+      }
+    }
+  }
+
+  //
+  // Multiplayer wingman - leader events
+  //
+
+  event void Server_LeaderChange(
+      int     _ClientID,
+      String  _WingmanID,
+      int     _PrevLeaderID,
+      int     _NewLeaderID
+    )
+  {
+    Component GC = new #GameController();
+
+    if (GC.GetGameMode() == "Server")
+    {
+      Component Session = GC.GetGameSession();
+      if (Session != null)
+      {
+        int PrevPlayerID = -1;
+        if ((_PrevLeaderID != -1) && (_PrevLeaderID < Session.m_PlayerSlots.size()))
+          PrevPlayerID = Session.m_PlayerSlots[_PrevLeaderID].PlayerID;
+        int NewPlayerID = -1;
+        if ((_NewLeaderID != -1) && (_NewLeaderID < Session.m_PlayerSlots.size()))
+          NewPlayerID = Session.m_PlayerSlots[_NewLeaderID].PlayerID;
+
+        Session.FireNetEvent("Client_LeaderChange", [_WingmanID, PrevPlayerID, NewPlayerID]);
+        fireEvent(0.0, [], "OnWingmanChangeLeader", [_WingmanID, PrevPlayerID, NewPlayerID]);
+      }
+      else
+        logWarning(" null session at Mission::Server_LeaderChange");
+    }
+  }
+
+  event void Client_LeaderChange(
+      String  _WingmanID,
+      int     _PrevLeaderID,
+      int     _NewLeaderID
+    )
+  {
+    Component GC = new #GameController();
+
+    if (GC.GetGameMode() == "Client")
+    {
+      fireEvent(0.0, [], "OnWingmanChangeLeader", [_WingmanID, _PrevLeaderID, _NewLeaderID]);
+    }
+  }
+
+  event void Server_InformPlayerDied(
+      int     _ClientID,
+      String  _PlayerID
+    )
+  {
+    // $TMP - no localized strings
+    logError("TODO : Mission::Server_InformPlayerDied");
+    return;
+
+    int Slot = GetPlayerSlotIDByUnitID(_PlayerID);
+
+    if (Slot != -1)
+    {
+      Component Session = (new #GameController()).GetGameSession();
+      if (Session.m_PlayerSlots.size() > Slot)
+      {
+        int PlayerID = Session.m_PlayerSlots[Slot].PlayerID;
+
+        if (!Session.m_PlayerSlots[Slot].IsManual)
+          PlayerID = Session.GetPlayerIDForBot(Slot);
+
+        Component PlayerInfo = Session.GetPlayerInfo(PlayerID);
+        if (PlayerInfo != null)
+        {
+          SendBroadcastCockpitMessage(
+            PlayerInfo.Rank + L" " + PlayerInfo.Name + CCommonStrings::str_PlayerDied,
+            CCockpitColorMap::m_NeutralNewsColor
+          );
+        }
+      }
+    }
+  }
+
+  WString GetPlayerDisplayTitle(
+      String _PlayerObjectID
+    )
+  {
+    WString Result = "BAD ID";
+
+    int Slot = GetPlayerSlotIDByUnitID(_PlayerObjectID);
+    if (Slot == -1)
+    {
+      logError("GetPlayerDisplayName ERROR: passed identifier is not player object identifier");
+      return Result;
+    }
+
+    Component Session = (new #GameController()).GetGameSession();
+    if (Session == null)
+    {
+      logError("GetPlayerDisplayName ERROR: no active multiplayer session");
+      return Result;
+    }
+
+    if (Session.m_PlayerSlots.size() <= Slot)
+    {
+      logError("GetPlayerDisplayName ERROR: internal error - bad player slot value");
+      return Result;
+    }
+
+    int PlayerID = m_PlayerSlots[Slot].PlayerID;
+
+    if (!Session.m_PlayerSlots[Slot].IsManual)
+      PlayerID = Session.GetPlayerIDForBot(Slot);
+
+    Component PlayerInfo = Session.GetPlayerInfo(PlayerID);
+    if (PlayerInfo == null)
+    {
+      logError("GetPlayerDisplayName ERROR: internal error - null player info");
+      return Result;
+    }
+
+    Result = PlayerInfo.Rank + L" " + PlayerInfo.Name;
+    return Result;
+  }
+
+  event void OnDestroyPlayer(
+      int _PlayerID
+    )
+  {
+  }
+
+  event void OnWingmanChangeLeader(
+      String  _WingmanID,
+      int     _PrevLeaderID,
+      int     _NewLeaderID
+    )
+  {
+    // $TMP - no localized strings
+    logError("TODO : Mission::OnWingmanChangeLeader");
+    return;
+
+    if ((new #GameController()).GetGameMode() == "Server")
+    {
+      Component Session = (new #GameController()).GetGameSession();
+
+      Component PrevLeaderInfo = Session.GetPlayerInfo(_PrevLeaderID);
+      Component NewLeaderInfo  = Session.GetPlayerInfo(_NewLeaderID);
+
+      WString PrevLeaderRank  = getLocalized("Common", "DefaultPrevLeaderRank");
+      WString PrevLeaderName  = getLocalized("Common", "DefaultPrevLeaderName");
+      WString NewLeaderRank   = getLocalized("Common", "DefaultNewLeaderRank");
+      WString NewLeaderName   = getLocalized("Common", "DefaultNewLeaderName");
+
+      if (PrevLeaderInfo != null)
+      {
+        PrevLeaderRank = PrevLeaderInfo.Rank;
+        PrevLeaderName = PrevLeaderInfo.Name;
+      }
+
+      if (NewLeaderInfo != null)
+      {
+        NewLeaderRank = NewLeaderInfo.Rank;
+        NewLeaderName = NewLeaderInfo.Name;
+      }
+
+      String Team = "NEUTRAL";
+      WString CallSign = getLocalized("Common", "DefaultCallSign");
+
+      Component Wingman = (new #GameController()).GetObject(_WingmanID);
+      if (Wingman != null)
+      {
+        Team = Wingman.GetAffiliation();
+
+        Component Task = GetUnitTask(_WingmanID);
+        if (Task != null)
+          CallSign = CCommonStrings::str_WingmanCallSigns[Task.m_WingmanRank];
+      }
+
+      if (_PrevLeaderID == -1)
+      {
+        if (_NewLeaderID != -1)
+          SendTeamCockpitMessage(
+            Team,
+            getLocalized("Common", "str_Wingman") + CallSign + getLocalized("Common", "str_WingmanUnderCommand") + NewLeaderRank + L" " + NewLeaderName,
+            CCockpitColorMap::m_GoodNewsColor
+          );
+        else
+            logError("Wingman " + _WingmanID + " passed from NOONE to NOBODY");
+      }
+      else if (_NewLeaderID == -1)
+      {
+        SendTeamCockpitMessage(
+          Team,
+          getLocalized("Common", "str_Wingman") + CallSign + getLocalized("Common", "str_WingmanHasLeft") + PrevLeaderRank + L" " + PrevLeaderName,
+          CCockpitColorMap::m_GoodNewsColor
+        );
+      }
+      else
+      {
+        SendTeamCockpitMessage(
+          Team,
+          getLocalized("Common", "str_Wingman") + CallSign + getLocalized("Common", "str_WingmanChangedLeader") + PrevLeaderRank + L" " + PrevLeaderName + getLocalized("Common", "str_WingmanChangedTo") + NewLeaderRank + L" " + NewLeaderName,
+          CCockpitColorMap::m_GoodNewsColor
+        );
+      }
+    }
+  }
+
+  float GetMissionTime()  // current mission time in secs
+  {
+    return getGameTimeInSeconds() + m_RealStartTime;
+  }
+
+  event void OnVoiceSoundStopped(
+      String  _MessageId
+    )
+  {
+    GetObject("DialogsManager").OnVoiceSoundStopped(_MessageId);
+    GetObject(GetMainPlayerObjectID()).OnVoiceSoundStopped(_MessageId);
+  }
+
+  event void SendCockpitMessage(
+      WString _Message,
+      Color   _Color
+    )
+  {
+    SendCockpitMessage(_Message, _Color, "");
+  }
+
+  event void SendCockpitMessage(
+      WString _Message,
+      Color   _Color,
+      String  _SoundId
+    )
+  {
+    SendCockpitMessage(L"Default Objective", _Message, _Color, _SoundId);
+  }
+
+  event void SendCockpitMessage(
+      WString _Callsign,
+      WString _Message,
+      Color   _Color,
+      String  _SoundId
+    )
+  {
+    GetObject(GetMainPlayerObjectID()).SendCockpitMessage(_Callsign, _Message, _Color, _SoundId);
+  }
+
+  void InitSession(
+      Array _PlayerSlots
+    )
+  {
+  }
+
+  void SetPlayerName(String _Name)
+  {
+    m_PlayerName = _Name;
+  }
+
+  String GetFreeSpawnPlace(
+      String _PlayerUnitID
+    )
+  {
+    Array ObjectPointsList =  GetContent().GetObjectsList();
+
+    Array FreePointsList = [];
+    for (int i = 0; i < ObjectPointsList.size(); i++)
+    {
+      Array Object = ObjectPointsList[i];
+      //logWarning("Check " + Object[CMissionContent::INDEX_ObjectID]);
+
+      if(Object[CMissionContent::INDEX_ScriptClass] != "CPlayerSpawnPoint")
+        continue;
+
+      Component Point = GetObject(Object[CMissionContent::INDEX_ObjectID]);
+      if (Point == null)
+      {
+        logWarning("Unable to find respawn point: " + Object[CMissionContent::INDEX_ObjectID]);
+        continue;
+      }
+
+      FreePointsList.add(Object[CMissionContent::INDEX_ObjectID]);
+    }
+
+    if(FreePointsList.size() != 0)
+      return FreePointsList[randnum(FreePointsList.size())];
+    else
+      return "";
+  }
+
+  event void IncreaseShoots()
+  {
+    m_PlayerShoots = m_PlayerShoots + 1;
+  }
+
+  event void IncreaseHits()
+  {
+    m_PlayerHits = m_PlayerHits + 1;
+  }
+
+}

@@ -1,0 +1,188 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CWeaponConfig
+{
+
+  void SetupAmmoContainer(
+      Component _AmmoContainer
+    )
+  {
+    RegisterObject("AmmoContainer", _AmmoContainer);
+  }
+
+  void SetupWeapon(
+      Array _WeaponConfig
+    )
+  {
+    int Size = _WeaponConfig.size();
+    if (Size != m_WpNameSuffix.size())
+    {
+      logError("Weapon config array for " + getIdentificator(user) + " does not match suffix array size" );
+      Size = min(_WeaponConfig.size(), m_WpNameSuffix.size());
+    }
+
+    for (int Weapon = 0; Weapon < Size; Weapon++)
+      SetupWeapon(Weapon, _WeaponConfig[Weapon]);
+  }
+
+  Component CreateWeaponItems(
+      float  _HitPoints,
+      String _ExplosionID,
+      Array  _WeaponConfig
+    )
+  {
+    for (int Weapon = 0; Weapon < _WeaponConfig.size(); Weapon++)
+    {
+      if (_WeaponConfig[Weapon] < 0)
+        continue;
+
+      String WeaponName = GetWeaponName(Weapon);
+      CreateUnitItem(
+          WeaponName + new String(_WeaponConfig[Weapon] + 1),
+          _HitPoints, _ExplosionID, WeaponName, false
+        );
+    }
+  }
+
+  void SetupWeapon(
+      int _PlaceNumber,
+      int _WeaponType
+    )
+  {
+    // Check weapon type
+    if (_WeaponType >= m_WpScriptName[_PlaceNumber].size())
+    {
+      logError("Invalid weapon type " + new String(_WeaponType) +
+               " for slot " + new String(_PlaceNumber));
+      _WeaponType = 0;
+    }
+
+    // Set visible state for weapon joints
+    ShowWeaponJoints(_PlaceNumber, _WeaponType);
+
+    // Setup weapon
+    if (_WeaponType >= 0)
+    {
+      Array FireNames = GetWeaponSlotList(_PlaceNumber, _WeaponType);
+
+      Component Weapon = CreateWeaponComponent(m_WpScriptName[_PlaceNumber][_WeaponType]);
+      SetupWeapon(
+          GetWeaponName(_PlaceNumber),
+          Weapon,
+          GetWeaponJointName(_PlaceNumber, _WeaponType),
+          FireNames,
+          CreateTargetingAnimator(m_WpTargetingAnimatorName[_PlaceNumber][_WeaponType])
+        );
+
+      Array ShellParams = m_WpEjectionsName[_PlaceNumber];
+      for (int i = 0; i < ShellParams.size(); i++)
+      {
+        Component Mesh = GetMeshComponent();
+        if (Mesh != null)
+        {
+          Component Joint = Mesh.GetJoint(GetShellName(ShellParams[i][0], _PlaceNumber, _WeaponType));
+          if (Joint != null)
+          {
+            int ShellId = Weapon.AppendShell(Joint, ShellParams[i][1], ShellParams[i][2]);
+            Weapon.ShellIds.add(new Array([ ShellId, ShellParams[i][1] ]));
+          }
+          else
+            logError(GetShellName(ShellParams[i][0], _PlaceNumber, _WeaponType) + " joint is not exists");
+        }
+        else
+          logError("Mesh is not exist");
+      }
+    }
+  }
+
+  void ShowWeaponJoints(
+      int _PlaceNumber,
+      int _WeaponType
+    )
+  {
+    Component Mesh = GetObject("Mesh");
+
+    // Set visible state for weapon joints
+    for (int WpType = 0; WpType < m_WpScriptName[_PlaceNumber].size(); WpType++)
+    {
+      Mesh.EnableJoint(
+          GetWeaponName(_PlaceNumber) + new String(WpType + 1),
+          0, _WeaponType == WpType
+        );
+
+      Array FireNames = GetWeaponSlotList(_PlaceNumber, WpType);
+      for (int FireNum = 0; FireNum < FireNames.size(); FireNum++)
+        Mesh.EnableJoint(FireNames[FireNum], 0, _WeaponType == WpType);
+    }
+  }
+
+  Component CreateWeaponComponent(
+      String _ScriptName
+    )
+  {
+    Component Weapon = new #Weapon();
+    loadFromScript(Weapon, _ScriptName);
+    return Weapon;
+  }
+
+  Component CreateTargetingAnimator(
+      String _ScriptName
+    )
+  {
+    if ("" == _ScriptName)
+       return null;
+
+    Component Animator = new #TargetingAnimator();
+    loadFromScript(Animator, _ScriptName);
+    return Animator;
+  }
+
+
+  Array GetWeaponSlotList(
+      int _PlaceNumber,
+      int _WeaponType
+    )
+  {
+    if (m_WpSlotsQty[_PlaceNumber][_WeaponType] == 1)
+      return ["Fire_" + m_WpNameSuffix[_PlaceNumber] + new String(_WeaponType + 1)];
+    else
+    {
+      Array NamesList = [];
+      for (int SlotNum = 0; SlotNum < m_WpSlotsQty[_PlaceNumber][_WeaponType]; SlotNum++)
+        NamesList.add("Fire_" + m_WpNameSuffix[_PlaceNumber] +
+          new String(_WeaponType + 1) + "_" + new String(SlotNum + 1));
+      return NamesList;
+    }
+  }
+
+  String GetWeaponName(
+      int _PlaceNumber
+    )
+  {
+    return "Weapon_" + m_WpNameSuffix[_PlaceNumber];
+  }
+
+  String GetShellName(
+      String _ShellName,
+      int    _PlaceNumber,
+      int    _WeaponType
+    )
+  {
+    return _ShellName + "_" + m_WpNameSuffix[_PlaceNumber] + new String(_WeaponType + 1);
+  }
+
+  String GetWeaponJointName(
+      int _PlaceNumber,
+      int _WeaponType
+    )
+  {
+    return "FireHost_" + m_WpNameSuffix[_PlaceNumber] + new String(_WeaponType + 1);
+  }
+}

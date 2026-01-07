@@ -1,0 +1,371 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CNumberModelSkin
+{
+  Array Materials = [
+                      new CNumberMaterial(
+                        "01_01",                           // material id
+                        "Textures/u_ussr_number_01_01.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "01_02",                           // material id
+                        "Textures/u_ussr_number_01_02.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "01_03",                           // material id
+                        "Textures/u_ussr_number_01_03.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "01_04",                           // material id
+                        "Textures/u_ussr_number_01_04.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "17_11",                           // material id
+                        "Textures/u_ussr_number_17_11.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_13",                           // material id
+                        "Textures/u_ussr_number_22_13.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_14",                           // material id
+                        "Textures/u_ussr_number_22_14.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_18",                           // material id
+                        "Textures/u_ussr_number_22_18.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_22",                           // material id
+                        "Textures/u_ussr_number_22_22.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_24",                           // material id
+                        "Textures/u_ussr_number_22_24.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_25",                           // material id
+                        "Textures/u_ussr_number_22_25.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_26",                           // material id
+                        "Textures/u_ussr_number_22_26.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_28",                           // material id
+                        "Textures/u_ussr_number_22_28.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_30",                           // material id
+                        "Textures/u_ussr_number_22_30.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_31",                           // material id
+                        "Textures/u_ussr_number_22_31.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_32",                           // material id
+                        "Textures/u_ussr_number_22_32.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_33",                           // material id
+                        "Textures/u_ussr_number_22_33.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_34",                           // material id
+                        "Textures/u_ussr_number_22_34.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_36",                           // material id
+                        "Textures/u_ussr_number_22_36.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_37",                           // material id
+                        "Textures/u_ussr_number_22_37.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "22_39",                           // material id
+                        "Textures/u_ussr_number_22_39.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_212",                           // material id
+                        "Textures/u_ussr_number_212.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_215",                           // material id
+                        "Textures/u_ussr_number_215.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_224",                           // material id
+                        "Textures/u_ussr_number_224.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_232",                           // material id
+                        "Textures/u_ussr_number_232.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_303",                           // material id
+                        "Textures/u_ussr_number_303.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_305",                           // material id
+                        "Textures/u_ussr_number_305.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_312",                           // material id
+                        "Textures/u_ussr_number_312.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "SAU_315",                           // material id
+                        "Textures/u_ussr_number_315.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "111",                          // material id
+                        "Textures/u_ger_number_111.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "112",                          // material id
+                        "Textures/u_ger_number_112.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "113",                          // material id
+                        "Textures/u_ger_number_113.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "114",                          // material id
+                        "Textures/u_ger_number_114.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "121",                          // material id
+                        "Textures/u_ger_number_121.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "122",                          // material id
+                        "Textures/u_ger_number_122.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "123",                          // material id
+                        "Textures/u_ger_number_123.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "124",                          // material id
+                        "Textures/u_ger_number_124.tex" // texture name
+                      ),
+                         new CNumberMaterial(
+                        "131",                          // material id
+                        "Textures/u_ger_number_131.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "132",                          // material id
+                        "Textures/u_ger_number_132.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "133",                          // material id
+                        "Textures/u_ger_number_133.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "134",                          // material id
+                        "Textures/u_ger_number_134.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "142",                          // material id
+                        "Textures/u_ger_number_142.tex" // texture name
+                      ),
+
+                      new CNumberMaterial(
+                        "143",                          // material id
+                        "Textures/u_ger_number_143.tex" // texture name
+                      ),
+                     new CNumberMaterial(
+                        "211",                          // material id
+                        "Textures/u_ger_number_211.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "212",                          // material id
+                        "Textures/u_ger_number_212.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "213",                          // material id
+                        "Textures/u_ger_number_213.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "214",                          // material id
+                        "Textures/u_ger_number_214.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "221",                          // material id
+                        "Textures/u_ger_number_221.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "222",                          // material id
+                        "Textures/u_ger_number_222.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "223",                          // material id
+                        "Textures/u_ger_number_223.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "224",                          // material id
+                        "Textures/u_ger_number_224.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "231",                          // material id
+                        "Textures/u_ger_number_231.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "232",                          // material id
+                        "Textures/u_ger_number_232.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "233",                          // material id
+                        "Textures/u_ger_number_233.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "234",                          // material id
+                        "Textures/u_ger_number_234.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "311",                          // material id
+                        "Textures/u_ger_number_311.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "312",                          // material id
+                        "Textures/u_ger_number_312.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "313",                          // material id
+                        "Textures/u_ger_number_313.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "314",                          // material id
+                        "Textures/u_ger_number_314.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "321",                          // material id
+                        "Textures/u_ger_number_321.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "322",                          // material id
+                        "Textures/u_ger_number_322.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "323",                          // material id
+                        "Textures/u_ger_number_323.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "324",                          // material id
+                        "Textures/u_ger_number_324.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "331",                          // material id
+                        "Textures/u_ger_number_331.tex" // texture name
+                      ),
+                        new CNumberMaterial(
+                        "332",                          // material id
+                        "Textures/u_ger_number_332.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "333",                          // material id
+                        "Textures/u_ger_number_333.tex" // texture name
+                      ),
+                       new CNumberMaterial(
+                        "334",                          // material id
+                        "Textures/u_ger_number_334.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "354",                          // material id
+                        "Textures/u_ger_number_354.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "674",                          // material id
+                        "Textures/u_ger_number_674.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "number1",                         // material id
+                        "Textures/u_veh_t34_85_turret.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r211",                    // material id
+                        "Textures/u_ger_number_r211.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w211",                    // material id
+                        "Textures/u_ger_number_w211.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r212",                    // material id
+                        "Textures/u_ger_number_r212.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w212",                    // material id
+                        "Textures/u_ger_number_w212.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r213",                    // material id
+                        "Textures/u_ger_number_r213.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w213",                    // material id
+                        "Textures/u_ger_number_w213.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r221",                    // material id
+                        "Textures/u_ger_number_r221.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w221",                    // material id
+                        "Textures/u_ger_number_w221.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r222",                    // material id
+                        "Textures/u_ger_number_r222.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w222",                    // material id
+                        "Textures/u_ger_number_w222.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r223",                    // material id
+                        "Textures/u_ger_number_r223.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w223",                    // material id
+                        "Textures/u_ger_number_w223.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r231",                    // material id
+                        "Textures/u_ger_number_r231.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w231",                    // material id
+                        "Textures/u_ger_number_w231.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r232",                    // material id
+                        "Textures/u_ger_number_r232.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w232",                    // material id
+                        "Textures/u_ger_number_w232.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "r233",                    // material id
+                        "Textures/u_ger_number_r233.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "w233",                    // material id
+                        "Textures/u_ger_number_w233.tex" // texture name
+                      ),
+                      new CNumberMaterial(
+                        "460",                    // material id
+                        "Textures/Number_460.tex" // texture name
+                      )
+                    ];
+}

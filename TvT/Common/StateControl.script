@@ -1,0 +1,1389 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// CUnitItemDescriptor
+//
+
+class CUnitItemDescriptor
+{
+  void CUnitItemDescriptor(
+      String    _BaseJointName,
+      Component _Joint,
+      float     _HitPoints,
+      Array     _Explosions,
+      Array     _ExplosionJoints,
+      String    _ItemName,
+      int       _Index
+    )
+  {
+    BaseJointName     = _BaseJointName;
+    Joint             = _Joint;
+    HitPoints         = _HitPoints;
+    Explosions        = _Explosions;
+    ExplosionJoints   = _ExplosionJoints;
+    ItemName          = _ItemName;
+    Index             = _Index;
+    CurrentHitPoints  = _HitPoints;
+    DeathPause        = 0;
+    IsUnitPart        = false;
+  }
+
+  Component Joint;
+  float     HitPoints;
+  Array     Explosions;
+  Array     ExplosionJoints;
+  String    ItemName;
+  int       Index;
+
+  float     DeathPause;
+  boolean   IsUnitPart;
+
+  String    BaseJointName;
+  float     CurrentHitPoints;
+}
+
+// Base state control for all objects
+class CBaseStateControl
+{
+  // ======================================
+  // Attributes
+  // ======================================
+
+  // last unit that inflicted damage to this one
+  String  m_LastDamager = "";
+
+  boolean m_LiveFxEnabled   = true;
+  boolean m_UnitIsHidden    = false;
+  boolean m_EngineFxEnabled = false;
+
+  Array m_DamageTransfer = [];
+
+  // ======================================
+  // IObject Interface functions
+  // ======================================
+
+  event void OnHitByEnemy(
+      String _EnemyID
+    )
+  {
+    if (checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]))
+      m_LastDamager = _EnemyID;
+
+    if (_EnemyID == "MainPlayerUnit")
+    {
+      sendEvent(0.0f, SOID_MissionController, "IncreaseHits", []);
+      logError("sendEvent(0.0f, SOID_MissionController, IncreaseHits, [])");
+    }
+
+    Component Behavior = GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Component Task = Behavior.GetTaskScriptHost();
+      if (Task != null)
+        Task.OnHitByEnemy(_EnemyID);
+    }
+  }
+
+  event void OnDislocationEffect(
+      Vector _Position,
+      float  _Damage
+    )
+  {
+    Component Recoil = GetRecoilController();
+    if (null != Recoil)
+    {
+      Array Angles = getSphericAngles(_Position - getPosition(this).origin, getPosition(this));
+      Recoil.ApplyImpulse(new Vector(cos(Angles[0]), sin(Angles[0]), 0));
+      sendEvent(0.0, getIdentificator(this), "ShakeTank", [1.0f]);
+    }
+  }
+
+  String GetLastDamager()
+  {
+    return m_LastDamager;
+  }
+
+  // ===================================
+  // Initialization
+  // ===================================
+
+  void FinilizeStateControl(
+      Component _PropMap
+    )
+  {
+  }
+
+  // ===================================
+  // Effects state
+  // ===================================
+
+  void EnableEffectsForLiveState(
+      boolean _Enable
+    )
+  {
+    m_LiveFxEnabled = _Enable;
+    UpdateEffectsState();
+  }
+
+  void EnableEffectsForHiddentState(
+      boolean _Enable
+    )
+  {
+    m_UnitIsHidden = _Enable;
+    UpdateEffectsState();
+  }
+
+  void EnableEffectsForEngineState(
+      boolean _Enable
+    )
+  {
+    m_EngineFxEnabled = _Enable;
+    UpdateEffectsState();
+  }
+
+  void UpdateEffectsState()
+  {
+    if (m_UnitIsHidden)
+    {
+      EnableAllEffects(false, "", "");
+    }
+    else
+    if (!m_LiveFxEnabled)
+    {
+      EnableAllEffects(false,             "",       "Special");
+      EnableAllEffects(m_EngineFxEnabled, "Engine", "");
+    }
+    else
+    {
+      EnableAllEffects(true,              "",       "Special");
+      EnableAllEffects(m_EngineFxEnabled, "Engine", "");
+    }
+  }
+
+  void UpdateTracks(
+      float _fLeftTrackPath,
+      float _fRightTrackPath
+    )
+  {
+    Component LTrack = GetObject("LeftTrack");
+    Component RTrack = GetObject("RightTrack");
+
+    if (null != LTrack)
+       LTrack.SetTrackPath(_fLeftTrackPath);
+
+    if (null != RTrack)
+       RTrack.SetTrackPath(_fRightTrackPath);
+  }
+}
+
+// State control for buildinds
+class CBuildingStateControl
+  extends CBaseStateControl
+{
+}
+
+// State control for units
+class CUnitStateControl
+  extends CBaseStateControl
+{
+  Array   m_UnitItemsList;
+
+  // =======================================
+  // Unit custom states
+  // =======================================
+
+  final static int USID_Engine       = 1;
+  final static int USID_Position     = 2;
+  final static int USID_Control      = 3;
+  final static int USID_Door         = 4;
+  final static int USID_Collision    = 5;
+  final static int USID_LeftTrack    = 6;
+  final static int USID_RightTrack   = 7;
+  final static int USID_HatchBody    = 8;
+  final static int USID_TurretOut    = 9;
+  final static int USID_HatchCommander = 10;
+
+  final static int US_TurretOut      = 1;
+  final static int US_TurretIn       = 2;
+
+  final static int US_HatchClose = 1;
+  final static int US_HatchOpen  = 2;
+
+  final static int US_EngineInit     = 1;
+  final static int US_EngineStart    = 2;
+  final static int US_EngineStop     = 3;
+
+  final static int US_PosLanded      = 1;
+  final static int US_PosLanding     = 2;
+  final static int US_PosTakeOff     = 3;
+  final static int US_PosUnlinked    = 4;
+
+  final static int US_CtrlDisabled   = 1;
+  final static int US_CtrlEnabled    = 2;
+
+  final static int US_DoorOpen       = 1;
+  final static int US_DoorClose      = 2;
+
+  final static int US_CollDisabled   = 1;
+  final static int US_CollEnabled    = 2;
+
+  final static int US_TrackDisabled  = 1;
+  final static int US_TrackEnabled   = 2;
+
+
+  String  m_CurrLandingPoint  = "";
+  boolean m_DoorOpen          = false;
+
+  Array   m_AccelEffect;
+  Array   m_StartEngineEffect;
+  Array   m_StopEngineEffect;
+  Array   m_TrackEffects;
+
+  // ===================================
+  // Initialization
+  // ===================================
+
+  void FinilizeStateControl(
+      Component _PropMap
+    )
+  {
+    CBaseStateControl::FinilizeStateControl(_PropMap);
+
+    EnableEngineLights(false);
+    // Find armored items and send it to damage handler
+    if (IsSpecialDamageHandler())
+      GetDamageHandler().SetArmoredItems(GetArmoredItems());
+  }
+
+  // =======================================
+  // Event handlers
+  // =======================================
+
+  event void OnCustomStateChanged(
+      int   _StateID,
+      int   _StateValue,
+      float _ChangeTime
+    )
+  {
+    if (USID_Engine == _StateID)
+      UpdateEngineState(_StateValue, _ChangeTime);
+    else
+    if (USID_Control  == _StateID)
+      UpdateControlState(_StateValue,   _ChangeTime);
+    else
+    if (USID_Door == _StateID)
+      UpdateDoorState(_StateValue,      _ChangeTime);
+    else
+    if (USID_Position == _StateID)
+      UpdatePositionState(_StateValue,  _ChangeTime);
+    else
+    if (USID_Collision == _StateID)
+      UpdateCollisionState(_StateValue, _ChangeTime);
+    else
+    if (USID_Engine == _StateID)
+      UpdateEngineState(_StateValue,    _ChangeTime);
+    else
+    if (USID_LeftTrack == _StateID)
+      UpdateTrackState(_StateValue,     _ChangeTime, 0);
+    else
+    if (USID_RightTrack == _StateID)
+      UpdateTrackState(_StateValue,     _ChangeTime, 1);
+    else
+    if (USID_HatchBody == _StateID)
+      UpdateHatchBodyState(_StateValue, _ChangeTime);
+    else
+    if (USID_HatchCommander == _StateID)
+      UpdateHatchCommanderState(_StateValue, _ChangeTime);
+    else
+    if (USID_TurretOut == _StateID)
+      UpdateTurretOutState(_StateValue, _ChangeTime);
+  }
+
+  void EnableEngineLights(
+      boolean _Enable
+    )
+  {
+    sendEvent(0.0f, getIdentificator(this), "UpdateEngineLights", [_Enable]);
+  }
+
+  void UpdateTrackState(
+      int   _State,
+      float _Time,
+      int   _Track
+    )
+  {
+  }
+
+  Array GetDamageEffectName(
+      String  _Name,
+      int     _State
+    )
+  {
+    Array EffectName = [];
+
+    for (int Index = 0; Index < m_UnitItemsList.size(); Index++)
+    {
+      if (m_UnitItemsList[Index].ItemName == _Name)
+      {
+        EffectName.add(m_UnitItemsList[Index].ExplosionJoints[_State]);
+        EffectName.add(m_UnitItemsList[Index].Explosions[_State]);
+        break;
+      }
+    }
+
+    return EffectName;
+  }
+
+  void UpdateControlState(
+      int   _State,
+      float _Time
+    )
+  {
+    if (US_CtrlDisabled == _State)
+      SetBehActiveState(false, false, true, false);
+    else
+    if (US_CtrlEnabled == _State)
+      SetBehActiveState(true, true, true, true);
+  }
+
+  void UpdateCollisionState(
+      int   _State,
+      float _Time
+    )
+  {
+  }
+
+  void UpdateDoorState(
+      int   _State,
+      float _Time
+    )
+  {
+    Component DoorAnimator = GetObject("Door1Animator");
+    if (DoorAnimator != null)
+    {
+      if (US_DoorOpen == _State)
+        DoorAnimator.AnimateForward(_Time);
+      else
+      if (US_DoorClose == _State)
+        DoorAnimator.AnimateBackward(_Time);
+    }
+
+    DoorAnimator = GetObject("Door2Animator");
+    if (DoorAnimator != null)
+    {
+      if (US_DoorOpen == _State)
+        DoorAnimator.AnimateForward(_Time);
+      else
+      if (US_DoorClose == _State)
+        DoorAnimator.AnimateBackward(_Time);
+    }
+  }
+
+  void UpdatePositionState(
+      int   _State,
+      float _Time
+    )
+  {
+  }
+
+  void UpdateEngineState(
+      int   _State,
+      float _Time
+    )
+  {
+    Component EngineAnimator   = GetObject("EngineAnimator");
+
+    if (US_EngineStart == _State)
+    {
+      if (EngineAnimator != null)
+        EngineAnimator.SwitchAnimationOn(_Time);
+      EnableEffectsForEngineState(true);
+    }
+    else
+    if (US_EngineStop == _State)
+    {
+      if (EngineAnimator != null)
+        EngineAnimator.SwitchAnimationOff(_Time);
+      EnableEffectsForEngineState(false);
+    }
+    else
+    if (US_EngineInit == _State)
+    {
+      if (EngineAnimator != null)
+        EngineAnimator.SwitchAnimationOff(0.0);
+      EnableEffectsForEngineState(false);
+    }
+  }
+
+  void UpdateMainEngineState(
+      float _ControlFactor
+    )
+  {
+    Component EngineAnimator1 = GetObject("EngineAnimator1");
+    if (EngineAnimator1 != null)
+      EngineAnimator1.SwitchAnimationOn(_ControlFactor);
+  }
+
+  void UpdateTailEngineState(
+      float _ControlFactor
+    )
+  {
+    Component EngineAnimator2 = GetObject("EngineAnimator2");
+    if (EngineAnimator2 != null)
+      EngineAnimator2.SwitchAnimationOn(_ControlFactor);
+  }
+
+  void UpdateHatchBodyState(
+      int   _State,
+      float _Time
+    )
+  {
+    Component HatchBodyAnimator = GetObject("HatchBodyAnimator");
+
+    if (HatchBodyAnimator != null)
+    {
+      if (US_HatchClose == _State)
+      {
+        HatchBodyAnimator.AnimateBackward(_Time);
+        Component Mesh = GetInsideMesh();
+//        Component HatchLight = Mesh.GetJoint("LightLuk");
+//        Matrix Position = getPosition(HatchLight);
+      }
+      else
+      if (US_HatchOpen == _State)
+      {
+        HatchBodyAnimator.AnimateForward(_Time);
+          Component Mesh = GetInsideMesh();
+//        Component HatchLight = Mesh.GetJoint("LightLuk");
+//        Matrix Position = getPosition(HatchLight);
+      }
+    }
+  }
+
+  void UpdateHatchCommanderState(
+      int   _State,
+      float _Time
+    )
+  {
+    Component HatchCommanderAnimator = GetObject("HatchCommanderAnimator");
+    Component CommanderOutAnimator = GetObject("CommanderOutAnimator");
+
+    if ((HatchCommanderAnimator != null) && (CommanderOutAnimator != null))
+    {
+      if (US_HatchClose == _State)
+      {
+        HatchCommanderAnimator.AnimateBackward(_Time);
+        CommanderOutAnimator.AnimateBackward(_Time);
+      }
+      else
+      if (US_HatchOpen == _State)
+      {
+        HatchCommanderAnimator.AnimateForward(_Time);
+        CommanderOutAnimator.AnimateForward(_Time);
+      }
+    }
+  }
+
+  void UpdateTurretOutState(
+      int   _State,
+      float _Time
+    )
+  {
+    Component TurretOutAnimator = GetObject("TurretOutAnimator");
+
+    if (TurretOutAnimator != null)
+    {
+      if (US_TurretIn == _State)
+      {
+        TurretOutAnimator.AnimateBackward(_Time);
+      }
+      else
+      if (US_TurretOut == _State)
+      {
+        TurretOutAnimator.AnimateForward(_Time);
+      }
+    }
+  }
+
+  event void OpenDoor()
+  {
+    if (!m_DoorOpen)
+    {
+      Component StateControl = GetStateControl();
+      if (StateControl != null)
+        StateControl.ScheduleCustomState(0.0, USID_Door, US_DoorOpen);
+      m_DoorOpen = true;
+    }
+  }
+
+  event void CloseDoor()
+  {
+    if (m_DoorOpen)
+    {
+      Component StateControl = GetStateControl();
+      if (StateControl != null)
+        StateControl.ScheduleCustomState(0.0, USID_Door, US_DoorClose);
+      m_DoorOpen = false;
+    }
+  }
+
+  // ==================================
+  // Setup effects
+  // ==================================
+
+  void SetDeviceAnimator(
+      String _DeviceName,
+      Component _DeviceAnimator
+    )
+  {
+    if (_DeviceAnimator != null)
+      SetupAnimator(_DeviceName, _DeviceAnimator);
+  }
+
+  void SetHatchBodyEffects(
+      Component _HatchBodyAnimator
+    )
+  {
+    if (_HatchBodyAnimator != null)
+    {
+      SetupAnimator("HatchBodyAnimator", _HatchBodyAnimator);
+//      _HatchBodyAnimator.SetEventHandler2(this, "OnUpdateHatchAnimation");
+    }
+  }
+
+  void SetHatchCommanderEffects(
+      Component _HatchCommanderAnimator,
+      Component _CommanderOutAnimator
+    )
+  {
+    if (_HatchCommanderAnimator != null)
+      SetupAnimator("HatchCommanderAnimator", _HatchCommanderAnimator);
+
+    if (_CommanderOutAnimator != null)
+      SetupAnimator("CommanderOutAnimator", _CommanderOutAnimator);
+
+  }
+
+  void SetTurretOutEffects(
+      Component _TurretOutAnimator
+    )
+  {
+    if (_TurretOutAnimator != null)
+    {
+      SetupAnimator("TurretOutAnimator", _TurretOutAnimator);
+    }
+  }
+
+  void SetTurretOutEffectsArray(
+      Array _TurretOutAnimators
+    )
+  {
+    if( _TurretOutAnimators.size() == 0 ) {
+      return;
+    }
+
+    float probability_range = 1.0;
+
+    for( int i = 0; i < _TurretOutAnimators.size(); i++ ) {
+      Array animator = _TurretOutAnimators[i];
+      if( animator.size() != 2 ) {
+        logError( "SetTurretOutEffects: Animators array item have incorrect size!" );
+      } else {
+        float     probability = animator[0];
+        Component animator_component = animator[1];
+
+        float chance = rand( 0.0, probability_range );
+
+        if( chance < probability ) {
+          SetupAnimator("TurretOutAnimator", animator_component );
+          return;
+        }
+
+        probability_range -= probability;
+        if( probability_range < 0.0 ) {
+          logError( "SetTurretOutEffects: Probability range too high! Sum of all probabilities must be equal or less 1.0" );
+        }
+      }
+    }
+  }
+
+  void SetGunRecoilEffects(
+      Component _GunRecoilAnimator
+    )
+  {
+    if (_GunRecoilAnimator != null)
+      SetupAnimator("GunRecoilAnimator", _GunRecoilAnimator);
+  }
+
+  void SetEngineEffects(
+      Component _Animator1,
+      Component _Animator2
+    )
+  {
+    SetupAnimator("EngineAnimator1", _Animator1);
+    SetupAnimator("EngineAnimator2", _Animator2);
+  }
+
+  void SetEngineComponents(
+      Array _Effects
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (!_Effects.isEmpty())
+      for (int Index = 0; Index < _Effects.size(); Index++)
+      {
+        if (_Effects[Index][2] == "EngineStart")
+        {
+          Component HostJoint = Mesh.GetJoint(_Effects[Index][0]);
+          if (HostJoint == null) HostJoint = Mesh;
+          Array Effect = [ HostJoint, _Effects[Index][1] ];
+          m_StartEngineEffect.add(Effect);
+        }
+        else if (_Effects[Index][2] == "EngineStop")
+        {
+          Component HostJoint = Mesh.GetJoint(_Effects[Index][0]);
+          if (HostJoint == null) HostJoint = Mesh;
+          Array Effect = [ HostJoint, _Effects[Index][1] ];
+          m_StopEngineEffect.add(Effect);
+        }
+        else
+          AttachEffect(_Effects[Index][0], _Effects[Index][1], new Vector(0.0), _Effects[Index][2]);
+      }
+
+    UpdateEffectsState();
+  }
+
+  void SetMovementEffects(
+      Component _MoveSound,
+      Array     _Effects
+    )
+  {
+    if (_MoveSound != null)
+      SetupSoundEmitter("MoveSound", _MoveSound);
+
+    // Create effects
+    if (!_Effects.isEmpty())
+      for (int Index = 0; Index < _Effects.size(); Index++)
+        AttachEffect(_Effects[Index][0], _Effects[Index][1], new Vector(0.0), "Movement");
+
+    UpdateEffectsState();
+  }
+
+  void SetIdleEffects(
+      Component _IdleSound
+    )
+  {
+    if (_IdleSound != null)
+    {
+      SetupSoundEmitter("IdleSound", _IdleSound);
+      _IdleSound.PlaySoundBuffer(true);
+    }
+  }
+
+  void SetAccelEffects(
+      Component _AccelSound,
+      Array     _Effects
+    )
+  {
+    if (_AccelSound != null)
+    {
+      SetupSoundEmitter("AccelSound", _AccelSound);
+      if (!_Effects.isEmpty())
+      {
+        _AccelSound.SetEventHandler(this, "AccelSound");
+        Component Mesh = GetMeshComponent();
+        for (int i = 0; i < _Effects.size(); i++)
+        {
+          // Get host joint
+          Component HostJoint = Mesh.GetJoint(_Effects[i][0]);
+          if (HostJoint == null)
+            HostJoint = Mesh;
+
+          Array Effect = [HostJoint, _Effects[i][1], new Vector(0.0)];
+
+          if (_Effects[i].size() > 2)
+            Effect[2] = _Effects[i][2];
+
+          m_AccelEffect.add(Effect);
+        }
+      }
+    }
+  }
+
+  void SetDoorEffects(
+      Component _Door1Animator,
+      Component _Door2Animator
+    )
+  {
+    SetupAnimator("Door1Animator", _Door1Animator);
+    SetupAnimator("Door2Animator", _Door2Animator);
+  }
+
+  // create effects for tracks: [ HostId, Effectid, ZoneId ]
+  void SetTrackEffects(
+      Component _Mission,
+      Array     _Effects
+    )
+  {
+    Collection Joints;
+
+    // Create effects
+    Component Mesh = GetMeshComponent();
+    if (!_Effects.isEmpty())
+    {
+      for (int Index = 0; Index < _Effects.size(); Index++)
+      {
+        Component HostJoint = Mesh.GetJoint(_Effects[Index][0]);
+        if (HostJoint == null)
+          HostJoint = Mesh;
+
+        // calculate position
+        Matrix Position = getPosition(HostJoint);
+
+        // Create effect and attach it
+        int EffectId = (new #EffectsArray()).CreateEffect(_Effects[Index][1], Position, HostJoint);
+
+        // store effect id
+        if (INVALID_EFFECT_ID != EffectId)
+        {
+          Array Effect = [ _Effects[Index][0], _Effects[Index][2], EffectId, _Effects[Index][3] ];
+          m_TrackEffects.add(Effect);
+          Joints.insert(_Effects[Index][0]);
+        }
+      }
+    }
+
+    // Create target zone controllers for all joints
+    Component MicroTex = _Mission.GetMissionZoneMap();
+    if (!Joints.isEmpty())
+    {
+      Joints.gotoBegin();
+      while (!Joints.isAtEnd())
+      {
+        String    JointName = Joints.getValue();
+        Component JointComp = Mesh.GetJoint(JointName);
+
+        Component ZoneController = new #TargetZoneController();
+        RegisterObject("ZoneController_" + JointName, ZoneController);
+        setPositionable(ZoneController, JointComp);
+        ZoneController.Enable(true);
+        ZoneController.SetMatrixLayer(MicroTex);
+        ZoneController.SetEventHandler(this);
+        ZoneController.SetEventId(JointName);
+
+        Joints.gotoNext();
+      }
+    }
+  }
+
+  event void OnChangedTargetZone(
+      String _JointId,
+      int    _ZoneId
+    )
+  {
+    UpdateEffectsState();
+
+    Component EffectsArray = new #EffectsArray();
+    for (int i = 0; i < m_TrackEffects.size(); i++)
+      if (m_TrackEffects[i][0] == _JointId)
+        EffectsArray.EnableAndForgetEffect(m_TrackEffects[i][2], m_TrackEffects[i][1] == _ZoneId);
+  }
+
+  void SoundPlayingFinished(
+      String _ID
+    )
+  {
+  }
+
+  void SoundPlayingStarted(
+      String _ID
+    )
+  {
+    if (_ID == "AccelSound")
+    {
+      for (int i = 0; i < m_AccelEffect.size(); i++)
+      {
+        Component HostJoint = m_AccelEffect[i][0];
+
+        // calculate position
+        Matrix Position = getPosition(HostJoint);
+        Position.origin += m_AccelEffect[i][2];
+
+        // Create effect
+        (new #EffectsArray()).CreateEffect(m_AccelEffect[i][1], Position, HostJoint);
+      }
+    }
+  }
+
+  void EnableEffectsForEngineState(
+      boolean _Enable
+    )
+  {
+    CBaseStateControl::EnableEffectsForEngineState(_Enable);
+    EnableEngineLights(_Enable);
+
+    if (!m_UnitIsHidden && m_LiveFxEnabled)
+    {
+      Array EngineEffects;
+      if (_Enable)
+        EngineEffects = m_StartEngineEffect;
+      else
+        EngineEffects = m_StopEngineEffect;
+
+      for (int i = 0; i < EngineEffects.size(); i++)
+      {
+        Component HostJoint = EngineEffects[i][0];
+        Matrix Position = getPosition(HostJoint);
+        // Create effect
+        (new #EffectsArray()).CreateEffect(EngineEffects[i][1], Position, HostJoint);
+      }
+    }
+  }
+
+  void SetEngineEffectScale(float _Scale)
+  {
+    Component EffectsArray = new #EffectsArray();;
+    for (int Index = 0; Index < m_EffectsIdList.size(); Index++)
+    {
+      if (m_EffectsIdList[Index].CheckMask("Engine", ""))
+        EffectsArray.SetEffectScale(m_EffectsIdList[Index].EffectID, _Scale);
+    }
+  }
+
+  void SetTrackEffectScale(String _Type, float _Scale)
+  {
+    Component EffectsArray = new #EffectsArray();
+    for (int Index = 0; Index < m_TrackEffects.size(); Index++)
+      if (m_TrackEffects[Index][3] == _Type)
+        EffectsArray.SetEffectScale(m_TrackEffects[Index][2], _Scale);
+  }
+
+  //
+  // Items
+  //
+  int CreateUnitItem(
+      String  _JointName,
+      float   _HitPoints,
+      Array   _Explosions,
+      Array   _ExplosionJoints,
+      String  _ItemName
+    )
+  {
+    Component StateControl = GetStateControl();
+    if (StateControl == null)
+      return -1;
+
+    Component Joint = GetMeshComponent().GetJoint(_JointName);
+    if (Joint == null)
+    {
+      logError("Unable to find joint " + _JointName + " in CreateUnitItem function call");
+      return -1;
+    }
+
+    Array ExplosionJoints = [];
+    for (int i = 0; i < _Explosions.size(); i++)
+    {
+      Component ExpJoint = Joint;
+      if (i < _ExplosionJoints.size())
+      {
+        Component Joint2 = GetMeshComponent().GetJoint(_ExplosionJoints[i]);
+        if (null != Joint2)
+          ExpJoint = Joint2;
+      }
+      ExplosionJoints.add(ExpJoint);
+    }
+
+    int Index = StateControl.CreateUnitItem(Joint, _HitPoints);
+    m_UnitItemsList.add(new CUnitItemDescriptor(
+        _JointName, Joint, _HitPoints, _Explosions, ExplosionJoints, _ItemName, Index));
+    StateControl.EnableHPEvent(true);
+
+    return Index;
+  }
+
+  int CreateUnitItem(
+      String  _JointName,
+      float   _HitPoints,
+      Array   _Explosions,
+      String  _ItemName
+    )
+  {
+    return CreateUnitItem(_JointName, _HitPoints, _Explosions, [], _ItemName);
+  }
+
+  void OnLifeStateChanged(
+      int       _ItemIndex,
+      boolean   _IsAlive
+    )
+  {
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (null == Mission)
+    {
+      logError("OnLifeStateChanged have null Mission component");
+      return;
+    }
+
+    Component Object = Mission.GetObject(getIdentificator(this));
+    if ( null == Object )
+    {
+      logError("OnLifeStateChanged have null Object component");
+      return;
+    }
+
+    if (checkMask(Object, [], ["PLAYERUNIT"]) && !_IsAlive)
+      return;
+
+    if (!_IsAlive)
+    {
+      float DestroyPause = m_UnitItemsList[_ItemIndex].DeathPause;
+      sendEvent(DestroyPause,
+        getIdentificator(this), "DestroyItem", [m_UnitItemsList[_ItemIndex]]);
+    }
+    else
+      sendEvent(0.0,
+        getIdentificator(this), "RestoreItem", [m_UnitItemsList[_ItemIndex]]);
+  }
+
+  void OnHitPointsChanged(
+      int       _ItemIndex,
+      float     _HitPoints
+    )
+  {
+    Component Item = m_UnitItemsList[_ItemIndex];
+    if (Item.HitPoints != 0.0f)
+    {
+      // apply unit functioning
+      OnUnitItemHitPercentChanged(Item, _HitPoints / Item.HitPoints);
+//      sendEvent(0.0, getIdentificator(this), "ShakeTank", [1.0f - _HitPoints / Item.CurrentHitPoints]);
+    }
+
+    if (Item.CurrentHitPoints <= 0.0f)
+    {
+      for (int Index = 0; Index < m_DamageTransfer.size(); Index++)
+      {
+        if (Item.ItemName == m_DamageTransfer[Index][0])
+        {
+          Component TargetItem = GetItem(m_DamageTransfer[Index][1]);
+          if (TargetItem.CurrentHitPoints > 0.0f)
+          {
+            DamageItemPercent(m_DamageTransfer[Index][1], m_DamageTransfer[Index][2]);
+            logWarning("Destroyed Item hit: " + Item.ItemName + " Damage transfered to: " + m_DamageTransfer[Index][1]);
+          }
+        }
+      }
+    }
+    sendEvent(0.0f, getIdentificator(this), "ReportHitByEnemy", [Item.ItemName, _HitPoints, Item.CurrentHitPoints - _HitPoints] );
+    Item.CurrentHitPoints = _HitPoints;
+  }
+
+  event void DamageItemPercent(
+      String _ItemName,
+      float  _Percent
+    )
+  {
+    Component Item = GetItem(_ItemName);
+    if (Item == null)
+    {
+      logError("Item " + _ItemName + " not found at " + getIdentificator(this));
+      return;
+    }
+    float CurrentPercent = Item.CurrentHitPoints / Item.HitPoints - _Percent;
+
+    GetStateControl().SetUnitItemHP(Item.Index, Item.HitPoints * CurrentPercent);
+  }
+
+  event void OnUnitItemHitPercentChanged(
+      Component _Item,
+      float     _HitPointsProcent     // current hitpoints relative to initial value
+    )
+  {
+    SetPartLifePercent(_Item.ItemName, _HitPointsProcent);
+  }
+
+  event void KillWithoutSmokeAndFire()
+  {
+    sendEvent(0.0, getIdentificator(this), "DestroyObject", []);
+
+    Component IdleSound = this.GetObject("IdleSound");
+    if (IdleSound != null)
+    {
+      IdleSound.StopSoundPlaying(true);
+    }
+
+    for (int i = 0; i < m_UnitItemsList.size(); i++)
+    {
+      Component Item = m_UnitItemsList[i];
+      SetCrashedSet(Item.ItemName);
+    }
+  }
+
+  Array GetChildrenItems(
+      Component _Descriptor
+    )
+  {
+    Array Result = [];
+
+    Component Mesh = GetMeshComponent();
+    if (Mesh == null)
+      return Result;
+
+    Array Children = Mesh.GetChildren(_Descriptor.Joint, true);
+
+    for (int i = 0; i < Children.size(); i++)
+    for (int j = 0; j < m_UnitItemsList.size(); j++)
+      if (Children[i] == m_UnitItemsList[j].Joint)
+        Result.add(j);
+
+    return Result;
+  }
+
+  Component GetItem(
+      String _ItemName
+    )
+  {
+    for (int i = 0; i < m_UnitItemsList.size(); i++)
+    {
+      if (m_UnitItemsList[i].ItemName == _ItemName)
+        return m_UnitItemsList[i];
+    }
+    return null;
+  }
+
+  void SetUnitItemHPPercent(
+      String _ItemName,
+      float  _Percent
+    )
+  {
+    Component Item = GetItem(_ItemName);
+    if (Item == null)
+    {
+      logError("Item " + _ItemName + " not found at " + getIdentificator(this));
+      return;
+    }
+
+    GetStateControl().SetUnitItemHP(Item.Index, Item.HitPoints * _Percent / 100.0);
+  }
+
+  Array GetArmoredItems()
+  {
+    Array Result;
+
+    Component Mesh = GetMeshComponent();
+    Component MatManager = Mesh.GetMaterials();
+    for (int iItem = 0; iItem < m_UnitItemsList.size(); iItem++)
+    {
+      // Get materials ids from joint
+      Array JointMaterials = Mesh.GetJointMaterials(m_UnitItemsList[iItem].BaseJointName);
+
+      boolean IsArmored = false;
+      for (int iMaterial = 0; iMaterial < MatManager.Materials.size(); iMaterial++)
+      {
+        int Index = JointMaterials.find(MatManager.Materials[iMaterial].MaterialID);
+        if (Index != -1)
+        {
+          IsArmored = MatManager.Materials[iMaterial].IsArmored();
+          if (IsArmored)
+            break;
+        }
+      }
+
+      if (IsArmored)
+        Result.add(iItem);
+    }
+
+    return Result;
+  }
+}
+
+//
+// State control for player unit
+//
+
+class CPlayerStateControl
+  extends CUnitStateControl
+{
+
+  // ===================================
+  // Initialization
+  // ===================================
+
+  void FinilizeStateControl(
+      Component _PropMap
+    )
+  {
+    // Init base class
+    CUnitStateControl::FinilizeStateControl(_PropMap);
+
+    // Get state control object
+    Component StateControl = GetStateControl();
+    if (null == StateControl)
+      return;
+
+    if (_PropMap.Get("Location", "") != "")
+    {
+      // Init unit landing state
+      StateControl.SetCustomState(USID_Control,   US_CtrlDisabled);
+      StateControl.SetCustomState(USID_Position,  US_PosLanded);
+      StateControl.SetCustomState(USID_Collision, US_CollDisabled);
+    }
+    else
+    {
+      // Init unit flying state
+      StateControl.SetCustomState(USID_Control,   US_CtrlEnabled);
+      StateControl.SetCustomState(USID_Position,  US_PosUnlinked);
+      StateControl.SetCustomState(USID_Collision, US_CollEnabled);
+    }
+  }
+
+  // =======================================
+  // Event handlers
+  // =======================================
+
+  void UpdateTrackState(
+      int   _State,
+      float _Time,
+      int   _Track
+    )
+  {
+    // $TMP
+    CUnitStateControl::UpdateTrackState(_State, _Time, _Track);
+
+    Component VehicleController = GetVehicleController();
+    if (VehicleController != null)
+    {
+      if (_Track == 0)
+      {
+        if (US_TrackDisabled == _State)
+          VehicleController.EnableLeftTrack(false);
+        else
+        if (US_TrackEnabled == _State)
+          VehicleController.EnableLeftTrack(true);
+      }
+      else
+      if (_Track == 1)
+      {
+        if (US_TrackDisabled == _State)
+          VehicleController.EnableRightTrack(false);
+        else
+        if (US_TrackEnabled == _State)
+          VehicleController.EnableRightTrack(true);
+      }
+    }
+    else
+    {
+      // $TODO
+    }
+  }
+
+  void UpdateControlState(
+      int   _State,
+      float _Time
+    )
+  {
+    CUnitStateControl::UpdateControlState(_State, _Time);
+
+    Component ManualControl = GetManualControl();
+    if (null != ManualControl)
+    {
+      if (US_CtrlDisabled == _State)
+       ManualControl.EnableControl(false);
+      else
+      if (US_CtrlEnabled == _State)
+        ManualControl.EnableControl(true);
+    }
+
+    Component VehicleController = GetVehicleController();
+    if (null != VehicleController)
+    {
+      if (US_CtrlDisabled == _State)
+        VehicleController.EnableControl(false);
+      else
+      if (US_CtrlEnabled == _State)
+        VehicleController.EnableControl(true);
+    }
+  }
+
+  void UpdateCollisionState(
+      int   _State,
+      float _Time
+    )
+  {
+    CUnitStateControl::UpdateCollisionState(_State, _Time);
+
+    Component CollisionControl = GetCollisionControl();
+    if (CollisionControl == null)
+      return;
+
+    if (US_CollDisabled == _State)
+      CollisionControl.EnableControl(false);
+    else
+    if (US_CollEnabled == _State)
+      CollisionControl.EnableControl(true);
+  }
+
+  void UpdatePositionState(
+      int   _State,
+      float _Time
+    )
+  {
+    CUnitStateControl::UpdatePositionState(_State, _Time);
+
+    // Get control components
+    Component LandingControl = GetLandingControl();
+
+    if (US_PosLanded == _State)
+    {
+      if (LandingControl != null)
+        LandingControl.PutonLandingGround(m_PointHostID, m_ObjectHostID);
+    }
+    else
+    if (US_PosLanding == _State)
+    {
+      if (LandingControl != null)
+        LandingControl.StartLanding(m_PointHostID, m_ObjectHostID, _Time, 5.0);
+      LinkObjectToObject(m_ObjectHostID);
+    }
+    else
+    if (US_PosTakeOff == _State)
+    {
+      if (LandingControl != null)
+        LandingControl.StartTakeOff(_Time, 5.0, 110.0);
+      LinkObjectToObject(m_ObjectHostID);
+    }
+
+    if (US_PosUnlinked == _State)
+    {
+      if (LandingControl != null)
+        LandingControl.DisableControl();
+    }
+  }
+
+  event void SwitchEngine(
+      boolean _IsWorkEngine
+    )
+  {
+    OnEngineStateChanged(_IsWorkEngine);
+
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;
+
+    Mission.OnEngineStateChanged(_IsWorkEngine);
+
+    Component StateControl = GetObject("StateControl");
+    if (StateControl == null)
+      return;
+
+    if (_IsWorkEngine)
+      StateControl.SetCustomState(USID_Engine, US_EngineStart);
+    else
+      StateControl.SetCustomState(USID_Engine, US_EngineStop);
+  }
+
+  event void OnSetImmortalMode(
+      boolean _IsImmortal
+    )
+  {
+    Component StateControl = GetStateControl();
+    if (StateControl != null)
+      StateControl.SetImmortalMode(_IsImmortal);
+  }
+
+  event void Respawn(
+      String    _LocationID,
+      Matrix    _Position
+    )
+  {
+    // initialize camera link
+//     SetRespawnCameraViewMode(
+//         (getPosition(GetObject("Mesh")).origin -
+//          _Position.origin).Magnitude() / 9.5,
+//         Math_PI / 1.5
+//       );
+
+    //sendEvent(0.0, getIdentificator(this), "RestoreObject", []);
+
+    Component Game    = new #GameController();
+    Component Mission = Game.GetMission();
+    if (Mission == null)
+      return;
+
+    logWarning("Respawn: " + new String(getIdentificator(this)));
+    Component OldObject = this;
+
+    Component Content = new #GameController().GetObject(SOID_MissionController).GetContent();
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.DropDefault("IsPlayer");
+    PropertiesMap.Set("IsPlayer", false);
+
+    PropertiesMap.DropDefault("IsManual");
+    PropertiesMap.Set("IsManual", false);
+
+/*    OldObject.SetProperties(
+      new CPropertiesMap(
+          [
+            ["IsPlayer", false],
+            ["IsManual", false],
+            ["Affiliation", "FRIEND"]
+          ]
+        )
+      );
+*/
+    if(!OldObject.IsMirror())
+    {
+      String ObjectID = Mission.GenerateFreeObjectID();//getIdentificator(this) + new String(randnum(1000));
+      logWarning("[State Control] Create new player: " + ObjectID);
+
+      if(getIdentificator(this) == Mission.GetMainPlayerObjectID())
+      { 
+        //unregister tank controllers
+        OldObject.UnregisterObject("AutoThingsUI");
+        OldObject.UnregisterObject("ManualControl");
+
+        //recreate player unit
+        CGameSettings::PlayerName = ObjectID;
+        Mission.CreatePlayerObject(_Position);
+
+        String ActivatedObject = Mission.GetMainPlayerObjectID();
+        logWarning("ActivatedObject: " + ActivatedObject);
+        Component MissionEditor = (new #GameController()).GetObject("MissionEditor");
+        if(MissionEditor != null)
+        {
+          logWarning("MissionEditor != null");
+          if(MissionEditor.GetViewMode() == "FromPlayer")
+          {
+            Game.ActivateObject(getIdentificator(this), false, false);
+            MissionEditor.GotoObject(Mission.GetObject(ActivatedObject), true);
+            Game.ActivateObject(ActivatedObject, true, true);
+            Game.EnableControl(ActivatedObject, true);
+          }
+        }
+        else
+        {
+          logWarning("MissionEditor == null");
+          Game.ActivateObject(getIdentificator(this), false, false);
+          Game.ActivateObject(ActivatedObject, true, true);
+          Game.EnableControl(ActivatedObject, true);
+        }
+      }
+      else //this is a bot
+      {
+        Clone(ObjectID, _Position);
+      }
+
+      //Mission.FreeRespawnsByUsurper(getIdentificator(this));
+    }
+
+    (new #InputController()).ResetState();
+  }
+}

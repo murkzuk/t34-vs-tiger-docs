@@ -1,0 +1,44 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPlanarShadows
+{
+  static void InitializePlanarShadows()
+  {
+    Cbld_BridgeWoodModel::PlanarShadow                            = true;
+    Cbld_USRCorralWoodModel::PlanarShadow                         = true;
+    Cbld_USRHouseWoodModel::PlanarShadow                          = true;
+    Cbld_USRShedWoodModel::PlanarShadow                           = true;
+    Cbld_USRShedWood02Model::PlanarShadow                         = true;
+    Cbld_WaterWell_2Model::PlanarShadow                           = true;
+    Cbld_WaterWell_1Model::PlanarShadow                           = true;
+    Cbld_DotConcreteModel::PlanarShadow                           = true;
+    Cbld_DzotWoodModel::PlanarShadow                              = true;
+
+    Cbld_Barricade_PakModel::PlanarShadow                         = true;
+    Cbld_BarricadeModel::PlanarShadow                             = true;
+
+    Cfence_WickerModel::PlanarShadow                              = true;
+    Cfence_PoleModel::PlanarShadow                                = true;
+    Cfence_PalisadeModel::PlanarShadow                            = true;
+    Cbld_PostElectricModel::PlanarShadow                          = true;
+    Cbld_PostSpeakerModel::PlanarShadow                           = true;
+    Cbld_HaystackModel::PlanarShadow                              = true;
+    Cbld_PileLogsModel::PlanarShadow                              = true;
+    Cbld_SandBagWallModel::PlanarShadow                           = true;
+
+    Cenv_Antitank_singleModel::PlanarShadow                       = true;
+    Cenv_BarrelModel::PlanarShadow                                = true;
+
+    Chum_GermanSoldierRifleModel::PlanarShadow                    = true;
+    Chum_GermanTankmanModel::PlanarShadow                         = true;
+    Chum_SovietSoldierRifleModel::PlanarShadow                    = true;
+    Chum_SovietTankmanModel::PlanarShadow                         = true;
+  }
+}

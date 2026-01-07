@@ -1,0 +1,1677 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CEngineSound
+{
+  float   MinDistance    = 100.0;
+  float   MaxDistance    = 500.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+
+  boolean PlayOnMove     = false;
+  Vector  SpeedThreshold = new Vector(0.5, 0.5, 100.0);
+
+  boolean Preload          = true;      // Флаг создания буфера для звука при регистрации в CSoundArray
+  int Priority             = DEFAULT_SOUND_PRIORITY;     // Приоритет звука (min..max)= (0..0xFFFFFFFF)
+  int MaxPlayingSameSounds = 10;         // Max Количество одновременно играющих одинаковых звуков
+
+  int     TimeLoop         = 0;//ms      // Если значение ненулевое - проигрывание в цикле в течение указанного времени
+}
+
+// example of complex sounds class
+/*
+class CComplexSound
+{
+
+ final static Array Sounds = [
+                               ["BarrelExplosionSound",    // simple registered 3D pattern ID
+                                 new Vector(0.0, 0.0, 0.0) // Position relative to Placement matrix in CreateInstance3D
+                               ],
+                               [
+                                 "GroundHitSound",
+                                 new Vector(0.0, 0.0, 0.0)]
+                             ];
+
+  // second use style:
+
+  //
+  // all params here as common sound file
+  //
+
+  final static boolean Random = false;
+
+  final static Array SoundsFiles = [ ["sounds/..", new Vector]];
+}
+*/
+
+
+class CTigerLukCloseSound
+{
+  String  SoundFile      = "Sounds/tiger_lukclose.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 200.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+class CTigerLukOpenSound
+{
+  String  SoundFile      = "Sounds/tiger_lukopen.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 200.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+class CShockSound
+{
+  String  SoundFile      = "Sounds/ShockSound2.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 200.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+//
+// Terrain effects
+//
+
+//
+// Surround effects
+//
+
+//
+// Forest effects
+//
+
+//
+// Water effects
+//
+
+//
+// Fence effects
+//
+
+class CFencePalisadeDeathSound
+  extends CExplosionSound
+{
+  String  SoundFile      = "Sounds/tree_small_fall.wav";
+  float   MinDistance    = 50.0;
+  float   MaxDistance    = 600.0;
+}
+
+class CFenceWickerDeathSound
+  extends CExplosionSound
+{
+  String  SoundFile      = "Sounds/tree_small_fall.wav";
+  float   MinDistance    = 50.0;
+  float   MaxDistance    = 600.0;
+}
+//
+// Movement sounds
+//
+
+class CMovementSound
+{
+  float   MinDistance    = 50.0;
+  float   MaxDistance    = 200.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+
+  boolean PlayOnMove     = true;
+  Vector  SpeedThreshold = new Vector(0.5, 0.5, 100.0);
+  int MaxPlayingSameSounds = 4;
+  float   FadeTime       = 1.0f;
+
+  Array FrequencyBySpeed = [ 0.0, 0.9, 4.0, 2.0];
+}
+
+class CIdleSound
+{
+  float   MinDistance    = 20.0;
+  float   MaxDistance    = 200.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+  boolean PlayOnMove     = false;
+  int MaxPlayingSameSounds = 6;
+  float InitialRandomFrequencyVariation = 0.01;
+}
+
+class CAccelSound
+{
+  float   MinDistance    = 20.0;
+  float   MaxDistance    = 200.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+  boolean PlayOnMove     = true;
+  boolean PlayOnce       = true;
+  Vector  SpeedThreshold = new Vector(0.1, 0.1, 100.0);
+  int MaxPlayingSameSounds = 4;
+  float InitialRandomFrequencyVariation = 0.01;
+}
+
+//
+// Turret rotation sounds
+//
+
+class CTurretDirectionSoundH
+{
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 60.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+  int     MaxPlayingSameSounds = 4;
+  float   FadeTime       = 0.2f;
+}
+
+class CTurretDirectionSoundV
+{
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 60.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+  int     MaxPlayingSameSounds = 4;
+  float   FadeTime       = 0.2f;
+}
+
+
+//IL2Sounds
+class CPlaneMovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/PEngine1_Loop.wav";
+  float   MinDistance    = 500.0;
+  float   MaxDistance    = 2500.0;
+  Array FrequencyBySpeed = [ 1.0, 0.9, 40.0, 1.2];
+}
+
+//
+// T34 movement sounds
+//
+class CT34MovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/t34b_trans_moving.wav";
+}
+class CT34IdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/t34b_trans_idle.wav";
+}
+class CT34AccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/t34b_trans_drossel.wav";
+}
+class CT34_85_IdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/t3485_idle.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 100.0;
+}
+class CT34_85_Gear01Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_trans_01.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CT34_85_Gear02Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_trans_02.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CT34_85_Gear03Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_trans_03.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CT34_85_Gear04Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_trans_04.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CT34_85_Gear05Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_trans_05.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CT34_85_GearOnSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_trans_on.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 50.0;
+}
+class CT34_85_StartEngineSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_eng_on.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CT34_85_StopEngineSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_eng_off.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CT34_85_StarterEngineSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_eng_starter.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CT34_85_EngineDieSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_eng_dieaway.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CT34_85_TrackSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_track_on.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CT34_85_TankGunLoadSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_gun_load.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 30.0;
+}
+class CT34_85_TankGunShootSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/t3485_gun_shoot.wav";
+  float   MinDistance    = 30.0;
+  float   MaxDistance    = 150.0;
+}
+
+class CPzVI_E_TankGunShootSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/Pz6_gun_shoot.wav";
+  float   MinDistance    = 30.0;
+  float   MaxDistance    = 150.0;
+}
+
+//
+// Pz.4 Ausf.G movement sounds
+//
+class CTankPzIVGMovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/t4b_trans_moving.wav";
+  Array FrequencyBySpeed = [ 0.0, 0.8, 4.0, 1.4 ];
+}
+class CTankPzIVGIdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/t4b_trans_idle.wav";
+}
+class CTankPzIVGAccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/t4b_trans_drossel.wav";
+}
+//
+// Pz.6 Ausf.E movement sounds
+//
+class CTankPzVIAusfEMovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/t6b_trans_moving.wav";
+}
+class CTankPzVIAusfEIdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/t6b_trans_idle.wav";
+}
+class CTankPzVIAusfEAccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/t6b_trans_drossel.wav";
+}
+
+class CTankPzVIAusfE_IdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/tiger_idle.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 100.0;
+}
+class CTankPzVIAusfE_Gear01Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_01.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear02Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_02.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear03Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_03.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear04Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_04.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear05Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_05.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear06Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_06.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear07Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_07.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_Gear08Sound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_08.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_GearOnSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_trans_on.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 50.0;
+}
+class CTankPzVIAusfE_StartEngineSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_eng_on.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CTankPzVIAusfE_StopEngineSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_eng_off.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CTankPzVIAusfE_StarterEngineSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_eng_starter.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CTankPzVIAusfE_EngineDieSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_eng_dieaway.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 80.0;
+}
+class CTankPzVIAusfE_TrackSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/tiger_track_on.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 150.0;
+}
+class CTankPzVIAusfE_GunLoadSound
+  extends CEngineSound
+{
+  String  SoundFile      = "Sounds/pz6_gun_load.wav";
+  float   MinDistance    = 0.0;
+  float   MaxDistance    = 50.0;
+}
+class CTankPzVIAusfE_GunLoadVoice
+  extends CEngineSound
+{
+  String  SoundFile      = "Resources/pz6_gun_load_voice.wav";
+  float   MinDistance    = 0.0;
+  float   MaxDistance    = 50.0;
+}
+class CTankPzVIAusfE_GunLoadedVoice
+  extends CEngineSound
+{
+  String  SoundFile      = "Resources/pz6_gun_loaded_voice.wav";
+  float   MinDistance    = 0.0;
+  float   MaxDistance    = 50.0;
+}
+//
+// Sd.Kfz.251/1 Hanomag movement sounds
+//
+
+class CBtrHanomag251AusfCMovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/kfz251b_trans_moving.wav";
+}
+
+class CBtrHanomag251AusfCIdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/kfz251b_trans_idle.wav";
+}
+
+class CBtrHanomag251AusfCAccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/kfz251b_trans_drossel.wav";
+
+  Vector  SpeedThreshold = new Vector(0.5, 0.5, 100.0);
+}
+
+//
+// M3A1 Halftruck movement sounds
+//
+
+class CBtrM3A1HalftruckMovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/m3a1b_trans_moving.wav";
+}
+
+class CBtrM3A1HalftruckIdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/m3a1b_trans_idle.wav";
+}
+
+class CBtrM3A1HalftruckAccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/m3a1b_trans_drossel.wav";
+
+  Vector  SpeedThreshold = new Vector(0.5, 0.5, 100.0);
+}
+
+//
+// Opel Blitz truck movement sounds
+//
+
+class CTruckOpelBlitzMovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/blitzb_trans_moving.wav";
+  float   MinDistance = 10.0;
+  float   MaxDistance = 50.0;
+}
+
+class CTruckOpelBlitzIdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/blitzb_trans_idle.wav";
+  float   MinDistance = 10.0;
+  float   MaxDistance = 50.0;
+}
+
+class CTruckOpelBlitzAccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/blitzb_trans_drossel.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 70.0;
+  Vector  SpeedThreshold = new Vector(0.5, 0.5, 100.0);
+}
+
+//
+// ZIS-5V truck movement sounds
+//
+
+class CTruckZis5MovementSound
+  extends CMovementSound
+{
+  String  SoundFile      = "Sounds/zis5b_trans_moving.wav";
+  float   MinDistance = 10.0;
+  float   MaxDistance = 50.0;
+}
+
+class CTruckZis5IdleSound
+  extends CIdleSound
+{
+  String  SoundFile      = "Sounds/zis5b_trans_idle.wav";
+  float   MinDistance = 10.0;
+  float   MaxDistance = 50.0;
+}
+
+class CTruckZis5AccelSound
+  extends CAccelSound
+{
+  String  SoundFile      = "Sounds/zis5b_trans_drossel.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 70.0;
+  Vector  SpeedThreshold = new Vector(0.5, 0.5, 100.0);
+}
+
+//
+//  Turret rotation and gun lift sounds
+//
+
+class CT34TurretDirectionSoundH
+  extends CTurretDirectionSoundH
+{
+  String  SoundFile      = "Sounds/t3485_turret_turn.wav";
+}
+
+class CT34TurretDirectionSoundV
+  extends CTurretDirectionSoundV
+{
+  String  SoundFile      = "Sounds/t3485_gun_lift.wav";
+}
+//Heavy tank subsection
+class CTankHeavyTurretDirectionSoundH
+  extends CTurretDirectionSoundH
+{
+  String  SoundFile      = "Sounds/tankheavy_turret_turn.wav";
+}
+
+class CTankHeavyTurretDirectionSoundV
+  extends CTurretDirectionSoundV
+{
+  String  SoundFile      = "Sounds/tankheavy_gun_lift.wav";
+}
+//Medium tank subsection
+class CTankMediumTurretDirectionSoundH
+  extends CTurretDirectionSoundH
+{
+  String  SoundFile      = "Sounds/tankmedium_turret_turn.wav";
+}
+
+class CTankMediumTurretDirectionSoundV
+  extends CTurretDirectionSoundV
+{
+  String  SoundFile      = "Sounds/tankmedium_gun_lift.wav";
+}
+
+//
+// Menu sounds
+//
+
+
+class CForestBulletHitSound
+{
+  String SoundFile       = "Sounds/BulletHit_Wood.wav";
+  float   MinDistance    = 10.0;
+  float   MaxDistance    = 100.0;
+}
+
+//
+// Gun Fire sounds
+//
+//
+// Base class
+//
+
+class CGunFireSound
+{
+  float   MinDistance    = 200.0;
+  float   MaxDistance    = 1200.0;
+  String  SoundFile      = "";
+  int     MinMaxType     = SD_MAX;
+
+}
+
+
+//
+// Handguns fire sounds
+class CMosinRifleFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/soviet_gun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+class C98kRifleFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/german_gun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+class CPPSHGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/soviet_autogun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+class CMP40GunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/german_autogun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+// Machineguns fire sounds
+
+class CDTMachineGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/DT_machinegun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+class CMG34MachineGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/MG34_machinegun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+class C50calMachineGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/50cal_machinegun_fire.wav";
+  float   MinDistance    = 5.0;
+  float   MaxDistance    = 1200.0;
+}
+
+//T34-76
+class CT34_76MainGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/t3476_gun_fire.wav";
+}
+
+//T34-85
+class CT34_85MainGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/t3485_gun_fire.wav";
+}
+
+//Pz4
+class CPz4MainGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/pz4_gun_fire.wav";
+}
+
+//Pz6
+class CPz6MainGunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/pz6_gun_fire.wav";
+}
+
+//StuG40
+class CStuG40GunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/pak40_gun_fire.wav";
+}
+
+//Pak40
+class CPak40GunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/pak40_gun_fire.wav";
+}
+
+//Zis3
+class CZis3GunFireSound
+  extends CGunFireSound
+{
+  String  SoundFile      = "Sounds/zis3_gun_fire.wav";
+}
+
+//
+//Bullethit
+//
+class CBulletHitSound
+{
+  final static boolean Random = true;
+  final static Array Sounds = [];
+  final static Array SoundFiles = [];
+
+  String  SoundFile = "";
+
+  float   MinDistance = 10.0;
+  float   MaxDistance = 100.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+class CBulletHitWoodSound
+  extends CBulletHitSound
+{
+  final static Array SoundFiles = [
+                                     ["sounds/bullethit_wood.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bullethit_wood.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bullethit_wood.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bulletricochet_wood.wav", new Vector(0.0, 0.0, 0.0)]
+                                   ];
+}
+
+class CBulletHitMetalSound
+  extends CBulletHitSound
+{
+  final static Array SoundFiles = [
+                                     ["sounds/bullethit_metal.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bulletricochet_metal.wav", new Vector(0.0, 0.0, 0.0)]
+                                   ];
+}
+
+class CBulletHitArmourSound
+  extends CBulletHitSound
+{
+  final static Array SoundFiles = [
+                                     ["sounds/bullethit_armour.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bullethit_armour.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bulletricochet_armour.wav", new Vector(0.0, 0.0, 0.0)]
+                                   ];
+}
+
+class CBulletHitGroundSound
+  extends CBulletHitSound
+{
+  final static Array SoundFiles = [
+                                     ["sounds/bullethit_ground.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bullethit_ground.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bullethit_ground.wav", new Vector(0.0, 0.0, 0.0)],
+                                     ["sounds/bulletricochet_ground.wav", new Vector(0.0, 0.0, 0.0)]
+                                   ];
+}
+
+class CBulletHitWaterSound
+  extends CBulletHitSound
+{
+  final static Array SoundFiles = [
+                                     ["sounds/bullethit_water.wav", new Vector(0.0, 0.0, 0.0)]
+                                   ];
+}
+
+class CBulletHitBodySound
+  extends CBulletHitSound
+{
+  final static Array SoundFiles = [
+                                     ["sounds/bullethit_body.wav", new Vector(0.0, 0.0, 0.0)]
+                                   ];
+}
+
+//
+// Explosion sounds
+//
+
+class CExplosionSound
+{
+  String  SoundFile   = "";
+  float   MinDistance = 100.0;
+  float   MaxDistance = 1000.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+class CExplosionHitSound
+{
+  String  SoundFile   = "";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 200.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+class CSubcalibreHitSound
+{
+  String  SoundFile   = "";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 200.0;
+  int     MinMaxType     = SD_MAX;
+}
+
+//Collision sounds
+class CCollisionSound
+{
+String SoundFile = "";
+float MinDistance = 20.0;
+float MaxDistance = 100.0;
+int MinMaxType = SD_MAX;
+}
+
+// Objects Explosions
+//Tank explosion sound
+class CTankExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/Armoured_Destroy.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 100.0;
+}
+
+// House explosion sound
+class CUSRCorralWoodExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/BuildingWood_Destroy.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 100.0;
+}
+class CUSRHouseWoodExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/BuildingWood_Destroy.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 100.0;
+}
+class CUSRShedWoodExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/BuildingWood_Destroy.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 100.0;
+}
+
+class CTankCollisionTankHighSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_tank_collision_highspeed.wav";
+}
+
+class CTankCollisionTankLowSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_tank_collision_lowspeed.wav";
+}
+
+class CTankCollisionTruckHighSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_truck_collision_highspeed.wav";
+}
+
+class CTankCollisionTruckLowSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_truck_collision_lowspeed.wav";
+}
+
+class CTankCollisionBtrHighSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_btr_collision_highspeed.wav";
+}
+
+class CTankCollisionBtrLowSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_btr_collision_lowspeed.wav";
+}
+
+class CTankCollisionHighSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_collision_long.wav";
+}
+
+class CTankCollisionLowSpeedSound
+  extends CCollisionSound
+{
+  String SoundFile = "Sounds/tank_collision.wav";
+}
+
+
+// Large tree fall
+class CLargeTreeFallSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/treefall.wav";
+  float   MinDistance = 30.0;
+  float   MaxDistance = 80.0;
+}
+
+class CSmallTreeFallSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/bush_runover.wav";
+  float   MinDistance = 30.0;
+  float   MaxDistance = 80.0;
+}
+
+//Calibre
+class CCalibre7576HitExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/calibre7576hit_explosion.wav";
+}
+
+class CCalibre7576HitWoodExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre7576hit_wood.wav";
+}
+
+class CCalibre7576HitMetalExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre7576hit_metal.wav";
+}
+
+class CCalibre7576HitArmourExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre7576hit_armour.wav";
+}
+
+class CCalibre7576HitGroundExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre7576hit_ground.wav";
+}
+
+class CCalibre7576HitWaterExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre7576hit_water.wav";
+}
+
+class CCalibre85HitExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/calibre85hit_explosion.wav";
+}
+
+class CCalibre85HitWoodExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre85hit_wood.wav";
+}
+
+class CCalibre85HitMetalExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre85hit_metal.wav";
+}
+
+class CCalibre85HitArmourExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre85hit_armour.wav";
+}
+
+class CCalibre85HitGroundExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre85hit_ground.wav";
+
+}
+
+class CCalibre85HitWaterExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre85hit_water.wav";
+
+}
+
+class CCalibre88HitExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/calibre88hit_explosion.wav";
+}
+
+class CCalibre88HitWoodExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre88hit_wood.wav";
+}
+
+class CCalibre88HitMetalExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre88hit_metal.wav";
+}
+
+class CCalibre88HitArmourExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre88hit_armour.wav";
+}
+
+class CCalibre88HitGroundExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre88hit_ground.wav";
+
+}
+
+class CCalibre88HitWaterExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/calibre88hit_water.wav";
+
+}
+
+//Subcalibre
+class CSubcalibre7576HitWoodExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre7576hit_wood.wav";
+}
+
+class CSubcalibre7576HitMetalExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre7576hit_metal.wav";
+}
+
+class CSubcalibre7576HitArmourExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre7576hit_armour.wav";
+}
+
+class CSubcalibre7576HitGroundExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre7576hit_ground.wav";
+}
+
+class CSubcalibre7576HitWaterExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre7576hit_water.wav";
+}
+
+class CSubcalibre7576HitBodyExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre7576hit_body.wav";
+  float   MaxDistance = 100.0;
+}
+
+class CSubcalibre85HitWoodExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre85hit_wood.wav";
+}
+
+class CSubcalibre85HitMetalExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre85hit_metal.wav";
+}
+
+class CSubcalibre85HitArmourExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre85hit_armour.wav";
+}
+
+class CSubcalibre85HitGroundExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre85hit_ground.wav";
+}
+
+class CSubcalibre85HitWaterExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre85hit_water.wav";
+}
+
+class CSubcalibre85HitBodyExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre85hit_body.wav";
+  float   MaxDistance = 100.0;
+}
+
+class CSubcalibre88HitWoodExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre88hit_wood.wav";
+}
+
+class CSubcalibre88HitMetalExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre88hit_metal.wav";
+}
+
+class CSubcalibre88HitArmourExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre88hit_armour.wav";
+}
+
+class CSubcalibre88HitGroundExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre88hit_ground.wav";
+}
+
+class CSubcalibre88HitWaterExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre88hit_water.wav";
+}
+
+class CSubcalibre88HitBodyExplosionSound
+  extends CSubcalibreHitSound
+{
+  String  SoundFile   = "Sounds/subcalibre88hit_body.wav";
+  float   MaxDistance = 100.0;
+}
+
+//HE
+class CHE7576HitExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/he7576hit_explosion.wav";
+}
+
+class CHE7576HitWoodExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he7576hit_wood.wav";
+}
+
+class CHE7576HitMetalExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he7576hit_metal.wav";
+}
+
+class CHE7576HitArmourExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he7576hit_armour.wav";
+}
+
+class CHE7576HitGroundExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he7576hit_ground.wav";
+}
+
+class CHE7576HitWaterExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he7576hit_water.wav";
+}
+
+class CHE85HitExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/he85hit_explosion.wav";
+}
+
+class CHE85HitWoodExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he85hit_wood.wav";
+}
+
+class CHE85HitMetalExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he85hit_metal.wav";
+}
+
+class CHE85HitArmourExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he85hit_armour.wav";
+}
+
+class CHE85HitGroundExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he85hit_ground.wav";
+}
+
+class CHE85HitWaterExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he85hit_water.wav";
+}
+
+class CHE88HitExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/he88hit_explosion.wav";
+}
+
+class CHE88HitWoodExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he88hit_wood.wav";
+}
+
+class CHE88HitMetalExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he88hit_metal.wav";
+}
+
+class CHE88HitArmourExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he88hit_armour.wav";
+}
+
+class CHE88HitGroundExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he88hit_ground.wav";
+}
+
+class CHE88HitWaterExplosionSound
+  extends CExplosionHitSound
+{
+  String  SoundFile   = "Sounds/he88hit_water.wav";
+}
+//
+// Array
+//
+
+class CSoundsArray
+{
+  static Array m_SoundsMap          = [];
+  static Array m_SoundsExplosionMap = [];
+  static Array m_SoundsMap2D        = [];
+  static Array m_ComplexSounds      = [];
+
+  static void StaticInitialization()
+  {
+    m_SoundsMap = [
+        ["TigerLukOpenSound",                  new CTigerLukOpenSound()],
+        ["TigerLukCloseSound",                 new CTigerLukCloseSound()],
+
+        // GunFire sounds
+        ["T34_76MainGunFireSound",             new CT34_76MainGunFireSound()],
+        ["T34_85MainGunFireSound",             new CT34_85MainGunFireSound()],
+        ["Pz4MainGunFireSound",                new CPz4MainGunFireSound()],
+        ["Pz6MainGunFireSound",                new CPz6MainGunFireSound()],
+        ["StuG40GunFireSound",                 new CStuG40GunFireSound()],
+
+        ["Pak40GunFireSound",                  new CPak40GunFireSound()],
+        ["Zis3GunFireSound",                   new CZis3GunFireSound()],
+
+        ["MosinRifleFireSound",                new CMosinRifleFireSound()],
+        ["98kRifleFireSound",                  new C98kRifleFireSound()],
+        ["PPSHGunFireSound",                   new CPPSHGunFireSound()],
+        ["MP40GunFireSound",                   new CMP40GunFireSound()],
+
+        ["50calMachineGunFireSound",           new C50calMachineGunFireSound()],
+        ["MG34MachineGunFireSound",            new CMG34MachineGunFireSound()],
+        ["DTMachineGunFireSound",              new CDTMachineGunFireSound()],
+
+        //BulletHit
+        ["USRCorralWoodExplosionSound",        new CUSRCorralWoodExplosionSound()],
+        ["USRHouseWoodExplosionSound",         new CUSRHouseWoodExplosionSound()],
+        ["USRShedWoodExplosionSound",          new CUSRShedWoodExplosionSound()],
+        ["TankExplosionSound",                 new CTankExplosionSound()],
+        ["ForestBulletHitSound",               new CForestBulletHitSound()],
+        // Objects explosions
+
+        ["LargeTreeFallSound",                 new CLargeTreeFallSound()],
+        ["SmallTreeFallSound",                 new CSmallTreeFallSound()],
+        ["FenceWickerDeathSound",                 new CFenceWickerDeathSound()],
+
+        //Bullets Explosion
+        ["Calibre7576HitExplosionSound",           new CCalibre7576HitExplosionSound()],
+        ["Calibre7576HitWoodExplosionSound",       new CCalibre7576HitWoodExplosionSound()],
+        ["Calibre7576HitMetalExplosionSound",      new CCalibre7576HitMetalExplosionSound()],
+        ["Calibre7576HitArmourExplosionSound",     new CCalibre7576HitArmourExplosionSound()],
+        ["Calibre7576HitGroundExplosionSound",     new CCalibre7576HitGroundExplosionSound()],
+        ["Calibre7576HitWaterExplosionSound",      new CCalibre7576HitWaterExplosionSound()],
+
+        ["Calibre85HitExplosionSound",           new CCalibre85HitExplosionSound()],
+        ["Calibre85HitWoodExplosionSound",       new CCalibre85HitWoodExplosionSound()],
+        ["Calibre85HitMetalExplosionSound",      new CCalibre85HitMetalExplosionSound()],
+        ["Calibre85HitArmourExplosionSound",     new CCalibre85HitArmourExplosionSound()],
+        ["Calibre85HitGroundExplosionSound",     new CCalibre85HitGroundExplosionSound()],
+        ["Calibre85HitWaterExplosionSound",      new CCalibre85HitWaterExplosionSound()],
+
+        ["Calibre88HitExplosionSound",           new CCalibre88HitExplosionSound()],
+        ["Calibre88HitWoodExplosionSound",       new CCalibre88HitWoodExplosionSound()],
+        ["Calibre88HitMetalExplosionSound",      new CCalibre88HitMetalExplosionSound()],
+        ["Calibre88HitArmourExplosionSound",     new CCalibre88HitArmourExplosionSound()],
+        ["Calibre88HitGroundExplosionSound",     new CCalibre88HitGroundExplosionSound()],
+        ["Calibre88HitWaterExplosionSound",      new CCalibre88HitWaterExplosionSound()],
+
+        ["Subcalibre7576HitWoodExplosionSound",    new CSubcalibre7576HitWoodExplosionSound()],
+        ["Subcalibre7576HitMetalExplosionSound",   new CSubcalibre7576HitMetalExplosionSound()],
+        ["Subcalibre7576HitArmourExplosionSound",  new CSubcalibre7576HitArmourExplosionSound()],
+        ["Subcalibre7576HitGroundExplosionSound",  new CSubcalibre7576HitGroundExplosionSound()],
+        ["Subcalibre7576HitWaterExplosionSound",   new CSubcalibre7576HitWaterExplosionSound()],
+        ["Subcalibre7576HitBodyExplosionSound",    new CSubcalibre7576HitBodyExplosionSound()],
+
+        ["Subcalibre85HitWoodExplosionSound",    new CSubcalibre85HitWoodExplosionSound()],
+        ["Subcalibre85HitMetalExplosionSound",   new CSubcalibre85HitMetalExplosionSound()],
+        ["Subcalibre85HitArmourExplosionSound",  new CSubcalibre85HitArmourExplosionSound()],
+        ["Subcalibre85HitGroundExplosionSound",  new CSubcalibre85HitGroundExplosionSound()],
+        ["Subcalibre85HitWaterExplosionSound",   new CSubcalibre85HitWaterExplosionSound()],
+        ["Subcalibre85HitBodyExplosionSound",    new CSubcalibre85HitBodyExplosionSound()],
+
+        ["Subcalibre88HitWoodExplosionSound",    new CSubcalibre88HitWoodExplosionSound()],
+        ["Subcalibre88HitMetalExplosionSound",   new CSubcalibre88HitMetalExplosionSound()],
+        ["Subcalibre88HitArmourExplosionSound",  new CSubcalibre88HitArmourExplosionSound()],
+        ["Subcalibre88HitGroundExplosionSound",  new CSubcalibre88HitGroundExplosionSound()],
+        ["Subcalibre88HitWaterExplosionSound",   new CSubcalibre88HitWaterExplosionSound()],
+        ["Subcalibre88HitBodyExplosionSound",    new CSubcalibre88HitBodyExplosionSound()],
+
+        ["HE7576HitExplosionSound",                new CHE7576HitExplosionSound()],
+        ["HE7576HitWoodExplosionSound",            new CHE7576HitWoodExplosionSound()],
+        ["HE7576HitMetalExplosionSound",           new CHE7576HitMetalExplosionSound()],
+        ["HE7576HitArmourExplosionSound",          new CHE7576HitArmourExplosionSound()],
+        ["HE7576HitGroundExplosionSound",          new CHE7576HitGroundExplosionSound()],
+        ["HE7576HitWaterExplosionSound",           new CHE7576HitWaterExplosionSound()],
+
+        ["HE85HitExplosionSound",                new CHE85HitExplosionSound()],
+        ["HE85HitWoodExplosionSound",            new CHE85HitWoodExplosionSound()],
+        ["HE85HitMetalExplosionSound",           new CHE85HitMetalExplosionSound()],
+        ["HE85HitArmourExplosionSound",          new CHE85HitArmourExplosionSound()],
+        ["HE85HitGroundExplosionSound",          new CHE85HitGroundExplosionSound()],
+        ["HE85HitWaterExplosionSound",           new CHE85HitWaterExplosionSound()],
+
+        ["HE88HitExplosionSound",                new CHE88HitExplosionSound()],
+        ["HE88HitWoodExplosionSound",            new CHE88HitWoodExplosionSound()],
+        ["HE88HitMetalExplosionSound",           new CHE88HitMetalExplosionSound()],
+        ["HE88HitArmourExplosionSound",          new CHE88HitArmourExplosionSound()],
+        ["HE88HitGroundExplosionSound",          new CHE88HitGroundExplosionSound()],
+        ["HE88HitWaterExplosionSound",           new CHE88HitWaterExplosionSound()],
+
+        ["TankCollisionTankHighSpeedSound",     new CTankCollisionTankHighSpeedSound()],
+        ["TankCollisionTankLowSpeedSound",      new CTankCollisionTankLowSpeedSound()],
+        ["TankCollisionTruckHighSpeedSound",    new CTankCollisionTruckHighSpeedSound()],
+        ["TankCollisionTruckLowSpeedSound",     new CTankCollisionTruckLowSpeedSound()],
+        ["TankCollisionBtrHighSpeedSound",      new CTankCollisionBtrHighSpeedSound()],
+        ["TankCollisionBtrLowSpeedSound",       new CTankCollisionBtrLowSpeedSound()],
+        ["TankCollisionHighSpeedSound",         new CTankCollisionHighSpeedSound()],
+        ["TankCollisionLowSpeedSound",          new CTankCollisionLowSpeedSound()],
+        ["T34_85_TankGunLoadSound",             new CT34_85_TankGunLoadSound()],
+        ["T34_85_TankGunShootSound",            new CT34_85_TankGunShootSound()],
+        ["PzVI_E_TankGunShootSound",            new CPzVI_E_TankGunShootSound()],
+        ["TankPzVIAusfE_GunLoadSound",          new CTankPzVIAusfE_GunLoadSound()],
+        ["TankPzVIAusfE_GunLoadVoice",          new CTankPzVIAusfE_GunLoadVoice()],
+        ["TankPzVIAusfE_GunLoadedVoice",        new CTankPzVIAusfE_GunLoadedVoice()]
+     ];
+
+    // complex sounds effects (3D sounds)
+
+    m_ComplexSounds = [
+//       //Bullethit
+        ["BulletHitWoodSound",                 new CBulletHitWoodSound()],
+        ["BulletHitMetalSound",                new CBulletHitMetalSound()],
+        ["BulletHitArmourSound",               new CBulletHitArmourSound()],
+        ["BulletHitGroundSound",               new CBulletHitGroundSound()],
+        ["BulletHitWaterSound",                new CBulletHitWaterSound()],
+        ["BulletHitBodySound",                 new CBulletHitBodySound()]
+      ];
+
+
+    // [ Тип Материала , Тип повреждения -> Идентификатор звука ]
+    m_SoundsExplosionMap = [
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitArmourSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitArmourSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitArmourExplosionSound"  ],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitArmourExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitWoodSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitMetalSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitGroundSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitWaterSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,           "BulletHitBodySound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitWoodSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitMetalSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitGroundSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitWaterSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,           "BulletHitBodySound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576HitGroundExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,    "Calibre85HitGroundExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,    "Calibre88HitGroundExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576HitBodyExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85, "Subcalibre85HitBodyExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88, "Subcalibre88HitBodyExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576HitGroundExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,         "HE85HitGroundExplosionSound"  ],
+
+        [ CMaterialStructure::MSID_Wood,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitWoodExplosionSound"  ],
+        [ CMaterialStructure::MSID_Metal,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitMetalExplosionSound"  ],
+        [ CMaterialStructure::MSID_Ground,           CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitGroundExplosionSound"  ],
+        [ CMaterialStructure::MSID_Water,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitWaterExplosionSound"  ],
+        [ CMaterialStructure::MSID_Body,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,         "HE88HitGroundExplosionSound"  ]
+      ];
+
+    m_SoundsMap2D = [
+			["CursorOnButton",     "Sounds/menu_button_choose.wav"],
+                        ["PressButton",        "Sounds/menu_button_click.wav"]
+
+                    ];
+
+  }
+
+  void CSoundsArray()
+  {
+    for (int Index = 0; Index < m_SoundsMap2D.size(); Index++)
+      RegisterPattern2D(m_SoundsMap2D[Index][0], m_SoundsMap2D[Index][1]);
+
+    for (int Index = 0; Index < m_SoundsMap.size(); Index++)
+      RegisterPattern(m_SoundsMap[Index][0], m_SoundsMap[Index][1]);
+
+    for (int Index = 0; Index < m_ComplexSounds.size(); Index++)
+      RegisterComplexPattern(m_ComplexSounds[Index][0],  m_ComplexSounds[Index][1]);
+
+
+    for (int Index = 0; Index < m_SoundsExplosionMap.size(); Index++)
+      RegisterSubstanceAlias(
+          m_SoundsExplosionMap[Index][0],
+          m_SoundsExplosionMap[Index][1],
+          m_SoundsExplosionMap[Index][2]
+        );
+  }
+}
+
+

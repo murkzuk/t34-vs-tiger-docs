@@ -1,0 +1,51 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CShadowsHide
+{
+  static void InitializeShadowsHide()
+  {
+      Cbld_BridgeWoodModel::LodForShadowHide         = 1.8;
+      Cbld_DotConcreteModel::LodForShadowHide        = 1.8;
+      Cbld_DzotWoodModel::LodForShadowHide           = 1.8;
+      Cbld_USRCorralWoodModel::LodForShadowHide      = 1.8;
+      Cbld_USRHouseWoodModel::LodForShadowHide       = 1.8;
+      Cbld_USRShedWoodModel::LodForShadowHide        = 1.8;
+      Cbld_WaterWell_1Model::LodForShadowHide        = 1.8;
+      Cbld_WaterWell_2Model::LodForShadowHide        = 1.8;
+
+
+      Cfence_PalisadeModel::LodForShadowHide         = 1.0;
+      Cfence_WickerModel::LodForShadowHide           = 1.0;
+
+      Chum_GermanSoldierRifleModel::LodForShadowHide = 1.0;
+      Chum_GermanTankmanModel::LodForShadowHide      = 1.0;
+      Chum_SovietSoldierRifleModel::LodForShadowHide = 1.0;
+      Chum_SovietTankmanModel::LodForShadowHide      = 1.0;
+
+      
+
+      Cu_stat_pak40Model::LodForShadowHide           = 2.0;
+      Cu_stat_zis3Model::LodForShadowHide            = 2.0;
+
+      Cu_veh_Hanomag_251CModel::LodForShadowHide     = 2.8;
+      Cu_veh_M3A1HalfTrackModel::LodForShadowHide    = 2.8;
+
+      Cu_veh_OpelBlitzModel::LodForShadowHide        = 2.8;
+      Cu_veh_zis5Model::LodForShadowHide             = 2.8;
+
+      Cu_veh_PzIVGModel::LodForShadowHide            = 2.6;
+      Cu_veh_PzVI_MAINModel::LodForShadowHide        = 2.6;
+      Cu_veh_PzVI_LATEModel::LodForShadowHide        = 2.6;
+      Cu_veh_t34_76_42Model::LodForShadowHide        = 2.0;
+      Cu_veh_t34_85_44Model::LodForShadowHide        = 2.0;
+      Cu_veh_SAU_Stug40Model::LodForShadowHide       = 2.6;
+      Cu_veh_SU85Model::LodForShadowHide             = 3.0;
+  }
+}

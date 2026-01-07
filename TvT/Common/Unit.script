@@ -1,0 +1,96 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CUnitType
+{  
+  final static Array UnitPriority = [CLASSIFICATOR_T34_HEAVY_TANK, CLASSIFICATOR_T34_LIGHT_TANK, CLASSIFICATOR_T34_BTR, CLASSIFICATOR_T34_GUN, CLASSIFICATOR_T34_TRUCK, CLASSIFICATOR_T34_SOLDER, CLASSIFICATOR_T34_AIR, CLASSIFICATOR_T34_UNIT];
+}
+
+// Base class for all units
+class CUnit
+  extends CObject, CUnitStateControl, CDevicesController
+{
+
+  final static String DefaultSurfaceControl = "PutonGroundLandingJoints";
+
+  static Array  LandingJoints = ["Corner_FL", "Corner_RL", "Corner_RR", "Corner_FR"];
+  
+  static Array  SubstanceArmourWidth = [
+                                        // [ CMaterialStructure::MSID_Metal,   100.0 ],  
+                                      ];
+                                      
+  static category UnitType = CLASSIFICATOR_T34_UNIT;
+
+  // ==========================================
+  // Initialization
+  // ==========================================
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    // Call inherited construct
+    CObject::Construct(_Mission, _PropMap);
+  }
+   
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Initialize(_Mission, _PropMap);
+    
+    addClassificator(user, UnitType);
+  }
+   
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    (new #EffectsArray()).DeleteEffectByHost(GetMeshComponent());
+    CObject::Shutdown(_Mission);
+    CDevicesController::Shutdown(_Mission);
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Finalize(_Mission, _PropMap);
+  }
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CObject::GetDefaultProperties();
+
+    return Default;
+  }
+  
+  Array GetPropStrings()
+  {
+    Array PropStrings = CObject::GetPropStrings();
+
+    return PropStrings;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CObject::SetProperties(_PropMap);
+  }
+  
+//   int GetUnitType()
+//   {
+//     return UnitType;
+//   }
+
+}

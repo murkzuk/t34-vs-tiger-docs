@@ -1,0 +1,374 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CTargetingAnimator
+{
+  float  MaxAngleSpeed = 5.0;
+}
+
+
+class CAnyWeapon
+{
+  // default behavior parameters
+  final static Array   GunSpecificFireMask = []; // gun specific fire mask with priorities
+  final static boolean SpecialWeapon       = false;
+  final static boolean CanFire             = true;
+  final static boolean BurstFire           = false;
+  final static int     Ammunition          = -1;
+  final static int     OnAmmoEventQty      = 10;
+  final static float   AmmoMass            = 0.0;
+  final static float   WeaponMass          = 0.0;
+
+  final static boolean m_PlayerWeapon      = false;
+
+  // default UI params
+  final static boolean IsDefenceWeapon     = false;
+
+  // secondary pilot attributes
+  final static Array   UnlawfulModes       = [];
+  final static boolean IsWingmanControlled = false;
+
+  // to be overriden in derivatives
+  final static int     FirePeriod          = -1;
+  final static int     BurstDelay          = -1;
+
+  // effective distance
+  final static float   MinDistance         = -1.0f;
+  final static float   MaxDistance         = -1.0f;
+
+  // gun behavior parameters
+  final static boolean   CanFireInMove   = true;
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = false;
+  final static Array     Power               = [];  // can shoot nobody, set sensible values down the hierarchy
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = true;
+
+  // additiobal effects settings
+  final static String FireEffectId      = "";
+  final static String CloudEffectId     = "";
+
+  Array  ShellIds          = [];
+
+  final static String NearFireEffectId  = "";
+  final static String NearCloudEffectId = "";
+
+  final static boolean ManualLoad = false;
+
+  void Setup()
+  {
+  }
+
+  void InitMasks(
+      String _Affiliation
+    )
+  {
+  }
+
+  // add the rule "do not shoot at friends" to the mask
+  void SetFriendlyGunFireMask(
+      String _Affiliation
+    )
+  {
+    // if mask is totally empty we need to add at least one entry
+    if (0 == GunSpecificFireMask.size())
+    {
+      GunSpecificFireMask.add(new Array());     // add one mask of
+      GunSpecificFireMask[0].add(new Array());  // restrict and
+      GunSpecificFireMask[0].add(new Array());  // exclude parts
+    }
+
+    // add friendly restriction to every mask
+    for (int i = 0; i < GunSpecificFireMask.size(); i++)
+    {
+      GunSpecificFireMask[i][1].add(_Affiliation);
+    }
+  }
+
+  void ClearFriendlyGunFireMask(
+      String _Affiliation
+    )
+  {
+    for (int i = 0; i < GunSpecificFireMask.size(); i++)
+    {
+      int p = GunSpecificFireMask[i][1].find(_Affiliation);
+      if (p != -1)
+        GunSpecificFireMask[i][1].remove(p);
+    }
+  }
+
+  float GetWeaponMass()
+  {
+    return AmmoMass * GetAmmoQuantity() + WeaponMass;
+  }
+
+  void SetBaseEffects()
+  {
+    StopThisEffects();
+
+    SetFireEffectID(FireEffectId);
+    SetCloudEffectID(CloudEffectId);
+
+    for (int Index = 0; Index < ShellIds.size(); Index++)
+      SetShellPatternID(ShellIds[Index][0], ShellIds[Index][1]);
+  }
+
+  void SetNearEffects()
+  {
+    StopThisEffects();
+
+    if ("" != NearFireEffectId)
+      SetFireEffectID(NearFireEffectId);
+    if ("" != NearCloudEffectId)
+      SetCloudEffectID(NearCloudEffectId);
+
+    for (int Index = 0; Index < ShellIds.size(); Index++)
+      if ("" != ShellIds[Index][1])
+        SetShellPatternID(ShellIds[Index][0], "Near" + ShellIds[Index][1]);
+  }
+
+  void SetEmptyEffects()
+  {
+    StopThisEffects();
+
+    SetFireEffectID("");
+    SetCloudEffectID("");
+
+    for (int Index = 0; Index < ShellIds.size(); Index++)
+      SetShellPatternID(ShellIds[Index][0], "");
+  }
+}
+
+class CWeaponFireRecoil
+{
+  event void OnWeaponFire()
+  {
+    Matrix FirePos = getPosition(this);
+    Component Unit = 
+      (new #GameController()).GetMission().GetObject(getIdentificator(user));
+    if (Unit != null)
+    {
+      Matrix UnitPos = getPosition(Unit);
+      Array Angles = getSphericAngles(FirePos.xvec, UnitPos);
+      Unit.OnWeaponFire(FirePos.origin, new Vector(cos(Angles[0]), sin(Angles[0]), 0));
+//      Unit.OnWeaponFire(FirePos.origin, UnitPos.multVec(FirePos.xvec));
+    }
+  }
+};
+
+//
+// Base class for all player weapons
+//
+
+class CPlayerWeapon
+{
+  final static boolean  m_PlayerWeapon      = true;
+
+  boolean   m_IsTargetLocked                = false;
+
+  int       m_FireMode                      = WFM_Free;
+  float     m_CurrentTime                   = 0.0;
+  float     m_LockInitTime                  = 0.0;
+  Vector    m_Position                      = new Vector(0.0f);
+  Vector    m_Destination                   = new Vector(0.0f);
+  boolean   m_HasTarget                     = false;
+  boolean   m_ProjectileCameraNotifyEnabled = false;;
+
+  String    BayAnimatorID                   = "";
+
+  event void OnWeaponFire(
+      Array _BulletIds
+    )
+  {
+    if (m_ProjectileCameraNotifyEnabled && m_ProjectileCameraAttachable)
+    {
+      Component Mission = (new #GameController()).GetObject(SOID_MissionController);
+      // notify camera about last fired bullet
+      if (null != Mission)
+        Mission.NotifyProjectileCamera(_BulletIds[_BulletIds.size() - 1]);
+    }
+  }
+
+  void EnableProjectileCameraNotify(
+        boolean _Enable
+    )
+  {
+    m_ProjectileCameraNotifyEnabled = _Enable;
+  }
+}
+
+//
+// Common weapon classes
+//
+
+class CRifle
+  extends CAnyWeapon
+{
+  final static float     InitBulletSpeed = 650.0;
+  final static float     FireDeviation   = 0.2;
+
+  final static String    FireEffectId    = "MachineGunFireEffect";
+
+  // gun behavior parameters
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = false;
+  final static Array     Power           = ["HP_FRAGILE", "HP_HEALTHY"];
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = false;
+
+}
+
+class CMachineGun
+  extends CAnyWeapon
+{
+  final static float     InitBulletSpeed = 650.0;
+  final static float     FireDeviation   = 0.5;
+
+  final static String    FireEffectId    = "MachineGunFireEffect";
+  final static String    CloudEffectId   = "";
+  final static String    FireSoundId     = "";
+  Component BurstFireSound  = null;
+
+
+  // gun behavior parameters
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = false;
+  final static Array     Power           = ["HP_FRAGILE", "HP_HEALTHY"];
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = false;
+
+}
+
+class CLightGun
+  extends CAnyWeapon
+{
+  final static float     InitBulletSpeed = 600.0;
+  final static float     FireDeviation   = 0.2;
+
+  final static String    FireEffectId    = "LightGunFireEffect";
+  final static String    CloudEffectId   = "";
+  final static String    FireSoundId     = "";
+  Component BurstFireSound  = new #Emitter<CLightGunFireSound>();
+
+  // gun behavior parameters
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = false;
+  final static Array     Power           = ["HP_FRAGILE", "HP_HEALTHY"];
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = false;
+}
+
+class CHeavyGun
+  extends CAnyWeapon
+{
+  final static float     InitBulletSpeed = 400.0;
+  final static float     FireDeviation   = 0.25;
+
+  final static String    FireEffectId    = "HeavyGunFireMuzzleEffect";
+  final static String    CloudEffectId   = "";
+  final static String    FireSoundId     = "";
+  Component BurstFireSound  = null;
+
+  // gun behavior parameters
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = false;
+  final static Array     Power           = ["HP_HEALTHY"];
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = false;
+}
+
+class CLightLauncher
+  extends CAnyWeapon
+{
+  final static float     InitBulletSpeed = 0.0;
+  final static float     FireDeviation   = 0.0;
+
+  final static String    FireEffectId    = "";
+  final static String    CloudEffectId   = "LightLauncherCloudEffect";
+  final static String    FireSoundId     = "";
+  Component BurstFireSound  = null;
+
+  // gun behavior parameters
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = true;
+  final static Array     Power           = ["HP_HEALTHY"];
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = true;
+}
+
+class CHeavyLauncher
+  extends CAnyWeapon
+{
+  final static float     InitBulletSpeed = 0.0;
+  final static float     FireDeviation   = 0.0;
+
+  final static String    FireEffectId    = "";
+  final static String    CloudEffectId   = "HeavyLauncherCloudEffect";
+  final static String    FireSoundId     = "HeavyLauncherFireSound";
+  Component BurstFireSound  = null;
+
+  // gun behavior parameters
+  final static boolean   SelfTargeting   = false;
+  final static boolean   Sequenced       = true;
+  final static Array     Power           = ["HP_BULLET_PROOF"];
+
+  // is camera can be attached to bullets of this weapon?
+  final static boolean m_ProjectileCameraAttachable = true;
+}
+
+class CSKS45Gun extends CMachineGun
+{
+  final static String BulletPatternId = "MachineGunBullet";
+
+  // *** Gun parameters for behavior
+  final static int  FirePeriod        = 200; // ms
+  final static int  FirePeriodRandAdd = 50; // ms
+
+  final static boolean BurstFire      = true;
+  final static int  BurstTime         = 2400; // ms
+  final static int  BurstTimeRandAdd  = 0; // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["HUMAN"],[]],  // high priority mask
+                                [["AIR"],[]],    // low priority mask
+                                [[],[]]          // low priority mask: RestrictTo, Exclude
+                              ];
+}
+
+class CM2A1Gun extends CMachineGun
+{
+  final static String BulletPatternId = "MachineGunBullet";
+
+  // *** Gun parameters for behavior
+  final static int  FirePeriod        = 200; // ms
+  final static int  FirePeriodRandAdd = 50; // ms
+
+  final static boolean BurstFire      = true;
+  final static int  BurstTime         = 2400; // ms
+  final static int  BurstTimeRandAdd  = 0; // ms
+
+  final static int  BurstDelay        = 3000; // ms
+  final static int  BurstDelayRandAdd = 2000; // ms
+
+  // gun specific fire mask with priorities
+  final static Array GunSpecificFireMask = [
+                                [["AIR"],[]],  // high priority mask: RestrictTo, Exclude
+                                [["HUMAN"],[]] // low priority mask: RestrictTo, Exclude
+                              ];
+}

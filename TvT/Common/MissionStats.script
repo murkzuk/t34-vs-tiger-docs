@@ -1,0 +1,543 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMissionStatus extends CCommonStrings
+{
+  Array m_BonusMissionObjectivesVisible;
+  Array m_MissionObjectivesVisible;
+
+  CMissionStatus()
+  {
+    for (int obj = 0; obj < m_MissionObjectives.size(); obj++)
+    {
+      m_MissionObjectivesVisible.add(m_MissionObjectivesStatuses[obj] != CCommonStrings::str_ObjectiveHidden);
+      if (!m_MissionObjectivesVisible[obj])
+        m_MissionObjectivesStatuses[obj] = str_ObjectiveInProgress;
+    }
+
+    for (int obj = 0; obj < m_BonusMissionObjectives.size(); obj++)
+    {
+      m_BonusMissionObjectivesVisible.add(m_BonusMissionObjectivesStatuses[obj] != CCommonStrings::str_ObjectiveHidden);
+      if (!m_BonusMissionObjectivesVisible[obj])
+        m_BonusMissionObjectivesStatuses[obj] = str_ObjectiveInProgress;
+    }
+  }
+
+  //
+  //  Objectives
+  //
+
+  Array GetMissionObjectives()
+  {
+    return m_MissionObjectives;
+  }
+
+  Array GetMissionObjectivesStatuses()
+  {
+    return m_MissionObjectivesStatuses;
+  }
+
+  Array GetMissionObjectivesVisibleFlag()
+  {
+    return m_MissionObjectivesVisible;
+  }
+
+  void SetMissionObjectiveStatus(
+      int     _Objective,
+      WString _Status
+    )
+  {
+    m_MissionObjectivesStatuses[_Objective] = _Status;
+  }
+
+  //
+  //  Bonus objectives
+  //
+
+  Array GetBonusMissionObjectives()
+  {
+    return m_BonusMissionObjectives;
+  }
+
+  Array GetBonusMissionObjectivesStatuses()
+  {
+    return m_BonusMissionObjectivesStatuses;
+  }
+
+  Array GetBonusMissionObjectivesVisibleFlag()
+  {
+    return m_BonusMissionObjectivesVisible;
+  }
+
+  Array GetBonusMissionConditionFlags()
+  {
+    return m_BonusMissionObjectivesConditionFlags;
+  }
+
+  void SetBonusMissionObjectiveStatus(
+      int     _Objective,
+      WString _Status
+    )
+  {
+    m_BonusMissionObjectivesStatuses[_Objective] = _Status;
+  }
+
+  //
+  //  Mission statistics
+  //
+
+  //
+  //  Methods common to all missions
+  //
+
+  event void CompleteObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetMissionObjectives();
+    Array statuses   = GetMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveComplete)
+      return;
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_CompleteObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_CompleteObjective", [_Objective]);
+        // send to self
+        Client_CompleteObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_CompleteObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetMissionObjectives();
+    Array statuses   = GetMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveComplete)
+      return;
+
+    // play music
+    new #MusicController().SetImmidiateMissionState(CMusicController::MISSION_Objective);
+    // after play objective music, play normal music
+    new #MusicController().SetMissionState(GetCurrentMissionMusic());
+
+    SetMissionObjectiveStatus(_Objective, str_ObjectiveComplete);
+    fireEvent(0.0, [], "SendCockpitMessage", [
+        str_CompleteMessage + objectives[_Objective],
+        CCockpitColorMap::m_ObjectiveCompleteMessageColor
+      ]);
+
+    // check whether all base objectives are complete
+    statuses = GetMissionObjectivesStatuses();
+    // mission is complete if all the main objectives are complete
+    boolean bMissionComplete = true;
+
+    // $LOG
+//    logWarning("Checking objectives status:");
+
+    for (int i = 0; i < statuses.size(); i = i + 1)
+    {
+      if (m_MissionObjectivesVisible[i])
+        bMissionComplete &= (statuses[i] == str_ObjectiveComplete);
+//       || (statuses[i] == str_ObjectiveHidden));
+
+      // $LOG
+//      logMessage("Objective " + new String(i) + " status is " + new String(statuses[i]));
+    }
+
+    logWarning("As a result bMissionComplete is " + new String(bMissionComplete));
+
+    // refresh statuses
+    statuses = GetBonusMissionObjectivesStatuses();
+    // get "condition" flags
+    Array condition = GetBonusMissionConditionFlags();
+    // bonus objectives are complete if all bonus non-condition objectives are complete
+    boolean bBonusMissionComplete = true;
+    for (int i = 0; i < statuses.size(); i = i + 1)
+      if (!condition[i] && m_BonusMissionObjectivesVisible[i])
+        bBonusMissionComplete &= (statuses[i] == str_ObjectiveComplete);
+
+    if (bMissionComplete && bBonusMissionComplete)
+    {
+      m_MissionComplete = true;
+      DelayedQuit();
+    }
+    else
+    {
+      if (bMissionComplete)
+        DelayedContinueEscMenu();
+    }
+  }
+
+  void FailObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetMissionObjectives();
+    Array statuses = GetMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveFailed)
+      return;
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_FailObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_FailObjective", [_Objective]);
+        // send to self
+        Client_FailObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_FailObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetMissionObjectives();
+    Array statuses = GetMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveFailed)
+      return;
+
+    SetMissionObjectiveStatus(_Objective, str_ObjectiveFailed);
+    fireEvent(0.0, [], "SendCockpitMessage", [
+        str_FailedMessage + objectives[_Objective],
+        CCockpitColorMap::m_ObjectiveFailedMessageColor
+      ]);
+
+    // one of the base objectives failed - quit
+    DelayedQuit();
+  }
+
+  void CompleteBonusObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetBonusMissionObjectives();
+    Array statuses = GetBonusMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveComplete)
+      return;
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_CompleteBonusObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_CompleteBonusObjective", [_Objective]);
+        // send to self
+        Client_CompleteBonusObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_CompleteBonusObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetBonusMissionObjectives();
+    Array statuses = GetBonusMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveComplete)
+      return;
+
+    // play music
+    new #MusicController().SetImmidiateMissionState(CMusicController::MISSION_Objective);
+    // after play objective music, play normal music
+    new #MusicController().SetMissionState(GetCurrentMissionMusic());
+
+    SetBonusMissionObjectiveStatus(_Objective, str_ObjectiveComplete);
+    fireEvent(0.0, [], "SendCockpitMessage", [
+        str_CompleteMessage + objectives[_Objective],
+        CCockpitColorMap::m_ObjectiveCompleteMessageColor
+      ]);
+
+    // check whether all base and all bonus objectives are complete
+    // quit if true
+
+    // refresh statuses
+    statuses             = GetMissionObjectivesStatuses();
+    Array bonus_statuses = GetBonusMissionObjectivesStatuses();
+
+    // mission is complete if all the main objectives are complete...
+    boolean bMissionComplete = true;
+    for (int i = 0; i < statuses.size(); i++)
+      if (m_MissionObjectivesVisible[i])
+        bMissionComplete &= (statuses[i] == str_ObjectiveComplete);
+
+    // ... and all bonus objectives are complete
+    Array condition = GetBonusMissionConditionFlags();
+    for (int i = 0; i < bonus_statuses.size(); i++)
+      if (!condition[i] && m_BonusMissionObjectivesVisible[i])
+        bMissionComplete &= (bonus_statuses[i] == str_ObjectiveComplete);
+
+    if (bMissionComplete)
+    {
+      m_MissionComplete = true;
+      DelayedQuit();
+    }
+  }
+
+  void FailBonusObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetBonusMissionObjectives();
+    Array statuses = GetBonusMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveFailed)
+      return;
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_FailBonusObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_FailBonusObjective", [_Objective]);
+        // send to self
+        Client_FailBonusObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_FailBonusObjective(
+      int _Objective
+    )
+  {
+    Array objectives = GetBonusMissionObjectives();
+    Array statuses = GetBonusMissionObjectivesStatuses();
+
+    if (statuses[_Objective] == str_ObjectiveFailed)
+      return;
+
+    SetBonusMissionObjectiveStatus(_Objective, str_ObjectiveFailed);
+    fireEvent(0.0, [], "SendCockpitMessage", [
+        str_FailedMessage + objectives[_Objective],
+        CCockpitColorMap::m_ObjectiveFailedMessageColor
+      ]);
+  }
+
+  // Hide and UniHide bonus and primary objectives
+
+  event void ShowObjective(
+      int _Objective
+    )
+  {
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_ShowObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_ShowObjective", [_Objective]);
+        // send to self
+        Client_ShowObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_ShowObjective(
+      int _Objective
+      )
+  {
+    Array objectives = GetMissionObjectives();
+    Array statuses   = GetMissionObjectivesStatuses();
+
+    // this objective already show
+    if (m_MissionObjectivesVisible[_Objective]) return;
+
+     m_MissionObjectivesVisible[_Objective] = true;
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission != null)
+    {
+       String PlayerObjectID = Mission.GetMainPlayerObjectID();
+       Component PlayerHelicopter = Mission.GetObject(PlayerObjectID);
+
+      if (PlayerHelicopter != null)
+         if (PlayerHelicopter.Attribute == "RUS")
+         {
+           fireEvent(0.0, [], "SendCockpitMessage", [ str_ObjectiveAdded + L": " + objectives[_Objective],
+              CCockpitColorMap::m_ObjectiveAddedMessageColor, "str_Sas_Message_11"]);
+// LOG
+            logWarning("[Client_ShowObjective] Sound 'str_Sas_Message_11'  it is added in queue");
+         }
+          else
+          {
+           fireEvent(0.0, [], "SendCockpitMessage", [ str_ObjectiveAdded + L": " + objectives[_Objective],
+              CCockpitColorMap::m_ObjectiveAddedMessageColor, "str_Sas_AH64_Message_11"]);
+// LOG
+            logWarning("[Client_ShowObjective] Sound 'str_Sas_AH64_Message_11'  it is added in queue");
+          }
+    }
+  }
+
+  event void ShowBonusObjective(
+      int _Objective
+    )
+  {
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_ShowBonusObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_ShowBonusObjective", [_Objective]);
+        // send to self
+        Client_ShowBonusObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_ShowBonusObjective(
+      int _Objective
+      )
+  {
+    Array objectives = GetBonusMissionObjectives();
+    Array statuses = GetBonusMissionObjectivesStatuses();
+
+    // this objective already show
+    if (m_BonusMissionObjectivesVisible[_Objective]) return;
+
+    m_BonusMissionObjectivesVisible[_Objective] = true;
+
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission != null)
+    {
+       String PlayerObjectID = Mission.GetMainPlayerObjectID();
+       Component PlayerHelicopter = Mission.GetObject(PlayerObjectID);
+
+       if (PlayerHelicopter == null)
+         if (PlayerHelicopter.Attribute == "RUS")
+         {
+             fireEvent(0.0, [], "SendCockpitMessage", [
+              str_ObjectiveAdded + L": " + objectives[_Objective],
+               CCockpitColorMap::m_ObjectiveAddedMessageColor, "str_Sas_Message_11"]);
+// LOG
+            logWarning("[Client_ShowBonusObjective] Sound 'str_Sas_Message_11'  it is added in queue");
+         }
+         else
+         {
+             fireEvent(0.0, [], "SendCockpitMessage", [
+              str_ObjectiveAdded + L": " + objectives[_Objective],
+               CCockpitColorMap::m_ObjectiveAddedMessageColor, "str_Sas_AH64_Message_11"]);
+// LOG
+            logWarning("[Client_ShowBonusObjective] Sound 'str_Sas_AH64_Message_11'  it is added in queue");
+         }
+     }
+  }
+
+  event void HideObjective(
+      int _Objective
+    )
+  {
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_HideObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_HideObjective", [_Objective]);
+        // send to self
+        Client_HideObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_HideObjective(
+      int _Objective
+      )
+  {
+    m_MissionObjectivesVisible[_Objective] = false;
+  }
+
+  event void HideBonusObjective(
+      int _Objective)
+  {
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Single")
+      Client_HideBonusObjective(_Objective);
+    else
+    if (GameMode == "Server")
+    {
+      Component Session = Game.GetGameSession();
+      if (Session != null)
+      {
+        // send to clients
+        Session.FireNetEvent("Client_HideBonusObjective", [_Objective]);
+        // send to self
+        Client_HideBonusObjective(_Objective);
+      }
+    }
+  }
+
+  event void Client_HideBonusObjective(
+      int _Objective
+    )
+  {
+    m_BonusMissionObjectivesVisible[_Objective] = false;
+  }
+
+}
+

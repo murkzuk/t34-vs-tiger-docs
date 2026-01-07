@@ -1,0 +1,81 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//                      
+//-------------------------------------------------------------------
+
+class CMoviesList
+{
+  // for movie list
+  Array   m_Movies;
+  int     m_MovieIndex;
+  Array   m_OnEndEvent;
+
+  boolean m_bIsPlaying;
+
+  void SetOnEndEvent(
+      String _IdComponent, 
+      String _Method
+    )
+  {
+   m_OnEndEvent = [_IdComponent, _Method];
+  }
+  
+  // play movies list
+  void Setup(
+      Array _MovieList
+    )
+  {
+    m_Movies       = _MovieList;
+    m_OnEndEvent   = [];
+
+    m_MovieIndex   = -1;
+    m_bIsPlaying   = false;
+  }
+
+  // start play from first movie
+  void PlayList()
+  {
+    if (m_Movies.isEmpty())
+      return;
+    
+    m_MovieIndex   = -1;
+    m_bIsPlaying   = true;
+
+    // play list
+    NextMovie();
+  }
+
+  void NextMovie()
+  {
+    // next movie
+    m_MovieIndex++;
+    if (m_MovieIndex < m_Movies.size())
+    {
+      // play file
+      SetFullscreenMovie(m_Movies[m_MovieIndex]);
+      SetPlayMode(false);
+    }
+    else // Закончили проигрывать ролики
+    {
+      m_bIsPlaying = false;
+      m_Movies = [];
+      m_MovieIndex = -1;
+      DeleteMovie();
+
+      if (!m_OnEndEvent.isEmpty())
+        sendEvent(0, m_OnEndEvent[0], m_OnEndEvent[1], []);
+    }
+  }
+
+  event void OnEndOfStream(
+      String _Id
+    )
+  { 
+    // change movie
+    NextMovie();
+  }
+}

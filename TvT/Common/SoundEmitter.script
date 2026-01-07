@@ -1,0 +1,163 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Emitter script
+//
+
+class CSoundEmitter
+  extends CBaseSysObject
+{
+  // Special object class
+  final static String SPEC_CLASS = "Sound Emitters";
+
+  // Flag for script loading
+  final static boolean AggregateScript = true;
+
+  // Default properties
+  final static String  SoundFile   = "";
+  final static float   MinDistance = DS3D_DEFAULTMINDISTANCE;
+  final static float   MaxDistance = DS3D_DEFAULTMAXDISTANCE;
+  final static boolean AutoStart   = true;
+  final static boolean Loop        = true;
+
+  // Emitter properties
+  boolean m_AutoStart = AutoStart;
+  boolean m_Loop      = Loop;
+
+  // Effects properties
+  final static String EID_Center    = "EmitterCenter";
+  final static String EID_MinBounds = "EmitterMinBounds";
+  final static String EID_MaxBounds = "EmitterMaxBounds";
+  final static Array  SysEffects = [ 
+                                     "SoundEmitterCenter", 
+                                     "SoundEmitterMinBounds", 
+                                     "SoundEmitterMaxBounds"        
+                                   ];
+  final static Array  EffectsSrc = [ 
+                                     "CSoundEmitterCenterEffect", 
+                                     "CSoundEmitterMinBoundsEffect", 
+                                     "CSoundEmitterMaxBoundsEffect"     
+                                   ];
+
+  //
+  // Service functions
+  //
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CEditable::GetDefaultProperties();
+
+    Default.append([
+        ["SoundFile",   SoundFile],
+        ["MinDistance", MinDistance],
+        ["MaxDistance", MaxDistance],
+        ["AutoStart",   AutoStart],
+        ["Loop",        Loop]
+      ]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CEditable::SetProperties(_PropMap);
+
+    String SoundFileDir  = CApplicationSettings::m_PathToSoundFiles;
+    String SoundFileName = _PropMap.Get("SoundFile", SoundFile);
+    if (SoundFileDir.length() != 0)
+      SoundFileName = SoundFileDir + SoundFileName;
+
+    LoadSoundFile (SoundFileName);
+    SetMinDistance(_PropMap.Get("MinDistance", MinDistance));
+    SetMaxDistance(_PropMap.Get("MaxDistance", MaxDistance));
+    m_AutoStart = _PropMap.Get("AutoStart", AutoStart);
+    m_Loop      = _PropMap.Get("Loop",      Loop);
+
+    UpdateEffects();
+  }
+
+  void SetSize(
+      Vector _Size
+    )
+  {
+    Component Content = new #GameController().GetLoadedLevel().GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.Set("MaxDistance", max(max(_Size.x, _Size.y), _Size.z));
+    SetProperties(PropertiesMap);
+  }
+
+  void Initialize(
+      Component _Level,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Show();
+
+    if (m_AutoStart)
+      SetActive(1);
+  }
+
+  void Shutdown(
+      Component _Level
+    )
+  {
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Hide();
+  }
+
+  //
+  // Visibility functions
+  //
+
+  void UpdateEffects()
+  {
+    m_Boundings[1] = new Vector(GetMinDistance(), GetMinDistance(), GetMinDistance());
+    m_Boundings[2] = new Vector(GetMaxDistance(), GetMaxDistance(), GetMaxDistance());
+    CBaseSysObject::UpdateEffects();
+  }
+
+  //
+  // Object state functions
+  //
+
+  void SetActive(
+      int _Active
+    )
+  {
+    if (1 == _Active) // Activate
+      PlaySoundBuffer(m_Loop);
+
+    else if (0 == _Active) // Deactivate
+      StopSoundPlaying(true);
+  }
+
+  //
+  // Event handlers
+  //
+
+  void SoundPlayingFinished(
+      String _SubIdentificator
+    )
+  {
+  }
+}

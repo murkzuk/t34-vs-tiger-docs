@@ -1,0 +1,344 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseCockpitTerrainMap
+{
+  Component MatManager     = new #MaterialManager<CCockpitSkin>();
+
+  // CONSTANTS FROM CODE!
+  final static int NO_EXTRA_MASK_CHECKS     = 0; // проверяем маску только при начале работы
+  final static int DECREMENTAL_MASK_CHECKS  = 1; // объекты по маске исключаем из имеющихся c предыдущ update..
+  final static int PERMANENT_MASK_CHECKS    = 2;
+
+  // how render objects
+  final static int BEH_DEFAULT              = 0;
+  final static int BEH_FIT_MAP              = 2;
+  final static int BEH_NOT_ROTATE_TEX       = 8;
+
+  // render levels
+  final static int COCKPIT_DETECT_OBJECTS   = 3;
+  final static int COCKPIT_MAP_PLAYER       = 4;
+
+  // default ObjectsBehaviors use index
+  final static int DEFAULT_BEHAVIOR         = -1;
+
+  // navpoint render flags
+
+  final static int  NAV_RENDER_Default             = 0x00;
+  final static int  NAV_RENDER_ShowDirectionLine   = 0x02;
+  final static int  NAV_RENDER_NotRenderFirstPoint = 0x04;
+  final static int  NAV_RENDER_NotRenderLastPoint  = 0x08;
+  final static int  NAV_RENDER_NotRenderTexture    = 0x10;
+}
+
+class CUh1bMapView
+  extends CBaseCockpitTerrainMap
+{
+  Array Fonts = [
+      [ "Interface", 0.022 ]
+    ];
+
+  boolean ShowRulers         = true;
+  boolean ShowCross          = false;
+  boolean ShowHelicopter     = true;
+  boolean ShowBackground     = true;
+  boolean ShowTerrain        = true;
+  boolean RenderMask         = false;
+
+
+  float XScale = 0.65 ;
+  float YScale = 0.65 ;
+
+  Array MapTexture          = [ 0.0, 0.0, "N", "N", "N", "N", 1.0, 1.0, "terrain map",    0 ];
+
+  Array NavPoint            = [ 0.0, 0.0, "N", "N", "C", "C", XScale, XScale, "navpoint icon",  0 ];
+  Array MainNavPoint        = [ 0.0, 0.0, "N", "N", "C", "C", XScale * 1.5f, XScale * 1.5f, "main navpoint icon",  0 ];
+  Array CompassNavPoint     = [ 0.0, 0.0, "N", "N", "C", "C", XScale * 2.0f, XScale * 2.0f, "compass navpoint icon",  0 ];
+
+  Array MapBackground       = [ -0.04, -0.04, "N", "N", "N", "N", 0.66, 0.66, "map background", 0 ];
+//  Array MapBackground       = [ 0.0, 0.0, "C", "C", "C", "C", 1.30, 1.30, "map background", 0 ];
+
+  Array NavpointName        = [ 0.0, 0.0, "C", "F", "C", "C" , 0, L"" ];
+
+
+  Array ThickRulerLine       = [ 0.0, 1.0, "N", "N", "N", "N", 1.0, 0.0, 3.0, 0.0f, 0.0f, new Color(0.50, 0.50, 0.50, 0.50)];
+  Array ThinRulerLine        = [ 0.0, 0.0, "N", "N", "N", "N", 0.0, 1.0, 1.0, 0.0f, 0.0f, new Color(0.50, 0.50, 0.50, 0.50)];
+
+  Array DirectionLine        = [ 0.00, 0.00, "N", "N", "N", "N", 1.00, 1.00, 1.0, 15.0f, 10.0f]; // arrowed line
+  Array MapBorder            = [ 0.0, 0.0, "N", "N", "N", "N", 1.0, 1.0, 0.0];
+
+  float MarksSpacing    = 11000.0f / 6.0;
+  int   MarksSubSpacing = 10;
+  Vector MarksInitPoint = new Vector(1000.0f, 1000.0f, 0.0f);
+
+  Color FriendColor = new Color(1.0, 1.0, 1.0);
+
+  Array ObjectsUIElements = [
+       //[ 0.0, 0.0, "N", "N", "N", "N", XScale * 1.5f, XScale * 1.5f, "tank arrow",     0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "tank arrow rus",                   0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "tank arrow ger",                   0, FriendColor, 0.5, 0.5 ],
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI rus tank arrow",            0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI ger tank arrow",            0, FriendColor, 0.5, 0.5 ],
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI rus vehicle",               0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI ger vehicle",               0, FriendColor, 0.5, 0.5 ],
+
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI rus antitank arrow",        0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI ger antitank arrow",        0, FriendColor, 0.5, 0.5 ],
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI rus btr arrow",        0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI ger btr arrow",        0, FriendColor, 0.5, 0.5 ],
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI rus sau arrow",        0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI ger sau arrow",        0, FriendColor, 0.5, 0.5 ],
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale * 1.5f, XScale * 1.5f, "airplane rus arrow", 0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale * 1.5f, XScale * 1.5f, "airplane ger arrow", 0, FriendColor, 0.5, 0.5 ],
+
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "dzot rus arrow", 0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "dzot ger arrow", 0, FriendColor, 0.5, 0.5 ],
+       // Out icons
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "tank arrow out", 0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI rus arrow out", 0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale, XScale, "AI ger arrow out", 0, FriendColor, 0.5, 0.5 ]
+
+    ];
+
+  // array indeces
+  final static int PLAYER_BEHAVIOR          = 0;
+  final static int FIX_DIR_BEHAVIOR         = 1;
+
+  Array ObjectsBehaviors = [
+      [
+        BEH_FIT_MAP,                // Behavior Type mask
+        new Color(1.0, 0.0, 0.0)    // values
+      ],
+      [
+        BEH_NOT_ROTATE_TEX         // Behavior Type mask
+      ]
+
+    ];
+
+  Array ObjectsList = [
+      // main player unit
+      [
+        ["PLAYERUNIT", "TANK"],           // include           ["Foo", "MainMesh", "TANK"],
+        [CLASSIFICATOR_DEAD_OBJECT],              // exclude
+        0,                            // ObjectsUIElements index
+        PLAYER_BEHAVIOR,              // ObjectBehavior index
+        COCKPIT_MAP_PLAYER,           // render priority level
+        DECREMENTAL_MASK_CHECKS,      // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        16,                           // ObjectsUIElements Out of map index
+        true                          // Is MainPlayer unit (false)
+      ],
+      [
+        ["PLAYERUNIT", "HEAVYTANK"],           // include          ["Foo", "MainMesh", "HEAVYTANK"],
+        [CLASSIFICATOR_DEAD_OBJECT],              // exclude
+        1,                            // ObjectsUIElements index
+        PLAYER_BEHAVIOR,              // ObjectBehavior index
+        COCKPIT_MAP_PLAYER,           // render priority level
+        DECREMENTAL_MASK_CHECKS,      // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        16,                           // ObjectsUIElements Out of map index
+        true                          // Is MainPlayer unit (false)
+      ],
+      [
+        ["TANK"],                   // include
+        ["PLAYERUNIT", "GER", "SAU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        2,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        17                            // ObjectsUIElements Out of map index
+      ],
+      [
+        ["TANK"],                   // include
+        ["PLAYERUNIT", "RU", "SAU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        3,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+      ],
+       [
+        ["HEAVYTANK"],                   // include
+        ["PLAYERUNIT", "RU", "SAU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        3,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+      ],
+
+
+
+      [
+        ["VEHICLE"],                   // include
+        ["GER", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        4,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        17                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["VEHICLE"],                   // include
+        ["RU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        5,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["ANTITANK"],       // include
+        ["GER", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        6,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        17                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["ANTITANK"],       // include
+        ["RU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        7,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["BTR"],       // include
+        ["GER", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        8,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        17                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["BTR"],       // include
+        ["RU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        9,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["SAU"],       // include
+        ["GER", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        10,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        17                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["SAU"],       // include
+        ["RU", "INVISIBLE_ON_RADAR",
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        11,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+/*      [
+        ["AIRPLANE"],           // include
+        ["FW"],                     // exclude
+        12,                      // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,       // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS, // render priority level
+        NO_EXTRA_MASK_CHECKS    // mask checking type
+        // color if need
+      ],
+      [
+        ["AIRPLANE"],           // include
+        ["IL"],                     // exclude
+        13,                      // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,       // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS, // render priority level
+        NO_EXTRA_MASK_CHECKS    // mask checking type
+        // color if need
+      ],
+*/
+      [
+        ["BLD_WAR", "RU"],       // include
+        ["INVISIBLE_ON_RADAR", 
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        14,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        17                            // ObjectsUIElements Out of map index
+        // color if need
+      ],
+      [
+        ["BLD_WAR", "GER"],       // include
+        ["INVISIBLE_ON_RADAR", 
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        15,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS,     // mask checking type
+        new Color(1.0, 1.0, 1.0),     // color if need
+        18                            // ObjectsUIElements Out of map index
+        // color if need
+      ]
+     ];
+}
+

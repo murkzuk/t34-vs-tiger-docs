@@ -1,0 +1,1254 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Player slot descriptor
+//
+
+class CSlotDescriptor
+{
+  void CSlotDescriptor(
+      int     _Team,
+      boolean _IsManual,
+      boolean _IsOpen
+    )
+  {
+    IsManual = _IsManual;
+    IsOpen   = _IsOpen;
+    Team     = _Team;
+  }
+
+  int     PlayerID = 0;
+  int     Team     = -1;
+
+  boolean IsBusy   = false;
+  boolean IsManual = true;
+  boolean IsOpen   = true;
+
+  String ToString()
+  {
+    return new String("["+
+                      "Player: "+new String(PlayerID)+", "+
+                      "Team: "+new String(Team)+", "+
+                      "IsBusy: "+new String(IsBusy)+", "+
+                      "IsManual: "+new String(IsManual)+", "+
+                      "IsOpen: "+new String(IsOpen)+
+                      "]");
+  }
+}
+
+
+//
+// Player descriptor
+//
+
+class CPlayerDescriptor
+{
+  void CPlayerDescriptor(
+      int _PlayerID
+    )
+  {
+    PlayerID = _PlayerID;
+  }
+
+  int     PlayerID = 0;
+  boolean IsReady  = false;
+  Array   Mirrors  = [];
+}
+
+
+//
+// Mirror descriptor
+//
+
+class CMirrorDescriptor
+{
+  void CMirrorDescriptor(
+      int   _PlayerID,
+      Array _Descriptor
+    )
+  {
+    PlayerID   = _PlayerID;
+    Descriptor = _Descriptor;
+    ObjectID   = _Descriptor[CMissionContent::INDEX_ObjectID];
+  }
+
+  int     PlayerID   = 0;
+  String  ObjectID   = "";
+  Array   Descriptor = [];
+}
+
+
+//
+// Server descriptor
+//
+
+class CServerDescriptor
+{
+  final static int ST_DeathMatch     = 0;
+  final static int ST_CaptureTheFlag = 1;
+  final static int ST_Cooperative    = 2;
+
+  void CServerDescriptor(
+      Component _Descriptor
+    )
+  {
+    m_Descriptor = _Descriptor;
+  }
+
+  WString GetSessionName()
+  {
+    return m_Descriptor.SessionName;
+  }
+
+  WString GetSessionType()
+  {
+    return "Deth"/*CCommonStrings::MultiplayerGameTypeS[m_Descriptor.SessionType]*/;
+  }
+
+  int GetSessionTypeID()
+  {
+    return m_Descriptor.SessionType;
+  }
+
+  String GetMissionName()
+  {
+    return "C" + SessionMapToMissionID(m_Descriptor.SessionMap) + "Mission";
+  }
+
+  String GetMissionDescrName()
+  {
+    return "C" + SessionMapToMissionID(m_Descriptor.SessionMap) + "MissionDescriptor";
+  }
+
+  WString GetMapName()
+  {
+     Component MissionDescriptor = createScriptClass(GetMissionDescrName());
+
+     if (null != MissionDescriptor)
+       return MissionDescriptor.GetMapName();
+
+     return getLocalized("Common", "str_Unknown");
+  }
+
+  String SessionMapToMissionID(
+      int _SessionMap
+    )
+  {
+    if (m_Descriptor.SessionType == ST_DeathMatch)
+      return "DM" + new String(_SessionMap);
+    else
+    if (m_Descriptor.SessionType == ST_CaptureTheFlag)
+      return "CF" + new String(_SessionMap);
+    else
+    if (m_Descriptor.SessionType == ST_Cooperative)
+      return "C" + new String(_SessionMap / 10) +
+             "M" + new String(_SessionMap % 10);
+    else
+      logError("Invalid session type: " + new String(m_Descriptor.SessionType));
+  }
+
+  int GetOpenSlotsA()
+  {
+    return m_Descriptor.OpenSlotsA;
+  }
+
+  int GetFreeSlotsA()
+  {
+    return m_Descriptor.FreeSlotsA;
+  }
+
+  int GetOpenSlotsB()
+  {
+    return m_Descriptor.OpenSlotsB;
+  }
+
+  int GetFreeSlotsB()
+  {
+    return m_Descriptor.FreeSlotsB;
+  }
+
+  int GetControlMode()
+  {
+    return m_Descriptor.ControlMode;
+  }
+
+  boolean CanTeamChange()
+  {
+    return (m_Descriptor.TeamChangeMode == 1);
+  }
+
+  int GetFragLimit()
+  {
+    return getStaticClassMember(GetMissionName(), "FragLimit");
+  }
+
+  int GetTimeLimit()
+  {
+    return getStaticClassMember(GetMissionName(), "TimeLimit");
+  }
+
+  Component m_Descriptor = null;
+}
+
+
+//
+// Server
+//
+
+class CServer extends CSession
+{
+  void CServer()
+  {
+    logWarning("[Server] Constructor");
+
+    m_SessionInfo     = new CServerDescriptor(GetServerInfo());
+  }
+
+  // Server events handlers
+  void OnSessionCreated()
+  {
+    logWarning("[Server] OnSessionCreated");
+
+    // Set connected status
+    SetSessionStatus(CPlayerStat::CS_Connected, false);
+
+    // Add player info
+    if(!(new #GameController()).IsDedicate())
+    {
+      logWarning("[Server]   SetPlayerInfo: " + SERVER_PLAYER_ID);
+      SetPlayerInfo(SERVER_PLAYER_ID, GetThisPlayerInfo());
+    }
+  }
+
+  void OnSessionClosed()
+  {
+  }
+
+
+  void OnCreatePlayer(
+      int _PlayerID
+    )
+  {
+    logWarning("[Server] OnCreatePlayer(" + new String(_PlayerID) + ")");
+
+    // Add player
+    m_PlayersList.add(new CPlayerDescriptor(_PlayerID));
+    // Send player ID to player
+    FireNetEvent(_PlayerID, "Server_SetPlayerID", [_PlayerID]);
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  event void DeleteObject(
+      String _ObjectID
+    )
+  {
+    logWarning("[Server] DeleteObject(" + new String(_ObjectID) + ")");
+    // remove player objects
+    if (_ObjectID != "")
+    {
+      Component Mission = (new #GameController()).GetMission();
+      if (Mission == null)
+        return;
+      // delete object on server
+      if (Mission.GetObject(_ObjectID) != null)
+        Mission.DeleteObject(_ObjectID);
+
+      // delete object on clients
+      DeleteObjectMirror(_ObjectID);
+    }
+  }
+
+/*  event void ReportPlayerLeave(
+      WString _Name
+    )
+  {
+    logWarning("[Server] ReportPlayerLeave: " + new String(_Name));
+    FireNetEvent("ReportPlayerLeave", [_Name]);
+  }
+*/
+
+  event void Client_DeleteObject(
+      String _ObjectID
+    )
+  {
+    logWarning("[Server] Client_DeleteObject(" + new String(_ObjectID) + ")");
+    DeleteObject(_ObjectID);
+  }
+
+  void  RemoveObject(
+      int _Slot
+    )
+  {
+    int PlayerID = m_PlayerSlots[_Slot].PlayerID;
+    
+    if (!m_PlayerSlots[_Slot].IsManual)
+      PlayerID = GetPlayerIDForBot(_Slot);
+      
+    logWarning("[Server] RemoveObject(" + new String(PlayerID) + ")");
+
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;    
+
+    String ObjectID = Mission.FindObjectBySlot(_Slot);
+    logWarning("FindObjectBySlot: " + ObjectID);
+    //logWarning("FreeSlot: " + new String(_Slot));
+    FreeSlot(_Slot);
+    Component Object = Mission.GetObject(ObjectID);
+    if(Object == null) return;
+    if (!checkMask(Object, ["MULTIPLAYERUNIT"], [])) return;
+
+    FreeSlot(_Slot);
+
+    //logWarning("removeClassificator: " + ObjectID);
+    removeClassificator(Object, "MULTIPLAYERUNIT");
+
+    //logWarning("KillUnit: " + ObjectID);
+    sendEvent(0.0, ObjectID, "KillUnit", []);
+    FireNetEvent("Server_KillUnit", [ObjectID]);
+
+    // remove player info
+    DelPlayerInfo(PlayerID);
+    FireNetEvent("Server_DelPlayerInfo", [PlayerID]);
+    
+    sendEvent(15.0, getIdentificator(Mission), "AddDeathUnit", [ObjectID]);
+
+    //ReportServerLists();
+    
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  event void RemoveObject(
+      int _Slot,
+      String _ObjectID
+    )
+  {
+    int PlayerID = m_PlayerSlots[_Slot].PlayerID;
+    logWarning("[Server] RemoveObject(" + new String(PlayerID) + ")");
+
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;  
+
+    String ObjectID = _ObjectID;
+    //logWarning("FindObjectBySlot: " + ObjectID);
+    //logWarning("FreeSlot: " + new String(_Slot));
+    FreeSlot(_Slot);
+    Component Object = Mission.GetObject(ObjectID);
+    if(Object == null) return;
+    //logWarning("removeClassificator: " + ObjectID);
+    removeClassificator(Object, "MULTIPLAYERUNIT");
+    //logWarning("KillUnit: " + ObjectID);
+    sendEvent(0.0, ObjectID, "KillUnit", []);
+    FireNetEvent("Server_KillUnit", [ObjectID]);
+
+    // remove player info
+    DelPlayerInfo(PlayerID);
+    FireNetEvent("Server_DelPlayerInfo", [PlayerID]);
+    
+    sendEvent(15.0, getIdentificator(Mission), "AddDeathUnit", [ObjectID]);
+    
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void OnDestroyPlayer(
+      int _PlayerID
+    )
+  {
+    logWarning("[Server] OnDestroyPlayer(" + new String(_PlayerID) + ")");
+
+    int Slot = FindPlayerSlot(_PlayerID);
+    RemoveObject(Slot);
+
+    // remove player
+    int Index = FindPlayer(_PlayerID);
+    if (Index != -1)
+      m_PlayersList.remove(Index);    
+
+    Index = FindPlayerInfo(_PlayerID);
+    if (Index != -1)
+      m_PlayersInfo.remove(Index);
+
+    String ObjectID = "";
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission != null && Slot != -1)
+    {
+      //ObjectID = Mission.GetUnitIDByPlayerSlotID(Slot);
+
+      // inform mission on that (useful for multiplayer)
+      Mission.OnDestroyPlayer(_PlayerID);
+    }
+
+    
+
+//     // free slot
+//     FreePlayerSlot(_PlayerID);
+// 
+//     // remove player info
+//     DelPlayerInfo(_PlayerID);
+//     FireNetEvent("Server_DelPlayerInfo", [_PlayerID]);
+// 
+//     // remove player objects
+//     if (ObjectID != "")
+//     {
+//       // delete object on server
+//       if (Mission.GetObject(ObjectID) != null)
+//         Mission.DeleteObject(ObjectID);
+// 
+//       // delete object on clients
+//       DeleteObjectMirror(ObjectID);
+//     }
+//     // update GameSpy
+//     OnGameStateChanged();
+  }
+
+  void OnPlayerIsReady(
+      int _PlayerID
+    )
+  {
+    logWarning("[Server] OnPlayerIsReady(" + new String(_PlayerID) + ")");
+
+    // find player record
+    int Index = FindPlayer(_PlayerID);
+    if (Index == -1)
+      return;
+
+    // update player record
+    m_PlayersList[Index].IsReady = true;
+
+    // send event to player to start
+    FireNetEvent(_PlayerID, "Server_StartPlayer", []);
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  // Player info control
+  void SendPlayerInfo()
+  {
+    logWarning("[Server] SendPlayerInfo");
+
+    // Get player info
+    Array PlayerInfo = GetThisPlayerInfo();
+
+    // Set player info to local array
+    SetPlayerInfo(SERVER_PLAYER_ID, PlayerInfo);
+
+    // Set bot players info
+    for (int i = 0; i < m_BotStatInfo.size(); i++)
+      if (m_BotStatInfo[i] != null)
+      {
+        SetPlayerInfo(
+            GetPlayerIDForBot(i),
+            m_BotStatInfo[i].Export()
+          );
+        FireNetEvent("Server_SetPlayerInfo", [GetPlayerIDForBot(i), m_BotStatInfo[i].Export()]);
+      }
+
+    // Send player info to server
+    FireNetEvent("Server_SetPlayerInfo", [SERVER_PLAYER_ID, PlayerInfo]);
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void OnServerDescrChanged(
+      Component _ServerInfo
+    )
+  {
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  // Mirrors control
+  void SetSessionName(
+      WString _SessionName
+    )
+  {
+    m_SessionInfo.m_Descriptor.SessionName = _SessionName;
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void SetSessionType(
+      int _SessionType
+    )
+  {
+    m_SessionInfo.m_Descriptor.SessionType = _SessionType;
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void SetSessionMap(
+      int _SessionMap
+    )
+  {
+    m_SessionInfo.m_Descriptor.SessionMap  = _SessionMap;
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  String GetMissionName()
+  {
+    return m_SessionInfo.GetMissionName();
+  }
+
+  int LockSlotForPlayer(
+      int _PlayerID,
+      int _PreferTeam
+    )
+  {
+    logWarning("[Server] LockSlotForPlayer(" + new String(_PlayerID) + ", " + new String(_PreferTeam) + ")");
+
+    // find free slot
+    int FreeSlot = GetFreeManualSlot(_PreferTeam);
+    if (FreeSlot == -1)
+    {
+      logError("Unable to find free slot for new player");
+      return -1;
+    }
+
+    // lock player slot
+    m_PlayerSlots[FreeSlot].IsBusy   = true;
+    m_PlayerSlots[FreeSlot].PlayerID = _PlayerID;
+
+    // update server descriptor
+    if (0 == m_PlayerSlots[FreeSlot].Team)
+      m_SessionInfo.m_Descriptor.FreeSlotsA--;
+    else
+    if (1 == m_PlayerSlots[FreeSlot].Team)
+      m_SessionInfo.m_Descriptor.FreeSlotsB--;
+
+    UpdateServerInfo();
+
+    // update GameSpy
+    OnGameStateChanged();
+    //ReportServerLists();
+
+    return FreeSlot;
+  }
+
+  void FreePlayerSlot(
+      int _PlayerID
+    )
+  {
+    // find the slot
+    int Slot = FindPlayerSlot(_PlayerID);
+
+
+    if (Slot != -1)
+    {
+      // update slot status
+      m_PlayerSlots[Slot].IsBusy = false;
+
+      // update server descriptor
+      if (0 == m_PlayerSlots[Slot].Team)
+      {
+        if (m_SessionInfo.m_Descriptor.FreeSlotsA < GetManualSlotsQty(0))
+        {
+          m_SessionInfo.m_Descriptor.FreeSlotsA++;
+        }
+        else
+          logError("[Server] ERROR FreePlayerSlots() : won't free more slots than are open");
+      }
+      else
+      {
+        if (m_SessionInfo.m_Descriptor.FreeSlotsB < GetManualSlotsQty(1))
+          m_SessionInfo.m_Descriptor.FreeSlotsB++;
+        else
+          logError("[Server] ERROR FreePlayerSlots() : won't free more slots than are open");
+      }
+
+      UpdateServerInfo();
+
+      // update GameSpy
+      OnGameStateChanged();
+    }
+
+    //ReportServerLists();
+  }
+
+  void FreeSlot(int _Slot)
+  {
+    if (_Slot != -1)
+    {
+      // update slot status
+      m_PlayerSlots[_Slot].IsBusy = false;
+
+      // update server descriptor
+      if (0 == m_PlayerSlots[_Slot].Team)
+      {
+        if (m_SessionInfo.m_Descriptor.FreeSlotsA < GetManualSlotsQty(0))
+        {
+          m_SessionInfo.m_Descriptor.FreeSlotsA++;
+        }
+        else
+          logError("[Server] ERROR FreePlayerSlots() : won't free more slots than are open");
+      }
+      else
+      {
+        if (m_SessionInfo.m_Descriptor.FreeSlotsB < GetManualSlotsQty(1))
+          m_SessionInfo.m_Descriptor.FreeSlotsB++;
+        else
+          logError("[Server] ERROR FreePlayerSlots() : won't free more slots than are open");
+      }
+
+      Component Mission = (new #GameController()).GetMission();
+      Mission.FreePlayerSlot(_Slot);
+
+      UpdateServerInfo();
+
+      // update GameSpy
+      OnGameStateChanged();
+    }
+
+    //ReportServerLists();
+  }
+
+  void LoadMissionOnClientSide(
+      int _PlayerID,
+      int _Slot
+    )
+  {
+    logWarning("[Server] LoadMissionOnClientSide(" + new String(_PlayerID) + ", " + new String(_Slot) + ")");
+
+    Component Game = new #GameController();
+    Component Mission = Game.GetMission();
+    Component Session = Game.GetGameSession();
+    
+    String checkSum = Session.GetCheckSum(Game.GetMissionFiles(GetMissionName()));
+    //logWarning("[Server] checkSum: " + checkSum);
+
+    if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+    {
+      FireNetEvent(_PlayerID, "Server_LoadMissionCF", [
+        GetMissionName(),
+        _Slot,
+        m_PlayerSlots[_Slot].Team,
+        invokeClassFunction(GetMissionName(), "GetMultiplayerSettings", []),
+        checkSum
+      ]);
+    }
+    else
+    {
+      // send load mission message
+      Matrix Position   = Mission.GetFreeSpawnPoasition("NewPlayer");
+      FireNetEvent(_PlayerID, "Server_LoadMission", [
+        GetMissionName(),
+        _Slot,
+        m_PlayerSlots[_Slot].Team,
+        invokeClassFunction(GetMissionName(), "GetMultiplayerSettings", []),
+        Position,
+        checkSum
+      ]);
+    }
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void SendFreeRespawnPlace()
+  {
+    // Get current mission
+
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;
+    FireNetEvent("Server_SetFreeRespawn", [Mission.GetFreeSpawnPlace(Mission.GetMainPlayerObjectID())]);
+  }
+
+  void CreateObjectMirror(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    logWarning("[Server] CreateObjectMirror(" + _ObjectID + ") ");
+
+    // Create mirror hosted by server
+    CreateObjectMirror(new CMirrorDescriptor(SERVER_PLAYER_ID,
+      [_ObjectID, _ComponentID, _ScriptClass, _Position, _Properties]));
+  }
+
+  void DeleteObjectMirror(
+      String _ObjectID
+    )
+  {
+    logWarning("[Server] DeleteObjectMirror(" + _ObjectID + ")");
+
+    for (int ObjectInd = 0; ObjectInd < m_ObjectsList.size(); ObjectInd++)
+      if (m_ObjectsList[ObjectInd].ObjectID == _ObjectID)
+      {
+        m_ObjectsList.remove(ObjectInd);
+        break;
+      }
+
+    for (int PlayerInd = 0; PlayerInd < m_PlayersList.size(); PlayerInd++)
+    {
+      int ObjectInd = m_PlayersList[PlayerInd].Mirrors.find(_ObjectID);
+      if (ObjectInd != -1)
+        m_PlayersList[PlayerInd].Mirrors.remove(ObjectInd);
+      FireNetEvent(m_PlayersList[PlayerInd].PlayerID, "Server_DeleteObjectMirror", [_ObjectID]);
+
+    }
+
+//    FireNetEvent("Server_DeleteObjectMirror", []);
+  }
+
+  void CreateObjectMirror(
+      Component _Descriptor
+    )
+  {
+    // $LOG
+    logWarning("[Server] CreateObjectMirror");
+
+    // Add object to objects list
+    m_ObjectsList.add(_Descriptor);
+
+    // Create mirrors on other clients
+    for (int Index = 0; Index < m_PlayersList.size(); Index++)
+      if (m_PlayersList[Index].IsReady)
+      {
+        // $LOG
+        logWarning("[Server] Updating mirrors on client " + new String(m_PlayersList[Index].PlayerID) + " because of object " + _Descriptor.ObjectID);
+
+        CreateAllMirrorsOnClientSide(m_PlayersList[Index].PlayerID);
+      }
+      // $LOG
+      else
+        logWarning("[Server] Would update mirrors on client " + new String(m_PlayersList[Index].PlayerID) + " because of object " + _Descriptor.ObjectID + " but client is not ready");
+  }
+
+  void CreateAllMirrorsOnClientSide(
+      int _PlayerID
+    )
+  {
+    // $LOG
+    logWarning("[Server] CreateAllMirrorsOnClientSide(" + new String(_PlayerID) + ")");
+
+    int PlayerIndex = FindPlayer(_PlayerID);
+    logWarning("[Server] PlayerIndex(" + new String(PlayerIndex) + ")");
+    if (PlayerIndex == -1)
+      return;
+    Component PlayerDescr = m_PlayersList[PlayerIndex];
+
+    //logWarning("[Server] m_ObjectsList.size(" + new String(m_ObjectsList.size()) + ")");
+    for (int Index = 0; Index < m_ObjectsList.size(); Index++)
+    {
+      //logWarning("[Server] PlayerID[" + new String(Index) + "]" + 
+      //           "(" + new String(m_ObjectsList[Index].PlayerID) + ")");
+      if ((m_ObjectsList[Index].PlayerID != _PlayerID) &&                  // check object hosted by this player
+          (PlayerDescr.Mirrors.find(m_ObjectsList[Index].ObjectID) == -1)) // check mirror already created
+      {
+        // $LOG
+        //logMessage("[Server] Creating object " + new String(m_ObjectsList[Index].ObjectID) + " mirror on client " + new String(_PlayerID));
+
+        PlayerDescr.Mirrors.add(m_ObjectsList[Index].ObjectID);
+        FireNetEvent(_PlayerID, "Server_CreateObjectMirror", m_ObjectsList[Index].Descriptor);
+      }
+    }
+  }
+
+  void SendPlayersInfoArray(
+      int _PlayerID
+    )
+  {
+    logWarning("[Server] SendPlayersInfoArray(" + new String(_PlayerID) + ")");
+
+    for (int Index = 0; Index < m_PlayersInfo.size(); Index++)
+      FireNetEvent(_PlayerID, "Server_SetPlayerInfo",
+        [m_PlayersInfo[Index][0], m_PlayersInfo[Index][1]]);
+  }
+
+
+  // Service functions
+  int FindPlayer(
+      int _PlayerID
+    )
+  {
+    for (int Index = 0; Index < m_PlayersList.size(); Index++)
+      if (_PlayerID == m_PlayersList[Index].PlayerID)
+        return Index;
+
+    return -1;
+  }
+
+  void SetServerMode(
+      int     _ControlMode,
+      boolean _TeamChangeMode
+    )
+  {
+    GetServerInfo().ControlMode    = _ControlMode;
+    GetServerInfo().TeamChangeMode = _TeamChangeMode;
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  int GetPlayerIDForBot(
+      int _Slot
+    )
+  {
+    return SERVER_PLAYER_ID - _Slot - 1;
+  }
+
+  // Player slot control
+  void SetPlayerSlots(
+      Array _Slots
+    )
+  {
+    Array BotNamesArray = new Array(CCommonStrings::BotNamesArray);
+
+    m_PlayerSlots = [];
+    for (int Index = 0; Index < _Slots.size(); Index++)
+    {
+      m_PlayerSlots.add(new CSlotDescriptor(
+          Index / (_Slots.size() / 2),
+          _Slots[Index] == "MANUAL",
+          _Slots[Index] != "CLOSED"
+        ));
+
+      if (_Slots[Index] == "BOT" || _Slots[Index] == "BOT_TIGER")
+      {
+        Component Info = new CPlayerInfo();
+
+        int BotNameInd = randnum(BotNamesArray.size());
+        Info.Name          = BotNamesArray[BotNameInd];
+        Info.SessionStatus = CPlayerStat::CS_Playing;
+        Info.SaveEnabled   = false;
+        
+        // set random bot info
+        Info.AirUnitsDestroyed    = randnum(25);
+        Info.GroundUnitsDestroyed = randnum(50);
+        Info.NavalUnitsDestroyed  = randnum(25);
+        Info.MultiplayerDeath     = randnum(25);
+        Info.MultiplayerKills     = randnum(30);
+        
+        int nNumCampaignsCompleted = randnum(3); // Сколько "пройдено" кампаний
+        int nCampaign              = 0;
+        
+        if (nNumCampaignsCompleted > 0)
+        {
+          // Помечаем "пройденные" кампании
+          for (nCampaign = 0; nCampaign < nNumCampaignsCompleted; nCampaign++)
+          {
+            for (int nDifficulty = 0; nDifficulty <= randnum(4); nDifficulty++)
+            for (int nMission = 0; nMission < Info.MissionStatus[nCampaign].size(); nMission++)
+              Info.MissionStatus[nCampaign][nMission][nDifficulty] = true;
+          }
+        }
+            
+        BotNamesArray.remove(BotNameInd);
+
+        m_BotStatInfo.add(Info);
+        SetPlayerInfo(GetPlayerIDForBot(Index), Info.Export());
+      }
+      else
+        m_BotStatInfo.add(null);
+    }
+
+    GetServerInfo().SessionSlots = GetOpenSlotsQty(-1); //GetManualSlotsQty(-1);
+
+    GetServerInfo().OpenSlotsA   = GetOpenSlotsQty(0);  //GetManualSlotsQty(0);
+    GetServerInfo().OpenSlotsB   = GetOpenSlotsQty(1);  //GetManualSlotsQty(1);
+
+    GetServerInfo().FreeSlotsA   = GetManualSlotsQty(0); //GetServerInfo().OpenSlotsA;
+    GetServerInfo().FreeSlotsB   = GetManualSlotsQty(1); //GetServerInfo().OpenSlotsB;
+
+    //ReportServerLists();
+
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  Component GetBotPlayerInfo(
+      int _Slot
+    )
+  {
+    return m_BotStatInfo[_Slot];
+  }
+  
+  int GetBotSlotByName(
+      String _Name
+    )
+  {
+    for(int i=0; i<m_BotStatInfo.size(); i++)
+        if (m_BotStatInfo[i] != null)
+        {
+            if(new String(m_BotStatInfo[i].Name) == _Name)
+                return i;
+        }
+    return -1;
+  }
+  
+  Array GetBotsInfo()
+  {
+    return m_BotStatInfo;
+  }
+
+  int GetManualSlotsQty(
+      int _Team
+    )
+  {
+    int SlotsQty = 0;
+    for (int SlotNum = 0; SlotNum < m_PlayerSlots.size(); SlotNum++)
+      if (m_PlayerSlots[SlotNum].IsOpen   &&
+          m_PlayerSlots[SlotNum].IsManual &&
+          (-1 == _Team || m_PlayerSlots[SlotNum].Team == _Team))
+        SlotsQty++;
+    return SlotsQty;
+  }
+
+  int GetOpenSlotsQty(
+      int _Team
+    )
+  {
+    int SlotsQty = 0;
+    for (int SlotNum = 0; SlotNum < m_PlayerSlots.size(); SlotNum++)
+      if (m_PlayerSlots[SlotNum].IsOpen   &&
+          (-1 == _Team || m_PlayerSlots[SlotNum].Team == _Team))
+        SlotsQty++;
+    return SlotsQty;
+  }
+
+  int FindPlayerSlot(
+      int _PlayerID
+    )
+  {
+    for (int SlotNum = 0; SlotNum < m_PlayerSlots.size(); SlotNum++)
+      if (m_PlayerSlots[SlotNum].PlayerID == _PlayerID)
+        return SlotNum;
+    return -1;
+  }
+
+  int GetFreeManualSlot(
+      int _PreferTeam
+    )
+  {
+    Array FreeSlots = [];
+    Array BotSlots  = [];
+
+    // search free slots
+    for (int SlotNum = 0; SlotNum < m_PlayerSlots.size(); SlotNum++)
+    {
+      if ( m_PlayerSlots[SlotNum].IsOpen   &&
+           m_PlayerSlots[SlotNum].IsManual &&
+          !m_PlayerSlots[SlotNum].IsBusy   &&
+          (-1 == _PreferTeam || m_PlayerSlots[SlotNum].Team == _PreferTeam))
+       FreeSlots.add(SlotNum);
+      if( m_PlayerSlots[SlotNum].IsOpen   &&
+         !m_PlayerSlots[SlotNum].IsManual)
+        BotSlots.add(SlotNum);
+    }
+
+    // check slots
+    if (FreeSlots.isEmpty())
+    {
+      if(BotSlots.isEmpty())
+      {
+        logWarning("GetFreeManualSlot return -1");
+        return -1;
+      }
+      else
+      {
+        int slot = randnum(BotSlots.size());
+        RemoveObject(slot);
+        FreeSlots.add(slot);
+      }
+    }
+
+    //ReportServerLists();
+
+    // select random slot
+    return FreeSlots[randnum(FreeSlots.size())];
+  }
+
+  void ClearRemotePlayers()
+  {
+    logWarning("[Server] ClearRemotePlayers");
+
+    for (int i = 0; i < m_PlayerSlots.size(); i++)
+    {
+      if (m_PlayerSlots[i].IsBusy
+        && m_PlayerSlots[i].IsManual
+        && (m_PlayerSlots[i].PlayerID != SERVER_PLAYER_ID))
+      {
+        int Index = FindPlayer(m_PlayerSlots[i].PlayerID);
+        if (Index != -1)
+        {
+          logWarning("[Server] Clearing slot of player with PlayerID " + new String(m_PlayerSlots[i].PlayerID) + ", index " + new String(Index));
+
+          m_PlayersList.remove(Index);
+        }
+
+        Index = FindPlayerInfo(m_PlayerSlots[i].PlayerID);
+        if (Index != -1)
+        {
+          logWarning("[Server] Clearing player's info for player with PlayerID " + new String(m_PlayerSlots[i].PlayerID) + ", index " + new String(Index));
+
+          m_PlayersInfo.remove(Index);
+        }
+
+        m_PlayerSlots[i].IsBusy = false;
+      }
+    }
+
+    // update GameSpy
+    OnGameStateChanged();
+    //ReportServerLists();
+  }
+
+  void ReserveLocalPlayerSlot(
+      int _PreferTeam
+    )
+  {
+    logWarning("[Server] ReserveLocalPlayerSlot");
+
+    int FreeSlot = LockSlotForPlayer(SERVER_PLAYER_ID, _PreferTeam);
+    if (FreeSlot == -1)
+      return;
+
+    logWarning("[Server] Local slot reserved - " + new String(FreeSlot));
+
+    SetPlayerSlotID(FreeSlot);
+    SetPlayerTeam(m_PlayerSlots[FreeSlot].Team);
+
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void ClearPlayers()
+  {
+//    Component Game = new #GameController();
+//    Component Mission        = Game.GetLoadedMission();
+    for (int i = 0; i < m_CFPlayers.size(); i++)
+      DeleteObject(m_CFPlayers[i]);
+
+  }
+
+  void RestartCFMission()
+  {
+/*    Component Game = new #GameController();
+    Component Mission        = Game.GetLoadedMission();
+    for (int i = 0; i < m_CFPlayers.size(); i++)
+      Mission.DeleteObject(m_CFPlayers[i]);
+*/
+    for (int iPlayer = 0; iPlayer < m_PlayersList.size(); iPlayer++)
+    {
+      FireNetEvent(m_PlayersList[iPlayer].PlayerID, "Server_ReloadMissionCF", [GetMissionName(), m_CFPlayers]);
+    }
+
+//    m_CFPlayers.clear();
+  }
+
+  // Client event handlers
+  event void Client_CreateObjectMirror(
+      int    _PlayerID,
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    // $LOG
+    //logWarning("[Server] Client_CreateObjectMirror(" + _ObjectID + ") " /*+ new String(_Properties)*/);
+
+    // Create mirror hosted by player
+    CreateObjectMirror(new CMirrorDescriptor(_PlayerID,
+      [_ObjectID, _ComponentID, _ScriptClass, _Position, _Properties]));
+
+    // Get current mission
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;
+
+    // Create local mirror
+    Mission.CreateObject(_ObjectID, _ComponentID,
+      _ScriptClass, _Position, Mission.GenerateMirrorProps(_Properties));
+    //Add record
+    Mission.GetContent().CreateObjectRecord(_ObjectID, _ComponentID,
+      _ScriptClass, _Position, Mission.GenerateMirrorProps(_Properties));
+
+  }
+
+  event void Client_SetPlayerInfo(
+      int    _PlayerID,
+      Array  _PlayerInfo
+    )
+  {
+    logWarning("[Server] Client_SetPlayerInfo(" + new String(_PlayerID) + ")");
+    
+    Array allInfo = GetPlayersInfo();
+    for (int Index = 0; Index < allInfo.size(); Index++)
+      if(allInfo[Index].Name == _PlayerInfo[0] && m_PlayersInfo[Index][0] != _PlayerID)
+      {
+        _PlayerInfo[0] = _PlayerInfo[0] + new WString(randnum(99));
+        logWarning("dublicated names: " + new String(allInfo[Index].Name) + " and " + new String(_PlayerInfo[0]));
+        break;
+      }
+
+    // Update or add player info
+    SetPlayerInfo(_PlayerID, _PlayerInfo);
+
+    // Send message to clients
+    FireNetEvent("Server_SetPlayerInfo", [_PlayerID, _PlayerInfo]);
+  }
+
+  event void Client_StartPlayer(
+      int _PlayerID,
+      int _PreferTeam
+    )
+  {
+    logWarning("[Server] Client_StartPlayer(" + new String(_PlayerID) + ", " + new String(_PreferTeam) + ")");
+
+    // find player record
+    int Index = FindPlayer(_PlayerID);
+    if (Index == -1)
+      return;
+
+    // find free slot
+    int FreeSlot = LockSlotForPlayer(_PlayerID, _PreferTeam);
+    if (FreeSlot == -1)
+    {
+      FireNetEvent(_PlayerID, "Server_Disconnect", ["NoFreeSlots"]);
+      return;
+    }
+
+    logWarning("[Server] Locking slot for player " + new String(_PlayerID) + ", slot " + new String(FreeSlot));
+        
+    // load mission on client side
+    LoadMissionOnClientSide(_PlayerID, FreeSlot);
+
+/*    Component Game = new #GameController();
+    Component Session = Game.GetGameSession();
+    if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+      return;
+*/  
+    SendFreeRespawnPlace();
+    CreateAllMirrorsOnClientSide(_PlayerID);
+    SendPlayersInfoArray(_PlayerID);
+
+    sendEvent(0.0f, SOID_MissionController, "ReportPlayerJoin", [GetPlayerInfo(Index).Name]);
+    FireNetEvent("ReportPlayerJoin", [GetPlayerInfo(Index).Name]);
+
+    if (CServerDescriptor::ST_CaptureTheFlag != GetSessionInfo().GetSessionTypeID())
+      sendEvent(0.0f, SOID_MissionController, "ClearDeathTanks", []);
+  }
+
+  // send for all player event to start session
+  void StartGameSession()
+  {
+    logWarning("[Server] StartGameSession. Players:" + new String(m_PlayersList.size()));
+
+    Component Game = new #GameController();
+    Component Session = Game.GetGameSession();
+    if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+    {
+//      m_CFPlayers.clear();
+      Component Mission        = Game.GetLoadedMission();
+      Array PlayersInfo = GetPlayersInfo();
+            
+//      Mission.DeleteObject(Mission.GetMainPlayerObjectID());
+      Mission.CreatePlayerObject(Mission.GetFreeSpawnCF(PlayersInfo[0].SessionTeam));
+      CreateObjectMirror(Mission.GetObject(Mission.GetMainPlayerObjectID()));
+      Mission.StartMission();
+      Game.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+      Game.EnableControl(Mission.GetMainPlayerObjectID(), true);
+      Game.ActivateCamera(SOID_MainCamera, false);
+
+      for (int iPlayer = 0; iPlayer < m_PlayersList.size(); iPlayer++)
+      {
+        int PlayerID = m_PlayersList[iPlayer].PlayerID;
+        Component PlayerInfo = Session.GetPlayerInfo(PlayerID);
+
+        if (m_PlayersList[iPlayer].IsReady)
+        {
+          if ((PlayerInfo != null) && (CPlayerStat::CS_Ready == PlayerInfo.SessionStatus))
+          {
+            String PlayerID = Mission.GenerateFreeObjectID();
+            m_CFPlayers.add(PlayerID);
+            FireNetEvent(m_PlayersList[iPlayer].PlayerID, "Server_StartGameSessionCF", [Mission.GetFreeSpawnCF(PlayerInfo.SessionTeam), PlayerID]);
+          }
+        }
+      }
+    }
+    else
+    {
+      for (int iPlayer = 0; iPlayer < m_PlayersList.size(); iPlayer++)
+        if (m_PlayersList[iPlayer].IsReady)
+          FireNetEvent(m_PlayersList[iPlayer].PlayerID, "Server_StartGameSession", []);
+    }
+
+    // update GameSpy
+    OnGameStateChanged();
+  }
+
+  void OnGameStateChanged()
+  {
+    Component Reporter = (new #GameController()).GetObject("GameSpyReporter");
+
+    if (null != Reporter)
+    {
+      Reporter.OnGameStateChanged();
+    }
+  }
+
+  void CleanupPlayersInfo()
+  {
+    CSession::CleanupPlayersInfo();
+
+    m_PlayerSlots.clear();
+    m_ObjectsList.clear();
+    //ReportServerLists();
+  }
+
+  // $LOG method
+  void ReportServerLists()
+  {
+    logWarning("[Server]------------------------------ ReportServerList--------------------------");
+
+    int i = 0;
+    logWarning("m_PlayersList:");
+    for (; i < m_PlayersList.size(); i++)
+      logMessage(new String(i) + ": " + new String(m_PlayersList[i]));
+
+    logWarning("m_PlayerSlots:");
+    for (i = 0; i < m_PlayerSlots.size(); i++)
+      logMessage(new String(i) + ": " + new String(m_PlayerSlots[i].ToString()));
+
+    logWarning("m_PlayersInfo:");
+    for (i = 0; i < m_PlayersInfo.size(); i++)
+    {
+      logMessage(new String(i) + ": " + new String(m_PlayerSlots[i]));
+      //Array info = m_PlayersInfo[i].Export();
+      String PInfo = "  ";
+      int j = 0;
+      for(j = 0; j < m_PlayersInfo[i].size(); j++)
+        PInfo += new String(m_PlayersInfo[i][j]) + "; ";
+      logMessage(PInfo);
+    }
+
+    logWarning("m_ObjectsList:");
+    for (i = 0; i < m_ObjectsList.size(); i++)
+      logMessage(new String(i) + ": " + new String(m_ObjectsList[i]));
+
+    logWarning("--------------------------------------------------------");
+  }
+
+  // Attributes
+  Array m_PlayersList = [];
+  Array m_PlayerSlots = [];
+  Array m_ObjectsList = [];
+  Array m_BotStatInfo = [];
+  Array m_CFPlayers = [];
+}
+

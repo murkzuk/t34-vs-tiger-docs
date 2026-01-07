@@ -1,0 +1,502 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// CPilotAttackStates
+//
+
+class CPilotAttackStates
+{
+  final static int STATE_Default              = 0;
+  final static int STATE_Sit                  = 0;
+}
+
+//
+// CPilotAnimatorConfig
+//
+
+class CPilotAnimatorConfig
+  extends CPilotAttackStates
+{
+  final static float StateChangeTime = 0.25;
+
+  final static int   PHASE_METHOD_LinePhase = 4; // value sensitive constant
+
+  final static int   PARAM_Sit      = 0;  
+  final static int   PARAM_Throttle = 1;  
+  final static int   PARAM_Rudder   = 2;  
+  final static int   PARAM_Tangage  = 3;  
+  final static int   PARAM_Bank     = 4;  
+  
+  final static int   PHASE_HeliControl = 0;
+
+  final static int   GENERATOR_Throttle = 0;
+  final static int   GENERATOR_Rudder   = 1;
+  final static int   GENERATOR_Bank     = 2;
+  final static int   GENERATOR_Tangage  = 3;
+
+  String ANIM_Throttle = "trottle";
+  String ANIM_Rudder   = "rudder";
+  String ANIM_Bank     = "cyclic_bank";
+  String ANIM_Tangage  = "cyclic_tangage";
+
+}
+
+
+//
+// CPilotAnimatorGraph
+//
+
+class CPilotAnimatorGraph
+  extends CPilotAnimatorConfig, CBaseStateAnimatorGraph
+{
+  // ==================================
+  // Condition wrappers
+  // ==================================
+
+  Array Sit_State(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_Sit, _StateID, StateChangeTime);
+  }
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CPilotAnimatorGraph()
+  {
+    SetupBlendTree();
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+
+  void SetupBlendTree()
+  {
+    String StateID = new String(STATE_Sit);
+    
+    CreateBlendNode("", StateID, [
+            [ Sit_State(STATE_Sit)],
+            [
+              [ ANIM_Throttle, GENERATOR_Throttle, 0],
+              [ ANIM_Rudder,   GENERATOR_Rudder, 1],
+              [ ANIM_Bank,     GENERATOR_Bank, 2 ],
+              [ ANIM_Tangage,  GENERATOR_Tangage, 2 ]
+            ]
+          ]);
+
+  }
+}
+
+//
+// CPilotAnimator
+//
+
+class CPilotAnimator
+  extends CPilotAnimatorConfig, CBaseStateAnimator
+{
+
+  static Component Graph = null;
+  
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CPilotAnimator()
+  {
+    // Setup graph component
+    if (null == Graph)
+      Graph = new #StateAnimatorGraph<CPilotAnimatorGraph>();
+
+    DefinePhaseGenerator(PHASE_HeliControl, GENERATOR_Tangage,  PHASE_METHOD_LinePhase, [ 1.0f, PARAM_Tangage]);
+    DefinePhaseGenerator(PHASE_HeliControl, GENERATOR_Bank,     PHASE_METHOD_LinePhase, [ 1.0f, PARAM_Bank]);
+    DefinePhaseGenerator(PHASE_HeliControl, GENERATOR_Rudder,   PHASE_METHOD_LinePhase, [ 1.0f, PARAM_Rudder]);
+    DefinePhaseGenerator(PHASE_HeliControl, GENERATOR_Throttle, PHASE_METHOD_LinePhase, [ 1.0f, PARAM_Throttle]);
+
+    SetSitState(STATE_Default);
+    SetThrottlePhase(0.0);
+    SetRudderPhase(0.0);
+    SetBankTangagePhase(0.0, 0.0);
+  }
+
+  // ==================================
+  // Interface
+  // ==================================
+
+  void Initialize(
+      Component _Mesh
+    )
+  {
+    _Mesh.SetAnimationPhase("rhand_pilot", 1.0f);
+    _Mesh.SetAnimationPhase("lhand_pilot", 1.0f);
+    _Mesh.SetAnimationPhase("pilot_neutral_", 1.0f);
+  }
+
+  void SetThrottlePhase(
+      float _Phase
+    )
+  {
+    SetParameter(PARAM_Throttle, _Phase);
+  }
+
+  void SetRudderPhase(
+      float _Phase
+    )
+  {
+    SetParameter(PARAM_Rudder, _Phase);
+  }
+
+  void SetBankTangagePhase(
+      float _Bank,
+      float _Tangage
+    )
+  {
+    SetParameter(PARAM_Bank, _Bank);
+    SetParameter(PARAM_Tangage, _Tangage);
+  }
+
+  void SetSitState(
+      int _StateID
+    )
+  {
+    SetParameter(PARAM_Sit, _StateID);
+  }
+
+  // ==================================
+  // Events
+  // ==================================
+
+
+  // ==================================
+  // Service
+  // ==================================
+
+}
+
+
+//
+// Gunner animator configs
+//
+
+class CGunnerAnimatorConfig
+{
+  final static float StateChangeTime = 0.25;
+
+  final static int STATE_Default = 0;
+
+  final static int PHASE_METHOD_AnimationTime = 1;
+  final static int PHASE_METHOD_AnglePhase = 3; // value sensitive constant
+  final static int PHASE_METHOD_FixedPhase = 5; // value sensitive constant
+  final static int PHASE_METHOD_JointAnglePhase = 6;
+
+  final static int PHASE_GunnerHAim   = 0;
+  final static int PHASE_GunnerVAim   = 1;
+
+  final static int GENERATOR_HAim      = 0;
+  final static int GENERATOR_VAim      = 1;
+
+  final static float MinVAngle = - 20; 
+  final static float MaxVAngle = 50;
+  
+  // params 
+  final static int PARAM_AIM_LINK = 0;
+
+}
+
+class CRightGunnerAnimationNames
+{
+  final static String ANIM_HMove    = "shooter_right";
+  final static String ANIM_VAimDown = "shooter_right_dn";
+  final static String ANIM_VAimUp   = "shooter_right_up";
+  final static String ANIM_VAimMdl  = "";
+}
+
+
+class CLeftGunnerAnimationNames
+{
+  final static String ANIM_HMove    = "shooter_left";
+  final static String ANIM_VAimDown = "shooter_left_dn";
+  final static String ANIM_VAimUp   = "shooter_left_up";
+  final static String ANIM_VAimMdl  = "";
+}
+
+class CRightGunnerHeliAnimationNames
+{
+  final static String ANIM_HMove    = "F1_turret";
+  final static String ANIM_VAimDown = "F1_gun_dn";
+  final static String ANIM_VAimUp   = "F1_gun_up";
+  final static String ANIM_VAimMdl  = "F1_gun_mdl";
+}
+
+class CLeftGunnerHeliAnimationNames
+{
+  final static String ANIM_HMove    = "A1_turret";
+  final static String ANIM_VAimDown = "A1_gun_dn";
+  final static String ANIM_VAimUp   = "A1_gun_up";
+  final static String ANIM_VAimMdl  = "A1_gun_mdl";
+}
+
+//
+// Gunner animator graphs
+//
+
+class CGunnerAnimatorGraph
+  extends CGunnerAnimatorConfig, CBaseStateAnimatorGraph
+{
+  static String m_AnimClass;
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CGunnerAnimatorGraph()
+  {
+    SetupBlendTree();
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+
+  void SetupBlendTree()
+  {
+    String ANIM_HMove    = getStaticClassMember(m_AnimClass, "ANIM_HMove");
+    String ANIM_VAimDown = getStaticClassMember(m_AnimClass, "ANIM_VAimDown");
+    String ANIM_VAimUp   = getStaticClassMember(m_AnimClass, "ANIM_VAimUp");
+
+    String StateID = new String(STATE_Default);
+    
+    CreateBlendNode("", StateID, [[],[]]);
+    CreateBlendNode(StateID, StateID + "HAim",
+          [
+            [C_JointDir(0.0f, (MaxVAngle - MinVAngle) * 0.5, 0.0f, (MaxVAngle + MinVAngle) * 0.5 , PARAM_AIM_LINK)],
+            [
+              [ ANIM_HMove, GENERATOR_HAim, 0]
+            ]
+          ]);
+
+    CreateBlendNode(StateID, StateID + "VAimUp",
+          [
+            [C_JointDir(0.0f, (MaxVAngle - MinVAngle) * 0.5, 0.0f, MinVAngle, PARAM_AIM_LINK)],
+            [
+              [ ANIM_VAimUp, GENERATOR_HAim, 0]
+            ]
+          ]);
+    CreateBlendNode(StateID, StateID + "VAimDown",
+          [
+            [C_JointDir(0.0f, (MaxVAngle - MinVAngle) * 0.5, 0.0f, MaxVAngle, PARAM_AIM_LINK)],
+            [
+              [ ANIM_VAimDown, GENERATOR_HAim, 0]
+            ]
+          ]);
+
+  }
+}
+
+class CGunnerHeliAnimatorGraph
+  extends CGunnerAnimatorConfig, CBaseStateAnimatorGraph
+{
+  static String m_AnimClass;
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CGunnerHeliAnimatorGraph()
+  {
+    SetupBlendTree();
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+
+  void SetupBlendTree()
+  {
+    String ANIM_HMove    = getStaticClassMember(m_AnimClass, "ANIM_HMove");
+    String ANIM_VAimDown = getStaticClassMember(m_AnimClass, "ANIM_VAimDown");
+    String ANIM_VAimMdl  = getStaticClassMember(m_AnimClass, "ANIM_VAimMdl");
+    String ANIM_VAimUp   = getStaticClassMember(m_AnimClass, "ANIM_VAimUp");
+
+    String StateID = new String(STATE_Default);
+    
+    CreateBlendNode("", StateID, [[],[]]);
+
+    CreateBlendNode(StateID, StateID + "HMove",
+          [
+            [],
+            [
+              [ ANIM_HMove, GENERATOR_HAim, 0]
+            ]
+          ]);
+
+    CreateBlendNode(StateID, StateID + "HAim",
+          [
+            [C_JointDir(0.0f, (MaxVAngle - MinVAngle) * 0.5, 0.0f, (MaxVAngle + MinVAngle) * 0.5 , PARAM_AIM_LINK)],
+            [
+              [ ANIM_VAimMdl, GENERATOR_VAim, 1]
+            ]
+          ]);
+
+    CreateBlendNode(StateID, StateID + "VAimUp",
+          [
+            [C_JointDir(0.0f, (MaxVAngle - MinVAngle) * 0.5, 0.0f, MinVAngle, PARAM_AIM_LINK)],
+            [
+              [ ANIM_VAimUp, GENERATOR_VAim, 1]
+            ]
+          ]);
+    CreateBlendNode(StateID, StateID + "VAimDown",
+          [
+            [C_JointDir(0.0f, (MaxVAngle - MinVAngle) * 0.5, 0.0f, MaxVAngle, PARAM_AIM_LINK)],
+            [
+              [ ANIM_VAimDown, GENERATOR_VAim, 1]
+            ]
+          ]);
+
+  }
+}
+
+//
+// Gunner animators
+//
+
+class CGunnerAnimator
+  extends CGunnerAnimatorConfig, CBaseStateAnimator
+{    
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CGunnerAnimator()
+  {
+    CreateGraph();
+    DefinePhaseGenerator(PHASE_GunnerHAim, GENERATOR_HAim, PHASE_METHOD_JointAnglePhase, [PARAM_AIM_LINK, GunJointHVectorBegin, GunJointHVectorEnd]);
+    DefinePhaseGenerator(PHASE_GunnerVAim, GENERATOR_VAim, PHASE_METHOD_FixedPhase, [ 1.0f]);
+  }
+
+  // ==================================
+  // Interface
+  // ==================================
+
+  void Initialize(
+      Component _Mesh
+    )
+  {
+    _Mesh.SetAnimationPhase("lhand_shooter", 1.0f);
+    _Mesh.SetAnimationPhase("rhand_shooter", 1.0f);
+  }
+
+  void InitializeWeaponJoint(
+      Component _AimJoint
+    )
+  {
+    SetParameter(PARAM_AIM_LINK, _AimJoint);
+  }
+
+  // overrideable service 
+  void CreateGraph()
+  {
+    logError("CGunnerAnimator::CreateGraph() was not overriden!");
+  }
+}
+
+class CHeliGunnerAnimator
+  extends CGunnerAnimator
+{ 
+  void Initialize(
+      Component _Mesh
+    )
+  {
+  }
+}
+
+//
+// exactly used classes
+//
+
+class CRightGunnerAnimator
+  extends CGunnerAnimator
+{
+  static Component Graph = null;
+
+  final static Vector GunJointHVectorBegin = new Vector(cos(-140.0 * Math_PI / 180.0f), sin(-140.0 * Math_PI / 180.0f), 0.0f);
+  final static Vector GunJointHVectorEnd   = new Vector(cos(-10.0  * Math_PI / 180.0f), sin(-10.0  * Math_PI / 180.0f), 0.0f);
+  
+  // overrideable service 
+  void CreateGraph()
+  {
+    // Setup graph component
+    if (null == Graph)
+    {
+      CGunnerAnimatorGraph::m_AnimClass = "CRightGunnerAnimationNames";
+      Graph = new #StateAnimatorGraph<CGunnerAnimatorGraph>();
+    }
+  }
+}
+
+class CLeftGunnerAnimator
+  extends CGunnerAnimator
+{  
+  static Component Graph = null;
+
+  final static Vector GunJointHVectorBegin = new Vector(cos(140.0 * Math_PI / 180.0f), sin(140.0 * Math_PI / 180.0f), 0.0f);
+  final static Vector GunJointHVectorEnd   = new Vector(cos(10.0  * Math_PI / 180.0f), sin(10.0  * Math_PI / 180.0f), 0.0f);
+
+  // overrideable service 
+  void CreateGraph()
+  {
+    // Setup graph component
+    if (null == Graph)
+    {
+      CGunnerAnimatorGraph::m_AnimClass = "CLeftGunnerAnimationNames";
+      Graph = new #StateAnimatorGraph<CGunnerAnimatorGraph>();
+    }
+  }
+}
+
+class CRightHeliGunnerAnimator
+  extends CHeliGunnerAnimator
+{ 
+  static Component Graph = null; 
+
+  final static Vector GunJointHVectorBegin = new Vector(cos(-140.0 * Math_PI / 180.0f), sin(-140.0 * Math_PI / 180.0f), 0.0f);
+  final static Vector GunJointHVectorEnd   = new Vector(cos(-10.0  * Math_PI / 180.0f), sin(-10.0  * Math_PI / 180.0f), 0.0f);
+
+  void CreateGraph()
+  {
+    // Setup graph component
+    if (null == Graph)
+    {
+      CGunnerHeliAnimatorGraph::m_AnimClass = "CRightGunnerHeliAnimationNames";
+      Graph = new #StateAnimatorGraph<CGunnerHeliAnimatorGraph>();
+    }
+  }
+}
+
+class CLeftHeliGunnerAnimator
+  extends CHeliGunnerAnimator
+{ 
+  static Component Graph = null; 
+
+  final static Vector GunJointHVectorEnd    = new Vector(cos(140.0 * Math_PI / 180.0f), sin(140.0 * Math_PI / 180.0f), 0.0f);
+  final static Vector GunJointHVectorBegin  = new Vector(cos(10.0  * Math_PI / 180.0f), sin(10.0  * Math_PI / 180.0f), 0.0f);
+
+  void CreateGraph()
+  {
+    // Setup graph component
+    if (null == Graph)
+    {
+      CGunnerHeliAnimatorGraph::m_AnimClass = "CLeftGunnerHeliAnimationNames";
+      Graph = new #StateAnimatorGraph<CGunnerHeliAnimatorGraph>();
+    }
+  }
+}

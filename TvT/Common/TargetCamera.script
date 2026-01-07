@@ -1,0 +1,41 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTargetCamera
+{
+  Component m_Camera;
+  String m_CameraId;
+
+
+  void CTargetCamera(
+      Component _Camera
+    )
+  {
+    m_Camera = _Camera;
+  }
+
+  void SetCameraId(
+      String _CameraId
+    )
+  {
+    setIdentificator(m_Camera, _CameraId);
+    m_CameraId = _CameraId;
+  }
+
+  String GetCameraId()
+  {
+    return m_CameraId;
+  }
+
+  Component GetCamera()
+  {
+    return m_Camera;
+  }
+
+}

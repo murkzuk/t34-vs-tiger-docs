@@ -1,0 +1,273 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CBaseNavigatorScreen
+{
+  Component MatManager  = new #MaterialManager<CCockpitSkin>(); 
+}
+
+class CNavigatorScreen_Uh1
+  extends CBaseNavigatorScreen
+{
+  static boolean PitchEnabled        = false;
+  static boolean RollEnabled         = false;
+  static boolean NavpointInfoEnabled = false;
+
+  Array Fonts = [
+      [ "Century Gothic Monospace Digits", 0.045 ],
+      [ "Century Gothic", 0.0425 ],
+      [ "Century Gothic Bold", 0.035 ],
+      [ "Century Gothic Bold", 0.0225 ]
+    ];
+
+  Array NavpointName           = [  0.00, 0.10, "C", "N", "C", "N", 0, L"" ];
+  Array TargetName             = [ -0.18, 0.80, "F", "N", "N", "N", 0, L"" ];
+  Array DistanceToTarget       = [ -0.18, 0.83, "F", "N", "N", "N", 0, L"" ];
+  Array WeaponName             = [ -0.18, 0.86, "F", "N", "N", "N", 0, L"" ];
+
+  //
+  // Compass
+  //
+
+  float CompassAngle           = 90.0;
+
+  // not to be localized!
+  Array CompassTileTexts       = [ L"N", L"E", L"S", L"W" ];
+
+  Array ElCompassBar           = [ 0.0, 0.95833, "C", "N", "C", "C", 0.40125, 0.0, 1.1 ];
+  Array ElCompassDirArrow      = [ 0.0, 0.0,     "C", "N", "C", "N", 0.150, 0.202, "dummy", 0 ];
+  Array ElCompassNPArrow       = [ 0.0, 0.0,     "C", "N", "C", "F", 0.150, 0.202, "navpoint", UI_FLIP_VERTICAL ];
+
+  Array ElCompassBaseTile      = [ 0.0, 0.0,     "C", "N", "C", "N", 0.0, 0.01167, 4.0 ];
+  Array ElCompassTiles         = [ ElCompassBaseTile, ElCompassBaseTile ];
+
+  Array ElCompassBaseTilesText = [ 0.0, 0.0, "C", "N", "C", "F", 2, L"" ];
+  Array ElCompassTilesText     = [ ElCompassBaseTilesText, ElCompassBaseTilesText ];
+
+  Array ElCompassNumbersBaseText  = [ 0.0, 0.0, "C", "N", "C", "F", 1, L"" ];
+  Array ElCompassNumbersTile      = [ 0.0, 0.0,     "C", "N", "C", "N", 0.0, 0.0167, 1.1 ];
+  Array CompassNumbers            = [ 30.0, 60.0, 120.0, 150.0, 210.0, 240.0, 300.0, 330.0 ];
+  
+  // NP Arrow
+  float CmpsY = 0.0133;
+  Array CompassNPArrowRect = [
+     //    X          Y
+      [ 0.5 + 0.00625, CmpsY + 0.02   ],
+      [ 0.5 + 0.0,     CmpsY          ],
+      [ 0.5 - 0.00625, CmpsY + 0.02   ],
+      [ 0.5 + 0.0,     CmpsY + 0.0167 ]
+    ];
+  
+  // azimuth
+  boolean CompassAzimuthEnabled = true;
+  
+  Array ElCompassBar2               = [ 0.0, 0.95833, "C", "N", "N", "C", 0.166875, 0.0, 0.5 ];
+  Array ElCompassAzimuthText        = [ 19.0 / 800.0, -9.0 / 600.0, "C", "C", "F", "C", 0, L"" ];
+  Array CompassAzimuthFrame         = [ 0.0,-0.015,   "C", "C", "C", "C", 0.0675, 0.0433, 0.0025 ];
+  static float CompassAzimuthFrameWidth    = 0.5;
+  static float CompassAzimuthFrameRadius   = 0.0075;
+  static float CompassAzimuthHideBeginDist = 0.09;
+  static float CompassAzimuthHideEndDist   = 0.05875;
+  
+  //
+  // Horizon
+  //
+  
+  static float HorX = 0.9175;
+  static float HorY = 0.655;
+  static float HorR = 0.10083;
+  
+  Array ElHorCircle    = [ HorX, HorY, "N", "N", "C", "C", HorR, 0.3, 0.0, 2.0 * Math_PI ];
+  
+  Array HorNotches = [
+      //  angle,                    radiusMin, radiusMax, width, 
+      [-0.5             * Math_PI, -HorR,          HorR,   1.0 ],
+      [( -0.5 + 0.056 ) * Math_PI,  HorR - 0.006,  HorR,   0.3 ],
+      [( -0.5 - 0.056 ) * Math_PI,  HorR - 0.006,  HorR,   0.3 ],
+      [( -0.5 + 0.111 ) * Math_PI,  HorR - 0.006,  HorR,   0.3 ],
+      [( -0.5 - 0.111 ) * Math_PI,  HorR - 0.006,  HorR,   0.3 ],
+      [( -0.5 + 0.167 ) * Math_PI,  HorR - 0.013,  HorR,   0.3 ],
+      [( -0.5 - 0.167 ) * Math_PI,  HorR - 0.013,  HorR,   0.3 ],
+      [( -0.5 + 0.333 ) * Math_PI,  HorR - 0.013,  HorR,   0.3 ],
+      [( -0.5 - 0.333 ) * Math_PI,  HorR - 0.013,  HorR,   0.3 ],
+      [( -0.5 + 0.5   ) * Math_PI,  HorR - 0.015,  HorR,   0.3 ],
+      [( -0.5 - 0.5   ) * Math_PI,  HorR - 0.015,  HorR,   0.3 ]
+    ];
+  
+  static float YShift = 0.00375;
+    
+  Array HorFixedArrowRect = [
+     // X                      Y
+      [ HorX           , YShift + HorY - HorR          ],
+      [ HorX - 0.004375, YShift + HorY - HorR + 0.0183 ],
+      [ HorX           , YShift + HorY - HorR + 0.0185 ],
+      [ HorX + 0.004375, YShift + HorY - HorR + 0.0183 ]
+    ];
+
+  Array HorFixedLines = [
+      [ -2.0 / 800.0,  1.0 / 600.0, "C", "C", "N", "N", 4.0 / 800.0, 0.0, 1.0 ],
+      [ -2.0 / 800.0,  0.0,         "C", "C", "N", "N", 4.0 / 800.0, 0.0, 1.0 ],
+
+      [ -0.0575,  0.0, "C", "C", "N", "N", 0.0075, 0.0, 1.0 ],
+      [ -0.0475,  0.0, "C", "C", "N", "N", 0.0075, 0.0, 1.0 ],
+      [ -0.0375,  0.0, "C", "C", "N", "N", 0.0075, 0.0, 1.0 ],
+      [ -0.02625, 0.0, "C", "C", "N", "N", 0.0075, 0.0, 1.0 ],
+      
+      [ 0.0575,  0.0, "C", "C", "N", "N", -0.0075, 0.0, 1.0 ],
+      [ 0.0475,  0.0, "C", "C", "N", "N", -0.0075, 0.0, 1.0 ],
+      [ 0.0375,  0.0, "C", "C", "N", "N", -0.0075, 0.0, 1.0 ],
+      [ 0.02625, 0.0, "C", "C", "N", "N", -0.0075, 0.0, 1.0 ],
+
+      [ 0.0,  0.0,       "C", "C", "N", "N",  0.0075, 0.0083, 1.0 ],
+      [ 0.0,  0.0,       "C", "C", "N", "N", -0.0075, 0.0083, 1.0 ],
+      [  0.0075, 0.0083, "C", "C", "N", "N",  0.005, -0.0083, 1.0 ],
+      [ -0.0075, 0.0083, "C", "C", "N", "N", -0.005, -0.0083, 1.0 ],
+      [  0.0125, 0.0,    "C", "C", "N", "N",  0.0025, 0.0, 1.0 ],
+      [ -0.0125, 0.0,    "C", "C", "N", "N", -0.0025, 0.0, 1.0 ]
+    ];
+
+  static float HorPitchAngle   = 90.0;   // deg
+  static float HorPitchHeight  = HorR * 2.0;
+  
+  int HorHorizonColorIndex = CI_HORIZON;
+  int HorGroundColorIndex  = CI_GROUND;
+
+  Array HorPitchBase = [ HorX, HorY, "N", "N", "N", "N" ];
+
+  static float LongLine  = 44.0 / 800.0 / 2.0;
+  static float TextLine  = 28.0 / 800.0 / 2.0;
+  static float ShortLine = 10.0 / 800.0 / 2.0;
+  Array HorPitchLines = [
+     // deg,  startX,     finishX,   width 
+      [ 180.0, -HorR,      HorR,      1.0 ],
+      [ 175.0, -ShortLine, ShortLine, 1.0 ],
+      [ 170.0, -LongLine,  LongLine,  1.0 ],
+      [ 165.0, -ShortLine, ShortLine, 1.0 ],
+      [ 160.0, -LongLine,  LongLine,  1.0 ],
+      [ 155.0, -ShortLine, ShortLine, 1.0 ],
+      
+      [ 150.0, -TextLine,  TextLine,  1.0 ],
+      [ 145.0, -ShortLine, ShortLine, 1.0 ],
+      [ 140.0, -LongLine,  LongLine,  1.0 ],
+      [ 135.0, -ShortLine, ShortLine, 1.0 ],
+      [ 130.0, -LongLine,  LongLine,  1.0 ],
+      [ 125.0, -ShortLine, ShortLine, 1.0 ],
+
+      [ 120.0, -TextLine,  TextLine,  1.0 ],
+      [ 115.0, -ShortLine, ShortLine, 1.0 ],
+      [ 110.0, -LongLine,  LongLine,  1.0 ],
+      [ 105.0, -ShortLine, ShortLine, 1.0 ],
+      [ 100.0, -LongLine,  LongLine,  1.0 ],
+      [  95.0, -ShortLine, ShortLine, 1.0 ],
+
+      [  90.0, -TextLine,  TextLine,  1.0 ],
+      [  85.0, -ShortLine, ShortLine, 1.0 ],
+      [  80.0, -LongLine,  LongLine,  1.0 ],
+      [  75.0, -ShortLine, ShortLine, 1.0 ],
+      [  70.0, -LongLine,  LongLine,  1.0 ],
+      [  65.0, -ShortLine, ShortLine, 1.0 ],
+ 
+      [  60.0, -TextLine,  TextLine,  1.0 ],
+      [  55.0, -ShortLine, ShortLine, 1.0 ],
+      [  50.0, -LongLine,  LongLine,  1.0 ],
+      [  45.0, -ShortLine, ShortLine, 1.0 ],
+      [  40.0, -LongLine,  LongLine,  1.0 ],
+      [  35.0, -ShortLine, ShortLine, 1.0 ],
+
+      [  30.0, -TextLine,  TextLine,  1.0 ],
+      [  25.0, -ShortLine, ShortLine, 1.0 ],
+      [  20.0, -LongLine,  LongLine,  1.0 ],
+      [  15.0, -ShortLine, ShortLine, 1.0 ],
+      [  10.0, -LongLine,  LongLine,  1.0 ],
+      [   5.0, -ShortLine, ShortLine, 1.0 ],
+
+      [   0.0, -HorR,      HorR,      1.0 ],
+
+      [  -5.0, -ShortLine, ShortLine, 1.0 ],
+      [ -10.0, -LongLine,  LongLine,  1.0 ],
+      [ -15.0, -ShortLine, ShortLine, 1.0 ],
+      [ -20.0, -LongLine,  LongLine,  1.0 ],
+      [ -25.0, -ShortLine, ShortLine, 1.0 ],
+      [ -30.0, -TextLine,  TextLine,  1.0 ],
+
+      [ -35.0, -ShortLine, ShortLine, 1.0 ],
+      [ -40.0, -LongLine,  LongLine,  1.0 ],
+      [ -45.0, -ShortLine, ShortLine, 1.0 ],
+      [ -50.0, -LongLine,  LongLine,  1.0 ],
+      [ -55.0, -ShortLine, ShortLine, 1.0 ],
+      [ -60.0, -TextLine,  TextLine,  1.0 ],
+
+      [ -65.0, -ShortLine, ShortLine, 1.0 ],
+      [ -70.0, -LongLine,  LongLine,  1.0 ],
+      [ -75.0, -ShortLine, ShortLine, 1.0 ],
+      [ -80.0, -LongLine,  LongLine,  1.0 ],
+      [ -85.0, -ShortLine, ShortLine, 1.0 ],
+      [ -90.0, -TextLine,  TextLine,  1.0 ],
+      
+      [ -95.0, -ShortLine, ShortLine, 1.0 ],
+      [-100.0, -LongLine,  LongLine,  1.0 ],
+      [-105.0, -ShortLine, ShortLine, 1.0 ],
+      [-110.0, -LongLine,  LongLine,  1.0 ],
+      [-115.0, -ShortLine, ShortLine, 1.0 ],
+      [-120.0, -TextLine,  TextLine,  1.0 ],
+
+      [-125.0, -ShortLine, ShortLine, 1.0 ],
+      [-130.0, -LongLine,  LongLine,  1.0 ],
+      [-135.0, -ShortLine, ShortLine, 1.0 ],
+      [-140.0, -LongLine,  LongLine,  1.0 ],
+      [-145.0, -ShortLine, ShortLine, 1.0 ],
+      [-150.0, -TextLine,  TextLine,  1.0 ],
+
+      [-155.0, -ShortLine, ShortLine, 1.0 ],
+      [-160.0, -LongLine,  LongLine,  1.0 ],
+      [-165.0, -ShortLine, ShortLine, 1.0 ],
+      [-170.0, -LongLine,  LongLine,  1.0 ],
+      [-175.0, -ShortLine, ShortLine, 1.0 ]
+    ];
+    
+  Array HorFillLevels = [
+      // degree, color index
+      [   0.0,   CI_HORIZON    ],
+      [ -22.0,   CI_HORIZONMID ],
+      [ -90.0,   CI_GROUND     ],
+      [-158.0,   CI_HORIZONMID ],
+      [-180.0,   CI_HORIZON    ]
+    ];
+
+  static float TextPosX = 20.0 / 800.0;
+  static float SymSizeX = 4.0 / 800.0;
+  static float SymSizeY = 7.0 / 600.0;
+  Array HorPitchSymbols = [
+      // angle, text (position used as shift from vertical axis)
+      [ 150.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"3" ] ],
+      [ 150.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      [ 120.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"6" ] ],
+      [ 120.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      
+      [  90.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"9" ] ],
+      [  90.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      [  60.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"6" ] ],
+      [  60.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      [  30.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"3" ] ],
+      [  30.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      
+      [ -30.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"3" ] ],
+      [ -30.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      [ -60.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"6" ] ],
+      [ -60.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      [ -90.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"9" ] ],
+      [ -90.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      
+      [-120.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"6" ] ],
+      [-120.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ],
+      [-150.0,  [-TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"3" ] ],
+      [-150.0,  [ TextPosX - SymSizeX, -SymSizeY, "N", "N", "N", "N", 3, L"0" ] ]
+    ];    
+}

@@ -1,0 +1,387 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Terrain Patch scripts
+//
+
+class CTerrainPatch
+  extends CBaseSysObject
+{
+  // Special object class
+  final static String SPEC_CLASS = "Terrain Patches";
+
+  final static Array  SysEffects = [ 
+                                     "TerrainPatchCenter", 
+                                     "TerrainPatchBounds"        
+                                   ];
+  final static Array  EffectsSrc = [  
+                                     "CTerrainPatchCenterEffect", 
+                                     "CTerrainPatchBoundsEffect" 
+                                   ];
+
+  final static Vector DefaultDimensions  = new Vector(500.0, 500.0, 1.0);
+  final static String DefaultMaterialID  = "Village";
+  final static String DefaultTextureName = "";
+  final static String DefaultZoneName    = "";
+  final static float  DefaultBorderSize  = 10.0;
+
+  int     TerrainPatchID  = -1;
+  boolean IsPatchModified = false;
+  Vector  PatchDimensions = DefaultDimensions;
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CEditable::GetDefaultProperties();
+
+    Default.append([
+        ["Dimensions",   DefaultDimensions],
+        ["MaterialID",   DefaultMaterialID],
+        ["TextureName",  DefaultTextureName],
+        ["ZoneName",     DefaultZoneName],
+        ["BorderSize",   DefaultBorderSize]
+      ]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    SetProperties(new #GameController().GetObject(SOID_MissionController), _PropMap);
+  }
+
+  void SetProperties(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CEditable::SetProperties(_PropMap);
+
+    SetDimensions(_Mission, _PropMap.Get("Dimensions", DefaultDimensions));
+    SetMaterial(_Mission, 
+        _PropMap.Get("MaterialID",  DefaultMaterialID),
+        _PropMap.Get("TextureName", DefaultTextureName),
+        _PropMap.Get("ZoneName",    DefaultZoneName)
+      );
+    SetBorderSize(_Mission, _PropMap.Get("BorderSize", DefaultBorderSize));
+
+    UpdateBoundingAndPosition(_Mission);
+    UpdateEffects();
+  }
+
+  Component GetMission(
+      Component _Mission
+    )
+  {
+    if (null != _Mission)
+      return _Mission;
+
+    return new #GameController().GetObject(SOID_MissionController);
+  }
+    
+  Component GetTerrain(
+      Component _Mission
+    )
+  {
+    Component Mission = GetMission(_Mission);
+    if (null == Mission)
+      return null;
+
+    return Mission.GetObject(CMission::LAYER_TERRAIN_NAME);
+  }      
+
+  void SetDimensions(
+      Component _Mission,
+      Vector    _Dimensions
+    )
+  {
+    PatchDimensions = _Dimensions;
+    UpdateBoundingAndPosition(_Mission);
+    UpdateEffects();
+
+    Component Terrain = GetTerrain(_Mission);
+    if (null == Terrain)
+      return;
+    
+    if (-1 != TerrainPatchID)
+    {    
+      Terrain.ResizePatch(
+          TerrainPatchID,
+          PatchDimensions.x * 2.0, 
+          PatchDimensions.y * 2.0
+        );
+      IsPatchModified = true;
+    }
+  }      
+
+  void SetMaterial(
+      Component _Mission,
+      String    _MaterialID,
+      String    _TextureName,
+      String    _ZoneName
+    )
+  {
+    if ("" == _MaterialID ||
+        "" == _TextureName)
+      return;
+    
+    Component Terrain = GetTerrain(_Mission);
+    if (null == Terrain)
+      return;
+    
+    if (-1 != TerrainPatchID)
+      Terrain.SetPatchMaterial(TerrainPatchID, _MaterialID, _TextureName, _ZoneName);
+  }
+
+
+  void SetBorderSize(
+      Component _Mission,
+      float     _BorderSize
+    )
+  {
+    Component Terrain = GetTerrain(_Mission);
+    if (null == Terrain)
+      return;
+    
+    if (-1 != TerrainPatchID)
+      Terrain.SetPatchBorderSize(TerrainPatchID, _BorderSize);
+  }
+
+  event void OnPositionEdited()
+  {
+    setPosition(user, eliminateRotationAlongXAndY(getPosition(user)));
+
+    Component Terrain = GetTerrain(null);
+    if (null == Terrain)
+      return;
+    
+    UpdateBoundingAndPosition(null);
+    UpdateEffects();
+
+    if (-1 != TerrainPatchID)
+    {    
+      Terrain.MovePatch(TerrainPatchID, getPosition(user));
+      IsPatchModified = true;
+    }
+  }
+
+  void SetSize(
+      Vector _Size
+    )
+  {
+    Component Mission = GetMission(null);
+    if (null == Mission)
+      return;
+    Component Content = Mission.GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    Vector Dim = PropertiesMap.Get("Dimensions", DefaultDimensions);
+
+    if (0.0 != _Size.x) Dim.x = _Size.x;
+    if (0.0 != _Size.y) Dim.y = _Size.y;
+    if (0.0 != _Size.z) Dim.z = _Size.z;
+
+    PropertiesMap.Set("Dimensions", Dim);
+
+    SetProperties(PropertiesMap);
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    Component Terrain = GetTerrain(_Mission);
+    if (null != Terrain)
+    {    
+      TerrainPatchID = Terrain.CreatePatch();
+      if (-1 != TerrainPatchID)
+      {
+        setPosition(user, eliminateRotationAlongXAndY(getPosition(user)));
+        Terrain.MovePatch(TerrainPatchID, getPosition(user));
+      }
+    }
+    
+    SetProperties(_Mission, _PropMap);
+
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Show();
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Hide();
+
+    Component Terrain = GetTerrain(_Mission);
+    if (null != Terrain &&
+        -1   != TerrainPatchID)
+      TerrainPatchID = Terrain.DeletePatch(TerrainPatchID);
+  }
+
+  boolean IsModified()
+  {
+    return IsPatchModified;
+  }
+
+  void ApplyModifications()
+  {
+    IsPatchModified = false;
+
+    Component Terrain = GetTerrain(null);
+    if (null == Terrain)
+      return;
+
+    Terrain.PropagatePatches();
+  }
+
+  void UpdateBoundingAndPosition(
+      Component _Mission
+    )
+  {
+    Component Mission = GetMission(_Mission);
+    if (null == Mission)
+      return;
+
+    Matrix Position = getPosition(user);
+
+    Array Isection = Mission.GetIsectionWithAxis(
+        DF_POINT, 
+        [CLASSIFICATOR_MAIN_GEOMETRY], 
+        [],
+        Position.origin,
+        AXIS_Z
+      );
+    if (0 != (Isection[0] & DF_POINT))
+    {
+      Position.origin = Isection[1];
+      setPosition(user, eliminateRotationAlongXAndY(Position));
+    }      
+
+    Array Isection00 = Mission.GetIsectionWithAxis(
+        DF_POINT, 
+        [CLASSIFICATOR_MAIN_GEOMETRY], 
+        [],
+        Position.origin - Position.xvec * PatchDimensions.x - Position.yvec * PatchDimensions.y,
+        AXIS_Z
+      );
+    Array Isection01 = Mission.GetIsectionWithAxis(
+        DF_POINT, 
+        [CLASSIFICATOR_MAIN_GEOMETRY], 
+        [],
+        Position.origin - Position.xvec * PatchDimensions.x + Position.yvec * PatchDimensions.y,
+        AXIS_Z
+      );
+    Array Isection10 = Mission.GetIsectionWithAxis(
+        DF_POINT, 
+        [CLASSIFICATOR_MAIN_GEOMETRY], 
+        [],
+        Position.origin + Position.xvec * PatchDimensions.x - Position.yvec * PatchDimensions.y,
+        AXIS_Z
+      );
+    Array Isection11 = Mission.GetIsectionWithAxis(
+        DF_POINT, 
+        [CLASSIFICATOR_MAIN_GEOMETRY], 
+        [],
+        Position.origin + Position.xvec * PatchDimensions.x + Position.yvec * PatchDimensions.y,
+        AXIS_Z
+      );
+
+
+    if (0 != (Isection00[0] & DF_POINT) &&
+        0 != (Isection01[0] & DF_POINT) &&
+        0 != (Isection10[0] & DF_POINT) &&
+        0 != (Isection11[0] & DF_POINT))
+    {
+      PatchDimensions.z = max(
+                              max(abs(Position.origin.z - Isection00[1].z), 
+                                  abs(Position.origin.z - Isection11[1].z)),
+                              max(abs(Position.origin.z - Isection01[1].z), 
+                                  abs(Position.origin.z - Isection10[1].z))
+                            );
+    }      
+  }      
+
+  void UpdateEffects()
+  {
+    m_Boundings[1] = PatchDimensions;
+    CBaseSysObject::UpdateEffects();
+  }
+}
+
+//
+// Terrain Patch effects
+//
+
+class CTerrainPatchEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "Center",   // material id
+          "NORMAL"    // transparency
+        ),
+      new CEffectMaterial(
+          "Bounds",   // material id
+          "NORMAL"    // transparency
+        )
+    ];
+}
+
+class CTerrainPatchCenterEffect
+{
+  CTerrainPatchCenterEffect()
+  {
+    SetSkinClass(new #MaterialManager<CTerrainPatchEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_STAR_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.05, 0.05, 1.0),
+        "Center",
+        new Color(0.0,  0.75, 0.75, 1.0)
+      );
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0,  0.0,  0.0),
+        new Vector(0.01, 0.01, 0.01),
+        "Center",
+        new Color(0.0,  0.75, 0.75, 1.0)
+      );
+  }
+}
+
+class CTerrainPatchBoundsEffect
+{
+  CTerrainPatchBoundsEffect()
+  {
+    SetSkinClass(new #MaterialManager<CTerrainPatchEffectSkin>());
+
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "Bounds",
+        new Color(0.0,  0.75, 0.75, 1.0)
+      );
+  }
+}
+
+

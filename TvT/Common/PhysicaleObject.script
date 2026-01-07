@@ -1,0 +1,411 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPhysicaleObject
+{
+  Component GetPhysicsController()
+  {
+    return GetObject("PhysicsController");
+  }
+
+  void UnregisterPhysicsController()
+  {
+    logMessage("UnregisterPhysicsController");
+    GetPhysicsController().EnableControl(false);
+    UnregisterObject("PhysicsController");
+  }
+
+  void SetupPhysicsController(
+      Component _PhysicsController,
+      float     _Mass
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    logMessage("SetupPhysicsController");
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupPhysicsController function call");
+      return;
+    }
+
+    Component Behavior = GetBehavior();
+    Component Game = new #GameController();
+    //if(Game.GetGameMode() != "Single" && null != Behavior)
+    //  return;
+    //if(Game.GetGameMode() == "Client"   && null != Behavior)
+    //  return;
+
+    // Initialize controller
+    _PhysicsController.SetEventHandler(this);
+    _PhysicsController.SetMass(_Mass);
+    _PhysicsController.SetExcludeSet([ CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_WATER ]);
+    setSlaveObject(_PhysicsController, Mesh);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    _PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    
+    // Register object physics controller
+    RegisterObject("PhysicsController", _PhysicsController);
+
+    // Enable controller by default    
+    if (null != Behavior)
+      _PhysicsController.EnableControl(false);
+    else
+      _PhysicsController.EnableControl(true);
+
+    //_PhysicsController.EnableControl(false);
+  }
+
+  void SetupItemPhysicsController(
+      Component _PhysicsController,
+      float     _Mass,
+      String    _Item
+    )
+  {
+    Component Mesh = GetMeshComponent().GetJoint(_Item);
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupPhysicsController function call");
+      return;
+    }
+
+    // Initialize controller
+    _PhysicsController.SetEventHandler(this);
+    _PhysicsController.SetMass(_Mass);
+    _PhysicsController.SetExcludeSet([ CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_WATER ]);
+    setSlaveObject(_PhysicsController, Mesh);
+    _PhysicsController.CreateTouchTrigger(0.0);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    _PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    // Register object physics controller
+    RegisterObject("PhysicsController_" + _Item, _PhysicsController);
+
+    // Enable controller by default
+    _PhysicsController.EnableControl(true);
+    _PhysicsController.Activate(true);
+  }
+
+}
+
+class CPushObject extends CPhysicaleObject
+{
+  float EnergyToHP = 0.0;
+  boolean m_AITankCollisionShape = false;
+  float MinEnergyToSound = 500.0;
+
+  void SetupPhysicaleObject(
+      String _SubstanceScript,
+      float  _ObjectMass
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (Mesh == null)
+    {
+      logError("Unable to find mesh in CreateDestructibleRoot function call");
+      return;
+    }
+
+    // Setup physics controller
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, _SubstanceScript);
+    SetupPhysicsController(PhysicsController, _ObjectMass);
+
+    Component Body = Mesh.GetRootJoint();
+    if (Body == null)
+    {
+      logError("Unable to find root joint in CreateDestructibleRoot function call");
+      return;
+    }
+
+    // Initialize physics controller
+    Array Shapes = Mesh.GetCollisionShapes(Body, true);
+    PhysicsController.CreateRigidBody("Mesh", Mesh, Shapes);
+    if (m_AITankCollisionShape)
+      PhysicsController.SetIsAITankCollisionShape("Mesh");
+
+    if ((new #GameController()).GetGameMode() != "Single")
+      PhysicsController.SetFixedBody("Mesh", true);
+
+    // Append classificator for physics controllable object
+    addClassificator(user, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+  }
+
+  Component SetupPhysicaleItem(
+      String _SubstanceScript,
+      float  _ObjectMass,
+      String _JointName
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (Mesh == null)
+    {
+      logError("Unable to find mesh in CreateDestructibleRoot function call");
+      return;
+    }
+
+    // Setup physics controller
+    //Component PhysicsController = GetPhysicsController();
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, _SubstanceScript);
+    SetupItemPhysicsController(PhysicsController, _ObjectMass, _JointName);
+
+    Component Joint = Mesh.GetJoint(_JointName);
+    if (Joint == null)
+    {
+      logError("Unable to find joint in CreateDestructibleRoot function call");
+      return;
+    }
+
+    Mesh.UnlinkJoint(Joint);
+
+    // Initialize physics controller
+    Array Shapes = Mesh.GetCollisionShapes(Joint, false);
+    PhysicsController.CreateRigidBody(_JointName, Joint, Shapes);
+
+    //PhysicsController.AppendExternalForce(new Vector(3,0,4), new Vector(1.0,2,0.5));
+    
+    //removeClassificator(PhysicsController, CLASSIFICATOR_DO_NOT_COLLISION_CHECK);
+
+    return PhysicsController;
+  }
+
+  void SetupPhysicaleObject(
+      String _SubstanceScript,
+      float  _ObjectMass,
+      float  _EnergyToHP
+    )
+  {
+    SetupPhysicaleObject(_SubstanceScript, _ObjectMass);
+
+    Component PhysicsController = GetPhysicsController();
+    if (null != PhysicsController)
+    {
+      PhysicsController.CreateTouchTrigger(0.0);
+    }
+
+    EnergyToHP = _EnergyToHP;
+  }
+
+  event void OnPhysicsEnabled(
+      boolean _IsEnabled
+    )
+  {
+    if (_IsEnabled)
+    {      
+      Component SurfaceControl = GetSurfaceControl();
+      if (null != SurfaceControl)
+        SurfaceControl.EnableSurfaceControl(false);
+      Component Behavior = GetBehavior();
+      if (null != Behavior)
+        Behavior.ActivateMovement(false);
+    }
+  }
+
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+    Component StateControl = GetStateControl();
+    if (null != StateControl)
+    {
+      float HitPoints =
+        StateControl.GetHitPoints() - _Energy * EnergyToHP;
+      StateControl.SetHitPoints(HitPoints);
+
+      Component ItemPhysicsController = GetObject("PhysicsController_Turret_A_Crashed");
+      if (null != ItemPhysicsController)
+        ItemPhysicsController.CreateTouchTrigger(0.0);
+     
+      // create new trigger
+//      if (HitPoints > 0.0)
+//      {
+        Component PhysicsController = GetPhysicsController();
+        if (null != PhysicsController)
+          PhysicsController.CreateTouchTrigger(0.0);
+//      }
+    }
+  }
+}
+class CPushVehicleObject extends CPushObject
+{
+  int CurrentEventID;
+  int RepeatEventID;
+
+  event void OnRepeatOrder(
+      int _EventID
+    )
+  {
+    if (RepeatEventID != _EventID)
+      return;    
+
+//    logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnRepeatOrder");
+    Component Behavior = GetBehavior();
+    Behavior.SetPosition(getPosition(this));
+    Component Task = Behavior.GetTaskScriptHost();
+    if (Task != null)
+    {
+      Task.OnMoveAbility(true, 0);
+    }
+  }
+
+  event void MoveLeft(
+      Vector _Point
+    )
+  {
+    if (checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+//    logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " MoveLeft");
+    Component Behavior = GetBehavior();
+    Behavior.SetPosition(getPosition(this));
+    Vector MovePos = getPosition(this).yvec;
+    MovePos.Normalize();
+    Vector Dest = getPosition(this).origin + MovePos + MovePos + MovePos + MovePos + MovePos + MovePos + MovePos + MovePos + MovePos + _Point + _Point + _Point + _Point;
+    Behavior.setOrder_Maneuver(Dest);
+    RepeatEventID = randnum(INT_MAX);      
+    sendEvent(9.0, getIdentificator(this), "OnRepeatOrder", [RepeatEventID]);
+  }
+
+  event void OnMoveSomewhere(
+      Vector _Point
+    )
+  {
+    if (checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+//    logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnMoveSomewhere");
+    Component Behavior = GetBehavior();
+    if (null != Behavior)
+    {
+      Behavior.ActivateMovement(false);
+      //$HACK
+      CurrentEventID = randnum(INT_MAX);      
+      sendEvent(1.0, getIdentificator(this), "OnBehaviorEnabled", [true, CurrentEventID]);
+//      MoveOut(_Point);
+    }
+
+    _Point.Normalize();
+    _Point.x = _Point.x / 10.0f;
+    _Point.y = _Point.y / 10.0f;
+    _Point.z = 0.0;
+    Component PhysicsController = GetPhysicsController();
+    PhysicsController.EnableControl(true);
+    PhysicsController.Activate(true);
+    PhysicsController.AppendExternalForce(_Point, new Vector(0.0, 0.0, 0.0));
+//    PushObject(_Point);
+  }
+
+  event void MoveOut(
+      Vector _Point
+    )
+  {
+    if (checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+
+    _Point.Normalize();
+    Component Behavior = GetBehavior();
+    Behavior.SetPosition(getPosition(this));
+    Vector Dest = getPosition(this).origin + _Point + _Point + _Point + _Point + _Point;
+//    if (abs(getAngleBetween(getPosition(this).origin - _Point, getPosition(this).xvec, getPosition(this).xvec)) > Math_HALFPI)
+//      Behavior.setOrder_Retreat(getPosition(this).origin - getPosition(this).xvec - getPosition(this).xvec - getPosition(this).xvec - getPosition(this).xvec - getPosition(this).xvec - getPosition(this).xvec);
+//    else
+      Behavior.setOrder_Maneuver(Dest);
+
+    RepeatEventID = randnum(INT_MAX);      
+    sendEvent(9.0, getIdentificator(this), "OnRepeatOrder", [RepeatEventID]);
+  }
+
+  event void OnSuccessTouchTrigger(
+      float _Energy,
+      Vector _Point
+    )
+  {
+    //$LOG
+    //logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnSuccessTouchTrigger energy = " + new String(_Energy));
+    // create new trigger
+    Component PhysicsController = GetPhysicsController();
+    if (null != PhysicsController)
+      PhysicsController.CreateTouchTrigger(0.0);
+
+    Component StateControl = GetStateControl();
+    if (null != StateControl)
+    {
+      float HitPoints = StateControl.GetHitPoints() - _Energy * EnergyToHP;
+      StateControl.SetHitPoints(HitPoints);
+
+      if (HitPoints <= 0.0)
+        user.SetUnitItemHPPercent("HullEngine", 0.0);
+    }
+
+    // play touch sound
+    //$FIXME change constand by varible
+    if(_Energy > MinEnergyToSound)
+      (new #SoundsArray()).CreateSound("TankCollisionBtrLowSpeedSound", getPosition(this));
+
+    OnMoveSomewhere(_Point);
+    Component Behavior = GetBehavior();
+    if (null != Behavior)
+    {
+      Behavior.ActivateMovement(false);
+      PhysicsController.EnableControl(true);
+      //$HACK
+      CurrentEventID = randnum(INT_MAX);      
+      sendEvent(1.0, getIdentificator(this), "OnBehaviorEnabled", [true, CurrentEventID]);
+    }
+
+    //PhysicsController.EnableControl(true);
+  }
+
+  event void OnPhysicsEnabled(
+    boolean _IsEnabled
+    )
+  {
+    if (_IsEnabled)
+    {
+     //$LOG
+//     logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnPhysicsEnabled: " + new String(_IsEnabled));
+     GetPhysicsController().ClearAllForces();
+        
+     Component SurfaceControl = GetSurfaceControl();
+      if (null != SurfaceControl)
+        SurfaceControl.EnableSurfaceControl(false);
+    }
+  }
+
+  event void OnBehaviorEnabled(
+    boolean _IsEnabled,
+    int     _EventID
+    )
+  {
+    if (_IsEnabled && checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]) )
+    {
+      //$LOG
+//      logWarning("[CPushVehicleObject]: " + getIdentificator(this) + " OnBehaviorEnabled with ID: " + new String(_EventID));
+      if(CurrentEventID != _EventID) return;    
+
+      Component SurfaceControl = GetSurfaceControl();
+      if (null != SurfaceControl)
+        SurfaceControl.EnableSurfaceControl(true);
+
+      Component Behavior = GetBehavior();
+      if (null != Behavior)
+      {
+        GetPhysicsController().EnableControl(false);
+        Behavior.SetPosition(getPosition(this));
+        Behavior.ActivateMovement(true);
+      }
+
+      //GetPhysicsController().ActivateMovement(false);
+    }
+  }
+}
+

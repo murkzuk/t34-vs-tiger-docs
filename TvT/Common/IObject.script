@@ -1,0 +1,99 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class IObject
+{
+  // Initialization
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+  }
+
+  Array GetDefaultProperties()
+  {
+    return [];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  int GetState(
+      String _StateID
+    )
+  {
+    return 0;
+  }
+
+  void SetState(
+      String _StateID,
+      int    _Value
+    )
+  {
+  }
+
+  Array GetStatesList()
+  {
+    return [];
+  }
+
+  boolean HasDetectionFlag(
+      int _DetectionFlag
+    )
+  {
+    return false;
+  }
+
+  void SetActive(
+      int _Active
+    )
+  {
+  }
+
+  WString GetLabel(
+      Component _Joint
+    )
+  {
+    return L"";
+  }
+  
+  void SetIngameState(
+      boolean _ingame
+    )
+  {
+  }  
+  
+  void UpdateIngameState()
+  {
+  }  
+}

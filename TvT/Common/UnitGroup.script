@@ -1,0 +1,2107 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2002 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CGroupOrder
+{
+  CGroupOrder(
+      Component _Source
+   )
+  {
+    m_Order             = _Source.m_Order;
+    m_MovingSpeed       = _Source.m_MovingSpeed;
+    m_Formation         = _Source.m_Formation;
+    m_FormationDistance = _Source.m_FormationDistance;
+    m_PatrolPath        = new Array(_Source.m_PatrolPath);
+    m_PatrolPause       = _Source.m_PatrolPause;
+    m_CyclePath         = _Source.m_CyclePath;
+    m_NonSynchedPatrol  = _Source.m_NonSynchedPatrol;
+    m_NextPatrolPoint   = _Source.m_NextPatrolPoint;
+    m_GuardRadius       = _Source.m_GuardRadius;
+    m_Targets           = new Array(_Source.m_Targets);
+    m_AttackPlace       = _Source.m_AttackPlace;
+    m_TargetPoint       = new Vector(_Source.m_TargetPoint);
+    m_TargetObjectID    = _Source.m_TargetObjectID;
+    m_ReferenceObjectID = _Source.m_ReferenceObjectID;
+    m_EnemyReactionType = _Source.m_EnemyReactionType;
+    m_UseAverageSpeed   = _Source.m_UseAverageSpeed;
+  }
+
+  String   m_Order             = "";
+  float    m_MovingSpeed       = 0.0;
+  String   m_Formation         = "Independent";
+  int      m_FormationDistance = 30;
+  Array    m_PatrolPath        = [];
+  int      m_PatrolPause       = 0;
+  boolean  m_CyclePath         = true;
+  boolean  m_NonSynchedPatrol  = false;
+  int      m_NextPatrolPoint   = 0;
+  float    m_GuardRadius       = 0.0;
+  Array    m_Targets           = [];
+  boolean  m_AttackPlace       = false;
+  Vector   m_TargetPoint;
+  String   m_TargetObjectID    = "";
+  String   m_ReferenceObjectID = "";
+  int      m_EnemyReactionType = ERT_PASSIVE;
+  boolean  m_UseAverageSpeed   = true;
+}
+
+class CBaseUnitGroup extends IObject, CBaseUtilities
+{
+  final static boolean StatusDebug = true;
+
+  final static int STATUS_IN_TRANSPORT = 1;
+  final static int STATUS_STAY = 2;
+
+  // ======================================
+  // Object properties
+  // ======================================
+
+  int       m_Status           = STATUS_STAY;
+
+  String    m_GroupID          = "";
+  boolean   m_IsAlive          = true;
+  Array     m_OrderStack       = [];
+  Component m_CurrentOrder     = new CGroupOrder();
+  Component m_DelayedOrder     = new CGroupOrder();
+
+  int m_EnemyReactionType      = ERT_PASSIVE;
+
+  Array     m_Units            = []; // call RefreshUnitsList() before using this in script
+
+  int       m_UnloadDelay      = 0;
+  String    m_TempPoint        = "";
+  boolean   m_GroupShown       = true;
+
+  Array     m_RunOffPoints     = [];
+
+  // parachute parameters
+  int       m_LastThrown       = 0;
+  int       m_Landed           = 0;
+  boolean   m_bStopped         = false;
+
+  // $TMP Load runoff distances should be in concret group or transport
+  Array     RunOffPoints       = [
+                                   new Vector(8.313, -5.55, 0.0)
+                                 ];
+
+  // for current group targets
+  Collection m_GroupTargets;
+
+  // ======================================
+  // IObject Interface functions
+  // ======================================
+
+  CBaseUnitGroup()
+  {
+    addClassificator(user, CLASSIFICATOR_NOTVISIBLEONRADAR);
+  }
+
+
+  void Construct(
+      Component  _Mission,
+      Component  _PropMap
+   )
+  {
+    SetProperties(_PropMap);
+  }
+
+  Array GetDefaultProperties()
+  {
+    Array Properties = [
+      [ "Affiliation",        "NEUTRAL"    ],
+      [ "Units",              []           ],
+      [ "MovingSpeed",        0            ],
+      [ "Formation",          "Independent"],
+      [ "FormationDistance",  30           ],
+      [ "Path",               []           ],
+      [ "CyclePath",          true         ],
+      [ "NonSynchedPatrol",   false        ],
+      [ "PatrolStart",        0            ],
+      [ "PatrolPause",        0            ],
+      [ "InstantEnemies",     []           ],
+      [ "AttackPlace",        false        ],
+      [ "TargetPoint",        ""           ],
+      [ "GuardRadius",        100          ],
+      [ "GroupEnemyReaction", "ERT_PASSIVE"],
+      [ "OrderEnemyReaction", "ERT_PASSIVE"],
+      [ "Visible",            true         ],
+      [ "DelayedOrder",       false        ],
+      [ "FirstOrder",         ""           ]
+    ];
+
+    return Properties;
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+    // mark unit as processed for current order
+    ProcessQueueOrderUnit("", GetUnitTask(_UnitID));
+  }
+
+  void SetProperties(
+      Component _PropMap
+   )
+  {
+//      logError(getIdentificator(user) + "::SetProperties()");
+
+    // Set unit affiliation
+    String Affiliation = _PropMap.Get("Affiliation", "NEUTRAL");
+    SetAffiliation(Affiliation);
+
+    m_Units = _PropMap.Get("Units", []);
+    /*if (m_Units.size() == 0)
+      logError(getIdentificator(user) + ": no units in properties");
+    else
+      logWarning(getIdentificator(user) + ": units - " + new String(m_Units));*/
+
+    m_GroupID = getIdentificator(this);
+    SetGroupName(m_GroupID);
+
+    // orders properties
+    m_CurrentOrder.m_Order             = _PropMap.Get("FirstOrder", "");
+    m_CurrentOrder.m_MovingSpeed       = _PropMap.Get("MovingSpeed", 0.0);
+    m_CurrentOrder.m_Formation         = _PropMap.Get("Formation", "Independent");
+    m_CurrentOrder.m_FormationDistance = _PropMap.Get("FormationDistance", 30.0);
+    m_CurrentOrder.m_PatrolPath        = _PropMap.Get("Path", []);
+    m_CurrentOrder.m_CyclePath         = _PropMap.Get("CyclePath", true);
+    m_CurrentOrder.m_NonSynchedPatrol  = _PropMap.Get("NonSynchedPatrol", false);
+
+    m_CurrentOrder.m_NextPatrolPoint   = _PropMap.Get("PatrolStart", 0);
+    m_CurrentOrder.m_PatrolPause       = _PropMap.Get("PatrolPause", 0);
+    m_CurrentOrder.m_Targets           = _PropMap.Get("InstantEnemies", []);
+    m_CurrentOrder.m_AttackPlace       = _PropMap.Get("AttackPlace", false);
+    m_CurrentOrder.m_TargetObjectID    = _PropMap.Get("TargetPoint", "");
+    m_CurrentOrder.m_GuardRadius       = _PropMap.Get("GuardRadius", 100.0);
+
+    String Reaction = _PropMap.Get("OrderEnemyReaction", "ERT_PASSIVE");
+
+    if (Reaction == "ERT_AGGRESSIVE")
+      m_CurrentOrder.m_EnemyReactionType = ERT_AGGRESSIVE;
+    else if (Reaction == "ERT_FRIGID")
+      m_CurrentOrder.m_EnemyReactionType = ERT_FRIGID;
+    else
+      m_CurrentOrder.m_EnemyReactionType = ERT_PASSIVE;
+
+    Reaction = _PropMap.Get("GroupEnemyReaction", "ERT_PASSIVE");
+
+    if (Reaction == "ERT_AGGRESSIVE")
+      m_EnemyReactionType = ERT_AGGRESSIVE;
+    else if (Reaction == "ERT_FRIGID")
+      m_EnemyReactionType = ERT_FRIGID;
+    else
+      m_EnemyReactionType = ERT_PASSIVE;
+
+    m_GroupShown = _PropMap.Get("Visible",  true);
+
+    boolean DelayedOrder = _PropMap.Get("DelayedOrder", false);
+    if (DelayedOrder && (m_CurrentOrder.m_Order != ""))
+    {
+      m_DelayedOrder = new CGroupOrder(m_CurrentOrder);
+      m_CurrentOrder.m_Order = "";
+    }
+
+    sendEvent(0.0, m_GroupID, "UpdateGroupCenter", []);
+  }
+
+  void BuildGroup()
+  {
+//      logError(getIdentificator(user) + "::INIT (script)");
+
+    int i = 0;
+
+    Component Mission = GetMission();
+    if (Mission == null)
+//      {
+//        logError(getIdentificator(user) + ": no mission");
+      return;
+//      }
+
+    if (m_Units.size() == 0)
+      logError(m_GroupID + ": no units");
+
+    for (i = 0; i < m_Units.size(); )
+    {
+
+//        logWarning(getIdentificator(user) + ": touching unit '" + m_Units[i] + "'");
+      Component Unit = Mission.GetObject(m_Units[i]);
+
+      if (Unit != null)
+      {
+//          logWarning(getIdentificator(user) + ": adding unit '" + m_Units[i] + "'");
+        AddUnit(Unit);
+        i++;
+      }
+      else
+      {
+//          logMessage(getIdentificator(user) + ": unit " + m_Units[i] + " skipped (no object)");
+
+        m_Units.remove(i);
+      }
+    }
+
+    if (m_CurrentOrder.m_TargetObjectID != "")
+    {
+      Component TargetObject = Mission.GetObject(m_CurrentOrder.m_TargetObjectID);
+
+      if (TargetObject != null)
+      {
+        m_CurrentOrder.m_TargetPoint = getPosition(TargetObject).origin;
+      }
+    }
+
+    if (m_CurrentOrder.m_Formation != "")
+      SetFormation(m_CurrentOrder.m_Formation, m_CurrentOrder.m_FormationDistance, false, false);
+
+    if (!m_GroupShown)
+      ShowGroup(false);
+
+    for (i = 0; i < m_Units.size(); i++)
+    {
+      if (GetUnitTask(m_Units[i]) != null)
+        InvokeUnitTaskFunction (m_Units[i], "SetGroup", [this, i]);
+    }
+
+    if (m_CurrentOrder.m_Order != "")
+    {
+      if ((m_CurrentOrder.m_Order == "Patrol") && (m_CurrentOrder.m_NonSynchedPatrol))
+      {
+        ForEachUnitTask("InitPatrolPointIndex", [m_CurrentOrder.m_PatrolPath.size()]);
+      }
+
+      RepeatOrder();
+    }
+  }
+
+  void ThinOutGroup(int _NumToKill)
+  {
+    String UnitID;
+
+    Component Mission = (new #GameController()).GetMission();
+    Component Session = (new #GameController()).GetGameSession();
+
+    if (Mission.IsMirror())
+      return;
+
+    boolean IsServer = ((!Mission.IsSingle()) && Mission.IsHost());
+
+    int NumToKill = _NumToKill;
+    if (NumToKill >= m_Units.size())
+    {
+      // $LOG
+//        logWarning("ThinOutGroup() : totally clearing out group " + getIdentificator(user));
+
+      while (m_Units.size() != 0)
+      {
+        UnitID = m_Units[0];
+        RemoveUnit(m_Units[0]);
+        m_Units.remove(0);
+        Component Unit = Mission.GetObject(UnitID);
+        if (Unit != null)
+        {
+          addClassificator(Unit, CLASSIFICATOR_DEAD_OBJECT);
+          Mission.DeleteObject(UnitID);
+          if (IsServer)
+            Session.FireNetEvent("Server_DeleteObject", [UnitID]);
+        }
+      }
+
+      return;
+    }
+
+    int i;
+
+    // $LOG
+//      logWarning("ThinOutGroup() : group " + getIdentificator(user));
+
+    for (int n = 0; n < _NumToKill; n++)
+    {
+      i = randnum(m_Units.size());
+      UnitID = m_Units[i];
+
+      // $LOG
+//        logMessage("Unit " + UnitID + " is out");
+
+      RemoveUnit(m_Units[i]);
+      m_Units.remove(i);
+      Component Unit = Mission.GetObject(UnitID);
+      if (Unit != null)
+      {
+        addClassificator(Unit, CLASSIFICATOR_DEAD_OBJECT);
+        Mission.DeleteObject(UnitID);
+        if (IsServer)
+          Session.FireNetEvent("Server_DeleteObject", [UnitID]);
+      }
+    }
+
+    // $LOG
+//      logWarning("[Statistic] Group " + getIdentificator(user) + ": " + new String(m_Units.size()) + " units left after thin-out");
+  }
+
+  int RefreshUnitsList()
+  {
+    Array Units = GetUnitsList();
+    if (Units.isEmpty() &&  !m_Units.isEmpty())
+    {
+      logWarning("["+getIdentificator(this)+"::RefreshUnitsList()] Possible units lost, rebuild group");
+
+      int i = 0;
+      Component Mission = GetMission();
+      if (Mission != null)
+      {
+        for (i = 0; i < m_Units.size(); )
+        {
+          Component Unit = Mission.GetObject(m_Units[i]);
+          if (Unit != null)
+          {
+            AddUnit(Unit);
+            i++;
+          }
+          else
+            m_Units.remove(i);
+        }
+      }
+//      BuildGroup();
+      Units = GetUnitsList();
+    }
+
+    m_Units = Units;
+
+    m_IsAlive = !m_Units.isEmpty();
+
+    return m_Units.size();
+  }
+
+  void UpdateGroupTargets()
+  {
+    logWarning("["+getIdentificator(this)+"] UpdateGroupTargets CALLED");
+
+    RefreshUnitsList();
+    m_GroupTargets.clear();
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component _UnitTask = GetUnitTask(m_Units[i]);
+      String _Enemy = _UnitTask.m_CurrentEnemy;
+
+      if (_Enemy != "")
+        m_GroupTargets.insert(_Enemy);
+    }
+
+    if (m_GroupTargets.isEmpty())
+    {
+      for (int i = 0; i < m_Units.size(); i++)
+        sendEvent(10 + randnum(10), m_Units[i], "SetHatchesToNormalState", []);
+//      logWarning("group hatches to normal");
+    }
+    else
+    {
+      for (int i = 0; i < m_Units.size(); i++)
+        sendEvent(randnum(3), m_Units[i], "SetHatchesToAttackState", []);
+//      logWarning("group hatches to attack");
+    }
+  }
+
+  void SetGroupHatchesToAttackState()
+  {
+//    logMessage("GroupHatches to attack");
+    for (int i = 0; i < m_Units.size(); i++)
+      sendEvent(randnum(3), m_Units[i], "SetHatchesToAttackState", []);
+  }
+
+  event void PopDelayedOrder()
+  {
+    if (m_DelayedOrder.m_Order != "")
+    {
+      if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+        PushOrder();
+
+      m_CurrentOrder = new CGroupOrder(m_DelayedOrder);
+
+      if (m_CurrentOrder.m_Formation != "")
+        SetFormation(m_CurrentOrder.m_Formation, m_CurrentOrder.m_FormationDistance, false, false);
+
+      RepeatOrder();
+    }
+  }
+
+  void RepeatOrder()
+  {
+    if (StatusDebug)
+      logMessage(m_GroupID + "::RepeatOrder()");
+    if (m_CurrentOrder.m_Order == "")
+    {
+      if (StatusDebug)
+        logMessage(m_GroupID + "::RepeatOrder() : popping order");
+      PopOrder();
+    }
+
+    // "PATROL"
+    if (m_CurrentOrder.m_Order == "Patrol")
+    {
+      if (StatusDebug)
+        logMessage(m_GroupID + "::RepeatOrder() : Patrol order");
+      if (!m_CurrentOrder.m_NonSynchedPatrol)
+      {
+        if (m_CurrentOrder.m_PatrolPath.isEmpty())
+        {
+          logError("" + m_GroupID + ": Group can not execute 'Patrol' order with empty patrol path");
+          return;
+        }
+
+        int NextPoint = m_CurrentOrder.m_NextPatrolPoint;
+        if (NextPoint == m_CurrentOrder.m_PatrolPath.size())
+        {
+          if (!m_CurrentOrder.m_CyclePath)
+          {
+            if (StatusDebug)
+              logWarning("[REPEAT] Group " + m_GroupID + " reached the end of the path");
+            m_CurrentOrder.m_Order = "";
+            OnPathEndReached();
+            return;
+          }
+          else
+          {
+            m_CurrentOrder.m_NextPatrolPoint = 1;
+            NextPoint = 0;
+          }
+        }
+
+        Vector NextDest = GetNavPointBehPos(m_CurrentOrder.m_PatrolPath[NextPoint]);
+        if (StatusDebug)
+          logMessage(m_GroupID + "::RepeatOrder() : Patrol order to point " + m_CurrentOrder.m_PatrolPath[NextPoint]);
+        setOrder_MoveTo(NextDest, m_CurrentOrder.m_MovingSpeed, true);
+        return;
+      }
+    }
+
+    // ACHTUNG! ATTANTION! WARNING!
+    // all worked branch MUST return before this point
+
+    // default forwarding
+    ContinueOrder();
+  }
+
+  event void ContinueOrder()
+  {
+    if (StatusDebug)
+      logMessage(m_GroupID + "::ContinueOrder()");
+
+    if (m_CurrentOrder.m_Order == "")
+    {
+      PopOrder();
+
+      if (m_CurrentOrder.m_Order == "")
+      {
+        logWarning("[ALARM] No orders in group " + m_GroupID + " task script");
+        return;
+      }
+    }
+
+    if (m_CurrentOrder.m_Order == "Patrol")
+    {
+      if (m_CurrentOrder.m_NonSynchedPatrol)
+      {
+        if (RefreshUnitsList() != 0)
+        {
+          for (int i = 0; i < m_Units.size(); i++)
+          {
+            InvokeUnitTaskFunction (m_Units[i], "SetGroup", [this, i]);
+
+            int NextPoint = InvokeUnitTaskFunction(m_Units[i], "GetNextPatrolPoint", []);
+
+            InvokeUnitTaskFunction(m_Units[i], "MoveTo", [
+              GetNavPointBehPos(m_CurrentOrder.m_PatrolPath[ NextPoint]),
+              m_CurrentOrder.m_MovingSpeed]);
+          }
+        }
+
+        return;
+      }
+
+      if (m_CurrentOrder.m_PatrolPath.isEmpty())
+      {
+        logError("" + m_GroupID + ": Group can not execute 'Patrol' order with empty patrol path");
+        return;
+      }
+
+      m_CurrentOrder.m_NextPatrolPoint++;
+      int NextPoint = m_CurrentOrder.m_NextPatrolPoint;
+      if (NextPoint == m_CurrentOrder.m_PatrolPath.size())
+      {
+        if (!m_CurrentOrder.m_CyclePath)
+        {
+          if (StatusDebug)
+            logWarning("[CONTINUE] Group " + m_GroupID + " reached the end of the path");
+          m_CurrentOrder.m_Order = "";
+          OnPathEndReached();
+          return;
+        }
+        else
+        {
+            m_CurrentOrder.m_NextPatrolPoint = 0;
+            NextPoint = 0;
+        }
+      }
+
+      Vector NextDest = GetNavPointBehPos(m_CurrentOrder.m_PatrolPath[NextPoint]);
+
+      if (StatusDebug)
+        logMessage("[CONTINUE] Group " + m_GroupID + " moving to next patrol point");
+      if (m_CurrentOrder.m_PatrolPause != 0)
+        PostDelayedEvent("setOrder_MoveTo", [NextDest, m_CurrentOrder.m_MovingSpeed, true], m_CurrentOrder.m_PatrolPause);
+      else
+        setOrder_MoveTo(NextDest, m_CurrentOrder.m_MovingSpeed, true);
+      return;
+    }
+
+    if (m_CurrentOrder.m_Order == "MoveTo")
+    {
+      if (StatusDebug)
+        logMessage("[CONTINUE] Group " + m_GroupID + " moving by 'MoveTo' command");
+      setOrder_MoveTo(m_CurrentOrder.m_TargetPoint, m_CurrentOrder.m_MovingSpeed, m_CurrentOrder.m_UseAverageSpeed);
+      return;
+    }
+
+    if (m_CurrentOrder.m_Order == "Attack")
+    {
+      if (StatusDebug)
+        logMessage("[CONTINUE] Group " + m_GroupID + " attacking unit ID = "+ m_CurrentOrder.m_TargetObjectID);
+
+      if (m_EnemyReactionType == ERT_FRIGID)
+      {
+        SetOrder_Stop();
+        SetOrder_NoFire();
+        return;
+      }
+
+      RefreshUnitsList();
+      OrderUnitToAttack("_everybody_");
+    }
+
+    if (m_CurrentOrder.m_Order == "Guard")
+    {
+      if (StatusDebug)
+        logMessage("[CONTINUE] Group " + m_GroupID + " SetOrder_Guard");
+
+      SetOrder_Guard(
+          m_CurrentOrder.m_TargetObjectID,
+          m_CurrentOrder.m_GuardRadius,
+          m_CurrentOrder.m_MovingSpeed,
+          m_CurrentOrder.m_PatrolPause);
+    }
+
+    if (m_CurrentOrder.m_Order == "Parachutize")
+    {
+      if (m_LastThrown >= m_Units.size())
+        return;
+
+      Vector Appear = new Vector(m_CurrentOrder.m_TargetPoint);
+
+      Appear.x += randnum(m_CurrentOrder.m_GuardRadius);
+      Appear.y += randnum(m_CurrentOrder.m_GuardRadius);
+
+      InvokeUnitTaskFunction(m_Units[m_LastThrown], "SetGroup", [this, 0]);
+      sendEvent(0.0, m_Units[m_LastThrown], "Parachutize", [Appear]);
+
+      m_LastThrown++;
+      if (m_LastThrown < m_Units.size())
+        // m_MovingSpeed is used as time period for this command
+        sendEvent(m_CurrentOrder.m_MovingSpeed, m_GroupID, "ContinueOrder", []);
+    }
+  }
+
+
+  // ==========================================
+  //  Internal and external event processing
+  // ==========================================
+
+  //
+  // Group events
+  //
+
+  // called by group after full initialization
+  void Init()
+  {
+    if (m_EnemyReactionType == ERT_FRIGID)
+      SetEnemyReactionType(ERT_FRIGID);
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component UnitTask = GetUnitTask(m_Units[i]);
+      // if (UnitTask.m_MeneuveringUnit)jm
+	  if ((UnitTask != null) && (UnitTask.m_MeneuveringUnit))
+        isManeuver = true;
+    }
+  }
+
+  // called when Group queue orders is ended
+  void OnQueueOrdersEnd(
+      String _OrderGroupID
+    )
+  {
+    if (StatusDebug)
+      logMessage("UnitGroup::OnQueueOrdersEnd('"+_OrderGroupID+"') for "+ getIdentificator(this));
+  }
+
+  void OnPathEndReached()
+  {
+//      logWarning("Group " + m_GroupID + " reached the end of the path");
+    PopOrder();
+    RepeatOrder();
+  }
+
+  // called when order is fulfilled
+  void OnOrderFulfilled ()
+  {
+    m_CurrentOrder.m_Order = "";
+    RepeatOrder();
+  }
+
+  // is called when the group is fully loaded into target vehicle
+  void OnLoaded(
+      String _TransportID
+    )
+  {
+    m_Status = STATUS_IN_TRANSPORT;
+    sendEvent(1.5, _TransportID, "CloseDoor", []);
+    fireEvent(1.5, [], "OnGroupLoaded", [m_GroupID]);
+  }
+
+  // is called when the group is fully unloaded from target vehicle
+  void OnUnloaded(
+      String _TransportID
+    )
+  {
+    m_Status = STATUS_STAY;
+    sendEvent(2.0, _TransportID, "CloseDoor", []);
+    fireEvent(2.0, [], "OnGroupUnloaded", [m_GroupID]);
+  }
+
+  // is called when the wingman group is fully recharged
+  void OnRecharged(
+      String _NavPointID
+    )
+  {
+    fireEvent(2.0, [], "OnGroupRecharged", [m_GroupID]);
+  }
+
+  //
+  // Unit's events
+  //
+
+  // called when unit reached end of orders stack
+  void OnQueueOrdersEnd(
+      String _OrderGroupID,
+      Component _UnitTask
+    )
+  {
+    String UnitId = _UnitTask.GetName();
+    String LeaderID = GetLeaderId();
+
+    if (UnitId == LeaderID)
+    {
+      if (_OrderGroupID == "SpecialBombAttack")
+      {
+        ProcessNextQueueOrder("OnLeaderBombAttackEnd");
+      }
+    }
+
+    // Notify order waiting for 'OnAllUnits'
+    ProcessQueueOrderUnit(_OrderGroupID, _UnitTask.GetBehavior());
+  }
+
+  // called by group members on stopped
+  void OnStopped(
+    Component _UnitTask
+    )
+  {
+    String UnitId = _UnitTask.GetName();
+    String LeaderID = GetLeaderId();
+
+    if (UnitId == LeaderID)
+      ClearLastMoveOrder(); // do not repeat move order on leader lost
+
+    if (m_CurrentOrder.m_Order == "Patrol")
+    {
+      if (m_CurrentOrder.m_NonSynchedPatrol)
+      {
+        int NextPoint = InvokeUnitTaskFunction(UnitId, "GetNextPatrolPoint", []);
+
+        InvokeUnitTaskFunction(UnitId, "MoveTo",
+                                [
+                                  GetNavPointBehPos(m_CurrentOrder.m_PatrolPath[NextPoint]),
+                                  m_CurrentOrder.m_MovingSpeed
+                                ]
+                              );
+      }
+      else
+      {
+        if (UnitId == LeaderID)
+        {
+          if (StatusDebug)
+            logMessage("[STOPPED] Group " + m_GroupID + " is up to continue patrol");
+          ContinueOrder();
+        }
+      }
+    }
+    else if (m_CurrentOrder.m_Order == "MoveTo")
+    {
+      if (UnitId == LeaderID)
+      {
+        logMessage("[STOPPED] Group " + m_GroupID + " reached the point they MovedTo");
+        m_CurrentOrder.m_Order = "";
+        OnPathEndReached();
+        return;
+        //ContinueOrder();
+      }
+    }
+    else if (m_CurrentOrder.m_Order == "Maneuver")
+    {
+      int index = m_ManeuveringUnits.find(UnitId);
+      if (index != -1)
+        m_ManeuveringUnits.remove(index);
+
+      if (m_ManeuveringUnits.size() == 0)
+      {
+        logMessage("[STOPPED] Group " + m_GroupID + " end maneuvering");
+        sendEvent(rand(7.0, 10.0), getIdentificator(user), "EndManeuver", []);
+      }
+
+      return;
+    }
+
+    if (UnitId == LeaderID)
+      ProcessNextQueueOrder("OnLeaderStopped");
+  }
+
+  event void EndManeuver()
+  {
+    if (m_CurrentOrder.m_Order == "Maneuver")
+    {
+      m_CurrentOrder.m_Order = "";
+
+      PopOrder();
+      RepeatOrder();
+    }
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)  // calles when unit (member of the group) hit by enemy
+  {
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID) // calles when unit (member of the group) receive event OnExplosion
+  {
+  }
+
+  void OnUnitLostLeader(String _UnitID)
+  {
+    RepeatMoveOrder();
+  }
+
+  void OnUnitFormationReached(String _UnitID) // called when spec formation with notify flag executed
+  {
+  }
+
+  void OnUnitParachuteLanded(
+      String _UnitID
+    )
+  {
+    if (m_Units.find(_UnitID) != -1)
+    {
+      logWarning(m_GroupID + ": my unit " + _UnitID + " landed");
+
+      m_Landed++;
+      if (m_Landed >= m_Units.size())
+      {
+        logWarning(m_GroupID + ": LANDED");
+        fireEvent(0.0, [], "OnGroupParachuteLanded", [m_GroupID]);
+      }
+    }
+  }
+
+  // called by group members in attack mode
+  void OnUnitNeedsEnemy(
+      Component _Unit
+   )
+  {
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    if (m_CurrentOrder.m_Order == "Attack")
+      OrderUnitToAttack(_Unit.GetName());
+  }
+
+  void OnUnitInactive(
+      Component _Unit
+   )
+  {
+//      logWarning("Unit " + _Unit.GetName() + " gone inactive");
+    if (!HasOrderedEnemies()/* || !IsAnybodyBusy()*/)
+    {
+//        logError("Group " + m_GroupID + ": no ordered enemies, attack off");
+      ClearEnemiesArray();
+      OnOrderFulfilled();
+    }
+    else if (!IsAnybodyBusy())
+    {
+//        logError("Group " + m_GroupID + ": nobody attacking, attack off");
+      ClearEnemiesArray();
+      OnOrderFulfilled();
+    }
+  }
+
+  // called by group unit that has targeted enemy
+  void OnEnemyTargeted(
+    Component _UnitAlerted // group unit that spotted enemy unit
+    )
+  {
+    if (m_EnemyReactionType == ERT_FRIGID)
+      return;
+
+    // by default when any group unit spots enemy
+    // all the group attacks enemy group targeted unit belongs to
+    String TargetedUnit = _UnitAlerted.GetTargetedEnemy();
+
+    if (m_CurrentOrder.m_Order == "Attack")
+      return;
+
+    if (GetCurrentQueueOrder() == "Unload")
+    {
+      //logWarning( m_GroupID + ": no group attack while unloading");
+      return;
+    }
+
+    if (((m_CurrentOrder.m_Order != "") && (m_CurrentOrder.m_EnemyReactionType == ERT_PASSIVE)) ||
+        (m_EnemyReactionType == ERT_PASSIVE))
+    {
+      if (m_CurrentOrder.m_Order != "Maneuver")
+      {
+        TryToManeuver();
+        return;
+      }
+      else
+        return;
+    }
+
+    Array KillList = GetMission().GetPlayerObjectsIDList();
+    boolean PlayerCaught = false;
+
+    for (int i = 0; i < KillList.size(); i++)
+    {
+      if (TargetedUnit == KillList[i])
+        PlayerCaught = true;
+    }
+
+    if (!PlayerCaught)
+      KillList = GetEnemyGroupUnitsList(TargetedUnit);
+
+   if (KillList.isEmpty())
+     KillList.add(TargetedUnit);
+
+    //logMessage("[TARGETED] Group " + m_GroupID + " initiating attack");
+    RefreshUnitsList();
+    SetOrder_Attack(KillList, m_EnemyReactionType);  // i.e. with default group reaction
+  }
+
+  int m_LastHitByEnemyTime = 0;
+  int m_ManeuverLatency    = 35000; // latency between two sequential maneuvers in milliseconds
+
+  Array m_ManeuveringUnits = [];
+
+  boolean isManeuver = false;
+
+  void TryToManeuver()
+  {
+    if (isManeuver)
+    {
+      if (getGameTime() - m_LastHitByEnemyTime > m_ManeuverLatency)
+      {
+        if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+          PushOrder();
+
+        m_LastHitByEnemyTime = getGameTime();
+        m_CurrentOrder.m_Order = "Maneuver";
+
+        RefreshUnitsList();
+        m_ManeuveringUnits = m_Units;
+
+        sendEvent(1.0, getIdentificator(user), "DoManeuver", []);
+      }
+    }
+    else
+      logWarning("This group can not maneuvering");
+  }
+
+  event void DoManeuver()
+  {
+    ForEachUnitTask("DoManeuver", []);
+  }
+
+  //-------
+  // Orders
+  //-------
+  void SetOrder (Component _Order)
+  {
+    if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+      PushOrder();
+
+    m_CurrentOrder = new CGroupOrder(_Order);
+
+    RepeatOrder();
+  }
+
+  void SetOrder_Stop()
+  {
+    PushOrder();
+    SetOrder_StopEm();
+  }
+
+  void SetOrder_Move(
+      Array   _Path,
+      float   _Speed,
+      boolean _Cycle
+   )
+  {
+    SetOrder_Move(_Path, _Speed, _Cycle, 0);
+  }
+
+  void SetOrder_Move(
+      Array   _Path,
+      float   _Speed,
+      boolean _Cycle,
+      int     _PatrolPause
+   )
+  {
+    if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+      PushOrder();
+
+    m_CurrentOrder.m_Order = "Intermission";
+    m_CurrentOrder.m_PatrolPath = _Path;
+    m_CurrentOrder.m_PatrolPause = _PatrolPause;
+    m_CurrentOrder.m_NextPatrolPoint = 0;
+    m_CurrentOrder.m_CyclePath = _Cycle;
+    m_CurrentOrder.m_MovingSpeed = _Speed;
+
+    m_CurrentOrder.m_Order = "Patrol";
+    RepeatOrder();
+  }
+
+  void SetOrder_Attack(
+      Array _Targets,
+      int _EnemyReactionType
+   )
+  {
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+      PushOrder();
+
+    m_CurrentOrder.m_Order = "Intermission";
+    if (!_Targets.isEmpty())
+      SetEnemiesArray(_Targets);
+    m_CurrentOrder.m_EnemyReactionType = _EnemyReactionType;
+
+    m_CurrentOrder.m_Order = "Attack";
+    RefreshUnitsList();
+
+    Component Mission = GetMission();
+    if ((Mission != null) && (m_EnemyReactionType == ERT_AGGRESSIVE))
+    {
+      for (int i = 0 ; i < m_Units.size(); i++)
+      {
+        Component Unit = Mission.GetObject(m_Units[i]).GetBehavior();
+        Unit.SetPreferedTargets(_Targets);
+        logError(getIdentificator(this) + " Prefered targets: " + new String(_Targets));
+      }
+    }
+
+    ContinueOrder();
+  }
+
+  void SetOrder_Guard(
+      String  _GuardPoint,
+      float   _GuardRadius,
+      float   _MoveSpeed)
+  {
+    SetOrder_Guard(
+        _GuardPoint,
+        _GuardRadius,
+        _MoveSpeed,
+        0);
+  }
+
+  void SetOrder_Guard(
+      String _GuardPoint,
+      float  _GuardRadius,
+      float  _MoveSpeed,
+      int    _CrossPause)
+  {
+//      logMessage("Guard order for group " + getIdentificator(this) + " (" + new String(m_Units.size()) + " units)");
+//      logMessage("Guard point is (" + new String(_GuardPoint.x) + ", " + new String(_GuardPoint.y) + "), radius " + new String(_GuardRadius) + ", speed " + new String(_MoveSpeed));
+
+    if ((m_CurrentOrder.m_Order != "") && (m_CurrentOrder.m_Order != "Guard") && m_CurrentOrder.m_Order != "Maneuver")
+      PushOrder();
+
+    m_CurrentOrder.m_Order = "Intermission";
+
+    ForEachUnitTask("SetOrder_Guard", [ _GuardPoint, _GuardRadius, _MoveSpeed, _CrossPause ]);
+
+    m_CurrentOrder.m_PatrolPause = _CrossPause;
+    m_CurrentOrder.m_MovingSpeed = _MoveSpeed;
+    m_CurrentOrder.m_TargetObjectID = _GuardPoint;
+    m_CurrentOrder.m_GuardRadius = _GuardRadius;
+    m_CurrentOrder.m_Order = "Guard";
+  }
+
+  void SetOrder_SpecialFire(
+      Array _Targets
+   )
+  {
+    SetOrder_Stop();
+    SetSpecialOrder(_Targets, "HasSpecialWeapons", "SetFireStyle_SpecialFire", [], "", []);
+  }
+
+  void SetOrder_KamikazeAttack(
+      Array  _Targets,
+      float  _AttackSpeed,
+      String _SupportOrder,
+      Array  _SupportParameters
+   )
+  {
+    SetOrder_Stop();
+    SetSpecialOrder(
+        _Targets, "IsKamikazeUnit", "KamikazeAttack",
+        [_AttackSpeed], _SupportOrder, _SupportParameters
+      );
+  }
+
+  void SetOrder_Parachutize(
+      String  _CenterPointID,
+      float   _Radius,
+      float   _StartHeight,
+      float   _Period
+    )
+  {
+    RefreshUnitsList();
+
+    m_LastThrown = 0;
+    m_Landed = 0;
+
+    Component CenterPoint = GetMission().GetObject(_CenterPointID);
+    if (CenterPoint == null)
+    {
+      logError(m_GroupID + ".SetOrder_Parachutize : bad center point object");
+      return;
+    }
+
+    m_CurrentOrder.m_Order          = "Parachutize";
+    m_CurrentOrder.m_TargetPoint    = getPosition(CenterPoint).origin;
+    m_CurrentOrder.m_TargetPoint.z  = _StartHeight;
+    m_CurrentOrder.m_GuardRadius    = _Radius;
+    m_CurrentOrder.m_MovingSpeed    = _Period; // masked time into speed
+    ContinueOrder();
+  }
+
+  void SetOrder_Load(
+      String _TransportID
+    )
+  {
+    SetOrder_Load(_TransportID, true, "LoadToTransport");
+  }
+
+  void SetOrder_SpecLoad(
+      String _TransportID
+    )
+  {
+    GetMission().GetObject(_TransportID).OpenDoor();
+
+    SetFirstQueueOrders([
+                     ["Load", "SpecLoadToTransport", [_TransportID], "OnAllUnits"],
+                     ["Load", "OnLoaded",        [_TransportID], ""] // hack $TODO fix
+                   ]);
+  }
+
+  void SetOrder_Load(
+      String  _TransportID,
+      boolean _UsePreloadPoint,
+      String  _LoadToTransportFunc
+    )
+  {
+    if (m_Status == STATUS_IN_TRANSPORT)
+    {
+      logError(getIdentificator(this) + " SetOrder_Load called but group is already loaded ???");
+      return;
+    }
+
+    // Go to PreLoaded point in current formation then divide into 2 groups
+    // and send each unit to loaded point and then into transport
+
+    // $TODO : amount of load points(and groups) should depends on transport
+    // so we should get them from it ..
+
+    Component Mission = GetMission();
+    Component Unit = Mission.GetObject(_TransportID);
+    if (Unit != null)
+    {
+      Component Behavior = Unit.GetBehavior();
+
+      Component Leader = Mission.GetObject(GetLeaderId());
+
+      // Set PreLoad Point in front (or in back of transport depends on mutual position)
+
+      Matrix Position = getPosition(Unit);
+
+      float RunOffDistance = 20.0;
+      if (Behavior != null)
+        RunOffDistance = Behavior.GetSpecParams().TransportPreloadDistance;
+
+      Vector PreloadDir = Position.xvec * getDotProduct(Position.xvec, getPosition(Leader).origin - Position.origin);
+
+      if (PreloadDir.GetNormAndNormalize() == 0.0)
+      {
+        PreloadDir = Position.xvec;
+      }
+
+      Vector PreloadedPosition = Position.origin + RunOffDistance * PreloadDir;
+
+      Array Orders;
+      if (_UsePreloadPoint)
+      {
+        Orders = [["Load", "setOrder_MoveTo", [PreloadedPosition, m_CurrentOrder.m_MovingSpeed, true], "OnLeaderStopped"]];
+      }
+
+      Orders.append([
+                      ["Load", _LoadToTransportFunc, [_TransportID], "OnAllUnits"],
+                      ["Load", "OnLoaded",        [_TransportID], ""] // hack $TODO fix
+                    ]);
+
+      SetFirstQueueOrders(Orders);
+    }
+    else
+        logError("Transport unit '" + _TransportID + "' has not found");
+  }
+
+  void SetOrder_Unload(
+      String _TransportID,
+      String _GuardPoint,
+      int    _UnloadDelay,
+      float  _GuardRadius
+    )
+  {
+    SetOrder_Unload(_TransportID,
+                    _GuardPoint,
+                    _UnloadDelay,
+                    _GuardRadius,
+                    1);
+
+  }
+
+  void SetOrder_Unload(
+      String _TransportID,
+      String _GuardPoint,
+      int    _UnloadDelay,
+      float  _GuardRadius,
+      int    _TryCount
+    )
+  {
+
+    // check landing state
+    /*
+    Component Transport = GetMission().GetObject(_TransportID);
+    if (isFunctionExist(Transport, "GetState", 1))
+      if (Transport.GetState(CUnitStateControl::USID_Position) != CUnitStateControl::US_PosLanded)
+    {
+      if (_TryCount >= 10)
+        return;
+
+      logError(getIdentificator(this) + "::SetOrder_Unload(" + _TransportID + ") - transport is not landed! order is delayed");
+
+      PostDelayedEvent("SetOrder_Unload", [_TransportID, _GuardPoint, _UnloadDelay, _GuardRadius, _TryCount + 1], 5000);
+      return;
+    }
+    */
+
+    SetRunOffPoint(_TransportID, CBaseAITask::LOAD_NONROOTABLE_ANIM);
+
+    ExtendQueueOrder([
+                       ["Unload", "", [] , "OnAllUnits"],
+                       ["Unload", "OnUnloaded", [_TransportID] , ""]
+                     ]);
+
+    RefreshUnitsList();
+
+    float TimeDelay = 0.001 * float(_UnloadDelay);
+
+    float Time = 2.0; // wait for door open
+
+    int CurRunOffDirs = m_RunOffPoints.size();
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      sendEvent(Time, m_Units[i], "Unload", [_TransportID, m_RunOffPoints[i % CurRunOffDirs][1], m_RunOffPoints[i % CurRunOffDirs][0], _GuardPoint, _GuardRadius, 0.0f]); //speed is 0.0 $TMP
+
+      if (i % CurRunOffDirs == CurRunOffDirs - 1) // simultanious run in all dirs
+        Time = Time + TimeDelay;
+    }
+
+  }
+
+  void SetOrder_NoFire()
+  {
+    ForEachUnitTask("SetFireStyle_NoFire", []);
+  }
+
+  void SetOrder_FireNearest()
+  {
+    ForEachUnitTask("SetFireStyle_Nearest", []);
+  }
+
+  void SetOrder_MoveTo(
+      Vector  _Target,
+      float   _MoveSpeed,
+      boolean _UseAverageSpeed
+   )
+  {
+    if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+      PushOrder();
+    m_CurrentOrder.m_Order = "Intermission";
+    m_CurrentOrder.m_TargetPoint = new Vector(_Target);
+    m_CurrentOrder.m_UseAverageSpeed = _UseAverageSpeed;
+
+//      logMessage("[MOVETO] Group " + m_GroupID + ": MoveTo order");
+    setOrder_MoveTo(_Target, _MoveSpeed, _UseAverageSpeed);
+
+    m_CurrentOrder.m_Order = "MoveTo";
+  }
+
+  void SetOrder_FormattedFollow(
+      Vector  _RelativePos,  // relative to _TargetObjectID position
+      float   _MoveSpeed,
+      boolean _UseAverageSpeed,
+      String  _TargetObjectID,
+      float   _ReachEpsilon
+   )
+  {
+    m_CurrentOrder.m_Order = "Order_FormattedFollow";
+    setOrder_MoveTo(_RelativePos, _MoveSpeed, _UseAverageSpeed, _TargetObjectID, _ReachEpsilon);
+  }
+
+  void SetOrder_MoveToEx(
+      Array  _Points,
+      float  _MoveSpeed
+    )
+  {
+    Array Orders;
+    for (int i = 0; i < _Points.size(); i++)
+    {
+      Orders.add(["MoveToEx", "setOrder_MoveTo", [_Points[i], _MoveSpeed, true], "OnLeaderStopped"]);
+    }
+    ExtendQueueOrder(Orders);
+  }
+
+
+  void CancelAllOrders()
+  {
+    m_OrderStack.clear();
+    m_CurrentOrder.m_Order = "";
+    ForEachUnitTask("ClearQueueOrders",[]);
+    ClearQueueOrders();
+    ForEachUnitTask("SetOrder_StopNow",[]);
+  }
+
+  event void SetOrder_Recharge(
+      String _PointID
+    )
+  {
+    ExtendQueueOrder([
+                    ["Recharge", "setOrder_MoveTo", [GetNavPointBehPos(_PointID), m_CurrentOrder.m_MovingSpeed, true], "OnLeaderStopped"],
+
+                    // assume RechargeUnits invoke units queue orders with "Recharge" id - so use 'OnAllUnits' waiter
+                    ["Recharge", "RechargeUnits",   [_PointID], "OnAllUnits"],
+                    ["Recharge", "OnRecharged",     [_PointID], ""]
+                  ]);
+  }
+
+  void SetFormation(
+      String  _FormationClass,
+      float   _FormationDistance,
+      boolean _RepositionNow,
+      boolean _RepositionOnCasualties
+   )
+  {
+    if (StatusDebug)
+      logMessage(m_GroupID + "::SetFormation("+_FormationClass + ")");
+
+    // $TMP - ugly!
+    if (_FormationClass == "Column")
+      ForEachUnitScript("OnMoveOrder",[]);
+    else
+    if (_FormationClass == "Independent")
+      ForEachUnitScript("OnMoveOrderEnd",[]);
+
+    setFormation(_FormationClass, _FormationDistance, _RepositionNow, _RepositionOnCasualties, false);
+  }
+
+  void SetOrientedFormation(
+      String  _FormationClass,
+      float   _FormationDistance,
+      boolean _RepositionNow,
+      boolean _RepositionOnCasualties
+   )
+  {
+    if (StatusDebug)
+      logMessage(m_GroupID + "::SetOrientedFormation("+_FormationClass + ")");
+    setFormation(_FormationClass, _FormationDistance, _RepositionNow, _RepositionOnCasualties, true);
+  }
+
+  void SetOrder_BombAttack(
+      Array  _ApproachPoints,
+      float  _AttackSpeed,
+      String _Target,
+      float  _Time,
+      Vector _OutPoint
+    )
+  {
+    if (_ApproachPoints.isEmpty())
+    {
+      _ApproachPoints[0] = getPosition(user);
+    }
+
+    Vector LastApproach = _ApproachPoints[_ApproachPoints.size() - 1];
+
+    _ApproachPoints.remove(_ApproachPoints.size() - 1);
+
+
+    SetFirstQueueOrders([
+                          ["BombAttack", "SetOrder_MoveToEx", [_ApproachPoints, 0.0f], ""],
+                          ["BombAttack", "ForEachUnitTask",[ "setOrder_SpecialBombAttack",
+                                                           [LastApproach, _AttackSpeed, _Target, _Time, _OutPoint]                                                        ] , "OnLeaderBombAttackEnd"]
+                        ]);
+
+  }
+
+  // ==========================================
+  // Common
+  // ==========================================
+
+  boolean IsAnybodyBusy()
+  {
+    RefreshUnitsList();
+
+    int i = 0;
+    for(; i < m_Units.size(); i++)
+    {
+      if (InvokeUnitTaskFunction(m_Units[i], "IsAttacking", []))
+        return true;
+    }
+
+    return false;
+  }
+
+  void ShowGroup(boolean _On)
+  {
+    ForEachUnitScript("ShowObject",[_On]);
+  }
+
+  int GetRankOf(
+      String _UnitID)
+  {
+    RefreshUnitsList();
+    return m_Units.find(_UnitID);
+  }
+
+  void SetEnemyReactionType(
+      int _EnemyReactionType
+   )
+  {
+    m_EnemyReactionType = _EnemyReactionType;
+    ForEachUnitTask("SetFrigidMode", [m_EnemyReactionType == ERT_FRIGID]);
+  }
+
+  event void ClearFormation()
+  {
+    ForEachUnitTask("setOrder_Stop",[]);
+  }
+
+  event void ActivateMovement(boolean _On)
+  {
+    ForEachUnitTask("ActivateMovement", [_On]);
+  }
+
+  event void ActivateFire(boolean _On)
+  {
+    ForEachUnitTask("ActivateFire", [_On]);
+    ForEachUnitTask("OnRadarUpdate", []);
+  }
+
+  event void ActivateRadar(boolean _On)
+  {
+    ForEachUnitTask("ActivateRadar", [_On]);
+    ForEachUnitTask("OnRadarUpdate", []);
+  }
+
+  event void ActivateGroup(boolean _On)
+  {
+    ForEachUnitTask("SetFrigidMode", [!_On]);
+    ShowGroup(_On);
+    ForEachUnitTask("ActivateBehavior", [_On]);
+  }
+
+  event void ChangeMoveSpeed(float _Speed)
+  {
+    m_CurrentOrder.m_MovingSpeed = _Speed;
+    ForEachUnitTask("ChangeMoveSpeed", [_Speed]);
+  }
+
+  event void ChangeMoveSpeed(float _CruiserSpeed , float _SpeedOvertake)
+  {
+    InvokeUnitTaskFunction (m_Units[0], "ChangeMoveSpeed", [_CruiserSpeed, _SpeedOvertake]);
+  }
+
+  void CommitSuicide()
+  {
+    ForEachUnitScript("CommitSuicide",[]);
+  }
+
+  event void DestroyGroup()
+  {
+    ForEachUnitScript("DestroyObject", []);
+  }
+
+  event void RestoreGroup()
+  {
+    Array DestroyedUnits = RefreshDestroyedList(); // auto add dead unit list to unitlist
+    for (int i = 0; i < DestroyedUnits.size(); i++)
+    {
+        Component Unit =  GetMission().GetObject(DestroyedUnits[i]);
+        if (null != Unit)
+          Unit.RestoreObject();
+    }
+    if (!DestroyedUnits.isEmpty())
+      removeClassificator(this, CLASSIFICATOR_DEAD_OBJECT);
+  }
+
+  event void SetImmortalMode(
+      boolean _Mode
+    )
+  {
+    ForEachUnitScript("SetImmortalMode", [_Mode]);
+  }
+
+  // ==========================================
+  //  Service methods
+  // ==========================================
+
+  void SpecLoadToTransport(
+      String _TransportID
+    )
+  {
+    ForEachUnitTask("SpecLoad", []);
+  }
+
+  void LoadToTransport(
+      String _TransportID
+    )
+  {
+    SetRunOffPoint(_TransportID, CBaseAITask::LOAD_ROOTABLE_ANIM);
+
+    RefreshUnitsList();
+
+    ClearFormation();
+
+    float TimeDelay = 0.001 * float(1000); //$TODO - _UnloadDelay instead of 1000
+
+    float Time = 0.0;
+
+    int CurRunOffDirs = m_RunOffPoints.size();
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      sendEvent(Time, m_Units[i], "Load", [m_RunOffPoints[i % CurRunOffDirs][0], m_RunOffPoints[i % CurRunOffDirs][1], _TransportID, m_CurrentOrder.m_MovingSpeed, CBaseAITask::LOAD_ROOTABLE_ANIM]);
+
+//      if (i % CurRunOffDirs == CurRunOffDirs - 1) // simultanious run in all dirs
+      Time = Time + TimeDelay;
+    }
+  }
+
+  void LoadToTransportShortRunoffRight(
+      String _TransportID
+    )
+  {
+    SetRunOffPoint(_TransportID, CBaseAITask::LOAD_NONROOTABLE_ANIM);
+
+    RefreshUnitsList();
+
+    ClearFormation();
+
+    float TimeDelay = 0.001 * float(1000); //$TODO - _UnloadDelay instead of 1000
+
+    float Time = 0.0;
+
+    int CurRunOffDirs = m_RunOffPoints.size();
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      sendEvent(Time, m_Units[i], "Load", [m_RunOffPoints[0][0], m_RunOffPoints[0][1], _TransportID, m_CurrentOrder.m_MovingSpeed, CBaseAITask::LOAD_NONROOTABLE_ANIM]);
+
+      if (i % CurRunOffDirs == CurRunOffDirs - 1) // simultanious run in all dirs
+        Time = Time + TimeDelay;
+    }
+  }
+
+  void LoadToTransportShortRunoffLeft(
+      String _TransportID
+    )
+  {
+    SetRunOffPoint(_TransportID, CBaseAITask::LOAD_NONROOTABLE_ANIM);
+
+    RefreshUnitsList();
+
+    ClearFormation();
+
+    float TimeDelay = 0.001 * float(1000); //$TODO - _UnloadDelay instead of 1000
+
+    float Time = 0.0;
+
+    int CurRunOffDirs = m_RunOffPoints.size();
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      sendEvent(Time, m_Units[i], "Load", [m_RunOffPoints[1][0], m_RunOffPoints[1][1], _TransportID, m_CurrentOrder.m_MovingSpeed, CBaseAITask::LOAD_NONROOTABLE_ANIM]);
+
+      if (i % CurRunOffDirs == CurRunOffDirs - 1) // simultanious run in all dirs
+        Time = Time + TimeDelay;
+    }
+  }
+
+  // place points near transport to (un)load
+  void SetRunOffPoint(
+      String _TransportID,
+      int    _Type
+    )
+  {
+    Component Unit = GetMission().GetObject(_TransportID);
+    if (Unit != null)
+    {
+      Unit.OpenDoor();
+
+      Component Mesh = Unit.GetObject("Mesh");
+      if (Mesh != null)
+      {
+        float RunOffDistance = 10.0;
+        Component Behavior = Unit.GetBehavior();
+        if (Behavior != null)
+          RunOffDistance = Behavior.GetSpecParams().TransportRunOffDistance;
+
+        m_RunOffPoints.clear();
+
+        if (_Type == CBaseAITask::LOAD_ROOTABLE_ANIM)
+        {
+          Component Loader = Mesh.GetRootJoint();
+          if (Loader != null)
+          {
+            Matrix UnitMatr       = getPosition(Loader);
+            Matrix TransportPoint = new Matrix(UnitMatr);
+            //$TMP
+            TransportPoint.xvec   = - TransportPoint.xvec;
+            TransportPoint.yvec   = - TransportPoint.yvec;
+            TransportPoint.origin += new Vector(0.0, 0.0, 0.45);
+
+            for (int i = 0; i < RunOffPoints.size(); i++)
+            {
+              Vector RunOff         = UnitMatr.multVrt(RunOffPoints[i]);
+//              RunOff -= UnitMatr.yvec * 1.0f; // $TMP set the proper face dir before turning on the load animation
+//              Vector TransportPoint = RunOff;
+              m_RunOffPoints.add([RunOff, TransportPoint]);
+            }
+          }
+        }
+        else
+        if (_Type == CBaseAITask::LOAD_NONROOTABLE_ANIM)
+        {
+          for (int i = 1; i < 10; i++)
+          {
+            Component Loader = Mesh.GetJoint("Loader" + new String(i));
+            if (Loader == null)
+              break;
+            Matrix UnitMatr       = getPosition(Loader);
+            Vector UnitXVec       = UnitMatr.xvec;
+            m_RunOffPoints.add([UnitMatr.origin - RunOffDistance * UnitXVec, UnitMatr]);
+          }
+        }
+
+        if (m_RunOffPoints.isEmpty())
+        {
+          m_RunOffPoints.add([getPosition(Mesh).origin, getPosition(Mesh)]);
+          logError("no loader joints found in " + _TransportID + " for " + getIdentificator(this));
+        }
+
+
+      }
+    }
+  }
+
+  void RechargeUnits(
+      String _TargetObjectID
+    )
+  {
+    ForEachUnitTask("Wingman_Recharge", [_TargetObjectID]);
+  }
+
+  //
+  // order maintenance
+  //
+
+  void PushOrder()
+  {
+    if (m_CurrentOrder.m_Order == "")
+      return;
+
+    Component pusher = new CGroupOrder(m_CurrentOrder);
+
+    m_OrderStack.add(pusher);
+
+    if (StatusDebug)
+      logMessage("Group " + m_GroupID + ": pushing order " + m_CurrentOrder.m_Order + "; stack size = " + new String(m_OrderStack.size()));
+  }
+
+  void PopOrder()
+  {
+    if (m_OrderStack.isEmpty())
+      return;
+
+    int last = m_OrderStack.size() - 1;
+
+    m_CurrentOrder = new CGroupOrder(m_OrderStack[last]);
+    m_OrderStack.remove(last);
+
+    if (StatusDebug && (m_CurrentOrder.m_Order != ""))
+        logMessage("Group " + m_GroupID + ": popping order " + m_CurrentOrder.m_Order + "; stack size = " + new String(m_OrderStack.size()));
+  }
+
+  void SetOrderName(
+      String _OrderName
+   )
+  {
+    if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+        PushOrder();
+
+    m_CurrentOrder.m_Order = _OrderName;
+  }
+
+  String GetOrderName()
+  {
+    return m_CurrentOrder.m_Order;
+  }
+
+  // ==========================================
+  //  Editor support
+  // ==========================================
+
+  event void EditorCommand_MoveTo(
+      Vector _TargetPos,
+      float  _Speed
+    )
+  {
+    SetOrder_MoveTo(_TargetPos, _Speed, true);
+  }
+
+  event void EditorCommand_Stop()
+  {
+    SetOrder_Stop();
+  }
+
+  event void UpdateGroupCenter()
+  {
+    if (RefreshUnitsList() == 0)
+      return;
+
+    // Compute center of group
+    Vector Center = new Vector(0.0, 0.0, 0.0);
+    int    Count  = 0;
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component Unit = new #GameController().GetObject(m_Units[i]);
+      if (isPositionable(Unit))
+      {
+        Center = Center + getPosition(Unit).origin;
+        Count++;
+      }
+    }
+
+    if (0 == Count)
+      return;
+
+    Center = Center / float(Count);
+
+    // Update position
+    Matrix Position = getPosition(this);
+    Position.origin = Center;
+    setPosition(this, Position);
+
+    // Update self record
+    Array Record = new #GameController().GetLoadedMission().GetContent().FindObjectRecord(getIdentificator(this));
+    if (!Record.isEmpty())
+      Record[CMissionContent::INDEX_Position] = getPosition(this);
+  }
+
+  event void OnPositionEdited(
+      Matrix _OldPosition,
+      Matrix _Position
+    )
+  {
+    if (RefreshUnitsList() == 0)
+      return;
+
+    Component Mission = new #GameController().GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    // Compute units transform
+    Matrix InvOldPosition = _OldPosition;
+    InvOldPosition.inverse();
+    Matrix PositionDelta  = _Position * InvOldPosition;
+
+    // Update unit positions
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      String UnitID = m_Units[i];
+
+      Component Unit = new #GameController().GetObject(UnitID);
+      if (!isPositionable(Unit))
+        continue;
+
+      Matrix Position = PositionDelta * getPosition(Unit);
+      Position.normalize();
+      setPosition(Unit, Position);
+
+      // Update content record
+      {
+        Array Record = Mission.GetContent().FindObjectRecord(UnitID);
+
+        if (!Record.isEmpty())
+          Record[CMissionContent::INDEX_Position] = Position;
+
+        sendEvent(0.0, UnitID, "OnPositionEdited", []);
+      }
+    }
+  }
+
+// end of CBaseUnitGroup
+}
+
+class BaseZisGroup extends CBaseUnitGroup
+{
+  int countSoldier = 0;
+  Collection m_RunSoldiers;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component unit = GetMission().GetObject(m_Units[i]);
+      if (unit != null)
+        if (checkMask(unit, ["GROUND", "HUMAN"], []))
+        {
+          if(unit.GetObject("Behavior") != null)
+          {
+            unit.GetObject("Behavior").ActivateBehavior(false);
+            countSoldier++;
+          }
+        }
+    }
+
+    if (countSoldier == 0)  // типа солдат в группе нету
+      countSoldier == -1;
+
+    m_RunSoldiers.clear();
+  }
+
+  void SoldierRun(
+      String _ID
+    )
+  {
+    m_RunSoldiers.insert(_ID);
+    if (m_RunSoldiers.size() >= countSoldier)
+      StopFightGroup();
+//      ForEachUnitTask("ActivateBehavior", [false]);
+  }
+
+  void SoldierReturn(
+      String _ID
+    )
+  {
+    m_RunSoldiers.remove(_ID);
+    if (m_RunSoldiers.size() < countSoldier)
+      StartFightGroup();
+//      ForEachUnitTask("ActivateBehavior", [true]);
+  }
+
+  void StopFightGroup()
+  {
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component unit = GetMission().GetObject(m_Units[i]);
+      if (unit != null)
+        if (!checkMask(unit, ["HUMAN"], []))
+        {
+          if(!checkMask(unit, [CLASSIFICATOR_DEAD_OBJECT], []))
+          {
+            Component Behavior = unit.GetObject("Behavior");
+            Behavior.ActivateFire(false);
+            Behavior.ActivateRadar(false);
+            Behavior.ActivateBehavior(false);
+          }
+        }
+    }
+
+//    ForEachUnitTask("ActivateBehavior", [false]);
+  }
+
+  void StartFightGroup()
+  {
+//    ForEachUnitTask("ActivateBehavior", [false]);
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component unit = GetMission().GetObject(m_Units[i]);
+      if (unit != null)
+        if (!checkMask(unit, ["HUMAN"], []))
+        {
+          if(!checkMask(unit, [CLASSIFICATOR_DEAD_OBJECT], []))
+          {
+            Component Behavior = unit.GetObject("Behavior");
+            Behavior.ActivateFire(true);
+            Behavior.ActivateRadar(true);
+            Behavior.ActivateBehavior(true);
+          }
+        }
+    }
+  }
+
+  void DestroyGroup()
+  {
+//    ForEachUnitTask("ActivateBehavior", [false]);
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component Unit = GetMission().GetObject(m_Units[i]);
+      if (!checkMask(Unit, ["HUMAN"], []))
+      {
+        addClassificator(Unit, CLASSIFICATOR_DEAD_OBJECT);
+        Component Behavior = Unit.GetObject("Behavior");
+        Behavior.ActivateFire(false);
+        Behavior.ActivateRadar(false);
+        Behavior.ActivateBehavior(false);
+        sendEvent(0.0, getIdentificator(GetMission()), "OnObjectDestroyed", [m_Units[i]]);
+      }
+      else
+      {
+        Component StateControl = Unit.GetObject("StateControl");
+        StateControl.SetHitPoints(0.0);
+      }
+
+/*      addClassificatorObject(m_Units[i], CLASSIFICATOR_DEAD_OBJECT);
+      if (GetMission() != null)
+        sendEvent(0.0, getIdentificator(GetMission()), "OnObjectDestroyed", [m_Units[i]]);
+*/
+    }
+  }
+
+  void ReleaseSoldiers()
+  {
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component Unit = GetMission().GetObject(m_Units[i]);
+      if (checkMask(Unit, ["HUMAN"], []))
+        Unit.SetGuncrewMode(false);
+    }
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+    if(GetMission().isDebug)
+    {
+      logWarning("[BaseZisGroup] GroupID = " + getIdentificator(user) + "  Destroyed UnitID = " + _UnitID);
+      logWarning("[BaseZisGroup] GroupID = " + getIdentificator(user) + " countSoldier = " + new String(countSoldier));
+    }
+
+    Component unit = GetMission().GetObject(_UnitID);
+    if (checkMask(unit, ["GROUND", "HUMAN"], []))
+      countSoldier--;
+    else
+      ReleaseSoldiers();
+//      DestroyGroup();
+
+    if(countSoldier == 0)
+      DestroyGroup();
+  }
+}
+
+
+
+class CFormationVector
+{
+  int     Commander;
+  Vector  Displacement;
+
+  CFormationVector(int _Cmd, Vector _Disp)
+  {
+    Commander = _Cmd;
+    Displacement = _Disp;
+  }
+}
+
+class CBaseFormation
+{
+  final static String DisplayName = "Generic";
+
+  float m_Dist = 200;
+
+  Component GetUnitPosition(int _Rank)
+  {
+    return new CFormationVector(0., new Vector(0, 0, 0));
+  }
+
+  int GetMaxFormationUnits()
+  {
+    return 0;
+  }
+
+  void SetInterUnitDistance(float _Distance)
+  {
+    m_Dist = _Distance;
+  }
+}
+
+class COrderFormation extends CBaseFormation
+{
+  final static String DisplayName = "Order";
+
+  Component GetUnitPosition(int _Rank)
+  {
+    int cmd = 0;
+
+    if (_Rank > 0)
+        cmd = _Rank - 1;
+
+    Vector disp = new Vector(-m_Dist * _Rank, 0, 0);
+
+    return new CFormationVector(0, disp);
+  }
+}
+
+class CFrontFormation extends CBaseFormation
+{
+  final static String DisplayName = "Front";
+
+  Component GetUnitPosition(int _Rank)
+  {
+    int cmd = 0;
+    int Sign = 1;
+
+    if (_Rank > 2)
+        cmd = _Rank - 2;
+
+    if (_Rank/2*2 != _Rank)
+        Sign = -1;
+
+    Vector disp = new Vector(0, m_Dist*Sign,0);
+
+    return new CFormationVector(cmd, disp);
+  }
+}
+
+class CWedgeFormation extends CBaseFormation
+{
+  final static String DisplayName = "Wedge";
+
+  Component GetUnitPosition(int _Rank)
+  {
+    int cmd = 0;
+    int Sign = 1;
+
+    float Dist = sqrt(m_Dist * m_Dist / 2.);
+
+    if (_Rank > 2)
+      cmd = _Rank - 2;
+
+    if (_Rank/2*2 != _Rank)
+      Sign = -1;
+
+    Vector disp = new Vector(-Dist, Dist*Sign, 0);
+
+    return new CFormationVector(cmd, disp);
+  }
+}
+
+class CWideWedgeFormation extends CBaseFormation
+{
+  final static String DisplayName = "Wide Wedge";
+
+  Component GetUnitPosition(int _Rank)
+  {
+    int cmd = 0;
+    float Sign = 1.;
+
+    float Dist = sqrt((m_Dist * m_Dist) / 5.);
+
+    if (_Rank > 2)
+      cmd = _Rank - 2;
+
+    if (_Rank/2*2 != _Rank)
+      Sign = -1.;
+
+    Vector disp = new Vector(-Dist, Dist*Sign*2, 0);
+
+    return new CFormationVector(cmd, disp);
+  }
+}
+
+class CNarrowWedgeFormation extends CBaseFormation
+{
+  final static String DisplayName = "Narrow Wedge";
+
+  Component GetUnitPosition(int _Rank)
+  {
+    int cmd = 0;
+    float Sign = 1.;
+
+    float Dist = sqrt((m_Dist * m_Dist) / 5.);
+
+    if (_Rank > 2)
+      cmd = _Rank - 2;
+
+    if (_Rank/2*2 != _Rank)
+      Sign = -1.;
+
+    Vector disp = new Vector(-Dist*2., Dist*Sign, 0);
+
+    return new CFormationVector(cmd, disp);
+  }
+}
+
+class CRectangleFormation extends CBaseFormation
+{
+  final static String DisplayName = "Rectangle";
+
+  Component GetUnitPosition(int _Rank)
+  {
+    int cmd = _Rank - 2;
+    Vector disp = new Vector((-m_Dist), 0.0, 0.0);;
+
+    if (_Rank / 2 * 2 != _Rank)
+    {
+      cmd = _Rank - 1;
+      disp = new Vector(0.0, -m_Dist, 0);
+    }
+
+    return new CFormationVector(cmd, disp);
+  }
+}

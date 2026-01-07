@@ -1,0 +1,352 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Nav point scripts
+//
+
+class CNavPoint
+  extends CBaseSysObject
+{
+  // Special object class
+  final static String SPEC_CLASS = "Nav Points";
+
+  final static boolean DefaultDetectState  = false;  // non-detecting
+  final static float   DefaultRange        = 0.0f;
+  final static Vector  DefaultDimensions   = new Vector(0.0f);
+  final static String  DefaultName         = "";
+  final static Array   DefaultMask         = [[], []];
+  final static boolean DefaultIsVisible    = true;   // set visible point
+  final static int     DefaultPositionType = NPPT_Free;
+  final static String  DefaultPosTypeName  = "";
+  final static float   DefaultBehHeight    = 0.0f;
+
+  int PositionType = DefaultPositionType;
+
+  float m_BehaviorHeight = DefaultBehHeight;
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CEditable::GetDefaultProperties();
+
+    Default.append([
+        ["Detect",       DefaultDetectState],
+        ["Name",         DefaultName],
+        ["Mask",         DefaultMask],
+        ["IsVisible",    DefaultIsVisible],
+        ["PositionType", DefaultPosTypeName],
+        ["BehaviorHeight", DefaultBehHeight],
+        ["MapCompass",     false],
+        ["IsMain",         false]
+      ]);
+
+    if (NPDM_Box == GetDetectMode())
+      Default.add(["Dimensions", DefaultDimensions]);
+    else
+      Default.add(["Range",      DefaultRange]);
+
+    return Default;
+  }
+
+
+  void SetIdentifiers(Array _ID)
+  {
+    Array _Components = [];
+    for (int Index = 0; Index < _ID.size(); Index += 1)
+    {
+      Component Object = new #GameController().GetObject(SOID_MissionController).GetObject(_ID[Index]);
+      if (null !=  Object)
+        _Components.add(Object.GetMeshComponent());
+    }
+
+    SetIdentifiersArray(_Components);
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CEditable::SetProperties(_PropMap);
+    ClearNavProps();
+
+    SetDetectState     (_PropMap.Get("Detect",       DefaultDetectState));
+    SetNavpointName    (_PropMap.Get("Name",         DefaultName));
+    SetDetectMask      (_PropMap.Get("Mask",         DefaultMask));
+    SetVisible         (_PropMap.Get("IsVisible",    DefaultIsVisible));
+    SetPositionTypeName(_PropMap.Get("PositionType", DefaultPosTypeName));
+    SetMapCompass      (_PropMap.Get("MapCompass",   false));
+    SetIsMain          (_PropMap.Get("IsMain",       false));
+
+    if (NPDM_Box == GetDetectMode())
+      SetDetectDimensions(_PropMap.Get("Dimensions", DefaultDimensions));
+    else
+      SetDetectRange(_PropMap.Get("Range", DefaultRange));
+
+    m_BehaviorHeight = _PropMap.Get("BehaviorHeight", DefaultBehHeight);
+
+    UpdateEffects();
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    Array IDMask = _PropMap.Get("IDMask", []);
+    if (!IDMask.isEmpty())
+    {
+      SetIdentifiers(IDMask);
+    }
+  }
+
+  void SetSize(
+      Vector _Size
+    )
+  {
+    Component Content = new #GameController().GetObject(SOID_MissionController).GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    if (NPDM_Box == GetDetectMode())
+    {
+      Vector Dim = PropertiesMap.Get("Dimensions", DefaultDimensions);
+
+      if (0.0f != _Size.x)
+        Dim.x = _Size.x;
+
+      if (0.0f != _Size.y)
+        Dim.y = _Size.y;
+
+      if (0.0f != _Size.z)
+        Dim.z = _Size.z;
+
+      PropertiesMap.Set("Dimensions", Dim);
+    }
+
+    else if (NPDM_Sphere == GetDetectMode())
+      PropertiesMap.Set("Range", max(max(_Size.x, _Size.y), _Size.z));
+
+    else if (0.0f != _Size.x ||
+             0.0f != _Size.y)
+      PropertiesMap.Set("Range", max(_Size.x, _Size.y));
+
+    SetProperties(PropertiesMap);
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    SetEventHandler(_Mission);
+    SetProperties(_PropMap);
+
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Show();
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    SetEventHandler(null);
+
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      Hide();
+  }
+
+
+  //
+  // Visibility functions
+  //
+
+  event void SetVisiblePoint(
+      boolean _IsVisible
+    )
+  {
+    SetVisible(_IsVisible);
+
+    // refresh nav points list
+    fireEvent(0.0, [], "RefreshAllNavpoints", []);
+  }
+
+  void UpdateEffects()
+  {
+    if (NPDM_Box == GetDetectMode())
+      m_Boundings[1] = GetDetectDimensions();
+    else
+      m_Boundings[1] = new Vector(GetDetectRange(), GetDetectRange(), GetDetectRange());
+    CBaseSysObject::UpdateEffects();
+  }
+
+  void ExplodeNavPoint(
+      String _ExplosionID
+    )
+  {
+    Matrix Position = getPosition(this);
+    (new #GameController()).GetObject("ExplosionsArray").
+      CreateExplosion(_ExplosionID, Position, null, getIdentificator(this));
+  }
+
+  event void ExplodeNavPointRadius(
+    String _ExplosionID,
+    float  _Radius
+    )
+  {
+    Matrix SavePosition = getPosition(this);
+    Matrix RandomMatrix = new Matrix(
+                                      0.0, 0.0, 0.0, rand(_Radius),
+                                      0.0, 0.0, 0.0, rand(_Radius),
+                                      0.0, 0.0, 0.0, 0.0,
+                                      0.0, 0.0, 0.0, 0.0
+                                    );
+
+    setPosition(this, SavePosition + RandomMatrix);
+    Matrix Position = getPosition(this);
+
+    (new #GameController()).GetObject("ExplosionsArray").
+      CreateExplosion(_ExplosionID, Position, null, getIdentificator(this));
+
+    setPosition(this, SavePosition);
+  }
+
+  //
+  // Help functions
+  //
+
+  void SetDetectMask(
+      Array _Mask
+    )
+  {
+    SetDetectMask(_Mask[0], _Mask[1]);
+  }
+
+  void SetPositionTypeName(
+      String _Name
+    )
+  {
+    int Type = PositionType;
+    if (_Name == "Ground")
+      Type = NPPT_Ground;
+    else
+    if (_Name == "Water")
+      Type = NPPT_Water;
+
+    SetPositionType(Type);
+  }
+
+  float GetBehaviorHeight()
+  {
+    return m_BehaviorHeight;
+  }
+}
+
+
+class CSphereNavPoint extends CNavPoint
+{
+  final static Array  SysEffects = [
+                                     "NavPointCenter",
+                                     "SphereNavPointBounds"
+                                   ];
+  final static Array  EffectsSrc = [
+                                     "CNavPointCenterEffect",
+                                     "CSphereNavPointBoundsEffect"
+                                   ];
+
+
+  CSphereNavPoint()
+  {
+    SetDetectMode(NPDM_Sphere);
+  }
+}
+
+class CBoxNavPoint extends CNavPoint
+{
+  final static Array  SysEffects = [
+                                     "NavPointCenter",
+                                     "BoxNavPointBounds"
+                                   ];
+  final static Array  EffectsSrc = [
+                                     "CNavPointCenterEffect",
+                                     "CBoxNavPointBoundsEffect"
+                                   ];
+
+
+  CBoxNavPoint()
+  {
+    SetDetectMode(NPDM_Box);
+  }
+}
+
+class CZAxisCylNavPoint extends CNavPoint
+{
+  final static Array  SysEffects = [
+                                     "NavPointCenter",
+                                     "ZAxisCylNavPointBounds"
+                                   ];
+  final static Array  EffectsSrc = [
+                                     "CNavPointCenterEffect",
+                                     "CZAxisCylNavPointBoundsEffect"
+                                   ];
+
+
+  CZAxisCylNavPoint()
+  {
+    SetDetectMode(NPDM_ZAxisCyl);
+  }
+}
+
+class CPersonalNavPoint extends CNavPoint
+{
+  int    PositionType   = NPPT_Free;
+
+  final static Array  SysEffects = [
+                                     "PersonalNavPointCenter",
+                                     "PersonalNavPointBounds"
+                                   ];
+  final static Array  EffectsSrc = [
+                                     "CPersonalNavPointCenterEffect",
+                                     "CPersonalNavPointBoundsEffect"
+                                   ];
+}
+
+class CPlayerSpawnPoint extends CNavPoint
+{
+
+ final static Array  SysEffects = [
+                                     "NavPointCenter",
+                                     "PlayerSpawnNavPointBounds"
+                                   ];
+ final static Array  EffectsSrc = [
+                                     "CNavPointCenterEffect",
+                                     "CPlayerSpawnNavPointBoundsEffect"
+                                   ];
+
+  CPlayerSpawnPoint()
+  {
+    SetDetectMode(NPDM_ZAxisCyl);
+    addClassificator(user, "RESPAWNPOINT");
+  }
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CNavPoint::GetDefaultProperties();
+
+    Default.add(["IsLoadOnClient",      true]);
+
+    return Default;
+  }
+
+}

@@ -1,0 +1,50 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPlanarShadowsLodShift
+{
+  static void InitializePlanarShadowsLodShift()
+  {
+      Cbld_BridgeWoodModel::PlanarShadowLodShift         = 2.0;
+      Cbld_DotConcreteModel::PlanarShadowLodShift        = 2.0;
+      Cbld_DzotWoodModel::PlanarShadowLodShift           = 2.0;
+      Cbld_USRCorralWoodModel::PlanarShadowLodShift      = 2.0;
+      Cbld_USRHouseWoodModel::PlanarShadowLodShift       = 2.0;
+      Cbld_USRShedWoodModel::PlanarShadowLodShift        = 2.0;
+      Cbld_WaterWell_1Model::PlanarShadowLodShift        = 2.0;
+      Cbld_WaterWell_2Model::PlanarShadowLodShift        = 2.0;
+
+      Cfence_PalisadeModel::PlanarShadowLodShift         = 0.0;
+      Cfence_WickerModel::PlanarShadowLodShift           = 0.0;
+
+      Chum_GermanSoldierRifleModel::PlanarShadowLodShift = 1.0;
+      Chum_GermanTankmanModel::PlanarShadowLodShift      = 1.0;
+      Chum_SovietSoldierRifleModel::PlanarShadowLodShift = 1.0;
+      Chum_SovietTankmanModel::PlanarShadowLodShift      = 1.0;
+
+      Cu_air_FW_190Model::PlanarShadowLodShift           = 1.0;
+      Cu_air_IL2MModel::PlanarShadowLodShift             = 1.0;
+
+      Cu_stat_pak40Model::PlanarShadowLodShift           = 2.0;
+      Cu_stat_zis3Model::PlanarShadowLodShift            = 2.0;
+
+      Cu_veh_Hanomag_251CModel::PlanarShadowLodShift     = 3.0;
+      Cu_veh_M3A1HalfTrackModel::PlanarShadowLodShift    = 3.0;
+
+      Cu_veh_OpelBlitzModel::PlanarShadowLodShift        = 3.0;
+      Cu_veh_zis5Model::PlanarShadowLodShift             = 3.0;
+
+      Cu_veh_PzIVGModel::PlanarShadowLodShift            = 3.0;
+      Cu_veh_PzVI_MAINModel::PlanarShadowLodShift        = 3.0;
+      Cu_veh_t34_76_42Model::PlanarShadowLodShift        = 3.0;
+      Cu_veh_t34_85_44Model::PlanarShadowLodShift        = 3.0;
+      Cu_veh_SAU_Stug40Model::PlanarShadowLodShift       = 3.0;
+      Cu_veh_SU85Model::PlanarShadowLodShift             = 3.0;
+  }
+}

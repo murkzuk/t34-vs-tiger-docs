@@ -1,0 +1,69 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CPositionWatcher
+{
+  final static int INDEX_Speed       = 0;
+  final static int INDEX_Velocity    = 1;
+  final static int INDEX_RelSpeed    = 2;
+  final static int INDEX_Distance    = 3;
+  final static int INDEX_Angle       = 4;
+  final static int INDEX_RegionMask  = 5;
+
+  final static String Positionable;
+  final static Array  ControlPoints;
+
+  final static Array  RegionDefs;
+
+  // initialization
+
+  Initialize(
+      Component _Mission,
+      String    _Name
+    )
+  {
+    Component PositionWatcher = new #PositionWatcher();
+    PositionWatcher.SetEventHandler(this);               
+
+    for (int i = 0; i < ControlPoints.size(); i++)
+    {
+      PositionWatcher.AddControlPoint(_Mission.GetObject(ControlPoints[i]));
+    }
+
+    setPositionable(PositionWatcher, _Mission.GetObject(Positionable));
+
+    for (int i = 0; i < RegionDefs.size(); i++)
+    {
+      PositionWatcher.AddSphereRegion(RegionDefs[i]);
+    }
+
+    _Mission.RegisterObject(_Name, PositionWatcher);    
+  }
+
+  // events
+
+  void PointRegionChanged(
+      Component _PositionWatcher,
+      int       _Point,
+      int       _RegionMask
+    )
+  {
+    logWarning("PointRegionChanged not implemented");
+  }
+
+  void PointRelativeSpeedChanged(
+      Component _PositionWatcher,
+      int       _Point,
+      float     _RelativeSpeed
+    )
+  {
+    logWarning("PointRelativeSpeedChanged not implemented");
+  }
+
+}

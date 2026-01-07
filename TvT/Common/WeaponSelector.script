@@ -1,0 +1,53 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CWeaponSelector
+{
+  float RotationSpeedH = 0.2;
+  float RotationSpeedV = 0.2;
+
+  int Type = 1;
+
+  Array Fonts = [
+      [ "Interface", 0.028]
+    ];
+
+  Component MatManager = new #MaterialManager<CCockpitSkin>();
+
+  float MouseSensitivity = 0.0015;
+
+  float YPos0 = 0.30;
+  float YPos1 = 0.75;
+
+  Array GunSlots = [
+        [ 0.0, 0.1, "N", "N", "N", "C", 0, L"" ],            // name
+        [ 0.05, 0.1, "N", "N", "N", "C", 0.5f, 0.5f, "", 0 ],  // image base
+        [ 0.05, 0.1, "N", "N", "N", "C", 0.5f, 0.5f, "", 0 ],  // color image base
+        [ 0.66, 0.1, "N", "N", "N", "C", 0, L"" ],            // number
+        [ 0.265, 0.1, "N", "N", "N", "C", 0.5f, 0.5f, "", 0 ]  // progress bar
+    ];
+
+  Color StatusColorLoading        = new Color(1.0, 1.0, 0.0);
+  Color StatusColorLoaded         = new Color(0.0, 1.0, 0.0);
+  Color StatusColorNotAccessible  = new Color(1.0, 0.0, 0.0);
+  Color MainColor                 = new Color(244.0/256.0, 255.0/256.0, 215.0/256.0);
+        
+  Array TargetPointer_Lines = [
+      [ 0.0 / 256.0, 0.0 / 256.0, "C", "C", "C", "C", 4.0 / 256.0, 0.0 / 256.0, 1.0],
+      [ 0.0 / 256.0, 0.0 / 256.0, "C", "C", "C", "C", 0.0 / 256.0, 4.0 / 256.0, 1.0]
+    ];
+  
+  Color PointerColor     = new Color(0.0, 0.0, 0.0);
+
+  float WeaponSpeedCoeffX = 5.0f;
+  float WeaponSpeedCoeffY = 5.0f;
+
+  float MouseSpeedCoeff  = 0.002f;
+
+}
