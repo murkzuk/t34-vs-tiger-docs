@@ -1,0 +1,210 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+class C2M6_Ambush1_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "RussianAmbush1";                                                            // кто следит
+  final static Array  ControlPoints = ["MPU_German_1", "MPU_German_2", "MainPlayerUnit"];          // за кем следим
+
+  float AmbushRadius = 400;
+  float ContinueColumnMovement = 30;
+  float StartAmbushRadius = 600;
+  boolean FirstKick = false;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+
+
+    GetMission().GetObject("C2M6_Ambush1_Watcher").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(0);
+    Array PointInfo1 = _Watcher.GetPointInfo(1);
+    Array PointInfo2 = _Watcher.GetPointInfo(2);
+
+    PointRegionChanged(_Watcher, 0, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 1, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 2, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+        )
+  {
+    Array PointInfo   = _PositionWatcher.GetPointInfo(_Point);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+      //logWarning("[C2M6_Ambush1_Watcher] Point region changed");
+      //logWarning("Distance  beetwen C2M6_Ambush1_Watcher  and "  + ControlPoints[_Point]+  "  = " + new String(PointInfo[INDEX_Distance]));
+
+    if (PointInfo[INDEX_Distance] < StartAmbushRadius)
+      GetMission().StartAmbush1();
+
+    if ((PointInfo[INDEX_Distance] < ContinueColumnMovement) && (!FirstKick))
+    {
+      sendEvent(0.0, "CC2M6GerMPU_Group", "ContinueMovementColunm1", []);
+      //logWarning("[C2M6_Ambush1_Watcher] FirstKick");
+      FirstKick = true;
+    }
+
+    if(PointInfo[INDEX_Distance] < AmbushRadius)
+      GetMission().Ambush1Activate();
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+
+class C2M6_Ambush2_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "RussianAmbush2";                                            // кто следит
+  final static Array  ControlPoints = ["MPU_German_1", "MPU_German_2", "MainPlayerUnit"];          // за кем следим
+
+  float AmbushRadius = 400;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("C2M6_Ambush2_Watcher").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(0);
+    Array PointInfo1 = _Watcher.GetPointInfo(1);
+    Array PointInfo2 = _Watcher.GetPointInfo(2);
+
+    PointRegionChanged(_Watcher, 0, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 1, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 2, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+        )
+  {
+    Array PointInfo   = _PositionWatcher.GetPointInfo(_Point);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+      //logWarning("[C2M6_Ambush2_Watcher] Point region changed");
+      //logWarning("Distance  beetwen C2M6_Ambush2_Watcher  and "  + ControlPoints[_Point]+  "  = " + new String(PointInfo[INDEX_Distance]));
+
+    if(PointInfo[INDEX_Distance] < AmbushRadius)
+    {
+      //sendEvent(0.0, "CC2M6GerMPU_Group", "DisperseColumn", []);
+      GetMission().Ambush2Activate();
+    }
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+
+class C2M6_Ambush3_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "RussianAmbush3_Tank";                                            // кто следит
+  final static Array  ControlPoints = ["MPU_German_1", "MPU_German_2", "MainPlayerUnit"];          // за кем следим
+
+  float AmbushRadius = 800;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("C2M6_Ambush3_Watcher").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(0);
+    Array PointInfo1 = _Watcher.GetPointInfo(1);
+    Array PointInfo2 = _Watcher.GetPointInfo(2);
+
+    PointRegionChanged(_Watcher, 0, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 1, PointInfo1[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 2, PointInfo2[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+        )
+  {
+    Array PointInfo   = _PositionWatcher.GetPointInfo(_Point);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+      //logWarning("[C2M6_Ambush3_Watcher] Point region changed");
+      //logWarning("Distance  beetwen C2M6_Ambush3_Watcher  and "  + ControlPoints[_Point]+  "  = " + new String(PointInfo[INDEX_Distance]));
+
+    if(PointInfo[INDEX_Distance] < AmbushRadius)
+    {
+      //sendEvent(0.0, "CC2M6GerMPU_Group", "DisperseColumn", []);
+      GetMission().Ambush3Activate();
+    }
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+class C2M6_Anvil_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "RussianAmbush3_Tank";
+  final static Array  ControlPoints = ["RussianTank_Column1_1", "RussianTank_Column1_2", "RussianTank_Column1_3"];
+
+  float AnvilRadius = 800;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("C2M6_Anvil_Watcher").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(0);
+    Array PointInfo1 = _Watcher.GetPointInfo(1);
+    Array PointInfo2 = _Watcher.GetPointInfo(2);
+
+    PointRegionChanged(_Watcher, 0, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 1, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 2, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+        )
+  {
+    Array PointInfo   = _PositionWatcher.GetPointInfo(_Point);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+      //logWarning("[C2M6_Ambush3_Watcher] Point region changed");
+      //logWarning("Distance  beetwen C2M6_Ambush3_Watcher  and "  + ControlPoints[_Point]+  "  = " + new String(PointInfo[INDEX_Distance]));
+
+    if(PointInfo[INDEX_Distance] < AnvilRadius)
+      GetMission().AnvilActivate();
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}

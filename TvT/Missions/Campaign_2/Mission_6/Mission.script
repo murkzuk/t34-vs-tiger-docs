@@ -1,0 +1,688 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M6Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/C2M6_Map.tex"; //Textures/C1M3_Map.tex
+
+  static String m_MissionBriefingPicMaterial = "C2M6BriefingPic"; //C1M3BriefingPic
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary,   CC2M6Mission_Strings::Objective01, MOSID_InProgress, true],
+      [MOTID_Secondary, CC2M6Mission_Strings::Objective02, MOSID_InProgress, false],
+      [MOTID_Primary,   CC2M6Mission_Strings::Objective03, MOSID_InProgress, true],
+      [MOTID_Secondary, CC2M6Mission_Strings::Objective04, MOSID_InProgress, false],
+      [MOTID_Secondary, CC2M6Mission_Strings::Objective05, MOSID_InProgress, false],
+      [MOTID_Primary,   CC2M6Mission_Strings::Objective06, MOSID_InProgress, true]
+                               ];
+
+  static WString ObjectivesText = CC2M6Mission_Strings::ObjectivesText;
+  boolean isDebug = true;
+  boolean MainPlayerStartEgine = false;
+
+  boolean Ambush1Success   = false;
+  boolean Ambush1Activated = false;
+  boolean Ambush2Activated = false;
+  boolean Ambush3Activated = false;
+  boolean AnvilActivated   = false;
+  boolean RusColTrapped    = false;
+  boolean WatchAmb2Active  = false;
+  boolean Punishment       = false;
+  boolean AdvanceRun       = false;
+  boolean Cordon           = false;
+  boolean TigersFire       = false;
+  boolean Convoy           = false;
+  boolean NoPunish         = true;
+
+  boolean AnvilDestroy = false;
+  boolean Ambush1Start = false;
+
+  int Penalty_count = 0;
+
+  Array KillistRusColumn = ["RussianBTR_Column1_1", "RussianBTR_Column1_2"];
+  Array KillListAmbush1  = ["RussianTank_Ambush1_1", "RussianTank_Ambush1_2"];
+  Array KillListPunish   = [
+                            "RussianTank_PunisherGroup2_1", "RussianTank_PunisherGroup2_2",
+                            "RussianTank_PunisherGroup1_1", "RussianTank_PunisherGroup1_1"
+                           ];
+  Array KillListAmbush2  = ["RussianAmbush2_1", "RussianAmbush2_2"];
+  Array KillListAdvance  = ["AdvancedRusTank_1", "AdvancedRusTank_2", "AdvancedRusTank_3"];
+  Array KillListAmbush3  = ["RussianAmbush3_1", "RussianAmbush3_10", "RussianAmbush3_11", "RussianAmbush3_20", "RussianAmbush3_30"];
+  Array KillListAnvil    = ["RussianTank_Column1_1", "RussianTank_Column1_2", "RussianTank_Column1_3"];
+  Array KillListCordon   = ["CordonUnitTank_1", "CordonUnitTank_2"];
+  Array KillListTigers   = ["MPU_German_1", "MPU_German_2"];
+
+  Array MPUGroup         = [
+                            "MPU_German_1", "German_Column_Opel_1", "German_Column_Opel_2",
+                            "German_Column_Opel_3", "German_Column_Hanomag_1",
+                            "German_Column_Hanomag_2", "MPU_German_2"
+                           ];
+  Array KillistConvoyColumn = [
+                                "German_Column_Opel_1", "German_Column_Opel_2", "German_Column_Opel_3",
+                                "German_Column_Hanomag_1", "German_Column_Hanomag_2"
+                              ];
+
+  Array CC2M6DestroyedUnits = [
+                                "StartRepareBaseDestroyed_Truck_2", "StartRepareBaseDestroyed_Truck_1",
+                                "StartRepareBaseDestroyed_Tank_1", "StartRoadDestroyed_Tank_1",
+                                "StartRoadDestroyed_Tank_2", "StartRoadDestroyed_Tank_3"
+                              ];
+
+  Component C2M6_Ambush1_Watcher;
+  Component C2M6_Ambush2_Watcher;
+  Component C2M6_Ambush3_Watcher;
+  //Component C2M6_Anvil_Watcher;
+
+  Array m_NavpointsForPlayerMap =
+  [
+    [
+      ["NavPointCordon"],
+      CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+      new Color(244.0/255.0, 255.0/255.0, 215.0/255.0)   // NavColor
+    ],
+
+    [
+      ["Destination_Point"],
+      CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+      new Color(244.0/255.0, 255.0/255.0, 215.0/255.0)   // NavColor
+    ]
+  ];
+
+  float  CockpitMapMinRange        = 500.0;
+  float  CockpitMapMaxRange        = 2000.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2502, 1582.0, 0.0), new Vector(6852.0, 5882.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  Array KillList_Primary1   = [];
+  Array KillList_Primary2   = [];
+  Array KillList_Secondary1 = [];
+
+  void CC2M6Mission()
+  {
+    // Construct mission
+    CSPMission("CC2M6Mission", "CC2M6Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC2M6Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC2M6Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky12Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    SetMissionWorldMatrices(new #WorldMatrices<CC2M6WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME, "CC2M6LandscapeLayer"      ],
+        [LAYER_TERRAIN_ZONE, "CC2M6TerrainZoneLayer"    ],
+        [LAYER_ROUTER_ZONE,  "CC2M6RouterZoneLayer"     ],
+        [LAYER_MICROTEXTURE_MAP1, "CC2M6MicroTextures1" ],
+        //["Landing Zone Texture",  "CC2M6LZTexture"    ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC2M6WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+    for (int i = 0; i < CC2M6DestroyedUnits.size(); i++)
+      sendEvent(0.0, CC2M6DestroyedUnits[i], "KillWithoutSmokeAndFire", []);
+
+    C2M6_Ambush1_Watcher = new C2M6_Ambush1_Watcher();
+    C2M6_Ambush1_Watcher.Initialize(this, "C2M6_Ambush1_Watcher");
+
+    //Component console = new #GameController().GetObject(SOID_Console);
+    //console.disablebeh();
+    //console.showbehinf(true);
+
+    fireEvent(80.0, [], "StartAmbush1", []);
+
+    sendEvent(90.0, SOID_MissionController, "OnEngineStateChanged", [true]);
+  }
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+  }
+
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+    if (_IsWorkEngine && !MainPlayerStartEgine)
+    {
+      sendEvent(0.0,  "CC2M6GerMPU_Group",   "StartGermanColumn", []);
+      //sendEvent(30.0,  "CC2M6Rus_GroupColumn1",   "StartAmbush1", []);
+
+      MainPlayerStartEgine = true;
+    }
+  }
+
+  void OnObjectEnterNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //logMessage("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+    if ((_NavPointID == "GermanPath_7") && ((_ObjectID == "MPU_German_1") || (_ObjectID == "MPU_German_2") || (_ObjectID == "German_Column_Hanomag_1") || (_ObjectID == "German_Column_Hanomag_2") || (_ObjectID == "German_Column_Opel_1") || (_ObjectID == "German_Column_Opel_1") || (_ObjectID == "German_Column_Opel_1")))
+    {
+      sendEvent(0.0,  "CC2M6GerMPU_Group", "BlokadeReturn", []);
+      //logWarning("CriticalPoint_Blokade_Return");
+    }
+  }
+
+  void OnObjectLeaveNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //logWarning("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+  }
+
+  event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////ObjectivesKeys////////////////////////////////////////////////////
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+
+    // TMP
+    Component DeadThing = GetObject(_ObjectID);
+    if (null == DeadThing)
+    {
+      //logError("Component 'DeadThing' == null");
+      return;
+    }
+    // TMP
+
+    //logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String (DeadThing.GetLastDamager()));
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+      //logWarning("CheckMadPlayer");
+      //logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+      //logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+        //logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+          //logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+            //logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+    //////////////////////////////////////////////////
+    int _indexAmb1    = KillListAmbush1.find(_ObjectID);
+    int _indexAmb2    = KillListAmbush2.find(_ObjectID);
+    int _indexAmb3    = KillListAmbush3.find(_ObjectID);
+    int _indexAnvill  = KillListAnvil.find(_ObjectID);
+    int _indexRusCol  = KillistRusColumn.find(_ObjectID);
+    int _indexPunish  = KillListPunish.find(_ObjectID);
+    int _indexAdvance = KillListAdvance.find(_ObjectID);
+    int _indexCordon  = KillListCordon.find(_ObjectID);
+    int _indexCargo   = KillistConvoyColumn.find(_ObjectID);
+    int _indexTigers  = KillListTigers.find(_ObjectID);
+    /////////////////////////////////////////////////
+    if (_ObjectID.IsStartsWith("RussianTank_Ambush1_") && !(KillListAmbush1.size() == 0))
+    {
+      if (_indexAmb1 != -1)
+      {
+        //logWarning("KillListAmbush1 before removing = " + new String(KillListAmbush1));
+        KillListAmbush1.remove(_indexAmb1);
+        //logWarning("Object ID=" + _ObjectID + " removed from KillListAmbush1");
+        //logError("KillListAmbush1 after removing = " + new String(KillListAmbush1));
+      }
+
+      if (KillListAmbush1.size() == 0)
+      {
+        //logWarning("All_Russian_Ambush1_Units_Destroyed");
+        SetObjectiveStatus(0, MOSID_Completed);
+        Ambush1Destroyed();
+      }
+    }
+    //////////////////////////////////////////////////////
+    if (_ObjectID.IsStartsWith("RussianAmbush2_") && !(KillListAmbush2.size() == 0))
+    {
+      if (_indexAmb2 != -1)
+        {
+          //logWarning("KillListAmbush2 before removing = " + new String(KillListAmbush2));
+          KillListAmbush2.remove(_indexAmb2);
+          //logWarning("Object ID=" + _ObjectID + " removed from KillListAmbush2");
+          //logError("KillListAmbush2 after removing = " + new String(KillListAmbush2));
+          sendEvent(20.0, "CC2M6RussianCordonTanksGroup", "StartCordonSupport", []);
+        }
+
+      if (KillListAmbush2.size() == 0)
+        {
+          //logWarning("All_Russian_Ambush2_Units_Destroyed");
+          Ambush2Destroyed();
+          ShutdownWatcher("C2M6_Ambush2_Watcher");
+          SetObjectiveStatus(2, MOSID_Completed);
+          SetObjectiveVisible(3, true);
+        }
+    }
+    //////////////////////////////////////////////////////
+    if (_ObjectID.IsStartsWith("RussianAmbush3_") && !(KillListAmbush3.size() == 0))
+    {
+      if (_indexAmb3 != -1)
+        KillListAmbush3.remove(_indexAmb3);
+
+      if (KillListAmbush3.size() == 0)
+      {
+        Ambush3Destroyed();
+        //logWarning("Russian_Blockpost_Destroyed");
+        SetObjectiveStatus(5, MOSID_Completed);
+      }
+    }
+    /////////////////////////////////////////////////////
+    if (_ObjectID.IsStartsWith("RussianTank_Column1_") && !(KillListAnvil.size() == 0))
+    {
+      if (_indexAnvill != -1)
+      {
+        //logWarning("Object ID=" + _ObjectID + " removed from KillListAnvil");
+        //logWarning("KillListAnvil before removing = " + new String(KillListAnvil));
+        KillListAnvil.remove(_indexAnvill);
+        sendEvent(0.0, "CC2M6Rus_GroupColumn1", "ContinuePursuitRus", []);
+        //logError("KillListAnvil after removing = " + new String(KillListAnvil));
+      }
+
+      if (KillListAnvil.size() == 0)
+      {
+        //logWarning("KillListAnvil_is_Empty = " + new String(KillListAnvil));
+        SetObjectiveStatus(1, MOSID_Completed);
+        sendEvent(10.0, "CC2M6GerMPU_Group", "AnotherStart3GerColumn", []);
+        //AnvilDestroyed();
+      }
+    }
+    ////////////////////////////////////////////////////
+    if (_indexRusCol != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from KillistRusColumn");
+      //logWarning("KillistRusColumn before removing = " + new String(KillistRusColumn));
+      KillistRusColumn.remove(_indexRusCol);
+      SetObjectiveVisible(1, true);
+      //logError("KillistRusColumn after removing = " + new String(KillistRusColumn));
+    }
+
+    if ((KillistRusColumn.size() == 0) && (!RusColTrapped))
+    {
+      sendEvent(0.0, "CC2M6Rus_GroupColumn1", "AllUnitsTrapped", []);
+      //logWarning("All_Russian_Column_Units_Destroyed");
+      RusColTrapped = true;
+    }
+
+  ////////////////////////////////////////////////////
+    if(_indexPunish != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from KillListPunish");
+      //logWarning("KillListPunish before removing = " + new String(KillListPunish));
+      KillListPunish.remove(_indexPunish);
+      NoPunish = false;
+      //logError("KillListPunish after removing = " + new String(KillListPunish));
+    }
+
+    if ((KillListPunish.size() == 0) && (!Punishment) && (!NoPunish))
+    {
+      SetObjectiveStatus(1, MOSID_Completed);
+      //logWarning("All_Russian_Punisher_Destroyed");
+      Punishment = true;
+    }
+  ////////////////////////////////////////////////////////
+    if(_indexAdvance != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from KillListAdvance");
+      //logWarning("KillListAdvance before removing = " + new String(KillListAdvance));
+      KillListAdvance.remove(_indexAdvance);
+      //logError("KillListAdvance after removing = " + new String(KillListAdvance));
+    }
+
+    if ((KillListAdvance.size() == 0) && (KillListAmbush2.size() == 0) && (!AdvanceRun))
+    {
+      SetObjectiveStatus(4, MOSID_Completed);
+      //logWarning("All_Russian_Advancer_Destroyed");
+      sendEvent(0.0, "CC2M6GerMPU_Group","ContinueMovementColunm4", []);
+      AdvanceRun = true;
+    }
+
+  ////////////////////////////////////////////////////////
+    if(_indexCordon != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from KillListCordon");
+      //logWarning("KillListCordon before removing = " + new String(KillListCordon));
+      KillListCordon.remove(_indexCordon);
+      sendEvent(5.0, "CC2M6RussianCordonTanksGroup", "ContinueCordonRus", []);
+      //logError("KillListCordon after removing = " + new String(KillListCordon));
+    }
+
+    if ((KillListCordon.size() == 0) && (!Cordon))
+    {
+      sendEvent(10.0, "CC2M6RussianAdvancedGroup", "StartFlankAdvance", []);
+      SetObjectiveStatus(3, MOSID_Completed);
+      SetObjectiveVisible(4, true);
+      sendEvent(0.0, "CC2M6GerMPU_Group", "AnotherStart3GerColumn", []);
+      //logWarning("Russian_Cordon_Destroyed");
+      Cordon = true;
+    }
+  ///////////////////////////////////////////////////////////////////////////////////////////
+    if(_indexCargo != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from KillistConvoyColumn");
+      //logWarning("KillistConvoyColumn before removing = " + new String(KillistConvoyColumn));
+      KillistConvoyColumn.remove(_indexCargo);
+      //logWarning("KillistConvoyColumn after removing = " + new String(KillistConvoyColumn));
+    }
+
+    if ((KillistConvoyColumn.size() <= 2) && (!Convoy))
+    {
+      sendEvent(11.0, SOID_MissionController, "FailMissionByConvoy", []);
+      //logWarning("GermanConvoylost");
+      Convoy = true;
+    }
+  //////////////////////////////////////////////////////////////////////////////////////////
+    if(_indexTigers != -1)
+    {
+      //logWarning("Object ID=" + _ObjectID + " removed from KillListTigers");
+      //logWarning("KillListTigers before removing = " + new String(KillListTigers));
+      KillListTigers.remove(_indexTigers);
+      //logWarning("KillListTigers after removing = " + new String(KillListTigers));
+      //sendEvent(0.0, "CC2M6GerMPU_Group", "ActiveAnvilGroup", []);
+      TigersFire = true;
+    }
+
+    if ((KillListTigers.size() == 0) && (!TigersFire))
+    {
+      sendEvent(0.0, "CC2M6GerMPU_Group", "ActiveAnvilGroup", []);
+      //logWarning("Convoy_Guards_lost");
+      TigersFire = true;
+    }
+  }
+  //////////////////////////////////////////////////////////////////////////////////////////
+  event void FailMissionByConvoy()
+  {
+    FailMission(0.0);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////
+  event void NewGerTask()
+  {
+    SetObjectiveVisible(1, true);
+  }
+
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+//    else
+//      logError("Component NavPoint with ID = " + _NavPointID + " - null!" );
+  }
+
+  event void ShutdownWatcher(String _WatcherName)
+  {
+    Component Watcher = GetObject(_WatcherName);
+    if (Watcher != null)
+    {
+      Watcher.SetEventHandler(null);
+      Watcher = null;
+    }
+//    else
+//      logError("Object with ID = " + _WatcherName + " does not exist.");
+  }
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// AMBUSH 1
+//////////////////////////////////////////////////////////////////////////////////////////
+  event void StartAmbush1()
+  {
+    if (Ambush1Start)
+      return;
+
+    Ambush1Start = true;
+//    if(isDebug)
+//      logWarning("Mission -> Ambush1Start");
+
+    sendEvent(0.0, "CC2M6Rus_GroupColumn1", "StartAmbush1", []);
+    sendEvent(0.0, "CC2M6RusTank_Ambush1", "StartAmbush1", []);
+    sendEvent(0.0, "RusSoldierGroupAmbush1", "StartAmbush1", []);
+  }
+
+  event void Ambush1Activate()
+  {
+    if (Ambush1Activated)
+      return;
+
+    Ambush1Activated = true;
+//    if(isDebug)
+//      logWarning("Mission -> Ambush1Activated");
+
+    sendEvent(0.0, "CC2M6GerMPU_Group", "DisperseColumn", []);
+
+    sendEvent(10.0, "CC2M6Rus_GroupColumn1", "SetActiveGroup", []);
+    sendEvent(10.0, "CC2M6RusTank_Ambush1", "SetActiveGroup", []);
+    sendEvent(10.0, "RusSoldierGroupAmbush1", "SetActiveGroup", []);
+
+    sendEvent(5.0, "CC2M6GerMPU_Group", "SetActiveGroup", []);
+
+    ShutdownWatcher("C2M6_Ambush1_Watcher");
+  }
+
+  event void Ambush1Destroyed()
+  {
+//    if(isDebug)
+//      logWarning("Mission -> Ambush1Destroyed");
+
+    sendEvent(0.0, "CC2M6GerMPU_Group", "SetDeactiveGroup", []);
+    sendEvent(10.0, "CC2M6GerMPU_Group", "ContinueMovementColunm2", []);
+
+    C2M6_Ambush2_Watcher = new C2M6_Ambush2_Watcher();
+    C2M6_Ambush2_Watcher.Initialize(this, "C2M6_Ambush2_Watcher");
+  }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// AMBUSH 2
+//////////////////////////////////////////////////////////////////////////////////////////
+  event void Ambush2Activate()
+  {
+    if ((!Ambush2Activated) && (!WatchAmb2Active))
+    {
+      Ambush2Activated = true;
+//      if(isDebug)
+//        logWarning("Mission -> Ambush2Activated");
+
+      sendEvent(0.0, "CC2M6GerMPU_Group", "DisperseColumn", []);
+      sendEvent(5.0, "CC2M6RussianAmbush2_1", "SetActiveGroup", []);
+      sendEvent(5.0, "CC2M6RussianAmbush2_2", "SetActiveGroup", []);
+      sendEvent(5.0, "CC2M6GerMPU_Group", "SetActiveGroup", []);
+      ShutdownWatcher("C2M6_Ambush2_Watcher");
+      WatchAmb2Active  = true;
+    }
+  }
+
+  //fireEvent(0.0, [], "Ambush2Destroyed", []);
+  event void Ambush2Destroyed()
+  {
+//    if(isDebug)
+//      logWarning("Mission -> Ambush2Destroyed");
+
+    //sendEvent(0.0, "CC2M6GerMPU_Group", "SetDeactiveGroup", []);
+    sendEvent(10.0, "CC2M6GerMPU_Group", "ContinueMovementColunm3", []);
+    sendEvent(90.0, "CC2M6Rus_GroupColumn1", "StartPursuit", []);
+
+    C2M6_Ambush3_Watcher = new C2M6_Ambush3_Watcher();
+    C2M6_Ambush3_Watcher.Initialize(this, "C2M6_Ambush3_Watcher");
+    if (!WatchAmb2Active)
+    {
+      ShutdownWatcher("C2M6_Ambush2_Watcher");
+      WatchAmb2Active  = true;
+    }
+    if ((KillListAnvil.size() != 0)  &&  (!Punishment))
+    {
+      SetObjectiveStatus(1, MOSID_Completed);
+      //logWarning("All_Russian_Pursuiter_Destroyed");
+      Punishment = true;
+      //C2M6_Anvil_Watcher = new C2M6_Anvil_Watcher();
+      //C2M6_Anvil_Watcher.Initialize(this, "C2M6_Anvil_Watcher");
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// AMBUSH 3
+//////////////////////////////////////////////////////////////////////////////////////////
+  event void Ambush3Activate()
+  {
+    if (!Ambush3Activated)
+    {
+      Ambush3Activated = true;
+//      if(isDebug)
+//        logWarning("Mission -> Ambush3Activated");
+
+      //sendEvent(0.0, "CC2M6GerMPU_Group", "DisperseColumn", []);
+      sendEvent(0.0, "CC2M6GerMPU_Group", "SetActiveGroup", []);
+      sendEvent(5.0, "CC2M6RussianAmbush3_Tank", "SetActiveGroup", []);
+
+      //SAU
+      sendEvent(0.0, "CC2M6RussianAmbush3_SAU", "StartAmbush3", []);
+      sendEvent(10.0, "CC2M6RussianAmbush3_SAU", "SetActiveGroup", []);
+      sendEvent(11.0, "CC2M6RussianAmbush3_SAU", "AttackColumn", []);
+      sendEvent(0.0, "CC2M6RussianAmbush3_Tank", "StartAmbush3", []);
+      sendEvent(10.0, "CC2M6RussianAmbush3_Tank", "SetActiveGroup", []);
+      sendEvent(11.0, "CC2M6RussianAmbush3_Tank", "AttackColumn", []);
+
+
+      if (!AnvilDestroy)
+        sendEvent(30.0, SOID_MissionController, "AnvilActivate", []);
+
+      ShutdownWatcher("C2M6_Ambush3_Watcher");
+    }
+  }
+
+  event void Ambush3Destroyed()
+  {
+//    if(isDebug)
+//      logWarning("Mission -> Ambush3Destroyed");
+
+    sendEvent(0.0, "CC2M6GerMPU_Group", "SetDeactiveGroup", []);
+  }
+//////////////////////////////////////////////////////////////////////////////////////////
+  /*event void AnvilActivate()
+  {
+    if (AnvilActivated)
+      return;
+
+    AnvilActivated = true;
+    if(isDebug)
+      logWarning("Mission -> AnvilActivated");
+
+
+    //sendEvent(0.0, "CC2M6GerMPU_Group", "ActiveAnvilGroup", []);
+    //sendEvent(10.0, "CC2M6RussianAmbush3_2", "SetActiveGroup", []);
+    sendEvent(10.0, "CC2M6Rus_GroupColumn1", "SetActiveGroup", []);
+    //ShutdownWatcher("C2M6_Anvil_Watcher");
+  }
+
+  void AnvilDestroyed()
+  {
+    if (AnvilDestroy)
+    {
+      if(isDebug)
+        logWarning("Mission -> AnvilDestroyed");
+
+      Component CC2M6Rus_GroupColumn1 = GetObject("CC2M6Rus_GroupColumn1");
+      if(CC2M6Rus_GroupColumn1!= null)
+      {
+        if (!CC2M6Rus_GroupColumn1.Pursuit)
+        {
+          CC2M6GerMPU_Group.Continue2Movement = false;
+          CC2M6GerMPU_Group.ContinueMovementColunm2();
+        }
+      }
+    }
+
+    Component CC2M6GerMPU_Group = GetObject("CC2M6GerMPU_Group");
+    if(CC2M6GerMPU_Group!= null)
+    {
+      if (CC2M6GerMPU_Group.Continue3Movement)
+      {
+        CC2M6GerMPU_Group.Continue3Movement = false;
+        CC2M6GerMPU_Group.ContinueMovementColunm3();
+      }
+      else if (CC2M6GerMPU_Group.Continue2Movement)
+      {
+        CC2M6GerMPU_Group.Continue2Movement = false;
+        CC2M6GerMPU_Group.ContinueMovementColunm2();
+      }
+      else if (CC2M6GerMPU_Group.Continue1Movement)
+      {
+        CC2M6GerMPU_Group.Continue1Movement = false;
+        CC2M6GerMPU_Group.ContinueMovementColunm1();
+      }
+    }
+  }*/
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+  event void Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+    float m_CurrentDistance;
+    Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+    Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+
+    if ((null == Between_1) && (null == Between_2))
+    {
+      //logError("Component - null!");
+      return;
+    }
+
+    Vector m_Pos_1 = getPosition(Between_1).origin;
+    Vector m_Pos_2 = getPosition(Between_2).origin;
+
+    m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+    //logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + " distance = " + new String(m_CurrentDistance));
+  }
+}
