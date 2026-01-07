@@ -19,10 +19,12 @@ You don't need to be a coder to help! We want this project to be as open as poss
 
 To make this "mountain" easier to climb, we have organized the project into key areas:
 
-* **[Technical Manuals](./Documentation):** Comprehensive guides for Maya 5.0 and the G5 Engine export pipeline.
-* **[Mission Scripting & Templates](./Templates):** Standardized Atmosphere and Terrain headers to fix "Duplicate Class" errors.
-* **[Legacy Assets (Scripts)](./):** Original and modded scripts from ZeeWolf (ZW) and WoV for cross-referencing.
-* **[Tools & Executables](./Executables):** Download the 4GB patch (LAA) in .zip format and access 3D driver fixes.
+* **[Technical Manuals](./Documentation):** The library for Maya 5.0 export procedures and G5 engine specifications.
+* **[Mission Templates](./Templates):** Master Atmosphere and Terrain headers designed to eliminate "Duplicate Class" errors.
+* **[Consolidated Scripts](./concatenate%20scripts):** Missions processed through 'cat' to allow for full-text logic scanning and debugging.
+* **[Stable Builds](./Fixed%20Pre001):** Verified "Fixed" versions of scripts (Pre001) that are included in 0.001 
+* **[Tools & Executables](./Executables):** The 4GB LAA patch (Zip format) and essential engine startup fixes.
+* **[Legacy Archives](./):** Reference original logic in **[TvT](./TvT)**, **[TvTZW](./TvTZW)**, and **[ZW Mission scripts](./ZW%20Mission%20scripts)**.
 
 💡 Quick Start Troubleshooting
 
