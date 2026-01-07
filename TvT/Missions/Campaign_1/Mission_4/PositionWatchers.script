@@ -1,0 +1,248 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC1M4PlayerUnit_RussianPanzer_Group1 extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Kurtenki";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit", "CC1M4RussianPanzer_Group1"]; // за кем следим
+
+  Component RussianGroup;
+  Component MainPlayerUnit;
+  Component Mission;
+
+  float Kurtenki_MPU;
+  float Kurtenki_RusTank;
+  float MPU_RusTank;
+
+  Initialize(Component _Mission, String _Name)
+  {
+//    if (GetMission().isDebug)
+//        logWarning("CC1M4PlayerUnit_RussianPanzer_Group1::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M4Watcher").SetUpdatePeriod(10000);
+
+    RussianGroup = GetMission().GetObject("CC1M4RussianPanzer_Group1");
+    MainPlayerUnit = GetMission().GetObject("MainPlayerUnit");
+    Mission = GetMission();
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Kurtenki_MPU = Mission.Distance("NavPoint_Village_Kurtenki", "MainPlayerUnit");
+    Kurtenki_RusTank = Mission.Distance("NavPoint_Village_Kurtenki", "CC1M4RussianPanzer_Group1");
+    MPU_RusTank = Mission.Distance("MainPlayerUnit", "CC1M4RussianPanzer_Group1");
+
+//    if (MPU_RusTank > 1000)
+//        logError("MainPlayerUnit -- LOOSER");
+  }
+
+  void PointRelativeSpeedChanged(
+    Component _PositionWatcher,
+    int _Point,
+    float _RelativeSpeed
+    )
+  {
+  }
+}
+
+class CC1M4PRussianPanzerVSviso4ani extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Viso4ani";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit"
+      /*"MainPlayerUnit_Tank_1_T34_85", "MainPlayerUnit_Tank_2_T34_85", "MainPlayerUnit_Tank_3_T34_85"*/]; // за кем следим
+
+  float distancePlayer;
+  float distanceTank1;
+  float distanceTank2;
+  float distanceTank3;
+
+  Initialize(Component _Mission, String _Name)
+  {
+ //   if (GetMission().isDebug)
+  //      logWarning("CC1M4PRussianPanzerVSviso4ani::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M4PRussianPanzerVSviso4ani").SetUpdatePeriod(10000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+    Array PointInfoMPU   = _PositionWatcher.GetPointInfo(0);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(1);
+    //Array PointInfo2   = _PositionWatcher.GetPointInfo(2);
+    //Array PointInfo3   = _PositionWatcher.GetPointInfo(3);
+    distancePlayer = PointInfoMPU[INDEX_Distance];
+    //distanceTank1 = PointInfo1[INDEX_Distance];
+    //distanceTank2 = PointInfo2[INDEX_Distance];
+    //distanceTank3 = PointInfo3[INDEX_Distance];
+
+/*
+    if(GetMission().isDebug)
+    {
+      logMessage(" distancePlayer="+ new String(distancePlayer));
+      logMessage(" distanceTank1="+ new String(distanceTank1));
+      logMessage(" distanceTank2="+ new String(distanceTank2));
+      logMessage(" distanceTank3="+ new String(distanceTank3));
+    }
+ */
+
+/*  if (!GetMission().StartFightViso4ani)
+ *      if(distanceTank1 < 1130 || distanceTank2 < 1130 || distanceTank3 < 1130)
+        {
+         GetMission().StartFightViso4ani = true;
+         fireEvent(0.0, [], "SetActive", []);
+        }
+ */
+    if(distancePlayer < 1120)
+    {
+      GetMission().StartFightViso4ani = true;
+      fireEvent(0.0, [], "SetActive", []);
+      sendEvent(0.0,  "CC1M4GermanVysochany_StugG40_Group",   "StartStug", []);
+    }
+  }
+}
+
+class CC1M4PW_PlayerRetreat extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Village_Viso4ani"; // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit"];          // за кем следим
+
+  // количество зон
+  final static Array RegionDefs = [1120.0];
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array Info = _PositionWatcher.GetPointInfo(0);
+    float distancePlayer = Info[INDEX_Distance];
+
+    if (distancePlayer > RegionDefs[0])
+    {
+   //   if (GetMission().isDebug)
+   //       logMessage(" Player successfull retreat");
+
+      GetMission().EndMission_PlayerRetreat();
+      GetMission().ShutdownWatcher(_PositionWatcher);
+    }
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+class CC1M4PW_23PhaseInit extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "MainPlayerUnit";                 // кто следит
+  final static Array  ControlPoints = ["Path_German_Vysochany_1"];     // за кем следим
+  float dist;
+  //final static Array RegionDefs = [1000];
+  //final static int ZoneMask0 = 1;
+  // int m_RegionMask = 0;
+  float Phase_2;
+  float  Phase_3;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+    _Mission.GetObject(_Name).SetUpdatePeriod(20000);
+    //GetMission().GetObject("CC1M8GunshipGroupSpeedWatcher").SetUpdatePeriod(20000);
+    dist=GetMission().Distance("MainPlayerUnit", "Path_German_Vysochany_1");
+  }
+  void PointRelativeSpeedChanged(
+      Component _PositionWatcher,
+      int       _Point,
+      float     _RelativeSpeed
+      )
+  {
+    Array PosInfo = _PositionWatcher.GetPointInfo(0);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+    Phase_2 = GetMission().Distance("Path_German_Vysochany_1", "Path_Russian_Vysochany_7");
+    Phase_3 = GetMission().Distance("Path_German_Vysochany_1", "Path_Russian_Vysochany_11");
+
+//    if(GetMission().isDebug)
+//    {
+//      logError( "distance(MainPlayerUnit, Path_German_Vysochany_1)=" + new String(GetMission().Distance("Path_German_Vysochany_1", "MainPlayerUnit")));
+//    }
+    if((GetMission().Distance("MainPlayerUnit", "Path_German_Vysochany_1") < Phase_2)  &&  (GetMission().StartPhase_2==false))       //проверка старт фазы 2
+    {
+      if(GetMission().isDebug)
+          logWarning( "MPU Перешел в фазу 2; distance(MainPlayerUnit, Path_German_Vysochany_1 )=" + new String(GetMission().Distance("MainPlayerUnit", "Path_German_Vysochany_1")));
+
+                                                       //стартуем фазу2///
+
+        sendEvent(0.0,  "CC1M4RussianPanzer_Group1",   "RuPanzerPhase2", []);
+        fireEvent(60.0, [], "StartFightSAU", []);
+        fireEvent(180.0, [], "StartFight", []);
+   //   fireEvent(80.0, [], "StartFightAggressive", []);
+        fireEvent(360.0, [], "StartFight_Attack2", []);
+
+        GetMission().StartPhase_2=true;
+        return;
+    }
+    if((GetMission().Distance("MainPlayerUnit", "Path_German_Vysochany_1") < Phase_3)  &&  (GetMission().StartPhase_3==false))       //проверка старт фазы 3
+    {
+  //    if(GetMission().isDebug)
+  //        logWarning( "MPU Перешел в фазу 3; distance(MainPlayerUnit, Path_German_Vysochany_1 )=" + new String(GetMission().Distance("MainPlayerUnit", "Path_German_Vysochany_1")));
+
+      fireEvent(0.0, [], "MovoToViso4ani", []);
+      sendEvent(0.0, "CC1M4RussianPanzer_Group1", "MoveToAttackPosition_Visochany", []);
+      sendEvent(0.0, "CC1M4GermanAttack2_GroupTank", "StartFindPlayer_Attack2", []);
+      sendEvent(40.0, "CC1M4RussianAntiPanzer_Group", "SetActive", []);
+
+  //    logError("Активация фазы 3, вызов процедуры захода в тыл игроку из вотчера");
+
+                                                         //стартуем фазу3///
+
+      GetMission().StartPhase_3=true;
+      return;
+    }
+  }
+
+  void Update(Component _Watcher)
+  {
+    // update для обоих точек
+    Array PosInfo = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRelativeSpeedChanged(_Watcher, 0, PosInfo[INDEX_Speed]);
+  }
+}
+
