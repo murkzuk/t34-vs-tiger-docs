@@ -1,0 +1,451 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC1M5Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/c1m5_Map.tex";
+
+  static String m_MissionBriefingPicMaterial = "C1M5BriefingPic";
+
+  static Array m_MissionObjectives = [
+                                       [MOTID_Primary, CC1M5Mission_Strings::Objective01, MOSID_InProgress, true],
+                                       [MOTID_Primary, CC1M5Mission_Strings::Objective02, MOSID_InProgress, false],
+                                       [MOTID_Primary, CC1M5Mission_Strings::Objective03, MOSID_InProgress, false]
+                                     ];
+
+  static WString ObjectivesText = CC1M5Mission_Strings::ObjectivesText;
+
+  Array KillList_Primary   = ["GermanDzot_1", "GermanDzot_2", "GermanDzot_3", "GermanPak40_1", "GermanPak40_2", "GermanPak40_3"];
+  //special for start phase two when all pak40 die
+  Array Killlist_StartPhaseThree = ["GermanPak40_1", "GermanPak40_2", "GermanPak40_3"]; // теперь запускает третью фазу
+
+  Array KillList_Secondary1 = ["GermanPanzer_Group3_Stug_1", "GermanPanzer_Group3_Stug_2"];
+  Array KillList_Secondary2 = [
+                                "GermanPanzer_Group2_T4_1", "GermanPanzer_Group2_T4_2", "GermanPanzer_Group2_T6_3",
+                                "GermanPanzer_Group_T4_1", "GermanPanzer_Group_T4_2", "GermanPanzer_Group_T4_3"
+                              ];
+  Array KillList_Flanking   = ["StugAmbush_1","StugAmbush_2"];
+  Array KillList_FlankingR  = ["Russian_Group_76_1","Russian_Group_76_2", "Russian_Group_76_3"];
+
+  final static Array DefaultMask = [["ENEMY", "MainMesh"], ["FRIEND"]];
+  final static Array Mask        = [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]];
+
+  boolean isDebug = true;
+  boolean isRadarUpdateDebug = false;
+
+  Component CC1M5PRussianPanzer;
+
+  Component CC1M5GermanAmbush;
+
+  Component CC1M5BlockingStrike;
+
+
+  boolean MainPlayerStartEgine = false;
+  boolean StartStugAmbush      = false;
+  boolean StartFight           = false;
+  boolean StartedPhaseTwo      = false;
+  boolean StartedPhaseThree    = false;
+  boolean StartedLastOpponent  = false;
+
+  Array m_NavpointsForPlayerMap = [
+                                     [
+                                      ["NavPointKurt"],
+                                      CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+                                       new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+                                      ],
+
+                                     [
+                                      ["NavPointVis"],
+                                      CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+                                      new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+                                      ],
+
+                                     [
+                                      ["NavPointBer"],
+                                      CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+                                      new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+                                      ]
+                                   ];
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4100.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2399, 1449.0, 0.0), new Vector(6890.0, 5941.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  int Penalty_count = 0;
+
+  void CC1M5Mission()
+  {
+    // Construct mission
+    CSPMission("CC1M5Mission", "CC1M5Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC1M5Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC1M5Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky05Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare =  null;
+
+    SetMissionWorldMatrices(new #WorldMatrices<CC1M5WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME, "CC1M5LandscapeLayer"      ],
+        [LAYER_TERRAIN_ZONE, "CC1M5TerrainZoneLayer"    ],
+        [LAYER_ROUTER_ZONE,  "CC1M5RouterZoneLayer"     ],
+        [LAYER_MICROTEXTURE_MAP1, "CC1M5MicroTextures1" ],
+        //["Landing Zone Texture",  "CM5LZTexture"      ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC1M5WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+    Component console = new #GameController().GetObject(SOID_Console);
+    //console.disablebeh();
+    //console.showbehinf(true);
+
+    CC1M5PRussianPanzer = new CC1M5PRussianPanzer();
+    CC1M5PRussianPanzer.Initialize(this, "CC1M5PRussianPanzer");
+
+    CC1M5GermanAmbush = new CC1M5GermanAmbush();
+    CC1M5GermanAmbush.Initialize(this, "CC1M5GermanAmbush");
+
+    CC1M5BlockingStrike = new CC1M5BlockingStrike();
+    CC1M5BlockingStrike.Initialize(this, "CC1M5BlockingStrike");
+  }
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+  }
+
+  //fireEvent(0.0, [], "OnEngineStateChanged", [true]);
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+//    if (_IsWorkEngine && !MainPlayerStartEgine)
+//    logWarning("WorkEngine");
+    {
+      sendEvent(1.0,  "CC1M5RusGroup76Tank", "StartFlankingMovement", []);
+      sendEvent(4.0,  "CC1M5MPUGroupTank",   "StartRussianGroups", []);
+      sendEvent(2.0,  "CC1M5RusGroup85Tank",   "StartRussianGroups", []);
+      sendEvent(50.0,  "CC1M5RusSoldierGroup1",   "StartRussianGroups", []);
+      //fireEvent(0.0, [], "StartRussianGroups", []);
+      MainPlayerStartEgine = true;
+    }
+  }
+
+  void OnObjectEnterNavPoint( String _NavPointID, String _ObjectID)
+  {
+//    if(isDebug)
+//      logWarning("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+                                           // enter NavPoint: NavPoint_Duck
+    if(_NavPointID == "NavPoint_DuckBlind1Start" && _ObjectID == "Russian_Group_76_1")
+      sendEvent(0.0,  "CC1M5_GermanDuckBlindPanzer_Group1",   "DuckBlind1Start", []);
+    if(_NavPointID == "NavPoint_DuckBlind1Start" && _ObjectID == "MainPlayerUnit")
+      sendEvent(0.0,  "CC1M5_GermanDuckBlindPanzer_Group1",   "DuckBlind1Start", []);
+    if(_NavPointID == "NavPoint_DuckBlind2Start" && _ObjectID == "MainPlayerUnit")
+      sendEvent(0.0,  "CC1M5_GermanDuckBlindPanzer_Group2",   "DuckBlind2Start", []);
+  }
+
+  void OnObjectLeaveNavPoint( String _NavPointID, String _ObjectID)
+  {
+ //   if(isDebug)
+ //     logWarning("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+  }
+
+  event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+
+    // TMP
+    Component DeadThing = GetObject(_ObjectID);
+    if (null == DeadThing)
+    {
+  //    logError("Component 'DeadThing' == null");
+      return;
+    }
+    // TMP
+
+  //  if(isDebug)
+  //    logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String (DeadThing.GetLastDamager()));
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+   //   logWarning("CheckMadPlayer");
+   //   logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+  //    logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+    //    logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+      //    logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+      //      logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+
+    int _IndexFR = KillList_FlankingR.find(_ObjectID);
+    int _Index   = KillList_Primary.find(_ObjectID);
+
+    if(_IndexFR != -1)
+    {
+   //   logWarning("Object ID=" + _ObjectID + " removed from RaidKillist");
+  //    logWarning("KillList_FlankingR before removing = " + new String(KillList_FlankingR));
+      KillList_FlankingR.remove(_IndexFR);
+  //    logError("KillList_FlankingR after removing = " + new String(KillList_FlankingR));
+    }
+
+    if(KillList_FlankingR.size() == 0)
+    {
+   //   if(isDebug)
+   //     logWarning("KillList_FlankingR == 0");
+      sendEvent(0.0, "CC1M5_GermanDuckBlindPanzer_Group1", "ContinueGerCombat", []);
+    }
+
+    //if (_Index == -1 && isDebug)
+         //logError("Object ID=" + _ObjectID + " not find in KillList_Primary:" + new String(KillList_Primary));
+    if(_Index != -1)
+      KillList_Primary.remove(_Index);
+
+    if(KillList_Primary.size() == 0)
+    {
+    //  if(isDebug)
+    //    logWarning("KillList_Primary == 0");
+
+      SetObjectiveStatus(0, MOSID_Completed);
+      SetObjectiveVisible(1, true);
+    }
+
+    int _Index = KillList_Secondary1.find(_ObjectID);
+   // logError("Object ID=" + _ObjectID + " in KillList_Secondary1 has Index: " + new String(_Index));
+
+   // if (_Index == -1 && isDebug)
+   //    logWarning("Killed unit with Object ID=" + _ObjectID + "not in KillList_Secondary1");
+
+    if(_Index != -1)
+    {
+    //  logError("Object ID=" + _ObjectID + " removed from KillList_Secondary1");
+    //  logError("KillList_Secondary1 before removing = " + new String(KillList_Secondary1));
+      KillList_Secondary1.remove(_Index);
+    //  logError("KillList_Secondary1 after removing = " + new String(KillList_Secondary1));
+    }
+
+   //  logError("Check KillList_Secondary1 size " + new String(KillList_Secondary1.size()));
+
+    if(KillList_Secondary1.size() == 0)
+    {
+    //  if(isDebug)
+    //    logWarning("KillList_Secondary1 == 0");
+
+      SetObjectiveStatus(1, MOSID_Completed);
+    }
+
+    int _Index = KillList_Secondary2.find(_ObjectID);
+    //if (_Index == -1 && isDebug)
+         //logError("Object ID=" + _ObjectID + " not find in KillList_Secondary2:" + new String(KillList_Secondary2));
+    if(_Index != -1)
+      KillList_Secondary2.remove(_Index);
+
+    if(KillList_Secondary2.size() == 0)
+    {
+    //  if(isDebug)
+      //  logWarning("KillList_Secondary2 == 0");
+
+      SetObjectiveStatus(2, MOSID_Completed);
+    }
+
+
+    int _Index = Killlist_StartPhaseThree.find(_ObjectID);
+    if(_Index != -1)
+      Killlist_StartPhaseThree.remove(_Index);
+
+    if(Killlist_StartPhaseThree.size() == 0)
+    {
+    //  if(isDebug)
+    //    logWarning("Killlist_StartPhaseThree == 0");
+
+      StartPhaseThree();
+    }
+
+
+    if(_ObjectID == "GermanPak40_1")
+      sendEvent(0.0,  "CC1M5RusGroup85Tank",  "StartFightDzot", []);
+  }
+
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+    else
+      logError("Component NavPoint with ID = " + _NavPointID + " - null!" );
+  }
+
+  void ShutdownWatcher(String _Watcher)
+  {
+    Component watcher =  GetObject(_Watcher);
+    if(watcher == null)
+    {
+   //   logError("Watcher with name=" + _Watcher + "  doees not exist!");
+      return;
+    }
+    watcher.SetEventHandler(null);
+    watcher = null;
+  }
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+  float Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+    float m_CurrentDistance;
+    Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+    Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+
+    if (null == Between_1 && null == Between_2)
+    {
+   //   logError("Component - null!");
+      return;
+    }
+
+    Vector m_Pos_1 = getPosition(Between_1).origin;
+    Vector m_Pos_2 = getPosition(Between_2).origin;
+
+    m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+    //logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + " distance = " + new String(m_CurrentDistance));
+    return m_CurrentDistance;
+  }
+
+
+  event void StartFight()
+  {
+    if(StartFight)
+     return;
+
+  //  if(isDebug)
+   //   logWarning("StartFight");
+
+    StartFight = true;
+    sendEvent(0.0,  "CC1M5RusSoldierGroup1", "StartFightDzot", []);
+    sendEvent(0.0,  "CC1M5GermanDzotGroup",  "SetActive", []);
+    sendEvent(5.0,  "CC1M5MPUGroupTank",     "StartFightDzot", []);
+    sendEvent(8.0,  "CC1M5RusGroup85Tank",   "StartFightPak40", []);
+    sendEvent(5.0,  "CC1M5GermanPak40Group",   "StartFightRusGroup", []);
+    sendEvent(12.0,  "CC1M5GermanTankGroupStug", "StartPhaseTwo", []);
+  }
+
+  event void StartPhaseTwo()
+  {
+    if(StartedPhaseTwo)
+     return;
+
+ //   if(isDebug)
+ //     logWarning("....StartPhaseTwo");
+
+    StartedPhaseTwo = true;
+    //fireEvent(0.0, [], "StartPhaseTwo", []);
+    sendEvent(0.0,  "CC1M5MPUGroupTank",        "StartPhaseTwo", []);
+       // sendEvent(0.0,  "CC1M5GermanTankGroupStug", "StartPhaseTwo", []);
+    sendEvent(10.0, "CC1M5GerSoldierGroup1",    "StartPhaseTwo", []);
+  }
+
+  event void StartPhaseThree()
+  {
+    if(StartedPhaseThree)
+     return;
+
+  //  if(isDebug)
+  //    logWarning("....StartPhaseThree");
+
+    StartedPhaseThree = true;
+    SetObjectiveVisible(2, true);
+    //fireEvent(0.0, [], "StartPhaseThree", []);
+    sendEvent(40.0, "CC1M5GermanTankGroupT4T6", "StartPhaseThree", []);
+    sendEvent(10.0, "CC1M5GerTankT4Group",      "StartPhaseThree", []);
+    sendEvent(5.0,  "CC1M5RusGroup85Tank",      "StartPhaseThree", []);
+  }
+
+  Array m_StugArray = ["StugAmbush_1", "StugAmbush_2"];
+  Array m_RusTankArray = ["Russian_Group_76_1", "Russian_Group_76_1", "Russian_Group_76_1", "MainPlayerUnit" ];
+
+
+  event void StartStugAmbush(float _Delay)
+  {
+    if(StartStugAmbush)
+     return;
+
+   // if(isDebug)
+   //   logWarning("StartStugAmbush.Delay = " + new String(_Delay));
+
+    sendEvent(0.0,  "CC1M5RusGroup76Tank", "ChangeFormation",  []);
+    sendEvent(10.0,  "CC1M5RusGroup76Tank", "StartStugAmbush",  [0.0]);
+
+//    sendEvent(0.0,  "CC1M5RusGroup76Tank", "SetFormation",  ["CFrontFormation", 50.0, true, true]);
+//    sendEvent(10.0, "CC1M5RusGroup76Tank", "ActivateRadar", [true]);
+//    sendEvent(10.0, "CC1M5RusGroup76Tank", "ActivateFire",  [true]);
+//    sendEvent(11.0, "CC1M5RusGroup76Tank", "SetOrder_Attack",  [m_StugArray, ERT_AGGRESSIVE]);
+
+    //sendEvent(_Delay, "CC1M5_GermanStugAmbush_Group", "ActivateRadar", [true]);
+    //sendEvent(_Delay, "CC1M5_GermanStugAmbush_Group", "ActivateFire",  [true]);
+    sendEvent(_Delay, "CC1M5_GermanStugAmbush_Group", "StartStugAmbush",  [0.0]);
+    sendEvent(_Delay, "CC1M5_GermanDuckBlindPanzer_Group1", "StartStugAmbush",  [0.0]);
+
+    StartStugAmbush = true;
+  }
+}

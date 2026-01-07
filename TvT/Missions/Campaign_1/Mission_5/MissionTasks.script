@@ -1,0 +1,891 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC1M5SAUClassProcessingTask extends CBaseAISAUTask, CC1M3Split
+
+{
+  void OnUnreacheable(Vector _Destination)
+  {
+    if (m_Group != null)
+      m_Group.PushOrder();
+
+    Component me = GetMission().GetObject(getIdentificator(user));
+//     if (me == null)
+//      logError("Component 'me' == null!!!");
+
+      Array ApproachPoints = SplitPath(getPosition(me).origin, _Destination);
+
+      SetFirstQueueOrders([
+       ["OnUnreacheable", "SetOrder_MoveToEx", [ApproachPoints, m_Group.m_CurrentOrder.m_MovingSpeed], ""],
+       ["OnUnreacheable", "EndOnUnreacheable", [], ""]
+                        ]);
+
+  }
+
+  void EndOnUnreacheable()
+  {
+  //  if (GetMission().isDebug)
+  //    logWarning("EndOnUnreacheable");
+
+    if (m_Group != null)
+      m_Group.PopOrder();
+  }
+}
+
+
+class CC1M5RadarForRussian extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+  void Init()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+    SetRadarUnit(GetMission().Mask);
+  }
+
+  event void SetRadarUnit(Array _Mask)
+  {
+    Component Object = GetMission().GetObject(getIdentificator(user));
+
+    Component Behavior = GetBehavior();
+    if (Behavior == null)
+      return;
+
+    Component Content = GetMission().GetMission().GetContent();
+    if (Content == null)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(user));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.Set("BehRadarMask", _Mask);
+    Object.SetBehRadarMask(Behavior, PropertiesMap);
+  }
+
+  event void StateVisibleStug()
+  {
+  //  if(GetMission().isDebug)
+    //    logWarning("Stug_is_Visible /// RUSSIAN TANK ID=" + getIdentificator(user)+ " /// ");
+
+    SetRadarUnit(GetMission().DefaultMask);
+  }
+}
+//-------------------------------
+//----   ANTITANKS&canoneers   ----
+//-------------------------------
+class CC1M5Gr_VysochanyPak_1 extends BaseZisGroup
+{
+}
+class CC1M5Gr_VysochanyPak_2 extends BaseZisGroup
+{
+}
+class CC1M5Gr_VysochanyPak_3 extends BaseZisGroup
+{
+}
+
+//Russian tank
+class CC1M5MPURusTankTask extends CC1M5RadarForRussian
+{
+}
+
+class CC1M5MPUGroupTank extends CBaseUnitGroup
+{
+  float m_SpeedAttack = 3.5;
+  Array m_Targets1 = ["GermanDzot_1", "GermanDzot_2", "GermanDzot_3"];
+  Array m_Targets2 = ["GermanPanzer_Group3_Stug_1", "GermanPanzer_Group3_Stug_2"];
+
+  event void StartRussianGroups()
+  {
+    SetFormation("CFrontFormation", 70.0, true, true);
+    setOrder_MoveTo(GetNavPointBehPos("NavPoint_Rus85PlayerAttack"), m_SpeedAttack, true);
+
+//    if(GetMission().isDebug)
+//      logWarning(" CC1M5MPUGroupTank  -  StartRussianGroups");
+
+    //PopDelayedOrder();
+
+  }
+
+  event void StartFightDzot()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning(" CC1M5MPUGroupTank  -  StartFightDzot attack Dzot ");
+
+    CancelAllOrders();
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_Targets1, ERT_AGGRESSIVE);
+  }
+
+  event void StartPhaseTwo()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning(" CC1M5MPUGroupTank  -  StartPhaseTwo  attack  Stug");
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_Targets2, ERT_AGGRESSIVE);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5RusTank85Task extends CC1M5RadarForRussian
+{
+}
+
+class CC1M5RusGroup85Tank extends CBaseUnitGroup
+{
+  float m_SpeedAttack = 3.5;
+  Array m_Targets1 = ["GermanPak40_1", "GermanPak40_2", "GermanPak40_3"];
+  Array m_Targets2 = ["GermanDzot_1", "GermanDzot_2", "GermanDzot_3"];
+
+  event void StartRussianGroups()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("CC1M5RusGroup85Tank-StartRussianGroups");
+
+    SetFormation("CFrontFormation", 50.0, true, true);
+    setOrder_MoveTo(GetNavPointBehPos("NavPoint_Rus85Attack3"), m_SpeedAttack, true);
+  }
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  event void StartFightPak40()
+  {
+//    if(GetMission().isDebug)
+//      logWarning(" CC1M5RusGroup85Tank  -  StartFightPak40 attack Pak40 ");
+
+    //CancelAllOrders();
+    //SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_Targets1, ERT_AGGRESSIVE);
+  }
+
+  event void StartPhaseThree()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("CC1M5RusGroup85Tank-StartPhaseThree");
+
+    SetFormation("CFrontFormation", 50.0, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    setOrder_MoveTo(GetNavPointBehPos("NavPoint_Rus85Attack_2"), m_SpeedAttack, true);
+    //CancelAllOrders();
+    //SetEnemyReactionType(ERT_PASSIVE);
+
+    Array Path = [
+                   //GetNavPointBehPos("NavPoint_RussianMPUT85_AttackFinished_0111"),
+                   //GetNavPointBehPos("NavPoint_RussianMPUT85_AttackFinished_011"),
+                   GetNavPointBehPos ("NavPoint_Rus85Attack02"),
+                   GetNavPointBehPos("NavPoint_Rus85Attack2"),
+                   GetNavPointBehPos("NavPoint_Rus85Attack3"),
+                   GetNavPointBehPos("NavPoint_Rus85PlayerAttack")
+                 ];
+
+    SetFirstQueueOrders([
+        ["StartPhaseThree", "SetOrder_MoveToEx",[Path, m_SpeedAttack],""],
+        ["StartPhaseThree", "SetEnemyReactionType", [ERT_AGGRESSIVE], ""]
+                        ]);
+
+//   logWarning("CC1M5RusGroup85Tank  -  Continue Attack");
+  }
+
+  event void StartFightDzot()
+  {
+//    if(GetMission().isDebug)
+//      logWarning(" CC1M5RusGroup85Tank  -  StartFightDzot attack Dzot ");
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_Targets2, ERT_AGGRESSIVE);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5RusTank76Task extends CC1M5RadarForRussian
+{
+}
+
+class CC1M5RusGroup76Tank extends CBaseUnitGroup
+{
+  Array m_Targets = ["", ""];
+  float m_SpeedAttack = 3.0f;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateFire(false);
+    ActivateRadar(false);
+  }
+
+  event void StartFlankingMovement()
+  {
+//    if(GetMission().isDebug)
+//      logWarning(" CC1M5RusGroup76Tank  -  StartFlankingMovement ");
+
+      PopDelayedOrder();
+  }
+
+  event void ActivateFire(boolean _On)
+  {
+    CBaseUnitGroup::ActivateFire(_On);
+ //   logWarning("Call to ActivateFire from CC1M5RusGroup76Tank group task. Argument is "+new String(_On));
+  }
+
+  event void ActivateRadar(boolean _On)
+  {
+    CBaseUnitGroup::ActivateRadar(_On);
+ //   logWarning("Call to ActivateRadar from CC1M5RusGroup76Tank group task. Argument is "+new String(_On));
+  }
+
+  event void ChangeFormation()
+  {
+ //   logWarning("Called For Change Formation");
+
+    SetFormation("CFrontFormation", 55.0, true, true);
+ //   logWarning("Do Change Formation");
+  }
+
+  event void StartStugAmbush(float _Delay)
+  {
+ //   logWarning("Called For Fire");
+
+    ActivateRadar(true);
+    ActivateFire(true);
+
+    //SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(GetMission().m_StugArray, ERT_AGGRESSIVE);
+ //   logWarning("Do Fire Strike");
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//German tank
+
+class CC1M5GermanTankStug extends CC1M3Broken, CC1M5SAUClassProcessingTask
+{
+  float m_SpeedAttack = 3.0f;
+  // Array m_Points1 = [GetNavPointBehPos("Stak1_1"),GetNavPointBehPos("Stak1_2"),GetNavPointBehPos("Stak1_3") ];
+  // Array m_Points2 = [GetNavPointBehPos("Stak2_1"),GetNavPointBehPos("Stak2_2"),GetNavPointBehPos("Stak2_3") ];
+
+  //Array m_Points1 = [GetNavPointBehPos("Stak1_1") ];
+  //Array m_Points2 = [GetNavPointBehPos("Stak2_1") ];
+
+  boolean invisible = true;
+  void Init()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::Init();
+   // SetEnemyReactionType(ERT_FRIGID);//замораживание юнита
+    //addClassificatorObject(getIdentificator(user), "INVISIBLE_ON_RADAR");
+  }
+  event void StartMovement ()
+  {
+    if (getIdentificator(user) == "GermanPanzer_Group3_Stug_1")
+    {
+      SetFirstQueueOrders ([
+       ["StartMovement", "SetOrder_MoveTo", [GetNavPointBehPos("Stak1_1"), m_SpeedAttack], ""],
+       //["StartMovement", "SetOrder_MoveTo", [GetNavPointBehPos("Stak1_2"), m_SpeedAttack], ""],
+       //["StartMovement", "SetOrder_MoveTo", [GetNavPointBehPos("Stak1_3"), m_SpeedAttack], ""],
+
+       ["StartMovement", "Activate", [], ""]
+                          ]);
+  //    if(GetMission().isDebug)
+  //      logWarning("Stug ID="+ getIdentificator(user) + " mobile");
+
+    }
+    else
+    if (getIdentificator(user) == "GermanPanzer_Group3_Stug_2")
+    {
+      SetFirstQueueOrders ([
+      ["StartMovement", "SetOrder_MoveTo", [GetNavPointBehPos("Stak2_1"), m_SpeedAttack], ""],
+      //["StartMovement", "SetOrder_MoveTo", [GetNavPointBehPos("Stak2_2"), m_SpeedAttack], ""],
+      //["StartMovement", "SetOrder_MoveTo", [GetNavPointBehPos("Stak2_3"), m_SpeedAttack], ""],
+
+       ["StartMovement", "Activate", [], ""]
+                          ]);
+   //   if(GetMission().isDebug)
+   //     logWarning("Stug ID="+ getIdentificator(user) + " mobile");
+    }
+
+  }
+  event void Activate()
+  {
+    fireEvent(2.0, [], "StateVisibleStug", []);
+
+  //  if(GetMission().isDebug)
+  //    logWarning("Stug ID="+ getIdentificator(user) + " Activate");
+
+  }
+
+  event void StateVisibleStug()
+  {
+     if(!invisible)
+        return;
+
+   // if(GetMission().isDebug)
+   //  logWarning("Stug ID="+ getIdentificator(user) + " state VISIBLE");
+
+     invisible = false;
+     CancelAllOrders();
+     removeClassificatorObject(getIdentificator(user), "INVISIBLE_ON_RADAR");
+
+      m_Group.SetEnemyReactionType(ERT_AGGRESSIVE); //размораживание юнита
+      OnRadarUpdate();
+      //SetFormation("CFrontFormation", 100.0, true, true);
+  //    if(GetMission().isDebug)
+  //    logWarning("Stug ID="+ getIdentificator(user) + " Aggressive");
+  }
+}
+
+class CC1M5GermanTankGroupStug extends CBaseUnitGroup
+{
+//  Array m_Targets = ["MainPlayerUnit_Group_1", "MainPlayerUnit_Group_2"];
+  boolean _isvisible = true;
+
+  event void StartPhaseTwo()
+  {
+   // if(GetMission().isDebug)
+   //   logWarning(" CC1M5GermanTankGroupStug  -  StartPhaseTwo  ");
+      fireEvent(2.0f, [], "StartMovement", []);
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID)
+  {
+    CBaseUnitGroup::OnUnitExplosion(_UnitID, _OwnerID);
+
+  //  if(GetMission().isDebug)
+   //   logWarning("CC1M5GermanTankStug _UnitID = " + _UnitID + "has explosion from _OwnerID = "+ _OwnerID);
+
+    Component enemy = GetMission().GetObject(_OwnerID);
+    if(enemy == null)
+      return;
+
+    if (!_isvisible)
+      return;
+
+    //можно закоментить
+    if(checkMask(enemy, ["FRIEND"], []))
+    {
+      _isvisible = false;
+      fireEvent(2.0, [], "StateVisibleStug", []);
+      GetMission().SetObjectiveVisible(1, true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);  //еще раз размораживаем??
+      SetFormation("CFrontFormation", 100.0, true, true);
+    }
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+ //   if(GetMission().isDebug)
+ //    logWarning(" CC1M5GermanTankGroupStug OnUnitDestroyed _UnitID="+ _UnitID);
+
+    RefreshUnitsList();
+    if(m_Units.size() == 0)
+      GetMission().StartPhaseTwo();
+  }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5_GermanStugAmbush_Group extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateFire(false);
+    ActivateRadar(false);
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID)
+  {
+    CBaseUnitGroup::OnUnitExplosion(_UnitID, _OwnerID);
+
+ //   if(GetMission().isDebug)
+ //     logWarning("CC1M5GermanAmbushStug _UnitID = " + _UnitID + "has explosion from _OwnerID = "+ _OwnerID);
+
+    Component enemy = GetMission().GetObject(_OwnerID);
+    if(enemy == null)
+      return;
+
+    //if (!_isvisible)
+     // return;
+
+    if(checkMask(enemy, ["FRIEND"], []))
+    {
+     ActivateFire(true);
+     ActivateRadar(true);
+     //SetOrder_Attack(ERT_AGGRESSIVE);
+     //OnRadarUpdate();
+ //    if(GetMission().isDebug)
+ //     logWarning("StugAmdushAggressive1");
+    }
+  }
+
+  event void ActivateFire(boolean _On)
+  {
+    CBaseUnitGroup::ActivateFire(_On);
+ //   logWarning("Call to ActivateFire from CC1M5_GermanStugAmbush_Group group task. Argument is "+new String(_On));
+  }
+
+  event void ActivateRadar(boolean _On)
+  {
+    CBaseUnitGroup::ActivateRadar(_On);
+ //   logWarning("Call to ActivateRadar from CC1M5_GermanStugAmbush_Group group task. Argument is "+new String(_On));
+  }
+
+  event void StartStugAmbush(float _Delay)
+  {
+ //   logWarning("Called_Stug_For_Fire");
+
+    ActivateRadar(true);
+    ActivateFire(true);
+
+    SetOrder_Attack(GetMission().m_RusTankArray, ERT_AGGRESSIVE);
+ //   logWarning("Do_Stug_Fire_Strike");
+  }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5GermanTankGroupTask extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+  void Init()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::OnHitByEnemy(_EnemyID);
+
+  //  if(GetMission().isDebug)
+   //   logWarning("CC1M5GermanTankGroupTask _EnemyID=" + _EnemyID);
+
+
+   Component enemy = GetMission().GetObject(_EnemyID);
+    if(enemy == null)
+        return;
+
+    if(checkMask(enemy, ["FRIEND"], []))
+      m_Group.StartAttack();
+     //m_Group.SetEnemyReactionType(ERT_AGGRESSIVE);
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    CBaseAITankTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+    Component enemy = GetMission().GetObject(_OwnerID);
+    if(enemy == null)
+        return;
+
+
+    if(checkMask(enemy, ["FRIEND"], []))
+      m_Group.StartAttack();
+      //m_Group.SetEnemyReactionType(ERT_AGGRESSIVE);
+  }
+
+}
+class CC1M5GermanTankGroupT4T6 extends CBaseUnitGroup
+{
+  Array m_Targets = ["MainPlayerUnit_Group_1", "MainPlayerUnit_Group_2", "MainPlayerUnit"];
+
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ShowGroup(false);
+  }
+
+  event void StartPhaseThree()
+  {
+//    if(GetMission().isDebug)
+//      logWarning(" CC1M5GermanTankGroupT4T6  -  StartPhaseThree ");
+
+    ShowGroup(true);
+    StartAttack();
+    //SetEnemyReactionType(ERT_AGGRESSIVE);
+    //SetOrder_Attack(m_Targets, ERT_AGGRESSIVE);
+  }
+
+  //fireEvent(0.0, [], "StartAttack", []);
+  event void StartAttack()
+  {
+    SetFormation("CFrontFormation", 100.0, true, true);
+    SetFirstQueueOrders([
+                          ["AttackRussian", "SetOrder_MoveTo", [GetNavPointBehPos("NavPoint_GermanT4T6Attack"), 4.0, true], ""],
+                          ["AttackRussian", "SetEnemyReactionType", [ERT_AGGRESSIVE]],
+                          ["AttackRussian", "SetOrder_Attack", [m_Targets, ERT_AGGRESSIVE], ""]
+                        ]);
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5GermanTankT4GroupTask extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+  void Init()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+
+}
+class CC1M5GerTankT4Group extends CBaseUnitGroup
+{
+  Array m_Targets = ["Russian_Group_85_1", "Russian_Group_85_2", "Russian_Group_85_3", "Russian_Group_85_4"];
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ShowGroup(false);
+  }
+
+  event void StartPhaseThree()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning(" CC1M5GerTankT4Group  -  StartPhaseThree  ");
+
+    ShowGroup(true);
+    StartAttack();
+    //SetEnemyReactionType(ERT_AGGRESSIVE);
+    //SetOrder_Attack(m_Targets, ERT_AGGRESSIVE);
+  }
+
+  event void StartAttack()
+  {
+    SetFormation("CFrontFormation", 50.0, true, true);
+    SetFirstQueueOrders([
+                          ["AttackRussian", "SetOrder_MoveTo", [GetNavPointBehPos("NavPoint_GermanT4Attack"), 4.0, true], ""],
+                          ["AttackRussian", "SetEnemyReactionType", [ERT_AGGRESSIVE]],
+                          ["AttackRussian", "SetOrder_Attack", [m_Targets, ERT_AGGRESSIVE], ""]
+                        ]);
+  }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5GermanDzotGroup extends CBaseUnitGroup
+{
+  event void SetActive()
+  {
+ //   if(GetMission().isDebug)
+ //       logWarning("CC1M5GermanDzotGroup  call SetActive");
+
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+  }
+}
+class CC1M5GermanDzotTask extends CBaseAITask
+{
+  void Init()
+  {
+    CBaseAITask::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+    CBaseAITask::OnHitByEnemy(_EnemyID);
+ //   if(GetMission().isDebug)
+ //     logWarning("CC1M5GermanDzotTask _EnemyID=" + _EnemyID);
+
+    Component enemy = GetMission().GetObject(_EnemyID);
+    if(enemy == null)
+        return;
+
+    //можно закоментить
+    if(checkMask(enemy, ["FRIEND"], []))
+      sendEvent(0.0, SOID_MissionController, "StartFight", []);
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    CBaseAITankTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+    Component enemy = GetMission().GetObject(_OwnerID);
+    if(enemy == null)
+        return;
+
+    //можно закоментить
+    if(checkMask(enemy, ["FRIEND"], []))
+      sendEvent(0.0, SOID_MissionController, "StartFight", []);
+  }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5GermanPak40Group extends CBaseUnitGroup
+{
+  Array m_Targets1 = ["Russian_Group_85_1", "Russian_Group_85_2", "Russian_Group_85_3","Russian_Group_85_4"];
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+
+  event void StartFightRusGroup()
+  {
+  //  if(GetMission().isDebug)
+  //    logWarning(" CC1M5GermanPak40Group  -  StartFightRusGroup attack CC1M5RusGroup85Tank ");
+
+    CancelAllOrders();
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_Targets1, ERT_AGGRESSIVE);
+  }
+}
+
+ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Soldier German
+class GerTransportTruck_1_Panzmann_1 extends CBaseAITask
+{
+}
+
+class GerTransportTruck_1_Sold1 extends CBaseAITask
+{
+}
+class GerTransportTruck_1_Sold2 extends CBaseAITask
+{
+}
+class GerTransportTruck_1_Sold3 extends CBaseAITask
+{
+}
+
+class CC1M5GerSoldierGroup1Task extends CBaseAITask
+{
+  void Init()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+}
+class CC1M5GerSoldierGroup1 extends CBaseUnitGroup
+{
+  Array m_Targets = ["RussianSoldier_Group1_0", "RussianSoldier_Group1_1", "RussianSoldier_Group1_2",
+      "RussianSoldier_Group1_3", "RussianSoldier_Group1_4", "RussianSoldier_Group1_5", "RussianSoldier_Group1_6", "RussianSoldier_Group1_7",
+      "RussianSoldier_Group1_8", "RussianSoldier_Group1_9"];
+
+  event void StartPhaseTwo()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning(" CC1M5GerSoldierGroup1  -  StartPhaseTwo  ");
+
+    Component RusSoldierGroup = GetMission().GetObject("CC1M5RusSoldierGroup1");
+    if(RusSoldierGroup == null)
+    {
+ //     logError("RusSoldierGroup == null");
+      return;
+    }
+
+    RusSoldierGroup.RefreshUnitsList();
+    if(RusSoldierGroup.m_Units.size() != 0)
+    {
+      RusSoldierGroup.SuicideGroup(20.0);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      StartAttack();
+      //SetOrder_Attack(m_Targets, ERT_AGGRESSIVE);
+    }
+  }
+
+  event void StartAttack()
+  {
+    SetFormation("CFrontFormation", 30.0, true, true);
+    SetFirstQueueOrders([
+                          ["AttackRussian", "SetOrder_MoveTo", [GetNavPointBehPos("NavPoint_GerSoldierAttack"), 4.0, true], ""],
+                          ["AttackRussian", "SetEnemyReactionType", [ERT_AGGRESSIVE]],
+                          ["AttackRussian", "SetOrder_Attack", [m_Targets, ERT_AGGRESSIVE], ""]
+                        ]);
+  }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Russian Soldier
+class CC1M5RusSoldierGroup1Task extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+  void Init()
+  {
+    CC1M3OnUnreacheableUnitProcessingTask::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+}
+class CC1M5RusSoldierGroup1 extends CBaseUnitGroup
+{
+  float m_SpeedAttack = 1;
+  Array m_Targets1 = ["GermanDzot_1", "GermanDzot_2", "GermanDzot_3"];
+
+  event void StartRussianGroups()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning(" CC1M5RusSoldierGroup1  -  StartRussianGroups");
+
+    SetFormation("CFrontFormation", 5.0, true, true);
+    setOrder_MoveTo(GetNavPointBehPos("NavPoint_RusSoldierAttack"), m_SpeedAttack, true);
+  }
+
+  event void SuicideGroup(float _time)
+  {
+    float _Time = _time + randnum(_time);
+    RefreshUnitsList();
+    sendEvent(1.0, m_Units[randnum(m_Units.size())], "DestroyObject", []);
+    sendEvent(_Time, getIdentificator(user), "SuicideGroup", [_time]);
+  }
+
+  event void StartFightDzot()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning(" CC1M5RusSoldierGroup1Task  -  StartFightDzot attack Dzot ");
+
+    CancelAllOrders();
+    //SetEnemyReactionType(ERT_AGGRESSIVE);
+    //SetOrder_Attack(m_Targets1, ERT_AGGRESSIVE);
+
+    SetFormation("CFrontFormation", 5.0, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetFirstQueueOrders([
+                          ["AttackRussian", "SetOrder_MoveTo", [GetNavPointBehPos("NavPoint_RusSoldierAttack"), 5.0, true], ""]
+                          //["AttackRussian", "SetEnemyReactionType", [ERT_AGGRESSIVE]]
+                        ]);
+  }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5_GermanDuckBlindPanzer_Group1 extends CBaseUnitGroup
+{
+   // boolean DuckBlind1Start = false;
+  float TankAttackSpeed = 10.0f;
+  boolean StartStugAmbush = false;
+  boolean GerFlank        = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+    SetFormation("CFrontFormation", 30.0, true, true);
+    ShowGroup(false);
+  }
+
+  //event void DuckBlind1Start()
+  event void  StartStugAmbush(float _Delay)
+  {
+ //   if(GetMission().isDebug)
+ //       logWarning("CC1M5_GermanDuckBlindPanzer_Group1 - StartStugAmbush");
+
+    //if(StartStugAmbush)
+        //return;
+
+    ShowGroup(true);
+    StartAttack();
+    //DuckBlind1Start = true;
+
+ //   if(GetMission().isDebug)
+ //       logWarning("CC1M5_GermanDuckBlindPanzer_Group1 - Counterattack");
+
+  }
+
+  void StartAttack()
+  {
+    SetFormation("CFrontFormation", 50.0, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetFirstQueueOrders([
+                          ["AttackRussian", "SetOrder_MoveTo", [GetNavPointBehPos("NavPoint_GerDuckBlindAttack"), 4.0, true], ""]
+                          //["AttackRussian", "SetEnemyReactionType", [ERT_AGGRESSIVE]]
+                        ]);
+  }
+
+  event void ContinueGerCombat()
+  {
+    if (!GerFlank)
+    {
+      //ForEachUnitTask("ActivateBehavior", [true]);
+      SetFormation("CFrontFormation", 50, true, true);
+      ActivateRadar(true);
+      m_EnemyReactionType == ERT_PASSIVE;
+
+  //    if(GetMission().isDebug)
+  //      logWarning("Start_GermanFlankStrike");
+
+      Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_Rus76Attack2"),
+                    GetNavPointBehPos("NavPoint_Rus85PlayerAttack")
+                    //GetNavPointBehPos("NavPointFirstAdvance4CC2M5Group03T_34_76")
+                           ];
+
+      SetFirstQueueOrders([
+        ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+        ["StartFirstAdvance", "EndGerFlankManever", [], ""]
+                        ]);
+      GerFlank = true;
+    }
+  }
+  void EndGerFlankManever()
+  {
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    //ActivateRadar(true);
+    SetFormation("CFrontFormation", 50, true, true);
+    SetOrder_MoveTo(GetNavPointBehPos("NavPoint_Rus85PlayerAttack"), TankAttackSpeed, true);
+ //   if(GetMission().isDebug)
+ //     logWarning("Flank_Combat_Begin");
+  }
+}
+
+class CC1M5GermanTankDuckBlindGroupTask extends CC1M3Broken, CC1M3OnUnreacheableUnitProcessingTask
+{
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5_GermanDuckBlindPanzer_Group2 extends CBaseUnitGroup
+{
+  boolean DuckBlind2Start = false;
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+    SetFormation("CFrontFormation", 50.0, true, true);
+    ShowGroup(false);
+  }
+
+  event void DuckBlind2Start()
+  {
+  //  if(GetMission().isDebug)
+  //      logWarning("CC1M5_GermanDuckBlindPanzer_Group2 - DuckBlind2Start");
+
+    if(DuckBlind2Start)
+        return;
+
+    ShowGroup(true);
+    StartAttack();
+    DuckBlind2Start = true;
+  }
+
+  void StartAttack()
+  {
+    SetFormation("CFrontFormation", 50.0, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetFirstQueueOrders([
+                          ["AttackRussian", "SetOrder_MoveTo", [GetNavPointBehPos("NavPoint_GermanT4Attack"), 4.0, true], ""]
+                          //["AttackRussian", "SetEnemyReactionType", [ERT_AGGRESSIVE]]
+                        ]);
+  }
+}
+

@@ -1,0 +1,236 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+class CC1M5PRussianPanzer extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "CC1M5GermanDzotGroup";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit", "MainPlayerUnit_Tank_Group_1", "MainPlayerUnit_Tank_Group_2"];
+
+  float distanceForFight = 600;
+  float distanceStartPhaseTwo = 300;
+  float distanceStartPhaseThree = 100;
+  float distancePlayer;
+  float distanceTank1;
+  float distanceTank2;
+
+
+
+  Initialize(Component _Mission, String _Name)
+  {
+//    if (GetMission().isDebug)
+//      logWarning("CC1M5PRussianPanzer::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M5PRussianPanzer").SetUpdatePeriod(10000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Array PointInfoMPU   = _PositionWatcher.GetPointInfo(0);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(1);
+    Array PointInfo2   = _PositionWatcher.GetPointInfo(2);
+
+    distancePlayer = PointInfoMPU[INDEX_Distance];
+    distanceTank1 = PointInfo1[INDEX_Distance];
+    distanceTank2 = PointInfo2[INDEX_Distance];
+
+    //logError("CC1M6PRussianPanzerPak1 distancePlayer = " + new String(distancePlayer));
+    //logError("distancePlayer = " + new String(distancePlayer));
+    //logError("distanceTank1 = " + new String(distanceTank1));
+    //logError("distanceTank2 = " + new String(distanceTank2));
+
+
+    if(distancePlayer < distanceForFight ||
+        distanceTank1 < distanceForFight ||
+        distanceTank2 < distanceForFight)
+    {
+      if(!GetMission().StartFight)
+        sendEvent(0.0, SOID_MissionController, "StartFight", []);
+    }
+    if(distancePlayer < distanceStartPhaseTwo ||
+        distanceTank1 < distanceStartPhaseTwo ||
+        distanceTank2 < distanceStartPhaseTwo)
+    {
+      if(!GetMission().StartedPhaseTwo)
+        sendEvent(0.0, SOID_MissionController, "StartPhaseTwo", []);
+    }
+    if(distancePlayer < distanceStartPhaseThree ||
+        distanceTank1 < distanceStartPhaseThree ||
+        distanceTank2 < distanceStartPhaseThree)
+    {
+      if(!GetMission().StartedPhaseThree)
+      {
+        sendEvent(0.0, SOID_MissionController, "StartPhaseThree", []);
+        GetMission().ShutdownWatcher("CC1M5PRussianPanzer");
+      }
+    }
+  }
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5GermanAmbush extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "CC1M5_GermanStugAmbush_Group";                     // кто следимт
+  final static Array  ControlPoints = ["Russian_Group_76_1", "Russian_Group_76_2", "Russian_Group_76_3", "MainPlayerUnit"];
+
+  float distanceFrontOrder = 250;
+  float distanceAmbushActivated = 300;
+
+  Initialize(Component _Mission, String _Name)
+  {
+//    if (GetMission().isDebug)
+//      logWarning("CC1M5GermanAmbushInitialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M5GermanAmbush").SetUpdatePeriod(5000);
+    //GetMission().GetObject("CC1M5GermanAmbush").SetEventHandler(this);
+  }
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+//    if (GetMission().isDebug)
+//      logWarning("CC1M5GermanAmbushWatcherStart");
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Array PointInfoRussian_Group_76_1 = _PositionWatcher.GetPointInfo(0);
+    Array PointInfoRussian_Group_76_2 = _PositionWatcher.GetPointInfo(1);
+    Array PointInfoRussian_Group_76_3 = _PositionWatcher.GetPointInfo(2);
+    Array PointInfoMainPlayerUnit     = _PositionWatcher.GetPointInfo(3);
+
+
+    float distanceRussian_Group_76_1 = PointInfoRussian_Group_76_1[INDEX_Distance];
+    float distanceRussian_Group_76_2 = PointInfoRussian_Group_76_2[INDEX_Distance];
+    float distanceRussian_Group_76_3 = PointInfoRussian_Group_76_3[INDEX_Distance];
+    float distanceMainPlayerUnit     = PointInfoMainPlayerUnit[INDEX_Distance];
+
+
+ //   logWarning("CC1M5PRussianTankStugdistance1 = " + new String(distanceRussian_Group_76_1));
+//    logWarning("CC1M5PRussianTankStugdistance2 = " + new String(distanceRussian_Group_76_2));
+ //   logWarning("CC1M5PRussianTankStugdistance3 = " + new String(distanceRussian_Group_76_3));
+//    logWarning("CC1M5PRussianTankStugdistance4 = " + new String(distanceMainPlayerUnit));
+
+//    logWarning("Check distances distanceFrontOrder = " + new String(distanceFrontOrder));
+
+//    logWarning("Check distances Group_76_1 = " + new String(distanceRussian_Group_76_1 < distanceFrontOrder));
+//    logWarning("Check distances Group_76_2 = " + new String(distanceRussian_Group_76_2 < distanceFrontOrder));
+//    logWarning("Check distances Group_76_3 = " + new String(distanceRussian_Group_76_3 < distanceFrontOrder));
+
+    if(distanceRussian_Group_76_1 < distanceFrontOrder ||
+       distanceRussian_Group_76_2 < distanceFrontOrder ||
+       distanceRussian_Group_76_3 < distanceFrontOrder )
+    {
+      if(!GetMission().StartStugAmbush)
+      {
+        sendEvent(0.0, SOID_MissionController, "StartStugAmbush", [10.0]);
+        GetMission().ShutdownWatcher("CC1M5GermanAmbush");
+//        logWarning("WatcherAmbushDetected_StartBreakthrough");
+      }
+    }
+    if(distanceMainPlayerUnit < distanceAmbushActivated)
+    {
+      if(!GetMission().StartStugAmbush)
+      {
+        sendEvent(0.0, SOID_MissionController, "StartStugAmbush", [0.0]);
+        GetMission().ShutdownWatcher("CC1M5GermanAmbush");
+//        logWarning("AmbushDetectedbyPlayer_WatcherStartBreakthrough");
+      }
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+class CC1M5BlockingStrike extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "NavPoint_Flanking_Left";
+  final static Array  ControlPoints = ["MainPlayerUnit"];
+
+  float distanceBlockingGroupAct = 550;
+
+  Initialize(Component _Mission, String _Name)
+  {
+//    if (GetMission().isDebug)
+//      logWarning("CC1M5BlokingInitialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M5BlockingStrike").SetUpdatePeriod(5000);
+
+  }
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Array PointInfoMainPlayerUnit  = _PositionWatcher.GetPointInfo(0);
+
+    float distanceMainPlayerUnit   = PointInfoMainPlayerUnit[INDEX_Distance];
+
+
+//    logWarning("CC1M5PlayerTankBlockingDistance = " + new String(distanceMainPlayerUnit));
+
+//    logWarning("CheckBlockingdistanceMainPlayerUnit   = " + new String(distanceMainPlayerUnit < distanceBlockingGroupAct ));
+
+    if(distanceMainPlayerUnit < distanceBlockingGroupAct )
+    {
+      if(!GetMission().DuckBlind2Start)
+      {
+        sendEvent(0.0, SOID_MissionController, "DuckBlind2Start", [0.0]);
+        GetMission().ShutdownWatcher("CC1M5BlockingStrike");
+ //       logWarning("BlokingGroupDetectedPlayer_StartCounterAttack");
+      }
+    }
+  }
+}
+
+

@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC1M5Atmosphere extends CCommonAtmosphere
+{
+  Color   FogColorXPos      = new Color(0.627451, 0.627451, 0.627451, 1.000000); // S
+  Color   FogColorXNeg      = new Color(0.627451, 0.627451, 0.627451, 1.000000); // N
+  Color   FogColorYPos      = new Color(0.627451, 0.627451, 0.627451, 1.000000); // E
+  Color   FogColorYNeg      = new Color(0.627451, 0.627451, 0.627451, 1.000000); // W
+  float   FogNear           = 10.0;
+  float   FogFar            = 500.0;
+  float   FogFarMax         = 4000.0;
+  boolean EnableHorizontAdjustment = true;
+  Color   SunColor          = new Color(0.682353, 0.682353, 0.682353, 1.000000);
+  float   SunIntensity      = 0.5;
+  Color   AntiSunColor      = new Color(0.576471, 0.592157, 0.666667, 1.000000);
+  float   AntiSunIntensity  = 0.5;
+  float   AntiSunAngle      = 30.0;
+  Vector  SunDirection      = new Vector(-0.105195, -0.105554, -0.355535);
+  Color   AmbientLight      = new Color(0.152941, 0.152941, 0.180392, 1.000000);
+  Color   ShadowColor       = new Color(0.847059, 0.847059, 0.847059, 1.000000);
+  String  DefaultFogMode    = "Exp";
+  float   FogDensity        = 0.001;
+  float   TreeLightKoef     = 0.0; //tree lighting smooth koef: 0 - min range; 0.3 - middle; 0.8 - high range
+  float   TreeNormalRelax   = 0.0;
+  Color   StencilShadowColor = new Color(0.874510, 0.874510, 0.874510, 1.000000);
+
+
+  boolean IsLightEnabled   = true;
+  boolean IsAntiSunEnabled = true;
+  float   DistanceToSun  = 2000.0;
+  Array   HorizontPos    = [100.0f, 1000.0f];
+  float   ShadowFar      = FogFar * 0.7;
+  Vector  WindVector     = new Vector(0.2, 0.8, 0.0);
+  boolean IsIllumination = false;
+  boolean IsSunVisible   = true;
+  boolean IsLightEnabled = true;
+  float   SunSpecularIntensity     = 1.0;
+  float   AntiSunSpecularIntensity = 0.0;
+  float   TerrainShadowPower = 3.5; //terrain shadow contrast 1 - min; 6 - middle;
+}
