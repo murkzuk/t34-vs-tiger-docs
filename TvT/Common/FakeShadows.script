@@ -1,0 +1,55 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CFakeShadows
+{
+  static void InitializeFakeShadows()
+  {
+    // APC M3A1 (US)
+    Cu_veh_M3A1HalfTrackModel::FakeShadow                     = true;
+    Cu_veh_M3A1HalfTrackModel::FakeShadowScale                = 0.9;
+
+    // APC Hanomag mod.C
+    Cu_veh_Hanomag_251CModel::FakeShadow                      = true;
+    Cu_veh_Hanomag_251CModel::FakeShadowScale                 = 0.9;
+
+    // Truck Opel Blitz
+    Cu_veh_OpelBlitzModel::FakeShadow                         = false;
+    Cu_veh_OpelBlitzModel::FakeShadowScale                    = 0.9;
+
+    // Truck ZIS-5
+    Cu_veh_zis5Model::FakeShadow                              = false;
+    Cu_veh_zis5Model::FakeShadowScale                         = 0.9;
+
+    // Pz.4 mod.G
+    Cu_veh_PzIVGModel::FakeShadow                             = true;
+    Cu_veh_PzIVGModel::FakeShadowScale                        = 0.9;
+
+    // Pz.6 mod.E
+    Cu_veh_PzVI_MAINModel::FakeShadow                         = true;
+    Cu_veh_PzVI_MAINModel::FakeShadowScale                    = 0.9;
+
+    // T34-85 mod.44
+    Cu_veh_t34_85_44Model::FakeShadow                         = true;
+    Cu_veh_t34_85_44Model::FakeShadowScale                    = 0.9;
+
+    // T34-76 mod.42
+    Cu_veh_t34_76_42Model::FakeShadow                         = true;
+    Cu_veh_t34_76_42Model::FakeShadowScale                    = 0.9;
+
+    // SAU StuG-40 mod.G
+    Cu_veh_SAU_Stug40Model::FakeShadow                        = true;
+    Cu_veh_SAU_Stug40Model::FakeShadowScale                   = 0.9;
+
+    // SAU SU-85 mod.Classic
+    Cu_veh_SU85Model::FakeShadow                              = true;
+    Cu_veh_SU85Model::FakeShadowScale                         = 0.9;
+
+  }
+}

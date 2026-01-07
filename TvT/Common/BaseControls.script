@@ -1,0 +1,2905 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+//
+// CBaseUIControl
+//
+
+class CBaseUIControl
+  extends CMenuWrapper
+{
+  static float  DefaultZ    = 0.0;
+  static String DefaultHint = "";
+
+  Component  m_ParentMenu = null;
+  Component  m_PropMap    = null;
+  Component  m_Position   = null;
+  Component  m_ParentRect = new CUIPosition(0.0, 0.0, 1.0, 1.0);
+  WString    m_Hint       = L"";
+
+  // ping parameters
+  static float PingStartRadius = 1.0; // in units
+  static float PingEndRadius   = 0.0;
+  static float PingSpeed       = 1.2; // units per second
+  static float PingPeriod      = 3.0; // seconds
+
+  Array GetPingParams(
+      float _CurrentRadius
+    )
+  {
+    float Phase = (PingStartRadius - _CurrentRadius) / (PingStartRadius - PingEndRadius);
+
+    Array Result = [ 
+        30.0 - 25.0 * Phase,                // ring width in pixels
+        new Color(0.5, 1.0, 0.0, Phase)     // ring color
+      ];
+
+    return Result;
+  }
+
+  // Set parent menu
+  void SetParentMenu(
+      Component _ParentMenu
+    )
+  {
+    m_ParentMenu = _ParentMenu;
+  }
+
+  void GetParentMenu()
+  {
+    return m_ParentMenu;
+  }
+
+  // Get object from menu controller
+  Component GetObject(
+      String _ID
+    )
+  {
+    return m_ParentMenu.GetObject(_ID);
+  }
+
+  // Register UI control in menu controller
+  void RegisterObject(
+      String    _ID,
+      Component _Object
+    )
+  {
+    m_ParentMenu.RegisterObject(_ID, _Object);
+  }
+
+  // Unregister UI control in menu controller
+  void UnregisterObject(
+      String    _ID
+    )
+  {
+    m_ParentMenu.UnregisterObject(_ID);
+  }
+
+  void Initialize(
+      String _ControlID
+    )
+  {
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    m_PropMap = _PropMap;
+
+    SetZ(_PropMap.Get("Z", DefaultZ));
+
+    String LocalizedID = _PropMap.Get("Hint", DefaultHint);
+    if (!LocalizedID.isEmpty())
+      SetHint(getLocalized("Hints", LocalizedID));
+  }
+
+  String GetControlID()
+  {
+    return getIdentificator(this);
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Position = _UIPosition;
+  }
+
+  // Returns properties list
+  Array GetPropertiesList()
+  {
+    return m_PropMap.m_Properties;
+  }
+
+  // Returns position of UI control
+  Component GetUIPosition()
+  {
+    return m_Position;
+  }
+
+  // Updates UI control's condition. ( Calls when Apply button of properties window is pressed )
+  void UpdateProperties()
+  {
+    Construct(m_PropMap);
+  }
+
+  Array GetActualSize()
+  {
+    return [];
+  }
+
+  Array GetMaterialSize(
+      String _MaterialID
+    )
+  {
+    Component MaterialManager = m_MenuController.GetMaterialManager();
+    if (null == MaterialManager)
+      return [];
+
+    return [MaterialManager.GetMaterialWidth(_MaterialID), 
+            MaterialManager.GetMaterialHeight(_MaterialID)];
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    m_ParentRect = _UIPosition;
+  }
+
+  void SetSelectedItemState(
+      boolean _Selected
+    )
+  {
+  }
+
+  void SetHint(
+      WString _Hint
+    )
+  {
+    m_Hint = _Hint;
+  }
+
+  WString GetHint()
+  {
+    return m_Hint;
+  }
+
+  boolean IsVisible()
+  {
+    return getVisibleState(this);
+  }
+}
+
+
+//
+// Bitmap control
+//
+
+class CUIBitmap
+  extends CBaseUIControl
+{
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetMaterial(_PropMap.Get("Material", "Test material"));
+    SetTexTransform(
+        _PropMap.Get("TexU",        0.0),
+        _PropMap.Get("TexV",        0.0),
+        _PropMap.Get("TexMagnifyX", 1.0),
+        _PropMap.Get("TexMagnifyY", 1.0),
+        _PropMap.Get("TexConstAspectRatio", false)
+      );
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+    EnableFrame(_PropMap.Get("FrameEnabled", false));
+    SetFrameColor(_PropMap.Get("FrameColor", new Color(1.0, 1.0, 1.0)));
+    SetThickness(_PropMap.Get("FrameThickness", 1.0));
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("Material", "Test material"));
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+  }
+}
+
+//
+// Map control
+//
+
+class CUIMap
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return [];
+  }
+  
+  void OnLookAtMap(
+      Vector _Position
+    )
+  {
+    Component Level = (new #GameController()).GetLoadedLevel();
+    if (null != Level)
+      Level.GetObject("CameraViewManager").LookAt(_Position);
+  }
+
+  void OnWheel(
+      float _Delta
+    )
+  {
+    if (_Delta > 0.0)
+      new #GameController().GetObject("CameraViewManager").SetPrevZoom();
+    else
+      new #GameController().GetObject("CameraViewManager").SetNextZoom();
+  }
+
+  WString GetHint()
+  {
+    return GetIconHint();
+  }
+}
+
+//
+// Graph control
+//
+
+class CUIGraph
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return [];
+  }
+}
+
+//
+// Pie chart control
+//
+
+class CUIPieChart
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return [];
+  }
+}
+
+//
+// Frame control
+//
+
+class CUIFrame
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetThickness(_PropMap.Get("Thickness", 1.0));
+    SetFrameColor(_PropMap.Get("FrameColor", new Color(1.0, 1.0, 1.0)));
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+}
+
+//
+// Button control
+//
+
+class CUIButton
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.02;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    WString LocalizedString   = L"";
+    Array   LocalizedStringID;
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetMaterials(
+        _PropMap.Get("MaterialNormal",  ""),
+        _PropMap.Get("MaterialHilited", ""),
+        _PropMap.Get("MaterialPressed", "")
+      );
+
+    SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+      
+    SetTextIndent(_PropMap.Get("LeftIndent", 0.0));
+    SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER));
+
+    LocalizedStringID = _PropMap.Get("Text", ["Menu", "str_DEFAULT_BUTTON_CAPTION"]);
+    if (2 == LocalizedStringID.size())
+    {    
+      if (LocalizedStringID[0] != "" ||
+          LocalizedStringID[1] != "")
+      {
+        LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1]);
+        if (L"# INVALID STRING #" == LocalizedString)  
+          LocalizedString = L"";
+      }
+    }
+    SetText(LocalizedString);
+    SetMultiline(
+        _PropMap.Get("IsMultiline", false)
+      );
+    
+    SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(1.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedTextColor", new Color(0.0, 0.0, 1.0))
+      );
+    SetBitmapColors(
+        _PropMap.Get("NormalMaterialColor", new Color(1.0, 1.0, 1.0)),
+        _PropMap.Get("HilitedMaterialColor", new Color(1.0, 1.0, 1.0))
+      );
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("MaterialNormal", "Test material"));
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+}
+
+//
+// Edit Field control
+//
+
+class CUIEditField
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.02;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    WString LocalizedString;
+    Array   LocalizedStringID;
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+    SetMaterials(
+        _PropMap.Get("MaterialNormal", "Test material"),
+        _PropMap.Get("MaterialHilited", "Test material")
+      );
+    SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+
+    LocalizedStringID = _PropMap.Get("Text", ["Menu", "str_DEFAULT_TEXT_EDIT_CAPTION"] );
+    LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1] );
+    if (L"# INVALID STRING #" == LocalizedString)  LocalizedString = L"";
+    SetText(LocalizedString);
+    
+    SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(1.0, 1.0, 1.0)),
+        _PropMap.Get("HilitedTextColor", new Color(1.0, 1.0, 1.0))
+      );
+    SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER));
+    SetMaxChars(_PropMap.Get("MaxChars", 12));
+    DisableText(_PropMap.Get("DisableText", false));
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("MaterialNormal", "Test material"));
+  }
+  
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+  }
+}
+
+//
+// EditTextField control
+//
+
+class CUIEditTextField 
+  extends CUIEditField
+{
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CUIEditField::Construct(_PropMap);
+
+    SetNumericMode(_PropMap.Get("NumericMode", false));
+  }
+}
+
+//
+// EditNumericField control
+//
+
+class CUIEditNumericField 
+  extends CUIEditField
+{
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CUIEditField::Construct(_PropMap);
+
+    SetNumericMode(_PropMap.Get("NumericMode", true));
+  }
+}
+
+//
+// TextField control
+//
+
+class CUITextField
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    WString LocalizedString;
+    Array   LocalizedStringID;
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+
+    LocalizedStringID = _PropMap.Get("Text", ["Menu", "str_DEFAULT_STATIC_TEXT_CAPTION"] );
+    LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1] );
+    if (L"# INVALID STRING #" == LocalizedString)  LocalizedString = L"";
+    SetText(LocalizedString);
+    
+    SetTextColor(
+        _PropMap.Get("TextColor", new Color(1.0, 1.0, 1.0))
+      );
+
+    SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER));
+
+    SetShadow(_PropMap.Get("Shadow", 0.0));
+
+    EnableFormatting(_PropMap.Get("IsMultiline", true));
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+  
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+  }
+
+}
+
+//
+// ScrollableTextField control
+//
+
+class CUIScrollableTextField
+  extends CUITextField
+{
+  float m_FontSize         = 0.032;
+  int m_NumVisibleLines    = 0;
+  int m_NumFormattedLines  = 0;
+  int m_NumScrollableLines = 0;
+  int m_ScrollPos          = 0;
+
+  Component m_Scroller = null;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CUITextField::Construct(_PropMap);
+    
+    m_FontSize = _PropMap.Get("FontSize", 0.032);
+  }
+
+  void UnregisterControl()
+  {
+    m_Scroller.SetScrollHandler(null);
+    m_Scroller = null;
+    
+    UnregisterObject(getIdentificator(this));
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    CUITextField::SetPosition(_UIPosition);
+    
+    // set wheel area
+    if (null != m_Scroller)
+      m_Scroller.SetWheelArea(m_Position.X, m_Position.Y, m_Position.Width, m_Position.Height);
+
+    m_NumVisibleLines = int(_UIPosition.Height / m_FontSize);
+    SetNumLinesToRender(m_NumVisibleLines);
+
+    SetDimensions(_UIPosition.Width, 25.0);
+  }
+
+  void ScrollUp()
+  {
+    if (m_ScrollPos <= 0)
+      return;
+
+    SetScrollPos(m_ScrollPos - 1);
+  }
+
+  void ScrollDown()
+  {
+    if (m_ScrollPos >= m_NumScrollableLines)
+      return;
+    
+    SetScrollPos(m_ScrollPos + 1);
+  }
+  
+  void SetSlaveScroller(
+      Component _Scroller
+    )
+  {
+    if (null != m_Scroller)
+    {
+      m_Scroller.SetScrollHandler(null);
+      m_Scroller.SetWheelArea(0.0, 0.0, 0.0, 0.0);
+    }
+
+    m_Scroller = _Scroller;
+    m_Scroller.SetScrollHandler(this);
+
+    // set wheel area
+    if (null != m_Scroller)
+      m_Scroller.SetWheelArea(m_Position.X, m_Position.Y, m_Position.Width, m_Position.Height);
+  }
+
+  void SetScrollPos(
+      int _Pos
+    )
+  {
+    m_ScrollPos = _Pos;
+    UpdateText();
+  }
+
+  void ScrollToEnd()
+  {
+    SetScrollPos(m_NumScrollableLines);
+  }
+
+  void UpdateText()
+  {
+    SetStartLine(m_ScrollPos);
+    
+    UpdateScroller();
+  }
+
+  void UpdateScroller()
+  {
+    if (null == m_Scroller) return;
+
+    m_Scroller.SetScrollRange(m_NumScrollableLines);
+    m_Scroller.SetScrollPos(m_ScrollPos);
+  }
+  
+  void Update()
+  {
+    if(GetNumFormattedLines() == m_NumFormattedLines)
+      return;
+      
+    m_NumFormattedLines = GetNumFormattedLines();
+    m_NumScrollableLines = max(m_NumFormattedLines - m_NumVisibleLines, 0);
+    
+    UpdateScroller();
+  }
+}
+
+//
+// ScrollBar control
+//
+
+class CUIScrollBar
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.02;
+
+  // attributes
+
+  // compounds
+  Component   m_Arrow1;
+  Component   m_Arrow2;
+  Component   m_Scroll;
+
+  String      m_ControlID;
+  int         m_ScrollPos;
+  int         m_ScrollRange;
+
+  boolean     m_IsScrollerSizeFixed;
+  float       m_ScrollerFixedWidth;
+  float       m_ScrollerFixedHeight;
+
+  Component   m_ScrollHandler;
+  boolean     m_Enabled;
+
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID = _ControlID;
+
+    m_Arrow1 = new #BitmapButton();
+    m_Arrow2 = new #BitmapButton();
+    m_Scroll = new #SliderCursorControl();
+
+    m_Scroll.SetEventHandler(this);
+
+    RegisterObject(m_ControlID + "_Arrow1", m_Arrow1);
+    RegisterObject(m_ControlID + "_Arrow2", m_Arrow2);
+    RegisterObject(m_ControlID + "_Scroll", m_Scroll);
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+    m_Scroll.SetEventHandler(null);
+    m_ScrollHandler = null;
+    
+    UnregisterObject(m_ControlID);
+    UnregisterObject(m_ControlID + "_Arrow1");
+    UnregisterObject(m_ControlID + "_Arrow2");
+    UnregisterObject(m_ControlID + "_Scroll");
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    m_Enabled = _PropMap.Get("Enabled", true);
+
+    m_Arrow1.SetMaterialManager(m_MenuController.GetMaterialManager());
+
+    m_Arrow1.SetMaterials(
+        _PropMap.Get("MaterialArrow1", "Test material"), 
+        _PropMap.Get("MaterialArrow1", "Test material")
+      );
+    m_Arrow1.SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(0.5, 0.5, 0.5)),
+        _PropMap.Get("HilitedTextColor", new Color(0.5, 0.5, 0.5))
+      );
+    m_Arrow1.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    m_Arrow2.SetMaterialManager(m_MenuController.GetMaterialManager());
+    m_Arrow2.SetMaterials(
+        _PropMap.Get("MaterialArrow2", "Test material"), 
+        _PropMap.Get("MaterialArrow2", "Test material")
+      );
+    m_Arrow2.SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(0.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedTextColor", new Color(0.0, 0.0, 0.0))
+      );
+    m_Arrow2.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    m_Scroll.SetMaterialManager(m_MenuController.GetMaterialManager());
+    m_Scroll.SetMaterials(
+        _PropMap.Get("MaterialScroll", "Test material"), 
+        _PropMap.Get("MaterialScroll", "Test material")
+      );
+    m_Scroll.SetTextColors(
+        _PropMap.Get("NormalSliderColor", new Color(1.0, 1.0, 1.0)),
+        _PropMap.Get("HilitedSliderColor", new Color(1.0, 1.0, 1.0))
+      );
+    m_Scroll.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    // Scroll properties
+    SetScrollRange(_PropMap.Get("ScrollRange", 10));
+    SetScrollPos(_PropMap.Get("InitialScrollPos", 0));
+
+    // Fixed size scroller feature
+    m_IsScrollerSizeFixed = _PropMap.Get("IsScrollerSizeFixed", false);
+    m_ScrollerFixedWidth  = _PropMap.Get("ScrollerFixedWidth", 0.05);
+    m_ScrollerFixedHeight = _PropMap.Get("ScrollerFixedHeight", 0.05);
+  }
+
+  // Scroll bar functions
+  void SetScrollPos(int _ScrollPos)
+  {
+    if (!m_Enabled) return;
+
+    if (_ScrollPos > m_ScrollRange) _ScrollPos = m_ScrollRange;
+    if (_ScrollPos < 0) _ScrollPos = 0;
+
+    m_ScrollPos = _ScrollPos;
+
+    if (null != m_Position) SetPosition(m_Position);
+  }
+
+  void SetScrollRange(int _ScrollRange)
+  {
+    //if (_ScrollRange < 1) _ScrollRange = 1;
+
+    m_ScrollRange = _ScrollRange;
+
+    if (0 != m_ScrollRange)
+      m_Scroll.SetWheelUnit(-1.0 / float(m_ScrollRange));
+    else
+      m_Scroll.SetWheelUnit(0.0);
+
+    if (null != m_Position) SetPosition(m_Position);
+  }
+
+  // Scrolls one position down
+  void ScrollDown()
+  {
+    if (!m_Enabled) return;
+    SetScrollPos(m_ScrollPos-1);
+  }
+
+  // Scrolls one position up
+  void ScrollUp()
+  {
+    if (!m_Enabled) return;
+    SetScrollPos(m_ScrollPos+1);
+  }
+
+  int  GetScrollPos()
+  {
+    return m_ScrollPos;
+  }
+
+  int  GetScrollRange()
+  {
+    return m_ScrollRange;
+  }
+
+  float GetScrollPhase()
+  {
+    if (0 == GetScrollRange())
+      return 0.0;
+
+    return float(GetScrollPos()) / float(GetScrollRange());
+  }
+
+  void SetScrollPhase(
+      float _Phase
+    )
+  {
+    if (!m_Enabled) return;
+    SetScrollPos(iround(_Phase * float(GetScrollRange())));
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Scroll.SetZ(_Z);
+    m_Arrow1.SetZ(_Z);
+    m_Arrow2.SetZ(_Z);
+  }
+
+  void SetScrollHandler(
+      Component _ScrollHandler
+    )
+  {
+    m_ScrollHandler = _ScrollHandler;
+  }
+
+  void SetWheelArea(
+      float _X,
+      float _Y,
+      float _Width,
+      float _Height
+    )
+  {
+    m_Scroll.SetWheelArea(_X, _Y, _Width, _Height);
+  }
+
+  void SetEnabled(
+      boolean _Enabled
+    )
+  {
+    m_Enabled = _Enabled;
+  }
+
+  event void OnAttachControl(
+      Component _Control
+    )
+  {
+    m_MenuController.OnAttachControl(_Control);
+  }
+
+  event void OnSliderMoved()
+  {
+    if (!m_Enabled)
+    {
+      SetScrollPos(0);
+      m_Scroll.SetValue(0);
+      return;
+    }
+    if (0 == GetScrollRange())
+      SetScrollPos(0);
+    else
+      SetScrollPos(iround(m_Scroll.GetValue() * float(GetScrollRange())));
+
+    if (null != m_ScrollHandler)
+      m_ScrollHandler.SetScrollPos(m_ScrollPos);
+  }
+}
+
+//
+// Vertical ScrollBar control
+//
+
+class CUIVerticalScrollBar
+  extends CUIScrollBar
+{
+  void Initialize(
+      String _ControlID
+    )
+  {
+    CUIScrollBar::Initialize(_ControlID);
+
+    m_Scroll.SetVerticalMode(true);
+  }
+
+  // Set position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    if (_UIPosition.Height < 3.0 * _UIPosition.Width)
+      _UIPosition.Height = 3.0 * _UIPosition.Width;
+
+    float ScrollWidth;
+    if (0 == m_ScrollRange)
+      ScrollWidth = _UIPosition.Height;
+    else
+      ScrollWidth = float(_UIPosition.Height) / float(m_ScrollRange);
+
+    if (m_IsScrollerSizeFixed) ScrollWidth = m_ScrollerFixedHeight;
+
+    m_Arrow1.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Arrow1.SetDimensions(_UIPosition.Width, _UIPosition.Width);
+
+    m_Arrow2.SetPosition(_UIPosition.X, _UIPosition.Y + _UIPosition.Height - _UIPosition.Width);
+    m_Arrow2.SetDimensions(_UIPosition.Width, _UIPosition.Width);
+
+    m_Scroll.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Scroll.SetMargins(_UIPosition.Y + _UIPosition.Width, 
+      _UIPosition.Y + _UIPosition.Height - _UIPosition.Width - ScrollWidth);
+    m_Scroll.SetValue(GetScrollPhase());
+
+    if (m_IsScrollerSizeFixed)
+      m_Scroll.SetDimensions(m_ScrollerFixedWidth, m_ScrollerFixedHeight);
+    else
+      m_Scroll.SetDimensions(_UIPosition.Width, ScrollWidth);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+}
+
+//
+// Horizontal ScrollBar control
+//
+
+class CUIHorizontalScrollBar
+  extends CUIScrollBar
+{
+  // Set position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    if (_UIPosition.Width < 3.0 * _UIPosition.Height)
+      _UIPosition.Width = 3.0 * _UIPosition.Height;
+
+    float ScrollWidth;
+    if (0 == m_ScrollRange)
+      ScrollWidth = _UIPosition.Width;
+    else
+      ScrollWidth = float(_UIPosition.Width) / float(m_ScrollRange);
+
+    if (m_IsScrollerSizeFixed) ScrollWidth = m_ScrollerFixedWidth;
+
+    m_Arrow1.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Arrow1.SetDimensions(_UIPosition.Height, _UIPosition.Height);
+
+    m_Arrow2.SetPosition(_UIPosition.X  + _UIPosition.Width - _UIPosition.Height, _UIPosition.Y);
+    m_Arrow2.SetDimensions(_UIPosition.Height, _UIPosition.Height);
+
+    m_Scroll.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Scroll.SetMargins(_UIPosition.X  + _UIPosition.Height, 
+      _UIPosition.X + _UIPosition.Width - _UIPosition.Height - ScrollWidth);
+    m_Scroll.SetValue(GetScrollPhase());
+
+    if (m_IsScrollerSizeFixed)
+      m_Scroll.SetDimensions(m_ScrollerFixedWidth, m_ScrollerFixedHeight);
+    else
+      m_Scroll.SetDimensions(ScrollWidth, _UIPosition.Height);
+
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+}
+
+//
+// Check box control
+//
+
+class CUICheckBox
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // compounds
+  Component m_Button;
+  Component m_Caption;
+
+  String    m_ControlID;
+  boolean   m_bChecked;
+  boolean   m_bEnabled;
+
+  String    m_CheckedMaterial;
+  String    m_NonCheckedMaterial;
+  
+  float     m_CheckButtonWidth = 0.0;
+
+  CUICheckBox()
+  {
+    m_bChecked = false;
+    m_bEnabled = true;
+  }
+  
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID = _ControlID;
+
+    m_Button    = new #BitmapButton<CBaseUIControl>();
+    m_Caption   = new #TextControl<CBaseUIControl>();
+
+    RegisterObject(m_ControlID + "_Button", m_Button);
+    RegisterObject(m_ControlID + "_Caption", m_Caption);
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ControlID);
+    UnregisterObject(m_ControlID + "_Button");
+    UnregisterObject(m_ControlID + "_Caption");
+  }
+
+  // Implementation of CBaseUIControl methods
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    // Button properties
+    
+    m_Button.SetMaterialManager(m_MenuController.GetMaterialManager());
+
+    m_CheckedMaterial    = _PropMap.Get("CheckedNormal",    "Test material");
+    m_NonCheckedMaterial = _PropMap.Get("NonCheckedNormal", "Test material");
+    m_Button.SetMaterials(m_CheckedMaterial, m_CheckedMaterial);
+    
+    m_CheckButtonWidth = _PropMap.Get("CheckButtonWidth", 0.0);
+
+    m_Button.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.0)
+      );
+    m_Button.SetText(L"");
+    m_Button.SetTextColors(
+        _PropMap.Get("NormalButtonColor", new Color(1.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedButtonColor", new Color(0.0, 0.0, 1.0))
+      );
+    
+    m_Button.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    // Properties of text
+    Array   LocalizedStringID;
+    WString LocalizedString;
+
+    m_Caption.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+
+    LocalizedStringID = _PropMap.Get("Caption", ["Menu", "str_DEFAULT_CHECKBOX_CAPTION"] );
+    LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1] );
+    if (L"# INVALID STRING #" == LocalizedString)  LocalizedString = L"";
+    m_Caption.SetText(LocalizedString);
+    
+    m_Caption.SetTextColor(
+        _PropMap.Get("CaptionColor", new Color(1.0, 1.0, 1.0))
+      );
+    m_Caption.SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER), ALIGNMENT_CENTER);
+
+    // CheckBox properties
+    SetCheck(_PropMap.Get("bChecked", m_bChecked));
+    SetEnable(_PropMap.Get("bEnabled", m_bEnabled));
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    if (_UIPosition.Height > _UIPosition.Width)
+      _UIPosition.Width = _UIPosition.Height;
+
+    m_Button.SetPosition(_UIPosition.X, _UIPosition.Y);
+    if (0.0 == m_CheckButtonWidth)
+      m_Button.SetDimensions(_UIPosition.Height * 3.0f/4.0f, _UIPosition.Height);
+    else
+      m_Button.SetDimensions(m_CheckButtonWidth, _UIPosition.Height);
+
+    m_Caption.SetPosition(_UIPosition.X + _UIPosition.Height, _UIPosition.Y);
+    m_Caption.SetDimensions(_UIPosition.Width - _UIPosition.Height, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Caption.SetZ(_Z);
+    m_Button.SetZ(_Z);
+  }
+
+  // Check box functions
+  void SetCheck(boolean _bChecked)
+  {
+  // $TMP
+  // I guess the next line should work but there are some problems with interpretation
+  // of default values and I comment this one to supress default settings and set it
+  // manual using input argument (I mean if default value is false and input
+  // argument is false too we couldn't execute function body). 
+//    if (_bChecked != m_bChecked)
+    {
+      if (_bChecked)
+        m_Button.SetMaterials(m_CheckedMaterial, m_CheckedMaterial);
+      else
+        m_Button.SetMaterials(m_NonCheckedMaterial, m_NonCheckedMaterial);
+    }
+ 
+    m_bChecked = _bChecked;
+  }
+
+  void ToggleCheck()
+  {
+    SetCheck(!GetChecked());
+  }
+
+  void SetEnable(boolean _bEnabled)
+  {
+    m_bEnabled = _bEnabled;
+  }
+
+  boolean GetChecked()
+  {
+    return m_bChecked;
+  }
+
+  boolean GetEnabled()
+  {
+    return m_bEnabled;
+  }
+
+  void SetDisabled(
+      boolean _IsDisabled
+    )
+  {
+    m_Button.SetDisabled(_IsDisabled);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("NonCheckedNormal", "Test material"));
+  }
+
+  void SetText(
+      WString _Text
+    )
+  {
+    m_Caption.SetText(_Text);
+  }
+
+  void SetHint(
+      WString _Hint
+    )
+  {
+    m_Caption.SetHint(_Hint);
+    m_Button.SetHint(_Hint);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    m_Caption.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+    m_Button.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+  }
+}
+
+//
+// Combo box control
+//
+
+class CUIComboBox
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // compounds
+  Component m_Button;
+  Component m_Caption;
+  Component m_List;
+  Component m_Frame;
+  Component m_Scroll;
+
+  int MaxItems;
+
+
+  Array m_Items;
+  int   m_SelectedItem = -1;
+  int   m_RenderLayer;
+
+  String    m_ControlID;
+  boolean   m_bEnabled;
+
+  String    m_ButtonMaterial;
+  
+  float     m_CheckButtonWidth = 0.0;
+  float     m_ListAlignment = 0.0;
+  float     m_Z;
+  float     m_ListHeight = 0.0;
+
+  Component m_Position;
+
+  Array DefaultElementProps = [
+      ["FontName",        "Arial",                              false],
+      ["FontSize",        CUISettings::TextListFontSize,        false],
+      ["SelectedColor",   CUISettings::TextListSelectedColor,   false],
+      ["NormalColor",     CUISettings::TextListNormalColor,     false],
+      ["HiSelectedColor", CUISettings::TextListHiSelectedColor, false],
+      ["HiNormalColor",   CUISettings::TextListHiNormalColor,   false]
+    ];
+
+
+  CUIComboBox()
+  {
+    m_bEnabled = true;
+
+
+
+  }
+  
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID = _ControlID;
+
+    m_List = m_ParentMenu.CreateUIControl(
+          _ControlID + "_List", 
+          "", 
+          "CUIListControl", 
+          new CUIPosition(0.0, 0.0, 1.0, 240.0 / 768.0), 
+          clone(DefaultElementProps)
+        );
+
+    m_Scroll = m_ParentMenu.CreateUIControl(
+          m_ControlID + "_Scroll", 
+          "", 
+          "CUIVerticalScrollBar2", 
+          new CUIPosition(0.0, 0.0, 1.0, 250.0 / 768.0), 
+          clone(DefaultElementProps)
+        );
+
+    m_List.SetSlaveScroller(m_Scroll);
+    m_List.SetListScrollStep(25.0 / 768.0);
+
+    m_Button    = new #BitmapButton<CBaseUIControl>();
+    m_Caption   = new #TextControl<CUITextElement>();
+    m_Frame     = new #FrameControl<CBaseUIControl>();
+
+    m_Button.Initialize(_ControlID + "_Button");
+    m_Caption.Initialize(_ControlID + "_Caption");
+    m_Frame.Initialize(_ControlID + "_Frame");
+    RegisterObject(m_ControlID + "_Button", m_Button);
+    RegisterObject(m_ControlID + "_Caption", m_Caption);
+    RegisterObject(m_ControlID + "_Frame", m_Frame);
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ControlID);
+    UnregisterObject(m_ControlID + "_Button");
+    UnregisterObject(m_ControlID + "_Caption");
+    UnregisterObject(m_ControlID + "_Frame");
+    UnregisterObject(m_ControlID + "_List");
+
+  }
+
+  // Implementation of CBaseUIControl methods
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+
+    DefaultElementProps[0][1] = _PropMap.Get("FontName", "Arial");
+    DefaultElementProps[1][1] = _PropMap.Get("FontSize", CUISettings::TextListFontSize);
+
+    m_RenderLayer = _PropMap.Get("RenderLayer", PRIMLAYER_MENU); 
+    m_Z = _PropMap.Get("Z", 0.01);
+    m_ListAlignment = _PropMap.Get("ListAlignment", 0.0);
+
+    m_Button.SetMaterialManager(m_MenuController.GetMaterialManager());
+
+    m_ButtonMaterial    = _PropMap.Get("ButtonMaterial",    "Test material");
+    m_Button.SetMaterials(m_ButtonMaterial, m_ButtonMaterial);
+
+    m_Button.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.0)
+      );
+    m_Button.SetText(L"");
+    m_Button.SetTextColors(
+        _PropMap.Get("NormalButtonColor", new Color(1.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedButtonColor", new Color(0.0, 0.0, 1.0))
+      );
+    
+    m_Button.SetRenderLayer(m_RenderLayer);
+
+    // Properties of text
+    Array   LocalizedStringID;
+    WString LocalizedString;
+
+    m_Caption.SetRenderLayer(m_RenderLayer);
+    m_Caption.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+
+    LocalizedStringID = _PropMap.Get("Caption", ["Menu", "str_DEFAULT_COMBOBOX_CAPTION"] );
+    LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1] );
+    if (L"# INVALID STRING #" == LocalizedString)  LocalizedString = L"";
+    m_Caption.SetText(LocalizedString);
+    
+    m_Caption.SetTextColor(
+        _PropMap.Get("CaptionColor", new Color(1.0, 1.0, 1.0))
+      );
+    m_Caption.SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER), ALIGNMENT_CENTER);
+
+    m_Frame.SetRenderLayer(m_RenderLayer);
+    m_Frame.SetFrameColor(_PropMap.Get("FrameColor", new Color(1.0, 1.0, 1.0)));
+    m_Frame.SetThickness(_PropMap.Get("FrameThickness", 1.0));
+    m_Frame.SetZ(_PropMap.Get("FrameZ", 0.01));
+
+    m_List.Construct(_PropMap);
+    m_Scroll.Construct(_PropMap);
+
+    GetObject(m_ControlID + "_Scroll_ScrollFill").SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+    GetObject(m_ControlID + "_Scroll_Arrow1").SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+    GetObject(m_ControlID + "_Scroll_Arrow2").SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+    GetObject(m_ControlID + "_Scroll_Scroll").SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+    SetEnable(_PropMap.Get("bEnabled", m_bEnabled));
+
+  }
+
+  void SetRenderLayer(
+      int _Layer
+    )
+  {
+    m_Button.SetRenderLayer(_Layer);
+    m_Caption.SetRenderLayer(_Layer);
+    m_Frame.SetRenderLayer(_Layer);
+  }
+
+  void AddControl(
+      String _ControlID
+    )
+  {
+    Component Position = new CUIPosition(0.0, 0.0, m_List.GetUIPosition().Width, 25.0 / 768.0);
+    GetObject(_ControlID).SetPosition(m_List.GetUIPosition());
+    m_List.AddControl(_ControlID);
+  }
+
+  void FillList()
+  {
+    m_List.ClearWithUnregister();
+
+    Component Position = new CUIPosition(0.0, 0.0, m_List.GetUIPosition().Width, 25.0 / 768.0);
+    
+    for (int i = 0; i < m_Items.size(); i++)
+    {
+      final String NewID = m_ControlID + "_Item_" + new String(i);
+      Component Element = m_ParentMenu.CreateUIControl(
+          NewID, 
+          "BitmapButton", 
+          "CUITextElement", 
+          Position, 
+          clone(DefaultElementProps)
+        );
+
+      Element.SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+      Element.SetZ(m_Z);
+      Element.SetText(new WString(m_Items[i]));
+      Element.SetMaterials("GridBackground", "GridBackground");
+      Element.SetAlignment(m_ListAlignment);
+      m_List.AddControl(NewID);
+    }
+
+    if (m_Items.size() > 10) 
+    {
+      Component ScrollPosition = new CUIPosition(
+        m_Position.X + m_Position.Width - m_Position.Height,
+        m_Position.Y + m_Position.Height,
+        m_Position.Height,
+        250.0/768.0);
+  
+      m_Scroll.SetPosition(ScrollPosition);
+    }
+    else
+    {
+      m_Scroll.SetPosition(new CUIPosition(0.0,0.0,0.0,0.0));
+    }
+
+    if((m_SelectedItem >=0) && (m_Items.size() > m_SelectedItem ))
+    {
+      m_Caption.SetText(new WString(m_Items[m_SelectedItem]));
+      m_List.SelectCurrentItem(m_SelectedItem);
+    }
+
+  }
+
+  void SelectItem(
+      int _Index
+     )
+  {
+    m_List.SelectItemByIndex(_Index);
+    m_SelectedItem = _Index;
+    if((m_SelectedItem >=0) && (m_Items.size() > m_SelectedItem ))
+      m_Caption.SetText(new WString(m_Items[m_SelectedItem]));
+  }
+
+  void SelectIDItem(
+      String _ID
+    )
+  {
+    m_List.SelectItem(_ID);
+    SelectItem(m_List.GetCurrentItem());
+    CloseList();
+  }
+
+  int GetCurrentItem()
+  {
+    return m_SelectedItem;
+  }
+
+  void SetItems(
+      Array _Items
+     )
+  {
+    m_Items = _Items;
+    FillList();
+  }
+
+  void OpenList()
+  {
+    m_ListHeight = 245.0/768.0;
+    Component Rect = new CUIPosition(m_Position.X, m_Position.Y + m_Position.Height, m_Position.Width - m_Position.Height, m_ListHeight);
+    m_List.SetPosition(Rect);
+
+    FillList();
+  }
+
+  void CloseList()
+  {
+    m_ListHeight = 0.0;
+    Component Rect = new CUIPosition(m_Position.X, m_Position.Y + m_Position.Height, m_Position.Width - m_Position.Height, m_ListHeight);
+    m_List.SetPosition(Rect);
+    m_List.ClearWithUnregister();
+    m_Scroll.SetPosition(new CUIPosition(0.0, 0.0, 0.0, 0.0));
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Position = _UIPosition;
+    if (_UIPosition.Height > _UIPosition.Width)
+      _UIPosition.Width = _UIPosition.Height;
+
+    Component Rect = new CUIPosition(_UIPosition.X, _UIPosition.Y + _UIPosition.Height, _UIPosition.Width - _UIPosition.Height, m_ListHeight);
+    m_List.SetPosition(Rect);
+
+    if (m_Items.size() > 10) 
+    {
+      Component ScrollRect = new CUIPosition(
+        _UIPosition.X + _UIPosition.Width - _UIPosition.Height,
+        _UIPosition.Y + _UIPosition.Height,
+        _UIPosition.Height,
+        250.0/768.0);
+      m_Scroll.SetPosition(ScrollRect);
+    }
+    else
+      m_Scroll.SetPosition(new CUIPosition(0.0,0.0,0.0,0.0));
+
+    m_Button.SetPosition(_UIPosition.X + _UIPosition.Width - _UIPosition.Height, _UIPosition.Y);
+    m_Button.SetDimensions(_UIPosition.Height, _UIPosition.Height);
+
+    m_Caption.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Caption.SetDimensions(_UIPosition.Width - _UIPosition.Height, _UIPosition.Height);
+
+    m_Frame.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Frame.SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Caption.SetZ(_Z);
+    m_Button.SetZ(_Z);
+    m_List.SetZ(_Z - 0.01);
+    m_Frame.SetZ(_Z);
+  }
+
+  // Check box functions
+
+  void SetEnable(boolean _bEnabled)
+  {
+    m_bEnabled = _bEnabled;
+  }
+
+  boolean GetEnabled()
+  {
+    return m_bEnabled;
+  }
+
+  void SetDisabled(
+      boolean _IsDisabled
+    )
+  {
+    m_Button.SetDisabled(_IsDisabled);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("NonCheckedNormal", "Test material"));
+  }
+
+  void SetText(
+      WString _Text
+    )
+  {
+    m_Caption.SetText(_Text);
+  }
+
+  void SetHint(
+      WString _Hint
+    )
+  {
+    m_Caption.SetHint(_Hint);
+    m_Button.SetHint(_Hint);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    m_Caption.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+    m_Button.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+//    m_List.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+    m_List.SetParentRect(0.0,0.0,1.0,1.0);
+    m_Frame.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+    m_Scroll.SetParentRect(_UIPosition.X, _UIPosition.Y, _UIPosition.Width, _UIPosition.Height);
+  }
+
+  Array GetItems()
+  {
+    return m_Items;
+  }
+}
+
+//
+// Bookmark control
+//
+
+class CUIBookmark
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // attributes
+  Component m_Bookmark;
+  String    m_ControlID;
+
+  boolean   m_bActive  = false;
+  boolean   m_bEnabled = true;
+  String    m_ActiveMaterial;
+  String    m_NonActiveMaterial;
+
+  CUIBookmark()
+  {
+    m_bActive = false;
+    m_bEnabled = true;
+  }
+  
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID = _ControlID;
+
+    m_Bookmark = new #BitmapButton<CUIButton>();
+    RegisterObject(m_ControlID + "_Button", m_Bookmark);
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ControlID);
+    UnregisterObject(m_ControlID + "_Button");
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    WString LocalizedString;
+    Array   LocalizedStringID;
+
+    m_Bookmark.SetMaterialManager(m_MenuController.GetMaterialManager());
+
+    m_ActiveMaterial    = _PropMap.Get("ActiveMaterial",    "Test material");
+    m_NonActiveMaterial = _PropMap.Get("NonActiveMaterial", "Test material");
+    m_Bookmark.SetMaterials(m_NonActiveMaterial, m_NonActiveMaterial);
+
+    m_Bookmark.SetHint(GetHint());
+    m_Bookmark.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+    m_Bookmark.SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER) );
+
+    LocalizedStringID = _PropMap.Get("Text", ["Menu", "str_DEFAULT_BOOKMARK_CAPTION"] );
+    LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1] );
+    if (L"# INVALID STRING #" == LocalizedString)  LocalizedString = L"";
+    m_Bookmark.SetText(LocalizedString);
+    
+    m_Bookmark.SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(1.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedTextColor", new Color(0.0, 0.0, 1.0))
+      );
+    m_Bookmark.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Bookmark.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Bookmark.SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Bookmark.SetZ(_Z);
+  }
+
+  // Bookmark functions
+  void SetActive(boolean _bActive)
+  {
+    if (m_bActive != _bActive)
+    {
+      if (_bActive)
+        m_Bookmark.SetMaterials(m_ActiveMaterial, m_ActiveMaterial);
+      else
+        m_Bookmark.SetMaterials(m_NonActiveMaterial, m_NonActiveMaterial);
+    }
+
+    m_bActive = _bActive;
+  }
+
+  void SetEnable(boolean _bEnabled)
+  {
+    m_bEnabled = _bEnabled;
+  }
+
+  boolean GetEnabled()
+  {
+    return m_bEnabled;
+  }
+
+  boolean GetActive()
+  {
+    return m_bActive;
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("ActiveMaterial", "Test material"));
+  }
+
+  void SetBlinking(
+      boolean _Blink
+    )
+  {
+    m_Bookmark.SetBlinking(_Blink);
+  }
+
+  void SetPinging(
+      boolean _Ping
+    )
+  {
+    m_Bookmark.SetPinging(_Ping);
+  }
+
+  void SetDisabled(
+      boolean _IsDisabled
+    )
+  {
+    m_Bookmark.SetDisabled(_IsDisabled);
+  }
+
+  boolean IsEnabled()
+  {
+    return m_Bookmark.IsEnabled();
+  }
+
+  boolean IsControlEnabled()
+  {
+    return m_Bookmark.IsControlEnabled();
+  }
+
+  boolean IsVisible()
+  {
+    return m_Bookmark.IsVisible();
+  }
+}
+
+//
+//  Groupbox
+//
+
+class CUIGroupbox
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // attributes
+  Component m_Background;
+  Component m_Caption;
+  String    m_ControlID;
+
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID  = _ControlID;
+
+    m_Background = new #BitmapControl();
+    m_Caption    = new #TextControl();
+
+    RegisterObject(m_ControlID + "_Background", m_Background);
+    RegisterObject(m_ControlID + "_Caption", m_Caption);
+
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ControlID);
+    UnregisterObject(m_ControlID + "_Background");
+    UnregisterObject(m_ControlID + "_Caption");
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    WString LocalizedString;
+    Array   LocalizedStringID;
+
+    // Background
+    m_Background.SetMaterialManager(m_MenuController.GetMaterialManager());
+    m_Background.SetMaterial(_PropMap.Get("Background", "Test material"));
+    m_Background.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    // Caption
+    m_Caption.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    m_Caption.SetFont(
+        _PropMap.Get("CaptionFontName", "Arial"),
+        _PropMap.Get("CaptionFontSize", 0.032)
+      );
+
+    LocalizedStringID = _PropMap.Get("CaptionText", ["Menu", "str_DEFAULT_GROUPBOX_CAPTION"] );
+    LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1] );
+    if (L"# INVALID STRING #" == LocalizedString)  LocalizedString = L"";
+    m_Caption.SetText(LocalizedString);
+    
+    m_Caption.SetTextColor(
+        _PropMap.Get("CaptionTextColor", new Color(0.0, 0.0, 0.0))
+      );
+    m_Caption.SetAlignment(_PropMap.Get("CaptionAlignment", ALIGNMENT_LEFT));
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Background.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Background.SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    m_Caption.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Caption.SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Background.SetZ(_Z);
+    m_Caption.SetZ(_Z + 0.001);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("Background", "Test material"));
+  }
+}
+
+//
+// Progress bar control
+//
+
+class CUIProgressBar
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.01;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetMaterialManager(m_MenuController.GetMaterialManager());
+
+    SetMaterial(_PropMap.Get("MaterialCore",  "Test material"));
+    SetHorDelta(_PropMap.Get("HorDelta", 0.0));
+    SetProgress(_PropMap.Get("Progress", 1000));
+    SetColor(_PropMap.Get("Color", new Color(1.0, 0.0, 0.0)));
+    EnableTileMode(_PropMap.Get("IsTileMode", false));
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return GetMaterialSize(m_PropMap.Get("Material", "Test material"));
+  }
+}
+
+//
+// Caption control
+//
+
+class CUICaption
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.005;
+
+  Array     m_SlaveMenuList = [];
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void UnregisterControl()
+  {
+  }
+
+  Array GetActualSize()
+  {
+    return [];
+  }
+
+  void SetSlaveMenu(
+      Component _Menu
+    )
+  {
+    AddSlaveMenu(_Menu);
+  }
+
+  void AddSlaveMenu(
+      Component _Menu
+    )
+  {
+    m_SlaveMenuList.add(_Menu);
+  }
+
+  void OnDrag(
+      Vector _DeltaPosition
+    )
+  {
+    for (int Index = 0; Index < m_SlaveMenuList.size(); Index++)
+      m_SlaveMenuList[Index].MoveMenu(_DeltaPosition);
+  }
+}
+
+//
+// ControlField control
+//
+
+class CUIControlField
+  extends CBaseUIControl
+{
+
+  Component   m_Text;
+
+  float       m_TextWidth = 0.7;
+
+  //
+  // BaseUIControl override
+  //
+
+  static float DefaultZ = 0.02;
+
+  void Initialize(
+      String _ControlID
+    )
+  {
+    CBaseUIControl::Initialize(_ControlID);
+
+    m_Text = new #TextControl();
+    RegisterObject(_ControlID + "TextDescription", m_Text);
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    // text description
+
+    WString LocalizedString   = L"";
+    Array   LocalizedStringID;
+
+    LocalizedStringID = _PropMap.Get("Text", []);
+    if (2 == LocalizedStringID.size())
+    {    
+      if (LocalizedStringID[0] != "" ||
+          LocalizedStringID[1] != "")
+      {
+        LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1]);
+        if (L"# INVALID STRING #" == LocalizedString)  
+          LocalizedString = L"";
+      }
+    }
+
+    m_Text.SetText(LocalizedString);     
+    m_Text.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    m_Text.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+
+    
+    m_Text.SetTextColor(
+        _PropMap.Get("TextColor", new Color(1.0, 1.0, 1.0))
+      );
+
+    m_Text.SetAlignment(_PropMap.Get("TextAlignment", ALIGNMENT_LEFT));
+
+    m_Text.SetZ(DefaultZ - 0.0001);
+
+    // control button
+
+    SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+      
+    SetTextIndent(_PropMap.Get("LeftIndent", 0.0));
+    SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_RIGHT));
+    
+    SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(1.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedTextColor", new Color(0.0, 0.0, 1.0))
+      );
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    EnableBitmap(false);
+    SetActionMapID(_PropMap.Get("ActionMapID", 0));
+
+    String InputCommand = _PropMap.Get("InputCommand", "");
+
+    SetInputCommandID(getGlobalConstant(InputCommand));
+
+    Component Game = new #GameController();
+    Component MenuController = Game.GetMenuController();
+    Component ActiveMenu = MenuController.GetActiveMenu();
+    SetEventHandler(ActiveMenu);
+     
+
+    ActiveMenu.RegisterCtrlField(this);
+    Update();
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X + m_TextWidth * _UIPosition.Width, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width * (1.0 - m_TextWidth), _UIPosition.Height);
+
+    m_Text.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Text.SetDimensions(m_TextWidth * _UIPosition.Width , _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Text.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  void UnregisterControl()
+  {
+    String ID = GetControlID();
+    UnregisterObject(ID);
+    UnregisterObject(ID + "TextDescription");
+  }
+
+  //  
+  // Service
+  //
+
+  void Update()
+  {
+    UpdateText();
+    SetText(GenerateText());
+  }  
+
+  WString GenerateText()
+  {
+    return GenerateText(this);
+  }
+
+  WString GenerateText(
+      Component _ControlField
+    )
+  {
+    if (_ControlField == null)
+    {
+      logError("[CControlFieldCompound] GenerateText(): Component passed is null");
+      return L"";
+    }
+
+    int DeviceKeyboard = 1;
+
+    int device       = _ControlField.GetAssignedDeviceNameID();
+    int deviceNumber = _ControlField.GetAssignedDeviceNumber();
+    int object       = _ControlField.GetAssignedDeviceObjectNameID();
+
+    if (device < 0 || object < 0)
+      return L"";
+
+    if (device >= CDeviceNames::DeviceNames.size())
+    {
+      logError("[GenerateText()] Device number (" +
+        new String(device) + ") too large (there are only " +
+        new String(CDeviceNames::DeviceObjectNames.size()) + " devices in DeviceNames).");
+
+      return _ControlField.GetText();
+    }
+
+    if (device >= CDeviceNames::DeviceObjectNames.size())
+    {
+      logError("[GenerateText()] Device number (" +
+        new String(device) + ") too large (there are only  " +
+        new String(CDeviceNames::DeviceObjectNames.size()) + " devices in DeviceObjectNames).");
+
+      return _ControlField.GetText();
+    }
+
+    if (object >= CDeviceNames::DeviceObjectNames[device].size())
+    {
+      logError("[GenerateText()] Device object number (" +
+        new String(object) + ") too large (there are only  " +
+        new String(CDeviceNames::DeviceObjectNames[device].size()) +
+        " objects in DeviceObjectNames) for that device (" + new String(device) + ").");
+
+      return _ControlField.GetText();
+    }
+
+    WString controlName = CDeviceNames::DeviceObjectNames[device][object];
+
+    if (device != DeviceKeyboard)
+    {
+      if (deviceNumber != 0) 
+        controlName = new WString(deviceNumber) + L" " + controlName;
+
+      controlName = CDeviceNames::DeviceNames[device] + L" " + controlName;
+    }
+
+    return controlName;
+  }
+
+}
+
+
+class CUIBasicControlField
+  extends CBaseUIControl
+{
+
+  //
+  // BaseUIControl override
+  //
+
+  static float DefaultZ = 0.02;
+
+  void Initialize(
+      String _ControlID
+    )
+  {
+    CBaseUIControl::Initialize(_ControlID);
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    // control button
+    SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+      
+    SetTextIndent(_PropMap.Get("LeftIndent", 0.0));
+    SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_RIGHT));
+    
+    SetTextColors(
+        _PropMap.Get("NormalTextColor", new Color(1.0, 0.0, 0.0)),
+        _PropMap.Get("HilitedTextColor", new Color(0.0, 0.0, 1.0))
+      );
+
+
+    EnableBitmap(false);
+    SetActionMapID(_PropMap.Get("ActionMapID", 0));
+
+    String InputCommand = _PropMap.Get("InputCommand", "");
+
+    SetInputCommandID(getGlobalConstant(InputCommand));
+
+    Component Game = new #GameController();
+    Component MenuController = Game.GetMenuController();
+    SetRenderLayer(MenuController.GetCurrentLayer());
+    Component ActiveMenu = MenuController.GetActiveMenu();
+    SetEventHandler(ActiveMenu);
+
+    ActiveMenu.RegisterCtrlField(this);
+    Update();
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  void UnregisterControl()
+  {
+    String ID = GetControlID();
+    UnregisterObject(ID);
+  }
+
+  //  
+  // Service
+  //
+
+  void Update()
+  {
+    UpdateText();
+    SetText(GenerateText());
+  }  
+
+  WString GenerateText()
+  {
+    return GenerateText(this);
+  }
+
+  WString GenerateText(
+      Component _ControlField
+    )
+  {
+    if (_ControlField == null)
+    {
+      logError("[CControlFieldCompound] GenerateText(): Component passed is null");
+      return L"";
+    }
+
+    int DeviceKeyboard = 1;
+
+    int device       = _ControlField.GetAssignedDeviceNameID();
+    int deviceNumber = _ControlField.GetAssignedDeviceNumber();
+    int object       = _ControlField.GetAssignedDeviceObjectNameID();
+
+    if (device < 0 || object < 0)
+      return L"";
+
+    if (device >= CDeviceNames::DeviceNames.size())
+    {
+      logError("[GenerateText()] Device number (" +
+        new String(device) + ") too large (there are only " +
+        new String(CDeviceNames::DeviceObjectNames.size()) + " devices in DeviceNames).");
+
+      return _ControlField.GetText();
+    }
+
+    if (device >= CDeviceNames::DeviceObjectNames.size())
+    {
+      logError("[GenerateText()] Device number (" +
+        new String(device) + ") too large (there are only  " +
+        new String(CDeviceNames::DeviceObjectNames.size()) + " devices in DeviceObjectNames).");
+
+      return _ControlField.GetText();
+    }
+
+    if (object >= CDeviceNames::DeviceObjectNames[device].size())
+    {
+      logError("[GenerateText()] Device object number (" +
+        new String(object) + ") too large (there are only  " +
+        new String(CDeviceNames::DeviceObjectNames[device].size()) +
+        " objects in DeviceObjectNames) for that device (" + new String(device) + ").");
+
+      return _ControlField.GetText();
+    }
+
+    WString controlName = CDeviceNames::DeviceObjectNames[device][object];
+
+    if (device != DeviceKeyboard)
+    {
+      if (deviceNumber != 0) 
+        controlName = new WString(deviceNumber) + L" " + controlName;
+
+      controlName = CDeviceNames::DeviceNames[device] + L" " + controlName;
+    }
+
+    return controlName;
+  }
+
+}
+
+
+class CUIAdvancedControlField
+  extends CBaseUIControl
+{
+
+  Component   m_Text;
+  Component   m_PriControl;
+  Component   m_SecControl;
+  String      m_ID;
+
+  float       m_TextWidth = 0.50;
+  float       m_Delta = 4.0/1024.0;
+
+  //
+  // BaseUIControl override
+  //
+
+  static float DefaultZ = 0.02;
+
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ID = _ControlID;
+    CBaseUIControl::Initialize(_ControlID);
+
+    m_Text = new #TextControl();
+    RegisterObject(_ControlID + "TextDescription", m_Text);
+
+    m_PriControl = new #ControlField<CUIBasicControlField>();
+    RegisterObject(_ControlID + "_Control_Primary", m_PriControl);
+
+    m_SecControl = new #ControlField<CUIBasicControlField>();
+    RegisterObject(_ControlID + "_Control_Secondary", m_SecControl);
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    m_TextWidth  = _PropMap.Get("TextFieldWidth", 0.5f);
+    m_Delta      = _PropMap.Get("SpaceWidth", 4.0/1024.0);
+    // text description
+
+    WString LocalizedString   = L"";
+    Array   LocalizedStringID;
+
+    LocalizedStringID = _PropMap.Get("Text", []);
+    if (2 == LocalizedStringID.size())
+    {    
+      if (LocalizedStringID[0] != "" ||
+          LocalizedStringID[1] != "")
+      {
+        LocalizedString = getLocalized(LocalizedStringID[0], LocalizedStringID[1]);
+        if (L"# INVALID STRING #" == LocalizedString)  
+          LocalizedString = L"";
+      }
+    }
+
+    m_Text.SetText(LocalizedString);     
+    m_Text.SetRenderLayer(m_MenuController.GetCurrentLayer());
+
+    m_Text.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.032)
+      );
+
+    
+    m_Text.SetTextColor(
+        _PropMap.Get("TextColor", new Color(1.0, 1.0, 1.0))
+      );
+
+    m_Text.SetAlignment(_PropMap.Get("TextAlignment", ALIGNMENT_LEFT));
+
+    m_Text.SetZ(DefaultZ - 0.0001);
+    m_PriControl.SetZ(DefaultZ);
+    m_SecControl.SetZ(DefaultZ);
+
+    m_PriControl.Construct(_PropMap);
+    m_SecControl.Construct(_PropMap);
+    m_PriControl.SetControlOrder(_PropMap.Get("PrimaryControlOrder", 0));
+    m_SecControl.SetControlOrder(_PropMap.Get("SecondaryControlOrder", 1));
+    Update();
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Text.SetZ(_Z - 0.0001);
+
+    m_PriControl.SetZ(_Z);
+    m_SecControl.SetZ(_Z);
+  }
+
+  void SetRenderLayer(
+      int _Layer
+    )
+  {
+    m_Text.SetRenderLayer(_Layer);
+
+    m_PriControl.SetRenderLayer(_Layer);
+    m_SecControl.SetRenderLayer(_Layer);
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Text.SetPosition(_UIPosition.X + m_Delta, _UIPosition.Y);
+    m_Text.SetDimensions(m_TextWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_PriControl.SetPosition(_UIPosition.X + m_TextWidth * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_PriControl.SetDimensions(_UIPosition.Width * (1.0 - m_TextWidth)/2 - m_Delta*2, _UIPosition.Height);
+
+    m_SecControl.SetPosition(_UIPosition.X + (m_TextWidth + (1.0 - m_TextWidth)/2) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_SecControl.SetDimensions(_UIPosition.Width * (1.0 - m_TextWidth)/2 - m_Delta*2, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetParentRect(_UIPosition);
+
+    m_Text.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_PriControl.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_SecControl.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  String GetControlID()
+  {
+    return m_ID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ID);
+    UnregisterObject(m_ID + "TextDescription");
+    UnregisterObject(m_ID + "_Control_Primary");
+    UnregisterObject(m_ID + "_Control_Secondary");
+
+  }
+
+  //  
+  // Service
+  //
+
+  void Update()
+  {
+    m_PriControl.Update();
+    m_SecControl.Update();
+  }  
+
+}
+
+//
+// 
+//
+
+//
+// Hint control
+//
+
+class CUIHintControl
+  extends CBaseUIControl
+{
+  final static float FadeSpeed = 5.0;
+
+  Array     m_Elements  = [ "TL", "TC", "TR", "L", "C", "R", "BL", "BC", "BR" ];
+  Color     m_TextColor = new Color(1.0, 1.0, 1.0);
+
+  Component m_Timer     = null;
+  Component m_Text      = null;
+
+  Vector    m_MarginTL  = new Vector(0.0078125,   0.0078125, 0.0);
+  Vector    m_MarginBR  = new Vector(0.009765625, 0.0104167, 0.0);
+  float     m_Alpha     = 0.0;
+  boolean   m_IsShown   = false;
+
+  CUIHintControl()
+  {
+    EnableControl(false);
+  }
+
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_Timer = new #Timer();
+    m_Text  = new #TextControl();
+
+    m_Timer.SetEventHandler(this);
+    m_Timer.SetTickEvent("OnTimer", 0.0);
+
+    m_MenuController.RegisterStaticObject(_ControlID + "_Timer", m_Timer);
+    m_MenuController.RegisterStaticObject(_ControlID + "_Text",  m_Text);
+  }
+
+  void UnregisterControl()
+  {
+    m_Timer.SetEventHandler(null);
+    UnregisterObject(getIdentificator(m_Timer));
+    UnregisterObject(getIdentificator(m_Text));
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    SetZ(FLT_MAX - 1.0);
+    EnableHitTest(false);
+    SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+
+    String Prefix = _PropMap.Get("MaterialPrefix", "Hint ");
+    for (int i = 0; i < m_Elements.size(); i++)
+      m_Elements[i] = Prefix + m_Elements[i];
+
+    SetSkin(m_MenuController.GetMaterialManager(), m_Elements);
+
+    m_Text.SetZ(FLT_MAX);
+    m_Text.SetRenderLayer(PRIMLAYER_MENU_DIALOG);
+    m_Text.SetAlignment(_PropMap.Get("Alignment", ALIGNMENT_CENTER), ALIGNMENT_CENTER);
+    m_Text.SetFont(
+        _PropMap.Get("FontName", "Arial"),
+        _PropMap.Get("FontSize", 0.025)
+      );
+    m_TextColor = _PropMap.Get("TextColor", m_TextColor);
+    m_Text.SetTextColor(m_TextColor);
+
+    m_MarginTL = _PropMap.Get("MarginTL", m_MarginTL);
+    m_MarginBR = _PropMap.Get("MarginBR", m_MarginBR);
+
+    Hide();
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(AlignX(_UIPosition.X), AlignY(_UIPosition.Y));
+    SetDimensions(AlignX(_UIPosition.Width), AlignY(_UIPosition.Height));
+
+    final float XHack = 5.0 / 1024.0;
+
+    m_Text.SetPosition(AlignX(_UIPosition.X + m_MarginTL.x - XHack), AlignY(_UIPosition.Y + m_MarginTL.y));
+    m_Text.SetDimensions(AlignX(_UIPosition.Width  - (m_MarginTL.x + m_MarginBR.x - 2.0 * XHack)), 
+                         AlignY(_UIPosition.Height - (m_MarginTL.y + m_MarginBR.y)));
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+
+  Array GetActualSize()
+  {
+    return [ 
+        GetMaterialSize(m_Elements[0])[0] + GetMaterialSize(m_Elements[1])[0] + GetMaterialSize(m_Elements[2])[0],
+        GetMaterialSize(m_Elements[3])[1] + GetMaterialSize(m_Elements[4])[1] + GetMaterialSize(m_Elements[5])[1]
+      ];
+  }
+
+  //
+  // Interface
+  //
+
+  void Show(
+      float   _X,
+      float   _Y,
+      WString _Text
+    )
+  {
+    Show(_X, _Y, 0.0, 0.0, _Text);
+  }
+
+  void Show(
+      float   _X,
+      float   _Y,
+      float   _CursorWidth,
+      float   _CursorHeight,
+      WString _Text
+    )
+  {
+    m_Text.SetText(_Text);
+    
+    // Compute position & size
+    {
+      final Vector TextSize = m_Text.GetTextSize(0.5);
+      final Vector HintSize = TextSize + m_MarginTL + m_MarginBR;
+
+      float X = _X;
+      float Y = _Y;
+
+      if (X + _CursorWidth + HintSize.x > 1.0)
+        X -= HintSize.x;
+      else
+        X += _CursorWidth;
+
+      if (Y + _CursorHeight + HintSize.y > 1.0)
+        Y -= HintSize.y;
+      else
+        Y += _CursorHeight;
+
+      SetPosition(new CUIPosition(X, Y, HintSize.x, HintSize.y));
+    }
+
+    m_IsShown = true;
+
+    EnableControl(true);
+    m_Text.EnableControl(true);
+    m_Timer.Enable(true);
+  }
+
+  void Hide()
+  {
+    if (m_IsShown)
+    {
+      m_IsShown = false;
+      m_Timer.Enable(true);
+    }
+  }
+
+  //
+  // Service
+  //
+
+  static float AlignX(
+      float _X
+    )
+  {
+    return float(iround(_X * 1024.0)) / 1024.0;
+  }
+
+  static float AlignY(
+      float _Y
+    )
+  {
+    return float(iround(_Y *  768.0)) /  768.0;
+  }
+
+  //
+  // Events
+  //
+
+  void OnTimer(
+      float _TimeDelta
+    )
+  {
+    if (m_IsShown)
+      m_Alpha += FadeSpeed * _TimeDelta;
+    else
+      m_Alpha -= FadeSpeed * _TimeDelta;
+
+    if (m_Alpha < 0.0)
+      m_Alpha = 0.0;
+    else
+    if (m_Alpha > 1.0)
+      m_Alpha = 1.0;
+
+    if (0.0 == m_Alpha && !m_IsShown)
+    {
+      EnableControl(false);
+      m_Text.EnableControl(false);
+      m_Timer.Enable(false);
+    }
+    else
+    if (1.0 == m_Alpha && m_IsShown)
+    {
+      m_Timer.Enable(false);
+    }
+
+    SetSkinColor(new Color(1.0, 1.0, 1.0, m_Alpha));
+    m_Text.SetTextColor(new Color(m_TextColor.r, m_TextColor.g, m_TextColor.b, m_Alpha));
+  }
+}
+
+//
+// RenderTarget control
+//
+
+class CUIRenderTargetControl
+  extends CBaseUIControl
+{
+  static float DefaultZ = 0.02;
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    final int Size = _PropMap.Get("Size", 256);
+    SetSize(Size, Size);
+
+    SetRenderLayer(m_MenuController.GetCurrentLayer());
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    SetPosition(_UIPosition.X, _UIPosition.Y);
+    SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+}

@@ -1,0 +1,1568 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CDedicateServer
+  extends ISerializeable
+{
+  boolean m_EscapeMenuLoaded  = false;
+  boolean m_GamePaused        = false;
+  String  m_StartMission      = "CC1M1Mission";
+  Array   m_ControlState;
+
+  boolean m_ArraysInited      = false;
+
+  boolean m_MissionStarted    = true;
+  float   m_SoundFxVolume     = 0.0;
+
+  int     m_Sit               = 0;
+  int     m_CockpitMode       = 0;
+
+  int     m_ColorSheme        = 0;
+
+  // Process input commands
+  boolean m_bWireframeMode    = false;
+  boolean m_bStatsVisible     = false;
+  Array   m_SaveControlState  = [];
+  boolean m_EditorMode        = false;
+
+  String    m_LoadingMissionName   = "";
+  String    m_ProgressMissionName  = "";
+  Component m_LoadingMission       = null;
+
+  // Camera settings
+
+  boolean m_IsEscMenuActive  = false;
+
+  final static int CAMERA_NONE             = 0;
+  final static int CAMERA_PLAYER           = 3;
+  final static int CAMERA_FREE_PLAYER      = 4;
+
+  boolean m_FreeCamera         = false;
+
+  int     m_ViewCamera         = CAMERA_NONE;
+  int     m_PreviousViewCamera = CAMERA_NONE;
+
+  // Loading settings
+
+  int    m_StartMissionPhase = -1;
+  String m_MissionToStart;
+  String m_PlayerSpawnPoint;
+  Array  m_ObjectsPool;
+
+  // Timer settings
+
+  Array   m_GameSpeeds        = [ 1.0f / 4.0f, 1.0, 2.0, 4.0, 8.0 ];
+  Array   m_GameMsgSpeeds     = [ L"1/4", L"Normal"/*CGameMessages::str_msg_NormalSpeed*/, L"2x", L"4x", L"8x"];
+
+  Array   m_PhysicsIterations = [
+                                    CBasePhysicsController::Iterations * 1,
+                                    CBasePhysicsController::Iterations * 1,//1
+                                    CBasePhysicsController::Iterations * 2,//2,
+                                    CBasePhysicsController::Iterations * 3,//4,
+                                    CBasePhysicsController::Iterations * 4 //8
+                                ];
+
+  Array   m_GameIterations    = [
+                                    [ 0,  0    ], // disable split game time
+                                    [ 0,  0    ],
+                                    [ 0,  500  ],
+                                    [ 0,  500  ],
+                                    [ 0,  500  ]
+                                ];
+
+  int     m_CurrentGameSpeed  = 1;
+
+  // Construction
+  void CDedicateServer()
+  {
+    logWarning("Start game");
+    // Initialize text render
+    (new #TextRender()).LoadFontsTable(new CFontTable());
+    logWarning("LoadFontsTable");
+
+    // Init input filter
+    SetInputFilter(
+      [
+        CTLCMD_MENU_ESCAPE,
+        CTLCMD_SHOW_MISSION_MENU,
+        CTLCMD_FREE_PLAYER_CAMERA,
+        CTLCMD_OPENCONSOLE,
+        CTLCMD_FASTQUITGAME,
+        CTLCMD_WIREFRAME,
+        CTLCMD_SHOW_STATISTICS,
+        CTLCMD_PAUSE_GAME,
+        CTLCMD_TIMER_INCREASE,
+        CTLCMD_TIMER_DECREASE,
+        CTLCMD_TIMER_NORMAL,
+        CTLCMD_FIRE_PRIMARY,
+        CTLCMD_FIRE_SECONDARY,
+        CTLCMD_FIRE_THIRD
+
+      ]);
+    logWarning("SetInputFilter");
+
+    // Initialize instances
+    CInstances::InitializeInstances();
+    
+
+    CIntersections::InitializeIntersections();
+
+    // Notify game settings
+    (new #GameSettings()).OnGameStarted();
+  }
+
+  void InitializeArrays()
+  {
+    if (m_ArraysInited)
+      return;
+    m_ArraysInited = true;
+
+    // Static initialization
+    CEffectsArray::StaticInitialization();
+    CSoundsArray::StaticInitialization();
+  }
+
+  void StartGame()
+  {
+    logWarning("Dedicate Server Start");
+
+    // Создать главное меню
+  }
+
+  event void OnIntroPlayFinished()
+  {
+    CBaseMenu::m_Music = CMusicController::MENU_Main;
+    if (!CBaseMenu::m_Music.isEmpty())
+      new #MusicController().SetMenuState(CBaseMenu::m_Music);
+
+    // Создать главное меню
+//    CreateMainMenu();
+
+  }
+
+  void Shutdown()
+  {
+    UnloadMission();
+    DeleteMenuController();
+  }
+
+  event void BeginNewGame(
+      String _MissionClassName
+    )
+  {
+    UnloadMission();
+    StartMission(_MissionClassName);
+  }
+
+  event void BeginNewGame()
+  {
+    BeginNewGame(m_StartMission);
+  }
+
+  void SetupPlayer()
+  {
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+    {
+      Mission.CreatePlayerObject();
+
+      // Activate object
+      ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+    }
+  }
+
+  void SetEditorMode(
+      boolean _InEditor
+    )
+  {
+    m_EditorMode = _InEditor;
+  }
+
+  boolean GetEditorMode()
+  {
+    return m_EditorMode;
+  }
+
+  void SwitchPause()
+  {
+    m_GamePaused = !m_GamePaused;
+    PauseGame(m_GamePaused);
+    fireEvent(0.0, [], "OnGamePaused", [m_GamePaused]);
+  }
+
+  boolean IsPaused()
+  {
+    return m_GamePaused;
+  }
+
+  void SaveCS()
+  {
+    m_ControlState = GetControlState();
+  }
+
+  void RestoreCS()
+  {
+    SetControlState(m_ControlState);
+    m_ControlState.clear();
+  }
+
+  event void BeginMission()
+  {
+    if (m_MissionStarted)
+      return;
+
+    Component GameController = new #GameController();
+    if (GameController.IsPaused())
+      GameController.SwitchPause();
+
+    Component MenuController = GetMenuController();
+    MenuController.LoadNewMenu("LoadingScreenMenu");
+    Component Menu = MenuController.GetActiveMenu();
+    Menu.SetProgress(1002);
+    RenderIntermediateFrame();
+
+    m_MissionStarted = true;
+    logMessage("Mission started");
+
+    // Hide loading screen
+    HideLoadingScreen();
+    Component GameSettings = new #GameSettings();
+    GameSettings.SetSoundFxVolume(m_SoundFxVolume);
+    MenuController.EnableMenuMusic(false);
+  }
+
+  void OnInputCommand(
+      int _UserCommand
+    )
+  {
+
+    if (!m_MissionStarted)
+      BeginMission();
+
+    if (CTLCMD_SHOW_MISSION_MENU == _UserCommand)
+    {
+/*      if (m_EditorMode)
+        return;
+*/
+
+      if ("Single" == GetGameMode())
+      {
+
+        if (IsPaused())
+          return; // if game has been paused before
+
+        SwitchPause();
+      }
+        SaveCS();
+
+
+      Component MenuController = GetMenuController();
+
+      if (false == m_EscapeMenuLoaded)
+      {
+        if (CMission::MOSID_InProgress != CEndMissionMenu::MissionStatus)
+          MenuController.LoadNewMenu("EndMissionMenu");
+
+        else
+        {
+          if ("Single" == GetGameMode())
+            MenuController.LoadNewMenu("EscapeMenu");
+          else
+          {
+            Component GameSession = (new #GameController()).GetGameSession();
+            if ((GameSession != null) && (CServerDescriptor::ST_CaptureTheFlag == GameSession.GetSessionInfo().GetSessionTypeID()))
+              MenuController.LoadNewMenu("CFEndMissionMenu");
+            else
+              MenuController.LoadNewMenu("MultiEscapeMenu");
+          }
+        }
+        m_EscapeMenuLoaded != m_EscapeMenuLoaded;
+      }
+      MenuController.GetObject("Cursor").ShowCursor(true);
+      MenuController.LockChangeInputMode(false);
+      EnableControl("GameMenu", true);
+
+    }
+    if (CTLCMD_FREE_PLAYER_CAMERA == _UserCommand)
+    {
+      m_FreeCamera = !m_FreeCamera;
+
+      if (m_FreeCamera)
+      {
+        m_CockpitMode = (new #GameSettings()).GetCockpitMode();
+
+        (new #GameSettings()).SetCockpitMode(CM_Person3rd);
+        fireEvent(0.0, [], "OnCockpitModeChanged", [CM_Person3rd]);
+
+        Component Settings = new #GameSettings();
+        Settings.SetCockpitDevicesColor(CCommonStrings::CockpitColorCombo.size() - 1);
+        fireEvent(0.0, [], "OnCockpitColorChanged", [Settings.GetCockpitDevicesColor()]);
+
+        m_Sit         = GetLoadedMission().GetObject(GetLoadedMission().GetMainPlayerObjectID()).GetPlayerControlSit();
+      }
+      else
+      {
+        (new #GameSettings()).SetCockpitMode(m_CockpitMode);
+        fireEvent(0.0, [], "OnCockpitModeChanged", [m_CockpitMode]);
+
+        Component Settings = new #GameSettings();
+        Settings.SetCockpitDevicesColor(m_ColorSheme);
+        fireEvent(0.0, [], "OnCockpitColorChanged", [Settings.GetCockpitDevicesColor()]);
+
+        GetLoadedMission().GetObject(GetLoadedMission().GetMainPlayerObjectID()).SetPlayerControlSit(m_Sit);
+      }
+
+      GetLoadedMission().SwitchToFreeCamera(m_FreeCamera);
+    }
+    else
+    if (CTLCMD_OPENCONSOLE == _UserCommand)
+    {
+      Component Console = GetObject(SOID_Console);
+      if ((Console != null) && (CGameSettings::EnableConsole))
+        Console.Enable(true);
+    }
+    else
+    if (CTLCMD_FASTQUITGAME == _UserCommand)
+    {
+      m_SaveControlState = [];
+      QuitGame();
+    }
+    else
+    if (CTLCMD_WIREFRAME == _UserCommand)
+    {
+    //$TMP sonar
+//       m_bWireframeMode = !m_bWireframeMode;
+//       if (m_bWireframeMode)
+//         SetWireframeRenderMode();
+//       else
+//         SetSolidRenderMode();
+    }
+    else
+    if (CTLCMD_SHOW_STATISTICS == _UserCommand)
+    {
+      m_bStatsVisible = !m_bStatsVisible;
+      UpdateStatisticsVisibleState();
+    }
+    else
+    if (CTLCMD_PAUSE_GAME == _UserCommand)
+    {
+      if ("Single" == GetGameMode())
+        SwitchPause();
+    }
+    else
+    if (CTLCMD_TIMER_INCREASE == _UserCommand)
+    {
+      if ("Single" != GetGameMode())
+        return;
+
+      m_CurrentGameSpeed++;
+      if (m_CurrentGameSpeed >= m_GameSpeeds.size())
+        m_CurrentGameSpeed = m_GameSpeeds.size() - 1;
+
+      setGameTimerSpeed(m_GameSpeeds[m_CurrentGameSpeed]);
+      SetUpdateIterations(m_GameIterations[m_CurrentGameSpeed][0], m_GameIterations[m_CurrentGameSpeed][1]);
+
+      // Set to mission
+      Component Mission = GetLoadedMission();
+      if (null != Mission)
+        Mission.SetPhysicsIterations(m_PhysicsIterations[m_CurrentGameSpeed]);
+      fireEvent(0.0, [], "OnGameSpeedChanged", []);
+      logWarning("Game speed: " + new String(GetCurrentGameSpeedMsg()) );
+    }
+    else
+    if (CTLCMD_TIMER_DECREASE == _UserCommand)
+    {
+      if ("Single" != GetGameMode())
+        return;
+
+      m_CurrentGameSpeed--;
+      if (m_CurrentGameSpeed < 0)
+        m_CurrentGameSpeed = 0;
+
+      setGameTimerSpeed(m_GameSpeeds[m_CurrentGameSpeed]);
+      SetUpdateIterations(m_GameIterations[m_CurrentGameSpeed][0], m_GameIterations[m_CurrentGameSpeed][1]);
+
+      // Set to mission
+      Component Mission = GetLoadedMission();
+      if (null != Mission)
+        Mission.SetPhysicsIterations(m_PhysicsIterations[m_CurrentGameSpeed]);
+      fireEvent(0.0, [], "OnGameSpeedChanged", []);
+      logWarning("Game speed: " + new String(GetCurrentGameSpeedMsg()) );
+    }
+    else
+    if (CTLCMD_TIMER_NORMAL == _UserCommand)
+    {
+      if ("Single" != GetGameMode())
+        return;
+
+      m_CurrentGameSpeed = 0;
+      setGameTimerSpeed(m_GameSpeeds[m_CurrentGameSpeed]);
+      SetUpdateIterations(m_GameIterations[m_CurrentGameSpeed][0], m_GameIterations[m_CurrentGameSpeed][1]);
+
+      // Set to mission
+      Component Mission = GetLoadedMission();
+      if (null != Mission)
+        Mission.SetPhysicsIterations(m_PhysicsIterations[m_CurrentGameSpeed]);
+
+      fireEvent(0.0, [], "OnGameSpeedChanged", []);
+    }
+    else
+      logWarning("Unsupported command in game script: " + new String(_UserCommand));
+  }
+
+  event void QuitToMainMenu()
+  {
+    // Unload current level
+    UnloadMission();
+
+    // Reset menus
+    DeleteMenuController();
+
+    // Show main menu
+    CreateMainMenu();
+    
+//     Component Menu = GetObject("GameMenu");
+//     Menu.Init();
+//     Menu.Invoke("MainMenu");
+
+    ActivateCamera(SOID_MainCamera, true);
+  }
+
+  // ==================================
+  // Camera
+  // ==================================
+
+  void SetViewCamera(
+      int _ViewCamera
+    )
+  {
+  // $TMP cameras later
+
+    if (m_IsEscMenuActive)
+      return;
+
+    Component Mission = GetMission();
+    if (Mission == null)
+      return;
+
+    boolean bSuccess = true;
+
+    if (CAMERA_PLAYER == _ViewCamera)
+    {
+      Mission.SwitchToPlayerCamera();
+    }
+    else
+    if (CAMERA_FREE_PLAYER == _ViewCamera)
+    {
+      Mission.SwitchToFreePlayerCamera();
+    }
+    else
+    {
+      LogWarning("[Game] Invalid View Camera requested");
+    }
+
+    if (bSuccess)
+    {
+      m_PreviousViewCamera = m_ViewCamera;
+      m_ViewCamera         = _ViewCamera;
+    }
+  }
+
+  void SetPreviousViewCamera()
+  {
+    SetViewCamera(m_PreviousViewCamera);
+  }
+
+  void ResetViewCamera()
+  {
+     m_ViewCamera         = CAMERA_PLAYER;
+     m_PreviousViewCamera = CAMERA_PLAYER;
+  }
+
+  boolean IsFreeCameraMode()
+  {
+    return m_FreeCamera;
+  }
+
+  // Rendering control
+  void SetWireframeRenderMode()
+  {
+//    SetLayerFillMode(PRIMLAYER_ATMOSPHERE,        FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_TERRAIN,           FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_TERRAIN_PATCH,     FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_ROADS,             FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_FX_UNDER_WATER,    FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_WATER,             FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_SCENE,             FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_FOREST,            FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_SHADOW,            FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_EFFECTS,           FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_TRANSPARENT_SCENE, FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_TRANSPARENT_NEAR,  FILLMODE_WIREFRAME);
+    SetLayerFillMode(PRIMLAYER_NEAR,              FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_FENCE,             FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_LIGHT_MAPS,        FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_FLARES,            FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_COCKPIT,           FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_MENU,              FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_MENU_DIALOG,       FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_STATISTICS,        FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_CURSOR,            FILLMODE_WIREFRAME);
+//    SetLayerFillMode(PRIMLAYER_CONSOLE,           FILLMODE_WIREFRAME);
+  }
+
+  void SetSolidRenderMode()
+  {
+//    SetLayerFillMode(PRIMLAYER_ATMOSPHERE,        FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_TERRAIN,           FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_TERRAIN_PATCH,     FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_ROADS,             FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_FX_UNDER_WATER,    FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_WATER,             FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_SCENE,             FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_FOREST,            FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_SHADOW,            FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_EFFECTS,           FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_TRANSPARENT_SCENE, FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_TRANSPARENT_NEAR,  FILLMODE_SOLID);
+    SetLayerFillMode(PRIMLAYER_NEAR,              FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_FENCE,             FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_LIGHT_MAPS,        FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_FLARES,            FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_COCKPIT,           FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_MENU,              FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_MENU_DIALOG,       FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_STATISTICS,        FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_CURSOR,            FILLMODE_SOLID);
+//    SetLayerFillMode(PRIMLAYER_CONSOLE,           FILLMODE_SOLID);
+  }
+
+  void UpdateStatisticsVisibleState()
+  {
+    Component RenderStats = GetObject(SOID_RenderStatistics);
+    if (RenderStats != null)
+      RenderStats.Enable(m_bStatsVisible);
+
+    Component GameServer = GetObject(SOID_GameServer);
+    if (GameServer != null)
+      GameServer.ShowStatistics(m_bStatsVisible);
+
+    Component GameClient = GetObject(SOID_GameClient);
+    if (GameClient != null)
+      GameClient.ShowStatistics(m_bStatsVisible);
+  }
+
+  // ======================================
+  // Menu methods
+  // ======================================
+
+  Component GetMenuController()
+  {
+    return GetObject("GameMenu");
+  }
+
+  Component CreateMenuController()
+  {
+    Component Menu = GetMenuController();
+    if (null != Menu)
+      return Menu;
+
+    Menu = new #MenuController<CMenuController>();
+    RegisterObject("GameMenu", Menu);
+    Menu.EnableMenuMusic(true);
+
+    return Menu;
+  }
+
+  void DeleteMenuController()
+  {
+    Component Menu = UnregisterObject("GameMenu");
+    if (Menu != null)
+    {
+      shutdownComponent(Menu);
+      Menu = null;
+    }
+  }
+
+  void CreateMainMenu()
+  {
+    // Create main menu
+    CreateMenuController();
+    Component MenuController = GetMenuController();
+    MenuController.LoadNewMenu("MainMenu");
+    MenuController.LockChangeInputMode(true);
+    EnableControl("GameMenu", true);
+  }
+
+  // ======================================
+  // Mission methods
+  // ======================================
+
+  Component GetLoadedMission()
+  {
+    if (null != m_LoadingMission)
+      return m_LoadingMission;
+    else
+      return GetObject(SOID_MissionController);
+  }
+
+  void LoadMission(
+      String _MissionName
+    )
+  {
+    LoadMission(_MissionName, true);
+  }
+
+  void LoadMission(
+      String  _MissionName,
+      boolean _CreateObjects
+    )
+  {
+    m_LoadingMissionName = _MissionName;
+
+
+
+    // Show loading screen
+    ShowLoadingScreen(_MissionName, true);
+
+    // Create mission component
+    Component Mission = CreateMission(_MissionName);
+    if (Mission == null)
+      return;
+
+    //$DBG TMP
+    //return;
+    // Setup physics itertaions
+    Mission.SetPhysicsIterations(m_PhysicsIterations[m_CurrentGameSpeed]);
+
+    // Hide mission
+    setVisibleState(Mission, false);
+
+    // First initialization of arrays
+    InitializeArrays();
+
+    // Construct mission
+    float fTime = GetGameTime();
+    Mission.Construct(_CreateObjects);
+
+    // Register mission and initialize it
+    RegisterObject(SOID_MissionController, Mission);
+    m_LoadingMission = null;
+
+    // Initialize mission
+    Mission.Initialize();
+
+    Component Player = Mission.GetObject(Mission.GetMainPlayerObjectID());
+    if(Player != null)
+    {
+      Player.SetImmortalMode((new #GameSettings()).GetGodMode() );
+
+      logMessage("MainPlayerUnit GodMode " + new String(Player.GetImmortalMode()) );
+    }
+    // Print message about loding time
+    logMessage("Mission loading duration: " + new String(GetGameTime() - fTime));
+
+    // Show mission
+    setVisibleState(Mission, true);
+
+    UpdateWaitScreen();
+
+    // Hide loading screen
+//    HideLoadingScreen();
+
+    // Render current view
+//    RenderIntermediateFrame();
+  }
+
+  void UpdateWaitScreen()
+  {
+    Component MenuController = GetMenuController();
+    MenuController.LoadNewMenu("LoadingScreenMenu");
+    Component Menu = MenuController.GetActiveMenu();
+    Menu.SetProgress(1000);
+
+//    MenuController.GetObject("Cursor").ShowCursor(false);
+//    MenuController.LockChangeInputMode(false);
+    EnableControl("GameMenu", true);
+    ActivateCamera(SOID_MainCamera, true);
+
+    RenderIntermediateFrame();
+  }
+
+  void UnloadMission()
+  {
+    // Check mission was loaded
+    if (null == GetLoadedMission())
+      return;
+
+    clearEventsQueue();
+
+    // Unregister mission object
+    Component Mission = UnregisterObject(SOID_MissionController);
+
+    // Delete mission object
+    if (Mission != null)
+    {
+      shutdownComponent(Mission);
+      Mission = null;
+      m_LoadingMissionName = "";
+    }
+  }
+  
+  Array GetMissionFiles(String _MissionName)
+  {
+    String Mission = getClassFileName(_MissionName);    
+    String location = Mission.GetPartPrecedingExact("Mission.script");    
+    
+    String hmap = location + new String("hmap.raw");
+    String hwater = location + new String("hwater.raw");
+    String Atmosphere = location + new String("Atmosphere.script");
+    String content = location + new String("Content.script");
+    String Terrain = location + new String("Terrain.script");
+    String WorldMatricies = location + new String("WorldMatricies.script");
+    
+    Array files = [content, hmap, hwater,Atmosphere, Mission, Terrain, WorldMatricies];
+    logWarning("check sum files: " + new String(files));
+     
+    return files;
+  }
+
+  Component CreateMission(
+      String _MissionName
+    )
+  {
+    // Create mission component
+    m_LoadingMission = new #MissionController();
+    setIdentificator(m_LoadingMission, SOID_MissionController);
+
+    // Load it mission from script
+    if (!loadFromScript(m_LoadingMission, _MissionName))
+      return null;
+
+    // Return loaded mission
+    return m_LoadingMission;
+  }
+
+  Component GetMission()
+  {
+    return GetObject(SOID_MissionController);
+  }
+
+  String GetLoadingMissionName()
+  {
+    return m_LoadingMissionName;
+  }
+
+  String GetProgressMissionName()
+  {
+    return m_ProgressMissionName;
+  }
+
+  Component m_CurrentObjectProps;
+
+  void SetCurrentObjectProps(Array _Properties)
+  {
+    m_CurrentObjectProps = new CPropertiesMap(_Properties);
+  }
+
+  void ClearCurrentObjectProps()
+  {
+    m_CurrentObjectProps = null;
+  }
+
+  Component GetCurrentObjectProps()
+  {
+    return m_CurrentObjectProps;
+  }
+
+  // ======================================
+  // Loading Methods
+  // ======================================
+
+  event void StartMission(
+      String _MissionName
+    )
+  {
+    StartMission(_MissionName, "MainPlayerUnitInitPlace");
+  }
+
+  event void StartMission(
+      String _MissionName,
+      String _PlayerSpawnPoint
+    )
+  {
+    m_StartMissionPhase  = 1;  //$TMP
+    m_MissionToStart     = _MissionName;
+    m_PlayerSpawnPoint   = _PlayerSpawnPoint;
+
+    sendEvent(0, SOID_GameController, "ContinueStartingMission", []);
+  }
+
+  event void ContinueStartingMission()
+  {
+    if (0 == m_StartMissionPhase)
+    {
+      sendEvent(0, SOID_GameController, "ContinueStartingMission", []);
+      m_StartMissionPhase++;
+    }
+    else
+    if (1 == m_StartMissionPhase)
+    {
+      UnloadMission();
+
+      sendEvent(0, SOID_GameController, "ContinueStartingMission", []);
+
+      m_StartMissionPhase++;
+    }
+    else
+    if (2 == m_StartMissionPhase)
+    {
+      EnableControl("GameMenu", true);
+
+      // Setup new mission
+      LoadMission(m_MissionToStart);
+
+      UpdateWaitScreen();
+
+      Component GameController = new #GameController();
+      if (!GameController.IsPaused())
+        GameController.SwitchPause();
+
+      Component GameSettings = new #GameSettings();
+      m_SoundFxVolume = GameSettings.GetSoundFxVolume();
+      GameSettings.SetSoundFxVolume(0.0);
+
+      // Play starting cinematics of new mission
+      if (!RunCinema(GetLoadedMission().CINEMA_Start))
+        sendEvent(0, SOID_GameController, "ContinueStartingMission", []);
+
+      m_StartMissionPhase++;
+    }
+    else
+    if (3 == m_StartMissionPhase)
+    {
+      UpdateWaitScreen();
+
+      SetupPlayer();
+
+      UpdateWaitScreen();
+
+      GetLoadedMission().StartMission();
+
+      UpdateWaitScreen();
+
+      sendEvent(0, SOID_GameController, "ContinueStartingMission", []);
+      m_StartMissionPhase++;
+    }
+    else
+    if (4 == m_StartMissionPhase)
+    {
+
+      logMessage("Mission loaded");
+      m_MissionStarted = false;
+
+      UpdateWaitScreen();
+
+      Component MenuController = GetMenuController();
+      MenuController.LoadNewMenu("LoadingScreenMenu");
+      Component Menu = MenuController.GetActiveMenu();
+
+      Menu.SetProgress(1001);
+
+      m_StartMissionPhase++;
+    }
+
+  }
+
+  boolean m_IsLoadingScreenVisible = false;
+
+  void ShowLoadingScreen(
+      String  _MissionName,
+      boolean _UpdateScreen
+    )
+  {
+    if (m_IsLoadingScreenVisible)
+      return;
+
+    m_IsLoadingScreenVisible = true;
+    m_ProgressMissionName    = _MissionName;
+
+    // Show loading screen
+    Component MenuController = CreateMenuController();
+
+    CLoadingScreenMenu::MissionClassName = _MissionName; // set mission info
+    MenuController.LoadNewMenu("LoadingScreenMenu");
+    MenuController.GetObject("Cursor").ShowCursor(false);
+    MenuController.LockChangeInputMode(true);
+    EnableControl("GameMenu", true);
+    ActivateCamera(SOID_MainCamera, true);
+
+    UpdateLoadProgress(0, 100, 0);
+    if (_UpdateScreen)
+      RenderIntermediateFrame();
+  }
+
+  void HideLoadingScreen()
+  {
+    if (!m_IsLoadingScreenVisible)
+      return;
+    m_IsLoadingScreenVisible = false;
+
+    EnableControl("GameMenu", false);
+    ActivateCamera(SOID_MainCamera, false);
+    Component MenuController = CreateMenuController();
+    MenuController.GetObject("Cursor").ShowCursor(true);
+    MenuController.GoBack();
+
+    MenuController.BaseMenu_FreeUnusedMaterials();
+  }
+
+  void UpdateLoadProgress(
+      int _Num,
+      int _Total,
+      int _Part
+    )
+  {
+    Component MenuController = GetMenuController();
+    if (null == MenuController)
+      return;
+
+    Component Menu = GetMenuController().GetActiveMenu();
+    if (null == Menu)
+      return;
+
+    // Compute progress by part
+    int progress = 0;
+
+    if (0 == _Part)
+      progress =       _Num * 900 / _Total;
+    else
+    if (1 == _Part)
+      progress = 900 + _Num * 100 / _Total;
+
+    // Setup progress
+    Menu.SetProgress(progress);
+
+    // Update bar omn screen
+    RenderIntermediateFrame();
+  }
+
+  // ======================================
+  // Cinema methods
+  // ======================================
+
+  Array GetCinemaList()
+  {
+    Array Result = [];
+
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+    {
+      Component MissionContent = Mission.GetContent();
+      if (null != MissionContent)
+        return MissionContent.GetCinemaList();
+    }
+
+    return [];
+  }
+
+  boolean RunCinema(
+      String _CinemaID
+    )
+  {
+    return RunCinema(_CinemaID, "");
+  }
+
+  boolean RunCinema(
+      String _CinemaID,
+      String _ObjectToActivate
+    )
+  {
+    Component Level = GetLoadedMission();
+    if (null != Level)
+      return Level.PlayCameraScript(_CinemaID, 0.0, _ObjectToActivate);
+    return false;
+  }
+
+  event void OnCinemaEnd()
+  {
+    sendEvent(0.0, SOID_GameController, "ContinueStartingMission", []);
+  }
+
+
+  // ======================================
+  // ISerializeable
+  // ======================================
+
+  void Import(
+      Component _Storage
+    )
+  {
+    if (null != GetLoadedMission())
+      UnloadMission();
+
+    String MissionName = _Storage.ImportValue();
+
+    logMessage("name = " + MissionName);
+
+    LoadMission(MissionName);
+    Component Mission = GetLoadedMission();
+
+    if (null != Mission)
+    {
+      _Storage.ImportObject(Mission);
+      Mission.Import(_Storage);
+    }
+    else
+      logError("no mission");
+  }
+
+  void Export(
+      Component _Storage
+    )
+  {
+    Component Mission = GetLoadedMission();
+
+    _Storage.ExportValue(m_LoadingMissionName);
+
+    if (null != Mission)
+    {
+      _Storage.ExportObject("MissionController", Mission);
+      Mission.Export(_Storage);
+    }
+    else
+      logError("no mission");
+  }
+
+  int m_DifficultyLevelLatch = -1;
+
+  int GetDifficultyLevel()
+  {
+    return (new #GameSettings()).GetDifficultyLevel();
+  }
+
+  void SetDifficultyLevel(int _Level)
+  {
+    if (m_DifficultyLevelLatch == -1)
+    {
+      m_DifficultyLevelLatch = GetDifficultyLevel();
+    }
+
+    (new #GameSettings()).SetDifficultyLevel(_Level);
+  }
+
+  void ResetDifficultyLevel()
+  {
+    if (m_DifficultyLevelLatch != -1)
+    {
+      (new #GameSettings()).SetDifficultyLevel(m_DifficultyLevelLatch);
+      m_DifficultyLevelLatch = -1;
+    }
+  }
+
+  //
+  // Mutli-Player
+  //
+
+  String GetGameMode()
+  {
+   if (GetObject(SOID_GameClient) != null)
+     return "Client";
+
+   if (GetObject(SOID_GameServer) != null)
+     return "Server";
+
+   return "Single";
+
+    //TMP
+    //return "Server";
+  }
+
+  Component GetGameSession()
+  {
+   Component Client = GetObject(SOID_GameClient);
+   if (Client != null)
+     return Client;
+
+   Component Server = GetObject(SOID_GameServer);
+   if (Server != null)
+     return Server;
+
+   return null;
+
+    // TMP
+//     Component Server = GetObject(SOID_GameServer);
+//     return Server;
+  }
+
+  WString GetCurrentGameSpeedMsg()
+  {
+    return m_GameMsgSpeeds[m_CurrentGameSpeed];
+  }  
+
+  boolean IsNormalGameSpeed()
+  {
+    return m_CurrentGameSpeed == 1;
+  }
+
+  event void CreateAndStartSession(
+      WString  _SessionName,
+      int      _SessionType,
+      int      _SessionMap,
+      Array    _PlayerSlots,
+      int      _PreferTeam,
+      int      _ControlMode,
+      boolean  _bTeamChange,
+      boolean  _bInternetRegistration
+    )
+  {
+
+     CreateSession(_SessionName, _SessionType, _SessionMap, _PlayerSlots, _PreferTeam, _ControlMode, _bTeamChange, _bInternetRegistration);
+
+     Component GameController = new #GameController();
+
+     if (_SessionType == CServerDescriptor::ST_CaptureTheFlag)
+     {
+       Component MenuController = GameController.GetMenuController();
+       MenuController.LoadNewMenu("TeamPlayRoomMenu");
+       MenuController.GetObject("Cursor").ShowCursor(true);
+       MenuController.LockChangeInputMode(false);
+       GameController.EnableControl("GameMenu", true);
+     }
+     else
+     {
+       Component Mission        = GameController.GetLoadedMission();
+       Mission.ClearDeathTanks();
+       Mission.CreatePlayerObject();
+       Mission.StartMission();
+       GameController.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+       GameController.EnableControl(Mission.GetMainPlayerObjectID(), true);
+       GameController.ActivateCamera(SOID_MainCamera, false);
+     }
+  }
+
+
+  event void CreateSession(
+      WString  _SessionName,
+      int      _SessionType,
+      int      _SessionMap,
+      Array    _PlayerSlots,
+      int      _PreferTeam,
+      int      _ControlMode,
+      boolean  _bTeamChange,
+      boolean  _bInternetRegistration
+    )
+  {
+    // Delete client if exists
+    if (GetGameMode() == "Client")
+      DeleteGameClient();
+
+    // Create server
+    Component GameServer = GetObject(SOID_GameServer);
+    if (GameServer == null)
+    {
+      GameServer = new #GameServer<CServer>();
+      RegisterObject(SOID_GameServer, GameServer);
+    }
+    // Init stats visibility
+    UpdateStatisticsVisibleState();
+
+    // Set session info
+    GameServer.CleanupPlayersInfo();
+    GameServer.SetPlayerSlots(_PlayerSlots);
+    GameServer.ReserveLocalPlayerSlot(_PreferTeam);
+    //$TMP
+    GameServer.SetSessionName(_SessionName);
+    GameServer.SetSessionType(_SessionType);
+    GameServer.SetSessionMap(_SessionMap);
+    GameServer.SetServerMode(_ControlMode, _bTeamChange);
+
+    // Open game session
+    GameServer.OpenSession();
+
+    // Load mission on server
+    UnloadMission();
+    LoadMission(GameServer.GetMissionName(), true);
+
+    GetMission().AddBots(_PlayerSlots);
+
+    // Perform mission post creation steps
+    GetMission().InitSession(_PlayerSlots);
+
+    // create and init GameSpy component if we are server
+//     if (_bInternetRegistration && GetGameMode() == "Server")
+//     {
+//       Component GameSpyReporter = new #GameSpyReporter<CGameSpyReporter>();
+//       GameSpyReporter.Initialize(GameServer.m_SessionInfo);
+//       RegisterObject("GameSpyReporter", GameSpyReporter);
+//     }
+  }
+
+  void DeleteSession()
+  {
+//    logWarning("[Game] DeleteSession");
+
+    // remove GameSpy component
+    Component GameSpyReporter = GetObject("GameSpyReporter");
+    if (null != GameSpyReporter)
+    {
+      GameSpyReporter.Shutdown();
+      UnregisterObject("GameSpyReporter");
+    }
+
+    // Remove server
+    Component GameServer = UnregisterObject(SOID_GameServer);
+    if (GameServer != null)
+      shutdownComponent(GameServer);
+  }
+
+  void ConnectToServer(
+      Component  _Server,
+      WString    _Player,
+      int        _PreferTeam
+    )
+  {
+    logWarning("[Game] ConnectToServer(" + new String(_Player) + ", " + new String(_PreferTeam) + ")");
+
+    // Create game client
+    Component GameClient = CreateGameClient();
+
+    // Connect to server
+    if (GameClient != null)
+      GameClient.Connect(_Server, _Player, _PreferTeam);
+  }
+
+  void ConnectToServerByIP(
+      String     _Server,
+      WString    _Player,
+      int        _PreferTeam
+    )
+  {
+    logMessage("[Game] ConnectToServerByIP(" + new String(_Player) + ", " + new String(_PreferTeam) + ") Server IP: " + _Server);
+
+    // Create game client
+    Component GameClient = CreateGameClient();
+
+    // Connect to server
+    if (GameClient != null)
+      GameClient.ConnectByIP(_Server, _Player, _PreferTeam);
+  }
+
+  void StartAndConnect(
+      String _ServerName
+    )
+  {
+    CreateMainMenu();
+
+    Component Menu = GetObject("MainMenu");
+
+    Menu.Init();
+    Menu.EnableUpdateServerList(false);
+
+    WString PlayerName = Menu.GetCurrentPlayer().GetName();
+
+    ConnectToServerByIP(_ServerName, PlayerName, -1);
+
+    Menu.Invoke("ConnectingMenu");
+  }
+
+  void StartAndConnect(
+      String _ServerName,
+      WString _UserName
+    )
+  {
+//     CreateMainMenu();
+// 
+//     Component Menu = GetObject("MainMenu");
+//     Menu.Invoke("MultiPlayerMenu");
+
+//     Menu.Init();
+//     Menu.EnableUpdateServerList(false);
+
+//    ConnectToServerByIP(_ServerName, _UserName, -1);
+
+    logWarning("[Game] StartAndConnect 2 server: " + _ServerName);
+    CreateMainMenu();
+
+    CJoinGameMenu::IsRefreshServers = false;
+
+    Component Menu = GetMenuController().LoadNewMenu("JoinGameMenu");
+    Component Menu = GetMenuController().GetActiveMenu();
+    if(Menu == null)
+      logWarning("Menu == null");
+
+    //Menu.Init();    
+    Menu.SetServerIP(_ServerName);
+    Menu.SetPlayerName(_UserName);    
+    Menu.OnControlActivated("CustomIP");
+    Menu.OnControlActivated("JoinButton");
+
+    CJoinGameMenu::IsRefreshServers = true;
+    
+  }
+
+  void StartAndConnect(
+      String  _ServerName,
+      WString _UserName,
+      int     _Team
+    )
+  {
+    CreateMainMenu();
+
+    Component Menu = GetObject("MainMenu");
+    Menu.Invoke("MultiPlayerMenu");
+
+//     Menu.Init();
+//     //Menu.EnableUpdateServerList(false);
+
+    ConnectToServerByIP(_ServerName, _UserName, _Team);
+  }
+
+  void StartAndHost(
+      int      _MultiplayerGameType
+    )
+  {
+    logWarning("[Game] StartAndHost 1");
+    CreateMainMenu();
+
+    Component Menu = GetObject("MainMenu");
+
+    Menu.Init();
+    Menu.Invoke("MultiPlayerMenu");
+
+//     Menu.m_bInternetRegistration = true;
+//     Menu.m_MultiplayerGameType   = _MultiplayerGameType;
+
+//    Menu.Invoke(Menu.m_MenuFunctions[_MultiplayerGameType]);
+  }
+
+  void StartAndHost(
+    WString  _ServerName,
+    WString _UserName
+  )
+  {
+    logWarning("[Game] StartAndHost 2");
+    CreateMainMenu();
+
+    Component Menu = GetMenuController().LoadNewMenu("MultiPlayerMenu");
+    Component Menu = GetMenuController().GetActiveMenu();
+    if(Menu == null)
+      logWarning("Menu == null");
+
+    Menu.Init();    
+    Menu.SetSessionName(_ServerName);
+    Menu.SetPlayerName(_UserName);
+//     Menu.Init();    
+    //Menu./*Invoke*/GoTo("MultiPlayerMenu");
+    //Menu = GetMenuController().GetObject("MultiPlayerMenu");
+    Menu.OnControlActivated("CreateGameButton");
+
+//     Menu.m_bInternetRegistration = true;
+//     Menu.m_MultiplayerGameType   = _MultiplayerGameType;
+
+//    Menu.Invoke(Menu.m_MenuFunctions[_MultiplayerGameType]);
+  }
+
+  void StartAndHost(
+    WString  _ServerName,
+    WString  _UserName,
+    int      _GameType
+  )
+  {
+    logWarning("[Game] StartAndHost 3 name:" + 
+                new String(_ServerName) + 
+                " player: " + new String(_UserName) + 
+                " type: " + new String(_GameType));
+    CreateMainMenu();
+    //_GameType = 0;
+
+    Component Menu = GetMenuController().LoadNewMenu("MultiPlayerMenu");
+    Component Menu = GetMenuController().GetActiveMenu();
+    if(Menu == null)
+      logWarning("Menu == null");
+
+    
+
+   //Menu.Init();    
+   Menu.SetSessionName(_ServerName);
+   Menu.SetPlayerName(_UserName);
+   //Menu.SetGameType(_GameType);
+   //Menu.OnControlActivated("GameType_Item_" + new String(0/*_GameType*/));
+    //Menu./*Invoke*/GoTo("MultiPlayerMenu");
+    //Menu = GetMenuController().GetObject("MultiPlayerMenu");
+   Menu.OnControlActivated("CreateGameButton");
+
+//     Menu.m_bInternetRegistration = true;
+//     Menu.m_MultiplayerGameType   = _MultiplayerGameType;
+
+//    Menu.Invoke(Menu.m_MenuFunctions[_MultiplayerGameType]);
+  }
+
+  void StartAndHost(
+    WString  _ServerName,
+    WString  _UserName,
+    String   _GameType,
+    int      _MaxClients
+  )
+  {
+//     logWarning("[Game] StartAndHost 3 name:" + 
+//                 new String(_ServerName) + 
+//                 " player: " + new String(_UserName) + 
+//                 " type: " + new String(_GameType));
+    CreateMainMenu();
+
+    Component Menu = GetMenuController().LoadNewMenu("MultiPlayerMenu");
+    Component Menu = GetMenuController().GetActiveMenu();
+    if(Menu == null)
+    {
+      logWarning("Menu == null");   
+      return;
+    }
+
+   //Menu.Init();    
+   Menu.SetSessionName(_ServerName);
+   Menu.SetPlayerName(_UserName);
+   Menu.SetGameType(_GameType);
+   Menu.SetMaxClients(_MaxClients);
+   Menu.OnControlActivated("CreateGameButton");
+  }
+
+  Component CreateGameClient()
+  {
+//    logWarning("[Game] CreateGameClient");
+
+    // Delete session if exists
+    if (GetGameMode() == "Server")
+      DeleteSession();
+
+    // Create game client
+    Component GameClient = GetObject(SOID_GameClient);
+    if (GameClient != null)
+      return GameClient;
+
+    // Create and register game client component
+    GameClient = new #GameClient<CClient>();
+    RegisterObject(SOID_GameClient, GameClient);
+
+    // Init stats visibility
+    UpdateStatisticsVisibleState();
+
+    GameClient.CleanupPlayersInfo();
+
+    return GameClient;
+  }
+
+  void DeleteGameClient()
+  {
+//    logWarning("[Game] DeleteGameClient");
+
+    // Remove game client
+    Component GameClient = UnregisterObject(SOID_GameClient);
+    if (GameClient != null)
+      shutdownComponent(GameClient);
+
+    // Remove GameSpy component
+    Component GameSpyBrowser = GetObject("GameSpyBrowser");
+    if (GameSpyBrowser != null)
+    {
+      UnregisterObject("GameSpyBrowser");
+      GameSpyBrowser.Shutdown();
+    }
+
+    ResetDifficultyLevel();
+  }
+
+  Array m_AddressList = [];
+  Array m_ServersList = [];
+
+  void AddServerToAddressList(
+      String _Address
+    )
+  {
+//    logWarning("[Game] AddServerToAddressList(" + _Address + ")");
+
+    if (m_AddressList.find(_Address) == -1)
+      m_AddressList.add(_Address);
+  }
+
+  void RefreshServersList(boolean _bSearchOnLAN)
+  {
+//    logWarning("[Game] RefreshServersList");
+
+    // Create game client
+    Component GameClient = CreateGameClient();
+
+    // Enumerate servers
+    if (!_bSearchOnLAN)
+    {
+      Component GameSpyBrowser = GetObject("GameSpyBrowser");
+      if (GameSpyBrowser != null)
+        GameSpyBrowser.RefreshServersList();
+    }
+
+    if (GameClient != null)
+    {
+      GameClient.EnumerateServers("");
+      //GameClient.ScanAddressList(m_AddressList, _bSearchOnLAN);
+    }
+  }
+
+  void CloseMultiplayer()
+  {
+//    logWarning("[Game] CloseMultiplayer");
+
+//    GetLoadedMission().DeleteObject(GetLoadedMission().GetMainPlayerObjectID());
+
+    // Close connection if exists
+    if (GetGameMode() == "Client")
+      GetGameSession().CloseConnection();
+    else
+    // Close session if exists
+    if (GetGameMode() == "Server")
+      GetGameSession().CloseSession();
+  }
+
+  void DeleteMultimplayer()
+  {
+//    logWarning("[Game] DeleteMultiplayer");
+
+    // Delete client if exists
+    if (GetGameMode() == "Client")
+      DeleteGameClient();
+    else
+    // Delete session if exists
+    if (GetGameMode() == "Server")
+      DeleteSession();
+
+    // Log allocation stat
+    logComponentsList();
+  }
+
+  boolean IsServersListReady()
+  {
+    Component GameClient = CreateGameClient();
+    if (GameClient != null)
+      return GameClient.IsEnumerateDone();
+    else
+      return true;
+  }
+
+  Array GetServersList()
+  {
+    Component GameClient = CreateGameClient();
+
+    if (GameClient != null)
+    {
+      return GameClient.GetServersList();
+    }
+    Array List;
+    return List;
+  }
+
+}

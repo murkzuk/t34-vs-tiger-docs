@@ -1,0 +1,340 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CBaseWindow
+  extends CBaseMenu
+{
+  final static boolean CascadingEnabled = false;
+  final static Array   CascadingZone    = [0.0, 0.0, 1.0, 1.0];
+
+  final static float CascadeDX = 30.0 / 1024.0;
+  final static float CascadeDY = 30.0 / 768.0;
+
+  static float CascadeX = 0.0;
+  static float CascadeY = 0.0;
+
+  String WindowID;
+
+  String DefaultButtonID = "";
+
+  //
+  // Interface
+  //
+
+  void OpenMenu()
+  {
+    if (isFunctionExist(this, "Update", 1))
+      m_MenuController.WindowSetupTimer(WindowID);
+
+    // Cascading
+    if (CascadingEnabled)
+    {
+      CascadeX += CascadeDX;
+      CascadeY += CascadeDY;
+
+      if (CascadeX > CascadingZone[2])
+        CascadeX = CascadingZone[0];
+
+      if (CascadeY > CascadingZone[3])
+        CascadeY = CascadingZone[1];
+
+      m_MenuPositionX += CascadeX;
+      m_MenuPositionY += CascadeY;
+
+      m_MenuPositionX = float(iround(m_MenuPositionX * 1024.0)) / 1024.0;
+      m_MenuPositionY = float(iround(m_MenuPositionY * 768.0))  / 768.0;
+    }
+
+    CBaseMenu::OpenMenu();
+
+    Component Caption = GetObject("WindowCaption");
+    if (null != Caption)
+    {
+      Caption.SetEventHandler(m_MenuController);
+      Caption.SetSlaveMenu(this);
+    }
+
+    MoveMenu(new Vector(0.0, 0.0, 0.0));
+  }
+
+  // Get object from menu controller
+  Component GetObject(
+      String _ID
+    )
+  {
+    return m_MenuController.WindowGetObject(WindowID, _ID);
+  }
+
+  // Register UI control in menu controller
+  void RegisterObject(
+      String    _ID,
+      Component _Object
+    )
+  {
+    m_MenuController.WindowRegisterObject(WindowID, _ID, _Object);
+  }
+
+  // Unregister UI control in menu controller
+  void UnregisterObject(
+      String    _ID
+    )
+  {
+    m_MenuController.WindowUnregisterObject(WindowID, _ID);
+  }
+
+  void CloseWindow()
+  {
+    if (!m_DefaultCommandsToRestore.isEmpty())
+      m_MenuController.SetDefaultCommands(
+          m_DefaultCommandsToRestore[0], 
+          m_DefaultCommandsToRestore[1]
+        );
+
+    WindowClose(WindowID);
+  }
+
+  void OnWindowOpened()
+  {
+  }
+
+  void OnWindowClosed()
+  {
+    // Close sheet
+    Component Sheet = GetSheet();
+    if (null != Sheet)
+      Sheet.CloseWindow();
+  }
+  
+  float GetWindowZ()
+  {
+    return m_MenuController.WindowGetPosition(WindowID).z;
+  }
+
+  void SetWindowZ(
+      float _Z
+    )
+  {
+    Vector Position = m_MenuController.WindowGetPosition(WindowID);
+    Position.z = _Z;
+    m_MenuController.WindowSetPosition(WindowID, Position);
+  }
+
+  void MoveMenu(
+      Vector _DeltaPosition
+    )
+  {
+    CBaseMenu::MoveMenu(_DeltaPosition);
+
+    // Move current sheet
+    Component Sheet = GetSheet();
+    if (null != Sheet)
+      Sheet.MoveMenu(_DeltaPosition);
+  }
+
+  Component GetParent()
+  {
+    return WindowGetWindow(WindowGetParent(WindowID));
+  }
+
+  Array m_DefaultCommandsToRestore = [];
+
+  void SetDefaultCommands(
+      String _CommandEnter,
+      String _CommandEscape
+    )
+  {
+    m_DefaultCommandsToRestore = m_MenuController.GetDefaultCommands();
+
+    m_MenuController.SetDefaultCommands(
+        WindowID + "_" + _CommandEnter, 
+        WindowID + "_" + _CommandEscape
+      );
+  }
+
+  String GetDefaultButtonID()
+  {
+    return DefaultButtonID;
+  }
+
+  void SetAlwaysOnTop(
+      boolean _IsAlwaysOnTop
+    )
+  {
+    m_MenuController.WindowSetAlwaysOnTop(WindowID, _IsAlwaysOnTop);
+  }
+
+  boolean IsAlwaysOnTop()
+  {
+    return m_MenuController.WindowIsAlwaysOnTop(WindowID);
+  }
+
+  void OnMessageBoxDone(
+      boolean _IsOkResult
+    )
+  {
+  }
+
+  Component ShowMessageBox(
+      WString _Caption,
+      WString _Text,
+      boolean _IsCancelEnabled
+    )
+  {
+    Component MessageBox = m_MenuController.MessageBox(
+        getIdentificator(m_MenuController),
+        WindowID,
+        _Caption,
+        _Text
+      );
+
+    MessageBox.IsCancelEnabled = _IsCancelEnabled;
+
+    return MessageBox;
+  }
+
+  //
+  // Sheets
+  //
+
+  Map    m_Sheets;
+  String m_CurrentSheet;
+
+  void DefineSheet(
+      String _SheetID,
+      String _WindowClass,
+      String _BookmarkID
+    )
+  {
+    m_Sheets.insert(_SheetID, [_WindowClass, _BookmarkID]);
+  }
+
+  Component OpenSheet(
+      String _SheetID
+    )
+  {
+    if (_SheetID == m_CurrentSheet)
+      return GetSheet(m_CurrentSheet);
+
+    // Hide current sheet
+    if (m_Sheets.find(m_CurrentSheet))
+    {
+      Array SheetDescriptor = m_Sheets.getValue();
+
+      // Deactivate bookmark
+      Component Bookmark = GetObject(SheetDescriptor[1]);
+      if (null != Bookmark)
+        Bookmark.SetActive(false);
+      else
+        logWarning("Bookmark '" + SheetDescriptor[1] + "' not found");
+
+      // Close sheet
+      WindowClose(WindowID + m_CurrentSheet);
+      m_CurrentSheet = "";
+    }
+    else
+      new #GameController().SkipFlip(0);
+
+    // Show new sheet
+    if (m_Sheets.find(_SheetID))
+    {
+      Array SheetDescriptor = m_Sheets.getValue();
+
+      // Activate bookmark
+      Component Bookmark = GetObject(SheetDescriptor[1]);
+      if (null != Bookmark)
+        Bookmark.SetActive(true);
+      else
+        logWarning("Bookmark '" + SheetDescriptor[1] + "' not found");
+
+      // Open sheet
+      Component Sheet = WindowOpen(SheetDescriptor[0], WindowID + _SheetID, m_MenuPositionX, m_MenuPositionY);
+      if (null != Sheet)
+      {
+        // Set window "parent"
+        WindowSetParent(Sheet.WindowID, WindowID);
+
+        m_CurrentSheet = _SheetID;
+        return Sheet;
+      }
+      else
+        logError("can't open sheet '" + _SheetID + "'");
+    }
+    else
+      logError("Sheet '" + _SheetID + "' isn't defined");
+
+    return null;
+  }
+
+  Component GetSheet(
+      String _SheetID
+    )
+  {
+    return WindowGetWindow(WindowID + _SheetID);
+  }
+
+  Component GetSheet()
+  {
+    if (m_CurrentSheet.isEmpty())
+      return null;
+
+    return GetSheet(m_CurrentSheet);
+  }
+
+  String GetCurrentSheetID()
+  {
+    return m_CurrentSheet;
+  }
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    CBaseMenu::OnControlActivated(_ID);
+
+    // Check if sheet bookmark button is pressed
+    m_Sheets.gotoBegin();
+    while (!m_Sheets.isAtEnd())
+    {
+      if (m_Sheets.getValue()[1] + "_Button" == _ID)
+      {
+        OpenSheet(m_Sheets.getKey());
+        return;
+      }
+
+      m_Sheets.gotoNext();
+    }
+  }
+
+  //
+  // Service
+  //
+
+  static Array ComputeCascadingZone(
+      Array _Bounds
+    )
+  {
+    return ComputeCascadingZone(_Bounds, []);
+  }
+
+  static Array ComputeCascadingZone(
+      Array _Bounds,
+      Array _ControlsToExclude
+    )
+  {
+    Array Result = ComputeBounds(new Collection(_ControlsToExclude));
+
+    Result[0] = _Bounds[0] - Result[0];
+    Result[1] = _Bounds[1] - Result[1];
+    Result[2] = _Bounds[2] - Result[2];
+    Result[3] = _Bounds[3] - Result[3];
+
+    return Result;
+  }
+}

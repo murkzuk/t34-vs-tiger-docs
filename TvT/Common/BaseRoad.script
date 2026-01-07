@@ -1,0 +1,102 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CBaseRoadC1 extends CBaseZoneMap
+{
+  // Индексы в ZoneMap: Тайловые дороги
+  Array  ZoneValues  = [ ZMC_Road01 ];
+
+  // Индексы в ZoneMap: Векторные дороги
+  Array  ZoneValues2 = [ ZMC_Road01Add ];
+
+  int    TileSize = 256;
+
+  // порядок чисел в маске
+  //
+  // 0-1-2
+  // | | |
+  // 3-4-5
+  // | | |
+  // 6-7-8
+
+  Array  Tiles =
+  [
+    // маска       текстурные координаты
+    //            (лево,          верх,         ширина,   высота)
+
+    // 90 deg
+    [ "909111909", [1 * TileSize, 3 * TileSize, TileSize, TileSize] ], // '-'
+
+    [ "919010919", [3 * TileSize, 1 * TileSize, TileSize, TileSize] ], // '|'
+
+    [ "919111919", [2 * TileSize, 2 * TileSize, TileSize, TileSize] ], // '+'
+
+                                                                       // 000
+    [ "000110010", [3 * TileSize, 0 * TileSize, TileSize, TileSize] ], // 110
+                                                                       // 010
+
+                                                                       // 010
+    [ "010110000", [3 * TileSize, 2 * TileSize, TileSize, TileSize] ], // 110
+                                                                       // 000
+
+
+                                                                       // 000
+    [ "009011009", [0 * TileSize, 3 * TileSize, TileSize, TileSize] ], // 011
+                                                                       // 000
+
+
+                                                                       // 000
+    [ "900110900", [3 * TileSize, 3 * TileSize, TileSize, TileSize] ], // 110
+                                                                       // 000
+
+
+                                                                       // 010
+    [ "919111909", [2 * TileSize, 3 * TileSize, TileSize, TileSize] ], // 111
+                                                                       // 000
+
+    // 45 deg
+                                                                       // 001
+    [ "001010000", [0 * TileSize, 2 * TileSize, TileSize, TileSize] ], // 010
+                                                                       // 000
+
+    [ "999901910", [1 * TileSize, 0 * TileSize, TileSize, TileSize] ],
+    [ "001010100", [1 * TileSize, 1 * TileSize, TileSize, TileSize] ], // '/'
+
+    // mix                                                             // 000
+    [ "009011109", [2 * TileSize, 0 * TileSize, TileSize, TileSize] ]  // 011
+                                                                       // 100
+  ];
+
+  // Индексы конечных тайлов с которыми соединяются векторные дороги
+  Array  EndTiles = [5, 6, 8];
+
+  // на сколько ячеек ляжет микротекстура
+  float  MicroTextureScale = 0.125;
+
+  String SkinClass = "CBaseRoadSkin";
+
+  // Если true, то будут по возможности выбираться полностью идентичные тайлы.
+  // Если false, то будет делаться равнозначный выбор из всех возможных тайлов
+  // (с поворотами, и отражениями).
+  boolean ForceSelectEqualTile = false;
+
+  // Отключает сообщения об ненайденных тайлах.
+  boolean DisableWarnings      = false;
+}
+
+
+class CBaseRoadSkin
+{
+  Array Materials = [
+    new CRoadMaterial2("Road",         "Textures/road.tex",         "Textures/lnd_micro_close.tex"),
+    new CRoadMaterial2("RoadLine0",    "Textures/roadLine0.tex",    "Textures/lnd_micro_close.tex"),
+    new CRoadMaterial2("RoadLineEnd0", "Textures/roadLineEnd0.tex", "Textures/lnd_micro_close.tex")
+  ];
+}

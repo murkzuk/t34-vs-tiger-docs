@@ -1,0 +1,47 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CIntersections
+{
+  static void InitializeIntersections()
+  {
+//    Cbld_BarrackModel::UseBoxForIsection                          = false;
+    Cfence_WickerModel::UseBoxForIsection                         = false;
+    Cfence_PalisadeModel::UseBoxForIsection                       = false;
+    Cbld_BridgeWoodModel::UseBoxForIsection                       = false;
+
+    Cbld_USRCorralWoodModel::UseBoxForIsection                    = false;
+    Cbld_USRHouseWoodModel::UseBoxForIsection                     = false;
+    Cbld_USRShedWoodModel::UseBoxForIsection                      = false;
+
+// Human units
+    Chum_GermanSoldierRifleModel::UseBoxForIsection               = false;
+    Chum_GermanTankmanModel::UseBoxForIsection                    = true;
+    Chum_SovietSoldierRifleModel::UseBoxForIsection               = false;
+    Chum_SovietTankmanModel::UseBoxForIsection                    = true;
+
+
+    //shapes as walked mesh
+    Cbld_SandBagWallModel::UseShapesAsWalkedMesh                  = true;
+    Cbld_BridgeWoodModel::UseShapesAsWalkedMesh                   = true;
+    Cbld_DzotWoodModel::UseShapesAsWalkedMesh                     = true;
+    Cbld_PostElectricModel::UseShapesAsWalkedMesh                 = true;
+    Cbld_PostElectricModel::UseShapesAsWalkedMesh                 = true;
+    Cbld_PostSpeakerModel::UseShapesAsWalkedMesh                  = true;
+    Cbld_USRCorralWoodModel::UseShapesAsWalkedMesh                = true;
+    Cbld_USRHouseWoodModel::UseShapesAsWalkedMesh                 = true;
+    Cbld_USRShedWoodModel::UseShapesAsWalkedMesh                  = true;
+    Cbld_USRShedWood02Model::UseShapesAsWalkedMesh                = true;
+    Cbld_WaterWell_1Model::UseShapesAsWalkedMesh                  = true;
+    Cbld_WaterWell_2Model::UseShapesAsWalkedMesh                  = true;
+    Cenv_Antitank_singleModel::UseShapesAsWalkedMesh              = true;
+    Cu_stat_pak40Model::UseShapesAsWalkedMesh                     = true;
+    Cu_stat_zis3Model::UseShapesAsWalkedMesh                      = true;
+  }
+}

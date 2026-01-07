@@ -1,0 +1,299 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseTree
+{
+  // Tree lighting method
+  final static boolean TLM_STATIC  = false;
+  final static boolean TLM_DYNAMIC = true;
+
+  // Tree wind method
+
+  final static int TWM_NONE = 0;
+  final static int TWM_CPU  = 1;
+  final static int TWM_GPU  = 2;
+
+
+  //
+  // Tree parameters
+  //
+  // name of tree model
+  String  TreeModel            = "";
+
+  boolean LeafRocking          = true;
+
+  boolean BranchLightingMethod = TLM_STATIC;
+  boolean FrondLightingMethod  = TLM_STATIC;
+  boolean LeafLightingMethod   = TLM_STATIC;
+
+  int     BranchWindMethod     = TWM_GPU; // was TWM_NONE jm
+  int     FrondWindMethod      = TWM_GPU; // was TWM_NONE jm
+  int     LeafWindMethod       = TWM_GPU; // was TWM_NONE jm
+
+  // Tree size
+  float   TreeSize             = 40.0;
+
+  //Sphere Center Weight for leaf's normals compute
+  float   SphereCenterWeight   = 0.5;   // 0 - bottom, 1 - middle, 2 - top
+
+  // Lods distribution
+  //Array   ModelLOD             = [160,    280,    480,    720];
+  Array   ModelLOD             = [40,    70,    180,    250];
+}
+
+//
+// Conifers section (хвойные породы)
+//
+// Fir_short
+//
+
+class CFir_short
+  extends CBaseTree
+{
+  float  TreeSize   = 5.0;
+  String TreeModel  = "Models/Trees/Fir_short.spt";
+  String MaterialID = "FirShort";
+}
+
+class CFir_shortDestroyed
+  extends CBaseTree
+{
+  float  TreeSize  = 5.0;
+  String TreeModel = "Models/Trees/Fir_short.spt";  // Wrong tree model
+}
+
+//
+// Fir_tall_bend
+//
+
+class CFir_tall_bend
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.2;   // 0.2  0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 20.0;
+  String TreeModel = "Models/Trees/Fir_tall_bend.spt";
+}
+
+class CFir_tall_bendDestroyed
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.2;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 20.0;
+  String TreeModel = "Models/Trees/Fir_tall_bend.spt";  // Wrong tree model
+}
+
+//
+// Fir_tall
+//
+
+class CFir_tall
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.2;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 28.0;
+  String TreeModel = "Models/Trees/Fir_tall.spt";
+}
+
+class CFir_tallDestroyed
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.2;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 28.0;
+  String TreeModel = "Models/Trees/Fir_tall.spt";  // Wrong tree model
+}
+
+//
+// FirScotch
+//
+
+class CFirScotch
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.2;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 25.0;
+  String TreeModel = "Models/Trees/FirScotch.spt";
+}
+
+class CFirScotchDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.2;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 25.0;
+  String TreeModel = "Models/Trees/FirScotch.spt";  // Wrong tree model
+}
+
+class CFirScotchSmall
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.2;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 20.0;
+  String TreeModel = "Models/Trees/FirScotch.spt";
+}
+
+class CFirScotchSmallDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 1.0;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 20.0;
+  String TreeModel = "Models/Trees/FirScotch.spt";  // Wrong tree model
+}
+
+//
+// Deciduous section (лиственные породы)
+
+//
+// AppleTree
+//
+
+class CAppleTree
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 7.5;
+  String TreeModel = "Models/Trees/AppleTree.spt";
+}
+
+class CAppleTreeDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 7.5;
+  String TreeModel = "Models/Trees/AppleTree.spt";  // Wrong tree model
+}
+
+class CSmallAppleTree
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 6.2;
+  String TreeModel = "Models/Trees/AppleTree.spt";
+}
+
+class CSmallAppleTreeDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 6.2;
+  String TreeModel = "Models/Trees/AppleTree.spt";  // Wrong tree model
+}
+
+//
+// Birch
+//
+
+class CBirch
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;
+  float  TreeSize  = 4.0;
+  String TreeModel = "Models/Trees/Birch.spt";
+}
+
+class CBirchDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 1.6;
+  float  TreeSize  = 4.0;
+  String TreeModel = "Models/Trees/Birch.spt";  // Wrong tree model
+}
+
+class CSmallBirch
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;
+  float  TreeSize  = 3.0;
+  String TreeModel = "Models/Trees/Birch.spt";
+}
+
+class CSmallBirchDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 1.6;
+  float  TreeSize  = 3.0;
+  String TreeModel = "Models/Trees/Birch.spt";  // Wrong tree model
+}
+
+//
+// Live Oak
+//
+
+class CLiveOak
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.4;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 17.0;
+  String TreeModel = "Models/Trees/LiveOak.spt";
+}
+
+class CLiveOakDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 1.2;   //0.2 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 17.0;
+  String TreeModel = "Models/Trees/LiveOak.spt";  // Wrong tree model
+}
+
+//
+// Russish lipa
+//
+
+class CLinden
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 0.6; //0.2
+  float  TreeSize  = 8.0;
+  String TreeModel = "Models/Trees/Linden.spt";
+}
+
+class CLindenDestroyed
+  extends CBaseTree
+{
+  float  SphereCenterWeight   = 1.6; //0.2
+  float  TreeSize  = 8.0;
+  String TreeModel = "Models/Trees/Linden.spt";  // Wrong tree model
+}
+
+//
+// Bush section (кустарники)
+//
+// BulfordHolly
+//
+class CBulfordHolly
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.0;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 3.0;
+  String TreeModel = "Models/Trees/BulfordHolly.spt";
+}
+
+class CBulfordHollyDestroyed
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.0;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 3.0;
+  String TreeModel = "Models/Trees/BulfordHolly.spt";  // Wrong tree model
+}
+
+class CBulfordHollyLarge
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.0;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 5.0;
+  String TreeModel = "Models/Trees/BulfordHolly.spt";
+}
+
+class CBulfordHollyLargeDestroyed
+  extends CBaseTree
+{
+  float   SphereCenterWeight   = 0.0;   // 0 - bottom, 1 - middle, 2 - top
+  float  TreeSize  = 5.0;
+  String TreeModel = "Models/Trees/BulfordHolly.spt";  // Wrong tree model
+}
+
+

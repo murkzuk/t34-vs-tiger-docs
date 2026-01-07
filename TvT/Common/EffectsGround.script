@@ -1,0 +1,401 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//Subcalibre 7576_85_88
+class CGroundSubcalibre7576_85_88BulletHitDustEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundSubcalibre7576_85_88BulletHitDustEffect()
+  {
+    SetAnimationTime(4.0);
+    SetEffectTime(4.2);
+
+    SetSamplesQty(20);
+    SetSpeed(3.0, 3.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 9.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.2, 0.1);
+
+    final int SamplesQty =
+      CEffectsArray::GroundSprayEffectSkin.Materials.size();
+
+    //m_AnimLength = 16;
+
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+        CEffectsArray::GroundSprayEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(4.0, 4.0, 4.0)
+      );
+    }
+  }
+}
+
+class CGroundSubcalibre7576_85_88BulletHitRingEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundSubcalibre7576_85_88BulletHitRingEffect()
+  {
+    SetEffectTime(0.5);
+    SetAnimationTime(0.5);
+
+    SetSamplesQty(12);
+    SetSpeed(3.0, 0.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 90.0, 90.0);
+    SetRingMode(true);
+
+    SetSizeParams(1.0, 0.75);
+    SetBaseColor(new Color(0.52, 0.48, 0.35));
+    SetStartAndFinalFade(0.0, 0.8, 0.5);
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(0.3, 0.3, 0.3), new Vector(0.8, 0.8, 0.8)
+      );
+  }
+}
+
+//Calibre 7576_85_88
+class CGroundCalibre7576_85_88BulletHitSprayEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundCalibre7576_85_88BulletHitSprayEffect()
+  {
+    SetAnimationTime(1.0);
+    SetEffectTime(1.0);
+
+    SetSamplesQty(15);
+    SetSpeed(8.0, 5.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 25.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.1, 0.1);
+    SetStartAndFinalFade(0.0, 0.5);
+
+    final int SamplesQty =
+      CEffectsArray::GroundLightedCloudEffectSkin.Materials.size();
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      SetFixedMaterial("0");
+      GenerateAnimatedParticle(
+        CEffectsArray::GroundLightedCloudEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(3.0, 3.0, 3.0)
+      );
+    }
+  }
+}
+
+//HE 7576_85_88
+class CGroundHE7576_85_88BulletDustSplash
+  extends CAnimatedParticleGenerator
+{
+  boolean m_LightingParticle    = true;
+  float   m_LightingInterpolate = 0.6;
+  int     RandomSubFrames       = 20;
+
+  CGroundHE7576_85_88BulletDustSplash()
+  {
+    SetAnimationTime(4.5);
+    SetEffectTime(4.5);
+    SetPlaceParams(0.3);
+
+    for (int I = 0; I < 2; I++)
+    {
+      SetStartAndFinalFade(0.0, 0.2, 0.5);
+      SetSizeParams(1.9, 0.2);
+      SetBaseColor(new Color(160.0 / 255.0, 160.0 / 255.0, 160.0 / 255.0, 0.8));
+      SetAnimLength(32);
+      SetFixedMaterial(new String(randnum(15)));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(0.0, 0.0, 2.5),
+          new Vector(0.0, 0.0, 0.0), new Vector(1.0, 1.0, 1.0)
+        );
+    }
+
+    SetBaseColor(new Color(160.0 / 255.0, 160.0 / 255.0, 160.0 / 255.0, 0.45));
+    SetSizeParams(1.9, 0.2);
+    SetStartAndFinalFade(0.0, 0.7, 0.7);
+    for (int I = 0; I < 6; I++)
+    {
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), float(randnum(2)) + 1.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+
+    SetSizeParams(1.7, 0.75);
+    for (int I = 0; I < 4; I++)
+    {
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(1.0, 2.0)),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+
+    SetSizeParams(1.4, 0.75);
+    for (int I = 0; I < 2; I++)
+    {
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-0.5, 0.5), rand(-0.5, 0.5), rand(0.3, 0.5)),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+  }
+}
+
+class CGroundHE7576_85_88BulletHitDustEffect
+  extends CAnimatedParticleGenerator
+{
+  boolean m_LightingParticle    = false;
+  float   m_LightingInterpolate = 0.4;
+
+  CGroundHE7576_85_88BulletHitDustEffect()
+  {
+    SetAnimationTime(10.0);
+    SetEffectTime(10.0);
+    SetStartAndFinalFade(0.0, 0.8, 0.2);
+    SetSizeParams(1.9, 0.65);
+    SetBaseColor(new Color(0.8, 0.8, 0.8, 0.4));
+    //SetGravity(new Vector(0.0, 0.0, -6.0));
+
+    for (int I = 0; I < 10; I++)
+    {
+      SetAnimLength(16);
+      SetFixedMaterial(new String(I));
+
+      float Size = 2.0 - float(I) / 4;
+      float Deviation = 2.0 + float(I) / 7;
+      float Size1 = 2.0 - float(I) / 10;
+      float Deviation1 = float(I) / 6;
+
+//      logWarning("[TRACE] I is a "+new String(float(I)));
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, I+3, float(I)*float(I)/2,
+          new Vector(0.0, 2.0 - Deviation, float(I)/3), new Vector(0.0, 2.0 - Deviation, float(I)/3),
+          new Vector(0.5, 0.5, 0.5), new Vector(Size, Size, Size)
+        );
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, I+3, float(I)*float(I)/4,
+          new Vector(Deviation1, Deviation1, float(I)/4), new Vector(2.0 - Deviation1, 2.0 - Deviation1, float(I)/4),
+          new Vector(0.5, 0.5, 0.5), new Vector(Size-0.1, Size-0.1, Size)
+        );
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, I+3, float(I)*float(I)/4,
+          new Vector(0.0, 0.0, float(I)/3), new Vector(0.0, 0.0, float(I)/3),
+          new Vector(0.5, 0.5, 0.5), new Vector(Size-0.1, Size-0.1, Size)
+        );
+    }
+  }
+}
+
+class CGroundHE7576_85_88BulletHitRingEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundHE7576_85_88BulletHitRingEffect()
+  {
+    SetCoordSystemType(CRDSYS_Origin);
+    SetEffectTime(0.5);
+    SetAnimationTime(0.5);
+
+    SetSamplesQty(20);
+    SetSpeed(7.0, 0.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 90.0, 90.0);
+    SetRingMode(true);
+
+    SetBaseColor(new Color(0.52, 0.48, 0.35));
+    SetStartAndFinalFade(0.0, 0.01);
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 0, 5.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.2),
+        new Vector(0.3, 0.3, 0.2), new Vector(4.0, 4.0, 0.8)
+      );
+  }
+}
+
+class CGroundHE7576_85_88BulletHitSprayEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundHE7576_85_88BulletHitSprayEffect()
+  {
+    SetAnimationTime(1.0);
+    SetEffectTime(1.0);
+
+    SetSamplesQty(15);
+    SetSpeed(8.0, 1.5);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 25.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.1, 0.1);
+    SetStartAndFinalFade(0.0, 0.5);
+
+    final int SamplesQty =
+      CEffectsArray::GroundLightedCloudEffectSkin.Materials.size();
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      SetFixedMaterial("3");
+      GenerateAnimatedParticle(
+        CEffectsArray::GroundLightedCloudEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(3.0, 3.0, 3.0)
+      );
+    }
+  }
+}
+
+class CGroundHE7576_85_88BulletSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  float GenerationTime = 10.0f;
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESizeX, float _ESizeY, float _ESizeZ, float _ZDelta)
+  {
+    SetEffectTime(_EffectTime);
+    SetAnimationTime(_AnimTime);
+    SetWindEffect(0.5);
+    //logWarning("GroundHE7576_85_88BulletSmokeEffect _EffectTime = "+new String(_EffectTime)+" _AnimTime = "+new String(_AnimTime));
+    SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, _Speed));
+
+    SetSizeParams(1.0, 0.75);
+
+    for (int I = 0; I < 16; I++)
+    {
+      SetBaseColor(_Color);
+      SetStartAndFinalFade(0.0, 0.4);//, 0.5);
+      SetFixedMaterial(new String(I % CEffectsArray::GroundDustEffectSkin.Materials.size()));
+      //logWarning("GroundHE7576_85_88BulletSmokeEffect _EffectTime = "+new String(_EffectTime)+" _AnimTime = "+new String(_AnimTime));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), 0), new Vector(rand(_EPos), rand(_EPos), _ZDelta),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESizeX, _ESizeY, _ESizeZ)
+        );
+    }
+  }
+
+  CGroundHE7576_85_88BulletSmokeEffect()
+  {
+  // EffectTime, AnimTime, ItemsPerSec, Speed, Color, SPos, EPos, SSize, ESizeX, ESizeY, ESizeZ, ZDelta
+    //Init(120.0, 6.5, 2.0, 12.0, new Color(0.1, 0.1, 0.1), 1.7, 2.5, 2.3, 3.0, 2.3);
+    Init(70.0, 60.0, 0.5, 0.2, new Color(0.8, 0.8, 0.7, 0.2), 0.2, 1.5, 0.5, 1.5, 1.5, 1.5, 1.5);
+  }
+}
+
+class CHE7576_85_88BulletGroundHitSmokeEffect
+ extends CAnimatedParticleGenerator
+{
+  CHE7576_85_88BulletGroundHitSmokeEffect()
+  {
+    SetCoordSystemType(CRDSYS_Local);
+
+    SetAnimationTime(3.0);
+    SetEffectTime(3.0);
+
+    SetSizeParams(1.5, 2.0);
+    SetAnimLength(7); //SetAnimLength(16);
+
+    //SetBaseColor(new Color(0.8, 0.8, 0.7));
+    SetBaseColor(new Color(106.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 0.85000));
+    SetStartAndFinalFade(0.0, 0.7);
+    EnableItemCreation(true);
+    SetFixedMaterial("0");
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 1, 4.0,
+        new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 0.5),
+        new Vector(0.8, 0.8, 0.8), new Vector(3.0, 3.0, 3.0) //new Vector(0.3, 0.3, 0.3), new Vector(3.0, 3.0, 3.0)
+      );
+
+    SetFixedMaterial("1");
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 2, 4.0,
+        new Vector(0.0, 0.0, 1.5), new Vector(0.0, 0.0, 1.5),
+        new Vector(1.0, 1.0, 1.0), new Vector(3.2, 3.2, 3.2) // new Vector(0.7, 0.7, 0.7), new Vector(3.2, 3.2, 3.2)
+      );
+    SetFixedMaterial("2");
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 4, 4.0,
+        new Vector(0.0, 0.0, 2.5), new Vector(0.0, 0.0, 2.5),
+        new Vector(1.5, 1.5, 1.5), new Vector(3.3, 3.3, 3.3) // new Vector(1.2, 1.2, 1.2), new Vector(3.3, 3.3, 3.3)
+      );
+    SetFixedMaterial("3");
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 5, 4.0,
+        new Vector(0.0, 0.0, 3.5), new Vector(0.0, 0.0, 3.5),
+        new Vector(1.8, 1.8, 1.8), new Vector(3.5, 3.5, 3.5) // new Vector(1.5, 1.5, 1.5), new Vector(3.5, 3.5, 3.5)
+      );
+    SetFixedMaterial("5");
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 4.0,
+        new Vector(0.0, 0.0, 4.5), new Vector(0.0, 0.0, 4.5),
+        new Vector(2.1, 2.1, 2.1), new Vector(4.0, 4.0, 3.0) // new Vector(1.8, 1.8, 1.8), new Vector(4.0, 4.0, 3.0)
+      );
+  }
+}
+
+class CHE7576_85_88BulletGroundHitSplashEffect
+  extends CAnimatedParticleGenerator
+{
+  CHE7576_85_88BulletGroundHitSplashEffect()
+  {
+    SetAnimationTime(0.3);
+    SetEffectTime(0.3);
+
+    SetBaseColor(new Color(1.0, 0.9, 0.2));
+
+    GenerateAnimatedParticle(
+        CEffectsArray::SplashBulletGroundEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.3),
+        new Vector(0.0, 0.0, 0.0), new Vector(1.5, 2.0, 2.0)
+      );
+  }
+}
+
+class CGroundHE7576_85_88BulletSinkDustEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundHE7576_85_88BulletSinkDustEffect()
+  {
+    SetCoordSystemType(CRDSYS_Origin);
+    SetAnimationTime(4.5);
+    SetEffectTime(4.5);
+
+    SetSamplesQty(10);
+
+    SetSizeParams(1.3, 1.0);
+
+    SetSpeed(1.2, 1.2);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 90.0, 90.0);
+    SetRingMode(true);
+
+    SetBaseColor(new Color(0.52, 0.48, 0.35, 0.4));
+    SetStartAndFinalFade(0.1, 0.8, 0.5);
+
+    GenerateAnimatedParticle(
+      CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+      new Vector(0.0, 0.0, 0.4), new Vector(0.0, 0.0, 0.0),
+      new Vector(4.5, 4.5, 1.5), new Vector(4.0, 4.0, 1.5)
+                            );
+  }
+}

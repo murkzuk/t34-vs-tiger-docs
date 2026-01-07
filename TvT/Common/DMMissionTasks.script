@@ -1,0 +1,136 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+class CMultiplayerBotTask extends CBaseAITankTask
+{
+  static float AttackDistanceMin = 50.0f;
+  static float AttackDistanceMax = 600.0f;
+  static float AttackSpeedMax = 40.0f;
+
+  void Init()
+  {
+    CBaseAITankTask::Init();
+    
+    ActivateRadar(true);
+    ActivateFire(true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);     
+     
+    sendEvent(1.0, getIdentificator(user), "remove", []);     
+
+    Component beh = user.GetBehavior();
+    if(beh == null)
+      LogError("non behavior");
+      
+    beh.SetAttackDistances(AttackDistanceMin, AttackDistanceMax);
+    
+    Component console = new #GameController().GetObject(SOID_Console);
+    //console.showbehinf(true);
+  }
+  
+  Vector CultVector(Vector _dist, Vector _from)
+  {
+    Vector to = _dist - _from;
+    to.Normalize();
+    float l = 300.0 + randnum(200);
+    to = to * l;
+    float Radius = randnum(100);
+    Vector RandomVector = new Vector(rand(Radius), rand(Radius), 0.0);
+    return _from + to + RandomVector;
+  }
+  
+  event void remove()
+  {
+    String TargetedEnemy = GetTargetedEnemy();
+    if(TargetedEnemy != "")
+      return;
+      
+    Component mission = GetMission();
+    int v = randnum(3);
+    Vector from = getPosition(mission.GetObject(getIdentificator(user))).origin;
+    if(v == 0)
+    {
+      Matrix Free = mission.GetFreeSpawnPoasition(getIdentificator(user));
+      SetOrder_MoveTo(CultVector(Free.origin, from), AttackSpeedMax);
+      
+    }
+    if(v == 1)
+    {
+      Matrix Free = mission.GetFreeSpawnPoasition(getIdentificator(user));
+      SetOrder_MoveTo(CultVector(Free.origin, from), AttackSpeedMax);
+    }
+    if(v == 2)
+    {
+      Vector middlePos = new Vector(0.0,0.0,0.0);
+      middlePos = mission.GetMiddleRespawnOrigin();
+      SetOrder_MoveTo(CultVector(middlePos, from), AttackSpeedMax);
+    }
+    
+    int nextEvent = 40 + randnum(30);    
+    sendEvent(nextEvent, getIdentificator(user), "remove", []);
+  }
+
+  void OnPathEndReached()
+  {
+    CBaseAITankTask::OnPathEndReached();
+    int TimeStop = Behavior.GetNoMoveTime();
+    String TargetedEnemy = GetTargetedEnemy();
+    if(TargetedEnemy == "" && TimeStop > 7.0)
+    {
+      clearEventsForObject(getIdentificator(user));
+      sendEvent(2.0, getIdentificator(user), "remove", []);
+    }
+  }
+  
+  void OnUnreacheable(Vector _Destination)
+  {
+    String TargetedEnemy = GetTargetedEnemy();
+    if(TargetedEnemy == "")
+    {
+      clearEventsForObject(getIdentificator(user));
+      sendEvent(1.0, getIdentificator(user), "remove", []);
+    }
+  }
+}
+
+class CMultiplayerHardBotTask extends CMultiplayerBotTask
+{
+  static float AttackDistanceMin = 5.0f;
+  static float AttackDistanceMax = 1000.0f;
+  static float AttackSpeedMax = 60.0f;
+  
+  float GetAttackShootTime(String _EnemyID)     // вызывается 1 раз в атаке сколько времени будет стоять для стрельбы
+  {
+    //logMessage("[CBaseTankAttackStyle] Call GetAttackShootTime");
+    return 12.0f;
+  }
+
+  float GetAttackAngle(String _EnemyID)    // вызывается 1 раз в атаке когда переходит в состояние атаки ... в градусах
+  {
+    //logMessage("[CBaseTankAttackStyle] Call GetAttackAngle");
+    return 360.0f;
+  }
+}
+
+class CMultiplayerEasyBotTask extends CMultiplayerBotTask
+{
+  static float AttackDistanceMin = 70.0f;
+  static float AttackDistanceMax = 400.0f;
+  static float AttackSpeedMax = 30.0f;
+  
+  float GetAttackShootTime(String _EnemyID)     // вызывается 1 раз в атаке сколько времени будет стоять для стрельбы
+  {
+    //logMessage("[CBaseTankAttackStyle] Call GetAttackShootTime");
+    return 3.0f;
+  }
+
+  float GetAttackAngle(String _EnemyID)    // вызывается 1 раз в атаке когда переходит в состояние атаки ... в градусах
+  {
+    //logMessage("[CBaseTankAttackStyle] Call GetAttackAngle");
+    return 20.0f;
+  }
+}

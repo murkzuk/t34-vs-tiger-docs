@@ -1,0 +1,58 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+class CCalibre7576_85_88BulletArmourHitSplashEffect
+  extends CAnimatedParticleGenerator
+{
+  CCalibre7576_85_88BulletArmourHitSplashEffect()
+  {
+    SetAnimationTime(0.2);
+    SetEffectTime(0.2);
+
+    ExpandFramesTable(2);
+    SetSkinClass(CEffectsArray::BaseEffectsSkin);
+
+    final int ID1 = CreateParticle(
+        EPPID_STATIC_PLANE_XY,
+        new Vector(0.0, 0.0, 0.1),
+        new Vector(0.0, 0.0, 0.0),
+        "Halo",
+        new Color(0.929411, 0.964705, 0.960784, 0.5)
+      );
+    SetSizeFactor(ID1, 0, new Vector(0.01, 0.01, 0.01));
+    SetSizeFactor(ID1, 1, new Vector(0.1, 0.1, 0.1));
+
+    final int ID2 = CreateParticle(
+        EPPID_BILLBOARD_PLANE,
+        new Vector(0.0, 0.0, 0.1),
+        new Vector(0.0, 0.0, 0.0),
+        "Halo",
+        new Color(0.929411, 0.964705, 0.960784, 0.5)
+      );
+    SetSizeFactor(ID2, 0, new Vector(0.01, 0.01, 0.01));
+    SetSizeFactor(ID2, 1, new Vector(0.1, 0.1, 0.1));  }
+}
+//HE 7576
+class CArmourHE7576_85_88BulletHitSplashEffect
+  extends CAnimatedParticleGenerator
+{
+  CArmourHE7576_85_88BulletHitSplashEffect()
+  {
+    SetAnimationTime(0.5);
+    SetEffectTime(0.5);
+
+    SetSizeParams(1.0, 1.0);
+    SetBaseColor(new Color(1.0, 0.8, 0.0));
+    SetStartAndFinalFade(0.0, 0.9, 0.5);
+    GenerateAnimatedParticle(
+        CEffectsArray::SplashBulletGroundEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(0.1, 0.1, 0.1), new Vector(2.0, 2.0, 1.7)
+      );
+  }
+}

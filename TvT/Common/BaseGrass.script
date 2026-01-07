@@ -1,0 +1,292 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Описание типов травы
+//
+
+class CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord          = [0, 0, 512, 512];
+
+  // Максимальное расстояние видимости (минимально и максимально возможные значения)
+  Array   MaxVisDist        = [20.0, 150.0];
+
+  // Задает функцию распределения элементов (1 - линейная, 2 - квадратичная, и т.п.)
+  int     MaxVisDistPower   = 5;
+
+  // Плотность посадки - кустов на метр квадратный
+  // куст это два скрещивающихся билборда
+  float   Density           = 0.5;
+
+  // Отклонение (+/-) от вертикали в градусах
+  float   RotationVar       = 20.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width             = [0.5, 0.6];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height            = [1.0, 1.3];
+
+  // Яркость (минимум, максимум)
+  Array   Brightness        = [0.99, 1.08];
+
+  // Динамический коэффициент яркости (возникает при ветре)
+  Array   DynamicBrightness = [0.0, 0.3];
+}
+
+// Meadow grass (Meadow group)
+class CGrassType0 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [0, 0, 256, 256];
+
+  float   Density         = 0.5;
+
+  float   RotationVar     = 25.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [0.5, 0.7];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.5, 0.7];
+}
+
+// High grass (Meadow group)
+class CGrassType1 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [256, 0, 256, 256];
+
+  float   Density         = 2.5;
+
+  float   RotationVar     = 15.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [0.5, 0.7];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.5, 0.7];
+}
+
+// Rye densely (Field group)
+class CGrassType2 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [768, 0, 256, 512];
+
+  float   Density         = 2.9;
+
+  float   RotationVar     = 15.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [0.50, 0.6];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.8, 1.1];
+}
+
+// Forest grass (Forest group)
+class CGrassType3 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [0, 256, 256, 128];
+
+  float   Density         = 2.0;
+
+  float   RotationVar     = 20.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [1.0, 1.4];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.3, 0.5];
+}
+
+// Meadow grass (Forest group)
+class CGrassType4 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [0, 384, 128, 128];
+
+  float   Density         = 0.1;
+
+  float   RotationVar     = 25.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [0.5, 0.7];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.5, 0.7];
+}
+
+// High grass (Forest group)
+class CGrassType5 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [128, 384, 128, 128];
+
+  float   Density         = 0.5;
+
+  float   RotationVar     = 15.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [0.4, 0.6];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.4, 0.6];
+}
+
+// High grass (Lowland group)
+class CGrassType6 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [512, 0, 256, 512];
+
+  float   Density         = 0.2;
+
+  float   RotationVar     = 15.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [0.9, 1.2];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [1.1, 1.2];
+}
+
+// Meadow grass (Lowland group)
+class CGrassType7 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [256, 384, 256, 128];
+
+  float   Density         = 1.5;
+
+  float   RotationVar     = 20.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [1.0, 1.4];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.3, 0.5];
+}
+
+// Forest grass 
+class CGrassType8 extends CGrassType
+{
+  // Текстурные координаты (лево, верх, ширина, высота)
+  Array   TexCoord        = [256, 256, 256, 128];
+
+  float   Density         = 1.0;
+
+  float   RotationVar     = 25.0;
+
+  // Ширина куста в метрах (минимум, максимум)
+  Array   Width           = [1.7, 1.8];
+
+  // Высота куста в метрах (минимум, максимум)
+  Array   Height          = [0.7, 0.8];
+}
+
+//
+// Базовый класс травы
+//
+// 1. Medow group
+// 2. Forest group
+// 3. Field group
+// 4. Lowland group
+//
+
+class CBaseGrassC1 extends CBaseZoneMap
+{
+  Array GrassArray =
+  [
+    [
+      [
+        new CGrassType0(),
+        new CGrassType1()
+      ],
+
+      [
+        ZMC_Grass01
+      ]
+    ],
+
+    [
+      [
+        new CGrassType3(),
+        new CGrassType4(),
+        new CGrassType5()
+      ],
+
+      [
+        ZMC_Grass02,
+        ZMC_Forest02,
+        ZMC_Forest03,
+        ZMC_Forest04,
+        ZMC_VillagePlanting01,
+        ZMC_VillagePlanting02,
+        ZMC_SpecialLongAloneTree       
+      ]
+    ],
+
+    [
+      [
+        new CGrassType2()
+      ],
+
+      [
+        ZMC_Grass03
+      ]
+    ],
+
+    [
+      [
+        new CGrassType6(),
+        new CGrassType7()
+      ],
+
+      [
+        ZMC_Grass04,
+        ZMC_ShrubberyRegular,
+        ZMC_ShrubberyCasual
+      ]
+    ],
+
+    [
+      [
+        new CGrassType8(),
+        new CGrassType4()
+      ],
+
+      [
+        ZMC_Forest01
+      ]
+    ]
+
+  ];
+
+  float   AlphaBlendDistanceFactor = 0.8; //jm 0.4
+  boolean RenderOverShadow         = true; //jm false
+
+  String SkinClass = "CBaseGrassSkin";
+
+  float WindPeriod = 1.0f;
+  float WindFreq   = 0.025f;
+
+}
+
+
+class CBaseGrassSkin
+{
+  Array Materials = [
+      new CGrassBillboardMaterial("Grass", "Textures/grass.tex")
+  ];
+}

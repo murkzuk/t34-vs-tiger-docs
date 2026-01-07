@@ -1,0 +1,108 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+// This class use for create units with inside and outside models
+class CExtendUnit 
+{
+  Component m_GroupObject = null;
+
+  CExtendUnit()
+  {
+    m_GroupObject = new #GroupObject();
+  }
+
+  void SetupExtendMesh(
+      String _OutsideModel,
+      String _InsideModel
+    )
+  {
+    // Create outside mesh
+    Component OutsideMesh = new #AnimatedObject();
+    loadFromScript(OutsideMesh, _OutsideModel);
+
+    // Initialize outside mesh
+    SetupMesh(OutsideMesh);
+
+    // Create inside mesh
+    Component InsideMesh = new #PartObject();
+    loadFromScript(InsideMesh, _InsideModel);
+
+    Component Materials = InsideMesh.GetMaterials();
+    if (null != Materials)
+      Materials.LoadPhysicsTable(CSubstances::PhysicsTable);
+
+    // Eliminate view matrix for inside mesh
+    InsideMesh.EnableViewMatrix(false);
+    InsideMesh.SetLightsSelectionMode(LSM_LocalLights);
+    InsideMesh.SetLightsFlags("", LF_Local | LF_Context, true);
+    InsideMesh.SetupSelfLightsReference();
+
+    // Disable renders by default
+    InsideMesh.EnableRenderOnlyToCamera(getIdentificator(user), true);
+    InsideMesh.EnableShadowOnlyToCamera(getIdentificator(user), true);
+
+    InsideMesh.EnableRenderToCamera(getIdentificator(user),  false);
+    InsideMesh.EnableShadowToCamera(getIdentificator(user),  false);
+
+    // Set near layer for object
+    InsideMesh.SetRenderLayer(PRIMLAYER_NEAR);
+
+    // Register inside mesh
+    RegisterObject("InsideMesh", InsideMesh);
+
+    // Set slave objects
+    m_GroupObject.SetSlaveObjects(
+        [ OutsideMesh, InsideMesh ] 
+      );
+
+    m_GroupObject.SetMainObject(OutsideMesh);
+  }
+
+  void SetupExtendMesh(
+      String _OutsideModel,
+      String _InsideModel,
+      Array  _Lods
+    )
+  {
+    SetupExtendMesh(_OutsideModel, _InsideModel);
+    GetOutsideMesh().SetLods(_Lods);
+  }      
+
+  Component GetInsideMesh()
+  {
+    return GetObject("InsideMesh");      
+  }
+
+  Component GetOutsideMesh()
+  {
+    return GetMeshComponent();      
+  }
+
+  Component GetGroupObject()
+  {
+    return m_GroupObject;
+  }
+
+  void BuildOnlyOutsideMesh()
+  {
+    // check meshes
+    boolean bHaveInsideMesh  = (null != GetInsideMesh());
+    if (!bHaveInsideMesh)
+      return;
+
+    // Set slave object as outside mesh
+    m_GroupObject.SetSlaveObjects(
+        [ GetOutsideMesh() ] 
+      );
+
+    // Unregister meshes
+    if (bHaveInsideMesh)
+      UnregisterObject("InsideMesh");
+  }
+}

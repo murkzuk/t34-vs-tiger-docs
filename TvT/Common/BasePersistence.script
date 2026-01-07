@@ -1,0 +1,97 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+//
+// IPersistent
+//
+
+class IPersistent
+{
+  variant GetToken()
+  {
+  }
+
+  variant GetState()
+  {
+  }
+
+  void SetState(
+      variant _State
+    )
+  {
+  }
+}
+
+//
+// CBasePersistentContainer
+//
+
+class CBasePersistentContainer
+  extends IPersistent
+{
+  //
+  // To be overriden
+  //
+
+  Array GetPersistents()
+  {
+    logWarning("CBasePersistentContainer::GetPersistents(): not implemented");
+
+    return [];
+  }
+
+  //
+  // IPersistent
+  //
+
+  variant GetState()
+  {
+    Map Result = new Map();
+
+    Array Items = GetPersistents();
+    for (int i = 0; i < Items.size(); i++)
+    {
+      Component Item = Items[i];
+
+      // Check if item is IPersistent
+      if (!isFunctionExist(Item, "GetToken", 0))
+        continue;
+
+      // Save item state
+      Result.insert(Item.GetToken(), Item.GetState());
+    }
+
+    return Result;
+  }
+
+  void SetState(
+      variant _State
+    )
+  {
+    if (getVariableType(_State) == ST_MAP)
+    {
+      Array Items = GetPersistents();
+      for (int i = 0; i < Items.size(); i++)
+      {
+        Component Item = Items[i];
+
+        // Check if item is IPersistent
+        if (!isFunctionExist(Item, "GetToken", 0))
+          continue;
+
+        // Restore item state
+        if (_State.find(Item.GetToken()))
+          Item.SetState(_State.getValue());
+      }
+    }
+    else
+      logError("CBasePersistentContainer::SetState(): invalid state type");
+  }
+}

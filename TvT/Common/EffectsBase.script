@@ -1,0 +1,924 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Base classes
+//
+class CBaseEffect
+{
+  boolean m_SortByZ          = true;
+}
+
+class CAnimatedParticleGenerator
+  extends CBaseEffect
+{
+  int     m_PatternID        = EPPID_BILLBOARD_PLANE;
+  float   m_PlacePower       = 1.0;
+  float   m_SizeFactor       = 1.0;
+  float   m_SizePower        = 0.75;
+  Color   m_BaseColor        = new Color(1.0, 1.0, 1.0);
+  float   m_MinAlpha         = 0.0f;
+  float   m_MaxAlpha         = 1.0f;
+  Vector  m_Gravity          = new Vector(0.0, 0.0, 0.0);
+
+  boolean m_CreateItem       = true;
+  int     m_LastPartID       = -1;
+
+  float   m_FadeFrom         = 1.0;
+  float   m_FadeTo           = 0.0;
+  float   m_FadePower        = 1.0;
+
+  float   m_RiseFrom         = 0.0;
+  float   m_RiseTo           = 0.000001;
+
+  String  m_MaterialID       = "";
+  int     m_AnimLength       = 0;
+  float   m_AnimScale        = 1.0f;
+
+  float   m_RotationFrom     = 0.0f;
+  float   m_RotationTo       = 0.0f;
+
+  void SetPrimitiveType(int _PrimType)
+  {
+    m_PatternID = _PrimType;
+  }
+
+  void SetSizeParams(float _Factor, float _Power)
+  {
+    m_SizeFactor = _Factor;
+    m_SizePower  = _Power;
+  }
+
+  void SetPlaceParams(float _Power)
+  {
+    m_PlacePower  = _Power;
+  }
+
+  void SetBaseColor(Color _BaseColor)
+  {
+    m_BaseColor = _BaseColor;
+  }
+
+  void EnableItemCreation(boolean _Enable)
+  {
+    m_CreateItem = _Enable;
+  }
+
+  void DisableAnimation(boolean _Enable)
+  {
+    m_DisableAnimation = _Enable;
+  }
+
+  void SetStartAndFinalFade(float _To, float _From)
+  {
+    m_FadeTo   = _To;
+    m_FadeFrom = _From;
+  }
+
+  void SetStartAndFinalFade(float _To, float _From, float _FadePower)
+  {
+    m_FadeTo       = _To;
+    m_FadeFrom     = _From;
+    m_FadePower    = _FadePower;
+  }
+
+  void SetStartAndFinalRise(float _From, float _To)
+  {
+    m_RiseFrom = _From;
+    m_RiseTo   = _To;
+  }
+
+  void SetFixedMaterial(String _MaterialID)
+  {
+    m_MaterialID = _MaterialID;
+  }
+
+  void SetAnimLength(int _AnimLength)
+  {
+    m_AnimLength = _AnimLength;
+  }
+
+  int GetLastParticleId()
+  {
+    return m_LastPartID;
+  }
+
+  void SetAnimScale(float _Scale)
+  {
+    m_AnimScale = _Scale;
+  }
+
+  void SetRotation(float _From, float _To)
+  {
+    m_RotationFrom = _From;
+    m_RotationTo   = _To;
+  }
+
+  void GenerateAnimatedParticle(
+      Component _SkinClass,
+      int       _StartFrame,
+      float     _TimeScale,
+      Vector    _StartPlace,
+      Vector    _FinalPlace,
+      Vector    _StartSize,
+      Vector    _FinalSize,
+      int       _BlendFrameSize
+    )
+  {
+    int AnimLength = m_AnimLength;
+    if (AnimLength == 0)
+      AnimLength = _SkinClass.Materials.size();
+
+    int FramesQty = int(m_AnimScale * float(AnimLength) * _TimeScale + abs(_BlendFrameSize));
+
+    SetSkinClass(_SkinClass);
+    ExpandFramesTable(_StartFrame + FramesQty);
+
+    // create particle
+    if (m_CreateItem)
+    {
+      m_LastPartID = CreateParticle(
+          EPPID_NULL,
+          new Vector(0.0, 0.0, 0.0),
+          new Vector(0.0, 0.0, 0.0),
+          m_MaterialID,
+          new Color(1.0, 1.0, 1.0, 0.0)
+        );
+    }
+
+    int SkippedFrames = 1;
+    for (int Frame = 0; Frame < FramesQty; Frame++)   
+    {
+      if (Frame < _BlendFrameSize)
+      {
+        // blend with exists particles frames
+        float Density = float(_BlendFrameSize) / (Frame + 1);
+
+        if (Density > float(SkippedFrames))
+        {
+          SkippedFrames++;
+          //logMessage("Frame " + new String(Frame) + "skipped");
+          continue;
+        }
+        SkippedFrames = 1;
+      }
+
+      float Phase      = float(Frame);
+      if(FramesQty > 1)
+        Phase      = Phase / float(FramesQty - 1);
+      float PPhase     = pow(Phase, m_PlacePower);
+      float PPhase2    = pow(Phase, m_PlacePower * 2.0);
+      float SPhase     = pow(Phase, m_SizePower);
+      float RPhase     = Phase;
+
+      float Alpha = (m_MaxAlpha - m_MinAlpha);
+
+      if (Alpha < 0.0)
+        Alpha = 0.0f;
+
+      float AlphaDiff = Alpha;
+
+      if (   m_RiseFrom < Phase
+            && m_RiseTo   > Phase)
+        Alpha = AlphaDiff * (Phase - m_RiseFrom)/(m_RiseTo - m_RiseFrom);
+
+      if (m_RiseTo < Phase)
+        Alpha = AlphaDiff;
+
+      if (m_FadeTo > Phase)
+        Alpha -= AlphaDiff * pow((m_FadeTo - Phase) / m_FadeTo, m_FadePower);
+      if (m_FadeFrom < Phase)
+        Alpha -= AlphaDiff * pow((Phase - m_FadeFrom) / (1.0 - m_FadeFrom), m_FadePower);
+
+      Alpha += m_MinAlpha;
+
+      Alpha *= m_BaseColor.a;
+
+      if (m_AnimScale != 1.0f)
+        Phase = fmod(Phase * m_AnimScale, 1.0f);
+
+      String MaterialID = m_MaterialID;
+
+      if (MaterialID == "")
+        MaterialID = new String(int(float(AnimLength - 1) * Phase ));
+
+      SetPattern( m_LastPartID, _StartFrame + Frame, m_PatternID );
+      SetMaterial( m_LastPartID, _StartFrame + Frame, MaterialID );
+
+      SetPosition( m_LastPartID, _StartFrame + Frame,
+        ( _StartPlace + ( _FinalPlace - _StartPlace) * PPhase + m_Gravity * PPhase2 ) * m_SizeFactor);
+
+      SetSizeFactor( m_LastPartID, _StartFrame + Frame,
+        ( _StartSize + (_FinalSize - _StartSize) * SPhase) * m_SizeFactor );
+
+      SetColor( m_LastPartID, _StartFrame + Frame,
+        new Color( m_BaseColor.r, m_BaseColor.g, m_BaseColor.b, Alpha ));
+
+      SetRotationAngle( m_LastPartID, _StartFrame + Frame, m_RotationFrom + (m_RotationTo - m_RotationFrom) * RPhase);
+    }
+  }
+
+  void GenerateShiftedAnimatedParticle(
+      Component _SkinClass,
+      int       _ShiftFrame,
+      int       _FramesQty,
+      Vector    _StartPlace,
+      Vector    _FinalPlace,
+      Vector    _StartSize,
+      Vector    _FinalSize
+    )
+  {
+    int AnimLength = _SkinClass.Materials.size();
+    int FramesQty  = _FramesQty;
+
+    SetSkinClass(_SkinClass);
+    ExpandFramesTable(FramesQty);
+
+    // create particle
+    if (m_CreateItem)
+    {
+      m_LastPartID = CreateParticle(
+          EPPID_NULL,
+          new Vector(0.0, 0.0, 0.0),
+          new Vector(0.0, 0.0, 0.0),
+          m_MaterialID,
+          new Color(1.0, 1.0, 1.0)
+        );
+    }
+
+    for (int Frame = 0; Frame < FramesQty; Frame++)
+    {
+      float Phase   = float(Frame) / float(FramesQty - 1);
+      float PPhase  = pow(Phase, m_PlacePower);
+      float PPhase2 = pow(Phase, m_PlacePower * 2.0);
+      float SPhase  = pow(Phase, m_SizePower);
+
+      float Alpha   = m_BaseColor.a;
+
+      if (m_FadeTo > Phase)
+        Alpha -= m_BaseColor.a * (m_FadeTo - Phase) / m_FadeTo;
+      if (m_FadeFrom < Phase)
+        Alpha -= m_BaseColor.a * (Phase - m_FadeFrom) / (1.0 - m_FadeFrom);
+
+      String MaterialID = m_MaterialID;
+      if (MaterialID == "")
+        MaterialID = new String(int(float(AnimLength - 1) * Phase));
+
+      int FrameIdx = (_ShiftFrame + Frame) % FramesQty;
+
+      SetPattern(m_LastPartID, FrameIdx, m_PatternID);
+      SetMaterial(m_LastPartID, FrameIdx, MaterialID);
+
+      SetPosition(m_LastPartID, FrameIdx,
+        (_StartPlace + (_FinalPlace - _StartPlace) * PPhase + m_Gravity * PPhase2) * m_SizeFactor);
+
+      SetSizeFactor(m_LastPartID, FrameIdx,
+        (_StartSize + (_FinalSize - _StartSize) * SPhase) * m_SizeFactor);
+
+      SetColor(m_LastPartID, FrameIdx,
+        new Color(m_BaseColor.r, m_BaseColor.g, m_BaseColor.b, Alpha));
+    }
+  }
+
+  void GenerateAnimatedParticle(
+      Component _SkinClass,
+      int       _StartFrame,
+      float     _TimeScale,
+      Vector    _StartPlace,
+      Vector    _FinalPlace,
+      Vector    _StartSize,
+      Vector    _FinalSize
+    )
+  {
+    GenerateAnimatedParticle(
+      _SkinClass, _StartFrame, _TimeScale, _StartPlace, _FinalPlace, _StartSize, _FinalSize, 0);
+  }
+
+  void GenerateAnimatedParticle(
+      Component _SkinClass,
+      int       _StartFrame,
+      float     _TimeScale,
+      Vector    _StartPlace,
+      Vector    _FinalPlace,
+      Vector    _SizeFactor
+    )
+  {
+    GenerateAnimatedParticle(
+      _SkinClass, _StartFrame, _TimeScale, _StartPlace, _FinalPlace, _SizeFactor, _SizeFactor);
+  }
+
+  void GenerateAnimatedParticle(
+      Component _SkinClass,
+      int       _StartFrame,
+      float     _TimeScale,
+      Vector    _Position,
+      Vector    _SizeFactor
+    )
+  {
+    GenerateAnimatedParticle(
+      _SkinClass, _StartFrame, _TimeScale, _Position, _Position, _SizeFactor, _SizeFactor);
+  }
+}
+
+class CLightSplashBaseEffect
+  extends CBaseEffect
+{
+  float m_ColorPower = 0.5f;
+
+  CLightSplashBaseEffect(
+      float _Time,
+      Color _Color,
+      float _Range,
+      float _Atten
+    )
+  {
+    SetEffectTime(_Time);
+    SetAnimationTime(_Time);
+
+    ExpandFramesTable(7);
+
+    SetLightType(LIGHTTYPE_POINT);
+    SetAttenuation(1.0, 0.0, _Atten);
+    SetDynamicMode(true);
+
+    for (int FrameNum = 0; FrameNum < GetFramesQuantity(); FrameNum++)
+    {
+      float Phase = float(FrameNum) / float(GetFramesQuantity() - 1);
+
+      SetPosition(FrameNum, new Vector(0.0, 0.0, 0.0));
+      SetRange(FrameNum, _Range);
+      SetColor(FrameNum, _Color * sin(pow(Phase, m_ColorPower) * Math_PI));
+    }
+  }
+}
+
+class CGunFireTripleGenerator
+  extends CBaseEffect
+{
+  Color m_DirectColor = new Color(1.0, 1.0, 1.0, 0.0);
+  Color m_SideColor   = new Color(1.0, 0.9, 0.5, 0.0);
+
+  float m_AlphaPower  = 5.0;
+  float m_GeomPower   = 0.5;
+
+  float m_SizeFactor  = 1.0;
+
+  Vector FireIDSizeFactor  = new Vector(0.9, 0.3, 0.3);
+  Vector FireIDPosition    = new Vector(0.9, 0.0, 0.0); //for SetPosition
+
+  Vector SideID1SizeFactor = new Vector(0.2, 0.2, 0.6);
+  Vector SideIDPosition    = new Vector(-0.1, 0.0, 0.0); //for CreatePartile
+
+  Vector SideID2SizeFactor = new Vector(0.2, 0.6, 0.2);
+
+  void GenerateGunFireTriple()
+  {
+    SetSkinClass(CEffectsArray::BaseEffectsSkin);
+    ExpandFramesTable(16);
+
+    int FireID = CreateParticle(
+        EPPID_BILLBOARD_XAXIS,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.0, 0.0, 0.0),
+        "GunFire Forward",
+        new Color(1.0, 0.0, 0.0)
+      );
+
+    int SideID1 = CreateParticle(
+        EPPID_BILLBOARD_ZAXIS,
+        SideIDPosition,
+        new Vector(0.0, 0.0, 0.0),
+        "GunFire Side",
+        new Color(1.0, 0.0, 0.0)
+      );
+
+    int SideID2 = CreateParticle(
+        EPPID_BILLBOARD_YAXIS,
+        SideIDPosition,
+        new Vector(0.0, 0.0, 0.0),
+        "GunFire Side",
+        new Color(1.0, 0.0, 0.0)
+      );
+
+    for (int Frame = 0; Frame < GetFramesQuantity(); Frame++)
+    {
+      float Phase  = float(Frame) / float(GetFramesQuantity() - 1);
+      float GPhase = pow(Phase, m_GeomPower) * m_SizeFactor;
+      Color Alpha  = new Color(0.0, 0.0, 0.0, 1.0 - pow(Phase, m_AlphaPower));
+
+      SetPosition(FireID, Frame, FireIDPosition * GPhase);
+      SetSizeFactor(FireID, Frame, FireIDSizeFactor * GPhase);
+      SetColor(FireID, Frame, m_DirectColor + Alpha);
+
+      SetSizeFactor(SideID1, Frame, SideID1SizeFactor * GPhase);
+      SetColor(SideID1, Frame, m_SideColor + Alpha);
+
+      SetSizeFactor(SideID2, Frame, SideID2SizeFactor * GPhase);
+      SetColor(SideID2, Frame, m_SideColor + Alpha);
+    }
+  }
+}
+
+class CTerrainExplosionDustEffect
+  extends CAnimatedParticleGenerator
+{
+  Vector  StartPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  FinalPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  StartSize  = new Vector(1.0, 1.0, 1.0);
+  Vector  FinalSize  = new Vector(5.0, 5.0, 5.0);
+
+  CTerrainExplosionDustEffect()
+  {
+    SetAnimationTime(7.0);
+    SetEffectTime(7.2);
+
+    SetSamplesQty(25);
+    SetSpeed(6.0, 10.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 7.0, 13.5);
+    SetGravity(CWorldPhysics::GravityVector);
+    SetRingMode(true);
+
+    SetSizeParams(2.0, 0.75);
+  }
+
+  GenerateSamples(
+      Component _SkinClass
+    )
+  {
+    GenerateAnimatedParticle(
+        _SkinClass, 0, 1.0,
+        StartPlace, FinalPlace,
+        StartSize,  FinalSize
+      );
+  }
+}
+
+//
+// Spray effects
+//
+
+class CBaseSprayEffect
+  extends CBaseEffect
+{
+  float  m_DebrisSize    = 1.0;
+  Vector m_StartPosition = new Vector(0.0, 0.0, 0.0);
+
+  CBaseSprayEffect(
+      Component _SkinClass,
+      float     _EffectTime,
+      float     _AnimTime,
+      int       _DebrisQty,
+      float     _Speed,
+      float     _SpeedDev,
+      float     _Angle,
+      float     _MinEffectSize,
+      float     _MaxEffectSize,
+      Color     _Color,
+      float     _ColorDev
+    )
+  {
+    SetAnimationTime(_EffectTime);
+    SetEffectTime(_AnimTime);
+
+    SetSamplesQty(_DebrisQty);
+    SetSpeed(_Speed, _SpeedDev);
+    SetDirection(new Vector(0.0, 0.0, 1.0), _Angle);
+    SetGravity(CWorldPhysics::GravityVector * 0.5);
+
+    ExpandFramesTable(1);
+
+    SetSkinClass(_SkinClass);
+    final int ItemsQty = _SkinClass.Materials.size();
+
+    float ColorDev = 0.0;
+    for (int Item = 0; Item < ItemsQty; Item++)
+    {
+      ColorDev = rand(_ColorDev);
+      CreateParticle(
+          EPPID_BILLBOARD_PLANE,
+          new Vector(rand(m_StartPosition.x), rand(m_StartPosition.y), rand(m_StartPosition.z)),
+          new Vector(0.01, 0.01, 0.01) * m_DebrisSize * rand(_MinEffectSize, _MaxEffectSize),
+          new String(Item),
+          _Color + new Color(ColorDev, ColorDev, ColorDev, 0.0)
+        );
+    }
+  }
+}
+
+class CSmallSprayEffect
+  extends CBaseSprayEffect
+{
+  float m_DebrisSize = 2.0;
+
+  CSmallSprayEffect(
+      Component _SkinClass,
+      float     _EffectTime,
+      float     _SpeedFactor,
+      Color     _Color,
+      float     _ColorDev,
+      int       _DebrisQty
+    )
+  {
+    CBaseSprayEffect(
+        _SkinClass,                 // String _SkinClass,
+        _EffectTime,                // float  _EffectTime,
+        _EffectTime,                // float  _AnimTime,  if _EffectRadius != 0 than _AnimTime = _EffectRadius / _Speed
+        _DebrisQty,                 // int    _DebrisQty,
+        4.5 * _SpeedFactor,         // float  _Speed,
+        1.5 * _SpeedFactor,         // float  _SpeedDev
+        60.0,                       // float  _Angle,
+        1.0,                        // float  _MinEffectSize,
+        3.0,                        // float  _MaxEffectSize,
+        _Color,                     // float  _Color,
+        _ColorDev                   // float  _ColorDev
+      );
+  }
+}
+
+class CMediumSprayEffect
+  extends CBaseSprayEffect
+{
+  float  m_DebrisSize    = 4.0;
+  Vector m_StartPosition = new Vector(0.05, 0.05, 0.05);
+
+  CMediumSprayEffect(
+      Component _SkinClass
+    )
+  {
+    CBaseSprayEffect(
+        _SkinClass,                 // String _SkinClass,
+        2.0,                        // float  _EffectTime,
+        2.0,                        // float  _AnimTime,  if _EffectRadius != 0 than _AnimTime = _EffectRadius / _Speed
+        30,                         // int    _DebrisQty,
+        4.5,                        // float  _Speed,
+        1.5,                        // float  _SpeedDev
+        80.0,                       // float  _Angle,
+        1.0,                        // float  _MinEffectSize,
+        3.0,                        // float  _MaxEffectSize,
+        new Color(0.6, 0.6, 0.6),   // float  _Color,
+        0.4                         // float  _ColorDev
+      );
+  }
+}
+
+//
+// Base classes for trace effect
+//
+class CGroundUnitTraceEffect
+  extends CAnimatedParticleGenerator
+{
+  CGroundUnitTraceEffect()
+  { 
+  
+    SetAnimationTime(3.5); //jm 1.0
+    SetTraceStepSize(0.5); //jm 0.75
+    SetMaxJumpItems(50);//jm 20
+    SetExpiredOnStop(false);
+
+    SetSizeParams(1.0, 4.5); //jm 0.75, 1.75
+    m_PlacePower = 1.0; //jm 1.0
+    m_Gravity    = new Vector(0.0, 0.0, -4.0); //jm 0.0, 0.0, -10.0
+    SetBaseColor(new Color(0.33, 0.28, 0.28, 0.35));   //  ));
+  //  SetBaseColor(new Color(1.0, 1.0, 1.0));//, 0.7));   
+    SetStartAndFinalFade(0.4, 0.0); //jm 0.5
+
+    for (int I = 0; I < 8; I++) // was9 jm
+    {
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, rand(1.0)*(float(rand(2))*2.0-1.0), 1.5), //jm (0.0, 0.0, 0.4), new Vector(0.0, rand(0.7)*(float(rand(2))*2.0-1.0), 2.0),
+          new Vector(3.0, 3.0, 1.0), new Vector(4.0, rand(4.0, 6.0), rand(3.0, 5.0)) //jm (2.0, 2.0, 0.5), (2.0, rand(2.0, 3.0), rand(1.5, 2.5))
+        );
+    }  
+  }
+}
+
+class CBulletTraceEffectGenerator // $TODO add _Size parameter
+  extends CBaseEffect
+{
+  void GenerateBulletTracePlane(
+      Color _Color // color of trace particle
+    )
+  {
+    SetSkinClass(CEffectsArray::BaseEffectsSkin);
+
+    CreateParticle(
+        EPPID_BILLBOARD_PLANE,
+//        EPPID_BILLBOARD_XAXIS,
+        new Vector( 5.5f, 0.0f, 0.0f),
+        new Vector( 0.15f, 0.07f, 0.04f),
+        "BulletTrace",
+        _Color
+      );
+  }
+}
+
+class CTankBulletTraceEffectGenerator // $TODO add _Size parameter
+  extends CBaseEffect
+{
+  void GenerateBulletTracePlane(
+      Color _Color // color of trace particle
+    )
+  {
+    SetSkinClass(CEffectsArray::BaseEffectsSkin);
+
+    CreateParticle(
+        EPPID_BILLBOARD_PLANE,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.3, 0.3, 0.3),
+        "Halo",
+        _Color
+                  );
+  }
+}
+
+class CMachineBulletTraceEffectGenerator
+  extends CBaseEffect
+{
+  void GenerateBulletTracePlane(
+      float _Size, // length of one trace particle
+      Color _Color // color of trace particle
+    )
+  {
+    SetSkinClass(CEffectsArray::BaseEffectsSkin);
+
+    CreateParticle(
+        EPPID_BILLBOARD_XAXIS,
+        new Vector(2.5, 0.0, 0.0),
+        new Vector(0.3*_Size, 0.2, 0.2),
+        "BulletTrace",
+        _Color
+      );
+  }
+}
+
+//
+// Base smoke effect
+//
+
+class CBaseSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESize, float _ZDelta)
+  {
+    SetEffectTime(_EffectTime);
+    SetAnimationTime(_AnimTime);
+    //SetMaxWind(4.0);
+    //SetAlphaByWind(1.0, 0.7, []);
+    //SetRotationByWind(0.0, degreeToRadian(40.0), [[0.5, degreeToRadian(40.0)]]);
+    //SetSizeByWind(1.0, 0.8, []);
+    //SetWindEffect(0.5);
+
+    SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, _Speed));
+
+    SetSizeParams(3.0, 0.75);
+
+    for (int I = 0; I < 9; I++)
+    {
+      SetBaseColor(_Color);
+      SetStartAndFinalFade(0.1, 0.5, 0.5);
+      SetFixedMaterial(new String(I % CEffectsArray::GroundDustEffectSkin.Materials.size()));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), _ZDelta), new Vector(rand(_EPos), rand(_EPos), _ZDelta),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESize, _ESize, _ESize)
+        );
+    }
+  }
+}
+
+class CBaseTankSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  CBaseTankSmokeEffect(
+      Component _SkinClass,
+      float     _AnimTime,
+      float     _EffectTime,
+      float     _ItemsPerSecond,
+      Vector    _Speed,
+      float     _Scale,
+      Color     _Color
+    )
+  {
+    m_PlacePower       = 0.3;
+    SetCoordSystemType(CRDSYS_Local);
+
+    if(-1.0 != _EffectTime)
+      SetEffectTime(_EffectTime);
+
+    SetAnimationTime(_AnimTime);
+
+    SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(_Speed); // new Vector(_Speed, 0.0, 0.0));
+
+    SetSizeParams(_Scale, 0.75);
+
+    for (int I = 0; I < 9; I++)
+    {
+      SetBaseColor(_Color);
+      SetStartAndFinalFade(0.0, 0.1, 0.3);
+      SetFixedMaterial(new String(I % _SkinClass.Materials.size()));
+
+      GenerateAnimatedParticle(
+          _SkinClass, 0, 4.0,
+          new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+          new Vector(0.2, 0.2, 0.2), new Vector(1.0, 1.0, 1.0)
+        );
+    }
+  }
+}
+//
+// Sign effects
+//
+
+class CBaseSignEffect
+  extends CBaseEffect
+{
+  //boolean ForcePutonGround = true;
+
+  CBaseSignEffect(
+      Component _SkinClass,
+      String    _MaterialID,
+      Color     _Color,
+      float     _Size, //Factor,
+      int       _CheckLevels
+    )
+  {
+    // SetEffectTime(60.0f);
+    SetCheckLevels(_CheckLevels);
+
+    EnableHostVisSync(true);
+
+    SetSkinClass(_SkinClass);
+    //final float Size = 0.5 * _SizeFactor;
+
+    CreateParticle(
+        EPPID_STATIC_PLANE_XY,
+        new Vector(0.0,  0.0,  0.05),
+        new Vector(_Size, _Size, 0.010),
+        _MaterialID,
+        _Color
+      );
+  }
+}
+
+//
+//Track effects
+//
+class CBaseTrackEffect
+  extends CBaseEffect
+{
+  float DeltaPath      = 2.0;  // каждые х метров, когда будет положен след
+  float DeltaAngle     = 8.0;  // угол, при повороте на который будет положен след
+
+  float TrackBlendTime = 60.0; // время, через которое след начнет убывать
+  float TrackLifeTime  = 120.0; // время, через которое след исчезнет
+
+  CBaseTrackEffect(
+      Component _SkinClass,
+      String    _MaterialID,
+      Color     _Color,
+      float     _SizeX,
+      float     _SizeY
+    )
+  {
+    EnableHostVisSync(true);
+
+    SetSkinClass(_SkinClass);
+
+    CreateParticle(
+        EPPID_STATIC_PLANE_XY,
+        new Vector(0.0,  0.0,  0.05),
+        new Vector(_SizeX, _SizeY, 0.0),
+        _MaterialID,
+        _Color
+      );
+  }
+}
+//
+// Base Refuse effect section
+//
+class CBaseRefuseEffect
+  extends CAnimatedParticleGenerator,
+          CRefuseParticleGenerator
+{
+  void Init()
+  {
+    SetGravity(CWorldPhysics::GravityVector);
+//    SetMoveUpSpeed(new Vector(0.0, 0.0, EjectionVelocity + randnum(VelocityVariance)));
+
+    //logWarning("init refuse");
+
+
+//     logWarning("init refuse2 " + CBaseRefuseEffectSkin::TexName + " " +
+//                                  CBaseRefuseEffectSkin::Transparency + " " +
+//                                  new String(CBaseRefuseEffectSkin::Size) + " " +
+//                                  new String(CBaseRefuseEffectSkin::XSize) + " " +
+//                                  new String(CBaseRefuseEffectSkin::YSize) + " ");
+
+    Component EffectSkin = new #MaterialManager<CBaseRefuseEffectSkin>();
+    //logWarning("init refuse3");
+
+    for (int I = 0; I < EffectSkin.Materials.size(); I++)
+    {
+      //logWarning("init refuse4 " + new String(I));
+      SetFixedMaterial(new String(I % EffectSkin.Materials.size()));
+
+      GenerateAnimatedParticle(
+          EffectSkin, 0, 1.0,
+          new Vector(0, 0, 0), new Vector(0, 0, 0),
+          new Vector(1.0f, 1.0f, 1.0f), new Vector(1.0f, 1.0f, 1.0f)
+        );
+    }
+    //logWarning("end init refuse");
+  }
+
+  CBaseRefuseEffect()
+  {
+//     String Transparency = "NORMAL";
+//     if(!IsUseInvAlpha())
+//       Transparency = "ADDITIVE";
+//
+//     CBaseRefuseEffectSkin::TexName = TexName;
+//     CBaseRefuseEffectSkin::Transparency = Transparency;
+//     CBaseRefuseEffectSkin::Size = TexSize;
+//     CBaseRefuseEffectSkin::XSize = TexFrameX;
+//     CBaseRefuseEffectSkin::YSize = TexFrameY;
+//     Init();
+  }
+}
+class CRefuseParticleGenerator
+  extends CBaseEffect
+{
+
+   float EjectionPeriodMS   = 0.30;   //среднее значение периода генерации в мс
+   float PeriodVarianceMS   = 0.10;   //рандомизация (т.е. период будет +-2мс от среднего)
+   float LifetimeMS         = 1600;    //время жизни эммитера (генерация может идти "порциями" пока не истечет время его жизни)
+   float EjectionVelocity   = 5;      //скорость генерации (частиц за один период)
+   float VelocityVariance   = 0;      //вариация скорости
+   float EjectionOffsetMin  = 0.0;    //минимальный радиус эммитера в нормальной плоскости
+   float EjectionOffsetMax  = 0.0;    //максимальный радиус эммитера в нормальной плоскости
+   float ShiftVariance      = 0.0;    //
+   float Shift              = 0.0;    //
+
+   int ThetaMin             = 0;      //минимальный угол вектора скорости частицы относительно нормали эмиттера
+   int ThetaMax             = 0;      //максимальный
+   int PhiReferenceVel      = 10;     //Этот и следующий параметр указывают "сектор генрации" если от 0 до 360 - это круг,
+   int PhiVariance          = 11;     //указав например от 0 до 1 - можно получить "линейный эммитер"
+   boolean OverrideAdvances = false;  //используют ли частицы после рождения систему координат эммитера (в данном случае - нет)
+   boolean OrientParticles  = true;   //ориентация нормалей частиц "на камеру"
+   boolean OffsetInclude    = true;
+
+   String TexName           = "textures/Effect_01.tex"; //имя файла текстуры. (Если необходимо сюда могут быть
+						        //добавлены параметры анимации текстуры:
+						        //кол-во фреймов, указание конкретных номеров и т.п.)
+
+   boolean UseInvAlpha      =  true;  //тип прозрачности false-аддитивная, true - фильтр
+   int     TexSize          = 256;    //размер текстуры в пикселах (сторона квадрата текстуры)
+   int     TexFrameX        = 64;     //размер кадра по ширине
+   int     TexFrameY        = 64;     //размер кадра по высоте
+
+   String ParticlesClass    = "CBaseRefuseParticle";    //имя описателя самих частиц
+}
+
+// ОПИСАНИЕ ЧАСТИЦ
+class CBaseRefuseParticle
+{
+   float ParticleLifetimeMS         = 100;  //время жизни частицы
+   float ParticleLifetimeVarianceMS = 3;   //вариация времени жизни
+   float DragCoefficient            = 1.0; //not in use
+   float GravityCoefficient         = 0.0; //коэффициент влияния "мировой" гравитации
+   float InheritedVelFactor         = 1.0; //коэффициент наследования начальной скорости
+   float ConstantAcceleration       = 0.0; //усокрение
+
+
+   float SpinRandomMin              = -1.0;//минимальный угол поворота частицы вокруг своей нормали в радианах (от -3.14 до 3.14)
+   float SpinRandomMax              =  1.0;//максимальный (значение от -3.14 до 3.14 означает, что частица может родится в любом положении)
+   float SpinSpeed                  =  0.0;//скорость вращения частицы (оборотов в секунду)
+
+	 //БЛОК ДИНАМИКИ
+   Array times  = [0.0, 0.1, 0.45, 1.0];          // временные парамерты периодов в течение жизни частицы (может быть задано до 8 периодов)
+
+   Array colors = [
+                    new Color(0.3, 0.1, 0.0, 0.5),
+                    new Color(1.0, 1.0, 1.0, 0.8),
+                    new Color(0.5, 0.5, 0.2, 0.2),
+                    new Color(0.0, 0.0, 0.0, 0.0)
+                  ];                              // "Цвет и альфа частицы" по периодам
+
+   Array sizes  = [0.1, 3.0, 2.0, 0.1];           // относительный размер частицы по периодам (масштаб)
+
+   Array frames = [                               // используемые кадры попериодно (между периодами)
+                    [0,1,4,5],
+                    [5,6,7,10,12],
+                    [13,14,15]
+                  ];
+}

@@ -1,0 +1,915 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCommonStatusScreen
+{
+  Array Fonts = [];
+
+//  float ScaleX = 164.0 / 1024.0;
+//  float ScaleY = 164.0 / 1024.0;
+
+  float ScaleX = 100.0 / 1024.0;
+  float ScaleY = 100.0 / 1024.0;
+
+  float HPixels = 1024.0f;
+  float VPixels = 768.0f;
+
+  int CurrentMode = 1024;
+
+  Array Devices =
+    [
+/*
+      [ "PilotFirst",
+        [ 506.5 / 800.0, 59.5 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "pilot first", 0 ]
+      ],
+
+      [ "PilotSecond",
+        [ 511.5 / 800.0, 61.5 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "pilot second", 0 ]
+      ],
+      [ "GunnerLeft",
+        [ 543.25 / 800.0, 70.95 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "gunner left", 0 ]
+      ],
+      [ "GunnerRight",
+        [ 532.25 / 800.0, 68.75 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "gunner right", 0 ]
+      ],
+      [ "Engine",
+        [ 564.5 / 800.0, 38.5 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "engine", 0 ]
+      ],
+      [ "Transmission",
+        [ 567.5 / 800.0, 40.5 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "transmission", 0 ]
+      ],
+      [ "FuelTank",
+        [ 563.25 / 800.0, 75.75 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "fuel tank", 0 ]
+      ],
+      [ "MainRotor",
+        [ 478.5 / 800.0, 15.5 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "rotor", 0 ]
+      ],
+      [ "TailRotor",
+        [ 743.5 / 800.0,  5.5 / 600.0, "N", "N", "N", "N", ScaleX, ScaleY, "tail rotor", 0 ]
+      ],
+
+      [ "Turret",
+        [ 0.2, 0.5, "N", "N", "N", "N", ScaleX, ScaleY, "turret", 0 , new Color(1.0, 1.0, 1.0), 0.5, 0.8]
+      ],
+*/
+      [ "TrackLeft",
+        [ 0.0775, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "track left", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        0,
+        true
+      ],
+
+      [ "TrackRight",
+        [ 0.1235, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "track right", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        0,
+        true
+      ],
+
+      [ "HullEngine",
+        [ 0.1005, 0.058, "N", "N", "N", "N", ScaleX, ScaleY, "tank body", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        0,
+        true
+      ],
+
+      [ "Turret_A",
+        [ 0.1, 0.105, "N", "N", "N", "N", ScaleX, ScaleY, "turret", 0 , new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        Math_HALFPI,
+        true
+      ],  
+
+      [ "Z_TurretWireFrame2",
+        [ 0.1, 0.105, "N", "N", "N", "N", ScaleX, ScaleY, "turret wireframe", 0 , new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        Math_HALFPI
+      ],
+
+      [ "CommanderSight",
+        [ 0.1, 0.105, "N", "N", "N", "N", ScaleX, ScaleY, "commander sight", 0 , new Color(1.0, 1.0, 1.0), 0.5, 1.0]
+      ]
+    ];
+
+  Component MatManager = new #MaterialManager<CCockpitSkin>();
+
+  Array WireframeHeli  = [ -0.009, -0.004, "N", "N", "N", "N", ScaleX, ScaleY, "tank base", 0 ];
+
+  void CCommonStatusScreen(
+      int _Width,
+      int _Height
+    )
+  {
+    MatManager.EnableReload = false; // new script and MatManager instances will be created instead of reloading
+                                     // to be sure we have proper order of applying new screen dims
+
+    float NewHPixels = 800.0;
+    float NewVPixels = 600.0;
+    int   NewMode    = 800;
+
+    float X0 = WireframeHeli[0];
+    float Y0 = WireframeHeli[1];
+
+    if (_Width <= 800)
+    {
+      NewMode    = 800;
+      NewHPixels = 800.0;
+      NewVPixels = 600.0;
+    }
+    else
+    if (_Width <= 1024)
+    {
+      NewMode    = 1024;
+      NewHPixels = 1024;
+      NewVPixels = 768;
+    }
+    else
+    {
+      NewMode    = 1280;
+      NewHPixels = 1280;
+      NewVPixels = 960;
+    }
+
+//    if (NewMode == CurrentMode)
+//      return;
+
+//    float HKoeff = NewHPixels / HPixels;
+//    float VKoeff = NewVPixels / VPixels;
+    float HKoeff = 0.781f;
+    float VKoeff = 0.781f;
+
+    logWarning("HKoeff: " + new String(HKoeff));
+    logWarning("VKoeff: " + new String(VKoeff));
+    for (int i = 0; i < Devices.size(); i++)
+    {
+      Devices[i][1][6] = Devices[i][1][6] / HKoeff;
+      Devices[i][1][7] = Devices[i][1][7] / VKoeff;
+    }
+
+    WireframeHeli[6] = WireframeHeli[6] / HKoeff;
+    WireframeHeli[7] = WireframeHeli[7] / VKoeff;
+
+    CurrentMode = NewMode;
+    HPixels = NewHPixels;
+    VPixels = NewVPixels;
+  }
+
+  void CCommonStatusScreen()
+  {
+    CCommonStatusScreen(800, 600);
+  }
+
+  boolean IsShouldBeReloaded(
+      int _Width,
+      int _Height
+    )
+  {
+
+    return false;
+    if (_Width <= 800)
+    {
+      return (CurrentMode != 800);
+    }
+    else
+    if (_Width <= 1024)
+    {
+      return (CurrentMode != 1024);
+    }
+    else
+    {
+      return (CurrentMode != 1280);
+    }
+
+  }
+}
+
+class CTigerCommonStatusScreen extends CCommonStatusScreen
+{
+  Array Devices =
+    [
+      [ "TrackLeft",
+        [ 0.076, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "tiger track left", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        0,
+        true
+      ],
+
+      [ "TrackRight",
+        [ 0.1255, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "tiger track right", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        0,
+        true
+      ],
+
+      [ "HullEngine",
+        [ 0.1005, 0.058, "N", "N", "N", "N", ScaleX, ScaleY, "tiger tank body", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        0,
+        true
+      ],
+
+      [ "Turret_A",
+        [ 0.101, 0.105, "N", "N", "N", "N", ScaleX, ScaleY, "tiger turret", 0 , new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        Math_HALFPI,
+        true
+      ],  
+
+      [ "Z_TurretWireFrame2",
+        [ 0.101, 0.105, "N", "N", "N", "N", ScaleX, ScaleY, "tiger turret wireframe", 0 , new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        Math_HALFPI
+      ],
+
+      [ "CommanderSight",
+        [ 0.1, 0.105, "N", "N", "N", "N", ScaleX, ScaleY, "commander sight", 0 , new Color(1.0, 1.0, 1.0), 0.5, 1.0]
+      ]
+    ];
+
+  Array WireframeHeli  = [ -0.009, -0.004, "N", "N", "N", "N", ScaleX, ScaleY, "tiger tank base", 0 ];
+
+  void CTigerCommonStatusScreen(
+      int _Width,
+      int _Height
+    )
+  {
+    CCommonStatusScreen::CCommonStatusScreen(_Width, _Height);
+  }
+
+  void CTigerCommonStatusScreen()
+  {
+    CCommonStatusScreen::CCommonStatusScreen();
+  }
+
+}
+
+class CockpitPilotControls
+{
+  final static Array Switchers = [
+//				   ["RMISlave",              0.520, 1.0f - 0.385, 0.494, 1.0f - 0.340, "OnRMISwitch", "GeneralSwitch"],
+
+                                 ];
+
+
+  final static Array Lighters  = [
+//                                   ["AltimeterCodeOFF",      0.924, 1.0f - 0.118, 0.915, 1.0f - 0.109],
+
+                                 ];
+}
+
+class CockpitCoPilotControls
+{
+  final static Array Switchers = [
+   				 ];
+
+
+  final static Array Lighters  = [
+
+                                 ];  
+}
+
+
+class CCockpitAnimManager
+{
+  final static int INDEX_Time = 0;
+  final static int INDEX_ResetFlag = 1;
+  final static int INDEX_IsCircle = 2;
+
+  final static int INDEX_Animator = 3;
+  final static int INDEX_Phase = 4;
+
+  boolean m_Enabled = true;
+
+  Map AnimInfo = new Map(
+                 [                                      
+//                   ["torque_cursor",               [4.0 , true, false]],
+  
+              ]);
+  
+  CCockpitAnimManager(
+      Component _HostObject,
+      Component _CockpitModel
+    )
+  {    
+    AnimInfo.gotoBegin();
+    while (!AnimInfo.isAtEnd())
+    {
+      Array Info  = AnimInfo.getValue();
+
+      Component Animator = new #RangeAnimator();
+      setSlaveObject(Animator, _CockpitModel);
+      _HostObject.RegisterObject("ANIMATOR_" + AnimInfo.getKey(), Animator); 
+
+      Animator.SetFixedTime(true);
+      Animator.SetAnimationName(AnimInfo.getKey());
+      Animator.SetAnimationTime(Info[INDEX_Time]);
+      Animator.SetCircleAnimation(Info[INDEX_IsCircle]);
+      Info.add(Animator);
+      Info.add(0.0f); // phase
+
+      Animator.AnimateTo(0.0f);
+      AnimInfo.gotoNext();
+    }    
+  }
+  
+  void Enable(
+      boolean _Enable
+    )
+  {
+    if (m_Enabled == _Enable)
+      return;
+
+    m_Enabled = _Enable;
+    AnimInfo.gotoBegin();
+    while (!AnimInfo.isAtEnd())
+    {
+      Array Info  = AnimInfo.getValue();
+      if (Info[INDEX_ResetFlag])
+      {
+        float Phase = 0.0f;
+        if (_Enable)
+        {
+          Phase = Info[INDEX_Phase];
+          Info[INDEX_Animator].SetAnimationTime(Info[INDEX_Time]);
+        }        
+        else
+          Info[INDEX_Animator].SetAnimationTime(2.0f);
+          
+        Info[INDEX_Animator].AnimateTo(Phase);
+      }
+      AnimInfo.gotoNext();
+    }    
+  }
+
+  void AnimateTo(
+      String _Name,
+      float  _Phase
+    )
+  {
+    if (AnimInfo.find(_Name))
+    {
+      Array Info = AnimInfo.getValue();        
+
+      if (m_Enabled)
+      {
+        Info[INDEX_Animator].SetAnimationTime(Info[INDEX_Time]);
+        Info[INDEX_Animator].AnimateTo(_Phase);
+      }
+
+      Info[INDEX_Phase] = _Phase;
+    }
+  }  
+
+  void AnimateTo(
+      String _Name,
+      float  _Phase,
+      float  _Time
+    )
+  {
+    if (AnimInfo.find(_Name))
+    {
+      Array Info = AnimInfo.getValue();        
+
+      if (m_Enabled)
+      {
+        Info[INDEX_Animator].SetAnimationTime(_Time);
+        Info[INDEX_Animator].AnimateTo(_Phase);
+      }
+
+      Info[INDEX_Phase] = _Phase;
+    }
+  }  
+
+  boolean IsAnimating(
+      String _Name
+    )
+  {
+    if (!m_Enabled)
+      return false;
+
+    if (AnimInfo.find(_Name))    
+    {
+      Array Info = AnimInfo.getValue();        
+      return Info[INDEX_Animator].IsAnimating();
+    }
+
+    return false;
+  }
+
+  boolean GetCurrentPhase(
+      String _Name
+    )
+  {
+    if (AnimInfo.find(_Name))    
+    {
+      Array Info = AnimInfo.getValue();        
+      return Info[INDEX_Phase];
+    }
+
+    return 0.0f;
+  }
+}
+
+class CCockpitInfoMsgBar
+{
+  boolean UseTimerBar = false;
+
+  Component MatManager = new #MaterialManager<CCockpitSkin>();
+  Array Fonts = [
+      [ "Arial", 0.022 ]
+    ];
+  Array MessageBars = [
+    [ 0.0f, 0.0f, "N", "N", "N", "C", 0, L"" ], // SPEED
+    [ 0.0f, 0.3f, "N", "N", "N", "C", 0, L"" ], // AUTO
+    [ 0.0f, 0.6f, "N", "N", "N", "C", 0, L"" ], // PAUSE
+    [ 0.0f, 0.9f, "N", "N", "N", "C", 0, L"" ], // COMMANDER
+    [ 0.0f, 1.2f, "N", "N", "N", "C", 0, L"" ], // GUNNER
+    [ 0.0f, 1.5f, "N", "N", "N", "C", 0, L"" ], // DRIVER
+    [ 0.0f, 1.5f, "N", "N", "N", "C", 0, L"" ]  // STATUS
+  ];
+
+  final static int MSG_GAMESPEED  = 0;
+  final static int MSG_AUTOPILOT  = 1;
+  final static int MSG_PAUSE      = 2;
+  final static int MSG_COMMANDER  = 3;
+  final static int MSG_GUNNER     = 4;
+  final static int MSG_DRIVER     = 5;
+  final static int MSG_GAMESTATUS = 6;
+}
+
+class CMultiPlayerMsgBar
+{
+  boolean UseTimerBar = false;
+
+  Component MatManager = new #MaterialManager<CCockpitSkin>();
+  Array Fonts = [
+      [ "Arial", 0.022 ]
+    ];
+  static Array MessageBars = [];
+}
+
+class CCockpitMFDScreen
+{
+  final static int MFD_SHOW_IDX       = 0; 
+  final static int MFD_CONTROL_IDX    = 1; 
+  final static int MFD_AVAILABLE_SITS = 2;
+
+  // use 2 (left right) parts of screen
+/*  final static Array Appearance = [new Vector(0.01f, 0.01f, 0.0f), new Vector(0.74f, 0.01f, 0.0f),
+                                   new Vector(0.01f, 0.64f, 0.0f), new Vector(0.74f, 0.64f, 0.0f)];
+*/
+  Array Appearance = [new Vector(0.02f, 0.705f, 0.0f), new Vector(0.775f, 0.705f, 0.0f),
+                          new Vector(0.02f, 0.705f, 0.0f), new Vector(0.775f, 0.705f, 0.0f)];
+
+
+  Array   m_CurrentControl = [0, 0];
+  Array   m_Enabled        = [false, false];
+
+  Array   m_Controls;
+  boolean m_EnabledControl = false;
+
+  Map     m_StoredControls;
+
+  CCockpitMFDScreen()
+  {
+    m_Controls.add([true, null, [] ]); // empty screen
+  }
+
+  SetAspectRatio(
+      float _AR
+    )
+  {
+//    logError("AR_ = " + new String(_AR));
+    Appearance[0].y = 1.0f - 0.225f/_AR;
+    Appearance[1].y = 1.0f - 0.225f/_AR;
+  }
+
+  void DisableScreens()
+  {
+    if (m_CurrentControl[0] != 0)
+    {
+      m_Controls[m_CurrentControl[0]][MFD_CONTROL_IDX].Enable(false);
+      m_CurrentControl[0] = 0;
+    }
+    
+    if (m_CurrentControl[1] != 0)
+    {
+      m_Controls[m_CurrentControl[1]][MFD_CONTROL_IDX].Enable(false);
+      m_CurrentControl[1] = 0;
+    }
+  }
+
+  void RestoreScreens(int _PlayerSit, int _PosIndex)
+  {
+    int i = 0;
+
+    for (int Appear = 0 ; Appear <= 1 ; Appear++ )
+    {
+      i = 0;
+      if ( m_StoredControls.find(_PlayerSit) )
+      {
+        i = m_StoredControls[_PlayerSit][Appear];
+      }
+
+      if (m_Controls[i][MFD_SHOW_IDX] && 
+          m_CurrentControl.find(i) == -1 &&
+          m_Controls[i][MFD_AVAILABLE_SITS].find(_PlayerSit) != -1)
+      {
+        m_Controls[i][MFD_CONTROL_IDX].SetPosition(Appearance[Appear + _PosIndex*2].x, Appearance[Appear + _PosIndex*2].y);
+        m_Controls[i][MFD_CONTROL_IDX].Enable(m_Enabled[Appear] && m_EnabledControl);
+        if (m_CurrentControl[Appear] != 0)
+          m_Controls[m_CurrentControl[Appear]][MFD_CONTROL_IDX].Enable(false);
+
+        m_CurrentControl[Appear] = i;
+      }             
+    }
+  }
+
+  void NextScreen(int _Appearance, int _PlayerSit, int _PosIndex )
+  {
+    if (!m_Enabled[_Appearance])
+      return;
+
+    int i = (m_CurrentControl[_Appearance] + 1) % m_Controls.size();
+
+    for ( ; i != m_CurrentControl[_Appearance]; i = (i + 1) % m_Controls.size())
+    {       
+      if (i == 0)
+      {
+        m_Controls[m_CurrentControl[_Appearance]][MFD_CONTROL_IDX].Enable(false);
+        m_CurrentControl[_Appearance] = 0;
+
+        if ( m_StoredControls.find(_PlayerSit) )
+        {
+          m_StoredControls[_PlayerSit] = [ m_CurrentControl[0], m_CurrentControl[1] ];
+        }
+        else
+        {
+          m_StoredControls.insert(_PlayerSit, [ m_CurrentControl[0], m_CurrentControl[1] ] ) ;
+        }
+        return;
+      }
+
+      if (m_Controls[i][MFD_SHOW_IDX] && 
+          m_CurrentControl.find(i) == -1 &&
+          m_Controls[i][MFD_AVAILABLE_SITS].find(_PlayerSit) != -1)
+      {
+        m_Controls[i][MFD_CONTROL_IDX].SetPosition(Appearance[_Appearance + _PosIndex*2].x, Appearance[_Appearance + _PosIndex*2].y);
+        m_Controls[i][MFD_CONTROL_IDX].Enable(m_Enabled[_Appearance] && m_EnabledControl);
+        if (m_CurrentControl[_Appearance] != 0)
+          m_Controls[m_CurrentControl[_Appearance]][MFD_CONTROL_IDX].Enable(false);
+
+        m_CurrentControl[_Appearance] = i;
+
+        if ( m_StoredControls.find(_PlayerSit) )
+        {
+          m_StoredControls[_PlayerSit] = [ m_CurrentControl[0], m_CurrentControl[1] ];
+        }
+        else
+        {
+          m_StoredControls.insert(_PlayerSit, [ m_CurrentControl[0], m_CurrentControl[1] ] ) ;
+        }
+        return;
+      }             
+    }
+  }
+	
+  void SetDefaultControl(
+      int _PlayerSit,
+      Array _Controls
+    )
+  {
+    m_StoredControls.insert(_PlayerSit, _Controls);
+  }
+
+  void Enable(
+      int     _Appearance,
+      boolean _Enable
+    )
+  {
+    m_Enabled[_Appearance] = _Enable;
+
+    if (m_CurrentControl[_Appearance] != 0)
+      m_Controls[m_CurrentControl[_Appearance]][MFD_CONTROL_IDX].Enable(_Enable && m_EnabledControl);
+    
+    if (!_Enable)
+      m_CurrentControl[_Appearance] = 0;
+  }
+
+  void Enable(
+      boolean _Enable
+    )
+  {  
+    if (m_EnabledControl == _Enable)
+      return;
+
+    m_EnabledControl = _Enable;
+
+    Enable(0, m_Enabled[0]);
+    Enable(1, m_Enabled[1]);
+  }
+  
+  void CanShow(
+      Component _Control,
+      boolean   _Show
+    )
+  {
+    for (int i = 0; i < m_Controls.size(); i++)
+    {
+      if (m_Controls[i][MFD_CONTROL_IDX] == _Control)
+      {
+        m_Controls[i][MFD_SHOW_IDX] = _Show;
+        
+        int Appearance = m_CurrentControl.find(i);
+
+        if (Appearance != -1 && 
+            !_Show)
+          NextScreen(Appearance);
+        break;
+      }       
+    }
+  }
+ 
+  int RegisterControl(
+      Component _Control,
+      Array _PlayerSits
+    )
+  {
+    m_Controls.add([true, _Control, _PlayerSits]);
+    return m_Controls.size() - 1;
+  }
+}
+
+class CCockpitControlsGroup
+{
+  Array m_Controls;
+
+  int RegisterControl(
+      Component _Control
+    )
+  {
+    m_Controls.add(_Control);
+    return m_Controls.size() - 1;
+  } 
+
+  void Enable(
+      boolean _Enable
+    )
+  {
+    for (int i = 0; i < m_Controls.size(); i++)
+      m_Controls[i].Enable(_Enable);
+  }
+
+  void SetPosition(
+      float _X,
+      float _Y
+    )
+  {
+    for (int i = 0; i < m_Controls.size(); i++)
+      m_Controls[i].SetPosition(_X, _Y);
+  }
+}
+
+class CCockpitGunLayerScreen extends CCockpitControlsGroup
+{
+  int m_iTargetPointer = -1;
+  final Color PrimaryColor = new Color(242.0/256.0, 119.0/256.0, 23.0/256.0);
+
+  void Init(
+      Component _HostObject,
+      float     _Width,
+      float     _Height,
+      String    _PointerScriptClass
+    )
+  {
+    boolean Squared = (_Width == _Height);
+    Component TargetRender = new #RenderTargetControl();    
+
+    Component GunLayerCamera = new CTargetCamera(new #Camera<CPlayerCamera>());
+    GunLayerCamera.SetCameraId("GunnerCamera");
+//    setIdentificator(GunLayerCamera, "GunLayerCamera" + getIdentificator(_HostObject));
+    _HostObject.RegisterObject("GunLayerCamera", GunLayerCamera);
+
+    Component GunLayerCameraLink = new #ObjectObjectLink();
+    setSlaveObject(GunLayerCameraLink,GunLayerCamera.GetCamera());
+    _HostObject.RegisterObject("GunLayerCameraLink", GunLayerCameraLink);
+
+    Component GunLayerCameraJoint = _HostObject.GetMeshComponent().GetJoint("Weapon_A_Camera");
+    setPosition(GunLayerCamera.GetCamera(), getPosition(GunLayerCameraJoint));
+    setPositionable(GunLayerCameraLink, GunLayerCameraJoint);     
+
+    TargetRender.SetCamera(GunLayerCamera.GetCamera()); 
+    TargetRender.SetSize(512, 512);
+    TargetRender.SetSquared(Squared);
+    TargetRender.SetDimensions(_Width, _Height);     
+    TargetRender.SetMask([], [ CLASSIFICATOR_UI]);
+    addClassificator(TargetRender, CLASSIFICATOR_UI);
+    _HostObject.RegisterObject("TargetRender", TargetRender);
+    RegisterControl(TargetRender);
+
+    Component FrameControl = new #FrameControl();
+    FrameControl.SetFrameColor(PrimaryColor);
+    FrameControl.SetRenderLayer(PRIMLAYER_COCKPIT);
+    FrameControl.SetDimensions(_Width, _Height);     
+    FrameControl.SetThickness(1.0);
+    FrameControl.SetSquared(Squared);
+    addClassificator(FrameControl, CLASSIFICATOR_UI);
+    addClassificator(FrameControl, CLASSIFICATOR_NO_POST_EFFECTED);
+    _HostObject.RegisterObject("CCockpitGunLayerScreen_FrameControl", FrameControl);
+    RegisterControl(FrameControl);
+
+    Component TargetPointer = new #TargetPointer3();
+    loadFromScript(TargetPointer, _PointerScriptClass);
+    
+    TargetPointer.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    TargetPointer.SetRenderMode(false, true);
+    TargetPointer.SetCameraId(GunLayerCamera.GetCameraId());
+
+    addClassificator(TargetPointer, CLASSIFICATOR_NO_POST_EFFECTED);
+    _HostObject.RegisterObject("TargetPointer", TargetPointer);    
+    m_iTargetPointer = RegisterControl(TargetPointer);
+    Enable(false);
+  }
+
+  void Enable(
+      boolean _Enable
+    ) 
+  {
+    for (int i = 0; i < m_Controls.size(); i++)
+      m_Controls[i].Enable(_Enable);
+
+    if ( m_Controls[m_iTargetPointer] != null )
+    {
+      m_Controls[m_iTargetPointer].Enable(true);
+      m_Controls[m_iTargetPointer].SetRenderMode(_Enable,true);
+    }
+  }
+    
+  void SetPosition(
+      float _X,
+      float _Y
+    )
+  {
+    for (int i = 0; i < m_Controls.size(); i++)
+    {
+      if (i != m_iTargetPointer)
+        m_Controls[i].SetPosition(_X, _Y);
+    }
+  }
+}
+
+class CCockpitCommanderScreen extends CCockpitControlsGroup
+{
+  int m_iTargetPointer = -1;
+  final Color PrimaryColor = new Color(242.0/256.0, 119.0/256.0, 23.0/256.0);
+
+  void Init(
+      Component _HostObject,
+      float     _Width,
+      float     _Height,
+      String    _PointerScriptClass
+    )
+  {
+    boolean Squared = (_Width == _Height);
+    Component CommanderRender = new #RenderTargetControl();    
+
+    Component CommanderCamera = new CTargetCamera(new #Camera<CPlayerCamera>());
+    CommanderCamera.SetCameraId("Commander_Camera");
+//    setIdentificator(CommanderCamera, "CommanderCamera" + getIdentificator(_HostObject));
+    _HostObject.RegisterObject("CommanderCamera", CommanderCamera);
+
+    Component CommanderCameraLink = new #ObjectObjectLink2();
+    _HostObject.RegisterObject("CommanderCameraLink", CommanderCameraLink);
+    Component CommanderCameraJoint = _HostObject.GetMeshComponent().GetJoint("Commander_Camera");
+    Component TurretJoint = _HostObject.GetMeshComponent().GetJoint("Turret_A");
+    setPositionable(CommanderCameraLink, TurretJoint);
+    setSlaveObject(CommanderCameraLink, CommanderCameraJoint);
+    
+    Component Mission = new #GameController().GetLoadedMission();
+    boolean isAutoCommander = true;
+    if(isFunctionExist(Mission, "IsExpertMode", 0))
+          isAutoCommander = !Mission.IsExpertMode();
+    if(isAutoCommander)
+    {
+      Component AutoCommander = new #AutoCommander<CAutoCommander>();
+      AutoCommander.SetSightControl( CommanderCameraLink );
+      setSlaveObject( AutoCommander, _HostObject );
+      AutoCommander.SetEventHandler(_HostObject);
+      _HostObject.RegisterObject("AutoCommander", AutoCommander);
+    }
+
+
+    Matrix Pos = getPosition(_HostObject.GetMeshComponent()); 
+    Pos.origin = getPosition(CommanderCameraJoint).origin;
+    setPosition(CommanderCamera.GetCamera(), Pos);
+    CommanderCameraLink.SetMaxVertAngle(Math_PI*(10.0f/180.0f));
+    CommanderCameraLink.SetMinVertAngle(- Math_PI*(7.0f/180.0f));
+    CommanderCameraLink.SetInitialAngles();
+    CommanderCameraLink.EnableMouseControl(false);
+    CommanderCameraLink.EnableJoystickControl(false);
+  
+    CommanderRender.SetCamera(CommanderCamera.GetCamera()); 
+    CommanderRender.SetSize(512, 512);
+    CommanderRender.SetSquared(Squared);
+    CommanderRender.SetDimensions(_Width, _Height);     
+    CommanderRender.SetMask([], [ CLASSIFICATOR_UI]);
+    addClassificator(CommanderRender, CLASSIFICATOR_UI);
+    _HostObject.RegisterObject("CommanderRender", CommanderRender);
+    RegisterControl(CommanderRender);
+
+    Component FrameControl = new #FrameControl();
+    FrameControl.SetFrameColor(PrimaryColor);
+    FrameControl.SetDimensions(_Width, _Height);     
+    FrameControl.SetFrameColor(PrimaryColor);
+    FrameControl.SetRenderLayer(PRIMLAYER_COCKPIT);
+    FrameControl.SetThickness(1.0);
+    FrameControl.SetSquared(Squared);
+    addClassificator(FrameControl, CLASSIFICATOR_UI);
+    addClassificator(FrameControl, CLASSIFICATOR_NO_POST_EFFECTED);
+    _HostObject.RegisterObject("CCockpitCommanderScreen_FrameControl", FrameControl);
+    RegisterControl(FrameControl);
+
+    Component CommanderPointer = new #TargetPointer3();  
+    loadFromScript(CommanderPointer, _PointerScriptClass);
+
+    CommanderPointer.SetColorScheme([PrimaryColor]);
+    CommanderPointer.SetRenderMode(false, true);
+    CommanderPointer.SetCameraId(CommanderCamera.GetCameraId());
+
+    addClassificator(CommanderPointer, CLASSIFICATOR_NO_POST_EFFECTED);
+    //addClassificator(TargetPointer, CLASSIFICATOR_UI);
+    _HostObject.RegisterObject("CommanderPointer", CommanderPointer);    
+    m_iTargetPointer = RegisterControl(CommanderPointer);
+
+    Enable(false);
+  }
+    
+  void SetPosition(
+      float _X,
+      float _Y
+    )
+  {
+    for (int i = 0; i < m_Controls.size(); i++)
+    {
+      if (i != m_iTargetPointer)
+        m_Controls[i].SetPosition(_X, _Y);
+    }
+  }
+}
+
+class CWeaponBarWrapper
+{
+  Component m_WeaponBar;
+  Component m_FrameControl;
+  boolean m_ShowFrame = true;
+  final Color PrimaryColor = new Color(242.0/256.0, 119.0/256.0, 23.0/256.0);
+
+  CWeaponBarWrapper(
+      Component _HostObject,
+      float     _Width,
+      float     _Height
+    )
+  {
+    boolean Squared = (_Width == _Height);
+
+    m_WeaponBar = _HostObject.GetObject("WeaponSelector");;
+    m_WeaponBar.SetSquared(Squared);
+    m_WeaponBar.SetRenderMode(false, false);
+    m_WeaponBar.InputEnable(false);
+    //Weapon rotation speed. 1st parameter normal speed, 2rd - slow speed (with shift button)
+    m_WeaponBar.SetWeaponSpeed(1.0f,0.05f);
+
+    m_FrameControl = new #FrameControl();
+    m_FrameControl.SetFrameColor(PrimaryColor);
+    m_FrameControl.SetRenderLayer(PRIMLAYER_COCKPIT);
+    m_FrameControl.SetDimensions(_Width, _Height);     
+    m_FrameControl.SetThickness(1.0);
+    m_FrameControl.SetSquared(Squared);
+    m_FrameControl.Enable(false);
+    addClassificator(m_FrameControl, CLASSIFICATOR_UI);
+    addClassificator(m_FrameControl, CLASSIFICATOR_NO_POST_EFFECTED);
+    _HostObject.RegisterObject("CWeaponBarWrapper_FrameControl", m_FrameControl);
+
+  }
+
+  void ShowFrame(
+      boolean _Enable
+    )
+  {
+    m_ShowFrame = _Enable;
+  }
+
+  void Enable(
+      boolean _Enable
+    )
+  {
+    m_WeaponBar.SetRenderMode(true, true);
+    m_WeaponBar.SetVisible(_Enable);
+    m_FrameControl.Enable(_Enable && m_ShowFrame);
+  }
+
+  void SetPosition(
+      float _X,
+      float _Y
+    )
+  {
+    m_WeaponBar.SetPosition(_X, _Y);
+    m_FrameControl.SetPosition(_X, _Y);
+  }
+}

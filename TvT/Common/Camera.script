@@ -1,0 +1,60 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCamera
+{
+  float   FOV			 = 1.5708; // jeff was float   FOV            = 1.13;
+
+  float   RectLeft       = 0;
+  float   RectTop        = 0;
+  float   RectRight      = 1.0;
+  float   RectBottom     = 1.0;
+
+  float   ZNear          = 1.0;
+  float   ZFar           = 500.0;
+
+  float   LODFactor      = 0.04;
+  float   DistanceFactor = 3.0;
+  float   CutoffFactor   = 4.0;
+  float   FOVDistPower   = 0.54f;
+
+  void CCamera()
+  {
+    Component Settings = new #GameSettings();
+    FOVDistPower = 0.05f * (Settings.GetUserValue(L"FOVDistPower", 0) + 7);
+//    logWarning("Camera dist factor: " + new String(FOVDistPower));
+  }
+
+}
+
+class CPlayerCamera extends CCamera
+{
+}
+
+class CMainCamera extends CCamera
+{
+  boolean ClearScreen = true;
+  Color   ClearColor  = new Color(0.3, 0.3, 0.3);
+
+  void CMainCamera()
+  {
+    CCamera::CCamera();
+    addClassificator(user, CLASSIFICATOR_NOTVISIBLEONRADAR);
+    addClassificator(user, CLASSIFICATOR_NOTEDITABLE);
+  }
+}
+
+class CPlayerCameraCollisionControl
+{
+  float CollisionRadius = 1.5;
+  Array CollisionMask   = [
+                            [ /*CLASSIFICATOR_TERRAIN,*/ "CAMERA_COLLISION" ],
+                            [ ]
+                          ];
+}

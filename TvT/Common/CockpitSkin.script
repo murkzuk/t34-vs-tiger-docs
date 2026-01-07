@@ -1,0 +1,861 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CCockpitSkin
+{
+  final static boolean IsDisplayModeDep = true;
+
+  boolean EnableReload = true;
+
+  Array Materials = [];
+
+  Array CommonMaterials = [
+
+    new CUIMaterial(
+      "terrain map",                           // material id
+      "",                                      // texture name
+      0,                                        // u0
+      0,                                        // v0
+      1024,                                     // du
+      1024                                      // dv
+    ),
+//MAP section
+    new CUIMaterial(
+      "map background",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      0,                                       // u0
+      43,                                      // v0
+      213,                                     // du
+      213                                      // dv
+    ),
+
+    new CUIMaterial(
+      "tank arrow rus",                            // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      0,                                       // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+        new CUIMaterial(
+      "tank arrow ger",                            // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      0,                                       // u0
+      22,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+
+    new CUIMaterial(
+      "tank arrow out",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      154,                                       // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "AI rus arrow out",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      198,                                       // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "AI ger arrow out",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      176,                                       // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "AI rus tank arrow",                            // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      22,                                       // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+    new CUIMaterial(
+      "AI ger tank arrow",                            // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      22,                                       // u0
+      22,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+     new CUIMaterial(
+      "AI rus vehicle",                            // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      88,                                       // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+    new CUIMaterial(
+      "AI ger vehicle",                            // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      88,                                       // u0
+      22,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "AI rus antitank arrow",                 // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      110,                                     // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+    new CUIMaterial(
+      "AI ger antitank arrow",                 // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      110,                                     // u0
+      22,                                      // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+     new CUIMaterial(
+      "AI rus btr arrow",                 // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      66,                                     // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+    new CUIMaterial(
+      "AI ger btr arrow",                 // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      66,                                     // u0
+      22,                                      // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "AI rus sau arrow",                 // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      44,                                     // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+    new CUIMaterial(
+      "AI ger sau arrow",                 // material id
+      "Resources/Cockpit_1.tex",               // texture name
+      44,                                     // u0
+      22,                                      // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+
+
+    new CUIMaterial(
+      "airplane rus arrow",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      110,                                       // u0
+      0,                                     // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "airplane ger arrow",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      110,                                       // u0
+      22,                                     // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+     new CUIMaterial(
+      "dzot rus arrow",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      132,                                       // u0
+      0,                                     // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+    new CUIMaterial(
+      "dzot ger arrow",                        // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      220,                                       // u0
+      0,                                     // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+
+    new CUIMaterial(
+      "navpoint icon",                         // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      176,                                     // u0
+      0,                                       // v0
+      22,                                      // du
+      22                                       // dv
+    ),
+
+
+    new CUIMaterial(
+      "main navpoint icon",                    // material id
+      "Resources/Cockpit_1.tex",                // texture name
+      132,                                     // u0
+      22,                                       // v0
+      22,                                      // du
+      22                                        // dv
+    ),
+/*
+    new CUIMaterial(
+      "compass navpoint icon",                 // material id
+      "Textures/Cockpit_1.tex",                // texture name
+      0,                                       // u0
+      192,                                     // v0
+      64,                                      // du
+      64                                       // dv
+    ),
+  */
+
+    // Cursor
+
+    new CUIMaterial(
+      "hand point cursor",
+      "Resources/cursor01.tex",
+      0,
+      64,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "hand cursor",
+      "Resources/cursor01.tex",
+      32,
+      64,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "hand grab cursor",
+      "Resources/cursor01.tex",
+      64,
+      64,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "arrow four cursor",
+      "Resources/cursor01.tex",
+      96,
+      32,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "cockpit cursor",
+      "Resources/cursor01.tex",
+      0,
+      32,
+      32,
+      32
+    ),
+
+    new CUIMaterial(
+      "CommanderLensT34",
+      "Textures/RealCamera_Comander_1024_768.tex",
+      234,
+      460,
+      790,
+      565
+    ),
+
+    new CUIMaterial(
+      "CockpitViewT34",
+      "Textures/RealCamera_Gunlayer_1024_768.tex",
+      0,
+      0,
+      930,
+      410
+    ),
+
+    new CUIMaterial(
+      "CockpitViewTiger",
+      "Textures/RealCamera_Comander_1024_768.tex",
+      10,
+      0,
+      640,
+      300
+    ),
+
+    new CUIMaterial(
+      "GunnerLensT34",
+      "Textures/RealCamera_Gunlayer_1024_768.tex",
+      512,
+      510,
+      512,
+      512
+    ),
+
+    new CUIMaterial(
+      "GunnerLensTiger",
+      "Textures/RealCamera_Gunlayer_1024_768.tex",
+      0,
+      510,
+      512,
+      512
+    ),
+
+    new CUIMaterial(
+      "GunnerMarksTiger",
+      "Textures/RealCamera_Gunlayer_tiger_1024_768.tex",
+      0,
+      0,
+      512,
+      512
+    ),
+
+    new CUIMaterial(
+      "black box",
+      "",
+      0,
+      0,
+      256,
+      256
+    )
+
+  ];
+
+  Array Materials_800_600 = [
+    // status screen
+
+      new CUIMaterial(
+        "tank base",
+        "Textures/VCockpit_800_600.tex",
+        0,
+        0,
+        112,
+        112
+      ),
+
+      new CUIMaterial(
+        "commander sight",
+        "Textures/VCockpit_800_600.tex",
+        60,
+        10,
+        2,
+        100
+      ),
+
+      new CUIMaterial(
+        "turret wireframe",
+        "Textures/VCockpit_800_600.tex",
+        0,
+        112,
+        57,
+        22
+      ),
+
+      new CUIMaterial(
+        "turret",
+        "Textures/VCockpit_800_600.tex",
+        57,
+        112,
+        57,
+        22
+      ),
+
+     // weapon
+
+      new CUIMaterial(
+        "TankShell",
+        "Textures/VCockpit_800_600.tex",
+        204,
+        114,
+        52,
+        20
+      ),
+
+      new CUIMaterial(
+        "TankShellFill",
+        "Textures/VCockpit_800_600.tex",
+        204,
+        134,
+        52,
+        20
+      ),
+
+      new CUIMaterial(
+        "MachinGunFrame",
+        "Textures/VCockpit_800_600.tex",
+        203,
+        5,
+        50,
+        50
+      ),
+      new CUIMaterial(
+        "MachinGunFill",
+        "Textures/VCockpit_800_600.tex",
+        204,
+        59,
+        50,
+        50
+      )
+    ];
+
+  Array Materials_1024_768 = [
+
+      new CUIMaterial(
+        "commander sight",
+        "Resources/VCockpit_1024_768.tex",
+        225,
+        115,
+        35,
+        96
+      ),
+
+//    Tiger
+      new CUIMaterial(
+        "tiger tank base",
+        "Resources/VCockpit_1024_768.tex",
+        288,
+        288,
+        224,
+        224
+      ),
+      new CUIMaterial(
+        "tiger turret wireframe",
+        "Resources/VCockpit_1024_768.tex",
+        399,
+        243,
+        113,
+        44
+      ),
+      new CUIMaterial(
+        "tiger turret",
+        "Resources/VCockpit_1024_768.tex",
+        286,
+        243,
+        113,
+        44
+      ),
+      new CUIMaterial(
+        "tiger tank body",
+        "Resources/VCockpit_1024_768.tex",
+        236,
+        395,
+        51,
+        117
+      ),
+      new CUIMaterial(
+        "tiger track left",
+        "Resources/VCockpit_1024_768.tex",
+        280,
+        121,
+        18,
+        116
+      ),
+      new CUIMaterial(
+        "tiger track right",
+        "Resources/VCockpit_1024_768.tex",
+        261,
+        121,
+        18,
+        116
+      ),
+
+//    T34
+      new CUIMaterial(
+        "tank base",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        0,
+        224,
+        224
+      ),
+      new CUIMaterial(
+        "turret wireframe",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        225,
+        114,
+        44
+      ),
+      new CUIMaterial(
+        "turret",
+        "Resources/VCockpit_1024_768.tex",
+        114,
+        225,
+        114,
+        44
+      ),
+      new CUIMaterial(
+        "tank body",
+        "Resources/VCockpit_1024_768.tex",
+        225,
+        0,
+        48,
+        114
+      ),
+      new CUIMaterial(
+        "track right",
+        "Resources/VCockpit_1024_768.tex",
+        274,
+        0,
+        11,
+        120
+      ),
+      new CUIMaterial(
+        "track left",
+        "Resources/VCockpit_1024_768.tex",
+        286,
+        0,
+        11,
+        120
+      ),
+
+//    Weapon
+      new CUIMaterial(
+        "TankShellFill",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        438,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "MachinGunFill",
+        "Resources/VCockpit_1024_768.tex",
+        55,
+        410,
+        119,
+        27
+      ),
+//    Weapon ammo german
+      new CUIMaterial(
+        "TankShell_SprGr43",
+        "Resources/VCockpit_1024_768.tex",
+        298,
+        0,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "TankShell_Pzgr40",
+        "Resources/VCockpit_1024_768.tex",
+        298,
+        28,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "TankShell_PzGr40_2",
+        "Resources/VCockpit_1024_768.tex",
+        298,
+        56,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "TankShell_PzGr39HL",
+        "Resources/VCockpit_1024_768.tex",
+        298,
+        84,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "German_MG_Frame",
+        "Resources/VCockpit_1024_768.tex",
+        298,
+        112,
+        184,
+        27
+      ),
+
+//    Weapon ammo USSR
+      new CUIMaterial(
+        "TankShellAP",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        298,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "TankShellAPCR",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        326,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "TankShellHE",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        270,
+        184,
+        27
+      ),
+      new CUIMaterial(
+        "MachinGunFrame",
+        "Resources/VCockpit_1024_768.tex",
+        0,
+        382,
+        184,
+        27
+      ),
+      new CUIOnDemand2Material(
+        "GridBackground",
+        "Resources/cursor02.tex",
+        1,
+        224,
+        32,
+        32
+      )
+    ];
+
+  Array Materials_1280_960 = [
+    ];
+
+  static String TerrainMapTextureName = "";
+
+  int CurrentMode = 0;
+
+  void CCockpitSkin(
+      int _Width,
+      int _Height
+    )
+  {
+    if (_Width <= 800)
+    {
+      CurrentMode = 1024;            //         was   800;
+      Materials   = Materials_1024_768;   //         was   Materials_800_600;
+    }
+    else
+    if (_Width <= 1024)
+    {
+      CurrentMode = 1024;
+      Materials = Materials_1024_768;
+    }
+    else
+    {
+      CurrentMode = 1280;
+      Materials = Materials_1024_768;
+      //Materials = Materials_1280_960;
+    }
+
+    //$TMP $DEBUG
+//      CurrentMode = 800;
+//      Materials   = Materials_800_600;
+
+    CommonMaterials[0].TextureName = TerrainMapTextureName;
+
+    Materials.append(CommonMaterials);
+  }
+
+  void CCockpitSkin()
+  {
+    CCockpitSkin(800, 600);
+  }
+
+  boolean IsShoulBeReloaded(
+      int _Width,
+      int _Height
+    )
+  {
+    if (!EnableReload)
+      return false;
+
+    if (_Width <= 800)
+    {
+      return (CurrentMode != 800);
+    }
+    else
+    if (_Width <= 1024)
+    {
+      return (CurrentMode != 1024);
+    }
+    else
+    {
+      return (CurrentMode != 1280);
+    }
+  }
+}
+
+class CTankAutoThingUIMaterials {
+  Array   Materials = [
+    new CUIMaterial(
+      "handbrake on",                         // material id
+      "Resources/Cockpit_2.tex",              // texture name
+      132,                                    // u0
+      88,                                     // v0
+      57,                                     // du
+      44                                      // dv
+    ),
+    new CUIMaterial(
+      "handbrake off",                        // material id
+      "Resources/Cockpit_2.tex",              // texture name
+      132,                                    // u0
+      44,                                     // v0
+      57,                                     // du
+      44                                      // dv
+    ),
+
+    new CUIMaterial(
+      "gear",                                 // material id
+      "Resources/Cockpit_2.tex",              // texture name
+      64,                                      // u0
+      176,                                    // v0
+      55,                                     // du
+      44                                      // dv
+    ),
+
+    new CUIMaterial(
+      "speed",                                 // material id
+      "Resources/Cockpit_2.tex",               // texture name
+      0,                                       // u0
+      176,                                     // v0
+      64,                                      // du
+      44                                       // dv
+    ),
+
+    new CUIMaterial(
+      "rpm",                                   // material id
+      "Resources/Cockpit_2.tex",               // texture name
+      132,                                     // u0
+      0,                                       // v0
+      78,                                      // du
+      44                                       // dv
+    ),
+
+    new CUIMaterial(
+      "autodriver",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      0,                                       // u0
+      0,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autodriverA",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      0,                                      // u0
+      88,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autodriverP",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      0,                                       // u0
+      44,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+
+    new CUIMaterial(
+      "autodriverD",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      0,                                      // u0
+      132,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+
+    new CUIMaterial(
+      "autogunner",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      44,                                     // u0
+      0,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autogunnerA",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      44,                                     // u0
+      88,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autogunnerP",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      44,                                     // u0
+      44,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autogunnerD",                          // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      44,                                     // u0
+      132,                                       // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+
+    new CUIMaterial(
+      "autocommander",                       // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      88,                                     // u0
+      0,                                      // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autocommanderA",                       // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      88,                                     // u0
+      88,                                      // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autocommanderP",                       // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      88,                                     // u0
+      44,                                      // v0
+      44,                                      // du
+      44                                       // dv
+    ),
+    new CUIMaterial(
+      "autocommanderD",                       // material id
+      "Resources/Cockpit_2.tex",                // texture name
+      88,                                     // u0
+      132,                                      // v0
+      44,                                      // du
+      44                                       // dv
+    )
+
+  ];
+
+  boolean IsShouldBeReloaded(
+      int _Width,
+      int _Height
+    )
+  {
+    return false;
+  }
+}

@@ -1,0 +1,671 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// CHumanAttackStates
+//
+
+class CHumanAttackStates
+{
+  // PARAM_State
+  final static int STATE_Default              = 0;
+  final static int STATE_NearHeli             = 1;
+  final static int STATE_Ready                = 2;
+  final static int STATE_Aim                  = 3;
+
+  // PARAM_Sit
+  final static int STATE_Sit                  = 1;
+  final static int STATE_Lie                  = 2;
+  final static int STATE_Lie_SemiLie          = 3;
+}
+
+//
+// CHumanAnimatorConfig
+//
+
+class CHumanAnimatorConfig
+  extends CHumanAttackStates
+{
+  final static Array StandSpeed      = [0.0,   0.0, 0.001,  1.0];
+  final static Array WalkSpeed       = [0.001, 1.0,   2.0,  3.5];
+  final static Array RunSpeed        = [2.0,   3.5,  50.0, 50.0];
+
+  final static float WalkStepSize    = 1.5;
+  final static float RunStepSize     = 2.5;
+
+  // weapon direction range
+  final static float MinHAngle        = -45;
+  final static float MaxHAngle        = 45;
+  final static float MinVAngle        = -45;
+  final static float MaxVAngle        = 45;
+
+
+
+  final static float StateChangeTime = 0.25;
+
+  // Phase generators
+  final static int PHASE_Idle  = 0;
+  final static int PHASE_Walk  = 1;
+  final static int PHASE_Fixed = 2;
+
+  final static int PHASE_METHOD_AnimationTime = 1;
+  final static int PHASE_METHOD_StepSize      = 2;
+  final static int PHASE_METHOD_FixedPhase    = 5; // value sensitive constant
+
+  final static int GENERATOR_Idle   = 0;
+  final static int GENERATOR_Fixed  = 1;
+  final static int GENERATOR_Walk   = 2;
+  final static int GENERATOR_Run    = 3;
+
+  // Parameters
+  final static int PARAM_State      = 0;
+  final static int PARAM_Stay       = 1;
+  final static int PARAM_Sit        = 2;
+  final static int PARAM_AIM_LINK   = 3;
+  final static int PARAM_RunChoice  = 4;
+  final static int PARAM_StayChoice = 5;
+  final static int PARAM_MoveOrder  = 6;
+
+  // Clip names
+  final static Array POSE_Attack_M16 = [
+      "lhand_m16_attack",
+      "rhand_m16_attack",
+      "weapon_m16_attack"
+    ];
+
+  final static Array POSE_Attack = [
+      "weapon_carry"
+    ];
+
+/*
+  final static Array ANIM_Stand = [ "stand_free",    "stand_post",  "stand_attack",  "stand_ready",  "stand_aim"];
+  final static Array ANIM_Walk  = [ "walk_ready",    "walk_ready",  "walk_near_hel", "walk_ready",   "walk_attack"];
+  final static Array ANIM_Run   = [ "run_ready",     "run_ready",   "run_near_hel",  "run_ready",    "run_attack"];
+ */
+
+  final static Array ANIM_Stand = [ "stand_free",    "stand_post",    "stand_attack", "stand_ready",  "stand_aim"];
+  final static Array ANIM_Walk  = [ "walk_carry",    "walk_carry_bh", "walk_nearhel", "walk_ready" ,  "walk_attack"];
+  final static Array ANIM_Run   = [ "run_carry",     "run_carry_bh",  "run_nearhel",  "run_ready"  ,  "run_ready"];
+
+  final static String ANIM_ReadySit = "sit_ready";
+  final static String ANIM_ReadyLie = "lie_ready";
+
+  final static Array ANIM_AttackSit   = ["sit_aim",   "sit_aim_ltdn",   "sit_aim_rtdn",   "sit_aim_ltup",   "sit_aim_rtup"];
+  final static Array ANIM_AttackLie   = ["lie_aim",   "lie_aim_lt",   "lie_aim_rt"];
+  final static Array ANIM_AttackStand = ["stand_aim", "stand_aim_ltdn", "stand_aim_rtdn", "stand_aim_ltup", "stand_aim_rtup"];
+  
+  // do not change numbers
+  final static int   iANIM_RunCommon = 0;
+  final static int   iANIM_RunHeli   = 1;
+  final static int   iANIM_RunReady  = 2;
+  final static int   iANIM_RunChasovoy = 3;
+
+  final static Array RunAnimations  = [
+                                        // iANIM_RunCommon
+                                        ["stand_free","walk_ready", "run_nearhel"],
+                                        // iANIM_RunHeli
+                                        ["stand_post","walk_chasovoy", "run_carry"],
+                                        // iANIM_RunReady
+                                        ["stand_ready", "walk_ready", "run_carry"],
+                                        // iANIM_RunChasovoy
+                                        ["stand_free", "walk_chasovoy", "run_nearhel"]
+                                      ];
+  
+  final static int   iANIM_StayFree  = 0;
+  final static int   iANIM_StayReady = 1;
+  final static int   iANIM_StayFreeHnd = 2;
+
+  final static Array StayAnimations = [
+                                        "stand_free",
+                                        "stand_ready",
+                                        "stand_free_hnd"
+                                      ];
+                                         
+}
+
+//
+// CHumanAnimatorGraph
+//
+
+class CHumanAnimatorGraph
+  extends CHumanAnimatorConfig, CBaseStateAnimatorGraph
+{
+  // ==================================
+  // Condition wrappers
+  // ==================================
+
+  Array C_SpeedRangeArray(
+      Array _SpeedRange
+    )
+  {
+    return C_SpeedRange(
+        _SpeedRange[1],
+        _SpeedRange[2],
+        _SpeedRange[1] - _SpeedRange[0],
+        _SpeedRange[3] - _SpeedRange[2]
+      );
+  }
+
+  Array C_HorizMoveDir(
+      float _HAngleFrom,
+      float _HAngleTo
+    )
+  {
+    return C_MoveDir(_HAngleFrom, _HAngleTo, -90.0, 90.0);
+  }
+
+  Array C_ForwardMoveDir()  { return C_HorizMoveDir( -45.0,   45.0); }
+  Array C_BackwardMoveDir() { return C_HorizMoveDir( 135.0, -135.0); }
+  Array C_LeftMoveDir()     { return C_HorizMoveDir(  45.0,  135.0); }
+  Array C_RightMoveDir()    { return C_HorizMoveDir(-135.0,  -45.0); }
+
+  Array C_State(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_State, _StateID, StateChangeTime);
+  }
+
+  Array C_NotState(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_State, _StateID, StateChangeTime, false, false);
+  }
+
+  Array Sit_State(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_Sit, _StateID, StateChangeTime);
+  }
+
+  Array Stay_State(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_Stay, _StateID, StateChangeTime);
+  }
+
+  Array Choice_RunState(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_RunChoice, _StateID, StateChangeTime);
+  }
+
+  Array Choice_StayState(
+      int _StateID
+    )
+  {
+    return C_Parameter(PARAM_StayChoice, _StateID, StateChangeTime);
+  }
+
+  Array C_AimDir(
+      float _HAngle,
+      float _VAngle
+    )
+  {
+    return C_JointDir(MaxHAngle - MinHAngle, MaxVAngle - MinVAngle, _HAngle, _VAngle, PARAM_AIM_LINK);
+  }
+
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CHumanAnimatorGraph()
+  {
+    SetupBlendTree();
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+    void Create4AimStateBlendNodes( Array _Animations, String _StateID ) {
+     CreateBlendNode( _StateID, _StateID + "DnLeft", [
+            [ C_AimDir(MaxHAngle, MaxVAngle) ],
+            [
+              [ _Animations[1], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+
+    CreateBlendNode(_StateID, _StateID + "DnRight", [
+            [ C_AimDir(MinHAngle, MaxVAngle) ],
+            [
+              [ _Animations[2], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+
+    CreateBlendNode(_StateID, _StateID + "UpLeft", [
+            [ C_AimDir(MaxHAngle, MinVAngle) ],
+            [
+              [ _Animations[3], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+
+    CreateBlendNode(_StateID, _StateID + "UpRight", [
+            [ C_AimDir(MinHAngle, MinVAngle) ],
+            [
+              [ _Animations[4], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+  }
+
+  void Create2AimStateBlendNodes( Array _Animations, String _StateID ) {
+     CreateBlendNode( _StateID, _StateID + "Left", [
+            [ C_AimDir(MaxHAngle, MaxVAngle) ],
+            [
+              [ _Animations[1], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+
+    CreateBlendNode(_StateID, _StateID + "Right", [
+            [ C_AimDir(MinHAngle, MaxVAngle) ],
+            [
+              [ _Animations[2], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+
+    CreateBlendNode(_StateID, _StateID + "Left1", [
+            [ C_AimDir(MaxHAngle, MinVAngle) ],
+            [
+              [ _Animations[1], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+
+    CreateBlendNode(_StateID, _StateID + "Right1", [
+            [ C_AimDir(MinHAngle, MinVAngle) ],
+            [
+              [ _Animations[2], GENERATOR_Fixed, 0 ]
+            ]
+          ]);
+  }
+
+  void SetupBlendTree()
+  {
+
+//    CreateBlendNode("", "CalcStay", [[C_SpeedRangeArray(StandSpeed), C_ChangeParam(PARAM_Stay)], []]);
+//    CreateBlendNode("", "CalcStay2", [[C_Parameter(PARAM_MoveOrder, 0, 0.2), C_Parameter(PARAM_Stay, 1, 5.0f, true, true)], []]);
+
+//    CreateBlendNode("", "StateMove", [[C_Parameter(PARAM_Stay, 1, 5.0f, false, true)], []]);
+//    CreateBlendNode("", "StateStay", [[], []]);
+
+    CreateBlendNode("", "StateStay", [[C_SpeedRangeArray(StandSpeed), C_Parameter(PARAM_MoveOrder, 0, 0.5)], []]);
+
+    CreateBlendNode("", "StateMoveStay", [[C_SpeedRangeArray(StandSpeed), C_Parameter(PARAM_MoveOrder, 1, 0.5)], []]);
+    CreateBlendNode("", "StateMoveWalk", [[C_SpeedRangeArray(WalkSpeed)], []]);
+    CreateBlendNode("", "StateMoveRun", [[C_SpeedRangeArray(RunSpeed)], []]);
+
+    for (int i = 0 ; i < RunAnimations.size(); i++)
+    {
+      CreateBlendNode("StateMoveStay","StateMoveStay" + new String(i), [[Choice_RunState(i)], [
+         [RunAnimations[i][0], GENERATOR_Idle, 0]
+        ]]);
+      CreateBlendNode("StateMoveWalk","StateMoveWalk" + new String(i), [[Choice_RunState(i)], [
+         [RunAnimations[i][1], GENERATOR_Walk, 0]
+        ]]);
+      CreateBlendNode("StateMoveRun", "StateMoveRun" + new String(i), [[Choice_RunState(i)], [
+         [RunAnimations[i][2], GENERATOR_Run, 0]
+        ]]);
+    }
+
+
+    CreateBlendNode("StateStay", "StateStayChoice", [[C_NotState(STATE_Aim), Sit_State(STATE_Default)], []]);
+
+    for (int i = 0 ; i < StayAnimations.size(); i++)
+    {
+      CreateBlendNode("StateStayChoice", "StateStayChoice" + new String(i),[
+        [Choice_StayState(i)], 
+        [
+           [StayAnimations[i], GENERATOR_Idle, 0]
+        ]]);
+    }
+
+    CreateBlendNode("StateStay", "StateStaySimpleSit",[
+        [C_State(STATE_Ready), Sit_State(STATE_Sit)], 
+        [
+           [ANIM_ReadySit, GENERATOR_Idle, 0]
+        ]]);
+    
+    CreateBlendNode( "StateStay", "StateStaySimpleLie", [
+        [C_State(STATE_Ready), Sit_State(STATE_Lie)],
+        [
+          [ANIM_ReadyLie,GENERATOR_Idle,0]
+        ]]);
+    
+
+
+    // stand
+
+    CreateBlendNode("StateStay", "StateStayStandAim", [
+                 [C_State(STATE_Aim), Sit_State(STATE_Default)],
+                 []
+              ]);
+
+    // ACHTUNG! - Spherical coords has positive angle direction to "left"
+
+    Create4AimStateBlendNodes( ANIM_AttackStand, "StateStayStandAim" );
+
+    CreateBlendNode("StateStay", "StateStaySitAim", [
+                 [C_State(STATE_Aim), Sit_State(STATE_Sit)],
+                 []
+              ]);
+
+    
+    Create4AimStateBlendNodes( ANIM_AttackSit, "StateStaySitAim" );
+
+    // LAYING DOWN
+    CreateControlStateEx( "StateStay", [C_SpeedRangeArray(StandSpeed), C_Parameter(PARAM_MoveOrder, 0, 0.5)] );
+    CreateIntermediateState( "StateLayingDownNoAim" );
+    CreateControlStateEx( "StateLieNoAim", [ C_State(STATE_Aim), Sit_State(STATE_Lie) ] );
+    CreateControlStateEx( "StateStayAndLie", [ C_State(STATE_Aim), Sit_State(STATE_Lie) ] );  
+    
+    CreateDoubleLine( "StateStay", "StateLayingDownNoAim", 1.0, ANIM_AttackLie[0], 0, 0.05, 0, false );
+    CreateDoubleLine( "StateLayingDownNoAim", "StateLieNoAim", 1.0, "sit_to_lie", 0, 1, 0, false );
+//    CreateSingleLine( "StateLieNoAim", "StateLayingDownNoAim",  1.0, "lie_to_sit", 0, 1, 0, false );
+    CreateDoubleLine( "StateLieNoAim", "StateStayAndLie", 1.0, ANIM_AttackLie[0], 0, 0.05, 0, false );
+    
+    CreateBlendNode( "", "StateStayAndLie", [[C_SpeedRangeArray(StandSpeed), C_Parameter(PARAM_MoveOrder, 0, 0.5), C_State( STATE_Aim ), Sit_State( STATE_Lie ) ], []] );
+    Create2AimStateBlendNodes( ANIM_AttackLie, "StateStayAndLie" );
+
+//    LogBlendTree();
+  }
+}
+
+//
+// CHumanAnimator
+//
+
+class CHumanAnimator
+  extends CHumanAnimatorConfig, CBaseStateAnimator
+{
+  final static float SpeedSensitivity = 0.25;
+
+  static Component Graph = null;
+
+  Array m_RunAnimations;
+  Array m_StayAnimations;
+
+  final static boolean IsEventFilterEnabled = false;
+//  final static Array   EventFilter          = ["StateStayAndLie"];
+  
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CHumanAnimator()
+  {
+    // Setup graph component
+    if (null == Graph)
+      Graph = new #StateAnimatorGraph<CHumanAnimatorGraph>();
+
+    // Setup phase generators
+    DefinePhaseGenerator(PHASE_Fixed, GENERATOR_Fixed, PHASE_METHOD_FixedPhase, [ 1.0f]);
+    DefinePhaseGenerator(PHASE_Idle,  GENERATOR_Idle, PHASE_METHOD_AnimationTime, [ 13.33,        true]);
+    DefinePhaseGenerator(PHASE_Walk,  GENERATOR_Walk, PHASE_METHOD_StepSize,      [ WalkStepSize, 0.0 ]);
+    DefinePhaseGenerator(PHASE_Walk,  GENERATOR_Run,  PHASE_METHOD_StepSize,      [ RunStepSize,  0.0 ]);
+
+    // Set initial parameters
+    SetParameter(PARAM_State, STATE_Default);
+    SetParameter(PARAM_Sit,   STATE_Default);
+//    SetParameter(PARAM_Stay,  1);
+    SetParameter(PARAM_MoveOrder,  0);
+
+
+    SetParameter(PARAM_RunChoice, iANIM_RunCommon);
+    SetParameter(PARAM_StayChoice, iANIM_StayFree);
+  }
+
+  // ==================================
+  // Interface
+  // ==================================
+
+  void Initialize(
+      Component _Mesh
+    )
+  {
+    SetPose(_Mesh, /*POSE_Attack*/POSE_Attack_M16);
+  }
+
+  void InitializeWeaponJoint(
+      Component _AimJoint
+    )
+  {
+    SetParameter(PARAM_AIM_LINK, _AimJoint);
+  }
+
+
+  // ==================================
+  // Events
+  // ==================================
+
+  void OnAttackStateChanged(
+      int _StateID
+    )
+  {
+    SetParameter(PARAM_State, _StateID);
+    ChangeAnimation();
+//    SetPose(GetMeshComponent(), POSE_Attack);
+  }
+
+  void OnSitStateChanged(
+      int _StateID
+    )
+  {
+    SetParameter(PARAM_Sit, _StateID);
+    ChangeAnimation();
+  }
+
+  void ChangeAnimation()
+  {
+    int State = GetParameter(PARAM_State);
+ 
+    if (State != STATE_Aim &&
+        State != STATE_Ready)
+      SetParameter(PARAM_Sit, STATE_Default);
+
+    if (State < m_RunAnimations.size())
+    if (!m_RunAnimations[State].isEmpty())
+    {
+      SetParameter(PARAM_RunChoice, m_RunAnimations[State][randnum(m_RunAnimations[State].size())]);    
+    }
+
+    if (State < m_StayAnimations.size())
+    if (!m_StayAnimations[State].isEmpty())
+      SetParameter(PARAM_StayChoice,m_StayAnimations[State][randnum(m_StayAnimations[State].size())]);
+  }
+
+  void InitPossibleAnimations(
+      Array _RunAnimations,
+      Array _StayAnimations
+    )
+  {
+    m_RunAnimations  = _RunAnimations;
+    m_StayAnimations = _StayAnimations;
+    ChangeAnimation();
+  }
+
+  int GetAttackState()
+  {
+    return GetParameter(PARAM_State);
+  }
+
+  int GetSitState()
+  {
+    return GetParameter(PARAM_Sit);
+  }
+
+  void SetMoveState(int _StateID)
+  {
+    SetParameter(PARAM_MoveOrder, _StateID);
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+
+  void SetPose(
+      Component _Mesh,
+      Array     _Pose
+    )
+  {
+    for (int i = 0; i < _Pose.size(); i++)
+      _Mesh.SetAnimationPhase(_Pose[i], 1.0);
+  }
+}
+
+//
+// CHumanHeliLoadAnimator
+//
+
+class CHumanLoadHeliAnimatorConfig
+{
+  final static float SpeedSensitivity = 0.25;
+
+  final static float StateChangeTime = 0.25;
+
+  final static int PARAM_State = 0;
+
+  final static int STATE_Stay              = 0;
+  final static int STATE_Move              = 1;
+
+  final static int PHASE_RndIdle = 0;
+  final static int PHASE_Move    = 1;
+
+  final static int GENERATOR_Idle = 0;
+  final static int GENERATOR_Move = 1;
+
+  final static int PHASE_METHOD_AnimationTime = 1;
+  final static int PHASE_METHOD_StepSize      = 2;
+  final static int PHASE_METHOD_FixedPhase    = 5; // value sensitive constant
+
+  final static Array Animations = [
+                                    // _Type = 0
+                                    [
+                                      ["stand_free", 13.3],
+                                      ["run2hel0", 185.0 / 15.0]
+                                    ],
+                                    // _Type = 1
+                                    [
+                                      ["stand_free", 13.3],
+                                      ["run2hel1", 151.0 / 15.0]
+                                    ],
+                                    // _Type = 2
+                                    [
+                                      ["stand_free", 13.3],
+                                      ["run2hel2", 137.0 / 15.0]
+                                    ],
+                                    // _Type = 3
+                                    [
+                                      ["stand_free", 13.3],
+                                      ["run2hel3", 147.0 / 15.0]
+                                    ],
+                                    // _Type = 4
+                                    [
+                                      ["stand_free", 13.3],
+                                      ["run2hel4", 164.0 / 15.0]
+                                    ],
+                                    // _Type = 5
+                                    [
+                                      ["stand_free", 13.3],
+                                      ["run2hel5", 174.0 / 15.0]
+                                    ]
+                                  ];
+
+  final static Array AnimationsInitPos = new Array(6, new Vector(0.0, 0.0, 0.0));
+
+}
+
+class CHumanLoadHeliAnimatorGraph
+  extends CHumanLoadHeliAnimatorConfig, CBaseStateAnimatorGraph
+{
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CHumanLoadHeliAnimatorGraph()
+  {
+    CHumanLoadHeliAnimatorGraph(0);
+  }
+
+  CHumanLoadHeliAnimatorGraph(int _Type)
+  {
+    SetupBlendTree(_Type);
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+
+ Array C_State(
+        int _StateID
+      )
+    {
+      return C_Parameter(PARAM_State, _StateID, StateChangeTime);
+    }
+
+  void SetupBlendTree(int _Type)
+  {   
+    CreateBlendNode("", "MainState", [[C_State(STATE_Stay)], 
+          [
+            [Animations[_Type][1][0], GENERATOR_Idle, 0]
+          ]
+        ]);      
+    CreateBlendNode("", "MoveState", [[C_State(STATE_Move)], 
+          [
+            [Animations[_Type][1][0], GENERATOR_Move, 0]
+          ]
+        ]);                  
+  }
+}
+
+class CHumanLoadHeliAnimator
+  extends CBaseStateAnimator, CHumanLoadHeliAnimatorConfig
+{
+  Component Graph = null;
+
+  static Array Graphs = [null, null, null, null, null, null];
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CHumanLoadHeliAnimator()
+  {
+    CHumanLoadHeliAnimator(0);
+  }
+
+  CHumanLoadHeliAnimator(
+      int _Type
+    )
+  {
+    // Setup graph component
+    if (Graphs[_Type] == null)    
+    {
+      Graphs[_Type] = new #StateAnimatorGraph();
+      loadFromScript(Graphs[_Type], "CHumanLoadHeliAnimatorGraph",[_Type]);
+    }
+
+    Graph = Graphs[_Type];
+
+    // Setup phase generators
+    DefinePhaseGenerator(PHASE_RndIdle,  GENERATOR_Idle, PHASE_METHOD_FixedPhase, [ 0.0f ]);// Animations[_Type][1][1],        true]);
+    DefinePhaseGenerator(PHASE_Move,     GENERATOR_Move, PHASE_METHOD_AnimationTime, [ Animations[_Type][1][1],        false, true]); // not random start , runonce
+
+    SetParameter(PARAM_State, STATE_Stay);
+  }
+
+  void SetRunState()
+  {
+    SetParameter(PARAM_State, STATE_Move);
+  }
+
+}

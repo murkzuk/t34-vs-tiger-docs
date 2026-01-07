@@ -1,0 +1,36 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CInstances
+{
+  static void InitializeInstances()
+  {
+//    Cbld_BarrackModel::InstancesQty                          = 1;
+    Cfence_WickerModel::InstancesQty                         = 9;
+    Cfence_PalisadeModel::InstancesQty                       = 9;
+    Cfence_PoleModel::InstancesQty                           = 9;
+    Cbld_PostElectricModel::InstancesQty                     = 8;
+    Cbld_USRCorralWoodModel::InstancesQty                    = 9;
+    Cbld_USRHouseWoodModel::InstancesQty                     = 9;
+    Cbld_USRShedWoodModel::InstancesQty                      = 9;
+    Cbld_USRShedWood02Model::InstancesQty                    = 9;
+    Cbld_BridgeWoodModel::InstancesQty                       = 9;
+    Cu_veh_t34_85_44Model::InstancesQty                      = 1;
+    Cu_veh_PzVI_MAINModel::InstancesQty                      = 1;
+    Cu_veh_PzIVGModel::InstancesQty                          = 1;
+    Cu_veh_t34_76_42Model::InstancesQty                      = 1;
+    Cenv_Antitank_singleModel::InstancesQty                  = 9;
+    Cbld_DzotWoodModel::InstancesQty                         = 4;
+    Cbld_SandBagWallModel::InstancesQty                      = 9;
+    Cbld_WaterWell_1Model::InstancesQty                      = 1;
+    Cbld_WaterWell_2Model::InstancesQty                      = 1;
+    Cbld_BarricadeModel::InstancesQty                        = 4;
+    Cbld_Barricade_PakModel::InstancesQty                    = 3;
+  }
+}

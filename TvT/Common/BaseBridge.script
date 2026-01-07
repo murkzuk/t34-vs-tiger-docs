@@ -1,0 +1,136 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseBridgeObject
+  extends CObject
+{
+  static String  m_StartSection    = "";
+  static String  m_FinishSection   = "";
+  static String  m_CenterSection   = "";
+
+  static int     m_InitSize        = 10;
+
+  int            m_CurrentSize 	   = 10;
+
+  Array GetDefaultProperties()
+  {
+    return [
+             ["SurfaceControl", DefaultSurfaceControl],
+             ["Length", 	m_InitSize]
+           ];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CObject::SetProperties(_PropMap);
+
+    m_CurrentSize  = _PropMap.Get("Length", m_InitSize);
+    OnSizeChanged();
+  }
+
+  void SetProperties(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CBaseBridgeObject()
+  {
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Construct(_Mission, _PropMap);
+    Component Mesh = GetMeshComponent();
+    if (null != Mesh)
+    {
+      Mesh.SetCenteredMode(true);
+    }
+  }
+
+  // ====================================================
+  // Service
+  // ====================================================
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void UpdateIngameState()
+  {
+  }  
+  
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    CObject::Shutdown(_Mission);
+  }
+
+  void OnSizeChanged()
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+      return;
+
+    Mesh.CreateLine(
+        m_StartSection,   IdentityMatrix, 						  AXIS_X, "Start",
+        m_FinishSection,  IdentityMatrix,                                                 AXIS_X, "Finish",
+        m_CenterSection,  IdentityMatrix,                                                 AXIS_X, "Center_",
+        m_CurrentSize
+      );
+  } 
+
+  void UpdateRecord()
+  {
+    Component Content = new #GameController().GetObject(SOID_MissionController).GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.DropDefault("Length");
+    PropertiesMap.Set("Length", m_CurrentSize);
+  }      
+
+  // ====================================================
+  // Events
+  // ====================================================  
+  event void OnAddJoint()
+  {
+    m_CurrentSize++;
+    OnSizeChanged();
+    UpdateRecord();
+  }  
+
+  event void OnRemoveJoint()
+  {
+    if (m_CurrentSize > 0)
+    {    
+      m_CurrentSize--;
+      OnSizeChanged();
+      UpdateRecord();
+    }
+  }
+}

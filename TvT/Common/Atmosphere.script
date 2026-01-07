@@ -1,0 +1,41 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCommonAtmosphere
+  extends CBaseAtmosphere
+{
+  boolean IsLightEnabled        = true;
+ 
+  boolean IsShadowEnabled       = true;
+
+  Vector  SunDirection          = new Vector(0.0, 0.0, -1.0);
+  Color   SunColor              = new Color(0.0, 0.0, 0.0);
+  float   DistanceToSun         = 5000.0;
+  Array   HorizontPos           = [300.0, 2000.0];
+
+  Color   AmbientLight          = new Color(0.1, 0.1, 0.1);
+
+  float   FogNear               = 0.0;
+  float   FogFar                = 5000.0;
+  float   FogFarMax             = 6000.0;
+  Color   FogColorXPos          = new Color(0.7, 0.7, 0.7); // S
+  Color   FogColorXNeg          = new Color(0.7, 0.7, 0.7); // N
+  Color   FogColorYPos          = new Color(0.7, 0.7, 0.7); // E
+  Color   FogColorYNeg          = new Color(0.7, 0.7, 0.7); // W
+
+  Color   ShadowColor           = new Color(0.8, 0.8, 0.8);
+  float   ShadowFar             = FogFar * 0.7;
+
+  Vector  WindVector            = new Vector(0.0, 0.0, 0.0);
+
+  boolean EnableHorizontAdjustment = true;
+  boolean IsSunVisible          = false;
+
+  boolean IsCameraAdjustEnabled = false;
+}

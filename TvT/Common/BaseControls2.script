@@ -1,0 +1,621 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CUIScrollBar2
+  extends CUIScrollBar
+{
+  // compounds
+
+  float m_Arrow1_H2W = 1.0f;
+  float m_Arrow2_H2W = 1.0f;
+  float m_Scroll_H2W = 1.0f;
+
+
+  Component   m_Fill;
+
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    CUIScrollBar::Initialize(_ControlID);
+    m_Fill   = new #BitmapButton();
+    RegisterObject(m_ControlID + "_ScrollFill", m_Fill);
+  }
+
+  void UnregisterControl()
+  {
+    CUIScrollBar::UnregisterControl();
+    UnregisterObject(m_ControlID + "_ScrollFill");
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CUIScrollBar::Construct(_PropMap);
+
+    Component MaterialManager = m_MenuController.GetMaterialManager();
+
+    String FillMaterial = _PropMap.Get("MaterialFill", "");
+    m_Fill.SetMaterialManager(MaterialManager);
+    m_Fill.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Fill.SetMaterials(FillMaterial, FillMaterial);      
+/*
+    Array Arrow1Size = GetMaterialSize(_PropMap.Get("MaterialArrow1", ""));
+    Array Arrow2Size = GetMaterialSize(_PropMap.Get("MaterialArrow2", ""));
+    Array ScrollSize = GetMaterialSize(_PropMap.Get("MaterialScroll", ""));
+    
+
+    m_Arrow1_H2W = 2.0 * 4 / 3;
+    m_Arrow2_H2W = 2.0;
+    m_Scroll_H2W = 2.0;
+*/
+
+  
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Fill.SetZ(_Z - 0.001);
+    CUIScrollBar::SetZ(_Z);
+  } 
+
+  void SetRenderLayer()
+  {
+
+  }
+}
+
+//
+// Vertical ScrollBar control
+//
+
+class CUIVerticalScrollBar2
+  extends CUIScrollBar2
+{
+  void Initialize(
+      String _ControlID
+    )
+  {
+    CUIScrollBar2::Initialize(_ControlID);
+
+    m_Scroll.SetVerticalMode(true);
+  }
+
+  // Set position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+
+    m_Arrow1.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Arrow1.SetDimensions(_UIPosition.Width, _UIPosition.Width);
+
+    m_Fill.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Fill.SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    m_Arrow2.SetPosition(_UIPosition.X, _UIPosition.Y + _UIPosition.Height - _UIPosition.Width);
+    m_Arrow2.SetDimensions(_UIPosition.Width, _UIPosition.Width);
+
+    m_Scroll.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Scroll.SetMargins(_UIPosition.Y + _UIPosition.Width, 
+      _UIPosition.Y + _UIPosition.Height - _UIPosition.Width - _UIPosition.Width);
+
+    m_Scroll.SetValue(GetScrollPhase());
+
+    m_Scroll.SetDimensions(_UIPosition.Width, _UIPosition.Width);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+}
+
+//
+// Horizontal ScrollBar control
+//
+
+class CUIHorizontalScrollBar2
+  extends CUIScrollBar2
+{
+  // Set position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Arrow1.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Arrow1.SetDimensions(_UIPosition.Height / m_Arrow1_H2W, _UIPosition.Height);
+
+    m_Fill.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Fill.SetDimensions(_UIPosition.Width, _UIPosition.Height);
+
+    m_Arrow2.SetPosition(_UIPosition.X + _UIPosition.Width - _UIPosition.Height / m_Arrow2_H2W, _UIPosition.Y);
+    m_Arrow2.SetDimensions(_UIPosition.Height / m_Arrow2_H2W, _UIPosition.Height);
+
+    m_Scroll.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Scroll.SetMargins(_UIPosition.X + _UIPosition.Height / m_Arrow1_H2W, 
+      _UIPosition.X + _UIPosition.Width - _UIPosition.Height / m_Arrow2_H2W - _UIPosition.Height / m_Scroll_H2W);
+
+    m_Scroll.SetValue(GetScrollPhase());
+
+    m_Scroll.SetDimensions(_UIPosition.Height / m_Scroll_H2W, _UIPosition.Height);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+  }
+}
+
+
+//
+// ServerField control
+//
+
+class CUIServerField
+//  extends CBaseUIControl
+  extends CUITextElement
+{
+  Component   m_Name;
+  Component   m_IP;
+  Component   m_Type;
+  Component   m_Map;
+  Component   m_Status;
+  Component   m_Ping;
+
+  float       m_NameWidth = 0.15;
+  float       m_IPWidth = 0.20;
+  float       m_TypeWidth = 0.12;
+  float       m_MapWidth = 0.34;
+  float       m_StatusWidth = 0.08;
+  float       m_PingWidth = 0.11;
+
+  String      m_ID;
+
+  static float m_Delta = 2.0/1024.0;
+
+  Color m_NormalColor;
+  Color m_SelectedColor;
+
+  //
+  // BaseUIControl override
+  //
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ID = _ControlID;
+
+//    CBaseUIControl::Initialize(m_ID);
+    CUITextElement::Initialize(m_ID);
+
+    m_Name    = new #TextControl<CUITextElement>();
+    m_IP      = new #TextControl<CUITextElement>();
+    m_Type    = new #TextControl<CUITextElement>();
+    m_Map     = new #TextControl<CUITextElement>();
+    m_Status  = new #TextControl<CUITextElement>();
+    m_Ping    = new #TextControl<CUITextElement>();
+
+    RegisterObject(m_ID + "_Name",   m_Name);
+    RegisterObject(m_ID + "_IP",     m_IP);
+    RegisterObject(m_ID + "_Type",   m_Type);
+    RegisterObject(m_ID + "_Map",    m_Map);
+    RegisterObject(m_ID + "_Status", m_Status);
+    RegisterObject(m_ID + "_Ping",   m_Ping);
+
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+//    CBaseUIControl::Construct(_PropMap);
+
+    m_NameWidth =   _PropMap.Get("NameWidth", 0.15);
+    m_IPWidth =     _PropMap.Get("IPWidth", 0.20);
+    m_TypeWidth =   _PropMap.Get("TypeWidth", 0.12);
+    m_MapWidth =    _PropMap.Get("MapWidth", 0.34);
+    m_StatusWidth = _PropMap.Get("StatusWidth", 0.08);
+    m_PingWidth =   _PropMap.Get("PingWidth", 0.11);
+
+    CUITextElement::Construct(_PropMap);
+    SetText(L"");
+    m_NormalColor    = _PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0));
+    m_SelectedColor  = _PropMap.Get("SelectedColor", new Color(1.0, 1.0, 1.0));
+
+    m_Name.SetText(L"");     
+    m_Name.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Name.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Name.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Name.SetAlignment(ALIGNMENT_CENTER);
+    m_Name.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_IP.SetText(L"");     
+    m_IP.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_IP.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_IP.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_IP.SetAlignment(ALIGNMENT_CENTER);
+    m_IP.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Type.SetText(L"");     
+    m_Type.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Type.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Type.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Type.SetAlignment(ALIGNMENT_CENTER);
+    m_Type.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Map.SetText(L"");     
+    m_Map.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Map.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Map.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Map.SetAlignment(ALIGNMENT_CENTER);
+    m_Map.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Status.SetText(L"");     
+    m_Status.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Status.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Status.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Status.SetAlignment(ALIGNMENT_CENTER);
+    m_Status.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Ping.SetText(L"");     
+    m_Ping.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Ping.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Ping.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Ping.SetAlignment(ALIGNMENT_CENTER);
+    m_Ping.SetZ(_PropMap.Get("Z", 0.01));
+
+  }
+
+  void SetSelectedItemState(
+      boolean _State
+    )
+  {
+    if (_State)
+    {
+      m_Name.SetTextColor(m_SelectedColor);
+      m_IP.SetTextColor(m_SelectedColor);
+      m_Type.SetTextColor(m_SelectedColor);
+      m_Map.SetTextColor(m_SelectedColor);
+      m_Status.SetTextColor(m_SelectedColor);
+      m_Ping.SetTextColor(m_SelectedColor);
+    }
+    else
+    {
+      m_Name.SetTextColor(m_NormalColor);
+      m_IP.SetTextColor(m_NormalColor);
+      m_Type.SetTextColor(m_NormalColor);
+      m_Map.SetTextColor(m_NormalColor);
+      m_Status.SetTextColor(m_NormalColor);
+      m_Ping.SetTextColor(m_NormalColor);
+    }
+  }
+
+  void SetText(
+      WString _Name,
+      WString _IP,
+      WString _Type,
+      WString _Map,
+      WString _Status,
+      WString _Ping
+    )
+  {
+    m_Name.SetText(_Name);
+    m_IP.SetText(_IP);
+    m_Type.SetText(_Type);
+    m_Map.SetText(_Map);
+    m_Status.SetText(_Status);
+    m_Ping.SetText(_Ping);
+  }
+
+  void SetPing(
+      int _Ping
+    )
+  {
+    m_Ping.SetText(new WString(_Ping));
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Name.SetZ(_Z);
+    m_IP.SetZ(_Z);
+    m_Type.SetZ(_Z);
+    m_Map.SetZ(_Z);
+    m_Status.SetZ(_Z);
+    m_Ping.SetZ(_Z);
+  }
+
+  void SetRenderLayer(
+      int _Layer
+    )
+  {
+    m_Name.SetRenderLayer(_Layer);
+    m_IP.SetRenderLayer(_Layer);
+    m_Type.SetRenderLayer(_Layer);
+    m_Map.SetRenderLayer(_Layer);
+    m_Status.SetRenderLayer(_Layer);
+    m_Ping.SetRenderLayer(_Layer);
+  }
+
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Name.SetPosition(_UIPosition.X + m_Delta, _UIPosition.Y);
+    m_Name.SetDimensions(m_NameWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Type.SetPosition(_UIPosition.X + m_NameWidth * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Type.SetDimensions(m_TypeWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Map.SetPosition(_UIPosition.X + (m_NameWidth + m_TypeWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Map.SetDimensions(m_MapWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_IP.SetPosition(_UIPosition.X + (m_NameWidth + m_TypeWidth + m_MapWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_IP.SetDimensions(m_IPWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Ping.SetPosition(_UIPosition.X + (m_NameWidth + m_TypeWidth + m_MapWidth + m_IPWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Ping.SetDimensions(m_PingWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Status.SetPosition(_UIPosition.X + (m_NameWidth + m_TypeWidth + m_MapWidth + m_IPWidth + m_PingWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Status.SetDimensions(m_StatusWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+
+
+/*    m_Name.SetPosition(_UIPosition.X + m_Delta, _UIPosition.Y);
+    m_Name.SetDimensions(m_NameWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_IP.SetPosition(_UIPosition.X + m_NameWidth * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_IP.SetDimensions(m_IPWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Type.SetPosition(_UIPosition.X + (m_NameWidth + m_IPWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Type.SetDimensions(m_TypeWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Map.SetPosition(_UIPosition.X + (m_NameWidth + m_IPWidth + m_TypeWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Map.SetDimensions(m_MapWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Status.SetPosition(_UIPosition.X + (m_NameWidth + m_IPWidth + m_TypeWidth + m_MapWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Status.SetDimensions(m_StatusWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Ping.SetPosition(_UIPosition.X + (m_NameWidth + m_IPWidth + m_TypeWidth + m_MapWidth + m_StatusWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Ping.SetDimensions(m_PingWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+*/
+
+//    CBaseUIControl::SetPosition(_UIPosition);
+    CUITextElement::SetPosition(_UIPosition);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+//    CBaseUIControl::SetParentRect(_UIPosition);
+    CUITextElement::SetParentRect(_UIPosition);
+
+    m_Name.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_IP.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Type.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Map.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Status.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Ping.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  String GetControlID()
+  {
+    return m_ID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ID);
+    UnregisterObject(m_ID + "_Name");
+    UnregisterObject(m_ID + "_IP");
+    UnregisterObject(m_ID + "_Type");
+    UnregisterObject(m_ID + "_Map");
+    UnregisterObject(m_ID + "_Status");
+    UnregisterObject(m_ID + "_Ping");
+  }
+
+}
+
+
+//
+// CampaignField control
+//
+
+class CUICampaignField
+//  extends CBaseUIControl
+  extends CUITextElement
+{
+
+  Component   m_Name;
+  Component   m_PlayerID;
+  Component   m_Status;
+  Component   m_Difficulty;
+
+  float       m_NameWidth = 0.45;
+  float       m_IDWidth = 0.18;
+  float       m_StatusWidth = 0.22;
+  float       m_DiffWidth = 0.15;
+
+  String      m_ID;
+
+  static float m_Delta = 2.0/768.0;
+
+  Color m_NormalColor;
+  Color m_SelectedColor;
+
+  //
+  // BaseUIControl override
+  //
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ID = _ControlID;
+
+//    CBaseUIControl::Initialize(m_ID);
+    CUITextElement::Initialize(m_ID);
+
+    m_Name       = new #TextControl<CUITextElement>();
+    m_PlayerID   = new #TextControl<CUITextElement>();
+    m_Status     = new #TextControl<CUITextElement>();
+    m_Difficulty = new #TextControl<CUITextElement>();
+    
+    RegisterObject(m_ID + "_Name",       m_Name);
+    RegisterObject(m_ID + "_PlayerID",   m_PlayerID);
+    RegisterObject(m_ID + "_Status",     m_Status);
+    RegisterObject(m_ID + "_Difficulty", m_Difficulty);
+
+  }
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+//    CBaseUIControl::Construct(_PropMap);
+    CUITextElement::Construct(_PropMap);
+    SetText(L"");
+    m_NormalColor    = _PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0));
+    m_SelectedColor  = _PropMap.Get("SelectedColor", new Color(1.0, 1.0, 1.0));
+
+    m_Name.SetText(L"");     
+    m_Name.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Name.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Name.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Name.SetAlignment(ALIGNMENT_LEFT);
+    m_Name.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_PlayerID.SetText(L"");     
+    m_PlayerID.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_PlayerID.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_PlayerID.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_PlayerID.SetAlignment(_PropMap.Get("TextAlignment", ALIGNMENT_CENTER));
+    m_PlayerID.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Status.SetText(L"");     
+    m_Status.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Status.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Status.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Status.SetAlignment(_PropMap.Get("TextAlignment", ALIGNMENT_CENTER));
+    m_Status.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Difficulty.SetText(L"");     
+    m_Difficulty.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Difficulty.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Difficulty.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Difficulty.SetAlignment(_PropMap.Get("TextAlignment", ALIGNMENT_CENTER));
+    m_Difficulty.SetZ(_PropMap.Get("Z", 0.01));
+
+  }
+
+  void SetSelectedItemState(
+      boolean _State
+    )
+  {
+    if (_State)
+    {
+      m_Name.SetTextColor(m_SelectedColor);
+      m_PlayerID.SetTextColor(m_SelectedColor);
+      m_Status.SetTextColor(m_SelectedColor);
+      m_Difficulty.SetTextColor(m_SelectedColor);
+    }
+    else
+    {
+      m_Name.SetTextColor(m_NormalColor);
+      m_PlayerID.SetTextColor(m_NormalColor);
+      m_Status.SetTextColor(m_NormalColor);
+      m_Difficulty.SetTextColor(m_NormalColor);
+    }
+
+  }
+
+  void SetText(
+      WString _Name,
+      WString _PlayerID,
+      WString _Status,
+      WString _Difficulty
+    )
+  {
+    m_Name.SetText(_Name);
+    m_PlayerID.SetText(_PlayerID);
+    m_Status.SetText(_Status);
+    m_Difficulty.SetText(_Difficulty);
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Name.SetZ(_Z);
+    m_PlayerID.SetZ(_Z);
+    m_Status.SetZ(_Z);
+    m_Difficulty.SetZ(_Z);
+  }
+
+  void SetRenderLayer(
+      int _Layer
+    )
+  {
+    m_Name.SetRenderLayer(_Layer);
+    m_PlayerID.SetRenderLayer(_Layer);
+    m_Status.SetRenderLayer(_Layer);
+    m_Difficulty.SetRenderLayer(_Layer);
+  }
+
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_Name.SetPosition(_UIPosition.X + m_Delta, _UIPosition.Y);
+    m_Name.SetDimensions(m_NameWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_PlayerID.SetPosition(_UIPosition.X + m_NameWidth * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_PlayerID.SetDimensions(m_IDWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Status.SetPosition(_UIPosition.X + (m_NameWidth + m_IDWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Status.SetDimensions(m_StatusWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Difficulty.SetPosition(_UIPosition.X + (m_NameWidth + m_IDWidth + m_StatusWidth) * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Difficulty.SetDimensions(m_DiffWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+//    CBaseUIControl::SetPosition(_UIPosition);
+    CUITextElement::SetPosition(_UIPosition);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+//    CBaseUIControl::SetParentRect(_UIPosition);
+    CUITextElement::SetParentRect(_UIPosition);
+
+    m_Name.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_PlayerID.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Status.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Difficulty.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  String GetControlID()
+  {
+    return m_ID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ID);
+    UnregisterObject(m_ID + "_Name");
+    UnregisterObject(m_ID + "_PlayerID");
+    UnregisterObject(m_ID + "_Status");
+    UnregisterObject(m_ID + "_Difficulty");
+  }
+
+}

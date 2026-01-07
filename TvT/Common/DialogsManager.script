@@ -1,0 +1,508 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Dialogs managing classes
+//
+
+class CDialogsManager
+{
+  //
+  // Constants
+  //
+
+  final static String EVENT_ON_DIALOG_END = "OnDialogEnd";
+
+  //
+  // Properties
+  //
+
+  Map        m_DialogsContent; // Dialog class ID - Content component
+
+  Array      m_DoDialogs;
+  
+  //
+  // Class functions
+  //
+
+  CDialogsManager()
+  {
+    // Get dialogs content
+    Array Dialogs = CDialogsArray::Dialogs;
+
+    for (int i = 0; i < Dialogs.size(); i++)
+    {
+      Component DialogContent = new CDialogContent(Dialogs[i]);
+      if (DialogContent.IsValid())
+        m_DialogsContent.insert(Dialogs[i].ID, DialogContent);
+    }
+  }
+
+  static Component GetDialogsManager()
+  {
+    return new #GameController().GetObject("DialogsManager");
+  }
+
+  int GetDialogRunCount(
+      String _DialogID
+    )
+  {
+    if (!m_DialogsContent.find(_DialogID))
+    {
+      logWarning("CDialogsManager::GetDialogRunCount(): Dialog with ID \"" + _DialogID + "\" was not found.");
+      return 0;
+    }
+    return m_DialogsContent.getValue().m_RunCount;
+  }
+  
+  Component BeginDialog(
+      String _DialogID,
+      Array  _Units
+    )
+  {
+    if (!m_DialogsContent.find(_DialogID))
+    {
+      logWarning("CDialogsManager::BeginDialog(): Dialog with ID \"" + _DialogID + "\" was not found.");
+      return null;
+    }
+
+    Component Dialog = new CDialog(_DialogID, m_DialogsContent.getValue(), _Units);
+    if (!Dialog.IsValid())
+      return null;
+
+    logMessage("CDialogsManager::BeginDialog(): Dialog with ID \"" + _DialogID + "\" started");
+
+    return Dialog;
+  }
+
+  void SkipDialog(
+      String _DialogID
+    )
+  {
+    if (!m_DialogsContent.find(_DialogID))
+    {
+      logWarning("CDialogsManager::SkipDialog(): Dialog with ID \"" + _DialogID + "\" was not found.");
+      return;
+    }
+
+    m_DialogsContent.getValue().m_RunCount++;
+    logMessage("CDialogsManager::SkipDialog(): Dialog with ID \"" + _DialogID + "\" skipped");
+    sendEvent(0.0, SOID_MissionController, "OnMissionDialogEnd", [_DialogID]);
+  }
+  
+  // default phrase processing
+
+  boolean DoDialog(
+      Component _Dialog,
+      Component _Phrase
+    )
+  {
+    sendEvent(_Phrase.GetPause(), getIdentificator(this), "DoDialogAfterPause", [_Dialog, _Phrase]);
+
+    return true;
+  }
+
+  event void DoDialogAfterPause(
+      Component _Dialog,
+      Component _Phrase
+    )
+  {
+    logMessage("[DoDialog] " + _Dialog.m_DialogID + " ::Phrase - " + _Phrase.GetPhraseID() + " Sound - " + _Phrase.GetPhraseSound());
+    fireEvent(0.0, [], "SendCockpitMessage", [_Phrase.GetPhraseText(), CCockpitColorMap::m_NeutralNewsColor, _Phrase.GetPhraseSound()]);
+
+    if (_Phrase.GetPhraseSound() != "")
+    {
+      // will wait for end sound event
+      m_DoDialogs.add([_Dialog,_Phrase]);  
+    }
+    else
+      _Dialog.OnPhraseCompletion(_Phrase.GetPhraseID());
+
+    return true;
+  }
+
+  void OnVoiceSoundStopped(
+      String _SoundID
+    )
+  {
+    // find started phrase
+
+    for (int i = 0; i < m_DoDialogs.size(); i++)
+    { 
+      if (m_DoDialogs[i][1].GetPhraseSound() == _SoundID)
+      { 
+        m_DoDialogs[i][0].OnPhraseCompletion(m_DoDialogs[i][1].GetPhraseID());
+        m_DoDialogs.remove(i);
+        return;
+      }
+    }
+  }   
+}
+
+class CDialogContent
+{
+  //
+  // Properties
+  //
+
+  Array  m_Content;
+
+  float  m_Radius;
+
+  int    m_RunCount = 0;
+
+  //
+  // Class functions
+  //
+
+  CDialogContent(
+      Component _DialogTemplate
+    )
+  {
+    m_Radius  = _DialogTemplate.Radius;
+
+    m_Content = [];
+    for (int i = 0; i < _DialogTemplate.Content.size(); i++)
+      m_Content.add(new CDialogPhrase(_DialogTemplate.Content[i], new String(i), _DialogTemplate.DefaultTalkPause));
+  }
+
+  boolean IsValid()
+  {
+    return !m_Content.isEmpty();
+  }
+}
+
+class CDialogPhrase
+{
+  //
+  // Constants
+  //
+
+  final static int INDEX_MemberNumber             = 0;
+  final static int INDEX_PhraseText               = 1;
+  final static int INDEX_PhraseSound              = 2;
+  final static int INDEX_PhraseWaitTimeout        = 3;
+  final static int INDEX_PhraseTargetMemberNumber = 4;
+
+  //
+  // Properties
+  //
+
+  int     m_MemberNumber;
+  WString m_PhraseText;
+  String  m_PhraseSound;
+
+  String  m_PhraseID;
+  float   m_WaitTimeout;
+  int     m_TargetMemberNumber;
+  boolean m_IsHasTargetMember;
+
+  //
+  // Class functions
+  //
+
+  CDialogPhrase(
+      Array  _ContentRecord,
+      String _PhraseID,
+      float  _DefaultTalkPause
+    )
+  {
+    m_MemberNumber       = _ContentRecord[INDEX_MemberNumber];
+    m_PhraseText         = _ContentRecord[INDEX_PhraseText];
+
+    if (m_PhraseText == L"")
+      logWarning("empty dialog phrase text at " + _PhraseID + " ");
+
+    m_PhraseSound        = _ContentRecord[INDEX_PhraseSound];
+
+    m_PhraseID           = _PhraseID;
+
+    m_WaitTimeout        = _DefaultTalkPause;
+    m_TargetMemberNumber = CBaseDialog::TMN_None;    
+
+    if (_ContentRecord.size() > INDEX_PhraseWaitTimeout)
+      m_WaitTimeout = _ContentRecord[INDEX_PhraseWaitTimeout];
+
+    m_IsHasTargetMember = false;
+    if (_ContentRecord.size() <= INDEX_PhraseTargetMemberNumber)
+      return;
+
+    int TargetMemberNumber = _ContentRecord[INDEX_PhraseTargetMemberNumber];
+
+    m_IsHasTargetMember = (TargetMemberNumber != m_MemberNumber);
+    if (m_IsHasTargetMember)
+      m_TargetMemberNumber = TargetMemberNumber;
+  }
+
+  WString GetPhraseText()
+  {
+    return m_PhraseText;
+  }
+
+  String GetPhraseSound()
+  {
+    return m_PhraseSound; 
+  }  
+
+  String GetPhraseID()
+  {
+    return m_PhraseID;
+  }
+
+  float GetPause()
+  {
+    return m_WaitTimeout;
+  }
+
+}
+
+class CDialogMember
+{
+  //
+  // Properties
+  //
+
+  boolean   m_IsAIUnit = false;
+  Component m_Object   = null;
+
+  //
+  // Class functions
+  //
+
+  boolean Create(
+      Component _Dialog,
+      String    _ObjectID
+    )
+  {
+    if (_ObjectID == "")
+      _ObjectID = "DialogsManager";
+
+    Component Unit         = new #GameController().GetObject(_ObjectID);
+    
+    // Component StateMachine = Unit.GetStateMachine();
+
+    m_IsAIUnit = false; // (null != StateMachine);
+    if (m_IsAIUnit)
+      m_Object = StateMachine.ActivateDialogState(_Dialog);
+    else
+      m_Object = Unit;
+
+    return (null != m_Object);
+  }
+
+  void Delete(
+      String _DialogID
+    )
+  {
+    if (null == m_Object)
+      return;
+
+    if (m_IsAIUnit)
+      m_Object.EndDialog(_SC_IrritantID);
+
+    sendEvent(0.0, GetObjectID(), CDialogsManager::EVENT_ON_DIALOG_END,
+      [_DialogID]);
+
+    m_Object = null;
+  }
+
+  void SetDialogTarget(
+      String _ObjectID
+    )
+  {
+    if (m_IsAIUnit)
+      m_Object.SetDialogTarget(_ObjectID);
+  }
+
+  void ClearDialogTarget()
+  {
+    if (m_IsAIUnit)
+      m_Object.ClearDialogTarget();
+  }
+
+  String GetObjectID()
+  {
+    if (m_IsAIUnit)
+      return m_Object.GetSelfID();
+
+    return getIdentificator(m_Object);
+  }
+
+  boolean DoDialog(
+      Component _Dialog,
+      Component _Phrase
+    )
+  {
+    return m_Object.DoDialog(_Dialog, _Phrase);
+  }
+
+  Component GetPositionable()
+  {
+    if (m_IsAIUnit)
+      return m_Object.GetUnit();
+    else
+      return m_Object;
+  }
+}
+
+class CDialog
+{
+  //
+  // Properties
+  //
+
+  String m_DialogID;
+  Array  m_Content;
+  Map    m_Members;
+
+  Collection m_CurrentPhrases;
+  int        m_CurrentPhraseIndex = 0;
+  boolean    m_IsEnded            = false;
+  int        m_StartTime          = 0;
+
+  //
+  // Class functions
+  //
+
+  CDialog(
+      String    _DialogID,
+      Component _DialogContent,
+      Array     _Units
+    )
+  {
+    _DialogContent.m_RunCount++;
+
+    m_DialogID  = _DialogID;
+    m_StartTime = getGameTime();
+
+    for (int i = 0; i < _Units.size(); i++)
+    {
+      Component Member = new CDialogMember();
+      if (!Member.Create(this, _Units[i]))
+      {
+        End("");
+        return;
+      }
+
+      m_Members.insert(i, Member);
+    }
+
+    m_Content            = _DialogContent.m_Content;
+    m_CurrentPhraseIndex = -1;
+
+    Do();
+  }
+
+  Component GetNextPhrase(
+      boolean _ConstSearch
+    )
+  {
+    Component CurrentPhrase = null;
+    int       Index         = m_CurrentPhraseIndex + 1;
+
+    while (Index < m_Content.size())
+    {
+      if (m_Members.find(m_Content[Index].m_MemberNumber))
+      {
+        CurrentPhrase = m_Content[Index];
+        break;
+      }
+
+      Index++;
+    }
+
+    if (!_ConstSearch)
+      m_CurrentPhraseIndex = Index;
+
+    return CurrentPhrase;
+  }
+
+  boolean StartNextPhrase()
+  {
+    if (m_IsEnded)
+      return false;
+
+    Component CurrentPhrase = GetNextPhrase(false);
+    if (null == CurrentPhrase)
+    {
+      End();
+      return false;
+    }
+
+    Component CurrentMember = m_Members.getValue();
+
+    if (CurrentPhrase.m_IsHasTargetMember)
+    {
+      if (m_Members.find(CurrentPhrase.m_TargetMemberNumber))
+        CurrentMember.SetDialogTarget(m_Members.getValue().GetObjectID());
+      else
+        CurrentMember.ClearDialogTarget();
+    }
+
+//    logError("CDialog::StartNextPhrase: " + CurrentMember.GetObjectID() + " - " + CurrentPhrase.m_PhraseID);
+    m_CurrentPhrases.insert(CurrentPhrase.GetPhraseID());
+    if (!CurrentMember.DoDialog(this, CurrentPhrase))
+      End();
+
+    // Check next phrase
+    CurrentPhrase = GetNextPhrase(true);
+    if (null == CurrentPhrase)
+      return false;
+
+    return (CurrentPhrase.m_WaitTimeout < 0);
+  }
+
+  void Do()
+  {
+    while (StartNextPhrase());
+  }
+
+  void OnPhraseCompletion(
+      String _PhraseID
+    )
+  {
+    m_CurrentPhrases.remove(_PhraseID);
+    if (m_CurrentPhrases.isEmpty())
+      Do();
+  }
+
+  //
+  // Class common functions
+  //
+
+  boolean IsValid()
+  {
+    return !m_IsEnded;
+  }
+
+  void End()
+  {
+    if (m_IsEnded)
+      return;
+
+    m_IsEnded = true;
+
+    m_Members.gotoBegin();
+    while (!m_Members.isAtEnd())
+    {
+      m_Members.getValue().Delete(m_DialogID);
+
+      m_Members.gotoNext();
+    }
+
+    m_Content = [];
+    m_Members.clear();
+
+    logMessage("Dialog \"" + m_DialogID + "\" is ended. Dialog duration: " +
+        new String((getGameTime() - m_StartTime) / 1000) + " seconds.");
+
+    sendEvent(0.0, SOID_MissionController, "OnMissionDialogEnd", [m_DialogID]);
+  }
+
+}

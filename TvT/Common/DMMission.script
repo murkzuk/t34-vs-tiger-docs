@@ -1,0 +1,1328 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CDMMission extends CMission
+{
+  static int   FragLimit            = 0;
+  static int   TimeLimit            = 0;
+  static int   ControlMode          = MCM_Both;
+  static int   NumBots              = 0;
+  static int   MaxPlayers           = 4;
+  
+  //Sonar Games changes
+  static boolean  ExpertMode		= false;
+
+  final static int INDEX_Properties  = 4;
+
+  static Array AvailablePlayerUnits = [ true, true, true, true, true, true ];
+
+  final static Array MissionsID = [
+                                    ["CDM1Mission", 1],
+                                    ["CDM2Mission", 2],
+                                    ["CDM3Mission", 3],
+                                    ["CDM4Mission", 4],
+                                    ["CDM5Mission", 5],
+                                    ["CDM6Mission", 6]
+                                  ];
+
+  final static Array CFMissionsID = [
+                                      ["CCF1Mission", 1],
+                                      ["CCF2Mission", 2],
+                                      ["CCF3Mission", 3],
+                                      ["CCF4Mission", 4],
+                                      ["CCF5Mission", 5],
+                                      ["CCF6Mission", 6]
+                                    ];
+
+  Array m_ClosedSpawnsCF = [];
+
+  final static int MAX_DEATH_UNITS = 2;
+  static Array DeathUnits = [];
+
+  static Array DeathTanks = [];
+
+  CDMMission()
+  {
+  }
+
+  CDMMission(
+    String _MissionObjectClass,
+    String _MissionContentClass
+    )
+  {
+    CMission(_MissionObjectClass, _MissionContentClass);
+  }
+
+  Array GenerateMirrorProps(
+      Array _Properties
+    )
+  {
+    // Call inherited
+    Array Properties = CMission::GenerateMirrorProps(_Properties);
+
+    // update properties
+    Component Props = new CPropertiesMap(Properties);
+    Props.Set("IsMirror", true);
+    Props.Set("Affiliation", "ENEMY");
+
+    // return new array
+    return Properties;
+  }
+
+  Array GenerateBotProps(
+      Array _Properties
+    )
+  {
+    // Call inherited
+    Array Properties = CMission::GenerateBotProps(_Properties);
+
+    // update properties
+    Component Props = new CPropertiesMap(Properties);
+    Props.Set("IsManual", false);
+    Props.Set("IsPlayer", false);
+    Props.Set("IsUnit",   true);    
+    Props.Set("Affiliation", "ENEMY");
+    Props.Set("BehRadarMask", [[], ["NEUTRAL", "CLASSIFICATOR_DEAD_OBJECT"], ["NEUTRAL"], []]);
+    
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Server")
+    {    
+      Props.Set("EnemyReactionType", "ERT_AGGRESSIVE");
+    
+      Component GameSettings = new #GameSettings();
+      int botLevel = GameSettings.GetDifficultyLevel();
+      if(botLevel == 0)    
+        Props.Set("Task", "CMultiplayerEasyBotTask");
+      if(botLevel == 1)    
+        Props.Set("Task", "CMultiplayerBotTask");
+      if(botLevel == 2)    
+        Props.Set("Task", "CMultiplayerHardBotTask");
+    }
+
+    Props.Set("BehRadarMask", [
+        [ ],
+        [ "NEUTRAL", CLASSIFICATOR_NOTVISIBLEONRADAR ]
+      ]);
+
+    // return new array
+    return Properties;
+  }
+
+  void DegenerateBotProps(
+      Array _Properties
+    )
+  {
+    Component Props = new CPropertiesMap(_Properties);
+    Props.Set("IsManual", true);
+    Props.Set("IsPlayer", true);
+    Props.Set("Task", "");
+    Props.Set("Affiliation", "FRIEND");
+    Props.Del("BehRadarMask");
+  }
+
+   event void CreateBot(
+      int _Slot
+    )
+  {
+    String BotID = "Bot" + new String(randnum(100));
+
+    String SpawnID = GetFreeSpawnPlace(BotID);
+    Matrix InitPlace =  new Matrix(new Vector(0.0 , 0.0, 0.0));
+    if(SpawnID != "")
+    {
+      InitPlace = getPosition(GetObject(SpawnID));
+      SetRespawnState(SpawnID, true, BotID);
+    }
+
+    Array Prop = new Array
+      (
+        [
+          ["SlotID", _Slot],
+          ["IsUnit",   true],
+          ["EnemyReactionType", "ERT_AGGRESSIVE"],
+          ["Affiliation", "ENEMY"],
+          ["BehRadarMask", [[], ["NEUTRAL", "CLASSIFICATOR_DEAD_OBJECT"], ["NEUTRAL"], []]]
+        ]
+      );
+
+    logWarning("Add bot 2");
+    GetContent().CreateObjectRecord(
+      BotID,
+      "GameObject",
+      "CTankT34_85_44Unit",
+      InitPlace,
+      Prop
+     );
+
+    Array BotProperties = GenerateBotProps(Prop);
+
+    logWarning("Create new bot");
+    CreateGlobalObject(
+        BotID,
+        "GameObject",
+        "CTankT34_85_44Unit",
+        InitPlace,
+        BotProperties
+      );
+
+    Component Object = GetObject(BotID);
+    if (Object != null)
+      Object.Finalize(this, new CPropertiesMap(BotProperties));
+  }
+
+  void AddBots(
+      Array _PlayerSlots
+    )
+  {
+    for (int Index = 0; Index < _PlayerSlots.size(); Index++)
+    {
+      if(_PlayerSlots[Index] != "BOT" && _PlayerSlots[Index] != "BOT_TIGER")
+        continue;
+      //Array Record = [];
+      String BotID = "Bot" + new String(randnum(100));
+
+      String SpawnID = GetFreeSpawnPlace(BotID);
+      Matrix InitPlace =  new Matrix(new Vector(0.0 , 0.0, 0.0));
+      if(SpawnID != "")
+      {
+        InitPlace = getPosition(GetObject(SpawnID));
+        SetRespawnState(SpawnID, true, BotID);
+      }
+      
+      String TankType = new String("CTankT34_85_44Unit");
+      if(_PlayerSlots[Index] == "BOT_TIGER")
+        TankType = new String("CTankPzVIAusfEUnit");
+
+      logWarning("Add bot 1");
+      GetContent().CreateObjectRecord(
+        BotID,
+        "GameObject",
+        TankType,
+        InitPlace,
+        [
+          ["SlotID", Index],
+          ["Task", "CBotTask"],
+          ["Affiliation", "ENEMY"],
+          ["IsUnit",   true],
+          ["EnemyReactionType", "ERT_AGGRESSIVE"],
+          ["BehRadarMask", [[], ["ENEMY", "FRIEND", "NEUTRAL"]]]
+        ]
+        );
+    }
+  }
+
+  void InitSession(
+      Array _PlayerSlots
+    )
+  {
+    m_ClosedSpawnsCF = [];
+    Array ObjectList     = GetMissionObjectList();
+    //Array AvailableUnits = GetAvailableArray(GetAvailablePlayerUnits());
+    //Array WeaponConfigs  = GetAvailableArray(GetPlayerWeaponsConfig());
+    Array BotObjects     = [];
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if(!Game.IsDedicate())
+    {
+      String    MainID  = GetMainPlayerObjectID();
+      SetCurrentPlayer(new WString(MainID));
+    }
+
+    // create multiplayer bots
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      // check object properties
+      Component Properties = new CPropertiesMap(ObjectList[Index][CMissionContent::INDEX_Properties]);
+      int Slot = Properties.Get("SlotID", -1);
+      if (-1 == Slot)
+        continue;
+
+      // check for BOT
+      if (_PlayerSlots[Slot] != "BOT" && _PlayerSlots[Slot] != "BOT_TIGER")
+        continue;
+
+      // select unit type
+      //int SelectedUnitType = randnum(AvailableUnits.size());
+
+      // get weapon config
+      //Array WeaponConfig = [];
+      //if (SelectedUnitType < WeaponConfigs.size())
+      //  WeaponConfig = WeaponConfigs[SelectedUnitType];
+      //if (WeaponConfig.isEmpty())
+      //  WeaponConfig = getStaticClassMember(AvailableUnits[SelectedUnitType], "DefaultWeaponConfig");
+
+      // set weapon config and unit class
+      //SetUnitScriptClass(ObjectList[Index][CMissionContent::INDEX_ObjectID], AvailableUnits[SelectedUnitType]);
+      //SetUnitWeaponConfig(ObjectList[Index][CMissionContent::INDEX_ObjectID], WeaponConfig);
+
+      Array BotProperties = GenerateBotProps(ObjectList[Index][CMissionContent::INDEX_Properties]);
+
+      logWarning("Create bot");
+      CreateGlobalObject(
+          ObjectList[Index][CMissionContent::INDEX_ObjectID],
+          ObjectList[Index][CMissionContent::INDEX_ComponentID],
+          ObjectList[Index][CMissionContent::INDEX_ScriptClass],
+          ObjectList[Index][CMissionContent::INDEX_Position],
+          BotProperties
+        );
+
+      BotObjects.add([ObjectList[Index][CMissionContent::INDEX_ObjectID], BotProperties]);
+    }
+
+    NumBots = BotObjects.size();
+
+    // Finalize objects
+    for (int Index = 0; Index < BotObjects.size(); Index++)
+    {
+      Component Object = GetObject(BotObjects[Index][0]);
+      if (Object != null)
+        Object.Finalize(this, new CPropertiesMap(BotObjects[Index][1]));
+    }
+  }
+
+  event void OnDestroyPlayer(
+      int _PlayerID
+    )
+  {
+    logWarning("[DMMission] OnDestroyPlayer(" + new String(_PlayerID) + ")");
+
+    Component Session = (new #GameController()).GetGameSession();
+
+//     int Players = Session.GetPlayersInfo().size();
+//     if((NumBots + 1) > Players)
+//       sendEvent(15.0, getIdentificator(this), "AddNewBot", [Session.FindPlayerSlot(_PlayerID)]);
+  }
+
+  event void OnObjectDestroyed(
+      String _ObjectID
+    )
+  {
+    logWarning("[DMMission] OnObjectDestroyed(" + _ObjectID + ")");
+    Component Game = new #GameController();
+
+    //Game.GetGameSession().ReportServerLists();
+
+    // call inherited
+    CMission::OnObjectDestroyed(_ObjectID);
+
+    // Get object and check for hosted player units
+    Component DeadObject = GetObject(_ObjectID);
+    if (!checkMask(DeadObject, ["MULTIPLAYERUNIT", "HOSTMODE"], []))
+      return;
+
+    logWarning("[DMMission] FireNetEvent");
+
+    DeathTanks.add(_ObjectID);
+
+    if (Game.GetGameMode() == "Client")
+    {
+      // send message to server
+      Game.GetGameSession().FireNetEvent(
+          "Client_OnPlayerDestroyed",
+          [_ObjectID, DeadObject.GetLastDamager()]
+        );
+    }
+    else
+    {
+      // send message to sserver
+      Client_OnPlayerDestroyed(SERVER_PLAYER_ID,
+        _ObjectID, DeadObject.GetLastDamager());
+    }
+
+  }
+
+  event void ReportPlayerJoin(
+      WString _PlayerName
+    )
+  {
+    logWarning("Player " + new String(_PlayerName) + " has joined the game");
+    sendEvent(0.0f, GetMainPlayerObjectID(), "ReportNewPlayer", [_PlayerName]);
+  }
+
+  event void ReportPlayerLeave(
+      WString _PlayerName
+    )
+  {
+    logWarning("Player " + new String(_PlayerName) + " has left the game");
+    sendEvent(0.0f, GetMainPlayerObjectID(), "ReportPlayerLeft", [_PlayerName]);
+  }
+
+  event void SendChatMessage(
+      WString _Message
+    )
+  {
+    //logWarning("[DMMission] SendChatMessage(" + new String(_Message) + ")");
+    Component Game = new #GameController();
+
+    if (Game.GetGameMode() == "Client")
+    {
+      // send message to server
+      Game.GetGameSession().FireNetEvent(
+          "Client_SendChatMessage",
+          [_Message]
+        );
+    }
+    else
+    {
+      // send message to sserver
+      Client_SendChatMessage(SERVER_PLAYER_ID,
+        _Message);
+    }
+  }
+
+  event void Client_SendChatMessage(
+      int     _PlayerID,
+      WString _Message
+    )
+  {
+    //logWarning("[DMMission] Client_SendChatMessage(" + new String(_Message) + ")");
+
+    Component Session    = (new #GameController()).GetGameSession();
+    Component PlayerInfo = Session.GetPlayerInfo(_PlayerID);
+
+    WString ChatMessage = PlayerInfo.Name + L":> " + _Message;
+    //logMessage("  PlayerInfo.Name: " + new String(PlayerInfo.Name));
+
+    Session.FireNetEvent("OnSendChatMessage", [ChatMessage]);
+
+    OnSendChatMessage(ChatMessage);
+  }
+
+  event void OnSendChatMessage(
+      WString _Message
+    )
+  {
+    //logWarning("[DMMission] OnSendChatMessage(" + new String(_Message) + ")");
+
+    Component MainPlayer = GetObject(GetMainPlayerObjectID());
+    if (null != MainPlayer)
+    {
+      Component ChatInfo = MainPlayer.GetObject("MultiPlayerChatBar");
+      ChatInfo.AddMessage("Arial", 0.022, _Message, new Color(1.0f,0.55f,0.1f,1.0f));
+    }
+    Component MenuController = (new #GameController()).GetMenuController();
+    Component Menu = MenuController.GetActiveMenu();
+    if (isFunctionExist(Menu, "AddChatMessage", 1))
+      Menu.AddChatMessage(_Message);
+  }
+
+  event void Client_OnPlayerDestroyed(
+      int    _PlayerID,
+      String _ObjectID,
+      String _KillerID
+    )
+  {
+    logWarning("[DMMission] Client_OnPlayerDestroyed(" +
+              new String(_PlayerID) + ", " +
+              _ObjectID + ", " +
+              _KillerID + ")");
+
+    Component Session = new #GameController().GetGameSession();
+    // send to clients
+    Session.FireNetEvent("OnPlayerDestroyed", [_ObjectID, _KillerID]);
+
+    // send to server
+    OnPlayerDestroyed(_ObjectID, _KillerID);
+
+    if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+    {
+      if (_ObjectID == GetMainPlayerObjectID())
+        GetObject(GetMainPlayerObjectID()).DisableInput();
+
+      sendEvent(2.0, getIdentificator(this), "CheckCFMissionStatus", []);
+    }
+    else
+    {
+      // schedule respawn
+      sendEvent(10.0, getIdentificator(this), "RespawnPlayerUnit", [_ObjectID]);
+    }
+  }
+
+  event void OnPlayerDestroyed(
+      String _ObjectID,
+      String _KillerID
+    )
+  {
+    logWarning("[DMMission] OnPlayerDestroyed(" +
+          _ObjectID + ", " +
+          _KillerID + ")");
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    String    MainID  = GetMainPlayerObjectID();
+    Component Session = (new #GameController()).GetGameSession();
+
+    int ObjectSlot = GetPlayerSlotIDByUnitID(_ObjectID);
+    int KillerSlot = GetPlayerSlotIDByUnitID(_KillerID);
+
+    if (GameMode == "Server")
+    {
+      int ObjectID = Session.m_PlayerSlots[ObjectSlot].PlayerID;
+      int KillerID = Session.m_PlayerSlots[KillerSlot].PlayerID;
+
+      WString ObjectName;
+      if (_ObjectID == MainID)
+        ObjectName = Session.GetPlayerInfo(ObjectID).Name;
+      else
+      {
+        if (null != Session.GetBotPlayerInfo(ObjectSlot))
+          ObjectName = Session.GetBotPlayerInfo(ObjectSlot).Name;
+        else
+          ObjectName = Session.GetPlayerInfo(ObjectID).Name;
+      }
+
+      WString KillerName;
+      if (_KillerID == MainID)
+        KillerName = Session.GetPlayerInfo(KillerID).Name;
+      else
+      {
+        if (null != Session.GetBotPlayerInfo(KillerSlot))
+          KillerName = Session.GetBotPlayerInfo(KillerSlot).Name;
+        else
+          KillerName = Session.GetPlayerInfo(KillerID).Name;
+      }
+
+      Session.FireNetEvent("ReportPlayerKilled", [ObjectName, KillerName]);
+      fireEvent(0.0f, [], "ReportPlayerKilled", [ObjectName, KillerName]);
+    }
+
+    if (_ObjectID == _KillerID)
+    {
+      if (_ObjectID == MainID) // player unit
+        GetCurrentPlayer().AddSelfDestruction();
+      else if (GameMode == "Server")        // bot
+      {
+        Component BotInfo = Session.GetBotPlayerInfo(ObjectSlot);
+        if (BotInfo != null)
+          BotInfo.AddSelfDestruction();
+      }
+
+      Session.SendPlayerInfo();
+    }
+    else
+    {
+      if (_ObjectID == MainID) // player unit
+        GetCurrentPlayer().AddMultiplayerDeath();
+      else if (GameMode == "Server")        // bot
+      {
+        Component BotInfo = Session.GetBotPlayerInfo(ObjectSlot);
+        if (BotInfo != null)
+          BotInfo.AddMultiplayerDeath();
+      }
+
+      if (_KillerID == MainID) // player unit
+        GetCurrentPlayer().AddMultiplayerKills();
+      else if (GameMode == "Server")                     // bot
+      {
+        Component BotInfo = Session.GetBotPlayerInfo(KillerSlot);
+        if (BotInfo != null)
+          BotInfo.AddMultiplayerKills();
+      }
+
+      Session.SendPlayerInfo();
+    }
+
+    if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+    {
+      if (_ObjectID == GetMainPlayerObjectID())
+        GetObject(GetMainPlayerObjectID()).DisableInput();
+
+      sendEvent(2.0, getIdentificator(this), "CheckCFMissionStatus", []);
+    }
+
+    logWarning("[DMMission] sendEvent AddDeathUnit to " + getIdentificator(this) + "with object" + _ObjectID + ")");
+    sendEvent(15.0, getIdentificator(this), "AddDeathUnit", [_ObjectID]);
+  }
+
+  event void OnPlayerEnteredGame()
+  {
+    String MainID = GetMainPlayerObjectID();
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    if (GameMode == "Server")
+    {
+      Server_InformPlayerEnter(-1, MainID);
+    }
+    else
+    {
+      Component Session = Game.GetGameSession();
+      Session.FireNetEvent("Server_InformPlayerEnter", [MainID]);
+    }
+  }
+
+  event void Server_InformPlayerEnter(
+      int     _ClientID,
+      String  _PlayerObjectID
+    )
+  {
+    int Slot = GetPlayerSlotIDByUnitID(_PlayerObjectID);
+    if (Slot != -1)
+    {
+      Component Session = (new #GameController()).GetGameSession();
+      if (Session.m_PlayerSlots.size() > Slot)
+      {
+        int PlayerID = Session.m_PlayerSlots[Slot].PlayerID;
+
+        if (!Session.m_PlayerSlots[Slot].IsManual)
+          PlayerID = Session.GetPlayerIDForBot(Slot);
+
+        Component PlayerInfo = Session.GetPlayerInfo(PlayerID);
+        if (PlayerInfo != null)
+        {
+          SendBroadcastCockpitMessage(
+            PlayerInfo.Rank + L" " + PlayerInfo.Name + CCommonStrings::str_EnterPlayer,
+            CCockpitColorMap::m_NeutralNewsColor
+          );
+        }
+      }
+    }
+  }
+
+  event void CheckCFMissionStatus()
+  {
+    Component Session = new #GameController().GetGameSession();
+    Array PlayersInfo = Session.GetPlayersInfo();
+    int RedTeamCount = 0;
+    int BlueTeamCount = 0;
+    for (int i = 0; i < PlayersInfo.size(); i++)
+    {
+      if ((0 == PlayersInfo[i].SessionTeam) && (PlayersInfo[i].SessionDeaths == 0))
+        RedTeamCount++;
+
+      if ((1 == PlayersInfo[i].SessionTeam) && (PlayersInfo[i].SessionDeaths == 0))
+        BlueTeamCount++;
+    }
+
+    if ((0 == BlueTeamCount) || (0 == RedTeamCount))
+    {
+      logWarning("CloseCFMission");
+      sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+    }
+  }
+
+  event void CloseCFMission()
+  {
+//    CEndMissionMenu::MissionStatus = _Status;
+    Component MenuController = new #GameController().GetMenuController();
+    MenuController.LockChangeInputMode(false);
+
+    MenuController.GetObject("Cursor").ShowCursor(true);
+    MenuController.LoadNewMenu("CFEndMissionMenu");
+    new #GameController().EnableControl("GameMenu", true);
+  }
+
+  void Shutdown()
+  {
+    logError("[DMMission]: Shutdown");
+    Component GameSession = (new #GameController()).GetGameSession();
+
+//    GameSession.DeleteObject(DeathUnits[0]);
+    
+    if (CServerDescriptor::ST_CaptureTheFlag != GameSession.GetSessionInfo().GetSessionTypeID())
+    {
+      Component Content = GetContent();
+
+      Array ObjRec = Content.FindObjectRecord(GetMainPlayerObjectID());
+      Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+      PropertiesMap.DropDefault("IsPlayer");
+      PropertiesMap.Set("IsPlayer", false);
+
+      PropertiesMap.DropDefault("IsManual");
+      PropertiesMap.Set("IsManual", false);
+
+//      GameSession.DeleteObject(GetMainPlayerObjectID());
+      OnPlayerExitedGame();
+    }
+
+    logError("[DMMission]: Shutdown  " + new String(DeathUnits));
+    
+    CMission::Shutdown();
+  }
+  
+  event void Server_ShutdownMission()
+  {    
+    Component MenuController = new #GameController().GetMenuController();
+
+    MenuController.LoadNewMenu("MultiEscapeMenu");
+    
+    MenuController.GetObject("Cursor").ShowCursor(true);
+    MenuController.LockChangeInputMode(false);
+    new #GameController().EnableControl("GameMenu", true);
+
+    Component Game = new #GameController();
+    if ("Single" == Game.GetGameMode())
+    {
+    Game.RestoreCS();
+    Game.SwitchPause();
+    Game.UnloadMission();
+    Game.CreateMenuController();
+    Game.EnableControl("GameMenu", true);
+    sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+    }
+    else
+    {
+
+    Component Mission        = Game.GetLoadedMission();
+    Component Session = Game.GetGameSession();
+
+    if (Game.GetGameMode() == "Server")
+        Session.FireNetEvent("Server_KickAllPlayers", []);
+
+    Game.UnloadMission();
+
+    Game.CloseMultiplayer();
+    Session.CleanupPlayersInfo();
+    Game.DeleteSession();
+    Game.CreateMenuController();
+    Game.EnableControl("GameMenu", true);
+    sendEvent(0.0, SOID_GameController, "QuitToMainMenu", []);
+    }
+
+
+  }
+
+  event void Server_KickAllPlayers()
+  {
+    logWarning("Server_KickAllPlayers");
+
+    Component Game = new #GameController();
+
+    if (Game.GetGameMode() != "Server")
+    {
+      if (CServerDescriptor::ST_CaptureTheFlag == Game.GetGameSession().GetSessionInfo().GetSessionTypeID())
+        CloseCFMission();
+      else
+      {
+        Component MenuController = Game.GetMenuController();
+        MenuController.LockChangeInputMode(false);
+        MenuController.GetObject("Cursor").ShowCursor(true);
+        MenuController.LoadNewMenu("MultiEndMissionMenu");
+        Game.EnableControl("GameMenu", true);
+      }
+
+/*      String MainID = GetMainPlayerObjectID();
+      Component Session = Game.GetGameSession();
+      //Session.FireNetEvent("Server_InformPlayerExit", [MainID]);
+      logWarning("[DMMission]:Send Remove object: Slot: " + new String(Session.GetPlayerSlotID()) + " Name: " + MainID);
+      Session.FireNetEvent("Server_InformRemoveObject", [Session.GetPlayerSlotID(), MainID]);
+*/
+    }
+  }
+
+  event void OnPlayerExitedGame()
+  {
+    String MainID = GetMainPlayerObjectID();
+
+    logWarning("[DMMission]:OnPlayerExitedGame:" + new String(MainID));
+
+    DeathTanks.add(GetMainPlayerObjectID());
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+/*    if (GameMode == "Server")
+    {
+      //Server_InformPlayerExit(-1, MainID);
+      
+      // close mission
+      Component Server = Game.GetGameSession();
+      Server.FireNetEvent("CloseMission", [MOSID_Completed]);
+    }
+    else
+*/
+    {
+
+      Component Session = Game.GetGameSession();
+      //Session.FireNetEvent("Server_InformPlayerExit", [MainID]);
+      logWarning("[DMMission]:Send Remove object: Slot: " + new String(Session.GetPlayerSlotID()) + " Name: " + MainID);
+      Session.FireNetEvent("Server_InformRemoveObject", [Session.GetPlayerSlotID(), MainID]);
+    }
+  }
+
+  event void Server_InformRemoveObject(
+      int     _ClientID,
+      int     _Slot,
+      String  _PlayerObjectID
+    )
+  {
+    logWarning("[DMMission]:Server_InformRemoveObject:" + new String(_PlayerObjectID));
+
+    DeathTanks.add(_PlayerObjectID);
+
+    Component Game = new #GameController();
+    String GameMode = Game.GetGameMode();
+
+    Component Session = Game.GetGameSession();
+
+    sendEvent(0.0f, SOID_MissionController, "ReportPlayerLeave", [Session.GetPlayerInfo(_ClientID).Name]);
+    Session.FireNetEvent("ReportPlayerLeave", [Session.GetPlayerInfo(_ClientID).Name]);
+
+    Session.RemoveObject(_Slot, _PlayerObjectID);
+
+    int Players = Session.GetPlayersInfo().size();
+    if((NumBots + 1) > Players)
+      sendEvent(15.0, getIdentificator(this), "CreateBot", [_Slot]);
+  }
+  
+  event void Server_KillUnit(String  _PlayerObjectID)
+  {
+    sendEvent(0.0, _PlayerObjectID, "KillUnit", []);
+  }
+
+
+
+  event void Server_InformPlayerExit(
+      int     _ClientID,
+      int     _Slot,
+      String  _PlayerObjectID
+    )
+  {
+    logError("[DMMission]: Server_InformPlayerExit Slot:" + new String(_Slot) + "ID: " + _PlayerObjectID);
+    Component Session = (new #GameController()).GetGameSession();
+    Session.RemoveObject(_Slot, _PlayerObjectID);
+    //sendEvent(0.0, _PlayerObjectID, "ObjectDestroyed", []);
+  }
+
+//   event void Server_InformPlayerExit(
+//       int     _ClientID,
+//       String  _PlayerObjectID
+//     )
+//   {
+//     int Slot = GetPlayerSlotIDByUnitID(_PlayerObjectID);
+//     if (Slot != -1)
+//     {
+//       Component Session = (new #GameController()).GetGameSession();
+//       if (Session.m_PlayerSlots.size() > Slot)
+//       {
+//         int PlayerID = Session.m_PlayerSlots[Slot].PlayerID;
+// 
+//         if (!Session.m_PlayerSlots[Slot].IsManual)
+//           PlayerID = Session.GetPlayerIDForBot(Slot);
+// 
+//         Component PlayerInfo = Session.GetPlayerInfo(PlayerID);
+//         if (PlayerInfo != null)
+//         {
+//           SendBroadcastCockpitMessage(
+//             PlayerInfo.Rank + L" " + PlayerInfo.Name + CCommonStrings::str_ExitPlayer,
+//             CCockpitColorMap::m_NeutralNewsColor
+//           );
+//         }
+//       }
+//     }
+// 
+//     sendEvent(0.0, _PlayerObjectID, "ObjectDestroyed", []);
+//   }
+
+  int GetPlayerTeamByUnitID(
+      String _UnitID
+    )
+  {
+    if((new #GameController()).GetGameMode() == "Single")
+    {
+      return -1;
+    }
+    else
+    {
+      logMessage("[DMMission] GetPlayerTeamByUnitID " + _UnitID);
+      Array ObjectRecord = FindObjectListRecord(_UnitID);
+      if(ObjectRecord.isEmpty()) return -1;
+      logMessage("[DMMission] ObjectRecord found");
+
+      Array PropMap = ObjectRecord[INDEX_Properties];
+      if(PropMap.isEmpty()) return -1;
+
+      logMessage("[DMMission] PropMap found: " + new String(PropMap));
+
+      Component Properties = new CPropertiesMap(PropMap);
+      int PlayerID =  Properties.Get("PlayerID", -1);
+      logMessage("[DMMission] PlayerID: " + new String(PlayerID));
+      if(PlayerID == -1)
+        return -1;
+
+      Component Session = new #GameController().GetGameSession();
+      int Index = Session.FindPlayerInfo(PlayerID);
+      logMessage("[DMMission] Index: " + new String(Index));
+      if (Index == -1)
+        return -1;
+
+      Array PlayersInfo =
+        Session.GetPlayersInfo();
+
+      logMessage("[DMMission] PlayersInfo: " + new String(PlayersInfo));
+
+      return PlayersInfo[Index].SessionTeam;
+    }
+  }
+  
+
+  event void OnPlayersInfoChanged()
+  {
+    // Skip for client
+    if ((new #GameController()).GetGameMode() != "Server")
+      return;
+
+    //logWarning("[Server] OnPlayersInfoChanged");
+
+    // check frag limit
+    if (FragLimit != 0)
+    {
+      // get player info list
+      Array PlayersInfo =
+        (new #GameController()).GetGameSession().GetPlayersInfo();
+
+      //logWarning("[Server] PlayerInfo: " + new String(PlayersInfo.size()));
+      // scan player stats and check frags
+      for (int i = 0; i < PlayersInfo.size(); i++)
+      {
+        //logWarning("[Server] PlayerInfo: SessionFrags " + new String(PlayersInfo[i].SessionFrags));
+        if (PlayersInfo[i].SessionFrags >= FragLimit)
+        {
+          DelayedQuit();
+          //CloseMission(MOSID_Completed);
+          sendEvent(10.0, getIdentificator(this), "CloseMission", [MOSID_Completed]);
+          break;
+        }
+      }
+    }
+  }
+
+  void OnObjectLeaveNavPoint(String _NavPointID, String _ObjectID)
+  {
+    if (isDebug)
+      logMessage("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+    FreeRespawnsByUsurper(_ObjectID);
+  }
+
+  void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
+  {
+    if (isDebug)
+      logMessage("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+    // Lock respawn place
+    Server_SetRespawnState(-1, _NavPointID, true, _ObjectID);
+  }
+  
+
+  event void RespawnPlayerUnit(
+      String _UnitID
+    )
+  {
+    // Skip for client
+    if ((new #GameController()).GetGameMode() != "Server")
+      return;
+
+    String LocationID = GetFreeSpawnPlace(_UnitID);
+
+    // Lock respawn place
+    Server_SetRespawnState(-1, LocationID, true, _UnitID);
+
+    Component Session = (new #GameController()).GetGameSession();
+    Session.FireNetEvent("RespawnPlayerUnit", [_UnitID, LocationID]);
+    RespawnPlayerUnit(_UnitID, LocationID);
+  }
+
+  event void RespawnPlayerUnit(
+      String _UnitID,
+      String _LocationID
+    )
+  {
+    Matrix Pos;
+    Pos = getPosition(GetObject(_LocationID));
+    //Vector Or = Pos.origin;
+    //Pos.origin = new Vector(Or.x + randnum(10), Or.y + randnum(10), Or.z);
+    
+    // Respawn unit
+    sendEvent(0.0, _UnitID, "Respawn",
+      [_LocationID, Pos]);
+//     sendEvent(0.0, _UnitID, "Respawn",
+//       [_LocationID, 
+//        new Matrix(new Vector(4334.0 + randnum(60), 5960.4 + randnum(60), 612.5))
+//       ]);
+
+    // Restore unit if it host unit
+    //$TMP
+//     Component Object = GetObject(_UnitID);
+//     if (checkMask(Object, ["HOSTMODE"], []))
+//     {
+//       sendEvent(10.0, _UnitID, "Restore", []);
+//       sendEvent(12.0, _UnitID, "TakeOff", []);
+//       sendEvent(17.0, _UnitID, "OnRespawned", []);
+//     }
+  }
+
+  String GetFreeRespawnPlace(
+      String _PlayerUnitID
+    )
+  {
+    //%TMP
+    return "TestLocation";
+    /*return new Matrix(new Vector(4334.0 + randnum(60), 5960.4 + randnum(60), 612.5));*/
+
+    Array ObjectPointsList = (new CPropertiesMap(
+      FindObjectListRecord(_PlayerUnitID)[INDEX_Properties])).Get("RespawnPoints", []);
+
+    Array FreePointsList = [];
+    for (int i = 0; i < ObjectPointsList.size(); i++)
+    {
+      //logWarning("Check " + ObjectPointsList[i]);
+
+      Component Point = GetObject(ObjectPointsList[i]);
+      if (Point == null)
+      {
+        logWarning("Unable to find respawn point: " + ObjectPointsList[i]);
+        continue;
+      }
+
+      // Read status
+      boolean IsLocked    = GetRechargeState(ObjectPointsList[i]);
+      boolean IsFreePlace = Point.GetDetectedList().isEmpty();
+
+      //logWarning("  IsLocked = " + new String(IsLocked) + ", IsFreePlace = " + new String(IsFreePlace));
+
+      // Insert free respawn place
+      if (!IsLocked && IsFreePlace)
+        FreePointsList.add(ObjectPointsList[i]);
+    }
+
+    return FreePointsList[randnum(FreePointsList.size())];
+  }
+
+
+  String GetFreeSpawnPlace(
+      String _PlayerUnitID
+    )
+  {
+    return GetFreeSpawnPlace(_PlayerUnitID, -1);
+  }
+
+  String GetFreeSpawnPlace(
+      String _PlayerUnitID,
+      int    _Team
+    )
+  {
+    //%TMP
+    //return "TestLocation";
+    /*return new Matrix(new Vector(4334.0 + randnum(60), 5960.4 + randnum(60), 612.5));*/
+    //logWarning("  GetFreeSpawnPlace " + _PlayerUnitID);
+
+    Array ObjectPointsList =  GetContent().GetObjectsList();
+
+    Array FreePointsList = [];
+    if(!m_MissionFreeRespawnPlaces.isEmpty())
+    {
+      FreePointsList = m_MissionFreeRespawnPlaces;
+      m_MissionFreeRespawnPlaces.clear();
+    }
+    else
+      for (int i = 0; i < ObjectPointsList.size(); i++)
+      {
+        Array Object = ObjectPointsList[i];
+        //logWarning("Check " + Object[CMissionContent::INDEX_ObjectID]);
+
+        if(Object[CMissionContent::INDEX_ScriptClass] != "CPlayerSpawnPoint")
+          continue;
+
+        Component Point = GetObject(Object[CMissionContent::INDEX_ObjectID]);
+        if (Point == null)
+        {
+          logWarning("Unable to find respawn point: " + Object[CMissionContent::INDEX_ObjectID]);
+          continue;
+        }
+
+        // Read status
+        boolean IsLocked    = GetRespawnState(Object[CMissionContent::INDEX_ObjectID]);
+        logMessage("  IsLocked = " + new String(IsLocked));
+
+
+        Component ObjectProps = new CPropertiesMap(Object[CMissionContent::INDEX_Properties]);
+        // Insert free respawn place
+        if ( !IsLocked && ((-1 == _Team) || (ObjectProps.Get("Team", -1) == _Team)) )
+          FreePointsList.add(Object[CMissionContent::INDEX_ObjectID]);
+      }
+
+    return FreePointsList[randnum(FreePointsList.size())];
+  }
+  
+  Vector GetMiddleRespawnOrigin()
+  {
+    Vector Place =  new Vector(0.0 , 0.0, 0.0);
+    Array ObjectPointsList =  GetContent().GetObjectsList();
+    int count = 0;
+
+    for (int i = 0; i < ObjectPointsList.size(); i++)
+    {
+      Array Object = ObjectPointsList[i];
+
+      if (Object[CMissionContent::INDEX_ScriptClass] != "CPlayerSpawnPoint")
+        continue;
+
+      Place += getPosition(GetObject(Object[CMissionContent::INDEX_ObjectID])).origin;
+      count = count+1;
+    }
+    Place = Place * (1.0/count);
+    
+    return Place;
+  }
+
+  Matrix GetFreeSpawnCF(
+      int _Team
+    )
+  {
+    Matrix InitPlace =  new Matrix(new Vector(0.0 , 0.0, 0.0));
+    Array ObjectPointsList =  GetContent().GetObjectsList();
+    Array FreePointsList = [];
+
+    for (int i = 0; i < ObjectPointsList.size(); i++)
+    {
+      Array Object = ObjectPointsList[i];
+
+      if (Object[CMissionContent::INDEX_ScriptClass] != "CPlayerSpawnPoint")
+        continue;
+
+      if (-1 != m_ClosedSpawnsCF.find(Object[CMissionContent::INDEX_ObjectID]))
+        continue;
+
+      Component ObjectProps = new CPropertiesMap(Object[CMissionContent::INDEX_Properties]);
+
+//      logWarning("Insert free respawn place " + Object[CMissionContent::INDEX_ObjectID]);
+        // Insert free respawn place
+      if (ObjectProps.Get("Team", -1) == _Team)
+        FreePointsList.add(Object[CMissionContent::INDEX_ObjectID]);
+    }
+
+    if (!FreePointsList.isEmpty())
+    {
+      String SpawnID = FreePointsList[randnum(FreePointsList.size())];
+      m_ClosedSpawnsCF.add(SpawnID);
+      InitPlace = getPosition(GetObject(SpawnID));
+    }
+
+    return InitPlace;
+  }
+
+  Matrix GetFreeSpawnPoasition(String _PlayerID)
+  {
+    String SpawnID = GetFreeSpawnPlace(_PlayerID);
+    Matrix InitPlace =  new Matrix(new Vector(0.0 , 0.0, 0.0));
+    if(SpawnID != "")
+      InitPlace = getPosition(GetObject(SpawnID));
+    else
+      logWarning("[DMMission] not found free spawn place");
+    
+    return InitPlace;
+  }
+
+  event void StartMission()
+  {
+    CMission::StartMission();
+
+    // Chedule end mission event by time limit
+    if (TimeLimit != 0 && (new #GameController()).GetGameMode() == "Server")
+      sendEvent(float(TimeLimit) * 60.0, getIdentificator(this), "CloseMission", [false]);
+  }
+
+  event void CloseMission(
+      int _Status
+    )
+  {
+    Component Game = new #GameController();
+
+    // unblock escape menu
+    Game.BlockEscapeMenu(false, false);
+
+    // Send message to clients
+    if (Game.GetGameMode() == "Server")
+    {
+      Component Server = (new #GameController()).GetGameSession();
+      Server.FireNetEvent("CloseMission", [_Status]);
+    }
+
+    // Close mission on this host
+    Component MainMenu = Game.GetObject("MainMenu");
+
+    CMission::CloseMission(_Status);
+
+    if (MainMenu != null)
+    {
+      MainMenu.GoTo("MultiplayerDebriefingMenu");
+      Game.EnableControl("MainMenu", true);
+    }
+  }
+  
+  event void TerminateMission()
+  {
+    Component Game = new #GameController();
+
+    // unblock escape menu
+    Game.BlockEscapeMenu(false, false);
+
+    // Send message to clients
+    if (Game.GetGameMode() == "Client")
+    {
+      // Close mission on this host
+      Component MainMenu = Game.GetObject("MainMenu");
+
+      CMission::CloseMission(MOSID_Failed);
+ 
+      Component MenuController = Game.GetMenuController();
+    
+      Game.CreateMainMenu();
+      MenuController.LoadNewMenu("TerminateMenu");
+    }
+    
+  }
+
+  void CleanupObjectList()
+  {
+    CMission::CleanupObjectList();
+
+    Array ObjectList = GetMissionObjectList();
+
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      Component Properties = new CPropertiesMap(ObjectList[Index][INDEX_Properties]);
+
+      if ((Properties.Get("SlotID", -1) != -1) && (Properties.Get("IsPlayer", false) == false))
+      {
+        DegenerateBotProps(ObjectList[Index][INDEX_Properties]);
+      }
+    }
+  }
+
+  String FindObjectBySlot(int _Slot)
+  {
+    Array ObjectList = GetMissionObjectList();
+
+    logWarning("FindObjectListRecordBySlot: " + new String(_Slot));
+
+    for (int Index = 0; Index < ObjectList.size(); Index++)
+    {
+      
+      Component ParopMap = new CPropertiesMap(ObjectList[Index][CMissionContent::INDEX_Properties]);
+      //$LOG
+      //logMessage("[DMMission]: Check object " + new String(ObjectList[Index][CMissionContent::INDEX_ObjectID]) + " Slot: " + new String(ParopMap.Get("SlotID", -1)));
+      if( ParopMap.Get("SlotID", -1) == _Slot)
+        return ObjectList[Index][CMissionContent::INDEX_ObjectID];
+    }    
+    return "";
+  }
+
+  Array GetAvailableArray(
+      Array _EnterArray
+    )
+  {
+    Array ResultArray = [];
+    for (int Index = 0; Index < _EnterArray.size(); Index++)
+      if (AvailablePlayerUnits[Index])
+        ResultArray.add(_EnterArray[Index]);
+    return ResultArray;
+  }
+
+  // get and set multiplayer settings
+  static Array GetMultiplayerSettings()
+  {
+    Component GameSettings = new #GameSettings();
+    int botLevel = GameSettings.GetDifficultyLevel();
+    return [AvailablePlayerUnits, ExpertMode, botLevel];
+  }
+
+  static void SetMultiplayerSettings(
+      Array _Settings
+    )
+  {
+    AvailablePlayerUnits = _Settings[0];
+    ExpertMode           = _Settings[1];
+    Component GameSettings = new #GameSettings();
+    GameSettings.SetDifficultyLevel(_Settings[2]);
+  }
+
+  static void SetMultiplayerSettings(
+      int   _FragLimit,
+      int   _TimeLimit,
+      int   _ControlMode,
+      Array _AvailablePlayerUnits
+    )
+  {
+    FragLimit            = _FragLimit;
+    TimeLimit            = _TimeLimit;
+    ControlMode          = _ControlMode;
+    AvailablePlayerUnits = _AvailablePlayerUnits;
+  }
+  
+  static void SetMultiplayerSettings(
+      int		_FragLimit,
+      int		_TimeLimit,
+      int		_ControlMode,
+      boolean   _ExpertMode,
+      Array		_AvailablePlayerUnits
+    )
+  {
+    FragLimit            = _FragLimit;
+    TimeLimit            = _TimeLimit;
+    ControlMode          = _ControlMode;
+    ExpertMode           = _ExpertMode;
+    AvailablePlayerUnits = _AvailablePlayerUnits;
+  }
+  
+  boolean IsExpertMode()
+  {
+    return ExpertMode;
+  }
+
+  String GetMainPlayerObjectID()
+  {
+    //logWarning("GetMainPlayer return: " + CGameSettings::PlayerName);    
+    return CGameSettings::PlayerName;
+  }
+
+  event void AddDeathUnit(
+      String _UnitID
+    )
+  {
+    if ((new #GameController()).GetGameMode() != "Server") return;
+
+    //logWarning("[DMMission] AddDeathUnit(" + _UnitID + ")");
+    DeathTanks.add(_UnitID);
+    DeathUnits.add(_UnitID);
+    CleanupDeathUnit();
+  }
+
+  void CleanupDeathUnit()
+  {    
+    if(DeathUnits.size() > MAX_DEATH_UNITS)
+    {
+      //logWarning("[DMMission] DeathUnits.size() > MAX_DEATH_UNITS");
+      String UnitID = DeathUnits[0];
+      DeathUnits.remove(0);
+      Component Server = (new #GameController()).GetGameSession();
+      Server.DeleteObject(UnitID);
+    }
+      
+  }
+
+  event void ClearDeathTanks()
+  {    
+
+    Component Server = (new #GameController()).GetGameSession();
+    for (int i = 0; i < DeathTanks.size(); i++)
+    {
+      Server.DeleteObject(DeathTanks[i]);
+      logWarning("Delete Object: " + DeathTanks[i]);
+    }
+  }
+
+}
+
+

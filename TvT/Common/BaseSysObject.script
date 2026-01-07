@@ -1,0 +1,105 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Emitter script
+//
+
+class CBaseSysObject
+  extends IObject, CEditable
+{
+  // Special object class
+  final static String SPEC_CLASS = "";
+  final static Array  SysEffects = [];
+  final static Array  EffectsSrc = [];
+
+  CBaseSysObject()
+  {
+    for (int i = 0; i < SysEffects.size(); i++)
+    {
+      m_EffectsID.add(INVALID_EFFECT_ID);
+      m_Boundings.add(new Vector(1.0, 1.0, 1.0));
+    }      
+  }      
+
+  //
+  // Visibility functions
+  //
+
+  Array  m_EffectsID = [];
+  Array  m_Boundings = [];
+
+  void Show()
+  {
+    Component EffectsArray = new #EffectsArray();
+
+    for (int i = 0; i < SysEffects.size(); i++)
+    {
+      if (INVALID_EFFECT_ID != m_EffectsID[i])
+        continue;
+
+      if (!EffectsArray.IsPatternExists(SysEffects[i]))
+      {
+        Component Effect = new #StaticEffect();
+        loadFromScript(Effect, EffectsSrc[i]);
+        EffectsArray.RegisterPattern(SysEffects[i], Effect);
+      }
+
+      m_EffectsID[i] = EffectsArray.
+        CreateEffect(SysEffects[i], GetEffectMatrix(i), user);
+    }
+  }
+
+  void Hide()
+  {
+    Component EffectsArray = new #EffectsArray();
+
+    for (int i = 0; i < SysEffects.size(); i++)
+      if (INVALID_EFFECT_ID != m_EffectsID[i])
+      {    
+        EffectsArray.DeleteEffect(m_EffectsID[i]);
+        m_EffectsID[i] = INVALID_EFFECT_ID;
+      }
+  }
+
+  void UpdateEffects()
+  {
+    Component EffectsArray = new #EffectsArray();
+
+    for (int i = 0; i < SysEffects.size(); i++)
+    {
+      if (INVALID_EFFECT_ID != m_EffectsID[i])
+        EffectsArray.SetEffectPosition(m_EffectsID[i], GetEffectMatrix(i));
+    }
+  }
+
+  Matrix GetEffectMatrix(
+      int _Index
+    )
+  {
+    Matrix Position = getPosition(user);
+
+    Position.xvec *= m_Boundings[_Index].x;
+    Position.yvec *= m_Boundings[_Index].y;
+    Position.zvec *= m_Boundings[_Index].z;
+
+    return Position;
+  }
+
+  event void OnSpecObjectVisibleStateChanged()
+  {
+    if ("" != SPEC_CLASS)
+    {    
+      if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+        Show();
+      else
+        Hide();
+    }
+  }
+}

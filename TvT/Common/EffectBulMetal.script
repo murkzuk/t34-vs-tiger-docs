@@ -1,0 +1,281 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2007 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+// #########################################################################################
+//                                       Bullets in armour
+// #########################################################################################
+class CArmourBulletHitEffect
+  extends CBaseEffect
+{
+  CArmourBulletHitEffect()
+  {
+    CreateEffect("BulletArmourDustRefuseEffect", 0.0);
+    CreateEffect("BulletArmourSplashRefuseEffect", 0.0);
+    CreateEffect("BulletArmourRicochetEffect", 0.0);
+  }
+}
+// ==================================================== Dust  ============================
+class CBulletArmourDustRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.001;		// Was 0.005 - 5x more frequent particle generation
+   float PeriodVarianceMS   = 0.0;   	//рандомизация периода (сек)
+   float LifetimeMS         = 1.5;   	// Was 0.3 - 5x longer effect duration
+   float EjectionVelocity   = 0.5;   	// Was 0.1 - 5x faster particles
+   float VelocityVariance   = 5.0;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.0;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.0;   	//рандомизация смещени
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 70;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = true; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру"
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = false; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Effect_1.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = false;  	//тип прозрачности false - аддитивная,
+							//  true - нормальна
+   int     TexSize          = 128;    	//размер текстуры в пикселах
+   int     TexFrameX        = 64;     	//размер кадра по ширине
+   int     TexFrameY        = 64;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CBulletArmourDustRefuseParticle";  //имя описателя частиц
+// Data block .............................................................................
+ CBulletArmourDustRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CBulletArmourDustRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 3.5; 		// Was 0.7 - 5x longer particle life
+   float ParticleLifetimeVarianceMS = 0.2;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 1.0;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 1.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = -0.4;		//собственное усокрение
+
+   float SpinRandomMin              = -3.1;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              = 3.1;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  = 0.0;		//скорость вращени
+
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.2, 0.4, 1.0];			//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+                    new Color(0.99, 0.9, 0.7, 0.7),
+                    new Color(0.5, 0.3, 0.1, 0.9),
+                    new Color(0.3, 0.2, 0.1, 0.3),
+                    new Color(0.0, 0.0, 0.0, 0.0)
+                  ];
+
+   Array sizes  = [0.02, 0.02, 0.09, 0.02];		//размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+                    [3],
+                    [3],
+                    [3]
+                  ];
+// Data block ..............................................................................
+}
+// ==================================================== Splash  ============================
+class CBulletArmourSplashRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.002;		// Was 0.02 - 10x more frequent particle generation
+   float PeriodVarianceMS   = 0.0;   	//рандомизация периода (сек)
+   float LifetimeMS         = 1.0;   	// Was 0.1 - 10x longer effect duration
+   float EjectionVelocity   = 0.3;   	// Was 0.01 - 30x faster particles
+   float VelocityVariance   = 0.0;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.0;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.04;   	//рандомизация смещени
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 0;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = true; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру"
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = false; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Effect_1.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = false;  	//тип прозрачности false - аддитивная,
+							//  true - нормальна
+   int     TexSize          = 128;    	//размер текстуры в пикселах
+   int     TexFrameX        = 64;     	//размер кадра по ширине
+   int     TexFrameY        = 64;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CBulletArmourSplashRefuseParticle";  //имя описателя частиц
+// Data block .............................................................................
+ CBulletArmourSplashRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CBulletArmourSplashRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 0.3; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 0.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 0.0;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 1.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = -0.0;		//собственное усокрение
+
+   float SpinRandomMin              = -0.0;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              = 0.0;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  = 0.0;		//скорость вращени
+
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.1, 1.0];				//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+                    new Color(0.9, 0.9, 0.9, 0.9),
+                    new Color(0.9, 0.5, 0.1, 0.5),
+                    new Color(0.5, 0.1, 0.1, 0.0)
+                  ];
+
+   Array sizes  = [0.05, 0.1, 0.01];		//размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+                    [3],
+                    [3]
+                  ];
+// Data block ..............................................................................
+}
+// ==================================================== Ricoshet  ============================
+class CBulletArmourRicochetEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.2;    //период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.0;   	//рандомизация периода (сек)
+   float LifetimeMS         = 0.3;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 25.0;    //начальная скорость частицы (м/с)
+   float VelocityVariance   = 9.0;    //рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.0;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.0;   	//рандомизация смещени
+
+   int ThetaMin             = 10;      //мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 20;     //макс отклонение
+   int PhiReferenceVel      = -90;      //начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 90;    //конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = true;   //использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = false;   //ориентация нормалей частиц "на камеру"
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = false; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Effect_1.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = false;    //тип прозрачности false - аддитивная,
+							//  true - нормальна
+   int     TexSize          = 128;    	//размер текстуры в пикселах
+   int     TexFrameX        = 128;       //размер кадра по ширине
+   int     TexFrameY        = 32;       //размер кадра по высоте
+
+   String ParticlesClass    = "CBulletArmourRicochetParticle";  //имя описателя частиц
+// Data block .............................................................................
+ CBulletArmourRicochetEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CBulletArmourRicochetParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 1.0;    //время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 0.5;    //вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;    //not in use
+   float GravityCoefficient         = 0.6;    //коэффициент влияния гравитации
+   float InheritedVelFactor         = 1.0;    //коэффициент наследования начальной
+					      // скорости эмитеера
+   float ConstantAcceleration       = -0.4;   //собственное усокрение
+
+   float SpinRandomMin              = 0.0;    //мин поворот частицы вокруг
+					      //  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              = 0.0;    //макс (-3.14 до 3.14)
+   float SpinSpeed                  = 0.0;    //скорость вращени
+
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.2, 0.4, 1.0];	      //временные периоды в течение
+					      // жизни частицы (до 8 периодов)
+
+  Array colors = [ 			      //цвет и альфа частицы по периодам
+                    new Color(0.99, 0.9, 0.7, 0.7),
+                    new Color(0.8, 0.8, 0.6, 0.9),
+                    new Color(0.3, 0.2, 0.1, 0.9),
+                    new Color(0.0, 0.0, 0.0, 0.5)
+                  ];
+
+   Array sizes  = [0.10, 0.10, 0.10, 0.10];   //размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+                    [1],
+                    [1],
+                    [1]
+                  ];
+// Data block ..............................................................................
+}
+

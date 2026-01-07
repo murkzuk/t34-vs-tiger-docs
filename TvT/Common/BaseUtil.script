@@ -1,0 +1,334 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseUtilities
+{
+  //
+  // Mission
+  //
+
+  Component GetMission()
+  {
+    Component Mission = (new #GameController()).GetMission();
+    if (null == Mission)
+      logWarning("CBaseUtilities::GetMission(): The mission component is null");
+    return Mission;
+  }
+
+  //
+  // nav-point handling
+  //
+
+  Vector GetNavPointBehPos(
+      String _NavPointID
+    )
+  {
+    
+    Component Point = (new #GameController()).GetObject(_NavPointID);
+    if (Point == null)
+    {
+      logError("GetNavPointPos() : Could not get nav-point " + _NavPointID);
+      return new Vector(0,0,0);
+    }
+
+    // WARNING! GetBehaviorHeight used
+    
+    Vector Origin = getPosition(Point).origin;
+    Origin.z = Origin.z + Point.GetBehaviorHeight();
+    return Origin;
+  }
+
+  Vector GetNavPointPos(
+      String _NavPointID
+    )
+  {
+    
+    Component Point = (new #GameController()).GetObject(_NavPointID);
+    if (Point == null)
+    {
+      logError("GetNavPointPos() : Could not get nav-point " + _NavPointID);
+      return new Vector(0,0,0);
+    }
+
+    return getPosition(Point).origin;
+  }
+
+  float GetNavPointRange(
+      String _NavPointID
+    )
+  {
+    return (new #GameController()).GetObject(_NavPointID).GetDetectRange();
+  }
+
+  //
+  // Affiliation handling
+  //
+
+  void SetAffiliation(
+      String _Affiliation
+    )
+  {
+    removeClassificator(user, "NEUTRAL");
+    removeClassificator(user, "ENEMY");
+    removeClassificator(user, "FRIEND");
+
+    if (_Affiliation == "NEUTRAL")
+      addClassificator(user, "NEUTRAL");
+    else
+    if (_Affiliation == "ENEMY")
+      addClassificator(user, "ENEMY");
+    else
+    if (_Affiliation == "FRIEND")
+      addClassificator(user, "FRIEND");
+    else
+      logError("Unknown affiliation type: " + Affiliation);
+  }
+
+  String GetAffiliation()
+  {
+    if (checkMask(user, ["ENEMY"], []))
+      return "ENEMY";
+    else
+    if (checkMask(user, ["FRIEND"], []))
+      return "FRIEND";
+    else
+      return "NEUTRAL";
+  }
+
+  String GetInvertedAffiliation()
+  {
+    if (checkMask(user, ["ENEMY"], []))
+      return "FRIEND";
+    else
+    if (checkMask(user, ["FRIEND"], []))
+      return "ENEMY";
+    else
+      return "NEUTRAL";
+  }
+
+  void addClassificatorObject(
+      String  _ObjectID,
+      String  _Classificator
+    )
+  {
+    Component Self = (new #GameController()).GetObject(_ObjectID);
+    if (Self != null)
+      addClassificator(Self, _Classificator);
+    else
+      logError("Cannot get object '" + _ObjectID + "' component to add classificator '" + _Classificator + "'");
+  }
+
+  void removeClassificatorObject(
+      String  _ObjectID,
+      String  _Classificator
+    )
+  {
+    Component Self = (new #GameController()).GetObject(_ObjectID);
+    if (Self != null)
+      removeClassificator(Self, _Classificator);
+    else
+      logError("Cannot get object '" + _ObjectID + "' component to remove classificator '" + _Classificator + "'");
+  }
+
+  //
+  //  Health Parameter handling
+  //
+
+  void SetHealthParameter(
+      String _HealthParameter
+    )
+  {
+    removeClassificator(this, "HP_FRAGILE");
+    removeClassificator(this, "HP_HEALTHY");
+    removeClassificator(this, "HP_BULLET_PROOF");
+    removeClassificator(this, "HP_COCONUT");
+
+    if (_HealthParameter == "HP_HEALTHY")
+      addClassificator(this, "HP_HEALTHY");
+    else
+    if (_HealthParameter == "HP_BULLET_PROOF")
+      addClassificator(this, "HP_BULLET_PROOF");
+    else
+    if (_HealthParameter == "HP_FRAGILE")
+      addClassificator(this, "HP_FRAGILE");
+    else
+    if (_HealthParameter == "HP_COCONUT")
+      addClassificator(this, "HP_COCONUT");
+    else
+      logError(getIdentificator(user) + ": unknown Health Parameter type - " + _HealthParameter);
+  }
+
+  String GetHealthParameter()
+  {
+    if (checkMask(this, ["HP_HEALTHY"], []))
+      return "HP_HEALTHY";
+    else
+    if (checkMask(this, ["HP_BULLET_PROOF"], []))
+      return "HP_BULLET_PROOF";
+    else
+    if (checkMask(this, ["HP_COCONUT"], []))
+      return "HP_COCONUT";
+    else
+    if (checkMask(this, ["HP_FRAGILE"], []))
+      return "HP_FRAGILE";
+
+    logError(getIdentificator(user) + ": no Health Parameter assigned");
+  }
+
+  String GetElemental()
+  {
+    if (checkMask(this, ["AIR"], []))
+      return "AIR";
+    else
+    if (checkMask(this, ["GROUND"], []))
+      return "GROUND";
+    else
+    if (checkMask(this, ["NAVAL"], []))
+      return "NAVAL";
+    else
+    if (checkMask(this, ["STRUCTURE"], []))
+      return "STRUCTURE";
+    else
+    if (checkMask(this, ["HUMAN"], []))
+      return "HUMAN";
+
+    return "NOTHING"; // $UGLY what else?
+  }
+
+  //
+  // Behavior and task handling
+  //
+
+  Component GetUnitBehavior(
+      String  _ObjectID
+    )
+  {
+    Component Object = GetMission().GetObject(_ObjectID);
+
+    if (Object != null && isFunctionExist(Object, "GetObject", 1))
+    {
+      return Object.GetObject("Behavior");
+    }
+
+    return null;
+  }
+
+  Component GetUnitTask(
+      String  _ObjectID
+    )
+  {
+    Component Behavior = GetUnitBehavior(_ObjectID);
+
+    if (Behavior != null)
+    {
+      return Behavior.GetTaskScriptHost();
+    }
+
+    return null;
+  }
+
+  void SetObjectHitPoints(
+      String _ObjectID,
+      float  _HitPoints
+    )
+  {
+    Component Object = new #GameController().GetObject(_ObjectID);
+    if (null != Object)
+    {
+      Component StateControl = Object.GetStateControl();
+      if (null != StateControl)
+        StateControl.SetHitPoints(_HitPoints);
+    }
+    else
+      logError("BaseUtils::SetObjectHitPoints:  Object \"" + _ObjectID + "\" not found");
+  }
+
+  variant InvokeUnitTaskFunction(
+      String _ObjectID,
+      String _Function,
+      Array  _Parameters
+    )
+  {
+    return InvokeUnitTaskFunction(
+        _ObjectID,
+        _Function,
+        _Parameters,
+        null
+      );
+  }
+
+  variant InvokeUnitTaskFunction(
+      String  _ObjectID,
+      String  _Function,
+      Array   _Parameters,
+      variant _DefaultResult
+    )
+  {
+    Component Behavior = GetUnitBehavior(_ObjectID);
+
+    if (Behavior != null)
+      return Behavior.InvokeTaskFunction(_Function, _Parameters);
+
+    return _DefaultResult;
+  }
+
+  variant InvokeGroupTaskFunction(
+      String  _ObjectID,
+      String  _Function,
+      Array   _Parameters
+    )
+  {
+    Component Group = (new #GameController()).GetObject(_ObjectID);
+    if ((Group != null) && isFunctionExist(Group, _Function, _Parameters.size()))
+      return Group.InvokeTaskFunction(_Function, _Parameters);
+
+    return null;
+  }
+
+  Component GetUnitActiveGroup(String _UnitID)
+  {
+    Component Task = GetUnitTask(_UnitID);
+    if (Task != null)
+    {
+      return Task.m_Group;
+    }
+
+    return null;
+  }
+
+  void CreateGroupAllVillageNavPoints()
+  {
+    Array NavPointID;
+    Component Content = GetMission().GetContent();
+    if (null == Content)
+      return;
+
+      for (int Index = 0; Index < Content.GetObjectRecordsQty(); Index++)
+      {
+        Array Record = Content.GetObjectRecord(Index);
+
+        if (Record[CMissionContent::INDEX_ComponentID] == "NavPoint")
+        {
+            if (Record[CMissionContent::INDEX_ObjectID].IsStartsWith("NavPoint_Village_"))
+               NavPointID.add(Record[CMissionContent::INDEX_ObjectID]);
+        }
+      }
+
+     GetMission().CreateAndInitObject("AllVillageNavPoints",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      IdentityMatrix,
+      [
+        ["Contents",  NavPointID]
+      ]
+    );
+
+  }
+}
+

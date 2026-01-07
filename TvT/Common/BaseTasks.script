@@ -1,0 +1,3615 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CBaseAITask extends CBaseTankAttackStyle
+{
+  //
+  // *** 'virtual' functions ***
+  //
+  // All functions do nothing by default. Overwrite if needed
+  //
+
+  final static boolean StatusDebug = true;
+
+  final static int LOAD_ROOTABLE_ANIM    = 0;
+  final static int LOAD_NONROOTABLE_ANIM = 1;
+
+  // group unit is registered in (current, active...)
+  Component m_Group = null;
+  String  m_CurrentEnemy = "";
+  String  m_LastEnemy = "";
+  int     m_EnemyReactionType = ERT_PASSIVE;
+
+  float   m_ChooseSitState    = 0.5;    // Вероятность выбора положения стрельбы между сидячим и лежачим положением
+
+  int     m_NextPatrolPoint = 0;
+  int     m_TotalPatrolPoints = 0;
+  boolean m_InSpecialAttack = false;  // in special attack unit does not react to group events and orders
+  boolean m_IsTransport = false;
+//  float   m_TransportRunOffDistance = 20.0;
+
+  int     m_FireStyle = 1; // (0 - NoFire, 1 - Nearest, 2 - Enemy)
+
+  boolean m_HasOrder          = false; // used for walkaround units like civilians and soldiers
+
+  boolean m_Anchored          = false;
+  String  m_AnchorID          = "";
+  float   m_AnchorDistanceMax = 0.0;
+
+  String  m_TargetID          = "";   // used only in KamikazeAttack by now
+
+  boolean m_KamikazeNP        = false;
+
+  String  m_HomePointID       = "";   // multi-use, currently used by CWingmanTask
+
+  Array   m_PersonalWeaponPool = [];  // item format: [ <name>, <component> ]
+  Array   m_GroupWeaponPool    = [];  // item format: [ <unitID>, <weapon component> ]
+
+  boolean m_bHuman          = false;
+  boolean m_MeneuveringUnit = false;
+
+  boolean m_NotifyOnEnemyTargetedAfterFrigid = false;
+  //
+  // start up initialization
+
+  void Init() {}            // called by CVehicleBehavior after assign
+
+  void SetIsHuman(
+      boolean _Flag
+    )
+  {
+    m_bHuman = _Flag;
+    SetReportOnWeaponActivate(m_bHuman);
+  }
+
+  void OnPositionChange( float AngleA, float AngleB ) {
+ //   logWarning( "Angles: Dir=" + String( AngleA ) + " MaxAngle=" + String( AngleB ) );
+    logWarning( "OnPositionChange" );
+  }
+
+
+  void InitPersonalWeaponPool()
+  {
+
+    m_PersonalWeaponPool.clear();
+
+    Component Self = GetSelf();
+
+//    logWarning(getIdentificator(user) + ".InitPersonalWeaponPool()");
+    for (int i = 0; i < Self.m_WeaponList.size(); i++)
+    {
+      if ((Self.m_WeaponList[i].CanFire) && !Self.m_WeaponList[i].SpecialWeapon)
+//      {
+//        logMessage("    Adding weapon " + Self.m_WeaponNames[i]);
+        m_PersonalWeaponPool.add([Self.m_WeaponNames[i], Self.m_WeaponList[i]]);
+/*      }
+      else
+      {
+          logMessage("    Skipping weapon " + Self.m_WeaponNames[i]);
+      }*/
+    }
+//    logMessage("  Personal weapon pool size is " + new String(m_PersonalWeaponPool.size()));
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    sendEvent(0.0, getIdentificator(user), "PushHuman", [_Damage, _Position.origin]);
+    sendEvent(0.0, getIdentificator(user), "PushTruck", [_Damage, _Position.origin]);
+
+    if(m_Group != null)
+      m_Group.OnUnitExplosion(getIdentificator(user), _OwnerID);
+  }
+
+  event void OnAmmoChanged(
+      Component _Weapon,
+      int       _AmmoQty,
+      int       _FiredQty,
+      boolean   _Unlimited
+   )
+  {
+    if (_AmmoQty != 0)
+      return;
+
+    for (int i = 0; i < m_PersonalWeaponPool.size(); i++)
+      if (m_PersonalWeaponPool[i][1] == _Weapon)
+        m_PersonalWeaponPool.remove(i);
+  }
+
+  void AddToGroupWeaponPool(
+      String _UnitID
+   )
+  {
+    // first remove all weapons of this unit from pool
+    RemoveFromGroupWeaponPool(_UnitID);
+
+    Component Task = GetUnitTask(_UnitID);
+
+    if (Task != null)
+    {
+      for (int j = 0; j < Task.m_PersonalWeaponPool.size(); j++)
+      {
+        m_GroupWeaponPool.add([_UnitID, Task.m_PersonalWeaponPool[j][1]]);
+      }
+    }
+  }
+
+  void RemoveFromGroupWeaponPool(
+      String _UnitID
+   )
+  {
+    for (int i = m_GroupWeaponPool.size()-1; i >= 0; i--)
+    {
+      if (m_GroupWeaponPool[i][0] == _UnitID)
+          m_GroupWeaponPool.remove(i);
+    }
+  }
+
+  boolean CheckGunFireMask(
+      Component _Weapon,
+      Component _Enemy,
+      boolean   _Anyhow
+   )
+  {
+    for (int i = 0; i < _Weapon.GunSpecificFireMask.size(); i++)
+    {
+      if ((_Weapon.GunSpecificFireMask[i][0].size() == 0)
+          && (_Weapon.GunSpecificFireMask[i][1].size() == 0))
+      {
+//        logMessage("+++   Anyhow mask met");
+        return _Anyhow;
+      }
+
+      if (checkMask(_Enemy,
+          _Weapon.GunSpecificFireMask[i][0],
+          _Weapon.GunSpecificFireMask[i][1]))
+      {
+//        logMessage("+++   Weapon suits the enemy");
+        return true;
+      }
+    }
+
+//    logMessage("+++   Weapon is not good for enemy");
+    return false;
+  }
+
+  boolean CheckWeaponPower(
+      Component _Weapon,
+      String    _TargetHealth
+   )
+  {
+//    logMessage("*** Checking weapon power against target health (" + _TargetHealth + ")");
+    for (int i = 0; i < _Weapon.Power.size(); i++)
+    {
+//      logMessage("***   Power[" + new String(i) + "] = " + _Weapon.Power[i]);
+
+      if (_Weapon.Power[i] == _TargetHealth)
+      {
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+  boolean CanAttackPersonally(
+      String _EnemyID
+   )
+  {
+    Component Enemy = GetMission().GetObject(_EnemyID);
+
+    if (Enemy != null)
+    {
+      String Elemental = Enemy.GetElemental();
+      String Health = Enemy.GetHealthParameter();
+
+//      logWarning(getIdentificator(user) + ".CanAttackPersonally() with enemy " + _EnemyID + " [" + Elemental + ", " + Health + "]");
+
+      if (m_PersonalWeaponPool.size() == 0)
+          logError(getIdentificator(user) + ": personal weapon pool is empty");
+
+      // search for weapon with primary mask fittable
+//      logMessage("Search for primary weapon mask fit");
+      for (int i = 0; i < m_PersonalWeaponPool.size(); i++)
+      {
+//        logMessage("  Checking weapon " + m_PersonalWeaponPool[i][0] +", masks are:");
+//        logMessage("    AmmoQuantity: " + new String(m_PersonalWeaponPool[i][1].GetAmmoQuantity()));
+//        logMessage("    RestrictTo: " + new String(m_PersonalWeaponPool[i][1].GunSpecificFireMask[0][0]));
+//        logMessage("    Exclude:    " + new String(m_PersonalWeaponPool[i][1].GunSpecificFireMask[0][1]));
+//        logMessage("    Weapon power: " + new String(m_PersonalWeaponPool[i][1].Power));
+
+        if(m_PersonalWeaponPool[i][1].GetAmmoQuantity() != 0)
+        {
+//          logMessage("    Weapon has some ammo, good");
+
+          if (CheckGunFireMask(m_PersonalWeaponPool[i][1], Enemy, false))
+          {
+//            logMessage("    Mask check successful");
+
+            if (CheckWeaponPower(m_PersonalWeaponPool[i][1], Health))
+            {
+//              logMessage("    Weapon " + m_PersonalWeaponPool[i][0] + " can do the job");
+              return true;
+            }
+//            else
+//              logMessage("    Skipping weapon " + m_PersonalWeaponPool[i][0]);
+          }
+//          else
+//          {
+//            logMessage("    Mask check failed");
+//          }
+        }
+//        else
+//          logMessage("    Weapon is out of ammo");
+      }
+
+      // search for weapon with anyhow mask fittable
+//      logMessage("Search for anyhow weapon mask fit");
+      for (int i = 0; i < m_PersonalWeaponPool.size(); i++)
+      {
+//        logMessage("  Checking weapon " + m_PersonalWeaponPool[i][0] +", masks are:");
+//        logMessage("    AmmoQuantity: " + new String(m_PersonalWeaponPool[i][1].GetAmmoQuantity()));
+//        logMessage("    RestrictTo: " + new String(m_PersonalWeaponPool[i][1].GunSpecificFireMask[0][0]));
+//        logMessage("    Exclude:    " + new String(m_PersonalWeaponPool[i][1].GunSpecificFireMask[0][1]));
+//        logMessage("    Weapon power: " + new String(m_PersonalWeaponPool[i][1].Power));
+
+        if (m_PersonalWeaponPool[i][1].GetAmmoQuantity() != 0)
+        {
+//          logMessage("    Weapon has some ammo, good");
+
+          if (CheckGunFireMask(m_PersonalWeaponPool[i][1], Enemy, true))
+          {
+//            logMessage("    Mask check successful");
+
+            if (CheckWeaponPower(m_PersonalWeaponPool[i][1], Health))
+            {
+//              logMessage("    Weapon " + m_PersonalWeaponPool[i][0] + " can do the job");
+              return true;
+            }
+//            else
+//              logMessage("    Skipping weapon " + m_PersonalWeaponPool[i][0]);
+          }
+//          else
+//          {
+//            logMessage("    Mask check failed");
+//          }
+        }
+//        else
+//          logMessage("    Weapon is out of ammo");
+      }
+
+    }
+
+    return false;
+  }
+
+  boolean CanAttackAnyhow(
+      String _EnemyID
+   )
+  {
+    Component Enemy = GetMission().GetObject(_EnemyID);
+
+    if (Enemy != null)
+    {
+      String Elemental = Enemy.GetElemental();
+
+//      logWarning(getIdentificator(user) + ".CanAttackAnyhow(" + _EnemyID + "), enemy is " + Elemental);
+
+      for (int i = 0; i < m_PersonalWeaponPool.size(); i++)
+      {
+        for (int j = 0; j < m_PersonalWeaponPool[i][1].GunSpecificFireMask.size(); j++)
+        {
+/*          logMessage("  Checking weapon " + m_PersonalWeaponPool[i][0] +", masks are:");
+          logMessage("    RestrictTo: " + new String(m_PersonalWeaponPool[i][1].GunSpecificFireMask[0][0]));
+          logMessage("    Exclude:    " + new String(m_PersonalWeaponPool[i][1].GunSpecificFireMask[0][1]));
+*/
+          if (checkMask(Enemy,
+              m_PersonalWeaponPool[i][1].GunSpecificFireMask[j][0],
+              m_PersonalWeaponPool[i][1].GunSpecificFireMask[j][1]))
+//          {
+//            logMessage("    Weapon " + m_PersonalWeaponPool[i][0] + " can do the job on " + new String(j) + " priority level");
+            return true;
+/*          }
+          else
+          {
+            logMessage("    Skipping weapon " + m_PersonalWeaponPool[i][0]);
+          }*/
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // in respect to current group weapon pool
+  boolean CanAttackGroup(
+      String _EnemyID
+   )
+  {
+    Component Enemy = GetMission().GetObject(_EnemyID);
+
+    if (Enemy != null)
+    {
+      String Elemental = Enemy.GetElemental();
+      String Health = Enemy.GetHealthParameter();
+
+//      logWarning(getIdentificator(user) + ".CanAttackGroup(" + _EnemyID + "), enemy is [" + Elemental + ", " + Health + "]");
+      for (int i = 0; i < m_GroupWeaponPool.size(); i++)
+      {
+/*        logMessage("  Checking weapon of unit " + m_GroupWeaponPool[i][0] + ", masks are:");
+        logMessage("    RestrictTo: " + new String(m_GroupWeaponPool[i][1].GunSpecificFireMask[0][0]));
+        logMessage("    Exclude:    " + new String(m_GroupWeaponPool[i][1].GunSpecificFireMask[0][1]));
+*/ // $WARNING
+        if (checkMask(Enemy,
+            m_GroupWeaponPool[i][1].GunSpecificFireMask[0][0],
+            m_GroupWeaponPool[i][1].GunSpecificFireMask[0][1]) &&
+            CheckWeaponPower(m_GroupWeaponPool[i][1], Health))
+//        {
+//          logMessage("    This weapon can do the job");
+          return true;
+/*        }
+        else
+        {
+          logMessage("    Skipping weapon");
+        }*/
+      }
+    }
+
+    return false;
+  }
+
+  void SetTransportUnit(boolean _On)
+  {
+    m_IsTransport = _On;
+  }
+
+  //
+  // events called by Behavior
+
+  // call SetRadarDetectFriends(true) or SetRadarDetailedFriends(true) to recieve 'friend' events!
+
+  void OnFriendTargeted() // called when friend is entering empty radar
+  {
+  }
+
+  void OnEnemyTargeted() // called when enemy is on radar
+  {
+    // Notify unit
+
+    if (m_InSpecialAttack)
+        return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+    {
+      m_NotifyOnEnemyTargetedAfterFrigid = true;
+      return;
+    }
+    else
+      m_NotifyOnEnemyTargetedAfterFrigid = false;
+
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
+    }
+
+    String TargetedEnemy = GetTargetedEnemy();
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+          return;
+
+      if (TargetedEnemy == m_CurrentEnemy)
+      {
+        SetFireStyle_Enemy(m_CurrentEnemy);
+        return;
+      }
+
+      SetFireStyle_Nearest();
+
+      if (m_Group.m_EnemyReactionType == ERT_PASSIVE)
+      {
+        m_Group.OnEnemyTargeted(this);
+      }
+      else if (m_Group.m_EnemyReactionType == ERT_AGGRESSIVE)
+      {
+        if (!m_Group.HasOrderedEnemies())
+        {
+          m_Group.OnEnemyTargeted(this);
+        }
+        else
+        {
+          if (m_CurrentEnemy != "")
+            m_LastEnemy = m_CurrentEnemy;
+
+          AttackEnemy(TargetedEnemy);
+        }
+      }
+    }
+    else
+    {
+      if (m_EnemyReactionType != ERT_PASSIVE)
+        AttackEnemy(TargetedEnemy);
+    }
+  }
+
+  void OnNoEnemy()       // called when all enemy disapeared from radar
+  {
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnSitStateChanged(CHumanAttackStates::STATE_Default);
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_Default);
+    }
+
+    if (m_InSpecialAttack)
+        return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+    {
+      m_NotifyOnEnemyTargetedAfterFrigid = false;
+      return;
+    }
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+          return;
+
+      if ((m_Group.m_EnemyReactionType == ERT_PASSIVE) && (m_Group.m_CurrentOrder.m_Order != "Attack"))
+        return;
+
+      if (m_Group.HasOrderedEnemies())
+      {
+        if (m_Group.m_CurrentOrder.m_EnemyReactionType == ERT_AGGRESSIVE)
+        {
+          AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+        }
+        else  // _not_ group aggressive
+        {
+          String EnemyId = m_Group.GetNearestOrderedEnemyOnGroupRadar(GetIdentificator());
+          if (EnemyId != "")
+          {
+            AttackEnemy(EnemyId);
+          }
+          else
+          {
+            GoInactive();
+          }
+        }
+      }
+      else  // _not_ m_Group.HasOrderedEnemies()
+      {
+        // $WARNING (m_LastEnemy != null) was here
+        if ((m_EnemyReactionType == ERT_AGGRESSIVE) && !m_LastEnemy.isEmpty())
+        {
+          AttackEnemy(m_LastEnemy);
+          m_LastEnemy = "";
+        }
+        else  // _not_ personal aggressive
+        {
+          GoInactive();
+        }
+      }  // _end_ m_Group.HasOrderedEnemies()
+    }  // _end_  m_Group != null
+    else
+    {
+      // $WARNING (m_LastEnemy != null) was here
+      if ((m_EnemyReactionType == ERT_AGGRESSIVE) && !m_LastEnemy.isEmpty())
+      {
+        AttackEnemy(m_LastEnemy);
+        m_LastEnemy = "";
+      }
+      else
+      {
+        if (m_FireStyle != 0)
+          SetFireStyle_Nearest();
+      }
+    }
+  }
+
+  void OnUpdate() {}        // called every game tact for synchronization
+
+  void OnRadarUpdate() {}   // called every time on successful radar update
+
+  // called when unit reached end of orders stack
+  void OnQueueOrdersEnd(
+      String _OrderGroupID
+    )
+  {
+    if (_OrderGroupID == "Load")
+    {
+      // Load is finished for Unit
+
+      if (m_bHuman)
+      {
+        // animation
+        Component Self = GetSelf();
+        Self.OnAttackStateChanged(CHumanAttackStates::STATE_Default);
+      }
+      ActivateBehavior(false);
+      ShowUnit(false);
+    }
+
+    if (m_Group != null)
+      m_Group.OnQueueOrdersEnd(_OrderGroupID, this);
+  }
+
+  void OnStopped()             // called when unit has reached ordered position
+  {
+    if (m_KamikazeNP) // && (GetNavPointBehPos(m_TargetID) - getPosition(user).origin) < 10.0)
+    {
+//      logMessage("[KAMIKAZE] Unit " + getIdentificator(user) + ": KABOOM!");
+      Component self = GetMission().GetObject(getIdentificator(user));
+      if (self != null)
+          self.CommitSuicide();
+      return;
+    }
+
+    if (m_Group != null)
+      m_Group.OnStopped(this);
+
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.GuncrewRun(false);
+    }
+  }
+
+  void OnUnreacheable(Vector _Destination)    // called when unit can not move any more to ordered position
+  {
+    logMessage("[CBaseAITask::OnUnreacheable] Unit with ID=" + getIdentificator(user) + " can not move to _Destination=" + new String(_Destination));
+  }
+
+  void OnMoveFailed()    // called when unit can not move any more to ordered position
+  {
+  }
+
+  // called from soldier attack task when soldier is targeting (and shooting) enemy
+  void OnTargeting(
+      String  _EnemyID,
+      boolean _On
+   )
+  {
+    // should throw it to state control
+    sendEvent(0.0, getIdentificator(user), "Targeting", [_EnemyID, _On]);
+  }
+
+  // called from state control when enemy bullet hits unit
+  void OnHitByEnemy(
+      String _EnemyID
+   )
+  {
+    if (m_Group != null)
+        m_Group.OnUnitHitByEnemy(getIdentificator(user), _EnemyID);
+  }
+
+  // called when FRIEND unit appears on radar (not necessarily first)
+  // NB: DetailedFriends should be turned on /SetDetailedFriends(true)/
+  void OnFriendCame(
+      String _FriendID
+   )
+  {
+    //$TMP
+    return;
+//    logMessage(getIdentificator(user) + ": FRIEND came - " + _FriendID);
+
+    if (m_Group != null)
+    {
+      Component Task = GetUnitTask(_FriendID);
+      if ((Task != null) && (Task.m_Group == m_Group))
+        AddToGroupWeaponPool(_FriendID);
+    }
+  }
+
+  // called when FRIEND unit disappears from radar (not necessarily last)
+  // NB: DetailedFriends should be turned on /SetDetailedFriends(true)/
+  void OnFriendGone(
+      String _FriendID
+   )
+  {
+    //$TMP
+    return;
+//    logMessage(getIdentificator(user) + ": FRIEND gone - " + _FriendID);
+
+    if (m_Group != null)
+    {
+      Component Task = GetUnitTask(_FriendID);
+      if (Task != null)
+      {
+        if (Task.m_Group == m_Group)
+          RemoveFromGroupWeaponPool(_FriendID);
+      }
+    }
+  }
+
+  // called when ENEMY unit appears on radar (not necessarily first)
+  // NB: DetailedEnemies should be turned on /SetDetailedEnemies(true)/
+  void OnEnemyCame(
+      String _EnemyID
+   )
+  {
+    //$TMP $LOG
+    if (StatusDebug)
+      logMessage(" enemy came : "+ _EnemyID);
+  }
+
+  // called when ENEMY unit disappears from radar (not necessarily last)
+  // NB: DetailedEnemies should be turned on /SetDetailedEnemies(true)/
+  void OnEnemyGone(
+      String _EnemyID
+   )
+  {
+  }
+
+  // called when gun effective targeted enemy
+  void OnAnyWeaponActivated()
+  {
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_Aim);
+
+      if (rand(0.0, 1.0) >= m_ChooseSitState)
+      {
+        Self.OnSitStateChanged( CHumanAttackStates::STATE_Sit );
+      } else {
+        Self.OnSitStateChanged( CHumanAttackStates::STATE_Lie );
+      }
+    }
+  }
+
+  // called when no gun active
+  // NB: ReportOnWeaponActivated should be turned on /SetReportOnWeaponActivated(true)/
+  void OnNoWeaponActivated()
+  {
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnSitStateChanged(CHumanAttackStates::STATE_Default);
+
+      if (Self.GetAttackState() > CHumanAttackStates::STATE_Ready)
+        Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
+    }
+  }
+
+/* $TMP turned off in code
+  // called when gun targeted enemy
+  // NB: ReportOnWeaponActivated should be turned on /SetReportOnWeaponActivate(true)/
+  void OnAnyWeaponActivated(
+      Component _Weapon  // IWeapon
+   )
+  {
+  }
+
+  // called when gun become inactive
+  // NB: ReportOnWeaponActivated should be turned on /SetReportOnWeaponActivated(true)/
+  void OnWeaponDeactivated(
+      Component _Weapon  // IWeapon
+   )
+  {
+  }
+*/
+  String OnGetDebugInfo()   // called when behavior renders debug information
+  {                         // returned string will be appended to output text
+    return "";
+  }
+
+  void OnOrderedEnemyKilled() // called when the enemy (specified by SetFireStyle_Enemy) was killed
+  {
+    if (m_InSpecialAttack)
+        return; // ?
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return; // how possibly could we get here?
+
+    m_CurrentEnemy = "";
+    String Enemy = "";
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+          return;
+
+      if ((m_Group.m_EnemyReactionType == ERT_PASSIVE) && (m_Group.m_CurrentOrder.m_Order != "Attack"))
+        return;
+
+      if (m_Group.HasOrderedEnemies())
+      {
+        Enemy = m_Group.GetNearestOrderedEnemyOnRadar(GetIdentificator());
+
+        if (Enemy != "")
+          AttackEnemy(Enemy);
+        else  // _not_ ordered enemy on radar
+        {
+          Enemy = GetNearestEnemyUnitOnRadar();
+
+          if (Enemy != "")
+            AttackEnemy(Enemy);
+          else  // nobody on radar
+          {
+            if (m_Group.m_CurrentOrder.m_EnemyReactionType == ERT_AGGRESSIVE)
+              AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+            else  // not group aggressive
+            {
+              Enemy = m_Group.GetNearestOrderedEnemyOnGroupRadar(GetIdentificator());
+              if(Enemy != "")
+                AttackEnemy(Enemy);
+              else
+                GoInactive();
+            }
+          }  // _end_ nobody on radar
+        }  // _end_ ordered enemy on radar
+      }
+      else  // group has no ordered enemies
+      {
+        Enemy = GetNearestEnemyUnitOnRadar();
+
+        if (Enemy != "")
+        {
+          // #TODO - change to : inform group about enemy sighted
+          AttackEnemy(Enemy);
+        }
+        else  // nobody on radar
+        {
+          if ((m_EnemyReactionType == ERT_AGGRESSIVE) && (m_LastEnemy != ""))
+          {
+            AttackEnemy(m_LastEnemy);
+            m_LastEnemy = "";
+          }
+          else  // not personal aggressive
+          {
+            GoInactive();
+          }
+        } // _end_ nobody on radar
+      }  // _end_ group has no ordered enemies
+    }
+    else  // group == null
+    {
+      if ((m_EnemyReactionType == ERT_AGGRESSIVE) && (m_LastEnemy != ""))
+      {
+        AttackEnemy(m_LastEnemy);
+        m_LastEnemy = "";
+      }
+      else
+      {
+        if (m_FireStyle != 0)
+          SetFireStyle_Nearest();
+      }
+    }
+  }
+
+  void OnLeaderLost(String _LeaderID) // called when leader (specified by SetOrder_Follow or SetOrder_Formation) is lost
+  {
+    if (m_Group != null)
+    {
+      m_Group.OnUnitLostLeader(getIdentificator(user));
+    }
+  }
+
+  void OnFormationReached(String _LeaderID)
+  {
+    // $TMP no action here - course this event called in the middle of the task and movements updates
+
+    logMessage("OnFormationReached " + getIdentificator(user) + " leader = " + _LeaderID);
+    if (m_Group != null)
+    {
+      // wait for next update
+      sendEvent(0.0, getIdentificator(user), "OnFormationReachedAction", [_LeaderID]);
+    }
+  }
+
+  event void OnFormationReachedAction(String _LeaderID)
+  {
+    m_Group.OnUnitFormationReached(getIdentificator(user));
+  }
+
+  void OnEnemyLost(String _EnemyID)   // called when enemy (specified by SetOrder_Attack) is lost
+  {
+    if (m_InSpecialAttack)
+        return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    String Enemy = "";
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+          return;
+
+      if ((m_Group.m_EnemyReactionType == ERT_PASSIVE) && (m_Group.m_CurrentOrder.m_Order != "Attack"))
+        return;
+
+      if (m_Group.HasOrderedEnemies())
+      {
+        Enemy = m_Group.GetNearestOrderedEnemyOnRadar(GetIdentificator());
+
+        if (Enemy != "")
+        {
+          AttackEnemy(Enemy);
+        }
+        else  // no ordered enemy on radar
+        {
+          Enemy = GetNearestEnemyUnitOnRadar();
+
+          if (Enemy != "")
+          {
+            AttackEnemy(Enemy);
+          }
+          else  // nobody on radar
+          {
+            if (m_Group.m_CurrentOrder.m_EnemyReactionType == ERT_AGGRESSIVE)
+            {
+              AttackEnemy(m_Group.GetNearestOrderedEnemy(GetIdentificator()));
+            }
+            else
+            {
+              Enemy = m_Group.GetNearestOrderedEnemyOnGroupRadar(GetIdentificator());
+              if (Enemy != "")
+              {
+                AttackEnemy(Enemy);
+              }
+              else
+              {
+                GoInactive();
+              }
+            }
+          }
+        }
+      }
+      else  // no ordered enemies
+      {
+        if (m_Group.m_EnemyReactionType != ERT_PASSIVE)
+        {
+          Enemy = GetNearestEnemyUnitOnRadar();
+
+          if (Enemy != "")
+          {
+            AttackEnemy(Enemy);
+          }
+          else
+          {
+            if ((m_EnemyReactionType == ERT_AGGRESSIVE) && (m_LastEnemy != ""))
+            {
+              AttackEnemy(m_LastEnemy);
+              m_LastEnemy = "";
+            }
+            else
+            {
+              GoInactive();
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      if ((m_EnemyReactionType == ERT_AGGRESSIVE) && (m_LastEnemy != ""))
+      {
+        AttackEnemy(m_LastEnemy);
+        m_LastEnemy = "";
+      }
+      else
+      {
+        if (m_FireStyle != 0)
+          SetFireStyle_Nearest();
+      }
+    }
+  }
+
+  //
+  // Orders redirection (called from group script and code)
+  //
+
+  void MoveTo(
+      Vector _Destination,
+      float _Speed
+   )
+  {
+    if (m_InSpecialAttack)
+        return;
+
+    float Speed = _Speed;
+
+    if (Speed == 0.0)
+      Speed = GetMaxSpeed();
+    if (Speed > GetMaxSpeed())
+      Speed = GetMaxSpeed();
+
+    if (m_PauseNow)
+      PostDelayedEvent("SetOrder_MoveTo", [_Destination, Speed], m_PauseNow);
+    else
+      SetOrder_MoveTo(_Destination, Speed);
+  }
+
+  void Attack(
+      String _TargetID,
+      float _DistanceMin,
+      float _DistanceMax,
+      float _MoveSpeed
+   )
+  {
+    if (m_InSpecialAttack)
+        return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    m_CurrentEnemy = _TargetID;
+
+    float MoveSpeed = _MoveSpeed;
+    if ((MoveSpeed == 0) || (MoveSpeed > GetMaxSpeed()))
+      MoveSpeed = GetMaxSpeed();
+
+    float AttackSpeed = GetSelf().GetBehavior().GetSpecParams().MaxAttackSpeed;
+
+    if (AttackSpeed > 0.0 &&
+        MoveSpeed > AttackSpeed)
+      MoveSpeed = AttackSpeed;
+
+    SetFireStyle_Enemy(_TargetID);
+    SetOrder_Attack(_TargetID, MoveSpeed);
+  }
+
+  boolean KamikazeDetector = false;
+  boolean m_ParachuteDetector = false;
+
+  void KamikazeAttack(
+      String _Target,
+      float  _MoveSpeed
+   )
+  {
+//    logMessage("[KAMIKAZE] Unit " + getIdentificator(user) + " received order KamikazeAttack");
+    Component self = GetMission().GetObject(getIdentificator(user));
+
+    if (self != null)
+    {
+      Component Detector = self.GetObject("PointCollisionDetector");
+      if (Detector != null)
+      {
+//        logMessage("[KAMIKAZE] Unit " + getIdentificator(user) + ": turning detector ON");
+        KamikazeDetector = true;
+        Detector.EnableDetector(true);
+      }
+    }
+
+    Component Target = (new #GameController()).GetObject(_Target);
+    if (Target == null)
+    {
+      logError(getIdentificator(user) + ": no target - no kamikaze attack");
+      return;
+    }
+
+    m_TargetID = _Target;
+    m_KamikazeNP = true;
+
+    SetOrder_MoveTo(getPosition(Target).origin, _MoveSpeed);
+  }
+
+  void SetParachuteDetector(
+      boolean _Enabled
+    )
+  {
+    m_ParachuteDetector = _Enabled;
+  }
+
+  void OnPointCollisionDetect(String _Collidor)
+  {
+//    logMessage("[KAMIKAZE] Unit " + getIdentificator(user) + ": collision detected");
+    if (KamikazeDetector)
+    {
+//      logMessage("[KAMIKAZE] Unit " + getIdentificator(user) + ": BOOM!");
+      Component self = GetMission().GetObject(getIdentificator(user));
+      if (self != null)
+          self.CommitSuicide();
+    }
+    else
+    if (m_ParachuteDetector)
+    {
+      Component Self = GetMission().GetObject(getIdentificator(user));
+      if (Self == null)
+        return;
+
+      Component ParachuteController = Self.GetObject("ParachuteController");
+      if (ParachuteController == null)
+        return;
+
+      ParachuteController.EnableFreeFall(false);
+
+      Self.EnableSurfaceControl(true);
+
+      Component CollisionDetector = Self.GetObject("PointCollisionDetector");
+      if (CollisionDetector != null)
+        CollisionDetector.EnableDetector(false);
+
+      m_ParachuteDetector = false;
+
+      if (checkMask(Self, [], [CLASSIFICATOR_DEAD_OBJECT]))
+      {
+        sendEvent(0.0, getIdentificator(user), "CloseParachute", []);
+        fireEvent(1.5, [], "OnParachuteLanded", [getIdentificator(user)]);
+      }
+      else
+        OnParachuteLanded(getIdentificator(user));
+    }
+  }
+
+  event void OnParachuteLanded(
+      String _UnitID
+    )
+  {
+    String SelfID = getIdentificator(user);
+
+    if (SelfID == _UnitID)
+    {
+      ShowJoint(SelfID, "Parachute", false);
+
+      ActivateBehavior(true);
+
+      Component Self = GetMission().GetObject(SelfID);
+      if (Self != null)
+      {
+        Component Mesh = Self.GetMeshComponent();
+        if (Mesh != null)
+          SetPosition(getPosition(Mesh));
+      }
+
+      if (m_Group != null)
+        m_Group.OnUnitParachuteLanded(SelfID);
+    }
+  }
+
+  event void OnObjectDestroyed(
+      String _ObjectID
+    )
+  {
+    if (getIdentificator(user) == _ObjectID)
+    {
+      if (m_ParachuteDetector)
+      {
+        Component Self = GetMission().GetObject(_ObjectID);
+        if (Self != null)
+        {
+          Component ParachuteController = Self.GetObject("ParachuteController");
+          if (ParachuteController != null)
+          {
+            ParachuteController.SetTractiveResistance(0.0);
+          }
+        }
+      }
+      if (m_Group != null)
+        m_Group.OnUnitDestroyed(_ObjectID);
+    }
+  }
+
+  void Formation(
+      String  _LeaderID,
+      Vector  _Displacement,
+      float   _DistanceOptimum,
+      float   _DistanceMax,
+      float   _CruiserSpeed,
+      float   _OvertakeSpeed,
+      boolean _NotifyOnReached,
+      boolean _Oriented
+    )
+  {
+    if (m_InSpecialAttack)
+        return;
+
+    float OvertakeSpeed = _OvertakeSpeed;
+    float CruiserSpeed = _CruiserSpeed;
+
+    if ((OvertakeSpeed == 0) || (OvertakeSpeed > GetMaxSpeed()))
+      OvertakeSpeed = GetMaxSpeed();
+
+    if (CruiserSpeed == 0)
+      CruiserSpeed = GetMaxSpeed() * 2 / 3;
+    if (CruiserSpeed > GetMaxSpeed())
+      CruiserSpeed = GetMaxSpeed();
+
+    if (_Oriented)
+      SetOrder_Formation_Oriented(_LeaderID, _Displacement, _DistanceOptimum, _DistanceMax, CruiserSpeed, OvertakeSpeed, _NotifyOnReached);
+    else
+      SetOrder_Formation(_LeaderID, _Displacement, _DistanceOptimum, _DistanceMax, CruiserSpeed, OvertakeSpeed, _NotifyOnReached);
+  }
+
+  void Follow(
+      String _LeaderID,
+      float _DistanceMin,
+      float _DistanceOptimum,
+      float _DistanceMax,
+      float _CruiserSpeed,
+      float _OvertakeSpeed
+   )
+  {
+    if (m_InSpecialAttack)
+        return;
+
+    float OvertakeSpeed = _OvertakeSpeed;
+    float CruiserSpeed = _CruiserSpeed;
+
+    if ((OvertakeSpeed == 0) || (OvertakeSpeed > GetMaxSpeed()))
+      OvertakeSpeed = GetMaxSpeed();
+
+    if (CruiserSpeed == 0)
+      CruiserSpeed = GetMaxSpeed() * 2 / 3;
+    if (CruiserSpeed > GetMaxSpeed())
+      CruiserSpeed = GetMaxSpeed();
+
+    SetOrder_Follow(_LeaderID, _DistanceMin, _DistanceOptimum, _DistanceMax, CruiserSpeed, OvertakeSpeed);
+  }
+
+  void StopNow()
+  {
+    SetOrder_StopNow();
+  }
+
+  void ShowUnit(
+      boolean _On
+   )
+  {
+    sendEvent(0.0, GetIdentificator(), "ShowObject", [_On]);
+  }
+
+  void SetSpecialAttackFlag(boolean _Status)
+  {
+    m_InSpecialAttack = _Status;
+  }
+
+  void SetEnemyReactionType(int _EnemyReactionType)
+  {
+    m_EnemyReactionType = _EnemyReactionType;
+    if (m_EnemyReactionType == ERT_FRIGID)
+        SetFireStyle_NoFire();
+  }
+
+  int m_ERTLatch = -1;
+
+  void SetFrigidMode(boolean _On)
+  {
+    if (_On)
+    {
+      m_ERTLatch = m_EnemyReactionType;
+      m_EnemyReactionType = ERT_FRIGID;
+      if (IsAttacking())
+      {
+        SetOrder_StopNow();
+        m_CurrentEnemy = "";
+        SetOrderState(false);
+      }
+    }
+    else
+    {
+      if (m_ERTLatch != -1)
+        m_EnemyReactionType = m_ERTLatch;
+
+      if (m_NotifyOnEnemyTargetedAfterFrigid)
+        OnEnemyTargeted();
+    }
+
+    ActivateRadar(!_On);
+    ActivateFire(!_On);
+  }
+
+  void SetAnchorState(boolean _On)
+  {
+    m_Anchored = _On;
+  }
+
+  void SetOrderState(boolean _On)
+  {
+    m_HasOrder = _On;
+  }
+
+  void SetHomePoint(String _HomePoint)
+  {
+    m_HomePointID = _HomePoint;
+  }
+
+  void SetFireStyle_NoFire()
+  {
+    m_FireStyle = 0;
+
+    setFireStyle_NoFire();
+  }
+
+  void SetFireStyle_Nearest()
+  {
+    m_FireStyle = 1;
+
+    setFireStyle_Nearest();
+  }
+
+  void SetFireStyle_Enemy(String _EnemyID)
+  {
+    m_FireStyle = 2;
+
+    setFireStyle_Enemy(_EnemyID);
+  }
+
+  void SetFireStyle_SpecialFire(String _EnemyID)
+  {
+    m_FireStyle = 1;
+
+    setFireStyle_SpecialFire(_EnemyID);
+  }
+
+  void SetOrder_MoveToEx(
+      Array  _Points,
+      float  _MoveSpeed
+    )
+  {
+    Array Orders;
+    for (int i = 0; i < _Points.size(); i++)
+    {
+      Orders.add(["UnitMoveToEx", "setOrder_MoveTo", [_Points[i], _MoveSpeed], "OnStopped"]);
+    }
+    ExtendQueueOrder(Orders);
+  }
+
+  void SetOrder_MoveTo(
+      Vector _Destination,
+      float  _MoveSpeed
+   )
+  {
+  //$TMP
+  logMessage(getIdentificator(user) +":: SetOrder_MoveTo ");
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_MoveTo(_Destination, _MoveSpeed);
+  }
+
+  void SetOrder_MoveTo_LookAt(
+      Vector _Destination,
+      Vector _LookAt,
+      float  _MoveSpeed
+   )
+  {
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_MoveTo_LookAt(_Destination, _LookAt, _MoveSpeed);
+  }
+
+  void SetOrder_MoveTo_Direct(
+      Vector _Destination,
+      float  _MoveSpeed
+   )
+  {
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_MoveTo_Direct(_Destination, _MoveSpeed);
+  }
+
+  void SetOrder_MoveTo_Trace(
+      Vector _Destination,
+      String _TraceID,
+      float  _MoveSpeed
+   )
+  {
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_MoveTo_Trace(_Destination, _TraceID, _MoveSpeed);
+  }
+
+  void SetOrder_StopNow()
+  {
+    SetAnchorState(false);
+    SetOrderState(false);
+    setOrder_StopNow();
+  }
+
+  void SetOrder_Formation(
+      String  _LeaderID,
+      Vector  _FormationVector,
+      float   _PosDistanceOptimum,
+      float   _PosDistanceMax,
+      float   _CruiserSpeed,
+      float   _OvertakeSpeed
+   )
+  {
+    SetOrder_Formation(
+      _LeaderID,
+      _Displacement,
+      _DistanceOptimum,
+      _DistanceMax,
+      _CruiserSpeed,
+      _OvertakeSpeed,
+      false
+    );
+  }
+
+  void SetOrder_Formation(
+      String  _LeaderID,
+      Vector  _FormationVector,
+      float   _PosDistanceOptimum,
+      float   _PosDistanceMax,
+      float   _CruiserSpeed,
+      float   _OvertakeSpeed,
+      boolean _NotifyOnReached
+   )
+  {
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_Formation(
+        _LeaderID,
+        _FormationVector,
+        _PosDistanceOptimum,
+        _PosDistanceMax,
+        _CruiserSpeed,
+        _OvertakeSpeed,
+        false,
+        _NotifyOnReached);
+  }
+
+  void SetOrder_Formation_Oriented(
+      String  _LeaderID,
+      Vector  _FormationVector,
+      float   _PosDistanceOptimum,
+      float   _PosDistanceMax,
+      float   _CruiserSpeed,
+      float   _OvertakeSpeed,
+      boolean _NotifyOnReached
+   )
+  {
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_Formation(
+        _LeaderID,
+        _FormationVector,
+        _PosDistanceOptimum,
+        _PosDistanceMax,
+        _CruiserSpeed,
+        _OvertakeSpeed,
+        true,
+        _NotifyOnReached);
+  }
+
+  void SetOrder_Follow(
+      String  _LeaderID,
+      float   _PosDistanceMin,
+      float   _PosDistanceOptimum,
+      float   _PosDistanceMax,
+      float   _CruiserSpeed,
+      float   _OvertakeSpeed
+   )
+  {
+    if (StatusDebug)
+      logMessage(getIdentificator(user) +":: SetOrder_Follow (" + _LeaderID + ")");
+
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_Follow(
+        _LeaderID,
+        _PosDistanceMin,
+        _PosDistanceOptimum,
+        _PosDistanceMax,
+        _CruiserSpeed,
+        _OvertakeSpeed);
+  }
+
+  void SetOrder_Guard(
+      String  _GuardPoint,
+      float   _GuardRadius,
+      float   _MoveSpeed
+   )
+  {
+    SetOrder_Guard(
+        _GuardPoint,
+        _GuardRadius,
+        _MoveSpeed,
+        0);
+  }
+
+  void SetOrder_Guard(
+      String  _GuardPoint,
+      float   _GuardRadius,
+      float   _MoveSpeed,
+      int     _CrossPause
+   )
+  {
+    SetAnchorState(true);
+    SetOrderState(true);
+    m_AnchorID = _GuardPoint;
+    m_AnchorDistanceMax = _GuardRadius;
+
+    if (StatusDebug)
+      logMessage(getIdentificator(user) + ": guarding point " + _GuardPoint);
+
+    setOrder_Guard(
+        _GuardPoint,
+        _GuardRadius,
+        _MoveSpeed,
+        _CrossPause
+     );
+  }
+
+  void SetOrder_Attack(
+      String  _TargetID,
+      float   _MoveSpeed
+   )
+  {
+    // $LOG
+//    if (StatusDebug)
+      logMessage(getIdentificator(user) + ": attacking " + _TargetID);
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    SetAnchorState(false);
+    SetOrderState(true);
+    m_CurrentEnemy = _TargetID;
+
+    setOrder_Attack(
+        _TargetID,
+        _MoveSpeed);
+  }
+
+  void SetOrder_Attack_Anchored(
+      String  _TargetID,
+      float   _MoveSpeed,
+      String  _AnchorID,
+      float   _AnchorDistanceMax
+   )
+  {
+    // $LOG
+//    if (StatusDebug)
+//      logMessage(getIdentificator(user) + ": attacking " + _TargetID + " anchored at " + _AnchorID);
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    SetAnchorState(true);
+    SetOrderState(true);
+    m_CurrentEnemy = _TargetID;
+
+    setOrder_Attack_Anchored(
+        _TargetID,
+        _MoveSpeed,
+        _AnchorID,
+        _AnchorDistanceMax);
+  }
+
+  void SetOrder_SpecialAttack(
+      String  _TargetID,
+      float   _MoveSpeed
+   )
+  {
+    SetAnchorState(false);
+    SetOrderState(true);
+    setOrder_SpecialAttack(
+        _TargetID,
+        _MoveSpeed);
+  }
+
+  event void Unload(
+      String _TransportID,
+      Matrix _TransportPoint,
+      Vector _UnloadPoint,
+      String _GuardPoint,
+      float  _GuardRadius,
+      float  _GuardSpeed
+    )
+  {
+    ActivateBehavior(true);
+    SetFrigidMode(true);
+    SetPosition(eliminateRotationAlongXAndY(
+              createMatrixFromOriginAndXVec(_UnloadPoint - _TransportPoint.origin, _TransportPoint.origin)));
+
+    ShowUnit(true);
+
+    SetFirstQueueOrders([
+                          ["Unload",  "PlayUnloadAnimation",    [_TransportID], "OnUnloadAnimationEnd"],
+                          ["Unload" , "SetOrder_MoveTo_Direct", [_UnloadPoint, 0.0f], "OnStopped"],
+                          ["Unload" , "SetFrigidMode",   [false], ""],
+                          ["Unload" , "SetOrder_Guard",  [_GuardPoint, _GuardRadius, _GuardSpeed], ""]
+                        ]);
+
+  }
+
+  event void SpecLoad()
+  {
+    if (m_bHuman)
+    {
+      // animation
+      Component Self = GetSelf();
+      if (Self.SpecHeliLoadAnim != -1)
+      {
+        SetFrigidMode(true);
+        ActivateMovement(false);
+//        Self.EnableSurfaceControl(false);
+        Self.HeliLoadRun();
+        sendEvent(Self.GetHeliLoadTime(), getIdentificator(user), "OnSpecLoadEnd", []);
+        return;
+      }
+    }
+    sendEvent(0.0, getIdentificator(user), "OnSpecLoadEnd", []);
+  }
+
+  event void OnSpecLoadEnd()
+  {
+    SetFrigidMode(false);
+    ActivateMovement(true);
+
+    Component Self = GetSelf();
+//    Self.EnableSurfaceControl(true);
+    Self.GetObject("HeliLoadAnimator").EnableControl(false);
+    Self.GetHumanAnimator().EnableControl(true);
+
+    OnQueueOrdersEnd("Load");
+  }
+
+  event void Load(
+      Vector _RunOffPoint,
+      Matrix _TransportPoint,
+      String _TransportID,
+      float  _Speed,
+      int    _Type
+    )
+  {
+    if (m_bHuman)
+    {
+      // animation
+      Component Self = GetSelf();
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_NearHeli);
+    }
+
+    SetFrigidMode(true);
+    if (_Type == LOAD_ROOTABLE_ANIM)
+    {
+      SetFirstQueueOrders([
+                            ["Load", "SetOrder_MoveTo_Direct",   [_RunOffPoint, _Speed], "OnStopped"],
+  //                          ["Load", "SetOrder_MoveTo_Direct",   [_TransportPoint, _Speed], "OnStopped"],
+                            ["Load", "PlayLoadAnimation", [_TransportPoint, _TransportID], "OnLoadAnimationEnd"]
+                          ]);
+    }
+    else
+      SetFirstQueueOrders([
+                            ["Load", "SetOrder_MoveTo_Direct",   [_RunOffPoint, _Speed], "OnStopped"],
+                            ["Load", "SetOrder_MoveTo_Direct",   [_TransportPoint.origin, _Speed], "OnStopped"],
+                            ["Load", "PlayLoadAnimation", [_TransportID], "OnLoadAnimationEnd"]
+                          ]);
+  }
+
+
+  //
+  // helper functions
+  //
+
+  // attacks 'm_CurrentEnemy'
+  void AttackEnemy(
+    String _EnemyId
+   )
+  {
+    if (m_InSpecialAttack)
+        return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+    m_CurrentEnemy = _EnemyId;
+
+    SetFireStyle_Enemy(_EnemyId);
+
+    float AttackSpeed = GetSelf().GetBehavior().GetSpecParams().MaxAttackSpeed;
+
+    float MoveSpeed = GetMaxSpeed();
+
+    if (AttackSpeed > 0.0 &&
+        MoveSpeed > AttackSpeed)
+      MoveSpeed = AttackSpeed;
+
+    if (m_Anchored)
+      SetOrder_Attack_Anchored(
+        _EnemyId,
+        MoveSpeed,
+        m_AnchorID,
+        m_AnchorDistanceMax);
+    else
+      SetOrder_Attack(
+        _EnemyId,
+        MoveSpeed);
+  }
+
+
+  boolean IsAttacking()
+  {
+    return (IsAlive() && (m_CurrentEnemy != ""));
+  }
+
+  void GoInactive()
+  {
+    m_CurrentEnemy = "";
+    logError("GoInactive");
+    SetFireStyle_Nearest();
+    SetOrder_StopNow();
+    SetOrderState(false);
+    if ((m_Group != null) && (m_Group.m_CurrentOrder.m_Order == "Attack"))
+    {
+      m_Group.OnUnitInactive(this);
+    }
+  }
+
+  String GetName()
+  {
+    return getIdentificator(user); // GetIdentificator();
+  }
+
+  void SetGroup(Component _Group, int _Rank)
+  {
+    m_Group = _Group;
+  }
+
+  boolean HasSpecialWeapons()
+  {
+    Component Self = (new #GameController()).GetObject(GetIdentificator());
+
+    for (int i = 0; i < Self.m_WeaponList.size(); i++)
+    {
+      if (Self.m_WeaponList[i].SpecialWeapon)
+          return true;
+    }
+
+    return false;
+  }
+
+  // helpers for non-synched patrol
+
+  boolean m_TwoWayPaused = false;
+  boolean m_BackCount = false;
+  int m_PauseNow = 0;
+  int m_PauseInRoot = 0;
+  boolean m_StartFromBack = false;
+
+  void SetTwoWayPausedPatrol(int _RootPause, boolean _StartFromBack)
+  {
+    m_TwoWayPaused = true;
+    m_PauseInRoot = _RootPause;
+    m_StartFromBack = _StartFromBack;
+  }
+
+  void InitPatrolPointIndex(int _TotalPatrolPoints)
+  {
+    m_TotalPatrolPoints = _TotalPatrolPoints;
+    if (m_StartFromBack)
+      m_NextPatrolPoint = m_TotalPatrolPoints - 1;
+    else
+      m_NextPatrolPoint = 0;      // default is ...
+  }
+
+  int GetNextPatrolPoint()
+  {
+    // default implementation just iterates sequentially through point indexes
+    int Ret;
+
+    if (m_TwoWayPaused)
+    {
+      if (m_NextPatrolPoint == 0)
+      {
+        m_PauseNow = m_PauseInRoot;
+        m_BackCount = false;
+        m_NextPatrolPoint++;
+      }
+      else
+      if (m_NextPatrolPoint == m_TotalPatrolPoints - 1)
+      {
+        m_PauseNow = m_PauseInRoot;
+        m_BackCount = true;
+        m_NextPatrolPoint--;
+      }
+      else
+      {
+        m_PauseNow = 0;
+        if (m_BackCount)
+            m_NextPatrolPoint--;
+        else
+            m_NextPatrolPoint++;
+      }
+      Ret = m_NextPatrolPoint;
+    }
+    else
+    {
+      Ret = m_NextPatrolPoint;
+
+      m_NextPatrolPoint++;
+      if (m_NextPatrolPoint == m_TotalPatrolPoints)
+        m_NextPatrolPoint = 0;
+    }
+
+    return Ret;
+  }
+
+  // returns current rank of unit in its group
+  int GetRank()
+  {
+    if (m_Group == null)
+        return -1;
+
+    return m_Group.GetRankOf(GetIdentificator());
+  }
+
+  String GetPersonalNavPointName()
+  {
+    return getIdentificator(user) + "_PersonalNP";
+  }
+
+  void PlayLoadAnimation(
+      Matrix _TransportPoint,
+      String _TransportID
+    )
+  {
+    Component Self = GetSelf();
+
+    if (isFunctionExist(Self, "PlayLoadTransportAnimation", 2))
+    {
+      ActivateMovement(false);
+      Self.EnableSurfaceControl(false);
+      setPosition(Self.GetMeshComponent(), _TransportPoint);
+      Self.PlayLoadTransportAnimation(_TransportID, ["run2hel1", 3.5]);
+    }
+    else
+      LoadAnimationEnd();
+  }
+
+  void PlayLoadAnimation(
+      String _TransportID
+    )
+  {
+    Component Self = GetSelf();
+
+    if (isFunctionExist(Self, "PlayLoadTransportAnimation", 2))
+    {
+      ActivateMovement(false);
+      Self.PlayLoadTransportAnimation(_TransportID, []);
+    }
+    else
+      LoadAnimationEnd();
+  }
+
+  void PlayUnloadAnimation(
+      String _TransportID
+    )
+  {
+    Component Self = GetSelf();
+
+    if (isFunctionExist(Self, "PlayUnloadTransportAnimation", 1))
+    {
+      Self.PlayUnloadTransportAnimation(_TransportID);
+    }
+    else
+      UnloadAnimationEnd();
+  }
+
+  event void UnloadAnimationEnd()
+  {
+    ProcessNextQueueOrder("OnUnloadAnimationEnd");
+  }
+
+  event void LoadAnimationEnd()
+  {
+    GetSelf().EnableSurfaceControl(true);
+    ActivateMovement(true);
+    SyncPosition();
+    ProcessNextQueueOrder("OnLoadAnimationEnd");
+  }
+
+  void OnRunAway(
+      boolean _Enabled
+    )
+  {
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.GuncrewRun(_Enabled);
+    }
+  }
+
+  void OnMoveAbility(
+      boolean _Enabled,
+      int _time
+    )
+  {
+    if (m_Group != null)
+    {
+      m_Group.ResortUnits();
+      m_Group.RefreshUnitsList();
+//      m_Group.ContinueOrder();
+      m_Group.RepeatOrder();
+    }
+
+    if (_Enabled)
+    {
+//      logWarning("Unit with ID=" +  getIdentificator(user) +" can move");
+      Component Self = GetSelf();
+      Component SurfaceControl = Self.GetSurfaceControl();
+      if (null != SurfaceControl)
+        SurfaceControl.EnableSurfaceControl(true);
+      ActivateMovement(true);
+    }
+    else
+    {
+      StopNow();
+//      logWarning("Unit with ID=" +  getIdentificator(user) +" can not move");
+    }
+  }
+
+  void OnFireAbility(
+      boolean _Enabled,
+      int _time
+    )
+  {
+    if (_Enabled)
+    {
+      logWarning("Unit with ID=" +  getIdentificator(user) +" can fire");
+      ActivateFire(true);
+    }
+    else
+    {
+      logWarning("Unit with ID=" +  getIdentificator(user) +" can not fire");
+    }
+  }
+
+  void OnAimAbility(
+      boolean _Enabled,
+      int _time
+    )
+  {
+    if (_Enabled)
+    {
+      logWarning("Unit with ID=" +  getIdentificator(user) +" can aim");
+      ActivateRadar(true);
+    }
+    else
+    {
+      logWarning("Unit with ID=" +  getIdentificator(user) +" can not aim");
+    }
+  }
+
+  // ==========================================
+  //  Editor support
+  // ==========================================
+
+  event void EditorCommand_MoveTo(
+      Vector _TargetPos,
+      float  _Speed
+    )
+  {
+
+    MoveTo(_TargetPos, _Speed);
+  }
+
+  event void EditorCommand_Stop()
+  {
+    StopNow();
+  }
+
+  void DoManeuver()
+  {
+  }
+}
+
+class CWingmanTask extends CBaseAITask
+{
+  // *** constants ***
+
+  final static float FOLLOW_DISTANCE_MIN = 180.0;  // [metres] minimum follow distance
+  final static float FOLLOW_DISTANCE_OPT = 200.0;  // [metres] optimum follow distance
+  final static float FOLLOW_DISTANCE_MAX = 220.0;  // [metres] maximum follow distance
+  final static float FORMATION_DISTANCE_OPT = 10;
+  final static float FORMATION_DISTANCE_MAX = 30;
+
+  final static float ATTACK_DISTANCE_MIN = 300.0;  // [metres] minimum attack distance
+  final static float ATTACK_DISTANCE_MAX = 500.0;  // [metres] maximum attack distance
+
+  final static float PATROL_RADIUS = 200.0;  // [metres] radius of patrolling place
+  final static float PATROL_HEIGHT = 80.0;   // [metres] height of patrolling
+
+  final static Array FORMATION_VECTORS = [new Vector(200, 120, 30), new Vector(200, -120, 30)];
+
+  String m_LeaderID = "";   // this wingman's player ID
+
+  int m_WingmanRank = 0;    // wingman rank in player "group"
+  int m_WingmanReactionLatch = ERT_PASSIVE;
+  boolean m_InstantWingman = false;
+
+  int m_HarrassmentTime = 5000; // time to wait under attack before retreat
+  int m_HarrassmentCryTime = 2000; // pause between hysterical shouts
+  int m_LastHystericTime = -1;
+
+  void Init()
+  {
+    CBaseAITask::Init();
+
+    InitPersonalWeaponPool();
+//    SetRadarDetailedFriends(true);
+//    SetRadarDetailedEnemies(true);
+  }
+
+
+  // *** functions for overwriting ***
+
+  Vector GetFormationVector()
+  {
+    return FORMATION_VECTORS[m_WingmanRank];
+  };
+
+  void SetWingmanRank(int _Rank)
+  {
+    m_WingmanRank = _Rank;
+  }
+
+  int GetWingmanRank()
+  {
+    return m_WingmanRank;
+  }
+
+  void SetInstantWingman()
+  {
+    m_InstantWingman = true;
+  }
+
+  void InitHomePoint(
+      String _HomePoint
+    )
+  {
+    Component Pad = GetMission().GetObject(_HomePoint);
+    if (isFunctionExist(Pad, "SetCurrentRechargeTransport", 0))
+    {
+      Pad.SetCurrentRechargeTransport(getIdentificator(user));
+      m_CurrentRechargePlace = _HomePoint;
+    }
+  }
+
+  void SetLeaderID(String _LeaderID)
+  {
+    m_LeaderID = _LeaderID;
+  }
+
+  String GetLeaderID()
+  {
+    return m_LeaderID;
+  }
+
+
+  // *** current order ***
+  boolean m_Follow  = false;
+  boolean m_Stay    = false;
+  boolean m_RepeatStay = false;
+  boolean m_Attack  = false;
+  boolean m_Patrol  = false;
+  boolean m_Retreat = false;
+  boolean m_RechargeSequence = false;
+  boolean m_SafeRecharge = false;
+  boolean m_OrderRecharge = false;
+
+
+  // *** tasks stuff ***
+  String m_FollowID     = "";
+  String m_EnemyID      = "";
+  String m_PatrolPlace  = "";
+  Vector m_StayPlace;
+  Vector m_RetreatPlace;
+  String m_RechargeTarget = "";
+  String m_CurrentRechargePlace = "";
+
+  // *** routines ***
+
+  void ClearState()
+  {
+    m_Follow  = false;
+    m_Stay    = false;
+    m_RepeatStay = false;
+    m_Attack  = false;
+    m_Patrol  = false;
+    m_Retreat = false;
+    m_FollowID     = "";
+    m_EnemyID      = "";
+    m_PatrolPlace  = "";
+//    m_StayPlace    = null;
+//    m_RetreatPlace = null;
+  };
+
+  float GetPlayerRadarRange()
+  {
+    return 300.0;
+/* $COMMENTED OUT : design decision
+    if (m_LeaderID == "")
+    {
+      logError(getIdentificator(user) + ": LeaderID not set");
+      return 2000.0;
+    }
+
+    Component PlayerMainUnit = GetMission().GetObject(m_LeaderID);
+
+    if (PlayerMainUnit == null)
+    {
+      logError("No " + m_LeaderID + " in mission?");
+      return 2000.0;
+    }
+    else
+    {
+      return PlayerMainUnit.RadarRange;
+    }
+ */
+  }
+
+
+  // *** orders ***
+
+  event void Wingman_SetOrder(int _Order, String _LeaderID, String _TargetID)
+  {
+/*    if (_Order < 6 && _Order != 4)
+    {
+      GetMission().SendPersonalCockpitMessage(
+          m_LeaderID,
+          CCommonStrings::str_WingmanOrder +
+          CCommonStrings::str_AssaultOrders[_Order].GetUpperString() +
+          CCommonStrings::str_WingmanGiven +
+          CCommonStrings::str_WingmanCallSigns[ m_WingmanRank],
+          CCockpitColorMap::m_GoodNewsColor,
+          "WingmanOK"+ new String( (randnum(3)+1)*10 + (m_WingmanRank+1))
+        );
+    }
+ */
+
+    SetAnchorState(false);
+
+    if (_Order == 0)
+    {
+      // FOLLOW ME
+      Wingman_Follow(_LeaderID);
+    }
+    else
+    if (_Order == 1)
+    {
+      // ATTACK TARGET
+      Wingman_Attack(_TargetID);
+    }
+    else
+    if (_Order == 2)
+    {
+      // STAY HERE
+      Wingman_Stay();
+    }
+    else
+    if (_Order == 3)
+    {
+      // PATROL
+      Wingman_Patrol();
+    }
+    else
+    if (_Order == 4)
+    {
+      // RECHARGE
+      m_OrderRecharge = true;
+      Wingman_RechargeOld(_LeaderID);
+    }
+    else
+    if (_Order == 5)
+    {
+      // RETURN TO BASE #TODO PLACE
+      Wingman_Retreat();
+    }
+  }
+
+  // order "Follow me" and "Guard unit"
+  void Wingman_Follow(String _FollowID)     // id of object to follow and guard
+  {
+    logMessage("Wingman_Follow(\"" + _FollowID + "\")");
+
+    if (_FollowID == "")
+    {
+      if (m_LeaderID != "")
+      {
+        Component Leader = (new #GameController()).GetObject(m_LeaderID);
+        if ((Leader != null) && !checkMask(Leader, [CLASSIFICATOR_DEAD_OBJECT], []))
+        {
+          Wingman_Follow(m_LeaderID);
+          return;
+        }
+        else
+        {
+          WingmanDisconnect();
+          StickToNearestLeader();
+          return;
+        }
+      }
+      else
+      {
+        StickToNearestLeader();
+        return;
+      }
+    }
+    // $WARNING (m_LeaderID != null) was here
+    if (!m_LeaderID.isEmpty() && (m_LeaderID != _FollowID))
+    {
+      Component GC = new #GameController();
+      Component FollowLead = GC.GetObject(_FollowID);
+      if ((FollowLead != null) && !checkMask(FollowLead, [CLASSIFICATOR_DEAD_OBJECT], []))
+      {
+        WingmanDisconnect();
+        WingmanConnect(_FollowID);
+        return;
+      }
+      else
+      {
+        logError(getIdentificator(user) + ".Wingman_Follow() - new leader is either null or dead");
+        return;
+      }
+    }
+
+    ClearState();
+    m_Follow = true;
+    m_FollowID = _FollowID;
+
+    SetAnchorState(true);
+    m_AnchorID = _FollowID;
+    m_AnchorDistanceMax = GetPlayerRadarRange();
+
+    float max_speed = GetMaxSpeed();
+/*
+    SetOrder_Follow(
+      _FollowID,
+      FOLLOW_DISTANCE_MIN,
+      FOLLOW_DISTANCE_OPT,
+      FOLLOW_DISTANCE_MAX,
+      0.8 * max_speed,
+      max_speed);
+*/
+
+    setOrder_Formation(
+      _FollowID,
+      GetFormationVector(),
+      FORMATION_DISTANCE_OPT,
+      FORMATION_DISTANCE_MAX,
+      0.8 * max_speed,
+      max_speed,
+      false);
+  };
+
+  // order "Stay"
+  void Wingman_Stay()
+  {
+    logMessage("Wingman_Stay()");
+
+    ClearState();
+    m_Stay = true;
+
+    Vector current_position = GetNowPosition();
+    current_position.z = 0.0;           // lowest possible height
+    m_StayPlace = new Vector(current_position);
+
+    SetOrder_MoveTo(m_StayPlace, GetMaxSpeed());
+  };
+
+  // order "Attack"
+  void Wingman_Attack(String _EnemyID)
+  {
+    logMessage("Wingman_Attack(\"" + _EnemyID + "\")");
+
+    ClearState();
+    m_Attack = true;
+    m_EnemyID = _EnemyID;
+
+    SetOrder_Attack(
+      _EnemyID,
+      GetMaxSpeed());
+  };
+
+  // order "Patrol"
+  void Wingman_Patrol()
+  {
+    logMessage("Wingman_Patrol(...)");
+
+    Component Point = GetMission().GetObject(GetPersonalNavPointName());
+    if (Point == null)
+    {
+      logError("Wingman " + getIdentificator(user) + " cannot get personal nav-point");
+      return;
+    }
+
+    Component me = GetMission().GetObject(getIdentificator(user));
+    if (me == null)
+    {
+        logError("Wingman " + getIdentificator(user) + " could not get itself");
+        return;
+    }
+
+    setPosition(Point, getPosition(me));
+
+    ClearState();
+    m_Patrol = true;
+    m_PatrolPlace = GetPersonalNavPointName();
+    m_AnchorID = m_PatrolPlace;
+    m_AnchorDistanceMax = GetPlayerRadarRange();
+    SetAnchorState(true);
+
+    setOrder_Guard(
+      m_PatrolPlace,
+      300.0,
+      0.1 * GetMaxSpeed(),
+      200);
+  };
+
+  void Wingman_Panic()
+  {
+    if (!m_Retreat)
+    {
+      // $LOG
+//      logWarning("Wingman_Retreat() - retreat");
+
+      Wingman_Retreat();
+
+      if (m_Retreat)
+        GetMission().SendPersonalCockpitMessage(
+          m_LeaderID,
+          CCommonStrings::str_WingmanCallSigns[ m_WingmanRank]+
+          CCommonStrings::str_WingmanPanic,
+          CCockpitColorMap::m_BadNewsColor,
+          "WingmanPanic"+ new String( m_WingmanRank+1 )
+          );
+      else
+        logError("Error: no 'retreat' state after Wingman_Retreat()");
+    }
+    // $LOG
+//    else
+//      logMessage("Wingman_Retreat() - already retreating");
+  }
+
+  void Wingman_Cry()
+  {
+    // $LOG
+//    logWarning("Wingman_Cry()");
+
+    GetMission().SendPersonalCockpitMessage(
+      m_LeaderID,
+      CCommonStrings::str_WingmanCallSigns[ m_WingmanRank]+
+      CCommonStrings::str_WingmanPanic,
+      CCockpitColorMap::m_BadNewsColor,
+      "WingmanPanic"+ new String( m_WingmanRank+1 )
+      );
+  }
+
+  // order "Retreat"
+  void Wingman_Retreat()
+  {
+    logMessage("Wingman_Retreat(...)");
+
+    if (m_HomePointID == "")
+    {
+      logError("Wingman " + getIdentificator(user) + " has no place to call 'Home'");
+      return;
+    }
+
+    Component RetreatPlace = GetMission().GetObject(m_HomePointID);
+    if (RetreatPlace == null)
+    {
+      logError("Wingman " + getIdentificator(user) + ": 'Base' point identificator is invalid");
+      return;
+    }
+    // $WARNING
+    m_RetreatPlace = getPosition(RetreatPlace).origin;
+
+    ClearState();
+    m_Retreat = true;
+
+    Harrassers.clear();
+    m_LastHystericTime = -1;
+    SetFireStyle_NoFire();
+    m_WingmanReactionLatch = m_EnemyReactionType;
+    SetEnemyReactionType(ERT_PASSIVE);
+    SetOrder_MoveTo(m_RetreatPlace, GetMaxSpeed());
+  };
+
+  // order "Recharge"
+  event void Wingman_Recharge(
+      String _NavPoint
+    )
+  {
+    ExtendQueueOrder([
+                       ["Wingman_Recharge", "SetOrder_MoveTo", [GetNavPointBehPos(_NavPoint), 0.0], "OnStopped"],
+                       ["Wingman_Recharge", "Choose_Recharge", [_NavPoint], ""]
+                     ]);
+
+  }
+
+  // choose recharge pad and move to it
+  void Choose_Recharge(
+      String _NavPoint
+    )
+  {
+    Component Mission = GetMission();
+    Component NavPoint = Mission.GetObject(_NavPoint);
+    Array PadList = NavPoint.GetRefreshedDetectedList(["HELI_RECHARGE"],[]);
+    for (int i = 0; i < PadList.size(); i++)
+    {
+      Component Pad = Mission.GetObject(PadList[i]);
+      if (isFunctionExist(Pad, "GetCurrentRechargeTransport", 0))
+        if (Pad.GetCurrentRechargeTransport() == "")
+        {
+          Pad.SetCurrentRechargeTransport(getIdentificator(user));
+          m_CurrentRechargePlace = PadList[i];
+
+          if (StatusDebug)
+            logMessage("Begin Recharge "+getIdentificator(user) +" to " + m_CurrentRechargePlace);
+
+          ExtendQueueOrder([
+                             ["Wingman_Recharge", "Wingman_Landing", [PadList[i]], ""],
+                             ["Wingman_Recharge", "RechargeInPlace", [], ""]
+                           ]);
+          return;
+        }
+
+    }
+
+    logWarning(" no free recharge place for " + getIdentificator(user) + " at " + _NavPoint);
+  }
+
+  event void OnLanded(
+      String _TargetID
+    )
+  {
+
+    ProcessNextQueueOrder("OnLanded");
+  }
+
+  void RechargeInPlace()
+  {
+    GetSelf().Recharge();
+  }
+
+  // order "Recharge"
+  boolean Wingman_RechargeOld(String _LeaderID)
+  {
+    logMessage("Wingman_Recharge(...)");
+
+    Array Recharges = GetMission().GetRechargePlacesIDList();
+
+    if (Recharges.size() == 0)
+    {
+        logWarning("[Wingman] Wingman_Recharge : No recharge places found");
+        return false;
+    }
+
+    Component GC = new #GameController();
+
+    Array WingGroup = GetMission().GetPlayerObjectsIDList();
+    Array WingPos;
+
+    for (int j = 0; j < WingGroup.size(); j++)
+    {
+      if (WingGroup[j] != getIdentificator(user))
+      {
+//        logMessage(getIdentificator(user) + ": added " + WingGroup[j] + " into busy check");
+        Component Wing = GC.GetObject(WingGroup[j]);
+        if (Wing != null)
+        {
+          WingPos.add(getPosition(GC.GetObject(WingGroup[j])).origin);
+          WingPos[WingPos.size() - 1].z = 0.0;
+        }
+      }
+    }
+
+    Vector WingmanPos = GetNowPosition();
+    WingmanPos.z = 0.0;
+    Vector LeaderPos = getPosition(GC.GetObject(_LeaderID)).origin;
+    LeaderPos.z = 0.0;
+
+    float MinWingmanDist = -1;
+    float MinLeaderDist = -1;
+    String Champion = "";
+
+    float WingmanDist = 0;
+    float LeaderDist = 0;
+    float Range = 1000;    // #FIXME : tune
+    Vector TempPos;
+    Component TempObject;
+
+    for(int i = 0; i < Recharges.size(); i++)
+    {
+      TempObject = GC.GetObject(Recharges[i][0]);
+      if (TempObject != null)
+      {
+        String TempAffiliation = TempObject.GetAffiliation();
+
+        if (((TempAffiliation == "FRIEND") || (TempAffiliation == "NEUTRAL")) &&
+            !checkMask(TempObject, [CLASSIFICATOR_DEAD_OBJECT], []))
+        {
+          TempPos = new Vector(getPosition(GC.GetObject(Recharges[i][0])).origin);
+          TempPos.z = 0.0;
+
+          boolean IsBusy = false;
+          // check if recharge is busy
+
+          if (Recharges[i][1])
+            continue;
+
+          for (int k = 0; k < WingPos.size(); k++)
+          {
+            if ((TempPos - WingPos[k]).Magnitude() < 15.0)  // 15.0 - set radius of recharge busy detection
+                IsBusy = true;
+          }
+          if (IsBusy)
+          {
+            continue;
+          }
+
+          WingmanDist = (TempPos - WingmanPos).Magnitude();
+          LeaderDist  = (TempPos - LeaderPos).Magnitude();
+
+          if (WingmanDist < Range)
+          {
+            if ((MinWingmanDist < 0) || (MinWingmanDist > WingmanDist))
+            {
+              MinWingmanDist = WingmanDist;
+              Champion = Recharges[i][0];
+            }
+          }
+
+          if ((MinWingmanDist < 0) && (LeaderDist < Range))
+          {
+            if ((MinLeaderDist < 0) || (LeaderDist < MinLeaderDist))
+            {
+              MinLeaderDist = LeaderDist;
+              Champion = Recharges[i][0];
+            }
+          }
+        }
+      }
+    }
+
+    if (Champion == "")
+    {
+      if (m_OrderRecharge)
+      {
+        logWarning("[Wingman] Wingman_Recharge : Appropriate recharge place not found");
+        GetMission().SendPersonalCockpitMessage(
+          m_LeaderID,
+          CCommonStrings::str_WingmanCantRecharge,
+          CCockpitColorMap::m_BadNewsColor,
+          "WingmanRecharge"+ new String( m_WingmanRank+1 )
+        );
+        m_OrderRecharge = false;
+      }
+      return false;
+    }
+
+    // we have the winner
+    m_RechargeTarget = Champion;
+    GetMission().SetRechargeState(Champion, true, getIdentificator(user));
+    if (m_OrderRecharge)
+    {
+      GetMission().SendPersonalCockpitMessage(
+           m_LeaderID,
+           CCommonStrings::str_WingmanOrder +
+           CCommonStrings::str_AssaultOrders[4].GetUpperString() +
+           CCommonStrings::str_WingmanGiven +
+           CCommonStrings::str_WingmanCallSigns[ m_WingmanRank],
+           CCockpitColorMap::m_GoodNewsColor,
+           "WingmanOK"+ new String( (randnum(3)+1)*10 + (m_WingmanRank+1))
+        );
+      m_OrderRecharge = false;
+    }
+
+//    Recharges[i][1] = true; // make recharge place busy
+    m_RechargeSequence = true;
+    m_SafeRecharge = true;
+    SetOrder_MoveTo(getPosition(GC.GetObject(Champion)).origin, 0.0);
+    return true;
+  }
+
+  void RechargeReroute()
+  {
+    if(m_RechargeSequence)
+    {
+      if (m_SafeRecharge)
+      {
+        SetOrder_StopNow();
+        m_RechargeTarget = "";
+        m_RechargeSequence = false;
+        m_SafeRecharge = false;
+
+        Wingman_Recharge(m_LeaderID);
+      }
+    }
+  }
+
+  event void Wingman_TakeOff()
+  {
+    if (m_CurrentRechargePlace != "")
+    {
+      GetMission().GetObject(m_CurrentRechargePlace).SetCurrentRechargeTransport("");
+      m_CurrentRechargePlace = "";
+    }
+    GetSelf().TakeOff();
+
+    // PostDelayedEvent("Wingman_SetOrder", [0 /*Follow*/, m_LeaderID, ""], 5000);
+  }
+
+  event void Wingman_Landing(
+      String _TargetID
+    )
+  {
+    if (StatusDebug)
+      logMessage("Wingman_Landing " + getIdentificator(user) + " to " + _TargetID);
+
+    ExtendQueueOrder([
+                       ["Wingman_Landing", "SetOrder_MoveTo", [GetNavPointPos(_TargetID), 0.0], "OnStopped"],
+                       ["Wingman_Landing", "Wingman_StateLanding", [_TargetID], "OnLanded"]
+                     ]);
+  }
+
+  void Wingman_StateLanding(
+      String _TargetID
+    )
+  {
+    GetSelf().Landing(_TargetID);
+  }
+
+
+  // *** Event handlers ***
+
+  void OnQueueOrdersEnd(
+      String _OrderGroupID
+    )
+  {
+    if (m_Group != null)
+      m_Group.OnQueueOrdersEnd(_OrderGroupID, this);
+  }
+
+  void OnStopped()
+  {
+    if (m_RechargeSequence)
+    {
+      m_SafeRecharge = false;
+      sendEvent(0.0,  getIdentificator(user), "Landing",  [m_RechargeTarget]);
+      sendEvent(10.0, getIdentificator(user), "Recharge", []);
+      sendEvent(15.0, getIdentificator(user), "TakeOff",  []);
+      sendEvent(20.0, getIdentificator(user), "RechargeDone", []);
+      return;
+    }
+    if (m_RepeatStay)
+    {
+      m_RepeatStay = false;
+      Wingman_Stay();
+      return;
+    }
+    if (m_Retreat)
+    {
+      ClearState();
+      if (!Wingman_RechargeOld(m_LeaderID))
+        Wingman_Patrol();
+      SetEnemyReactionType(m_WingmanReactionLatch);
+      return;
+    }
+
+    CBaseAITask::OnStopped();
+  };
+
+  event void RechargeDone()
+  {
+    InitPersonalWeaponPool();
+
+    GetMission().SetRechargeState(m_RechargeTarget, false, "");
+    m_RechargeSequence = false;
+
+    if (m_Patrol)
+        SetOrder_MoveTo (m_PatrolPlace, 0.0);
+    else if (m_Follow)
+      Wingman_SetOrder(0 /* FOLLOW */, m_FollowID, ""); // Wingman_Follow(m_FollowID);
+    else if (m_Attack)
+      Wingman_SetOrder(0 /* FOLLOW */, m_LeaderID, ""); // Wingman_Follow(m_LeaderID);
+    else if (m_Stay)
+    {
+      m_RepeatStay = true;
+      SetOrder_MoveTo(m_StayPlace, 0.0);
+    }
+    else if (m_Retreat)
+    {
+      SetOrder_Guard(m_HomePointID, 300.0, 0.1 * GetMaxSpeed());
+    }
+    else
+        SetOrder_Guard(m_RechargeTarget, 300.0, 0.1 * GetMaxSpeed());
+  }
+
+  void OnMoveFailed()
+  {
+    if (m_Patrol)
+      SetOrder_MoveTo(m_PatrolPlace, 0.0);
+  };
+
+  void AttackEnemy(
+      String _EnemyID
+   )
+  {
+    if (m_CurrentEnemy != "")
+        GetMission().m_PlayerGroupEnemies.remove(GetMission().m_PlayerGroupEnemies.find(m_CurrentEnemy));
+
+    GetMission().m_PlayerGroupEnemies.add(_EnemyID);
+
+    CBaseAITask::AttackEnemy(_EnemyID);
+  }
+
+  boolean IsEnemyEngaged(
+      String _EnemyID
+   )
+  {
+    if (GetMission().m_PlayerGroupEnemies.find(_EnemyID) != -1)
+        return true;
+
+    return false;
+  }
+
+  void OnEnemyTargeted()
+  {
+    if (m_Attack)
+        return; // players orders are uber alles
+
+    String EnemyID = GetTargetedEnemy();
+
+    if (IsEnemyEngaged(EnemyID))
+      return;
+
+    if (!CanAttackPersonally(EnemyID))
+      return;
+
+    if (m_Patrol || m_Follow)
+      AttackEnemy(EnemyID);
+  };
+
+  void OnEnemyLost(String _EnemyID)
+  {
+    if (_EnemyID == m_CurrentEnemy)
+    {
+      GetMission().m_PlayerGroupEnemies.remove(GetMission().m_PlayerGroupEnemies.find(_EnemyID));
+      m_CurrentEnemy = "";
+    }
+
+    // if more enemyes attack another enemy
+    String TargetedEnemy = GetTargetedEnemy();
+    int Enemies = 1;
+    while (TargetedEnemy != "" && Enemies < 20)
+    {
+      if (!IsEnemyEngaged(TargetedEnemy) && CanAttackPersonally(TargetedEnemy))
+      {
+        AttackEnemy(TargetedEnemy);
+        return;
+      }
+
+      TargetedEnemy = GetNextEnemyUnitOnRadar(TargetedEnemy);
+      Enemies++;
+    }
+
+    if (m_Patrol)
+      SetOrder_Guard(m_PatrolPlace, 300.0, 0.1 * GetMaxSpeed());
+    if (m_Follow)
+      Wingman_Follow(m_FollowID);
+    if (m_Attack)
+      Wingman_Follow(m_LeaderID);
+  };
+
+  void OnNoEnemy()
+  {
+    if (m_CurrentEnemy != "")
+    {
+        GetMission().m_PlayerGroupEnemies.remove(GetMission().m_PlayerGroupEnemies.find(m_CurrentEnemy));
+        m_CurrentEnemy = "";
+    }
+  }
+
+  Array Harrassers = []; // format: [<ID>, <last time>]
+
+  int GetHarrasserIdx(
+      String _EnemyID
+   )
+  {
+    for (int i = 0; i < Harrassers.size(); i++)
+    {
+      if (Harrassers[i][0] == _EnemyID)
+          return i;
+    }
+    return -1;
+  }
+
+  void OnHitByEnemy(
+      String _EnemyID
+   )
+  {
+    if (m_Retreat)
+      return;
+
+    Component Enemy = GetMission().GetObject(_EnemyID);
+    if (Enemy == null) // sanity check
+        return;
+
+    if (Enemy.GetAffiliation() == "FRIEND")
+      return; // no friendly fire :)
+
+    if (m_EnemyReactionType == ERT_PASSIVE)
+      return;
+
+    int CurMenace = MENACE_UNARMED;
+    if (m_CurrentEnemy != "")
+    {
+      Component CurEnemy = GetMission().GetObject(m_CurrentEnemy);
+      if (CurEnemy != null)
+          CurMenace = CurEnemy.UnitMenacePower;
+    }
+
+    int i = GetHarrasserIdx(_EnemyID);
+    if (i != -1) // recurrence check
+    {
+      int TimePassed = getGameTime() - Harrassers[i][1];
+
+      if (TimePassed >= m_HarrassmentTime)
+      {
+        Harrassers[i][1] = getGameTime();
+
+        if (CanAttackAnyhow(_EnemyID))
+        {
+          if (Enemy.UnitMenacePower > CurMenace)
+            AttackEnemy(_EnemyID);
+        }
+        else
+        {
+          sendEvent(0.0, m_LeaderID, "WingmanRetreat", [getIdentificator(user)]);
+          //Wingman_Panic();
+        }
+
+        return;
+      }
+
+      if ((m_LastHystericTime == -1)
+        || (getGameTime() - m_LastHystericTime >= m_HarrassmentCryTime))
+      {
+        m_LastHystericTime = getGameTime();
+        Wingman_Cry();
+      }
+
+      return;
+    }
+
+    if (!IsEnemyEngaged(_EnemyID))
+    {
+      if (CanAttackPersonally(_EnemyID))
+      {
+        if (IsAttacking() || m_Attack)
+        {
+          if (!(Enemy.UnitMenacePower > CurMenace))
+            return;
+        }
+
+        AttackEnemy(_EnemyID);
+        return;
+      }
+
+      if (!CanAttackGroup(_EnemyID))
+      {
+        sendEvent(0.0, m_LeaderID, "WingmanNeedsHelp", [getIdentificator(user), _EnemyID]);
+        Harrassers.add([_EnemyID, getGameTime()]);
+
+        if ((m_LastHystericTime == -1)
+          || (getGameTime() - m_LastHystericTime >= m_HarrassmentCryTime))
+        {
+          m_LastHystericTime = getGameTime();
+          Wingman_Cry();
+        }
+      }
+    }
+  }
+
+  void OnFriendCame(
+      String _FriendID
+   )
+  {
+    //$TMP
+    return;
+    if (_FriendID == m_LeaderID)
+    {
+      Component Player = (new #GameController()).GetObject(_FriendID);
+
+      for (int i = 0; i < Player.m_WeaponList.size(); i++)
+      {
+        if (Player.m_WeaponList[i].CanFire)
+            m_GroupWeaponPool.add([m_LeaderID, Player.m_WeaponList[i]]);
+      }
+
+      return;
+    }
+
+    Array Wingmen = GetMission().GetPlayerObjectsIDList();
+    if (Wingmen.find(_FriendID) != -1)
+      AddToGroupWeaponPool(_FriendID);
+  }
+
+  void OnFriendGone(
+      String _FriendID
+   )
+  {
+    //$TMP
+    return;
+    Array Wingmen = GetMission().GetPlayerObjectsIDList();
+    if (Wingmen.find(_FriendID) != -1)
+        RemoveFromGroupWeaponPool(_FriendID);
+  }
+
+  void OnEnemyCame(
+      String _EnemyID
+   )
+  {
+    if (m_Attack)  // don't digress from enemy player wants to see dead
+        return;
+
+    Component Enemy = GetMission().GetObject(_EnemyID);
+    if (Enemy == null) // sanity check
+        return;
+
+    if (IsEnemyEngaged(_EnemyID))
+      return;
+
+    if (!CanAttackPersonally(_EnemyID)) // unreachable
+      return;
+
+    if (IsAttacking()) // already in process, check menace
+    {
+      Component CurEnemy = GetMission().GetObject(m_CurrentEnemy);
+
+      if ((CurEnemy != null)
+          && (CurEnemy.UnitMenacePower < Enemy.UnitMenacePower))
+        AttackEnemy(_EnemyID);
+    }
+
+    if (m_Patrol || m_Follow)  // alert state - attack
+      AttackEnemy(_EnemyID);
+  }
+
+  void OnEnemyGone(
+      String _EnemyID
+   )
+  {
+  }
+
+  event void MissionStarted()
+  {
+    if (m_InstantWingman)
+    {
+      sendEvent(float(m_WingmanRank + 1) * 3.0 + 5.0, getIdentificator(user), "TakeOff", []);
+      PostDelayedEvent("StickToNearestLeader", [], (m_WingmanRank + 1) * 3000 + 20000);
+    }
+  }
+
+  //
+  //  Network related event processing
+  //
+
+  boolean m_ReportSticker = true;
+
+  event void OnObjectDestroyed(
+      String  _ObjectID
+    )
+  {
+    Component GC = new #GameController();
+    String GameMode = GC.GetGameMode();
+
+    if (GameMode == "Server") //!= "Single")
+    {
+      if ((_ObjectID == m_LeaderID) && checkMask(user, ["HOSTMODE"], []))
+      {
+        Component Mission = GC.GetMission();
+
+        String PreviousLeader = m_LeaderID;
+
+        WingmanDisconnect();
+
+        m_ReportSticker = false;
+        StickToNearestLeader();
+
+        String NewLeader = m_LeaderID;
+        int PrevLeaderSlot = Mission.GetPlayerSlotIDByUnitID(PreviousLeader);
+        int NewLeaderSlot = Mission.GetPlayerSlotIDByUnitID(NewLeader);
+
+        Component Session = GC.GetGameSession();
+
+//        if (GameMode == "Server")
+//        {
+          GC.GetMission().Server_LeaderChange(-1, getIdentificator(user), PrevLeaderSlot, NewLeaderSlot);
+//          Session.FireNetEvent("Client_LeaderChange", [PrevLeaderSlot, NewLeaderSlot]);
+//          fireEvent(0.0, "OnWingmanChangeLeader", [getIdentificator(user), PrevLeaderSlot, NewLeaderSlot]);
+//        }
+//        else if (GameMode == "Client")
+//        {
+//          Session.FireNetEvent("Server_LeaderChange", [getIdentificator(user), PrevLeaderSlot, NewLeaderSlot]);
+//        }
+      }
+    }
+  }
+
+  event void WingmanDisconnect()
+  {
+    if (m_LeaderID != "")
+    {
+      Component GC = new #GameController();
+
+      Component Player = GC.GetObject(m_LeaderID);
+      if (Player != null)
+      {
+        if (GC.GetGameMode() == "Single")
+        {
+          Player.RemoveWingman(getIdentificator(user));
+        }
+        else
+        {
+          if (checkMask(Player, ["HOSTMODE"], []))
+          {
+            Player.RemoveWingman(getIdentificator(user));
+          }
+          else
+          {
+            Component Session = GC.GetGameSession();
+            if (Session != null)
+              Session.FireNetEvent("Player_RemoveWingman", [m_LeaderID, getIdentificator(user)]);
+          }
+        }
+      }
+      m_LeaderID = "";
+    }
+  }
+
+  event void WingmanConnect(String _LeaderID)
+  {
+    if (_LeaderID != "")
+    {
+      Component GC = new #GameController();
+      m_LeaderID = _LeaderID;
+
+      if (GC.GetGameMode() != "Single")
+      {
+        Component Player = GC.GetObject(_LeaderID);
+        if (Player != null)
+        {
+          if (checkMask(Player, ["HOSTMODE"], []))
+          {
+            Player.AddWingman(getIdentificator(user));
+          }
+          else
+          {
+            Component Session = GC.GetGameSession();
+            if (Session != null)
+              Session.FireNetEvent("Player_AddWingman", [_LeaderID, getIdentificator(user), m_WingmanRank]);
+            else
+              logWarning(" null session at WingmanTask::WingmanConnect()");
+          }
+        }
+
+        if (m_ReportSticker)
+        {
+          if (GC.GetGameMode() != "Single")
+          {
+            GC.GetMission().Server_LeaderChange(-1, getIdentificator(user), -1, GC.GetMission().GetPlayerSlotIDByUnitID(_LeaderID));
+          }
+        }
+      }
+      else
+      {
+        Component Player = GC.GetObject(m_LeaderID);
+        if (Player != null)
+          Player.AddWingman(getIdentificator(user));
+      }
+      Wingman_SetOrder(0 /*Follow*/, m_LeaderID, "");
+    }
+
+    m_ReportSticker = true;
+  }
+
+  event void StickToNearestLeader()
+  {
+    WingmanConnect(GetMission().GetMainPlayerObjectID());
+    return;
+/*
+    Array PlayerList = GetMission().GetTeamPlayerObjectsIDList(GetAffiliation());
+
+    if (PlayerList.size() == 0)
+        logError("No players?");
+
+    Vector MyPosition = GetNowPosition();
+
+    String Champion = "";
+    float ChampionDistance = FLT_MAX;
+
+    Component GC = new #GameController();
+
+    for (int i = 0; i < PlayerList.size(); i++)
+    {
+      Component TempObj = GC.GetObject(PlayerList[i]);
+      if ((TempObj != null) && !checkMask(TempObj, [CLASSIFICATOR_DEAD_OBJECT], []))
+      {
+        Vector TempPos = getPosition(TempObj).origin;
+        float  TempDist = (TempPos - MyPosition).Magnitude();
+
+        if (StatusDebug)
+          logMessage("WingmanStick - testing possible leader " + PlayerList[i] + ", distance is " + new String(TempDist));
+
+        if (TempDist < ChampionDistance)
+        {
+          Champion = PlayerList[i];
+          ChampionDistance = (TempPos - MyPosition).Magnitude();
+        }
+      }
+    }
+
+   if (StatusDebug)
+     logMessage("WingmanStick - leader selected - " + Champion);
+
+   WingmanConnect(Champion);
+*/
+  }
+}
+
+class CBaseMilitaryTask extends CBaseAITask
+{
+  Vector Pos;
+  float radius = 30.0;
+  int m_TimeRun = 60000;
+  int m_TimeCorrectionRun = 60000;
+  float m_WalkSpeed = 2.0;
+
+  void Init()
+  {
+    Component Self = (new #GameController()).GetObject(getIdentificator(user));
+    if (Self == null)
+      logError(getIdentificator(user) + ": can't get self component");
+    else
+      Pos = getPosition(Self).origin;
+    SetupWandering();
+  }
+
+  void SetupWandering()
+  {
+    if (!m_HasOrder)
+    {
+      PostDelayedEvent("TimeRun",[], m_TimeRun + randnum(120000));
+      PostDelayedEvent("CorrectionRun", [], m_TimeCorrectionRun);
+    }
+  }
+
+  void TimeRun()
+  {
+    if (!m_HasOrder)
+    {
+      Vector NewPos = Pos + new Vector(rand(radius), rand(radius), 0.0);
+      SetOrder_MoveTo(NewPos, m_WalkSpeed);
+      PostDelayedEvent("TimeRun",[], m_TimeRun + randnum(120000));
+    }
+  }
+
+  void CorrectionRun()
+  {
+    if (!m_HasOrder)
+    {
+      Component Self = (new #GameController()).GetObject(getIdentificator(user));
+      if (Self == null)
+        logError( getIdentificator(user) + ": can't get self component in CorrectionRun()");
+      else
+      {
+        if (radius < (Pos - getPosition(Self).origin).MagnitudeXY())
+        {
+          SetOrder_MoveTo(Pos, 0.0);
+        }
+        PostDelayedEvent("CorrectionRun", [], m_TimeCorrectionRun);
+      }
+    }
+  }
+
+  void GoInactive()
+  {
+    CBaseAITask::GoInactive();
+
+    SetupWandering();
+  }
+
+  void SetOrder_StopNow()
+  {
+    CBaseAITask::SetOrder_StopNow();
+
+    SetupWandering();
+  }
+
+  void OnUpdate() {}        // called every game tact for synchronization
+}
+
+class CBaseTankAttackStyle extends CBaseUtilities
+{
+  // функции для продвинутой такновой логики
+// возвращаемые значения defautl ... работать будет как обычно
+  Vector GetAttackPosition(String _EnemyID)     // вызывается когда надо поехать в атаке
+  {
+    logMessage("[CBaseTankAttackStyle] Call GetAttackPosition");
+    return new Vector(0.0f, 0.0f, 0.0f);
+  }
+
+  float GetAttackShootTime(String _EnemyID)     // вызывается 1 раз в атаке сколько времени будет стоять для стрельбы
+  {
+    logMessage("[CBaseTankAttackStyle] Call GetAttackShootTime");
+    return 5.0f;
+  }
+
+  float GetAttackAngle(String _EnemyID)    // вызывается 1 раз в атаке когда переходит в состояние атаки ... в градусах
+  {
+    logMessage("[CBaseTankAttackStyle] Call GetAttackAngle");
+    return 45.0f;
+  }
+
+  void BeginAttackShoot(String _EnemyID)      //  вызывается когда готов стрелять
+  {
+    logMessage("[CBaseTankAttackStyle] Call BeginAttackShoot");
+  }
+}
+
+class CBaseManeuveringUnit extends CBaseAITask
+{
+  int m_LastHitByEnemyTime = 0;
+  int m_ManeuverLatency    = 100000; // latency between two sequential maneuvers in milliseconds
+  float ManeuverDistanceMin = 15.0; // maneuvering ranges: min
+  float ManeuverDistanceMax = 25.0; //                     max
+  boolean ManeuverOnExposions = true; // maneuvering will occur on explosions
+  boolean ManeuverOnHits      = true; // maneuvering will occur on hits
+  boolean m_MeneuveringUnit   = true;
+
+  void OnStopped()
+  {
+    if (m_Group != null)
+    {
+      if (m_CurrentEnemy != "" && m_Group.m_CurrentOrder.m_Order == "Maneuver")
+        AttackEnemy(m_CurrentEnemy);
+
+      m_Group.OnStopped(this);
+    }
+  }
+
+  Matrix GetCurrentPosition()
+  {
+    return GetWholePosition();
+  }
+
+  void DoManeuver()
+  {
+    Component Behavior = GetBehavior();
+    int TimeStop = Behavior.GetNoMoveTime();
+    String TargetedEnemy = GetTargetedEnemy();
+
+    if (TimeStop != 0 || TargetedEnemy == "")
+    {
+      logWarning("DoManeuver: TargetedEnemy is empty!");
+      SetOrder_StopNow();
+      OnStopped();
+      return;
+    }
+
+    Component Enemy = GetMission().GetObject(TargetedEnemy);
+    if (null == Enemy)
+    {
+      logWarning("DoManeuver: No Targeted Enemy!");
+      return;
+    }
+
+    Matrix current_position = GetWholePosition();
+    Vector position = current_position.origin;
+
+    Vector Enemy_Pos = getPosition(Enemy).origin;
+    Vector AttackDir = Enemy_Pos - position;
+    AttackDir.z = 0.0;
+    AttackDir.Normalize();
+
+    Vector maneuver_point = position;
+
+    for (int i = 0 ; i < 10 ; i++)
+      maneuver_point = maneuver_point + AttackDir;
+
+    maneuver_point = maneuver_point + new Vector(rand(0.0, 10.0), rand(0.0, 10.0), 0);
+    Vector direction = AttackDir;
+
+
+//    direction = current_position.xvec;
+//    direction.z = 0.0;
+
+//    direction.Normalize();
+
+//    float distance = (ManeuverDistanceMin + rand(0.0, 1.0) * (ManeuverDistanceMax - ManeuverDistanceMin));
+
+//    Vector maneuver_point = new Vector(-1.0, (rand(0.0, 1.0) - 0.5) * 3.0, 0.0);
+//    maneuver_point.Normalize();
+//    maneuver_point *= distance;
+
+//    maneuver_point.x = maneuver_point.x * direction.x + maneuver_point.y * direction.y;
+//    maneuver_point.y = maneuver_point.y * direction.x - maneuver_point.x * direction.y;
+//    maneuver_point += position;
+
+    logMessage("Maneuver destination for " + getIdentificator(user) + ": " + new String(position - maneuver_point));
+
+    SetOrder_MoveTo_LookAt(maneuver_point, direction, GetMaxSpeed());
+
+    m_LastHitByEnemyTime = getGameTime();
+  }
+
+  void TryToManeuver()
+  {
+    logMessage("Try to maneuver: " + getIdentificator(user));
+    if ((getGameTime() - m_LastHitByEnemyTime > m_ManeuverLatency) && ManeuverOnExposions)
+      DoManeuver();
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    if (m_Group != null)
+    {
+      m_Group.OnUnitExplosion(getIdentificator(user), _OwnerID);
+      if (m_Group.m_EnemyReactionType == ERT_PASSIVE)
+      {
+        if (m_Group.m_CurrentOrder.m_Order != "Maneuver")
+          if (m_Group.m_CurrentOrder.m_Order != "Attack")
+            m_Group.TryToManeuver();
+          else
+            TryToManeuver();
+      }
+      else if (m_Group.m_EnemyReactionType == ERT_AGGRESSIVE)
+      {
+        if (m_Group.m_CurrentOrder.m_Order == "Attack")
+          TryToManeuver();
+      }
+    }
+    else
+    {
+      if (m_EnemyReactionType != ERT_FRIGID)
+        TryToManeuver();
+    }
+  }
+
+  event void SetHatchesToAttackState()
+  {
+    Component Self = GetSelf();
+    Component hatches = Self.GetObject("Hatches");
+    if (hatches != null)
+    {
+//      logMessage(getIdentificator(user) + ": Hatches to attack");
+      hatches.SetHatchesState("Attack");
+    }
+  }
+
+  event void SetHatchesToNormalState()
+  {
+    Component Self = GetSelf();
+    Component hatches = Self.GetObject("Hatches");
+    if (hatches != null)
+    {
+//      logMessage("Hatches to normal");
+      hatches.SetHatchesState("Normal");
+    }
+  }
+
+  void OnEnemyTargeted()
+  {
+    SetHatchesToAttackState();
+//    logMessage(getIdentificator(user) + ": OnEnemyTargeted (hatches)");
+
+    CBaseAITask::OnEnemyTargeted();
+  }
+
+  event void OnHitByEnemy(
+    String _EnemyID
+    )
+  {
+    if (m_Group != null)
+      m_Group.SetGroupHatchesToAttackState();
+
+    SetHatchesToAttackState();
+//    logMessage(getIdentificator(user) + ": OnHitByEnemy (hatches)");
+
+    if (m_Group != null)
+      m_Group.OnUnitHitByEnemy(getIdentificator(user), _EnemyID);
+  }
+
+  void OnNoEnemy()
+  {
+//    logMessage(getIdentificator(user) + ": OnNoEnemy (hatches)");
+    sendEvent(10 + randnum(10), getIdentificator(user), "SetHatchesToNormalState", []);
+
+    if (m_Group != null)
+    {
+      m_Group.SetOrder_Attack([], ERT_AGGRESSIVE);
+//      logError("NoEnemy!---");
+    }
+  }
+}
+
+class CBaseAISAUTask extends CBaseManeuveringUnit
+{
+
+  void OnStopped()
+  {
+    if (m_Group != null)
+      m_Group.OnStopped(this);
+  }
+
+  void OnRadarUpdate()
+  {
+//    if (GetMission().isRadarUpdateDebug)
+//      logError("OnRadarUpdate: " + new String(GetTargetedEnemy()) + " by " + getIdentificator(user));
+
+    if (m_InSpecialAttack)
+      return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+    {
+      m_NotifyOnEnemyTargetedAfterFrigid = true;
+      return;
+    }
+    else
+      m_NotifyOnEnemyTargetedAfterFrigid = false;
+
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
+    }
+
+    String TargetedEnemy = GetTargetedEnemy();
+    if (TargetedEnemy == "")
+    {
+      if (m_Group != null)
+      {
+        m_CurrentEnemy = "";
+        if (m_Group.m_CurrentOrder.m_Order == "Attack")
+        {
+          Collection _GroupTargets = m_Group.m_GroupTargets;
+          m_Group.UpdateGroupTargets();
+          if (_GroupTargets.isEmpty())
+          {
+            if (m_Group.HasOrderedEnemies())
+              m_Group.SetEnemiesArray([]);
+
+            m_Group.PopOrder();
+            m_Group.RepeatOrder();
+          }
+          else if (m_EnemyReactionType != ERT_FRIGID && m_EnemyReactionType != ERT_PASSIVE)
+          {
+            _GroupTargets.gotoBegin();
+            AttackEnemy(_GroupTargets.getValue());
+            m_CurrentEnemy = "";
+          }
+        }
+      }
+
+      return;
+    }
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+      if (TargetedEnemy == m_CurrentEnemy)
+      {
+        SetFireStyle_Enemy(m_CurrentEnemy);
+        return;
+      }
+
+      SetFireStyle_Nearest();
+
+      if (m_Group.m_EnemyReactionType == ERT_AGGRESSIVE)
+      {
+        if (!m_Group.HasOrderedEnemies())
+        {
+          m_Group.OnEnemyTargeted(this);
+        }
+        else
+        {
+          if (m_CurrentEnemy != "")
+            m_LastEnemy = m_CurrentEnemy;
+
+          AttackEnemy(TargetedEnemy);
+        }
+      }
+    }
+    else
+    {
+      if (m_EnemyReactionType != ERT_PASSIVE)
+        AttackEnemy(TargetedEnemy);
+    }
+  }
+}
+
+class CBaseAITankTask extends CBaseManeuveringUnit
+{
+  float GetAttackAngle(String _EnemyID)    // вызывается 1 раз в атаке когда переходит в состояние атаки ... в градусах
+  {
+    logMessage("[CBaseTankAttackStyle] Call GetAttackAngle");
+    return 30.0f;
+  }
+
+  void OnEnemyTargeted()
+  {
+    CBaseManeuveringUnit::OnEnemyTargeted();
+    if (m_Group != null)
+      m_Group.SetGroupHatchesToAttackState();
+  }
+
+  void OnRadarUpdate()
+  {
+//    if (GetMission().isRadarUpdateDebug)
+//      logError("OnRadarUpdate: " + new String(GetTargetedEnemy()) + " by " + getIdentificator(user));
+
+    if (m_InSpecialAttack)
+      return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+    {
+      m_NotifyOnEnemyTargetedAfterFrigid = true;
+      return;
+    }
+    else
+      m_NotifyOnEnemyTargetedAfterFrigid = false;
+
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
+    }
+
+    String TargetedEnemy = GetTargetedEnemy();
+    if (TargetedEnemy == "")
+    {
+      if (m_Group != null)
+      {
+        m_CurrentEnemy = "";
+        if (m_Group.m_CurrentOrder.m_Order == "Attack")
+        {
+          Collection _GroupTargets = m_Group.m_GroupTargets;
+          m_Group.UpdateGroupTargets();
+          if (_GroupTargets.isEmpty())
+          {
+            if (m_Group.HasOrderedEnemies())
+              m_Group.SetEnemiesArray([]);
+
+            m_Group.PopOrder();
+            m_Group.RepeatOrder();
+          }
+          else if (m_EnemyReactionType != ERT_FRIGID && m_EnemyReactionType != ERT_PASSIVE)
+          {
+            _GroupTargets.gotoBegin();
+            AttackEnemy(_GroupTargets.getValue());
+            m_CurrentEnemy = "";
+          }
+        }
+      }
+
+      return;
+    }
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+      if (TargetedEnemy == m_CurrentEnemy)
+      {
+        SetFireStyle_Enemy(m_CurrentEnemy);
+        return;
+      }
+
+      SetFireStyle_Nearest();
+
+      if (m_Group.m_EnemyReactionType == ERT_AGGRESSIVE)
+      {
+        if (!m_Group.HasOrderedEnemies())
+        {
+          m_Group.OnEnemyTargeted(this);
+        }
+        else
+        {
+          if (m_CurrentEnemy != "")
+            m_LastEnemy = m_CurrentEnemy;
+
+          AttackEnemy(TargetedEnemy);
+        }
+      }
+    }
+    else
+    {
+      if (m_EnemyReactionType != ERT_PASSIVE)
+        AttackEnemy(TargetedEnemy);
+    }
+  }
+}
+
+class CBaseAIBtrTask extends CBaseAITask
+{
+  void OnRadarUpdate()
+  {
+//    if (GetMission().isRadarUpdateDebug)
+//      logError("OnRadarUpdate: " + new String(GetTargetedEnemy()) + " by " + getIdentificator(user));
+    // Notify unit
+
+    if (m_InSpecialAttack)
+      return;
+
+    if (m_EnemyReactionType == ERT_FRIGID)
+    {
+      m_NotifyOnEnemyTargetedAfterFrigid = true;
+      return;
+    }
+    else
+      m_NotifyOnEnemyTargetedAfterFrigid = false;
+
+    if (m_bHuman)
+    {
+      Component Self = GetSelf();
+      Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
+    }
+
+    String TargetedEnemy = GetTargetedEnemy();
+    if( GetTargetedEnemy() == "" )
+      return;
+
+    if (m_Group != null)
+    {
+      if (m_Group.m_EnemyReactionType == ERT_FRIGID)
+        return;
+
+      if (TargetedEnemy == m_CurrentEnemy)
+      {
+        SetFireStyle_Enemy(m_CurrentEnemy);
+        return;
+      }
+
+      SetFireStyle_Nearest();
+
+      if (m_Group.m_EnemyReactionType == ERT_AGGRESSIVE)
+      {
+        if (!m_Group.HasOrderedEnemies())
+        {
+          m_Group.OnEnemyTargeted(this);
+        }
+        else
+        {
+          if (m_CurrentEnemy != "")
+            m_LastEnemy = m_CurrentEnemy;
+
+          AttackEnemy(TargetedEnemy);
+        }
+      }
+    }
+    else
+    {
+      if (m_EnemyReactionType != ERT_PASSIVE)
+        AttackEnemy(TargetedEnemy);
+    }
+  }
+}

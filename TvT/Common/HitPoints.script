@@ -1,0 +1,122 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CHitPoints
+{
+
+    final static float TankT34_76_42UnitHitPoints            = 1000;
+    final static float TankT34_85_44UnitHitPoints            = 1000;
+    final static float TankPzIVAusfGUnitHitPoints            = 1000;
+    final static float TankPzVIAusfEUnitHitPoints            = 1000;
+    final static float TruckOpelBlitzUnitHitPoints           = 200;//? 220000
+    final static float TruckZis5UnitHitPoints                = 200;//? 220000
+    final static float SAUSU_85UnitHitPoints                 = 1000;
+    final static float BtrHanomag251AusfCUnitHitPoints       = 1000;
+    final static float BtrM3A1HalftruckUnitHitPoints         = 1000;
+
+    final static float GunZis3UnitHitPoints                  = 120;
+    final static float GunPak40UnitHitPoints                 = 120;
+    final static float GunNebelUnitHitPoints                 = 150;
+
+    final static float GermanSoldierRifleUnitHitPoints       = 100;
+    final static float SovietSoldierRifleUnitHitPoints       = 100;
+    final static float GermanTankmanUnitHitPoints            = 100;
+    final static float SovietTankmanUnitHitPoints            = 100;
+
+    final static float IL2UnitHitPoints                      = 1000;
+    final static float FW190UnitHitPoints                    = 1000;
+
+    final static float FenceWickerUnitHitPoints         = 100;
+    final static float FencePalisadeUnitHitPoints       = 100;
+    final static float WaterWell_1UnitHitPoints         = 100;
+    final static float WaterWell_2UnitHitPoints         = 100;
+    final static float Cbld_HaystackModel               = 100;
+    final static float Cbld_PileLogsModel               = 100;
+    final static float BridgeWoodUnitHitPoints            = 100;
+    final static float AmmoBoxUnitHitPoints               = 100;
+    final static float BarrelPackAUnitHitPoints           = 100;
+    final static float BarrelPackBUnitHitPoints           = 100;
+    final static float BarrelUnitHitPoints                = 100;
+    final static float WeaponBoxSmallUnitHitPoints        = 100;
+
+    final static float DotConcreteUnitHitPoints            = 100;
+    final static float DzotWoodUnitHitPoints            = 100;
+    final static float USRCorralWoodUnitHitPoints            = 200;
+    final static float USRHouseWoodUnitHitPoints             = 300;//100
+    final static float USRShedWoodUnitHitPoints              = 300;//100
+    final static float TestHouseUnitHitPoints                = 300;//100
+
+}
+
+class CJointPoints
+{
+  //Pz4
+  final static float TankPzIVAusfGUnitHULL_DRIVERPoints      = 120;
+  final static float TankPzIVAusfGUnitHULL_GUNLAYERPoints    = 120;
+  final static float TankPzIVAusfGUnitHULL_ENGINEPoints      = 120;
+  final static float TankPzIVAusfGUnitTRACK_LEFTPoints       = 120;
+  final static float TankPzIVAusfGUnitTRACK_RIGHTPoints      = 120;
+  final static float TankPzIVAusfGUnitTURRETPoints           = 120;
+
+  //Pz4
+  final static float TankPzVIAusfEUnitHULL_DRIVERPoints      = 120;
+  final static float TankPzVIAusfEUnitHULL_GUNLAYERPoints    = 120;
+  final static float TankPzVIAusfEUnitHULL_ENGINEPoints      = 120;
+  final static float TankPzVIAusfEUnitTRACK_LEFTPoints       = 120;
+  final static float TankPzVIAusfEUnitTRACK_RIGHTPoints      = 120;
+  final static float TankPzVIAusfEUnitTURRETPoints           = 120;
+
+  //T34_76_42
+  final static float TankT34_76_42UnitHULL_DRIVERPoints      = 120;
+  final static float TankT34_76_42UnitHULL_GUNLAYERPoints    = 120;
+  final static float TankT34_76_42UnitHULL_ENGINEPoints      = 120;
+  final static float TankT34_76_42UnitTRACK_LEFTPoints       = 120;
+  final static float TankT34_76_42UnitTRACK_RIGHTPoints      = 120;
+  final static float TankT34_76_42UnitTURRETPoints           = 120;
+
+  //T34_85_44
+  final static float TankT34_85_44UnitHULL_DRIVERPoints      = 120;
+  final static float TankT34_85_44UnitHULL_GUNLAYERPoints    = 120;
+  final static float TankT34_85_44UnitHULL_ENGINEPoints      = 120;
+  final static float TankT34_85_44UnitTRACK_LEFTPoints       = 120;
+  final static float TankT34_85_44UnitTRACK_RIGHTPoints      = 120;
+  final static float TankT34_85_44UnitTURRETPoints           = 120;
+
+  //BtrHanomag251AusfC
+  final static float BtrHanomag251AusfCUnitHULL_DRIVERPoints   = 120;
+  final static float BtrHanomag251AusfCUnitHULL_ENGINEPoints   = 120;
+  final static float BtrHanomag251AusfCUnitTRACK_LEFTPoints    = 120;
+  final static float BtrHanomag251AusfCUnitTRACK_RIGHTPoints   = 120;
+  final static float BtrHanomag251AusfCUnitTURRETPoints        = 120;
+  final static float BtrHanomag251AusfCUnitDAMAGEDPoints       = 120;
+  final static float BtrHanomag251AusfCUnitHULL_GUNLAYERPoints = 100;
+
+  //BtrM3A1Halftruck
+  final static float BtrM3A1HalftruckUnitHULL_DRIVERPoints   = 120;
+  final static float BtrM3A1HalftruckUnitHULL_ENGINEPoints   = 120;
+  final static float BtrM3A1HalftruckUnitTRACK_LEFTPoints    = 120;
+  final static float BtrM3A1HalftruckUnitTRACK_RIGHTPoints   = 120;
+  final static float BtrM3A1HalftruckUnitTURRETPoints        = 120;
+  final static float BtrM3A1HalftruckUnitDAMAGEDPoints       = 120;
+
+  //TruckOpelBlitz
+  final static float TruckOpelBlitzUnitHULL_DRIVERPoints   = 100;
+  final static float TruckOpelBlitzUnitHULL_ENGINEPoints   = 100;
+  final static float TruckOpelBlitzUnitTRACK_LEFTPoints    = 100;
+  final static float TruckOpelBlitzUnitTRACK_RIGHTPoints   = 100;
+  final static float TruckOpelBlitzUnitDAMAGEDPoints       = 100;
+
+  //TruckZis5
+  final static float TruckZis5UnitHULL_DRIVERPoints   = 100;
+  final static float TruckZis5UnitHULL_ENGINEPoints   = 100;
+  final static float TruckZis5UnitTRACK_LEFTPoints    = 100;
+  final static float TruckZis5UnitTRACK_RIGHTPoints   = 100;
+  final static float TruckZis5UnitDAMAGEDPoints       = 100;
+
+}

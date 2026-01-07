@@ -1,0 +1,49 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Base class for all contents
+//
+
+class CBaseContent
+{
+  final static int INDEX_NotFound = -1;
+
+  final static int INDEX_ObjectID    = 0;
+  final static int INDEX_ComponentID = 1;
+  final static int INDEX_ScriptClass = 2;
+  final static int INDEX_Position    = 3;
+  final static int INDEX_Properties  = 4;
+
+  final static int INDEX_TriggerID    = 0;
+  final static int INDEX_EventType    = 1;
+  final static int INDEX_EventObjID   = 2;
+  final static int INDEX_Actions      = 3;
+  final static int INDEX_SpawnerMasks = 4;
+  final static int INDEX_Conditions   = 5;
+  final static int INDEX_TriggerInfo  = 6;
+
+  final static int INDEX_ActionID       = 0;
+  final static int INDEX_ActionRunState = 1;
+  final static int INDEX_ActionType     = 2;
+  final static int INDEX_ActionDelay    = 3;
+  final static int INDEX_ActionObjID    = 4;
+  final static int INDEX_ActionProp1    = 5;
+  final static int INDEX_ActionProp2    = 6;
+
+  final static int INDEX_CheckObjectType = 0;
+  final static int INDEX_CheckObjectID   = 1;
+  final static int INDEX_CheckStateID    = 2;
+  final static int INDEX_CompareFunction = 3;
+  final static int INDEX_CompareValue    = 4;
+  final static int INDEX_CondActionID    = 5;
+
+  final static int INDEX_CinemaProps  = 0;
+  final static int INDEX_CinemaFrames = 1;
+}

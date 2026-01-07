@@ -1,0 +1,43 @@
+//-------------------------------------------------------------------
+//
+//  Enhanced Subcaliber Metal Spark Effects
+//  This file contains enhanced spall effects that inherit from originals
+//  Created for realistic modern tank combat appearance
+//
+//-------------------------------------------------------------------
+// #########################################################################################
+//                                       Enhanced Subcaliber in metal / armour
+// #########################################################################################
+
+// ==================================================== Enhanced Sparks ==========================
+class CSubCaliberMetalSparkRefuseEffectEnhanced
+  extends CSubCaliberMetalSparkRefuseEffect
+{
+  // Parameters - Enhanced for realistic combat spall
+  // These values will override the original parameters after Init() is called
+  
+  CSubCaliberMetalSparkRefuseEffectEnhanced()
+  {
+    // IMPORTANT: We MUST call parent constructor first
+    // This ensures all original setup code runs properly
+    super();
+    
+    // === ENHANCED PARAMETERS ===
+    // These values will be applied AFTER the parent's Init() call
+    
+    // 1. Lifetime: 0.07 → 0.8 seconds (11x longer visibility)
+    LifetimeMS = 0.8;
+    
+    // 2. Ejection Velocity: 2.0 → 4.0 (2x faster sparks)  
+    EjectionVelocity = 4.0;
+    
+    // 3. Ejection Period: 0.01 → 0.005 (2x more frequent particle emission)
+    EjectionPeriodMS = 0.005;
+    
+    // 4. Theta Max: 50° → 80° (60% wider spread)
+    ThetaMax = 80;
+    
+    // 5. Velocity Variance: 3.0 → 2.0 (better controlled variation)
+    VelocityVariance = 2.0;
+  }
+}

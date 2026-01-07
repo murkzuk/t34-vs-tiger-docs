@@ -1,0 +1,200 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2007 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+// #########################################################################################
+//                                       Fire classes
+// #########################################################################################
+class CGenericSmallFireEffect
+  extends CBaseEffect
+{
+  CGenericSmallFireEffect()
+  {
+    CreateEffect("GenericSmallFireRefuseEffect", 0.0);
+    CreateEffect("GenericSmallFireSmokeRefuseEffect", 0.0);
+  }
+}
+// =============================================== SmallFire  ============================
+class CGenericSmallFireRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.15;		//период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.1;   	//рандомизация периода (сек)
+   float LifetimeMS         = 90;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 0.6;   	//начальная скорость частицы (м/с)
+   float VelocityVariance   = 0.2;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.1;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.0;   	//рандомизация смещени
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 20;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = false; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру"
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = false; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Eff_fire1.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = false;  	//тип прозрачности false - аддитивная,
+							//  true - нормальна
+   int     TexSize          = 256;    	//размер текстуры в пикселах
+   int     TexFrameX        = 256;     	//размер кадра по ширине
+   int     TexFrameY        = 256;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CGenericSmallFireRefuseParticle";  //имя описателя частиц
+// Data block .............................................................................
+ CGenericSmallFireRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+     SetWindEffect(1.0);
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CGenericSmallFireRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 3.0; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 2.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = -0.03;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 0.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = -0.03;		//собственное усокрение
+
+   float SpinRandomMin              = -3.1;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              = 3.1;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  = 0.1;		//скорость вращени
+
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.1, 0.15, 0.2, 1.0];		//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+                    new Color(0.1, 0.1, 0.1, 0.2),
+                    new Color(0.9, 0.9, 0.8, 0.6),
+                    new Color(0.9, 0.9, 0.8, 0.5),
+                    new Color(0.5, 0.5, 0.5, 0.3),
+                    new Color(0.1, 0.1, 0.1, 0.0)
+                  ];
+
+   Array sizes  = [0.3, 0.4, 0.5, 0.4, 0.6];		//размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+                    [0],
+                    [0],
+                    [0],
+                    [0]
+                  ];
+// Data block ..............................................................................
+}
+// ============================================ SmallFire Smoke ===========================
+class CGenericSmallFireSmokeRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.2;		//период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.1;   	//рандомизация периода (сек)
+   float LifetimeMS         = 480;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 0.3;   	//начальная скорость частицы (м/с)
+   float VelocityVariance   = 0.5;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = -0.1;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = -0.3;   	//рандомизация смещени
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 40;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = false; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру"
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = true; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.8;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Effect_7.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = true;  	//тип прозрачности false - аддитивная,
+							//  true - нормальна
+   int     TexSize          = 256;    	//размер текстуры в пикселах
+   int     TexFrameX        = 64;     	//размер кадра по ширине
+   int     TexFrameY        = 64;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CGenericSmallFireSmokeRefuseParticle"; //имя описателя частиц
+// Data block .............................................................................
+ CGenericSmallFireSmokeRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+     SetWindEffect(1.0);
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CGenericSmallFireSmokeRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 12.0; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 2.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = -0.01;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 0.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = -0.04;		//собственное усокрение
+
+   float SpinRandomMin              = -3.1;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              = 3.1;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  = 0.06;		//скорость вращени
+
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.1, 0.2, 0.4, 1.0];		//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+                    new Color(0.4, 0.4, 0.4, 0.0),
+                    new Color(0.5, 0.5, 0.5, 0.6),
+                    new Color(0.6, 0.6, 0.6, 0.4),
+                    new Color(0.7, 0.7, 0.7, 0.1),
+                    new Color(1.0, 1.0, 1.0, 0.0)
+                  ];
+
+   Array sizes  = [0.1, 0.5, 1.0, 2.0, 4.0];		//размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+                    [9],
+                    [9],
+                    [9],
+                    [9]
+                  ];
+// Data block ..............................................................................
+}

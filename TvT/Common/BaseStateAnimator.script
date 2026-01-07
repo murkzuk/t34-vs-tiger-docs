@@ -1,0 +1,154 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseStateAnimatorGraph
+{
+  // ==================================
+  // Condition types
+  // ==================================
+
+  final static int ECT_SPEED    = 0;
+  final static int ECT_PARAM    = 1;
+  final static int ECT_MOVEDIR  = 2;
+  final static int ECT_JOINTDIR = 3;
+  final static int ECT_CHANGE   = 8;
+
+  // ==================================
+  // Condition wrappers
+  // ==================================
+
+  Array C_SpeedRange(
+      float _SpeedLow,
+      float _SpeedHigh
+    )
+  {
+    return [ECT_SPEED, _SpeedLow, _SpeedHigh];
+  }
+
+  Array C_SpeedRange(
+      float _SpeedLow,
+      float _SpeedHigh,
+      float _SpeedBorderLow,
+      float _SpeedBorderHigh
+    )
+  {
+    return [ECT_SPEED, _SpeedLow, _SpeedHigh, _SpeedBorderLow, _SpeedBorderHigh];
+  }
+
+  Array C_Parameter(
+      variant _Key,
+      variant _Value
+    )
+  {
+    return [ECT_PARAM, _Key, _Value];
+  }
+
+  Array C_Parameter(
+      variant _Key,
+      variant _Value,
+      float   _Sensitivity
+    )
+  {
+    return [ECT_PARAM, _Key, _Value, _Sensitivity];
+  }
+
+  Array C_Parameter(
+      variant _Key,
+      variant _Value,
+      float   _Sensitivity,
+      boolean _Equal,
+      boolean _Restrict
+    )
+  {
+    return [ECT_PARAM, _Key, _Value, _Sensitivity, _Equal, _Restrict];
+  }
+
+  Array C_MoveDir(
+      float _HAngleFrom,
+      float _HAngleTo,
+      float _VAngleFrom,
+      float _VAngleTo
+    )
+  {
+    return [ECT_MOVEDIR, _HAngleFrom, _HAngleTo, _VAngleFrom, _VAngleTo];
+  }
+
+  Array C_JointDir(
+      float _HAngleRange,
+      float _VAngleRange,
+      float _HAngle,
+      float _VAngle,
+      variant _JointParam
+    )
+  {
+    return [ECT_JOINTDIR, _HAngleRange, _VAngleRange, _HAngle, _VAngle, _JointParam];
+  }
+
+  Array C_ChangeParam(
+      int _ParamValue
+    )
+  {
+    return [ECT_CHANGE, _ParamValue];
+  }
+
+  // ==================================
+  // Helpers
+  // ==================================
+
+  void CreateBlendLines(
+      String  _StateFrom,
+      String  _StateTo,
+      float   _Weight,
+      String  _AnimFrom,
+      String  _AnimTo,
+      int     _Mode,
+      float   _Duration,
+      float   _SpeedFactor,
+      float   _BlendingSpeed
+    )
+  {
+    CreateSingleLineEx(_StateFrom, _StateTo, _Weight, [_AnimFrom, _AnimTo], _Mode, _Duration, _SpeedFactor, false, _BlendingSpeed);
+    CreateSingleLineEx(_StateTo, _StateFrom, _Weight, [_AnimTo, _AnimFrom], _Mode, _Duration, _SpeedFactor, false, _BlendingSpeed);
+  }
+
+  void CreateBlendLines(
+      String  _StateFrom,
+      String  _StateTo,
+      float   _Weight,
+      String  _AnimFrom,
+      String  _AnimTo,
+      int     _Mode,
+      float   _Duration,
+      float   _SpeedFactor,
+      float   _BlendingSpeed,
+      boolean _CanBreak
+    )
+  {
+    CreateSingleLineEx(_StateFrom, _StateTo, _Weight, [_AnimFrom, _AnimTo], _Mode, _Duration, _SpeedFactor, _CanBreak, _BlendingSpeed);
+    CreateSingleLineEx(_StateTo, _StateFrom, _Weight, [_AnimTo, _AnimFrom], _Mode, _Duration, _SpeedFactor, _CanBreak, _BlendingSpeed);
+  }
+}
+
+class CBaseStateAnimator
+{
+  final static boolean IsPanicEnabled       = false;
+  final static boolean IsEventFilterEnabled = true;
+  final static Array   EventFilter          = [];
+
+  // ==================================
+  // Events
+  // ==================================
+
+  void OnChangeStateAnimation(
+      String _From,
+      String _To
+    )
+  {
+  }
+}

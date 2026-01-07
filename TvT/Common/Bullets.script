@@ -1,0 +1,292 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//-----------------------
+// Common bullets classes
+//-----------------------
+class CMachineGunBulletControl
+{
+  Component BulletRender = new #StaticEffect<CMachineGunBulletEffect>();
+  boolean   IsMotionBlur = true;
+  float     BlurLength   = 5.5;
+
+  float MaxDistance   = 1500.0;
+  Array Classificator = [];
+  boolean CanKillTree = false;
+  Array IsectionMask  = [
+                          [],
+                          ["FOREST"]
+                        ];
+
+  /*boolean OnDetonate(
+      Matrix _Position,
+      Vector _Direction,
+      Component _TargetObject,
+      Component _TargetObjectPart,
+      float     _Penetration,
+      String    _OwnerID,
+      int       _InstanceID,
+      int      _Substance
+                      )
+  {
+    if(null != _TargetObjectPart)
+    {
+      logError(_OwnerID + ": fired and hit " + new String(_Substance) + " material." +  " Target object is " + getIdentificator(_TargetObject) + " and joint is " + _TargetObject.GetJointName(_TargetObjectPart));
+    }
+    else
+    {
+      //logError("Component is null");
+      logError(_OwnerID + ": fired and hit " + new String(_Substance) + " material." +  " Target object is " + getIdentificator(_TargetObject));
+    }
+
+    return true;
+  }*/
+}
+
+// Fake bullets
+class CFakeMachineGunBulletControl
+{
+  Array   Classificator   = [];
+  float   MaxDistance     = 200.0;
+  boolean IsMotionBlur    = true;
+  boolean CanKillTree = false;
+  Array     IsectionMask = [
+                             [],
+                             [ "FOREST" ]
+                           ];
+}
+
+class CFakeRifleBulletControl
+{
+  Array   Classificator   = [];
+  float   MaxDistance     = 200.0;
+  boolean IsMotionBlur    = true;
+  boolean CanKillTree = false;
+}
+
+class CLightGunBulletControl
+{
+  Array   Classificator   = [];
+  float   MaxDistance     = 2000.0;
+  boolean IsMotionBlur    = true;
+}
+
+class CHeavyGunBulletControl
+{
+  Array   Classificator   = [];
+  float   MaxDistance     = 2000.0;
+  boolean IsMotionBlur    = true;
+}
+
+class CCalibreBulletControl
+{
+  Array     Classificator   = [];
+  float     MaxDistance     = 2000.0;
+  boolean   IsMotionBlur    = true;
+  int       CollisionMode   = BCM_ARMOUR_PIERCING;
+  Component BulletRender    = new #StaticEffect<CCalibreBulletTraceEffect>();// null;
+  Array     IsectionMask = [
+                             [],
+                             []
+                           ];
+}
+
+class CSubcalibreBulletControl
+{
+  Array     Classificator   = [];
+  float     MaxDistance     = 2000.0;
+  boolean   IsMotionBlur    = false;
+  int       CollisionMode   = BCM_ARMOUR_PIERCING;
+  Component BulletRender    = new #StaticEffect<CCalibreBulletTraceEffect>();// null;//new #StaticEffect<CSubcalibreBulletTraceEffect>();
+  Array     IsectionMask = [
+                             [],
+                             []
+                           ];
+}
+
+class CHEBulletControl
+{
+  Array     Classificator   = [];
+  float     MaxDistance     = 2000.0;
+  boolean   IsMotionBlur    = true;
+  int       CollisionMode   = BCM_ARMOUR_PIERCING;
+  Component BulletRender    = null;
+  Array     IsectionMask = [
+                             [],
+                             []
+                           ];
+}
+
+class CBombControl
+{
+  Array    Classificator  = [];
+  float    MaxDistance    = 5000.0;
+  boolean  IsMotionBlur   = true;
+  Vector   GravityAccel   = CWorldPhysics::GravityVector;
+}
+
+// base class for all missile
+class CBaseMissileControl
+{
+  Array   Classificator    = [];
+
+  // laying method
+  int     TraceMethod      = BTM_PURSUIT;
+
+  // line trace accelerate
+  boolean IsLineAccelerate = true;
+
+  // fuse settings
+  boolean IsProximityFuse  = false;
+  float   DetonateDistance = 10.0;
+
+  // distance altitude for cruising and surface-to-air missiles
+  float   ControlAltitude  = 300.0;
+}
+
+class CLightMissileControl
+{
+  float   Acceleration     = 190.0;
+  float   MaxMoveSpeed     = 270.0;
+  float   MaxDistance      = 3500.0;
+  float   MaxRotSpeed      = 70.0;
+
+  float   MaxLockAngle     = 90.0;
+
+  String  TraceEffectId    = "LightMissileTraceEffect";
+  String  FireEffectId     = "LightMissileFireEffect";
+}
+
+class CHeavyMissileControl
+{
+  float   Acceleration     = 150.0;
+  float   MaxMoveSpeed     = 200.0;
+  float   MaxDistance      = 3500.0;
+  float   MaxRotSpeed      = 70.0;
+
+  float   MaxLockAngle     = 90.0;
+
+  String  TraceEffectId    = "HeavyMissileTraceEffect";
+  String  FireEffectId     = "HeavyMissileFireEffect";
+}
+
+//
+// Bullets array
+//
+
+class CBulletsArray
+{
+  void CBulletsArray()
+  {
+    //
+    //Units
+    //
+
+    //T34_76_42
+    RegisterPattern("TankT34_76_42MachineGunBullet",
+      new #BulletController<CTankT34_76_42MachineGunBulletControl>());
+    RegisterPattern("TankT34_76_42GunCalibreBullet",
+      new #BulletController<CTankT34_76_42GunCalibreBulletControl>());
+    RegisterPattern("TankT34_76_42GunCalibreBulletDebris",
+      new #BulletController<CTankT34_76_42GunCalibreBulletDebrisControl>());
+    RegisterPattern("TankT34_76_42GunSubCalibreBullet",
+      new #BulletController<CTankT34_76_42GunSubCalibreBulletControl>());
+    RegisterPattern("TankT34_76_42GunHEBullet",
+      new #BulletController<CTankT34_76_42GunHEBulletControl>());
+    RegisterPattern("TankT34_76_42GunHEBulletDebris",
+      new #BulletController<CTankT34_76_42GunHEBulletDebrisControl>());
+
+    //T34_85_44
+    RegisterPattern("TankT34_85_44MachineGunBullet",
+      new #BulletController<CTankT34_85_44MachineGunBulletControl>());
+    RegisterPattern("TankT34_85_44GunCalibreBullet",
+      new #BulletController<CTankT34_85_44GunCalibreBulletControl>());
+    RegisterPattern("TankT34_85_44GunCalibreBulletDebris",
+      new #BulletController<CTankT34_85_44GunCalibreBulletDebrisControl>());
+    RegisterPattern("TankT34_85_44GunSubCalibreBullet",
+      new #BulletController<CTankT34_85_44GunSubCalibreBulletControl>());
+    RegisterPattern("TankT34_85_44GunHEBullet",
+      new #BulletController<CTankT34_85_44GunHEBulletControl>());
+    RegisterPattern("TankT34_85_44GunHEBulletDebris",
+      new #BulletController<CTankT34_85_44GunHEBulletDebrisControl>());
+
+    //PzIVG
+    RegisterPattern("TankPzIVGMachineGunBullet",
+      new #BulletController<CTankPzIVGMachineGunBulletControl>());
+    RegisterPattern("TankPzIVGGunCalibreBullet",
+      new #BulletController<CTankPzIVGGunCalibreBulletControl>());
+    RegisterPattern("TankPzIVGGunCalibreBulletDebris",
+      new #BulletController<CTankPzIVGGunCalibreBulletDebrisControl>());
+    RegisterPattern("TankPzIVGGunSubCalibreBullet",
+      new #BulletController<CTankPzIVGGunSubCalibreBulletControl>());
+    RegisterPattern("TankPzIVGGunHEBullet",
+      new #BulletController<CTankPzIVGGunHEBulletControl>());
+    RegisterPattern("TankPzIVGGunHEBulletDebris",
+      new #BulletController<CTankPzIVGGunHEBulletDebrisControl>());
+
+    //TankPzVIAusfE
+    RegisterPattern("TankPzVIAusfEMachineGunBullet",
+      new #BulletController<CTankPzVIAusfEMachineGunBulletControl>());
+    RegisterPattern("TankPzVIAusfEGunCalibreBulletDebris",
+      new #BulletController<CTankPzVIAusfEGunCalibreBulletDebrisControl>());
+    RegisterPattern("TankPzVIAusfEGunCalibreBullet",
+      new #BulletController<CTankPzVIAusfEGunCalibreBulletControl>());
+    RegisterPattern("TankPzVIAusfEGunSubCalibreBullet",
+      new #BulletController<CTankPzVIAusfEGunSubCalibreBulletControl>());
+    RegisterPattern("TankPzVIAusfEGunHEBullet",
+      new #BulletController<CTankPzVIAusfEGunHEBulletControl>());
+    RegisterPattern("TankPzVIAusfEGunHEBulletDebris",
+      new #BulletController<CTankPzVIAusfEGunHEBulletDebrisControl>());
+
+
+    //BtrHanomag251AusfC
+    RegisterPattern("BtrHanomag251AusfCMachineGunBullet",
+      new #BulletController<CBtrHanomag251AusfCMachineGunBulletControl>());
+
+    //BtrM3A1Halftruck
+    RegisterPattern("BtrM3A1HalftruckMachineGunBullet",
+      new #BulletController<CBtrM3A1HalftruckMachineGunBulletControl>());
+
+    //Zis3
+    RegisterPattern("GunZis3GunCalibreBullet",
+      new #BulletController<CGunZis3GunCalibreBulletControl>());
+    RegisterPattern("GunZis3GunCalibreBulletDebris",
+      new #BulletController<CGunZis3GunCalibreBulletDebrisControl>());
+    RegisterPattern("GunZis3GunSubCalibreBullet",
+      new #BulletController<CGunZis3GunSubCalibreBulletControl>());
+    RegisterPattern("GunZis3GunHEBullet",
+      new #BulletController<CGunZis3GunHEBulletControl>());
+    RegisterPattern("GunZis3GunHEBulletDebris",
+      new #BulletController<CGunZis3GunHEBulletDebrisControl>());
+
+    //Pak40
+    RegisterPattern("GunPak40GunCalibreBullet",
+      new #BulletController<CGunPak40GunCalibreBulletControl>());
+    RegisterPattern("GunPak40GunCalibreBulletDebris",
+      new #BulletController<CGunPak40GunCalibreBulletDebrisControl>());
+    RegisterPattern("GunPak40GunSubCalibreBullet",
+      new #BulletController<CGunPak40GunSubCalibreBulletControl>());
+    RegisterPattern("GunPak40GunHEBullet",
+      new #BulletController<CGunPak40GunHEBulletControl>());
+    RegisterPattern("GunPak40GunHEBulletDebris",
+      new #BulletController<CGunPak40GunHEBulletDebrisControl>());
+
+    //Airplane
+            RegisterPattern("AirBomb",
+      new #BulletController<CAirBombControl>());
+
+    //human unit
+    // Fake weapons
+     RegisterPattern("GermanSoldierRifleFakeBullet",
+       new #BulletController<CGermanSoldierRifleFakeBulletControl>());
+     RegisterPattern("SovietSoldierRifleFakeBullet",
+       new #BulletController<CSovietSoldierRifleFakeBulletControl>());
+  }
+}
+

@@ -1,0 +1,116 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseLightEmitter
+  extends CEditable
+{
+  static boolean DefaultIsEnabled          = true;
+  static boolean DefaultIsDebugInfoEnabled = false;
+
+  int     LightType        = LIGHTTYPE_POINT;
+  Color   LightColor       = new Color(1.0, 1.0, 1.0);
+  float   Illumination     = 10.0f;
+  float   LightRange       = 1000.0;
+  boolean LightDynamic     = true;
+  Array   LightAttenuation = [ 1.0, 0.0, 0.01 ];
+  Array   LightSpot        = [ 0.0, 0.0, 0.0  ];
+
+  //
+  // Constants
+  //
+
+  final static Array LightTypeNames = [
+      "LIGHTTYPE_POINT",
+      "LIGHTTYPE_SPOT",
+      "LIGHTTYPE_DIRECTIONAL"
+    ];
+
+  final static Array LightTypeValues = [
+      LIGHTTYPE_POINT,
+      LIGHTTYPE_SPOT,
+      LIGHTTYPE_DIRECTIONAL
+    ];
+
+  static String LightTypeValueToName(
+      int _LightTypeValue
+    )
+  {
+    return LightTypeNames[LightTypeValues.find(_LightTypeValue)];
+  }
+
+  static int LightTypeNameToValue(
+      String _LightTypeName
+    )
+  {
+    return LightTypeValues[LightTypeNames.find(_LightTypeName)];
+  }
+
+  //
+  // CEditable
+  //
+
+  Array GetDefaultProperties()
+  {
+    return [
+        [ "IsEnabled",          DefaultIsEnabled                ],
+        [ "IsDebugInfoEnabled", DefaultIsDebugInfoEnabled       ],
+        [ "LightType",          LightTypeValueToName(LightType) ],
+        [ "LightColor",         LightColor                      ],
+        [ "Illumination",       Illumination                    ],
+        [ "LightRange",         LightRange                      ],
+        [ "LightDynamic",       LightDynamic                    ],
+        [ "LightAttenuation",   LightAttenuation                ],
+        [ "LightSpot",          LightSpot                       ]
+      ];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    this.IsEnabled          = _PropMap.Get("IsEnabled",          DefaultIsEnabled);
+    this.IsDebugInfoEnabled = _PropMap.Get("IsDebugInfoEnabled", DefaultIsDebugInfoEnabled);
+    
+    SetLightType(LightTypeNameToValue(_PropMap.Get("LightType", LightTypeValueToName(LightType))));
+
+    SetLightColor      (_PropMap.Get("LightColor",       LightColor) * 
+                        _PropMap.Get("Illumination",     Illumination));
+    SetLightRange      (_PropMap.Get("LightRange",       LightRange));
+    SetLightDynamic    (_PropMap.Get("LightDynamic",     LightDynamic));
+    SetLightAttenuation(_PropMap.Get("LightAttenuation", LightAttenuation));
+    SetLightSpot       (_PropMap.Get("LightSpot",        LightSpot));
+  }
+
+  Array GetPropStrings()
+  {
+    return [["LightType", LightTypeNames]];
+  }
+
+  //
+  // Service
+  //
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+  }
+
+  void UpdateIngameState()
+  {
+  }  
+  
+  void Shutdown(
+      Component _Mission
+    )
+  {
+  }
+}

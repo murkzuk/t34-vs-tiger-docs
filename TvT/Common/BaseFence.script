@@ -1,0 +1,772 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseDestructableFenceObject
+  extends CObject
+{
+  static String  m_SectionName    = "";
+  static String  m_StartSection   = "";
+  static String  m_EndSection     = "";
+
+  static String  m_DamagedSectionName    = "";
+  static String  m_DamagedStartSection   = "";
+  static String  m_DamagedEndSection     = "";
+
+  static String  DeathEffect       = "";
+
+  static int     m_InitSize        = 10;
+
+  int            m_CurrentSize 	   = 10;
+
+  Array          m_SectionPos = [];
+  Array          m_SectionIndex = [];
+
+  float          m_DestroyEnergy = 0.0f;
+
+  final static float DefaultHitPoints = CHitPoints::FenceWickerUnitHitPoints;
+
+  final static String SubstanceClass = "";
+  final static float Mass       = 10.0f;
+  final static float TouchMass  = 0.0f;
+  final static float TouchSpeed = 0.0f;
+
+
+  Array GetDefaultProperties()
+  {
+    return [
+             ["SurfaceControl", DefaultSurfaceControl],
+             ["Length", 	m_InitSize]
+           ];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CObject::SetProperties(_PropMap);
+
+    m_CurrentSize  = _PropMap.Get("Length", m_InitSize) - 2;
+    if (m_CurrentSize < 1)
+      m_CurrentSize = 1;
+    OnSizeChanged();
+  }
+
+  void SetProperties(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CBaseDestructableFenceObject()
+  {
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Construct(_Mission, _PropMap);
+    Component Mesh = GetMeshComponent();
+    if (null != Mesh)
+    {
+      Mesh.SetCenteredMode(true);
+    }
+
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.00f);
+    GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127, 0.00f);
+
+  }
+
+  // ====================================================
+  // Service
+  // ====================================================
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void UpdateIngameState()
+  {
+  }  
+  
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    CObject::Shutdown(_Mission);
+  }
+
+  int CreateSection(
+      String  _JointName,
+      float   _HitPoints,
+      String  _SectionName
+    )
+  {
+
+    Component StateControl = GetStateControl();
+    if (StateControl == null)
+      return -1;
+
+    Component Joint = GetMeshComponent().GetJoint(_JointName);
+    if (Joint == null)
+    {
+      logError("Unable to find joint " + _JointName + " in CreateSection");
+      return -1;
+    }
+    int Index = StateControl.CreateUnitItem(Joint, _HitPoints);
+    StateControl.EnableHPEvent(true);
+
+    m_SectionPos.add(getPosition(Joint).origin);
+    m_SectionIndex.add(Index);
+
+    return Index;
+  }
+
+  void OnSizeChanged()
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+      return;
+
+    Mesh.CreateLine(
+        m_StartSection,   IdentityMatrix, AXIS_X, "Section_0",
+        m_FinishSection,  IdentityMatrix, AXIS_X, "Section_" + new String(m_CurrentSize + 1),
+        m_SectionName,    IdentityMatrix, AXIS_X, "Section_",
+        m_CurrentSize
+      );
+
+    Mesh.CreateDamagedLine(
+        m_DamagedStartSection,   IdentityMatrix, AXIS_X, "DamagedSection_0",
+        m_DamagedFinishSection,  IdentityMatrix, AXIS_X, "DamagedSection_" + new String(m_CurrentSize + 1),
+        m_DamagedSectionName,    IdentityMatrix, AXIS_X, "DamagedSection_",
+        m_CurrentSize
+      );
+
+    SetupDestroyController(
+        SubstanceClass,
+        Mass,
+        ComputeTouchParams(TouchMass, TouchSpeed)
+     );
+
+    m_SectionPos.clear();
+    for (int i = 0; i < m_CurrentSize + 2; i++)
+      CreateSection("Section_" + new String(i), DefaultHitPoints, "Section_" + new String(i));
+
+  } 
+
+  void UpdateRecord()
+  {
+    Component Content = new #GameController().GetObject(SOID_MissionController).GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.DropDefault("Length");
+    PropertiesMap.Set("Length", m_CurrentSize + 2);
+  }      
+
+  // ====================================================
+  // Events
+  // ====================================================  
+  event void OnAddJoint()
+  {
+    m_CurrentSize++;
+    OnSizeChanged();
+    UpdateRecord();
+  }  
+
+  event void OnRemoveJoint()
+  {
+    if (m_CurrentSize > 0)
+    {    
+      m_CurrentSize--;
+      OnSizeChanged();
+      UpdateRecord();
+    }
+  }
+
+  void OnLifeStateChanged(
+      boolean _IsAlive
+    )
+  {
+  }
+
+  void OnLifeStateChanged(
+      int       _ItemIndex,
+      boolean   _IsAlive
+    )
+  {
+    if (!_IsAlive)
+      for (int i = 0 ; i < m_SectionIndex.size() ; i++)
+      {
+        if (m_SectionIndex[i] == _ItemIndex)
+          DestroySection(i);
+      }
+
+  }
+
+  void DestroySection(
+      int _SectionNum
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+      return;
+
+//    logError("Section Destroyed: " + new String(_SectionNum));
+    Component DestroyedSection = Mesh.GetJoint("Section_" + new String(_SectionNum));
+    Component DamagedSection = Mesh.GetJoint("DamagedSection_" + new String(_SectionNum));
+//    addClassificator(DestroyedSection, CLASSIFICATOR_DO_NOT_COLLISION_CHECK);
+    m_SectionPos[_SectionNum] = new Vector();
+    setVisibleState(DestroyedSection, false);
+    setPosition(DamagedSection, getPosition(DestroyedSection));
+    setVisibleState(DamagedSection, true);
+      
+    if ("" != DeathEffect)
+      (new #EffectsArray()).CreateEffect(DeathEffect, getPosition(Mesh.GetJoint("Section_" + new String(_SectionNum))), this);
+
+    if ("" != PrevDeathSound)
+      (new #SoundsArray()).CreateSound(PrevDeathSound, getPosition(Mesh.GetJoint("Section_" + new String(_SectionNum))));
+
+  }
+
+  event void OnPhysicsEnabled(
+      boolean _Enable
+    )
+  {
+    Component DestroyController = GetObject("DestroyController");
+    DestroyController.Activate(true);
+  }
+
+  event void OnSuccessTouchTrigger(
+      float _Energy,
+      Vector _Point
+    )
+  {
+    float Lenght = FLT_MAX;
+    float NewLenght = 0;
+    int JointNum = -1;
+
+    for (int i = 0; i < m_SectionPos.size(); i++)
+    {
+      NewLenght = (m_SectionPos[i] - _Point).Magnitude();
+      if (Lenght > NewLenght)
+      {
+        JointNum = i;
+        Lenght = NewLenght;
+      }
+    }
+ 
+    if (JointNum >= 0)
+      DestroySection(JointNum);
+
+    Component physics_controller = GetObject("DestroyController");
+    physics_controller.CreateTouchTrigger( m_DestroyEnergy );
+
+  }
+  
+  void SetupDestroyController(
+      String _SubstaceScriptClass,
+      float  _FenceMass,
+      float  _DestroyEnergy
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupDestroyPhysicsController function call");
+      return;
+    }
+
+    m_DestroyEnergy = _DestroyEnergy;
+
+    // Create physics controller
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, _SubstaceScriptClass);
+
+    // Initialize controller
+    PhysicsController.SetEventHandler(this);
+    PhysicsController.SetMass(_FenceMass);
+    setSlaveObject(PhysicsController, Mesh);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    // Register object physics controller
+    RegisterObject("DestroyController", PhysicsController);
+
+    // Unlink all joints
+    for (int Index = 0; Index < m_CurrentSize + 2; Index++)
+    {
+      String SectionName = "Section_" + new String(Index);
+
+      Component SectionJoint = Mesh.GetJoint(SectionName);
+      if (SectionJoint == null)
+      {
+        logError("Unable to find joint " + SectionName + " in SetupDestroyPhysicsController function call");
+        continue;
+      }
+
+//      Mesh.UnlinkJoint(SectionJoint);
+
+      Array Shapes = Mesh.GetCollisionShapes(SectionJoint, false);
+      if (Shapes.isEmpty())
+        logError("Empty shapes");
+
+      boolean IsValidBody = PhysicsController.CreateRigidBody(SectionName, SectionJoint, Shapes);
+
+      if (IsValidBody)
+      {
+        PhysicsController.SetFixedBody(SectionName, true);
+//        PhysicsController.SetIsBuildingCollisionShape(SectionName);
+      }
+      else
+        logError("Invalid body. Joint - " + SectionName);
+
+
+    }
+
+    // Append classificator for physics controllable object
+    addClassificator(user, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+    PhysicsController.SetIsectionModeAsSkipContacts();
+
+    //# comment for vector solver # PhysicsController.SetIsectionModeAsGroupTriangles();
+    PhysicsController.CreateTouchTrigger(_DestroyEnergy);
+
+    PhysicsController.EnableControl(false);
+//    PhysicsController.Activate(false);
+
+    PhysicsController.SetExcludeSet([ CLASSIFICATOR_TERRAIN, CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_WATER ]);
+    
+  }
+
+
+}
+
+class CBaseFenceObject
+  extends CObject
+{
+  static int     m_SectionNumber  = 10;
+
+  static String  m_SectionName    = "";
+  static String  m_StartSection   = "";
+  static String  m_EndSection     = "";
+
+  static Matrix  m_MatrixMod      = new Matrix(new Quaternion(0.0, new Vector(0.0, 0.0, 1.0)));
+  static int     m_LocalAxis      = AXIS_X;
+
+  Array   m_SectionArray   = [];
+
+  final static String DefaultSurfaceControl = "PutonGround";
+
+  // Automatic classificators of this object
+  static Array AutomaticClassificators     = [];
+
+  Array GetDefaultProperties()
+  {
+    return [
+             ["SurfaceControl", DefaultSurfaceControl],
+             ["SectionArray",   m_SectionArray]
+           ];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CObject::SetProperties(_PropMap);
+  }
+
+  void SetProperties(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  // =======================================
+  // Contruction and initialization
+  // =======================================
+  void CBaseFenceObject()
+  {
+    m_SectionArray.add([]);
+
+    m_SectionArray[m_SectionArray.size()-1].add(1);
+    m_SectionArray[m_SectionArray.size()-1].add(m_StartSection);
+    m_SectionArray[m_SectionArray.size()-1].add(m_MatrixMod);
+
+    m_SectionArray.add([]);
+
+    m_SectionArray[m_SectionArray.size()-1].add(m_SectionNumber);
+    m_SectionArray[m_SectionArray.size()-1].add(m_SectionName);
+    m_SectionArray[m_SectionArray.size()-1].add(m_MatrixMod);
+
+    m_SectionArray.add([]);
+
+    m_SectionArray[m_SectionArray.size()-1].add(1);
+    m_SectionArray[m_SectionArray.size()-1].add(m_EndSection);
+    m_SectionArray[m_SectionArray.size()-1].add(m_MatrixMod);
+
+    addClassificator(user, "FENCE");
+
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Construct(_Mission, _PropMap);
+//    CGroundBuilding::Construct(_Mission, _PropMap);
+//    OnCreateShape(_PropMap);
+  }
+
+  void OnCreateShape(Component _PropMap)
+  {
+    Component Mesh = GetMeshComponent();
+    if (null != Mesh)
+    {
+      Array CompressedSectionArray = _PropMap.Get("SectionArray", m_SectionArray);
+      Array SectionArray = [];
+      Array SectionJointNames = [];
+      int iSection = 0;
+
+      for (int i = 0; i < CompressedSectionArray.size(); i++)
+      {
+        for (int j = 0; j < CompressedSectionArray[i][0]; j++)
+        {
+          SectionArray.add([]);
+
+          SectionArray[SectionArray.size()-1].add(CompressedSectionArray[i][1]);
+          SectionArray[SectionArray.size()-1].add(CompressedSectionArray[i][2]);
+          SectionArray[SectionArray.size()-1].add(m_LocalAxis);
+          SectionArray[SectionArray.size()-1].add("Section_");
+          SectionJointNames.add("Section_" + new String(iSection));
+          iSection++;
+        }
+      }
+
+      Mesh.CreateShape(SectionArray);
+
+/*      SetupDestroyController(
+        "CWoodSubstance",
+        4700.0,
+        ComputeTouchParams(4000.0, 2.0),
+        SectionJointNames
+        );
+  */
+    }
+
+
+  }
+
+  // ====================================================
+  // Service
+  // ====================================================
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void UpdateIngameState()
+  {
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    CObject::Shutdown(_Mission);
+  }
+
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+
+    logError("Fence trigger");
+    // Destroy house object
+//    Component StateControl = GetStateControl();
+//    StateControl.SetHitPoints(0.0);
+  }
+  
+  void SetupDestroyController(
+      String _SubstaceScriptClass,
+      float  _FenceMass,
+      float  _DestroyEnergy,
+      Array  _Sections
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupDestroyPhysicsController function call");
+      return;
+    }
+
+    // Create physics controller
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, _SubstaceScriptClass);
+
+    // Initialize controller
+    PhysicsController.SetEventHandler(this);
+    PhysicsController.SetMass(_FenceMass);
+    setSlaveObject(PhysicsController, Mesh);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    // Register object physics controller
+    RegisterObject("DestroyController", PhysicsController);
+
+    // Unlink all joints
+    for (int Index = 0; Index < _Sections.size(); Index++)
+    {
+      Component SectionJoint = Mesh.GetJoint(_Sections[Index]);
+      if (SectionJoint == null)
+      {
+        logError("Unable to find joint " + _Sections[Index] + " in SetupDestroyPhysicsController function call");
+        continue;
+      }
+
+//      Mesh.UnlinkJoint(SectionJoint);
+
+      Array Shapes = Mesh.GetCollisionShapes(SectionJoint, false);
+      if (Shapes.isEmpty())
+        logError("Empty shapes");
+
+      boolean IsValidBody = PhysicsController.CreateRigidBody(_Sections[Index], SectionJoint, Shapes);
+
+      if (IsValidBody)
+      {
+        PhysicsController.SetFixedBody(_Sections[Index], true);
+        PhysicsController.SetIsBuildingCollisionShape(_Sections[Index]);
+      }
+      else
+        logError("Invalid body. Joint - " + _Sections[Index]);
+
+
+    }
+
+    // Append classificator for physics controllable object
+    addClassificator(user, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+
+    //# comment for vector solver # PhysicsController.SetIsectionModeAsGroupTriangles();
+
+    PhysicsController.SetIsectionModeAsSkipContacts();
+    PhysicsController.CreateTouchTrigger(_DestroyEnergy);
+
+    PhysicsController.EnableControl(true);
+    PhysicsController.Activate(false);
+
+    PhysicsController.SetExcludeSet([ CLASSIFICATOR_TERRAIN, CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_WATER, "FENCE" ]);
+    
+  }
+
+
+  // ====================================================
+  // Events
+  // ====================================================
+
+  event void OnAddJoint()
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+      return;
+
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (null == Mission)
+      return;
+
+    Component Content = Mission.GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.DropDefault("SectionArray");
+    Array ContentSectionArray = PropertiesMap.Get("SectionArray", m_SectionArray);
+
+    if (ContentSectionArray.size() > 2)
+    {
+      if ((ContentSectionArray[ContentSectionArray.size()-2][1] == m_SectionName) &&
+          (ContentSectionArray[ContentSectionArray.size()-2][2] == m_MatrixMod))
+        ContentSectionArray[ContentSectionArray.size()-2][0] =
+          (ContentSectionArray[ContentSectionArray.size()-2][0] + 1);
+      else
+      {
+        ContentSectionArray.insert((ContentSectionArray.size()-1), []);
+
+        ContentSectionArray[ContentSectionArray.size()-2].add(1);
+        ContentSectionArray[ContentSectionArray.size()-2].add(m_SectionName);
+        ContentSectionArray[ContentSectionArray.size()-2].add(m_MatrixMod);
+      }
+    }
+    else
+    if (ContentSectionArray.size() == 2)
+    {
+      ContentSectionArray.insert((ContentSectionArray.size()-1), []);
+
+      ContentSectionArray[ContentSectionArray.size()-2].add(1);
+      ContentSectionArray[ContentSectionArray.size()-2].add(m_SectionName);
+      ContentSectionArray[ContentSectionArray.size()-2].add(m_MatrixMod);
+    }
+
+
+    PropertiesMap.Set("SectionArray", ContentSectionArray);
+
+    SetProperties(new #GameController().GetObject(SOID_MissionController), PropertiesMap);
+
+    OnCreateShape(PropertiesMap);
+  }
+
+  event void OnRemoveJoint()
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+      return;
+
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (null == Mission)
+      return;
+
+    Component Content = Mission.GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.DropDefault("SectionArray");
+    Array ContentSectionArray = PropertiesMap.Get("SectionArray", m_SectionArray);
+
+    if (ContentSectionArray.size() < 3)
+      return;
+
+    if (ContentSectionArray[ContentSectionArray.size()-2][0] > 0)
+      ContentSectionArray[ContentSectionArray.size()-2][0] =
+        (ContentSectionArray[ContentSectionArray.size()-2][0] - 1);
+    if (ContentSectionArray[ContentSectionArray.size()-2][0] == 0)
+      ContentSectionArray.remove(ContentSectionArray.size()-2);
+
+    PropertiesMap.Set("SectionArray", ContentSectionArray);
+
+    SetProperties(new #GameController().GetObject(SOID_MissionController), PropertiesMap);
+
+    OnCreateShape(PropertiesMap);
+  }
+
+  event void OnPositionEdited()
+  {
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (null == Mission)
+      return;
+
+    Component Content = Mission.GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    ObjRec[CMissionContent::INDEX_Position] = getPosition(this);
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.DropDefault("SectionArray");
+    Array ContentSectionArray = PropertiesMap.Get("SectionArray", m_SectionArray);
+
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+      return;
+
+    Array ObjectSectionArray = Mesh.GetAllSections();
+
+    if (ContentSectionArray.size() != 0 &&
+        ObjectSectionArray.size()  != 0)
+    {
+      Array ContentSectionArrayNew = [];
+      int JointIndex               = 1;
+
+      ContentSectionArrayNew.add([]);
+      ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(1);
+      ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ContentSectionArray[0][1]);
+      ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ObjectSectionArray[JointIndex]);
+      JointIndex++;
+
+      if (ContentSectionArray.size() > 2)
+      {
+        ContentSectionArrayNew.add([]);
+        ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(0);
+        ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ContentSectionArray[1][1]);
+        ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ObjectSectionArray[JointIndex]);
+
+
+        for (int i = 1; i < ContentSectionArray.size()-1; i++)
+        {
+          for (int j = 0; j < ContentSectionArray[i][0];)
+          {
+            if ((ContentSectionArrayNew[ContentSectionArrayNew.size()-1][1] != ContentSectionArray[i][1]) ||
+                (ContentSectionArrayNew[ContentSectionArrayNew.size()-1][2] != ObjectSectionArray[JointIndex]))
+            {
+              ContentSectionArrayNew.add([]);
+              ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(0);
+              ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ContentSectionArray[i][1]);
+              ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ObjectSectionArray[JointIndex]);
+            }
+            else
+            {
+              ContentSectionArrayNew[ContentSectionArrayNew.size()-1][0] =
+                (ContentSectionArrayNew[ContentSectionArrayNew.size()-1][0] + 1);
+
+              JointIndex++;
+              j++;
+            }
+          }
+        }
+      }
+
+      ContentSectionArrayNew.add([]);
+      ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(1);
+      ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ContentSectionArray[ContentSectionArray.size()-1][1]);
+      ContentSectionArrayNew[ContentSectionArrayNew.size()-1].add(ObjectSectionArray[JointIndex]);
+
+      if (JointIndex != (ObjectSectionArray.size()-1))
+        logWarning("Invalid moving" + new String(JointIndex));
+
+      PropertiesMap.Set("SectionArray", ContentSectionArrayNew);
+
+      SetProperties(new #GameController().GetObject(SOID_MissionController), PropertiesMap);
+    }
+  }
+}

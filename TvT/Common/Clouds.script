@@ -1,0 +1,406 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCloudMaterials
+{
+  Array Materials = [
+      new CSpriteMaterial(
+          "Mtr_0",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          0, 128, 128, -128,          // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_1",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          128, 128, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_2",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          256, 128, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_3",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          384, 128, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_4",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          0, 256, 128, -128,          // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_5",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          128, 256, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_6",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          256, 256, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_7",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          384, 256, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_8",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          0, 384, 128, -128,          // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_9",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          128, 384, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_a",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          256, 384, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_b",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          384, 384, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_c",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          0, 512, 128, -128,          // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_d",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          128, 512, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_e",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          256, 512, 128, -128,        // page
+          "NORMAL"
+        ),
+      new CSpriteMaterial(
+          "Mtr_f",                    // name
+          "Textures/c_cumulus1.tex",  // texture
+          384, 512, 128, -128,        // page
+          "NORMAL"
+        )
+    ];
+}
+
+class CCloud
+  extends CEditable, IObject
+{
+  boolean DebugRenderBoxes        = false;
+  boolean RenderClouds            = true;
+  
+  float NearAttenuation           = 50.0f;
+  float FarAttenuation            = 100.0f;
+  float DefaultSpriteSize         = 80.0f; //jeff was 50.0f
+  float DefaultDensity            = 1.0; //jeff was 0.7
+  Color DefaultGlobalAmbientColor = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+  
+  float Height0 = 0.0f;
+  float Height1 = 0.2f;
+  float Height2 = 0.4f;
+  float Height3 = 0.6f;
+  float Height4 = 0.8f;
+  
+  Color Color0 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+  Color Color1 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+  Color Color2 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+  Color Color3 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+  Color Color4 = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+  
+  Array Matid0 = [];
+  Array Matid1 = [];
+  Array Matid2 = [];
+  Array Matid3 = [];
+  Array Matid4 = [];
+  
+  float Size0 = 1.0f;
+  float Size1 = 1.0f;
+  float Size2 = 1.0f;
+  float Size3 = 1.0f;
+  float Size4 = 1.0f;
+  
+  float Dens0  = 0.2f;
+  float Dens1  = 0.2f;
+  float Dens2  = 0.2f;
+  float Dens3  = 0.2f;
+  float Dens4  = 0.2f;
+  
+  static Array  Parts = 
+  [
+    [
+      new Vector(-100.000000, -161.426945, -50.000000),
+      new Vector(100.000000, 161.426945, 50.000000)
+    ],
+    [
+      new Vector(48.779970, 37.637854, -46.023669),
+      new Vector(185.458361, 202.460763, 22.315527)
+    ],
+    [
+      new Vector(155.862659, 163.651788, -44.169146),
+      new Vector(244.734290, 219.665820 ,0.266669)
+    ],
+    [
+      new Vector(-14.488919, -241.439906, -46.023669),
+      new Vector(122.189472, -76.616996, 22.315527)
+    ],
+    [
+      new Vector(-160.141053, -103.141153, 12.594769),
+      new Vector(25.257810, 103.141153, 112.594769)
+    ],
+    [
+      new Vector(-191.458851, -127.766633, 94.620233),
+      new Vector(-105.161384, -31.748566, 185.760147)
+    ],
+    [
+      new Vector(-50.439334, -14.837929, 89.143519),
+      new Vector(80.032288, 130.330096, 226.936350)
+    ],
+    [
+      new Vector(-54.764762, -36.698553, 205.212835),
+      new Vector(8.184507, 33.341360, 271.694403)
+    ],
+    [
+      new Vector(-255.150739, -279.148775, -25.391781),
+      new Vector(-69.751876, 6.454572, 74.608219)
+    ],
+    [
+      new Vector(-314.955668, -356.826786, -44.233454),
+      new Vector(-192.654142, -168.423661, 21.733254)
+    ],
+    [
+      new Vector(-354.612363, -81.937919, -26.574329),
+      new Vector(-152.235910, 106.465206, 39.392378)
+    ],
+    [
+      new Vector(-412.866291, 58.140228, -43.843156),
+      new Vector(-286.458277, 138.966863, -2.639151)
+    ],
+    [
+      new Vector(76.614523, -305.670286, -52.207330),
+      new Vector(166.303082, -197.513253, -27.203541)
+    ],
+    [
+      new Vector(-213.136820, 137.233127, -43.843156),
+      new Vector(-86.728806, 296.257257, -2.639151)
+    ]
+  ];
+
+  // ====================================================
+  // CEditable
+  // ====================================================
+
+  CCloud()
+  {
+    SetMaterials(new #MaterialManager<CCloudMaterials>());
+    addClassificator(user, "CLOUD");
+  }
+  
+  Array GetDefaultProperties()
+  {
+    return [
+            ["SpriteSize",      DefaultSpriteSize ],
+            ["Density",         DefaultDensity ],
+            ["Ambient",         DefaultGlobalAmbientColor],
+            ["DbgRenderBoxes",  DebugRenderBoxes],
+            ["RenderClouds",    RenderClouds], 
+            ["NearAtten",       NearAttenuation],
+            ["FarAtten",        FarAttenuation],
+            
+            ["Height0", Height0],
+            ["Height1", Height1],
+            ["Height2", Height2],
+            ["Height3", Height3],
+            ["Height4", Height4],
+            
+            ["Color0",  Color0],
+            ["Color1",  Color1],
+            ["Color2",  Color2],
+            ["Color3",  Color3],
+            ["Color4",  Color4],
+            
+            ["Matid0",  []],
+            ["Matid1",  []],
+            ["Matid2",  []],
+            ["Matid3",  []],
+            ["Matid4",  []],
+            
+            ["Size0",   Size0],
+            ["Size1",   Size1],
+            ["Size2",   Size2],
+            ["Size3",   Size3],
+            ["Size4",   Size4],
+            
+            ["Dens0",   Dens0],
+            ["Dens1",   Dens1],
+            ["Dens2",   Dens2],
+            ["Dens3",   Dens3],
+            ["Dens4",   Dens4],
+            
+            ["Boxes",   []]
+            ];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    // set size for all sprites
+    SetSpriteSize(_PropMap.Get("SpriteSize",           DefaultSpriteSize));
+    
+    // set density for the cloud
+    SetDensity(_PropMap.Get("Density",                 DefaultDensity));
+    
+    // should we render debug boxes
+    SetDebugRenderBoxes(_PropMap.Get("DbgRenderBoxes", DebugRenderBoxes));
+    
+    // should we render clouds
+    SetRenderClouds(_PropMap.Get("RenderClouds", RenderClouds));
+    
+    // set global ambient
+    SetGlobalAmbientColor(_PropMap.Get("Ambient",      DefaultGlobalAmbientColor));
+    
+    // set attenuation
+    SetDistanceAttenuation(
+        _PropMap.Get("NearAtten", NearAttenuation),
+        _PropMap.Get("FarAtten",  FarAttenuation)
+      );
+      
+    // pass information for each level
+  /*  SetLevels(
+        _PropMap.Get("Height0", Height0),
+        _PropMap.Get("Color0",  Color0),
+        _PropMap.Get("Matid0",  Matid0),
+        _PropMap.Get("Size0",   Size0),
+        _PropMap.Get("Dens0",   Dens0),
+        
+        _PropMap.Get("Height1", Height1),
+        _PropMap.Get("Color1",  Color1),
+        _PropMap.Get("Matid1",  Matid1),
+        _PropMap.Get("Size1",   Size1),
+        _PropMap.Get("Dens1",   Dens1),
+            
+        _PropMap.Get("Height2", Height2),
+        _PropMap.Get("Color2",  Color2),
+        _PropMap.Get("Matid2",  Matid2),
+        _PropMap.Get("Size2",   Size2),
+        _PropMap.Get("Dens2",   Dens2),
+            
+        _PropMap.Get("Height3", Height3),
+        _PropMap.Get("Color3",  Color3),
+        _PropMap.Get("Matid3",  Matid3),
+        _PropMap.Get("Size3",   Size3),
+        _PropMap.Get("Dens3",   Dens3),
+           
+        _PropMap.Get("Height4", Height4),
+        _PropMap.Get("Color4",  Color4),
+        _PropMap.Get("Matid4",  Matid4),
+        _PropMap.Get("Size4",   Size4),
+        _PropMap.Get("Dens4",   Dens4)
+      );*/
+      
+     SetLevelInfo(
+        [
+        [
+          _PropMap.Get("Height0", Height0),
+          _PropMap.Get("Color0",  Color0),
+          _PropMap.Get("Matid0",  Matid0),
+          _PropMap.Get("Size0",   Size0),
+          _PropMap.Get("Dens0",   Dens0)
+        ],
+        [
+          _PropMap.Get("Height1", Height1),
+          _PropMap.Get("Color1",  Color1),
+          _PropMap.Get("Matid1",  Matid1),
+          _PropMap.Get("Size1",   Size1),
+          _PropMap.Get("Dens1",   Dens1)
+        ],
+        [  
+          _PropMap.Get("Height2", Height2),
+          _PropMap.Get("Color2",  Color2),
+          _PropMap.Get("Matid2",  Matid2),
+          _PropMap.Get("Size2",   Size2),
+          _PropMap.Get("Dens2",   Dens2)
+        ],
+        [ 
+          _PropMap.Get("Height3", Height3),
+          _PropMap.Get("Color3",  Color3),
+          _PropMap.Get("Matid3",  Matid3),
+          _PropMap.Get("Size3",   Size3),
+          _PropMap.Get("Dens3",   Dens3)
+        ],
+        [  
+          _PropMap.Get("Height4", Height4),
+          _PropMap.Get("Color4",  Color4),
+          _PropMap.Get("Matid4",  Matid4),
+          _PropMap.Get("Size4",   Size4),
+          _PropMap.Get("Dens4",   Dens4)
+        ]
+      ]
+      );
+      
+    // set new boxes
+    if (_PropMap.Find("Boxes") == -1)
+      SetBoxes(Parts, true);
+    else
+      SetBoxes(_PropMap.Get("Boxes",   Parts), false);
+  }
+
+  // ====================================================
+  // Initialization
+  // ====================================================
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+  }
+
+  // ====================================================
+  // Service
+  // ====================================================
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+  }
+
+  void UpdateIngameState()
+  {
+  }  
+  
+  void Shutdown(
+      Component _Mission
+    )
+  {
+  }
+} 

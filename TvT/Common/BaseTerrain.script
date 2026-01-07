@@ -1,0 +1,537 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CWaterRegion extends CBaseZoneMap
+{
+  Vector InsidePoint;
+
+  int    WaterZone    = ZMC_Water01;
+  float  WaterLevel   = 0.0;
+
+  int    ShallowZone  = ZMC_ShallowWater01;
+  float  ShallowDepth = 45.0;
+
+  int    BeachZone    = ZMC_BeachWater01;
+  float  BeachDepth   = 7.5;
+
+  CWaterRegion(
+      Vector _Point,
+      float  _Level
+    )
+  {
+    InsidePoint = _Point;
+    WaterLevel  = _Level;
+  }
+}
+
+class CBaseTerrain
+  extends CEditable, IObject
+{
+  //
+  //  Terrain geometry detail parameters
+  //
+
+  float   MinimumResolution    = 1.0;
+  float   DesiredResolution    = 1.0;
+
+  float   MinimumLightRes      = 10.0;
+  float   DesiredLightRes      = 200.0;
+
+  int     ShoreLineDetail      = 2;
+
+  //
+  //  terrain texturing parms
+  //
+
+  float  CloseMicroTextureScale =  0.0625;     // 0.125 на сколько ячеек ляжет микротекстура Close
+  float  NearMicroTextureScale  =  1.0;       // 2.0 на сколько ячеек ляжет микротекстура Near
+  float  FarMicroTextureScale   = 16.0;       // 32.0 на сколько ячеек ляжет микротекстура Far
+
+  float  MicroTexNearMin        =  0.0;      // 10 расстояние на котором начинает исчезать Near Micro текстура
+  float  MicroTexNearMax        =  200.0;      // 40 расстояние на котором Near Micro текстура полностью исчезает
+  float  MicroTexFarMin         = 1000.0;      // 300 расстояние на котором начинает исчезать Far Micro текстура
+  float  MicroTexFarMax         = 2500.0;      // 800 расстояние на котором Far Micro текстура полностью исчезает
+
+  Vector MicroTexDistFactor     = new Vector(0.5, 0.5, 1.0);
+  float  MicroTexCloseMax       =  0.0;       // расстояние на котором Close Micro текстура полностью исчезает
+  int    NoiseTexturePoints     = 10;         // количество рандомных точек для генерации текстуры шума
+  float  NoiseTextureAmplitude  = 0.6/8.0;    // максимальная амплитуда Noise текстуры
+
+  //
+  //  water mirror
+  //
+
+  float  WaterMirrorDetail   = 1.0; //1.0
+  int    WaterMirrorTexSize  = 1024; //1024
+  Array  WaterMirrorMasks    = [
+
+        //[ [ CLASSIFICATOR_TERRAIN/*, CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_TERRAINPATCH*/], [ /*CLASSIFICATOR_TERRAINPATCH, CLASSIFICATOR_SHADOW,*/ CLASSIFICATOR_UI ] ]
+        //[ [ "SKY" ],                 [ CLASSIFICATOR_SHADOW ] ],
+        //[ [ "NAVALSTRUCT" ],         [ CLASSIFICATOR_SHADOW ] ],
+        //[ [ "NAVAL" ],               [ CLASSIFICATOR_SHADOW ] ]
+
+        [ [ "SKY" ],                   [ CLASSIFICATOR_TERRAIN, CLASSIFICATOR_TERRAINPATCH, CLASSIFICATOR_SHADOW, CLASSIFICATOR_UI ] ]
+        //[ [ CLASSIFICATOR_UI ],      [ CLASSIFICATOR_TERRAIN, CLASSIFICATOR_TERRAINPATCH, CLASSIFICATOR_SHADOW  ] ],
+        //[ [ CLASSIFICATOR_TERRAIN],  [ CLASSIFICATOR_SHADOW, CLASSIFICATOR_UI ] ]
+        //[ [],                        [ CLASSIFICATOR_SHADOW, CLASSIFICATOR_UI, CLASSIFICATOR_TERRAINPATCH] ]
+   ];
+   
+   Array  WaterMirrorLodMasks    = [
+
+        [ [ "SKY" ],                   [ CLASSIFICATOR_TERRAIN, CLASSIFICATOR_TERRAINPATCH, CLASSIFICATOR_SHADOW, CLASSIFICATOR_UI,  CLASSIFICATOR_LENSFLARE] ]
+   ];
+   Array  WaterMirrorLodDistances    = [ 
+        [ 70.0, 100.0]
+   ];
+
+  //
+  //  water surface settings
+  //
+
+  float LargeWavePeriod          = 4.0; //4.0
+  float LargeWaveWidth           = 150.0; //150.0
+  float LargeWaveHeight          = 1.5; //3.0
+
+  int   WavesTexDimension        = 32;
+  float WavesTimeScale           = 1.5;
+  float WavesBumpScale           = 0.03; //0.03
+  float WavesLumScale            = 0.3;
+  float WavesLumOffset           = 0.7;
+  float WaterMirrorFactor        = 0.4;
+
+  float RipplesWavePeriod        = 0.8;
+  float RipplesBrightness        = 0.2;
+
+  // new Water Parameters
+  Color WaterColor               = new Color(2.0 * 61.0 / 255.0, 2.0 * 53.0 / 255.0, 2.0 * 31.0 / 255.0, 1);
+  Color WaterBorderColor         = new Color(1.0f, 0.0f, 0.0f, 1.0f);
+  float WaterFresnelPower        = 2.5; //3.5
+  float WaterTexScale            = 4.0;
+  float WaterMicroTexScale       = 32.0;
+  float WaterPenaTexScale        = 32.0;
+  float ReflectDistortion        = 0.25; //0.05
+  float BumpSlopeness            = 1.0;
+  float ReflectTextureShift      = 0.0;
+  float WaterBorderScale         = 0.2;
+  float WaterPenaBorderScale     = 20.0;
+  float BorderOffset             = 0.0;
+  float ClipPlaneShift           = 0.0;
+  float AnimationSpeed           = 0.2;
+  Color WaterClearColor          = new Color(191.0 / 255.0, 196.0 / 255.0, 208.0 / 255.0, 1.0);
+
+  // vert forest parameters
+  float VertForestDistMin        = 50.0; //250
+  float VertForestDistMax        = 2000.0; //1100
+  float VertForestAngleMin       = 0.0;
+  float VertForestAngleMax       = 45.0;
+  Array VertForestBeginFadeDist  = [ 10.0,  800.0 ]; //50. 210
+
+  // hor forest parameters
+  float ForestTextureScale       = 0.5; //1.0
+  float ForestBorderScale        = 1.0; //0.5
+  float ForestShadowBorderScale  = 1.2; //0.6
+  float ForestAlphaScale         = 1.5; //1.0
+  float ForestShadowAlphaScale   = 1.5; //1.0
+  Array ForestBeginFadeDist      = [ 10.0,  800.0 ]; //50. 210
+  Array ForestLightFadeDist      = [ 1500.0, 4000.0 ]; //710, 2010
+
+  Array FakeForestBeginFadeDist  = [ 50.0,  210.0 ];
+  Array FakeForestLightFadeDist  = [ 710.0, 2010.0 ];
+
+  //Terrain lighting parameters
+  float TerrainShadowPower       = 1.0;
+  boolean   IsAntiLighting       = false;
+  boolean   IsPlanarWater        = false;
+  
+
+  int       NoiseGrid            = 8;
+  int       NoiseSize            = 256;
+  float     NormalNoise          = 0.1;
+
+  //
+  //  constructor
+  //
+
+  final static Array MinimumResolutionRange   = [ 2.0,  6.0 ];
+  final static Array DesiredResolutionRange   = [ 12.0, 24.0 ];
+
+  final static Array ShoreLineDetailList      = [ 16,    8,    4,    2    ];
+
+  final static Array WavesTexDimensionsList   = [ 16,    16,   32,   32   ];
+  final static Array WaterMirrorTexSizesList  = [ 64,    128,  256,  512  ];
+
+  void CBaseTerrain()
+  {
+    OnTerrainDetailChanged();
+  }
+
+  // ====================================================
+  // CEditable
+  // ====================================================
+  Array GetDefaultProperties()
+  {
+    return [
+            ["WaterColor",               WaterColor              ],
+            ["WaterClearColor",          WaterClearColor         ],
+            ["WaterFresnelPower",        WaterFresnelPower       ],
+            ["WaterBorderColor",         WaterBorderColor        ],
+            ["WaterTexScale",            WaterTexScale           ],
+            ["WaterMicroTexScale",       WaterMicroTexScale      ],
+            ["WaterPenaTexScale",        WaterPenaTexScale       ],
+            ["ReflectDistortion",        ReflectDistortion       ],
+            ["BumpSlopeness",            BumpSlopeness           ],
+            ["ReflectTextureShift",      ReflectTextureShift     ],
+            ["WaterBorderScale",         WaterBorderScale        ],
+            ["WaterPenaBorderScale",     WaterPenaBorderScale    ],
+            ["BorderOffset",             BorderOffset            ],
+            ["ClipPlaneShift",           ClipPlaneShift          ],
+            ["AnimationSpeed",           AnimationSpeed          ],
+
+            ["VertForestDistMin",        VertForestDistMin       ],
+            ["VertForestDistMax",        VertForestDistMax       ],
+            ["VertForestAngleMin",       VertForestAngleMin      ],
+            ["VertForestAngleMax",       VertForestAngleMax      ],
+            ["VertForestBeginFadeDist",  VertForestBeginFadeDist ],
+
+            ["ForestTextureScale",       ForestTextureScale      ],
+            ["ForestBorderScale",        ForestBorderScale       ],
+            ["ForestShadowBorderScale",  ForestShadowBorderScale ],
+            ["ForestAlphaScale",         ForestAlphaScale        ],
+            ["ForestShadowAlphaScale",   ForestShadowAlphaScale  ],
+            ["ForestBeginFadeDist",      ForestBeginFadeDist     ],
+            ["ForestLightFadeDist",      ForestLightFadeDist     ],
+            ["TerrainShadowPower",       TerrainShadowPower      ],
+            ["IsAntiLighting",           IsAntiLighting          ],
+            ["NormalNoise",              NormalNoise             ]
+          ];
+    }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    SetTerrainShadowPower(
+        _PropMap.Get("TerrainShadowPower",	   TerrainShadowPower)
+    );
+    
+    SetNormalNoise(
+        _PropMap.Get("NormalNoise",	   NormalNoise)
+    );
+    
+    SetAntiSunEnabled(
+        _PropMap.Get("IsAntiLighting",         IsAntiLighting)
+    );
+
+    SetWaterMaterialParameters(
+        _PropMap.Get("WaterColor",              WaterColor),        
+        _PropMap.Get("WaterFresnelPower",       WaterFresnelPower),
+        _PropMap.Get("WaterBorderColor",        WaterBorderColor),
+        _PropMap.Get("WaterTexScale",           WaterTexScale),
+        _PropMap.Get("WaterMicroTexScale",      WaterMicroTexScale),
+        _PropMap.Get("ReflectDistortion",       ReflectDistortion),
+        _PropMap.Get("BumpSlopeness",           BumpSlopeness),
+        _PropMap.Get("ReflectTextureShift",     ReflectTextureShift),
+        _PropMap.Get("WaterBorderScale",        WaterBorderScale),
+        _PropMap.Get("BorderOffset",            BorderOffset),
+        _PropMap.Get("ClipPlaneShift",          ClipPlaneShift),
+        _PropMap.Get("AnimationSpeed",          AnimationSpeed),
+        _PropMap.Get("WaterPenaTexScale",       WaterPenaTexScale),
+        _PropMap.Get("WaterPenaBorderScale",    WaterPenaBorderScale),
+        _PropMap.Get("WaterClearColor",         WaterClearColor)
+    );
+
+    SetVerticalForestMaterialParameters(
+        _PropMap.Get("VertForestDistMin",       VertForestDistMin),
+        _PropMap.Get("VertForestDistMax",       VertForestDistMax),
+        _PropMap.Get("VertForestAngleMin",      VertForestAngleMin),
+        _PropMap.Get("VertForestAngleMax",      VertForestAngleMax),
+        _PropMap.Get("VertForestBeginFadeDist", VertForestBeginFadeDist)
+      );
+
+    SetHorizontalForestMaterialParameters(
+        _PropMap.Get("ForestTextureScale",      ForestTextureScale),
+        _PropMap.Get("ForestBorderScale",       ForestBorderScale),
+        _PropMap.Get("ForestShadowBorderScale", ForestShadowBorderScale),
+        _PropMap.Get("ForestAlphaScale",        ForestAlphaScale),
+        _PropMap.Get("ForestShadowAlphaScale",  ForestShadowAlphaScale),
+        _PropMap.Get("ForestBeginFadeDist",     ForestBeginFadeDist),
+        _PropMap.Get("ForestLightFadeDist",     ForestLightFadeDist),
+        _PropMap.Get("FakeForestBeginFadeDist", FakeForestBeginFadeDist),
+        _PropMap.Get("FakeForestLightFadeDist", FakeForestLightFadeDist)
+
+      );
+
+  }
+
+  void CreateForesRegions()
+  {
+    SetForestHeight(16.0f); // for collision
+  }
+
+
+  // ====================================================
+  // Initialization
+  // ====================================================
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+
+    Component GameController = new #GameController();
+
+    // Create object
+    Component Mission = GameController.GetLoadedMission();
+    if (null != Mission)
+    {
+      SetIsInEditor(true);
+    }
+    else
+    {
+      SetIsInEditor(false);
+    }
+
+    SetProperties(_PropMap);
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+  }
+
+  void OnTerrainDetailChanged()
+  {
+    Component GameSettings = new #GameSettings();
+
+    int   WaterDetail   = int(GameSettings.GetWaterDetail() * 4);
+    if (WaterDetail > 3)   WaterDetail   = 3;
+    int   TerrainDetail = int(GameSettings.GetTerrainDetail() * 4);
+    if (TerrainDetail > 3) TerrainDetail = 3;
+    float Resolution    = GameSettings.GetTerrainDetail();
+
+    MinimumResolution   = MinimumResolutionRange[0] * (1.0f - Resolution) +
+                          MinimumResolutionRange[1] * Resolution;
+    DesiredResolution   = DesiredResolutionRange[0] * (1.0f - Resolution) +
+                          DesiredResolutionRange[1] * Resolution;
+
+    ShoreLineDetail     = ShoreLineDetailList[TerrainDetail];
+
+    WavesTexDimension   = WavesTexDimensionsList[WaterDetail];
+    WaterMirrorTexSize  = WaterMirrorTexSizesList[WaterDetail];
+
+    UpdateTerrainDetails();
+  }
+
+  void SetRainyWeather()
+  {
+    RipplesTextureScale = 3.0;
+    RipplesWavePeriod   = 0.1;
+    RipplesBrightness   = 0.3;
+  }
+
+  void SetPhysicsTable()
+  {
+    Component Materials = GetMaterials();
+    if (null != Materials)
+      Materials.LoadPhysicsTable(CSubstances::PhysicsTable);
+  }
+
+  // obsolete settings - see WorldMatrices.script
+  // int    Dimension           = 2048;
+  // float  CellSizeHor         = 1.0;
+  // float  CellSizeVert        = 1.0;
+}
+
+class CBaseTerrainSkin
+{
+  // material array append method - should be used in derivative classes
+  // to overwrite default materials / add new materials
+  void AppendMaterials(Array _Materials)
+  {
+    for (int i = 0; i < _Materials.size(); i++)
+    {
+      boolean bFound = false;
+
+      // try to find already present material with this name
+      for (int j = 0; j < Materials.size(); j++)
+        if (Materials[j].MaterialID == _Materials[i].MaterialID)
+        {
+          // overwrite already present material
+          Materials[j] = _Materials[i];
+          bFound = true;
+          break;
+        }
+
+      if (!bFound)
+      {
+        // new material -- add to the array
+        Materials.add(_Materials[i]);
+      }
+    }
+  }
+
+  void SetupTerrainMainMaterial(
+      String _MainTexture
+    )
+  {
+    for (int i = 0; i < Materials.size(); i++)
+    {
+      if ("Terrain" == Materials[i].MaterialID)
+      {
+        Materials[i].TextureName   = _MainTexture;
+        break;
+      }
+    }
+  }
+
+  // default materials
+  Array Materials = [
+
+      //
+		      // Base terrain material
+      //
+
+      new CTerrainMaterial(
+          "Terrain",                    // material id
+
+          "Textures/lnd_micro_close.tex", // Noise
+
+          [                             // 8 микро текстур
+
+            //                         таблица соответствия индекса цвета типу поверхности
+            //                              ColorIndex           MicroType
+            "Textures/lnd_micro01.tex", //      0                   Road, Mud, Ground     Close Tex
+            "Textures/lnd_micro02.tex", //      1                   Dry Ground            Close Tex
+            "Textures/lnd_micro03.tex", //      2                   Medium Light Grass    Close Tex
+            "Textures/lnd_micro04.tex", //      3                   Dark Grass and Ground Close Tex
+            "Textures/lnd_micro05.tex", //      4                   Light Grass           Close Tex
+            "Textures/lnd_micro06.tex", //      5                   Field                 Close Tex
+            "Textures/lnd_micro07.tex", //      6                   Dark Grass            Close Tex
+            "Textures/lnd_micro08.tex", //      7                   Forest                Close Tex
+            //
+            "Textures/lnd_micro09.tex", //      0                   Road, Mud, Ground     Near Tex
+            "Textures/lnd_micro10.tex", //      1                   Dry Ground            Near Tex
+            "Textures/lnd_micro11.tex", //      2                   Medium Light Grass    Near Tex
+            "Textures/lnd_micro12.tex", //      3                   Dark Grass and Ground Near Tex
+            "Textures/lnd_micro13.tex", //      4                   Light Grass           Near Tex
+            "Textures/lnd_micro14.tex", //      5                   Field                 Near Tex
+            "Textures/lnd_micro15.tex", //      6                   Dark Grass            Near Tex
+            "Textures/lnd_micro16.tex"  //      7                   Forest                Near Tex
+          ]
+        ),
+
+      new CTerrainPatchMaterial(
+          "Village",                    // material id
+
+          "Textures/lnd_micro_close.tex", // Noise
+
+          [                             // 8 микро текстур
+
+            //                         таблица соответствия индекса цвета типу поверхности
+            //                              ColorIndex           MicroType
+            "Textures/Village_micro01.tex", //      0                   Grass
+            "Textures/Village_micro02.tex", //      1                   Top-top grass
+            "Textures/Village_micro03.tex", //      2                   Downland grass
+            "Textures/Village_micro04.tex", //      3                   LittleRoad
+            "Textures/Village_micro05.tex", //      4                   Ground
+            "Textures/Village_micro06.tex", //      5                   Dry grass
+            "Textures/Village_micro07.tex", //      6                   Dirt
+            "Textures/Village_micro08.tex"  //      7                   Graviy
+          ]
+        ),
+/*
+      new CTerrainPatchMaterial(
+          "Village",                    // material id
+
+          "", // $TMP "Textures/lnd_micro.tex",     // 4 микро текстуры (в 4-х каналах)
+
+          [                             // 8 микро текстур  (в volume текстуре)
+
+            //                         таблица соответствия индекса цвета типу поверхности
+            //                              ColorIndex           MicroType
+            "Textures/Village_micro01.tex", //      0                   Road      Close Tex
+            "Textures/Village_micro02.tex", //      1                   Grass     Close Tex
+            "Textures/Village_micro03.tex", //      2                   Forest    Close Tex
+            "Textures/Village_micro04.tex", //      3                   Trample   Close Tex
+            "Textures/Village_micro05.tex", //      4                   Mountain  Close Tex
+            "Textures/Village_micro06.tex", //      5                   Sand      Close Tex
+            "Textures/Village_micro07.tex", //      6                   Coast     Close Tex
+            "Textures/Village_micro08.tex"  //      7                   Bottom    Close Tex
+          ]
+        ),
+  */
+      new CTerrainPatchMaterial(
+          "Field",                      // material id
+
+          "Textures/lnd_micro_close.tex", // Noise
+
+          [                             // 8 микро текстур  (в volume текстуре)
+
+            //                         таблица соответствия индекса цвета типу поверхности
+            //                              ColorIndex           MicroType
+            "Textures/Field_micro01.tex", //      0                   Road      Close Tex
+            "Textures/Field_micro02.tex", //      1                   Grass     Close Tex
+            "Textures/Field_micro03.tex", //      2                   Forest    Close Tex
+            "Textures/Field_micro04.tex", //      3                   Trample   Close Tex
+            "Textures/Field_micro05.tex", //      4                   Mountain  Close Tex
+            "Textures/Field_micro06.tex", //      5                   Sand      Close Tex
+            "Textures/Field_micro07.tex", //      6                   Coast     Close Tex
+            "Textures/Field_micro08.tex"  //      7                   Bottom    Close Tex
+          ]
+        ),
+
+
+      //
+      // default water textures
+      //
+
+      new CWaterMaterial(
+          "Water",                        // material id
+          new Color(0.3, 0.4, 0.4),       // diffuse
+          new Color(0.8, 0.8, 0.8),       // specular
+          32.0,
+          "Textures/Water.tex",           // micro texture
+          "Textures/WaterFoam.tex"
+        ),
+
+      new CWaterMaterial(
+          "Shelf",                     // material id
+          "Textures/WaterBorder.tex",  // texture
+          new Color(0.7, 0.7, 0.7)     // diffuse
+        ),
+
+      new CWaterMaterial(
+          "WaterDetail",               // material id
+          "Textures/Detail_Water.tex"  // texture
+        ),
+
+      //
+      // define substance materials
+      //
+
+      new CSubstanceMaterial(
+          "GroundSubstance",
+          CMaterialStructure::MSID_Ground
+        ),
+
+      new CSubstanceMaterial(
+          "WaterSubstance",
+          CMaterialStructure::MSID_Water
+        ),
+
+      new CSubstanceMaterial(
+          "ForestSubstance",
+          CMaterialStructure::MSID_Forest
+        )
+    ];
+}

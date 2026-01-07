@@ -1,0 +1,256 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CGameSpyReporter
+{
+  // predefined GameSpy constants. 
+  // Warning! This values must coincide with corresponding ones defined in qr2regkeys.h  
+
+  final static int GS_KEY_SERVER        =  0;
+  final static int GS_KEY_PLAYER        =  1;
+  final static int GS_KEY_TEAM          =  2;
+
+  final static int GS_HOSTNAME_KEY      =  1;
+  final static int GS_GAMENAME_KEY      =  2;
+  final static int GS_GAMEVER_KEY       =  3;
+  final static int GS_HOSTPORT_KEY      =  4;
+  final static int GS_MAPNAME_KEY       =  5;
+  final static int GS_GAMETYPE_KEY      =  6; 
+  final static int GS_GAMEVARIANT_KEY   =  7;
+  final static int GS_NUMPLAYERS_KEY    =  8;
+  final static int GS_NUMTEAMS_KEY      =  9;
+  final static int GS_MAXPLAYERS_KEY    = 10;
+  final static int GS_GAMEMODE_KEY      = 11;
+  final static int GS_TEAMPLAY_KEY      = 12;
+  final static int GS_FRAGLIMIT_KEY     = 13;
+  final static int GS_TEAMFRAGLIMIT_KEY = 14;
+  final static int GS_TIMEELAPSED_KEY   = 15;
+  final static int GS_TIMELIMIT_KEY     = 16;
+  final static int GS_ROUNDTIME_KEY     = 17;
+  final static int GS_ROUNDELAPSED_KEY  = 18;
+  final static int GS_PASSWORD_KEY      = 19;
+  final static int GS_GROUPID_KEY       = 20;
+  final static int GS_PLAYER__KEY       = 21;
+  final static int GS_SCORE__KEY        = 22;
+  final static int GS_SKILL__KEY        = 23;
+  final static int GS_PING__KEY         = 24;
+  final static int GS_TEAM__KEY         = 25;
+  final static int GS_DEATHS__KEY       = 26;
+  final static int GS_PID__KEY          = 27;
+  final static int GS_TEAM_T_KEY        = 28;
+  final static int GS_SCORE_T_KEY       = 29;
+
+  void Initialize(Component _SessionInfo)
+  {
+    m_SessionInfo = _SessionInfo;
+
+    // register custom keys here
+
+    Initialize();
+  }
+
+  void ServerKeyCallback(
+      int _KeyId,
+      int _OutBuf
+    )
+  { 
+    if      (_KeyId == GS_HOSTNAME_KEY)
+    {
+      OutBufferAddString(_OutBuf, new String(m_SessionInfo.m_Descriptor.SessionName));
+    }
+    else if (_KeyId == GS_GAMETYPE_KEY)
+    {
+      OutBufferAddString(_OutBuf, new String(m_SessionInfo.GetSessionType()));
+    }
+    else if (_KeyId == GS_GAMEVER_KEY)
+    {
+      OutBufferAddString(_OutBuf, CGameSettings::VersionID);
+    }
+    else if (_KeyId == GS_HOSTPORT_KEY)
+    {
+      // $TMP
+      OutBufferAddInt(_OutBuf, CONNECTION_ADDRESS_PORT_NUMBER);
+    }
+    else if (_KeyId == GS_MAPNAME_KEY)
+    {
+      OutBufferAddString(_OutBuf, new String(m_SessionInfo.GetMapName()));
+      logWarning(" = " + new String(m_SessionInfo.GetMapName()));
+    }
+    else if (_KeyId == GS_NUMTEAMS_KEY)
+    {
+      OutBufferAddInt(_OutBuf, 2);
+    }
+    else if (_KeyId == GS_GAMEMODE_KEY)
+    {
+      OutBufferAddString(_OutBuf, "testmode");
+    }
+    else if (_KeyId == GS_TEAMPLAY_KEY)
+    {
+      OutBufferAddInt(_OutBuf, 0);
+    }
+    else if (_KeyId == GS_FRAGLIMIT_KEY)
+    {
+      OutBufferAddInt(_OutBuf, m_SessionInfo.GetFragLimit());
+    }
+    else if (_KeyId == GS_TIMELIMIT_KEY)
+    {
+      OutBufferAddInt(_OutBuf, m_SessionInfo.GetTimeLimit());
+    }
+    else if (_KeyId == GS_NUMPLAYERS_KEY)
+    {
+      OutBufferAddInt(_OutBuf, m_SessionInfo.m_Descriptor.SessionUsedSlots);
+    }
+    else if (_KeyId == GS_MAXPLAYERS_KEY)
+    {
+      OutBufferAddInt(_OutBuf, m_SessionInfo.m_Descriptor.SessionSlots);
+    }
+    else
+    {
+      logWarning("empty");
+      OutBufferAdd(_OutBuf, "");
+    }
+  }
+
+  void PlayerKeyCallback(
+      int _KeyId,
+      int _Index,
+      int _OutBuf
+    )
+  {
+    OutBufferAdd(_OutBuf, "");
+ }
+
+  void TeamKeyCallback(
+      int _KeyId,
+      int _Index,
+      int _OutBuf
+    )
+  {
+    OutBufferAdd(_OutBuf, "");
+  }
+
+  void KeyListCallback(
+      int _KeyType,
+      int _KeyBuf
+    )
+  {
+    if (_KeyType == GS_KEY_SERVER)
+    {
+      KeyBufferAdd(_KeyBuf, GS_HOSTNAME_KEY);
+      KeyBufferAdd(_KeyBuf, GS_GAMEVER_KEY);
+      KeyBufferAdd(_KeyBuf, GS_HOSTPORT_KEY);
+      KeyBufferAdd(_KeyBuf, GS_MAPNAME_KEY);
+      KeyBufferAdd(_KeyBuf, GS_GAMETYPE_KEY);
+      KeyBufferAdd(_KeyBuf, GS_NUMPLAYERS_KEY);
+      KeyBufferAdd(_KeyBuf, GS_NUMTEAMS_KEY);
+      KeyBufferAdd(_KeyBuf, GS_MAXPLAYERS_KEY);
+      KeyBufferAdd(_KeyBuf, GS_GAMEMODE_KEY);
+      KeyBufferAdd(_KeyBuf, GS_TEAMPLAY_KEY);
+      KeyBufferAdd(_KeyBuf, GS_FRAGLIMIT_KEY);
+      KeyBufferAdd(_KeyBuf, GS_TIMELIMIT_KEY);
+    }
+    else
+    if (_KeyType == GS_KEY_PLAYER)
+    {
+    }
+    else
+    if (_KeyType == GS_KEY_TEAM)
+    {
+    }
+    else
+      logError("Invalid KeyType " + new String(_KeyType));
+  }
+
+  int CountCallback(
+      int _KeyType
+    )
+  {
+    if (_KeyType == GS_KEY_PLAYER)
+    { 
+      return m_SessionInfo.m_Descriptor.SessionUsedSlots;
+    }
+    else
+    if (_KeyType == GS_KEY_TEAM)
+    {
+      return 0;
+    }
+    else
+      logError("Invalid KeyType " + new String(_KeyType));
+
+    return 0;
+  }
+
+  void AddErrorCallback(
+      int    _Error,
+      String _ErrMsg
+    )
+  {
+    logError("Error " + new String(_Error) + " when adding server to GameSpy Master :" + _ErrMsg);
+  }
+
+  void NatNegotioationCallback(
+      int _Cookie
+    )
+  {
+    logWarning("Got natneg cookie: " + new String(_Cookie));
+  }
+
+  void ClientMessageCallback(
+      int _Len
+    )
+  {
+    logWarning("Got " + new String(_Len) + " bytes from client");
+  }
+
+  Component m_SessionInfo = null;
+
+  int     BasePort        = 26900;
+  boolean IsPublicServer  = true;
+  boolean IsNATSupported  = false;
+  int     UpdateMillisecs = 50;
+} 
+
+class CGameSpyBrowser
+{
+  void ProgressCallback(
+      String _ServerIP,
+      int    _Progress
+    )
+  {
+    logWarning("[GameSpy] Added server " + _ServerIP);
+    logWarning("[GameSpy] Search progress " + new String(_Progress) + "%");
+
+    (new #GameController()).AddServerToAddressList(_ServerIP);
+  }
+
+  void UpdatingDoneCallback()
+  {
+    logWarning("[GameSpy] Server updating is done..");
+  }
+
+  void GettingListCallback()
+  {
+    logWarning("[GameSpy] Getting servers list..");
+  }
+
+  void SearchingLANCallback()
+  {
+    logWarning("[GameSpy] Searching LAN..");
+  }
+
+  void QueryingCallback()
+  {
+    logWarning("[GameSpy] Querying servers..");
+  }
+
+
+  int MaxConcurrentUpdates    = 10;
+  boolean bIsAsynchronousMode = true;
+  int UpdateMillisecs         = 50;
+}

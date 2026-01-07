@@ -1,0 +1,32 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Base class for collision controls
+//
+class CHelicopterCollisionControl
+{
+  float     RotationSpeed         = 6.0f;
+  float     MaxRotationAngle      = Math_HALFPI * 0.5f;
+  float     ThrowMoveFactor       = 0.8;
+  float     ThrowMoveSpeed        = 1.0;
+  float     ThrowRotateFactor     = 0.002f;
+  float     ThrowMoveDamper       = 0.5f;
+  float     ExplosionPeriod       = 3.0;
+  float     MinSpeedForExpl       = 8.0;
+
+  // $BUG first feedback effect cant create
+  Component TmpCollisionFeedback  = new #ForceFeedbackEffect<CGroundHitFeedbackEffect>();
+
+  Component CollisionFeedback     = new #ForceFeedbackEffect<CGroundHitFeedbackEffect>();
+
+  // Additional propertyes
+  boolean   AggressiveReaction    = true;
+  float     ReactionTime          = 1.0f;
+}

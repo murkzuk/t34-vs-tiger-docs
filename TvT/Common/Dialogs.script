@@ -1,0 +1,71 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Dialog classes
+//
+
+class CBaseDialog
+{
+  // Constants
+  final static int TMN_None = -1; // None phrase target member number
+
+  // Properties
+  final static String ID               = "";
+  final static float  DefaultTalkPause = 1.0f;
+  final static float  Radius           = 2.0f;
+
+  final static Array  Content = [
+      // Record format: <Member number>, <PhraseID>, [<Wait timeout>], [<Phrase target member number>]
+    ];
+}
+
+class CDialogsArray
+{
+  final static Array Dialogs = [
+//      new CC1M1ExchangeRemarks1_2(),
+    ];
+}
+
+class CGCommands
+{
+  final static Array Dialogs = [
+      // Angle direction
+      ["msg_GAngle1",        "Resources/g_1uhr.wav"],
+      ["msg_GAngle2",        "Resources/g_2uhr.wav"],
+      ["msg_GAngle3",        "Resources/g_3uhr.wav"],
+      ["msg_GAngle4",        "Resources/g_4uhr.wav"],
+      ["msg_GAngle5",        "Resources/g_5uhr.wav"],
+      ["msg_GAngle6",        "Resources/g_6uhr.wav"],
+      ["msg_GAngle7",        "Resources/g_7uhr.wav"],
+      ["msg_GAngle8",        "Resources/g_8uhr.wav"],
+      ["msg_GAngle9",        "Resources/g_9uhr.wav"],
+      ["msg_GAngle10",       "Resources/g_10uhr.wav"],
+      ["msg_GAngle11",       "Resources/g_11uhr.wav"],
+      ["msg_GAngle12",       "Resources/g_12uhr.wav"],
+      // Traget distance
+      ["msg_GDistance100",   "Resources/g_200.wav"],
+      ["msg_GDistance200",   "Resources/g_200.wav"],
+      ["msg_GDistance300",   "Resources/g_300.wav"],
+      ["msg_GDistance400",   "Resources/g_400.wav"],
+      ["msg_GDistance500",   "Resources/g_500.wav"],
+      ["msg_GDistance600",   "Resources/g_600.wav"],
+      ["msg_GDistance700",   "Resources/g_700.wav"],
+      ["msg_GDistance800",   "Resources/g_800.wav"],
+      ["msg_GDistance900",   "Resources/g_900.wav"],
+      ["msg_GDistance1000",  "Resources/g_1000.wav"],
+      ["msg_GDistance1100",  "Resources/g_1100.wav"],
+      ["msg_GDistance1200",  "Resources/g_1200.wav"],
+      ["msg_GDistance1300",  "Resources/g_1300.wav"],
+      ["msg_GDistance1400",  "Resources/g_1400.wav"],
+      ["msg_GDistance1500",  "Resources/g_1500.wav"],
+      ["msg_GDistance1600",  "Resources/g_1600.wav"]
+    ];
+}
+

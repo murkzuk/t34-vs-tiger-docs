@@ -1,0 +1,43 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CDebugSettings
+{
+  //////////////////////////////////////////
+  //  Log settings
+  /////////////////////////////////////////
+
+  //
+  //  StateMachine log settings
+  //
+
+  // Toggle log [<UnitID>: Incoming irritant "<IrritantID>" ("<ObjectID>")]
+  final static boolean LogSMIncomingIrritants = false;
+
+  // Toggle log [<UnitID>: Changing state from "<CurrentStateID>" to "<NewStateID>"]
+  final static boolean LogSMStateChanges      = true;
+
+  // Toggle log [Launching reaction function "<Function>"]
+  final static boolean LogSMChosenReactions   = false;
+
+  //
+  // Misc settings
+  //
+
+  final static boolean SkipRouterMapGeneration = true;
+
+  final static boolean LoadInteriorObjects     = true;
+  final static boolean LoadForest              = true;
+  final static boolean LoadRoads               = true;
+  final static boolean LoadWater               = true;
+  final static boolean LoadGrass               = true;
+  final static boolean LoadTextures            = true;
+
+  final static boolean EmptyTextureName        = "Textures/EmptyTex.tex";
+}

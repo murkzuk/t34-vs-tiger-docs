@@ -1,0 +1,154 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Nav point scripts
+//
+
+class CEnvironmentMap
+  extends IObject, CEditable
+{
+  // Special object class
+  final static String SPEC_CLASS = "Environment Maps";
+
+  final static Vector  DefaultDimensions = new Vector(0.0f);
+  final static boolean DefaultIsVisible  = true;   // set visible point
+
+  final static String EID_Center = "EnvironmentMapCenter";
+  final static String EID_Bounds = "EnvironmentMapBounds";
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CEditable::GetDefaultProperties();
+
+    Default.append([
+        ["Dimensions", DefaultDimensions],
+        ["IsVisible",  DefaultIsVisible]
+      ]);
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CEditable::SetProperties(_PropMap);
+
+    SetDimensions(_PropMap.Get("Dimensions", DefaultDimensions));
+//    SetVisible(_PropMap.Get("IsVisible", DefaultIsVisible));
+
+    UpdateEffects();
+  }
+
+  void SetSize(
+      Vector _Size
+    )
+  {
+    Component Content = new #GameController().GetLoadedLevel().GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(this));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    Vector Dim = PropertiesMap.Get("Dimensions", DefaultDimensions);
+
+    if (0.0f != _Size.x)
+      Dim.x = _Size.x;
+
+    if (0.0f != _Size.y)
+      Dim.y = _Size.y;
+
+    if (0.0f != _Size.z)
+      Dim.z = _Size.z;
+
+    PropertiesMap.Set("Dimensions", Dim);
+
+    SetProperties(PropertiesMap);
+  }
+
+  void Initialize(
+      Component _Level,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      ShowEnvironmentMap();
+  }
+
+  void Shutdown(
+      Component _Level
+    )
+  {
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      HideEnvironmentMap();
+  }
+
+  int m_CenterEffectId = INVALID_EFFECT_ID;
+  int m_BoundsEffectId = INVALID_EFFECT_ID;
+
+
+  //
+  // Visibility functions
+  //
+
+  void ShowEnvironmentMap()
+  {
+    if (INVALID_EFFECT_ID == m_CenterEffectId)
+      m_CenterEffectId = (new #EffectsArray()).
+        CreateEffect(EID_Center, getPosition(this), this);
+
+    if (INVALID_EFFECT_ID == m_BoundsEffectId)
+      m_BoundsEffectId = (new #EffectsArray()).
+        CreateEffect(EID_Bounds, GetRangeEffectMatrix(), this);
+  }
+
+  void HideEnvironmentMap()
+  {
+    if (INVALID_EFFECT_ID != m_CenterEffectId)
+      (new #EffectsArray()).DeleteEffect(m_CenterEffectId);
+    m_CenterEffectId = INVALID_EFFECT_ID;
+
+    if (INVALID_EFFECT_ID != m_BoundsEffectId)
+      (new #EffectsArray()).DeleteEffect(m_BoundsEffectId);
+    m_BoundsEffectId = INVALID_EFFECT_ID;
+  }
+
+  void UpdateEffects()
+  {
+    if (INVALID_EFFECT_ID != m_BoundsEffectId)
+      (new #EffectsArray()).SetEffectPosition(m_BoundsEffectId, GetRangeEffectMatrix());
+  }
+
+  Matrix GetRangeEffectMatrix()
+  {
+    Matrix Position = getPosition(this);
+
+    Position.xvec *= GetDimensions().x;
+    Position.yvec *= GetDimensions().y;
+    Position.zvec *= GetDimensions().z;
+
+    return Position;
+  }
+
+  event void OnSpecObjectVisibleStateChanged()
+  {
+    if (CSpecialSettings::IsSpecObjectsVisible(SPEC_CLASS))
+      ShowEnvironmentMap();
+    else
+      HideEnvironmentMap();
+  }
+}
+

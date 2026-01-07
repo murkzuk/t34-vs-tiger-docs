@@ -1,0 +1,376 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2007 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+// #########################################################################################
+//                                       HE bullet in Building detonation
+// #########################################################################################
+class CHE7576_85_88BulletWoodHitEffect
+  extends CBaseEffect
+{
+  CHE7576_85_88BulletWoodHitEffect()
+  {
+    CreateEffect("LightExplosionSplash",       0.0);
+    CreateEffect("HEWoodSplashRefuseEffect",   0.0);
+    CreateEffect("HEWoodDustRefuseEffect",     0.05);
+    CreateEffect("HEWoodSmokeRefuseEffect",    0.2);
+    CreateEffect("HEWoodSprayRefuseEffect",    0.0);
+    CreateAndForgetEffect("HE7576_85_88WoodSignEffect", 0.0);
+  }
+}
+// ==================================================== Splash  ==========================
+class CHEWoodSplashRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.05;		//период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.0;   	//рандомизация периода (сек)
+   float LifetimeMS         = 0.1;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 2.0;   	//начальная скорость частицы (м/с)
+   float VelocityVariance   = 2.0;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.0;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.0;   	//рандомизация смещения
+
+   int ThetaMin             = 45;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 70;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = false; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру" 
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = false; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Eff_fire1.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = false;  	//тип прозрачности false - аддитивная,
+							//  true - нормальная 		
+   int     TexSize          = 256;    	//размер текстуры в пикселах 
+   int     TexFrameX        = 256;     	//размер кадра по ширине
+   int     TexFrameY        = 256;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CHEWoodSplashRefuseParticle";    //имя описателя частиц
+
+// Data block .............................................................................
+ CHEWoodSplashRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CHEWoodSplashRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 0.5; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 0.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 0.0;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 0.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = 0.00;		//собственное усокрение
+   
+   float SpinRandomMin              = 0.0;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              =  0.0;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  =  0.0;		//скорость вращения
+   
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.1, 1.0];			//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+                    new Color(0.9, 0.9, 0.5, 0.9),
+                    new Color(0.9, 0.9, 0.5, 0.5),
+                    new Color(0.1, 0.1, 0.1, 0.1)
+                  ];	
+
+   Array sizes  = [1.1, 2.0, 5.0];			//размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+                    [0],
+                    [0]
+                  ];
+// Data block ..............................................................................
+}
+// ==================================================== Dust  ============================
+class CHEWoodDustRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.005;	//период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.001;   	//рандомизация периода (сек)
+   float LifetimeMS         = 0.03;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 10.0;   	//начальная скорость частицы (м/с)
+   float VelocityVariance   = 6.0;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.0;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.5;   	//рандомизация смещения
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 50;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = false; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру" 
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = true; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Eff_test4.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = true;  	//тип прозрачности false - аддитивная,
+							//  true - нормальная 		
+   int     TexSize          = 256;    	//размер текстуры в пикселах 
+   int     TexFrameX        = 256;     	//размер кадра по ширине
+   int     TexFrameY        = 256;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CHEWoodDustRefuseParticle";    //имя описателя частиц
+
+// Data block .............................................................................
+ CHEWoodDustRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CHEWoodDustRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 2.0; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 1.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 1.7;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 1.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = -0.02;		//собственное усокрение
+   
+   float SpinRandomMin              = -3.1;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              =  3.1;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  =  0.0;		//скорость вращения
+   
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.05, 0.5, 1.0];			//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+	            new Color(0.99, 0.99, 0.1, 0.7),
+                    new Color(0.7, 0.6, 0.4, 0.9),
+                    new Color(0.7, 0.6, 0.4, 0.4),
+                    new Color(0.7, 0.5, 0.3, 0.0)
+                  ];	
+
+   Array sizes  = [0.3, 1.0, 3.5, 5.0];			//размер частицы по периодам (масштаб)
+
+   Array frames = [                           		//кадры анимации между периодами
+    		    [0],
+		    [0],
+		    [0]
+                  ];
+// Data block ..............................................................................
+}
+// ============================================== Smoke  =================================
+class CHEWoodSmokeRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.009;	//период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.002;   	//рандомизация периода (сек)
+   float LifetimeMS         = 0.06;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 0.6;   	//начальная скорость частицы (м/с)
+   float VelocityVariance   = 8.0;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.5;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 1.0;   	//рандомизация смещения
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 25;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = false; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру" 
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = true; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Eff_test3.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = true;  	//тип прозрачности false - аддитивная,
+							//  true - нормальная 		
+   int     TexSize          = 256;    	//размер текстуры в пикселах 
+   int     TexFrameX        = 256;     	//размер кадра по ширине
+   int     TexFrameY        = 256;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CHEWoodSmokeRefuseParticle";    //имя описателя частиц
+
+// Data block .............................................................................
+ CHEWoodSmokeRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CHEWoodSmokeRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 4.0; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 9.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 0.1;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 0.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = -0.01;		//собственное усокрение
+   
+   float SpinRandomMin              = -3.1;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              =  3.1;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  =  0.09;		//скорость вращения
+   
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.01, 0.05, 0.2, 1.0];		//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+       		new Color(1.0, 1.0, 1.0, 0.2),
+                  new Color(0.99, 0.99, 0.9, 0.2),
+                  new Color(0.99, 0.99, 0.9, 0.3),
+                  new Color(0.5, 0.5, 0.4, 0.2),
+                  new Color(0.0, 0.0, 0.0, 0.0)
+                  ];	
+
+   Array sizes  = [0.1, 1.0, 5.0, 7.0, 15.0];		//размер частицы по периодам (масштаб)
+
+   Array frames = [ 						//кадры анимации между периодами
+                  	[0],
+			  	[0],
+			  	[0],
+			  	[0]   		
+		];
+// Data block ..............................................................................
+}
+// ============================================== Spray  =================================
+class CHEWoodSprayRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.008;	//период генерации частицы, (сек)
+   float PeriodVarianceMS   = 0.008;   	//рандомизация периода (сек)
+   float LifetimeMS         = 0.2;   	//время жизни эмитеера (время выброса частиц, с)
+   float EjectionVelocity   = 5.5;   	//начальная скорость частицы (м/с)
+   float VelocityVariance   = 3.5;   	//рандомизация начальной скорости (м/с)
+   float EjectionOffsetMin  = 0.0;   	//мин радиус эмитеера в нормальной плоскости (м)
+   float EjectionOffsetMax  = 0.0;   	//макс радиус эмитеера в нормальной плоскости (м)
+   float ShiftVariance      = 0.0;   	//смещение вдоль вектора начальной скорости (м)
+   float Shift              = 0.2;   	//рандомизация смещения
+
+   int ThetaMin             = 0;    	//мин отклонение скорости частицы от норм эмиттера
+   int ThetaMax             = 15;    	//макс отклонение
+   int PhiReferenceVel      = 0;     	//начало сектора генерации в норм плоскости (град)
+   int PhiVariance          = 360;   	//конец сектора генерации в  (град, 0-360 -круг)
+   boolean OverrideAdvances = false; 	//использование частицами локала эмитеера
+							//  (true-да, false - нет)
+   boolean OrientParticles  = true;  	//ориентация нормалей частиц "на камеру" 
+							//  (true-да, false - нет)
+   boolean m_LightingParticle = true; 	//освещенность патиклов (true-да, false - нет)
+   float m_LightingInterpolate = 0.5;  	//смещение серого к свету (0-1)
+
+   String TexName           = "textures/Effect_7.tex";	//имя файла текстуры
+
+   boolean UseInvAlpha      = true;  	//тип прозрачности false - аддитивная,
+							//  true - нормальная 		
+   int     TexSize          = 256;    	//размер текстуры в пикселах 
+   int     TexFrameX        = 64;     	//размер кадра по ширине
+   int     TexFrameY        = 64;     	//размер кадра по высоте
+
+   String ParticlesClass    = "CHEWoodSprayRefuseParticle";    //имя описателя частиц
+
+// Data block .............................................................................
+ CHEWoodSprayRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ОПИСАНИЕ ЧАСТИЦ ------------------------------------------------------------------------
+class CHEWoodSprayRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 1.0; 		//время жизни частицы (сек)
+   float ParticleLifetimeVarianceMS = 9.0;		//вариация времени жизни(сек)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 0.6;		//коэффициент влияния гравитации
+   float InheritedVelFactor         = 1.0;		//коэффициент наследования начальной
+									// скорости эмитеера
+   float ConstantAcceleration       = 0.001;		//собственное усокрение
+   
+   float SpinRandomMin              = -3.1;		//мин поворот частицы вокруг
+									//  своей нормали (-3.14 до 3.14)
+   float SpinRandomMax              =  3.1;		//макс (-3.14 до 3.14)
+   float SpinSpeed                  =  0.2;		//скорость вращения
+   
+//БЛОК ДИНАМИКИ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.1, 0.2, 1.0];			//временные периоды в течение
+									// жизни частицы (до 8 периодов)
+
+  Array colors = [ 						//цвет и альфа частицы по периодам
+       	        new Color(0.01, 0.01, 0.01, 0.9),
+                    new Color(0.2, 0.2, 0.2, 0.7),
+                    new Color(0.3, 0.3, 0.3, 0.2),
+                    new Color(0.3, 0.3, 0.3, 0.1)
+                  ];	
+
+   Array sizes  = [0.1, 1.0, 3.5, 5.5];			//размер частицы по периодам (масштаб)
+
+   Array frames = [ 						//кадры анимации между периодами
+                    [0,1,2,3,4,5,6,7,8],
+			  [9,10,11,12,14,15,16],
+			  [8]  		
+		];
+// Data block ..............................................................................
+}    		

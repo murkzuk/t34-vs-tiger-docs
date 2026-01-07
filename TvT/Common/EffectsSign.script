@@ -1,0 +1,299 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+//
+//Hit signs
+//
+
+//Calibre bullet in ground
+class CCalibre7576_85_88GroundSignEffect
+  extends CBaseSignEffect
+{
+  CCalibre7576_85_88GroundSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "CalibreGround",
+        new Color(1.0, 1.0, 1.0),
+        1.0, //Size
+        2
+      );
+  }
+}
+
+//Subcalibre bullet in ground
+class CSubcalibre7576_85_88GroundSignEffect
+  extends CBaseSignEffect
+{
+  CSubcalibre7576_85_88GroundSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "SubcalibreGround",
+        new Color(1.0, 1.0, 1.0),
+        1.0, //Size
+        2
+      );
+  }
+}
+
+//HE bullet in ground
+class CHE7576_85_88GroundSignEffect
+  extends CBaseSignEffect
+{
+  CHE7576_85_88GroundSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "HEGround",
+        new Color(1.0, 1.0, 1.0),
+        1.0, //Size
+        2
+      );
+  }
+}
+
+//Calibre bullet in armour
+class CCalibreArmourSignEffect
+  extends CBaseSignEffect
+{
+  CCalibreArmourSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "CalibreArmour",
+        new Color(1.0, 1.0, 1.0),
+        0.09, //Size
+        2
+      );
+  }
+}
+
+//Subcalibre bullet in armour
+class CSubcalibreArmourSignEffect
+  extends CBaseSignEffect
+{
+  CSubcalibreArmourSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "SubcalibreArmour",
+        new Color(1.0, 1.0, 1.0),
+        0.05, //Size
+        2
+      );
+  }
+}
+
+//HE bullet in armour
+class CHEArmourSignEffect
+  extends CBaseSignEffect
+{
+  CHEArmourSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "HEArmour",
+        new Color(1.0, 1.0, 1.0),
+        0.3, //Size
+        2
+      );
+  }
+}
+
+//Calibre bullet in metal
+class CCalibreMetalSignEffect
+  extends CBaseSignEffect
+{
+  CCalibreMetalSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "CalibreArmour",
+        new Color(1.0, 1.0, 1.0),
+        0.09, //Size
+        2
+      );
+  }
+}
+
+//Calibre bullet in wood
+class CCalibre7576_85_88WoodSignEffect
+  extends CBaseSignEffect
+{
+  CCalibre7576_85_88WoodSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "CalibreGround",
+        new Color(1.0, 1.0, 1.0),
+        0.2, //Size
+        2
+      );
+  }
+}
+
+//HE bullet in wood
+class CHE7576_85_88WoodSignEffect
+  extends CBaseSignEffect
+{
+  CHE7576_85_88WoodSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "HEGround",
+        new Color(1.0, 1.0, 1.0),
+        0.2, //Size
+        2
+      );
+  }
+}
+
+//Gun bullet in ground
+class CBulletGroundSignEffect
+  extends CBaseSignEffect
+{
+  CBulletGroundSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "BulletGround",
+        new Color(1.0, 1.0, 1.0),
+        0.09, //Size
+        2
+      );
+  }
+}
+
+//Gun bullet in wood
+class CBulletWoodSignEffect
+  extends CBaseSignEffect
+{
+  CBulletWoodSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "BulletWood",
+        new Color(1.0, 1.0, 1.0),
+        0.02, //Size
+        2
+      );
+  }
+}
+
+//
+//Track sign
+//
+class CT34TrackEffect
+  extends CBaseTrackEffect
+{
+  float DeltaPath      = 2.0;  // каждые х метров, когда будет положен след
+  float DeltaAngle     = 8.0;  // угол, при повороте на который будет положен след
+
+  CT34TrackEffect()
+  {
+    CBaseTrackEffect(
+        CEffectsArray::SignEffectsSkin,
+        "T34TrackSign",
+        new Color(1.0, 1.0, 1.0),
+        0.63, // Size X
+        0.27 // Size Y
+      );
+  }
+}
+class CHanomagTrackEffect
+  extends CBaseTrackEffect
+{
+  float DeltaPath      = 2.0;  // каждые х метров, когда будет положен след
+  float DeltaAngle     = 8.0;  // угол, при повороте на который будет положен след
+
+  CHanomagTrackEffect()
+  {
+    CBaseTrackEffect(
+        CEffectsArray::SignEffectsSkin,
+        "HanomagTrackSign",
+        new Color(1.0, 1.0, 1.0),
+        0.63, // Size X
+        0.23 // Size Y
+      );
+  }
+}
+class CPzVIETrackEffect
+  extends CBaseTrackEffect
+{
+  float DeltaPath      = 2.5;  // каждые х метров, когда будет положен след
+  float DeltaAngle     = 8.0;  // угол, при повороте на который будет положен след
+
+  CPzVIETrackEffect()
+  {
+    CBaseTrackEffect(
+        CEffectsArray::SignEffectsSkin,
+        "PzVIETrackSign",
+        new Color(1.0, 1.0, 1.0),
+        0.66, // Size X
+        0.36 // Size Y
+      );
+  }
+}
+class CPzIVGTrackEffect
+  extends CBaseTrackEffect
+{
+  float DeltaPath      = 2.0;  // каждые х метров, когда будет положен след
+  float DeltaAngle     = 8.0;  // угол, при повороте на который будет положен след
+
+  CPzIVGTrackEffect()
+  {
+    CBaseTrackEffect(
+        CEffectsArray::SignEffectsSkin,
+        "PzIVGTrackSign",
+        new Color(1.0, 1.0, 1.0),
+        0.63, // Size X
+        0.24 // Size Y
+      );
+  }
+}
+
+//
+//Object death sign
+//
+class CBaseBuildingExplosionSignEffect
+  extends CBaseSignEffect
+{
+  boolean ForcePutonGround = true;
+
+  CBaseBuildingExplosionSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "HEArmour",
+        new Color(1.0, 1.0, 1.0),
+        8.0, //Size
+        2
+      );
+  }
+}
+
+class CGenericUnitExplosionSignEffect
+  extends CBaseSignEffect
+{
+  boolean ForcePutonGround = true;
+
+  CGenericUnitExplosionSignEffect()
+  {
+    CBaseSignEffect(
+        CEffectsArray::SignEffectsSkin,
+        "HEArmour",
+        new Color(1.0, 1.0, 1.0),
+        3.0, //Size
+        2
+      );
+  }
+}
+

@@ -1,0 +1,527 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTreeDescriptor
+{
+  CTreeDescriptor()
+  {
+    IsPhysicaly = false;
+  }
+
+  CTreeDescriptor(
+      String  _NormalModelClass,
+      String  _DamagedModelClass,
+      String  _RootSystemTexture,
+      float   _RootSystemSize
+    )
+  {
+    NormalModelClass   = _NormalModelClass;
+    DamagedModelClass  = _DamagedModelClass;
+
+    RootSystemTexture  = _RootSystemTexture;
+    RootSystemSize     = _RootSystemSize;
+
+    IsPhysicaly = false;
+  }
+
+  CTreeDescriptor(
+      String  _NormalModelClass,
+      String  _DamagedModelClass,
+      String  _RootSystemTexture,
+      float   _RootSystemSize,
+      float   _FallEnergy,
+      float   _TreeRadius
+    )
+  {
+    NormalModelClass   = _NormalModelClass;
+    DamagedModelClass  = _DamagedModelClass;
+
+    RootSystemTexture  = _RootSystemTexture;
+    RootSystemSize     = _RootSystemSize;
+
+    IsPhysicaly  = true;
+    FallEnergy   = _FallEnergy;
+    BounceCoeff  = 0.2;
+    Acceleration = 0.4;
+    TreeRadius   = _TreeRadius;
+  }
+
+  String    NormalModelClass;
+  String    DamagedModelClass;
+
+  boolean   IsPhysicaly;
+  float     FallEnergy;
+  float     BounceCoeff;
+  float     Acceleration;
+  float     TreeRadius;
+  boolean   IsSkipContact     = false;
+
+  String    FallEffectId      = "BaseBuildingExplosionSmokeEffect";
+  String    FallSoundId       = "LargeTreeFallSound";
+
+  // Root system
+  String    RootSystemTexture = "Textures/effect_sign.tex";
+  float     RootSystemSize    = 1.5f;
+
+  float     Elasticity        = 0.0f;
+  float     Friction          = 0.0f;
+}
+
+class CSmallTreeDescriptor
+{
+  String    NormalModelClass = "CFir_short";
+  String    DamagedModelClass = "CFir_shortDestroyed";
+
+  boolean   IsPhysicaly   = true;
+  float     FallEnergy    = 10.0;
+
+  float     BounceCoeff   = 0.01;
+  float     Acceleration  = 3.5;
+  float     TreeRadius    = 0.1;
+  boolean   IsSkipContact = true;
+
+  String    FallEffectId  = "BaseBuildingExplosionSmokeEffect";
+  String    FallSoundId   = "SmallTreeFallSound";;
+
+  String    RootSystemTexture = "Textures/TreeSign_FirScotch.tex";
+  float     RootSystemSize    = 0.25f;
+
+  float     Elasticity        = 0.5f;
+  float     Friction          = 0.0f;
+}
+
+class CAppleTreeDescriptor
+{
+  String    NormalModelClass  = "CAppleTree";
+  String    DamagedModelClass = "CAppleTreeDestroyed";
+
+  boolean   IsPhysicaly   = true;
+  float     FallEnergy    = 10.0;
+
+  float     BounceCoeff   = 0.01;
+  float     Acceleration  = 3.5;
+  float     TreeRadius    = 0.1;
+  boolean   IsSkipContact = true;
+
+  String    FallEffectId  = "BaseBuildingExplosionSmokeEffect";
+  String    FallSoundId   = "SmallTreeFallSound";;
+
+  String    RootSystemTexture = "Textures/TreeSign_LightBranchLeaf.tex";
+  float     RootSystemSize    = 0.20f;
+
+  float     Elasticity        = 0.5f;
+  float     Friction          = 0.0f;
+}
+
+class CSmallAppleTreeDescriptor extends CAppleTreeDescriptor
+{
+  String    NormalModelClass  = "CSmallAppleTree";
+  String    DamagedModelClass = "CSmallAppleTreeDestroyed";
+}
+
+
+class CBushDescriptor
+{
+  String    NormalModelClass = "CBulfordHolly";
+  String    DamagedModelClass = "CBulfordHollyDestroyed";
+
+  boolean   IsPhysicaly   = true;
+  float     FallEnergy    = 10.0;
+  float     BounceCoeff   = 0.01;
+  float     Acceleration  = 2.8;
+  float     TreeRadius    = 0.1;
+  boolean   IsSkipContact = true;
+
+  String    FallEffectId  = "BaseBuildingExplosionSmokeEffect";
+  String    FallSoundId   = "SmallTreeFallSound";
+
+  String    RootSystemTexture = "Textures/TreeSign_FirScotch.tex";
+  float     RootSystemSize    = 0.5f;
+
+  float     Elasticity        = 0.5f;
+  float     Friction          = 0.0f;
+}
+
+class CLargeBushDescriptor
+{
+  String    NormalModelClass = "CBulfordHollyLarge";
+  String    DamagedModelClass = "CBulfordHollyLargeDestroyed";
+
+  boolean   IsPhysicaly   = true;
+  float     FallEnergy    = 10.0;
+  float     BounceCoeff   = 0.01;
+  float     Acceleration  = 2.8;
+  float     TreeRadius    = 0.1;
+  boolean   IsSkipContact = true;
+
+  String    FallEffectId  = "BaseBuildingExplosionSmokeEffect";
+  String    FallSoundId   = "SmallTreeFallSound";
+
+  String    RootSystemTexture = "Textures/TreeSign_FirScotch.tex";
+  float     RootSystemSize    = 1.0f;
+
+  float     Elasticity        = 0.5f;
+  float     Friction          = 0.0f;
+}
+
+class CBaseForest
+{
+  int     QuadtreeDepth     = 8;
+  int     TemplateSize      = 128;
+  Array   LevelDistribution = [ 1600,   3200,   4800,   6400,   8000   ];
+  Array   LevelRangeMin     = [ 2600.0, 2100.0, 1600.0, 1100.0, 600.0  ];
+  Array   LevelRangeMax     = [ 2600.0, 2400.0, 2200.0, 2000.0, 1800.0 ];
+
+  float   BurnDelay         = 10.0;
+  float   ModelDistance     = 15.0;
+
+  float   ShiftRange        = 0.01;
+
+  float   HighDensityFactor = 16.0;
+
+  // Distances for non-bordered cells
+  float   MinVariableDistance          = 300.0;
+  float   MaxVariableDistance          = 650.0;
+  // Distances for bordered cells
+  int     BorderCells                  = 2;
+  float   MinVariableDistanceForBorder =  900.0;
+  float   MaxVariableDistanceForBorder = 1000.0;
+
+  //Max Distance for tree root system
+  float   MaxVariableDistanceForRoot   = 400.0;
+
+  //Min Distance for tree root system
+  float   MinVariableDistanceForRoot   = 100.0;
+
+  boolean TreeBillboardUpZ             = true;
+
+  float   LeaveWindWeight              = 0.15; //влеяние ветра на листву деревьев
+
+  String  BulletHitEffect   = "ForestBulletHitDustEffect"; //"ForestBulletHitEffect";
+  String  BulletHitSound    = "ForestBulletHitSound";
+  String  ExplosionEffect   = "ForestBulletHitDustEffect"; //"ForestBulletHitEffect";
+  String  ExplosionSound    = "ForestBulletHitSound";
+
+  //
+  //  Trees in format
+  //
+//  final static Component Fir_short            = new CTreeDescriptor("CFir_short",       "CFir_shortDestroyed",         "Textures/effect_sign.tex", 1.5,  100.0, 0.1);
+  final static Component Fir_short            = new CSmallTreeDescriptor();
+  final static Component Fir_tall_bend        = new CTreeDescriptor("CFir_tall_bend",     "CFir_tall_bendDestroyed",     "Textures/TreeSign_FirTall.tex", 1.7,  1000.0, 0.1);    // elka
+  final static Component Fir_tall             = new CTreeDescriptor("CFir_tall",          "CFir_tallDestroyed",          "Textures/TreeSign_FirTall.tex", 1.7,  1000.0, 0.1);    // elka
+  final static Component FirScotch            = new CTreeDescriptor("CFirScotch",         "CFirScotchDestroyed",         "Textures/TreeSign_FirScotch.tex", 0.75,  1000.0, 0.1);  //sosna
+  final static Component FirScotchSmall       = new CTreeDescriptor("CFirScotchSmall",    "CFirScotchSmallDestroyed",    "Textures/TreeSign_FirScotch.tex", 0.75,  1000.0, 0.1);  //sosna
+  final static Component Linden               = new CTreeDescriptor("CLinden",            "CLindenDestroyed",            "Textures/TreeSign_FirScotch.tex", 0.75,  1000.0, 0.11); //Temnaja kora
+  final static Component Birch                = new CTreeDescriptor("CBirch",             "CBirchDestroyed",             "Textures/TreeSign_LightBranchLeaf.tex", 1.9,  1000.0, 0.1); //Svetlaja kora
+  final static Component SmallBirch           = new CTreeDescriptor("CSmallBirch",        "CSmallBirchDestroyed",        "Textures/TreeSign_LightBranchLeaf.tex", 1.9,  1000.0, 0.1); //Svetlaja kora
+  final static Component AppleTree            = new CAppleTreeDescriptor();
+  final static Component SmallAppleTree       = new CSmallAppleTreeDescriptor();
+  final static Component LiveOak              = new CTreeDescriptor("CLiveOak",           "CLiveOakDestroyed",           "Textures/TreeSign_FirScotch.tex", 4.5,  1000.0, 0.1);  //Temnaja kora
+  final static Component BulfordHolly         = new CBushDescriptor();
+//final static Component BulfordHolly         = new CTreeDescriptor("CBulfordHolly",      "CBulfordHollyDestroyed",      "Textures/TreeSign_DarkBranchLeaf.tex", 0.5,  1000.0, 0.5);  //Temnaja kora
+  final static Component BulfordHollyLarge    = new CLargeBushDescriptor();
+//final static Component BulfordHollyLarge    = new CTreeDescriptor("CBulfordHollyLarge", "CBulfordHollyLargeDestroyed", "Textures/TreeSign_DarkBranchLeaf.tex", 0.5,  1000.0, 0.5);  //Temnaja kora
+  final static Component NullTree             = null;
+}
+
+class CShrubbery
+{
+  int   CreationCount = 5;
+  float MinDistance   = 1.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::BulfordHolly,   1.0]
+                                  ];
+}
+
+class CShrubberyLarge
+{
+  int   CreationCount = 5;
+  float MinDistance   = 1.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::BulfordHollyLarge,   1.0]
+                                  ];
+}
+
+class CExtraLightForest
+{
+  int   CreationCount = 2;
+  float MinDistance   = 1.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::Fir_short,      0.05],
+                                    [CBaseForest::BulfordHolly,   0.4],
+
+                                    [CBaseForest::NullTree,      0.55]
+                                  ];
+}
+
+class CLiveOakForest
+{
+  int   CreationCount = 1;
+  float MinDistance   = 1.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::LiveOak, 1.0]
+                                  ];
+}
+
+class CLightForest
+{
+  int   CreationCount = 1;
+  float MinDistance   = 2.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::Fir_short,      0.1],
+                                    [CBaseForest::Linden,         0.2],
+                                    [CBaseForest::BulfordHolly,   0.2],
+                                    [CBaseForest::Birch,          0.2],
+                                    [CBaseForest::SmallBirch,     0.2],
+                                    [CBaseForest::NullTree,       0.1]
+                                  ];
+}
+
+class CMiddleForest
+{
+  int   CreationCount = 1;
+  float MinDistance   = 2.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::Fir_tall_bend,  0.20],
+                                    [CBaseForest::Fir_tall,       0.20],
+                                    [CBaseForest::FirScotch,      0.25],
+                                    [CBaseForest::FirScotchSmall, 0.25],
+                                    [CBaseForest::NullTree,       0.10]
+                                  ];
+}
+
+class CLargeForest
+{
+  int   CreationCount = 1;
+  float MinDistance   = 2.0;
+  Array TreeCreationProbability = [
+                                    [CBaseForest::Fir_tall_bend,  0.2],
+                                    [CBaseForest::Fir_tall,       0.15],
+                                    [CBaseForest::FirScotch,      0.15],
+                                    [CBaseForest::NullTree,       0.5]
+                                  ];
+}
+
+class CSTBaseForestC1 extends CBaseForest, CBaseZoneMap
+{
+  //
+  // Settings
+  //
+
+  Array ZoneValues = [
+//      ZMC_Forest01,
+//      ZMC_Forest02,
+//      ZMC_Forest03,
+//      ZMC_Forest04,
+//      ZMC_Forest05,
+//      ZMC_Forest06,
+//      ZMC_Forest07,
+//      ZMC_Forest08,
+//      ZMC_Forest09
+    ];
+
+ Array CellTemplates = [
+   [
+    27,
+    false,
+    new CExtraLightForest()
+   ],
+
+   [
+    28,
+    true,
+    new CLightForest()
+   ],
+
+   [
+    29,
+    true,
+    new CMiddleForest()
+   ],
+
+   [
+    30,
+    true,
+    new CLargeForest()
+   ],
+
+   [
+    ZMC_ShrubberyCasual,
+    false,
+    new CShrubbery()
+   ],
+
+   [
+     ZMC_Forest02,
+     true,
+//     20,
+     new CLightForest()
+   ],
+
+   [
+    ZMC_ShrubberyLarge,
+    false,
+    new CShrubberyLarge()
+   ],
+
+   [
+    ZMC_SpecialLongAloneTree,
+    [BulfordHolly, -3.0,  3.0],
+    [CBaseForest::Fir_tall,  2.0,  0.0],
+    [BulfordHolly, -2.0,  -3.0],
+    [BulfordHollyLarge,  3.0,  -3.0]
+   ],
+
+   [
+    ZMC_ShrubberyRegular,
+    [BulfordHolly, -3.0,  3.0],
+    [BulfordHolly,  2.0,  0.0],
+    [BulfordHollyLarge, -2.0,  -3.0],
+    [BulfordHolly,  3.0,  -3.0]
+   ],
+
+   [
+    ZMC_VillagePlanting01,
+    [Linden, 2.0, 2.0],
+    [BulfordHolly,  1.0, -1.0],
+    [BulfordHolly, -1.0, -3.0]
+   ],
+
+   [
+    ZMC_VillagePlanting02,
+    [Linden, 2.0, 3.0],
+    [Linden, -1.0, -2.0],
+    [BulfordHolly, 1.0, -1.0]
+   ],
+
+   [
+    ZMC_VillagePlanting03,
+    [AppleTree, -1.5, 3.0],
+    [SmallAppleTree, 0.0, -3.0],
+    [BulfordHolly, 1.5, -1.5]
+   ],
+
+   [
+    ZMC_RoadForest,
+    [Birch, 0.0, 0.0],
+    [Fir_tall, 1.0, 2.0],
+    [BulfordHolly, -1.0, -1.0]
+   ],
+
+   [
+     ZMC_Forest03,
+     [LiveOak, 0.0, 0.0]
+   ]
+  ];
+
+  Array VariableTemplates = [
+      [
+        ZMC_Forest04,
+        20,
+        new CLargeForest()
+      ],
+
+      [
+        ZMC_Forest01,
+        20,
+        new CMiddleForest()
+      ]
+
+/*      [
+        ZMC_Forest02,
+        20,
+        new CLightForest()
+      ],
+*/
+      /*[
+        ZMC_Forest03,
+        20,
+        new CLiveOakForest()
+      ]*/
+    ];
+
+
+  Array     Descriptors = [];
+
+  Component MissionAtmosphere = null;
+  Component MaterialManager = new #MaterialManager<CSTBaseForestC1Materials>();
+
+  CSTBaseForestC1(
+      Component _MissionAtmosphere
+    )
+  {
+    MissionAtmosphere = _MissionAtmosphere;
+  }
+}
+
+class CSTBaseForestC1Materials
+{
+  Array Materials = [
+/*
+      new CSubstanceMaterial(
+          "",
+          CMaterialStructure::MSID_Wood
+        ),
+
+      new CSubstanceMaterial(
+          "FirShort",
+          CMaterialStructure::MSID_Metal
+        ),
+ */
+
+      new CSubstanceMaterial(
+          "bush",
+          CMaterialStructure::MSID_Bush
+        )
+
+    ];
+}
+
+class CSTBaseForestC1Skin
+{
+  // "DISABLE",      // вылезающий слой с альфой
+  // "NORMAL",       // невылезающий слой с альфой
+  // "ADDITIVE",     // невылезающий без альфы
+
+  Array Materials = [
+      new CForestPlaneMaterial(
+          "L1",
+          "Textures/Forest_1.tex",
+          "DISABLE"     // используется только для определения нижнего сло
+        ),
+
+      new CForestPlaneMaterial(
+          "L2",
+          "Textures/Forest_2.tex",
+          "NORMAL"
+        ),
+
+   new CForestPlaneMaterial(
+          "L3",
+          "Textures/Forest_3.tex",
+          "NORMAL"
+        )
+
+      /*new CForestPlaneMaterial(
+          "L4",
+          "Textures/Forest_4.tex",
+          "NORMAL"
+        ),
+      new CForestPlaneMaterial(
+          "L5",
+          "Textures/Forest_5.tex",
+          "NORMAL"
+        ),
+      new CForestPlaneMaterial(
+          "L6",
+          "Textures/Forest_6.tex",
+          "NORMAL"
+        )*/
+    ];
+}

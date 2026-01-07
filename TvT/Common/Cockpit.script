@@ -1,0 +1,2103 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Base class for devices
+//
+
+class CDeviceToItemLink
+{
+  CDeviceToItemLink(
+      String _ItemName
+    )
+  {
+    ItemName = _ItemName;
+  }
+
+  void AddDevice(
+      Component _Device,
+      Array     _HPPoints,
+      Array     _Modes
+    )
+  {
+    Devices.add([_Device, _HPPoints, _Modes]);
+  }
+
+  String ItemName;
+  Array  Devices;
+}
+
+class CCockpit
+{
+  boolean   m_CockpitExists       = false;
+  boolean   m_CockpitEnabled      = true;
+  boolean   m_InputEnabled        = true;
+  boolean   m_EngineOverheat      = true;
+
+  float     m_ShakeCoeff          = 0.0f;
+
+  float     m_DefaultShakeForce   = 0.0f;
+  float     m_DecreaseShakeSpeed  = 2.0f;
+
+  float     m_TempSoundVolume     = 1.0f;
+  Component m_ShockSound          = new #Emitter<CShockSound>();
+
+  Array     m_ControlsNames       = [];
+
+  int       m_ViewMode            = CM_Person1rd;
+  int       m_PlayerSit           = PS_PilotFirst;
+
+  int       m_PlayerControl       = PS_PilotFirst;
+  int       m_GunnerControl       = PS_GunnerLeft;
+  
+  boolean   m_is3rdPerson		  = false;
+
+  final static int CS_T34         = 0;
+  final static int CS_Tiger       = 1;
+
+  int       m_CockpitStyle        = CS_T34;
+
+  Component m_AnimManager;
+  Component m_MFD;
+  Component m_CockpitCameraLink;
+
+  Map       m_OnLineDevices;
+
+//  boolean   m_CommanderZoom        = false;
+//  boolean   m_CommanderCockpitZoom = false;
+//  boolean   m_DriverZoom           = false;
+//  boolean   m_Binocular            = false;
+//  boolean   m_Nearest              = false;
+  boolean   m_Opened               = false;
+  boolean   m_HatchCommanderOpened = false;
+
+  static String BodyHatchOpenSound       = "TigerLukOpenSound";
+  static String BodyHatchCloseSound      = "TigerLukCloseSound";
+  static String CommanderHatchOpenSound  = "TigerLukOpenSound";
+  static String CommanderHatchCloseSound = "TigerLukCloseSound";
+
+  final static int UPS_Driver     = 0;
+  final static int UPS_Gunner     = 1;
+  final static int UPS_Commander  = 2;
+
+  final static int Shift1stPerson = 3;
+  final static int ShiftCockpit   = 6;
+
+  final static int UPS_1stPersonDriver     = Shift1stPerson + UPS_Driver;
+  final static int UPS_1stPersonGunner     = Shift1stPerson + UPS_Gunner;
+  final static int UPS_1stPersonCommander  = Shift1stPerson + UPS_Commander;
+
+  final static int UPS_CockpitDriver       = ShiftCockpit + UPS_Driver;
+  final static int UPS_CockpitGunner       = ShiftCockpit + UPS_Gunner;
+  final static int UPS_CockpitCommander    = ShiftCockpit + UPS_Commander;
+
+  String CockpitGunnerCamera     = "CockpitCameraGunner";
+  String CockpitGunnerNearCamera = "CockpitNearCameraGunner";
+  String CockpitCommanderCamera  = "CockpitCameraCommander";
+  String CockpitCommanderCameraOut = "Commander_Camera";
+  String CockpitDriverCamera     = "CockpitCameraDriver";
+  String CockpitDriverNearCamera = "CockpitNearCameraDriver";
+
+/*  final static Array GearNames = [ getLocalized("Cocpit", "str_GearR"),
+                                   getLocalized("Cocpit", "str_GearN"),
+                                   getLocalized("Cocpit", "str_Gear1"),
+                                   getLocalized("Cocpit", "str_Gear2"),
+                                   getLocalized("Cocpit", "str_Gear3"),
+                                   getLocalized("Cocpit", "str_Gear4"),
+                                   getLocalized("Cocpit", "str_Gear5")
+                                 ];
+*/
+  float m_WaterTemp = 52.0f;
+  float m_OilTemp   = 45.0f;
+  float m_OilPress  = 0.0f;
+
+  float m_CriticalEngineSpeed1 = 1500.0f;
+  float m_TempIncreaseCoeff1   = 0.01f;
+  float m_CriticalEngineSpeed2 = 1700.0f;
+  float m_TempIncreaseCoeff2   = 0.1f;
+  float m_CriticalEngineSpeed3 = 1750.0f;
+  float m_TempIncreaseCoeff3   = 0.2f;
+
+  float m_CriticalWaterTemp = 105.0f;
+  float m_CriticalOilTemp   = 100.0f;
+  float m_CriticalTempReport = 0.0f;
+
+  final static float T34GunnerFOV = 1.0f/5.0f;
+  final static float T34CommanderFOV = 1.0f/9.0f;
+  final static float TigerGunnerFOV = 1.0f/9.0f;
+  final static float TigerCommanderFOV = 1.0f/14.0f;
+
+  float m_GunnerFOV = T34GunnerFOV;
+  float m_CommanderFOV = T34CommanderFOV;
+
+  WString m_PlayerLeftGame = CGameMessages::msg_PlayerLeftGame;
+  WString m_PlayerJoinGame = CGameMessages::msg_PlayerJoinGame;
+  WString m_WasKilledBy    = CGameMessages::msg_PlayerKilledBy;
+
+  // ==========================================
+  // Items functioning
+  // ==========================================
+
+
+
+
+  // ==========================================
+  // Base cockpit methods
+  // ==========================================
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    Component VehicleController = GetVehicleController();
+    VehicleController.EnableEngine(false);
+    m_MFD = null;
+    m_AnimManager       = null;
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+    Component TerrainMap = GetObject("C_TerrainMap");
+    // navpoints for map
+    Array NavPoints = _Mission.GetNavpointsForPlayerMap();
+    for (int i = 0; i< NavPoints.size();i++)
+    {
+      TerrainMap.AddNavpointsList(NavPoints[i][0], NavPoints[i][1], NavPoints[i][2]);
+    }
+    TerrainMap.SetRanges(_Mission.CockpitMapMinRange,
+                         _Mission.CockpitMapMaxRange,
+                         _Mission.CockpitMapNavNameMaxRange,
+                         _Mission.CockpitMapZoomSteps,
+                         _Mission.CockpitMapAccessBox);
+
+    TerrainMap.SetMarksInitPoint(_Mission.MarksInitPoint);
+    TerrainMap.EnableMouseZoom(false);
+    TerrainMap.SetMultiPlayerMode(!_Mission.IsSingle());
+//    TerrainMap.SetCursorControl(GetObject("Cursor"));
+
+    UpdateCursorAndMouse();
+  }
+
+  // ==========================================
+  // Setup cockpit
+  // ==========================================
+
+  void SetupCockpit(
+      Component _Camera,
+      Component _Mission
+    )
+  {
+    // set flag
+    m_CockpitExists = true;
+
+
+    SetupCockpitUIControls(_Camera, _Mission);
+
+    //
+    // Init colors
+    //
+    Component Settings = new #GameSettings();
+    if (Settings.GetCockpitDevicesColor() > CCommonStrings::CockpitColorCombo.size() - 1)
+      Settings.SetCockpitDevicesColor(0);
+
+    OnCockpitColorChanged(
+      Settings.GetCockpitDevicesColor());
+
+    m_EngineOverheat = (1 == Settings.GetUserValue(L"EngineFire", 1));
+
+    InitializeCockpitMode();
+
+
+    Component auto_things = new #TankAutoThingControl<CBaseTankAutoThingUI>();
+    RegisterObject( "AutoThingsUI", auto_things );
+    auto_things.Enable( true );
+    auto_things.Show( true );
+    auto_things.Reset();
+    addClassificator(auto_things, CLASSIFICATOR_NO_POST_EFFECTED);
+    addClassificator(auto_things, CLASSIFICATOR_UI);
+    
+    logWarning("!!!!!!!!!!!!!!!!!!! SG KILL AUTO !!!!!!!!!!!!!!!!!!");
+    
+    boolean isExpertMode = false;
+    if(isFunctionExist(_Mission, "IsExpertMode", 0))
+       isExpertMode = _Mission.IsExpertMode();
+    if(isExpertMode)
+      auto_things.DisableAutoControls();
+
+    RegisterObject("ShockSound", m_ShockSound);
+
+    Component EmitterLink = new #ObjectEmitterLink();
+    setSlaveObject(EmitterLink, m_ShockSound);
+    setPositionable(EmitterLink, GetMeshComponent());
+    RegisterObject("ShockSoundLink", EmitterLink);
+
+  }
+
+  void SetupCockpitPanel()
+  {
+
+  }
+
+  void SetupSensorComponents(
+      Component _Camera,
+      Component _Mission
+    )
+  {
+  }
+
+  void SetupCockpitUIControls(
+      Component _Camera,
+      Component _Mission
+    )
+  {
+    final Color PrimaryColor = new Color(242.0/256.0, 119.0/256.0, 23.0/256.0);
+    // get mesh component
+    Component Mesh = GetMeshComponent();
+
+    m_MFD = new CCockpitMFDScreen();
+    m_MFD.SetAspectRatio(_Camera.GetAR());
+
+    CCockpitSkin::TerrainMapTextureName = _Mission.GetTerrainMapTextureName();
+
+    Component CockpitMatManager = new #MaterialManager<CCockpitSkin>();
+
+    // Create cursor
+    CreateDefaultCursor(this, CockpitMatManager);
+
+    GetObject("Cursor").Enable(true);
+
+    Component LensFlare =  _Mission.GetMissionLensFlare();//new #LensFlare<CLensFlare>();
+    if(LensFlare != null)
+    {
+      RegisterObject("LensFlare", LensFlare);
+      setPositionable(LensFlare,  _Camera);
+      LensFlare.SetAtmosphere(_Mission.GetMissionAtmosphere());
+    }
+
+    Component VoiceMessenger = new #VoiceMessenger();
+    VoiceMessenger.SetDequeSize(15);
+    RegisterObject("VoiceMessenger", VoiceMessenger);
+
+    Component MessageInfoBar = new #MessageBar2<CCockpitInfoMsgBar>();
+    addClassificator(MessageInfoBar, CLASSIFICATOR_NO_POST_EFFECTED);
+    MessageInfoBar.SetAppearance(10.0 / 800.0, 50.0 / 600.0, 0.10, 0.12);
+    RegisterObject("MessageInfoBar", MessageInfoBar);
+
+    CMultiPlayerMsgBar::MessageBars = [];
+    for (int i = 0; i < 17; i++)
+    {
+      CMultiPlayerMsgBar::MessageBars.add([ 0.8f, 0.02f * i + 0.04f, "N", "N", "N", "C", 0, L"" ]);
+      CMultiPlayerMsgBar::MessageBars.add([ 0.95f, 0.02f * i + 0.04f, "N", "N", "N", "C", 0, L"" ]);
+      CMultiPlayerMsgBar::MessageBars.add([ 0.6f, 0.02f * i + 0.04f, "N", "N", "N", "C", 0, L"" ]);
+      CMultiPlayerMsgBar::MessageBars.add([ 0.75f, 0.02f * i + 0.04f, "N", "N", "N", "C", 0, L"" ]);
+    }
+
+    Component MultiPlayerInfoBar = new #MessageBar2<CMultiPlayerMsgBar>();
+    addClassificator(MultiPlayerInfoBar, CLASSIFICATOR_NO_POST_EFFECTED);
+    MessageInfoBar.SetAppearance(10.0 / 800.0, 50.0 / 600.0, 0.10, 0.12);
+    RegisterObject("MultiPlayerInfoBar", MultiPlayerInfoBar);
+
+    Component MultiPlayerChatBar = new #MessageBar();
+    addClassificator(MultiPlayerChatBar, CLASSIFICATOR_NO_POST_EFFECTED);
+    MultiPlayerChatBar.EnableMessages(true);
+    MultiPlayerChatBar.SetPosition(0.01, 0.01);
+    MultiPlayerChatBar.SetDimensions(0.9,0.12);
+//     MultiPlayerChatBar.SetMaterialManager(CockpitMatManager);
+    MultiPlayerChatBar.EnableRenderSign(false);
+//     MultiPlayerChatBar.SetCallSignMaterial("GridBackground");
+//     MultiPlayerChatBar.SetCallSignPosition(0.1, 0.3);
+    RegisterObject("MultiPlayerChatBar", MultiPlayerChatBar);
+
+    Component TextControl = new #TextControl<CUIEditField>();
+    TextControl.SetPosition(0.01, 0.145);
+    TextControl.SetDimensions(0.3, 0.03);
+    TextControl.SetTextColor(new Color(1.0, 0.55, 0.1, 1.0));
+    TextControl.SetText(L">>");
+    TextControl.Enable(false);
+    RegisterObject("ChatText", TextControl);
+
+    Component MultiPlayerChatEditField = new #EditField<CUIEditField>();
+    RegisterObject("MultiPlayerChatEditField", MultiPlayerChatEditField);
+    MultiPlayerChatEditField.SetMaterialManager(CockpitMatManager);
+    MultiPlayerChatEditField.SetDimensions(0.9,0.03);
+    MultiPlayerChatEditField.SetPosition(0.04, 0.14);
+    MultiPlayerChatEditField.Enable(false);
+    MultiPlayerChatEditField.EnableBitmap(false);
+    MultiPlayerChatEditField.OnFocus(true);
+    MultiPlayerChatEditField.SetTextColors(new Color(0.6,0.3,0.0), new Color(1.0,0.55,0.1));
+    MultiPlayerChatEditField.SetZ(0.03);
+    MultiPlayerChatEditField.SetMaxChars(100);
+    MultiPlayerChatEditField.SetAlignment(ALIGNMENT_LEFT);
+    MultiPlayerChatEditField.SetMask(L"", L"`");
+    MultiPlayerChatEditField.ResetBySize(true);
+    MultiPlayerChatEditField.ResetOnlyValid(true);
+    MultiPlayerChatEditField.SetFont("Arial", 0.032);
+
+    // TerrainMap
+    Component TerrainMap = new #TerrainMap<CUh1bMapView>();;
+    TerrainMap.SetAppearance(0.0, 0.0, 0.2);
+    addClassificator(TerrainMap, CLASSIFICATOR_UI);
+    addClassificator(TerrainMap, CLASSIFICATOR_NO_POST_EFFECTED);
+    RegisterObject("C_TerrainMap", TerrainMap);
+    TerrainMap.Enable(false);
+    int MapID = m_MFD.RegisterControl(TerrainMap, [UPS_Gunner, UPS_Commander, UPS_Driver, UPS_1stPersonDriver,
+                                                   UPS_1stPersonCommander, UPS_CockpitDriver, UPS_CockpitCommander ]);
+    m_ControlsNames.add("C_TerrainMap");
+
+    // Weapon selector
+    Component WeaponSelector = new #WeaponSelector<CWeaponSelector>();
+    WeaponSelector.SetWeaponList(GetWeaponList());
+    WeaponSelector.SetEventHandler(this);
+    WeaponSelector.SetAppearance(0.0, 0.0, 0.25);
+
+    setPositionable(WeaponSelector, Mesh);
+    addClassificator(WeaponSelector, CLASSIFICATOR_UI);
+    addClassificator(WeaponSelector, CLASSIFICATOR_NO_POST_EFFECTED);
+    RegisterObject("WeaponSelector", WeaponSelector);
+    m_ControlsNames.add("WeaponSelector");
+
+    WeaponSelector.SetManualTargetingSlot(0, true, false);
+    WeaponSelector.SetManualTargetingSlot(1, false, false);
+    WeaponSelector.SetManualTargetingSlot(2, false, false);
+
+    WeaponSelector.SetMouseEnable(false);
+    WeaponSelector.EnableSlot(0, true);
+    WeaponSelector.SetOnWeaponDirectionEvent(false);
+    WeaponSelector.SetRenderMode(false, false);
+    WeaponSelector.EnableExButton(0, true);
+    WeaponSelector.SetSlotFireAction([CTLCMD_FIRE_PRIMARY, CTLCMD_FIRE_SECONDARY],
+                                     []);
+    Component WeaponBar = new CWeaponBarWrapper(this, 0.25, 0.25);
+    WeaponBar.ShowFrame(false);
+    RegisterObject("WeaponBar", WeaponBar);
+    int WeaponBarID = m_MFD.RegisterControl(WeaponBar, [UPS_Gunner, UPS_Commander, UPS_1stPersonGunner, UPS_CockpitGunner,
+                                                        UPS_1stPersonCommander, UPS_CockpitCommander ] );
+
+    //gunlayer target pointer
+    Component TargetPointer1stPerson      = new #TargetPointer3();
+    Component GunnerPointerRealView       = new #TargetPointer3();
+    Component GunnerRealView              = new #TargetPointer3();
+    Component CommanderPointer1stPerson   = new #TargetPointer3();
+    Component CommanderPointerRealView    = new #TargetPointer3();
+    Component CommanderRealView           = new #TargetPointer3();
+    // tank status
+    Component CommonScreen                = new #CommonStatusScreen();
+
+    if (CS_T34 == m_CockpitStyle)
+    {
+      loadFromScript(TargetPointer1stPerson,     "CTargetPointerScreen_TSH15Virtual");
+      loadFromScript(GunnerPointerRealView,      "CTargetPointerScreen_TSH15");
+      loadFromScript(GunnerRealView,             "CCockpitViewT34");
+      loadFromScript(CommanderPointer1stPerson,  "CCommanderPointerScreenT34Virtual");
+      loadFromScript(CommanderPointerRealView,   "CCommanderPointerScreenT34");
+      loadFromScript(CommanderRealView,          "CCockpitViewT34");
+      loadFromScript(CommonScreen,               "CCommonStatusScreen");
+      m_GunnerFOV    = T34GunnerFOV;
+      m_CommanderFOV = T34CommanderFOV;
+    }
+    else
+    if (CS_Tiger == m_CockpitStyle)
+    {
+      loadFromScript(TargetPointer1stPerson,     "CTargetPointerTZF9bVirtual");
+      loadFromScript(GunnerPointerRealView,      "CTargetPointerTZF9b");
+      loadFromScript(GunnerRealView,             "CCockpitViewTiger");
+      loadFromScript(CommanderPointer1stPerson,  "CCommanderPointerScreenTigerVirtual");
+      loadFromScript(CommanderPointerRealView,   "CCommanderPointerScreenTiger");
+      loadFromScript(CommanderRealView,          "CCockpitViewTiger");
+      loadFromScript(CommonScreen,               "CTigerCommonStatusScreen");
+      m_GunnerFOV    = TigerGunnerFOV;
+      m_CommanderFOV = TigerCommanderFOV;
+    }
+
+
+    RegisterObject("TargetPointer1stPerson", TargetPointer1stPerson);
+    TargetPointer1stPerson.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    TargetPointer1stPerson.SetRenderMode(false, false);
+
+    RegisterObject("A_GunnerPointerRealView", GunnerPointerRealView);
+    GunnerPointerRealView.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    GunnerPointerRealView.SetRenderMode(false, false);
+
+    RegisterObject("A_GunnerRealView", GunnerRealView);
+    GunnerRealView.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    GunnerRealView.SetRenderMode(false, false);
+
+    RegisterObject("CommanderPointer1stPerson", CommanderPointer1stPerson);
+    CommanderPointer1stPerson.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    CommanderPointer1stPerson.SetRenderMode(false, false);
+
+    RegisterObject("A_CommanderPointerRealView", CommanderPointerRealView);
+    CommanderPointerRealView.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    CommanderPointerRealView.SetRenderMode(false, false);
+
+    RegisterObject("A_CommanderRealView", CommanderRealView);
+    CommanderRealView.SetAppearance(0.0, 0.0, 1.0f, 1.0f);
+    CommanderRealView.SetRenderMode(false, false);
+
+/////////////////////////////////////////////////////////////
+    // GunLayer Screen
+    Component GunLayerScreen = new CCockpitGunLayerScreen();
+    Component CommanderScreen = new CCockpitCommanderScreen();
+    if (CS_T34 == m_CockpitStyle)
+    {
+      GunLayerScreen.Init(this, 0.2, 0.2, "CTargetPointerScreen_TSH15Virtual");
+      CommanderScreen.Init(this, 0.2, 0.2, "CCommanderPointerScreenT34Virtual");
+    }
+    else
+    if (CS_Tiger == m_CockpitStyle)
+    {
+      GunLayerScreen.Init(this, 0.2, 0.2, "CTargetPointerTZF9bVirtual");
+      CommanderScreen.Init(this, 0.2, 0.2, "CCommanderPointerScreenTigerVirtual");
+    }
+//////////////////////////////////////////////////////
+
+    CommonScreen.SetAppearance(0.0, 0.0, 1.0 );
+    CommonScreen.SetSquared(true);
+    CommonScreen.SetDevicePositionable("TrackRight", Mesh, Mesh);
+    CommonScreen.SetDevicePositionable("TrackLeft", Mesh, Mesh);
+    CommonScreen.SetDevicePositionable("HullEngine", Mesh, Mesh);
+    CommonScreen.SetDevicePositionable("Z_TurretWireFrame2", Mesh, Mesh.GetJoint("Weapon_A_Camera"));
+    CommonScreen.SetDevicePositionable("Turret_A", Mesh, Mesh.GetJoint("Weapon_A_Camera"));
+    CommonScreen.SetDevicePositionable("CommanderSight", Mesh, Mesh.GetJoint("Commander_Camera"));
+
+    addClassificator(CommonScreen, CLASSIFICATOR_UI);
+    addClassificator(CommonScreen, CLASSIFICATOR_NO_POST_EFFECTED);
+    CommonScreen.Enable(false);
+    RegisterObject("CommonStatusScreen", CommonScreen);
+    int CommonScreenID = m_MFD.RegisterControl(CommonScreen, [UPS_Gunner, UPS_Commander, UPS_Driver, UPS_1stPersonCommander,
+                                                              UPS_1stPersonDriver, UPS_1stPersonGunner, UPS_CockpitCommander,
+                                                              UPS_CockpitDriver, UPS_CockpitGunner ]);
+    m_ControlsNames.add("CommonStatusScreen");
+
+
+    m_CockpitCameraLink = new #ObjectObjectLink2();
+//    RegisterObject("CockpitCameraLink", m_CockpitCameraLink);
+    setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitDriverCamera));
+    m_CockpitCameraLink.EnableMouseControl(true);
+    m_CockpitCameraLink.EnableJoystickControl(true);
+    m_CockpitCameraLink.Enable(false);
+
+    m_MFD.SetDefaultControl(UPS_Driver, [CommonScreenID, MapID]);
+    m_MFD.SetDefaultControl(UPS_Gunner, [CommonScreenID, WeaponBarID]);
+    m_MFD.SetDefaultControl(UPS_Commander, [CommonScreenID, MapID]);
+
+    m_MFD.SetDefaultControl(UPS_1stPersonDriver, [CommonScreenID, MapID]);
+    m_MFD.SetDefaultControl(UPS_1stPersonGunner, [CommonScreenID, WeaponBarID]);
+    m_MFD.SetDefaultControl(UPS_1stPersonCommander, [CommonScreenID, MapID]);
+
+    m_MFD.SetDefaultControl(UPS_CockpitGunner, [CommonScreenID, WeaponBarID]);
+    m_MFD.SetDefaultControl(UPS_CockpitCommander, [CommonScreenID, WeaponBarID]);
+
+    m_MFD.Enable(0, true);
+    m_MFD.Enable(1, true);
+    m_MFD.Enable(true);
+  }
+
+  void MouseCameraControl(boolean State)
+  {
+    Component CameraLink = GetObject("CameraLink");
+    if (CameraLink == null)
+      return;
+
+    m_MouseCameraState = State;
+
+    CameraLink.EnableMouseControl(State);
+  }
+
+  void SetPilotsViewMode()
+  {
+  }
+
+  void InitializeCockpitMode()
+  {
+
+    // Enable or disable cockpit joint and heli model
+    Component Mesh = GetMeshComponent();
+    if (Mesh == null)
+      return;
+
+    Component CockpitObject = GetInsideMesh();
+    if (null != CockpitObject)
+    {
+      CockpitObject.EnableRenderToCamera(getIdentificator(user), (CM_Cockpit == m_ViewMode) );
+      CockpitObject.EnableShadowToCamera(getIdentificator(user), (CM_Cockpit == m_ViewMode) );
+      CockpitObject.SetAnimateAlways(true);
+      CockpitObject.SetLightsSelectionMode(LSM_LocalLights);
+      CockpitObject.SetLightsFlags("", LF_Local | LF_Context, true);
+      CockpitObject.SetupSelfLightsReference();
+    }
+
+    // Enable or disable heli render in player camera
+    Mesh.EnableRenderToCamera(getIdentificator(user), CM_Person3rd == m_ViewMode);
+    Mesh.EnableShadowToCamera(getIdentificator(user), CM_Person3rd == m_ViewMode);
+    // Set camera view mode
+    SetDefaultCameraViewMode();
+
+    Component WeaponBar = GetObject("WeaponBar");
+//    WeaponBar.ShowFrame( true /*CM_Cockpit != m_ViewMode*/);
+
+    Component TargetPointer = GetObject("TargetPointer1stPerson");
+
+    Component CommanderPointer = GetObject("CommanderPointer1stPerson");
+    Component CommanderPointerRealView = GetObject("A_CommanderPointerRealView");
+    Component CommanderRealView = GetObject("A_CommanderRealView");
+
+    Component GunnerPointerRealView = GetObject("A_GunnerPointerRealView");
+    Component GunnerRealView = GetObject("A_GunnerRealView");
+
+    Component CommanderCameraLink = GetObject("CommanderCameraLink");
+
+    CommanderPointerRealView.SetRenderMode(false, false);
+    CommanderRealView.SetRenderMode(false, false);
+    GunnerPointerRealView.SetRenderMode(false, false);
+    GunnerRealView.SetRenderMode(false, false);
+
+    Component WeaponSelector = GetObject("WeaponSelector");
+    WeaponSelector.EnableAdvancedControl(false);
+    WeaponSelector.InputEnable( (UPS_Gunner == m_PlayerSit) );
+    WeaponSelector.EnableCommanderControl( (UPS_Commander == m_PlayerSit) );
+
+    TargetPointer.SetRenderMode(false,false);
+    CommanderPointer.SetRenderMode(false,false);
+    m_MFD.Enable(false);
+    m_MFD.DisableScreens();
+    UpdateCursorAndMouse();
+
+    if (CommanderCameraLink != null)
+    {
+      CommanderCameraLink.EnableMouseControl(false);
+      CommanderCameraLink.EnableJoystickControl(false);
+    }
+
+    m_CockpitCameraLink.Enable(CM_Cockpit == m_ViewMode);
+    
+    if (CM_Person1rd == m_ViewMode)
+    {
+      WeaponSelector.EnableAdvancedControl((UPS_Gunner == m_PlayerSit));
+
+      m_MFD.Enable(true);
+      m_MFD.RestoreScreens(m_PlayerSit + Shift1stPerson, 0);
+      UpdateCursorAndMouse();
+
+      TargetPointer.SetRenderMode((UPS_Gunner == m_PlayerSit), false);
+
+      if (CommanderCameraLink != null)
+      {
+        CommanderCameraLink.EnableMouseControl((UPS_Commander == m_PlayerSit));
+        CommanderCameraLink.EnableJoystickControl((UPS_Commander == m_PlayerSit));
+      }
+      CommanderPointer.SetRenderMode((UPS_Commander == m_PlayerSit), false);
+    }
+    else
+    if (CM_Person3rd == m_ViewMode)
+    {
+      m_MFD.Enable(true);
+
+      m_MFD.RestoreScreens(m_PlayerSit, 0);
+      UpdateCursorAndMouse();
+      
+      m_is3rdPerson = true;
+    }
+    else
+    if (CM_Cockpit == m_ViewMode)
+    {
+      m_MFD.Enable(true);
+      m_MFD.RestoreScreens(m_PlayerSit + ShiftCockpit, 0);
+      UpdateCursorAndMouse();
+
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitGunnerCamera));
+        CockpitObject.EnableRenderToCamera(getIdentificator(user), true);
+      }
+      else
+      if (UPS_Commander == m_PlayerSit)
+      {
+        if (m_HatchCommanderOpened)
+        {
+          Mesh.EnableRenderToCamera(getIdentificator(user), true);
+          Mesh.EnableShadowToCamera(getIdentificator(user), true);
+          CommanderCameraLink.EnableMouseControl(true);
+          CommanderCameraLink.EnableJoystickControl(true);
+          setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitCommanderCameraOut));
+          CockpitObject.EnableRenderToCamera(getIdentificator(user), false );
+        }
+        else
+        {
+          CommanderCameraLink.EnableMouseControl(false);
+          CommanderCameraLink.EnableJoystickControl(false);
+          setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitCommanderCamera));
+        }
+      }
+      if (UPS_Driver == m_PlayerSit)
+      {
+        if (m_HatchBodyOpened && (m_CockpitStyle == CS_Tiger))
+        {
+          Mesh.EnableRenderToCamera(getIdentificator(user), true);
+          Mesh.EnableShadowToCamera(getIdentificator(user), true);
+          CockpitObject.EnableRenderToCamera(getIdentificator(user), false );
+        }
+
+        setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitDriverCamera));
+      }
+      
+      m_is3rdPerson = false;
+    }
+    else
+    if (CM_CockpitNearest == m_ViewMode)
+    {
+      m_MFD.Enable(true);
+      m_MFD.RestoreScreens(m_PlayerSit + ShiftCockpit, 0);
+      UpdateCursorAndMouse();
+
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        if (m_CockpitStyle == CS_Tiger)
+        {
+          setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitGunnerNearCamera));
+          CockpitObject.EnableRenderToCamera(getIdentificator(user), true);
+        }
+        else
+        {
+          GunnerRealView.SetRenderMode(true, false);
+          setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitGunnerCamera));
+        }
+      }
+      else
+      if (UPS_Commander == m_PlayerSit)
+      {
+        CommanderRealView.SetRenderMode(true, false);
+
+        CommanderCameraLink.EnableMouseControl(true);
+        CommanderCameraLink.EnableJoystickControl(true);
+        setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitCommanderCamera));
+      }
+      if (UPS_Driver == m_PlayerSit)
+      {
+        if (m_CockpitStyle == CS_Tiger)
+        {
+          CommanderRealView.SetRenderMode(true, false);
+          setPositionable(m_CockpitCameraLink, Mesh.GetJoint("NearDriverCamera"));
+        }
+        else
+        {
+          setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitDriverNearCamera));
+          CockpitObject.EnableRenderToCamera(getIdentificator(user), true );
+        }
+      }
+
+    }
+    else
+    if (CM_CockpitBinocular == m_ViewMode)
+    {
+      m_MFD.Enable(true);
+      m_MFD.RestoreScreens(m_PlayerSit + ShiftCockpit, 0);
+      UpdateCursorAndMouse();
+
+      if (UPS_Gunner == m_PlayerSit)
+      {
+        GunnerPointerRealView.SetRenderMode(true, false);
+        setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitGunnerCamera));
+        WeaponSelector.EnableAdvancedControl(true);
+      }
+      else
+      if (UPS_Commander == m_PlayerSit)
+      {
+        CommanderPointerRealView.SetRenderMode(true, false);
+
+        CommanderCameraLink.EnableMouseControl(true);
+        CommanderCameraLink.EnableJoystickControl(true);
+        setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitCommanderCamera));
+      }
+      if (UPS_Driver == m_PlayerSit)
+      {
+        setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitDriverCamera));
+        CockpitObject.EnableRenderToCamera(getIdentificator(user), true );
+      }
+
+    }
+    SetPlayerSit(m_PlayerSit);
+
+
+    Component TankAutoEntitiesControl = new #TankAutoThingControl();
+    if( TankAutoEntitiesControl != null ) {
+      TankAutoEntitiesControl.ShowAtTop(false/* MFD_PosIndex == 0*/ );
+    }
+
+//    Component WeaponSelector = GetObject("WeaponSelector");
+//    if (WeaponSelector != null)
+
+    CommanderCameraLink.Enable((UPS_Commander == m_PlayerSit));
+
+    Mesh.SetAnimateAlways(true);
+//    setVisibleState(Mesh.GetJoint("root_com"), false);
+  }
+
+  event void ReportNewPlayer(
+      WString _Name
+    )
+  {
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, _Name + L" " + m_PlayerJoinGame, new Color(0.0, 1.0, 0.0), 10.0f);
+  }
+
+  event void ReportPlayerLeft(
+      WString _Name
+    )
+  {
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, _Name + L" " + m_PlayerLeftGame, new Color(0.0, 1.0, 0.0), 10.0f);
+  }
+
+  event void ReportPlayerKilled(
+      WString _DeadPlayer,
+      WString _KillerPlayer
+    )
+  {
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, _DeadPlayer + L" " + m_WasKilledBy + L" " + _KillerPlayer, new Color(0.0, 1.0, 0.0), 10.0f);
+  }
+
+  void EnableCockpit(
+      boolean _Enable
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    m_CockpitEnabled = _Enable;
+  }
+
+  boolean IsCockpitExists()
+  {
+    return m_CockpitExists;
+  }
+
+
+  void SetControlsCameraId(
+      String _CameraId
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    for (int i = 0; i < m_ControlsNames.size(); i++)
+    {
+      Component Control = GetObject(m_ControlsNames[i]);
+      if (null != Control)
+      {
+        Control.SetCameraId(_CameraId);
+      }
+    }
+  }
+
+  void RefreshCockpitViewState()
+  {
+  }
+
+
+
+  void SetPlayerSit(
+      int  _PlayerSit
+    )
+  {
+    m_PlayerSit = _PlayerSit;
+
+    m_MFD.DisableScreens();
+    UpdateCursorAndMouse();
+
+    m_MFD.RestoreScreens(_PlayerSit, 0);
+    UpdateCursorAndMouse();
+
+    Component TankAutoEntitiesControl = new #TankAutoThingControl();
+    if(m_PlayerSit != UPS_Driver )
+      TankAutoEntitiesControl.EnableAutoDriver();
+    else
+      TankAutoEntitiesControl.DisableAutoDriver();
+
+    if(m_PlayerSit != UPS_Gunner )
+      TankAutoEntitiesControl.EnableAutoGunner();
+    else
+      TankAutoEntitiesControl.DisableAutoGunner();
+
+    if(m_PlayerSit != UPS_Commander )
+      TankAutoEntitiesControl.EnableAutoCommander();
+    else
+      TankAutoEntitiesControl.DisableAutoCommander();
+
+    SetPilotsViewMode();
+  }
+
+  int GetPlayerSit()
+  {
+    return m_PlayerSit;
+  }
+
+  void SetPlayerControlSit(
+      int  _PlayerSit
+    )
+  {
+    m_PlayerControl = _PlayerSit;
+    SetPlayerSit(m_PlayerControl);
+  }
+
+  int GetPlayerControlSit()
+  {
+    return m_PlayerControl;
+  }
+
+/*  void SetGunnerControlSit(
+      int  _PlayerSit
+    )
+  {
+    m_GunnerControl = _PlayerSit;
+    SetPlayerSit(m_GunnerControl);
+  }
+
+  int GetGunnerControlSit()
+  {
+    return m_GunnerControl;
+  }
+*/
+  Array GetSits()
+  {
+    return new Array([ UPS_Driver, UPS_Gunner, UPS_Commander ]);
+
+  }
+
+
+
+
+  // ==========================================
+  // Cursor control
+  // ==========================================
+
+  void CreateCursor(
+      Component _EventHandler,
+      Component _MatManager,
+      Array _Materials,
+      float  _X,
+      float  _Y,
+      float  _Width,
+      float  _Height
+    )
+  {
+    Component Cursor = new #CursorControl();
+    Cursor.SetPosition(_X, _Y);
+    Cursor.SetDimensions(_Width, _Height);
+    Cursor.DefineMaterials(_Materials);
+    Cursor.SetMaterialManager(_MatManager);
+    Cursor.SetEventHandler(_EventHandler);
+    Cursor.SyncWithWindowsCursor(true);
+    addClassificator(Cursor, CLASSIFICATOR_UI);
+    addClassificator(Cursor, CLASSIFICATOR_NO_POST_EFFECTED);
+    RegisterObject("Cursor", Cursor);
+    ShowCursor(false);
+  }
+
+  void CreateDefaultCursor(
+      Component _EventHandler,
+      Component _MatManager
+    )
+  {
+    CreateCursor(
+        _EventHandler,
+        _MatManager,
+        [
+         ["cockpit cursor", 4.0 / 1024.0, 4.0 / 768.0],
+         ["hand point cursor",12.0 / 1024.0, 0.0 / 768.0],
+         ["hand grab cursor",12.0 / 1024.0, 0.0 / 768.0]
+        ],
+        0.5,
+        0.5,
+        32.0 / 1024.0,
+        32.0 / 768.0
+      );
+  }
+
+  void ShowCursor(
+      boolean _Show
+    )
+  {
+    ShowCursor(_Show, true);
+  }
+
+  void ShowCursor(
+      boolean _Show,
+      boolean _ShowOnButton
+    )
+  {
+    Component Cursor = GetObject("Cursor");
+
+    if (_Show)
+    {
+      if (!_ShowOnButton)
+        Cursor.ShowCursorOnAction(5000);
+      Cursor.ShowCursorOnButton(_ShowOnButton);
+    }
+    else
+    {
+      Cursor.ShowCursor(false);
+      Cursor.ShowCursorOnAction(0);
+      Cursor.ShowCursorOnButton(false);
+    }
+
+    Cursor.Enable(_Show);
+  }
+
+  void UpdateCursorAndMouse()
+  {
+/*   if (GetObject("C_TerrainMap").IsEnabled())
+    {
+      GetObject("CameraLink").EnableKeyboardControl(false);
+      ShowCursor(true, false);
+      GetObject("CameraLink").EnableMouseControl(false);
+//      GetObject("WeaponSelector").SetMouseEnable(false);
+      GetObject("WeaponSelector").EnableExButton(0, false);
+      return;
+    }
+  */
+    ShowCursor(true, true); // show on button
+    GetObject("CameraLink").EnableMouseControl(true);
+    GetObject("CameraLink").EnableKeyboardControl(!GetObject("C_TerrainMap").IsEnabled());
+//    GetObject("WeaponSelector").SetMouseEnable(false);
+    GetObject("WeaponSelector").EnableExButton(0, true);
+  }
+
+  void OnVoiceSoundStopped(
+      String  _MessageId
+    )
+  {
+  }
+
+  void OnPowerStateChanged()
+  {
+  }
+
+  // ==========================================
+  // Manual control
+  // ==========================================
+
+  void OnEngineStateChanged(
+      boolean _IsOn
+    )
+  {
+  }
+
+  void UpdateFuelPressure(
+      float _FuelPressure
+    )
+  {
+  }
+
+  void SetCockpitDevice(
+      String    _DeviceName,
+      Component _DeviceAnimator,
+      float     _MaxValue,
+      float     _Delta
+    )
+  {
+    if (_DeviceAnimator != null)
+    {
+      SetupAnimator(_DeviceName, _DeviceAnimator);
+      m_OnLineDevices.insert(_DeviceName, [_MaxValue, _Delta]);
+    }
+
+  }
+
+  void AnimateCockpitDevice(
+      String    _DeviceName,
+      float     _Value,
+      float     _Amplitude,
+      float     _Frequency
+    )
+  {
+    if (m_OnLineDevices.find(_DeviceName))
+    {
+      Array Values = m_OnLineDevices.getValue();
+      GetObject(_DeviceName).SetShakeAnimPhase(_Value / Values[0] + Values[1], _Amplitude , _Frequency);
+    }
+//    else
+//      logError("Online Device: '" + _DeviceName + "' not set!");
+  }
+
+  void CriticalTempReport(
+      String  _Voice,
+      WString _Message
+    )
+  {
+    if ((new #GameController()).GetGameTime() - m_CriticalTempReport < 10.0f)
+      return;
+
+    m_CriticalTempReport = (new #GameController()).GetGameTime();
+
+    Component VoiceMessenger = GetObject("VoiceMessenger");
+    if (null != VoiceMessenger)
+      VoiceMessenger.PlaySound(_Voice);
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_DRIVER, _Message, new Color(0.0, 1.0, 0.0), 2.0f);
+  }
+
+
+  event void UpdateOnlineDevices(
+      float _DeltaTime
+    )
+  {
+    Component VehicleController = GetVehicleController();
+
+    if (VehicleController != null)
+    {
+      float Speed = VehicleController.GetSpeed();
+      float EngineSpeed = VehicleController.GetEngineSpeed();
+
+      if (CS_Tiger == m_CockpitStyle)
+        GetObject("WeaponSelector").SetTurretSpeedCoeff(EngineSpeed*60.0f/5500.0f);
+
+      AnimateCockpitDevice("TachometerAnimator", EngineSpeed * 60.0f, 0.01f , 1.5f);
+      AnimateCockpitDevice("SpeedAnimator", Speed * 3.6f, 0.001f , 0.5f);
+
+      if (EngineSpeed * 60.0f <= 600.0f)
+      {
+        m_WaterTemp -= 0.2f * _DeltaTime;
+        m_OilTemp -= 0.2f * _DeltaTime;
+      }
+      if (EngineSpeed * 60.0f <= 1000.0f)
+      {
+        if (m_WaterTemp > 65)
+          m_WaterTemp -= 0.1f * _DeltaTime;
+        else
+          m_WaterTemp += 0.1f * _DeltaTime;
+        if (m_OilTemp > 55)
+          m_OilTemp -= 0.1f * _DeltaTime;
+        else
+          m_OilTemp += 0.1f * _DeltaTime;
+      }
+      if (EngineSpeed * 60.0f > m_CriticalEngineSpeed1)
+      {
+        m_WaterTemp += m_TempIncreaseCoeff1 * _DeltaTime;
+        m_OilTemp += m_TempIncreaseCoeff1 * _DeltaTime;
+      }
+      if (EngineSpeed * 60.0f > m_CriticalEngineSpeed2)
+      {
+        m_WaterTemp += m_TempIncreaseCoeff2 * _DeltaTime;
+        m_OilTemp += 1.2f * m_TempIncreaseCoeff2 * _DeltaTime;
+      }
+      if (EngineSpeed * 60.0f > m_CriticalEngineSpeed3)
+      {
+        m_WaterTemp += m_TempIncreaseCoeff3 * _DeltaTime;
+        m_OilTemp += 1.2f * m_TempIncreaseCoeff3 * _DeltaTime;
+      }
+
+      AnimateCockpitDevice("WaterTemperatureAnimator", m_WaterTemp, 0.003f , 0.3f);
+      AnimateCockpitDevice("OilPressureAnimator", 11.0f*EngineSpeed/30.0f, 0.008f , 0.9f);
+      AnimateCockpitDevice("OilTemperatureAnimator", m_OilTemp, 0.003f , 0.2f);
+
+      if (m_WaterTemp > m_CriticalWaterTemp + 100)
+        m_WaterTemp = m_CriticalWaterTemp + 100;
+      if (m_WaterTemp < 30.0f)
+        m_WaterTemp = 30.0f;
+
+      if (m_OilTemp > m_CriticalOilTemp + 100)
+        m_OilTemp = m_CriticalOilTemp + 100;
+      if (m_OilTemp < 30.0f)
+        m_OilTemp = 30.0f;
+
+      if (m_EngineOverheat)
+      {
+        if ((m_WaterTemp > m_CriticalWaterTemp) && (EngineSpeed * 60 > 10))
+        {
+          sendEvent(0, getIdentificator(this), "DamageItemPercent", ["HullEngine", 0.007f * _DeltaTime]);
+          CriticalTempReport(m_EngineHotVoice[randnum(m_EngineHotVoice.size())], m_EngineHotMsg[randnum(m_EngineHotMsg.size())]);
+        }
+        else
+        if ((m_WaterTemp > m_CriticalWaterTemp*0.8f) && (EngineSpeed * 60 > 10))
+          CriticalTempReport(m_EngineWarmVoice[randnum(m_EngineWarmVoice.size())], m_EngineWarmMsg[randnum(m_EngineWarmMsg.size())]);
+
+        if ((m_OilTemp > m_CriticalOilTemp) && (EngineSpeed * 60 > 10))
+        {
+          sendEvent(0, getIdentificator(this), "DamageItemPercent", ["HullEngine", 0.007f * _DeltaTime]);
+
+          CriticalTempReport(m_EngineHotVoice[randnum(m_EngineHotVoice.size())], m_EngineHotMsg[randnum(m_EngineHotMsg.size())]);
+        }
+        else
+        if ((m_OilTemp > m_CriticalOilTemp*0.8f) && (EngineSpeed * 60 > 10))
+          CriticalTempReport(m_EngineWarmVoice[randnum(m_EngineWarmVoice.size())], m_EngineWarmMsg[randnum(m_EngineWarmMsg.size())]);
+      }
+
+      if (CM_Cockpit == m_ViewMode)
+      {
+        Component CameraLink = GetCameraLink();
+        // Set MaxAngle and Intensity
+        CameraLink.SetShakeVert( 0.0f + Speed * 0.01f + m_ShakeCoeff,  Speed * 0.02f + m_ShakeCoeff * 5.0f); //speed * 0.45f + m_ShakeCoeff * 500.0f);
+//        CameraLink.SetShakeHor( 0.0f + Speed * 0.04f + m_ShakeCoeff, Speed * 0.55f + m_ShakeCoeff * 500.0f);
+        CameraLink.Shake(VehicleController.GetCapturedAngularMomentum() );
+        if (m_ShakeCoeff > 0.0f)
+          m_ShakeCoeff = m_ShakeCoeff - m_ShakeCoeff * _DeltaTime * m_DecreaseShakeSpeed;
+        if (m_ShakeCoeff < 0.01f)
+          m_ShakeCoeff = 0.0f;
+
+      }
+      if (m_TempSoundVolume < 1.0f)
+      {
+        m_TempSoundVolume = m_TempSoundVolume + 0.06 * _DeltaTime;
+        Component Settings = new #GameSettings();
+        Settings.SetTemporarySoundVolume(m_TempSoundVolume);
+        if (m_TempSoundVolume > 0.0f)
+          m_ShockSound.SetFrequencyMultiplier(15.0 - m_TempSoundVolume * 45);
+      }
+
+      if ((m_ShockSound.IsSoundPlaying()) && (m_TempSoundVolume > 0.3f))
+        m_ShockSound.StopSoundPlaying(true);
+
+    }
+
+    // scale engine effect by engine speed
+    float DiffSpeedCoeff = VehicleController.GetDiffSpeedCoeff();
+    if (DiffSpeedCoeff > 0.0)
+      SetEngineEffectScale(1.0 + DiffSpeedCoeff * 4.0);
+    else
+      SetEngineEffectScale(1.0);
+  }
+
+
+  // ==========================================
+  // Service
+  // ==========================================
+
+  void OnChangeUnitSpeed(
+      float _CurrentValueMain,
+      float _CurrentValueEngine
+    )
+  {
+  }
+
+  String FindMaterialID(
+      Array _Materials,
+      String _TextureName
+    )
+  {
+    for (int i = 0; i < _Materials.size(); i++)
+    {
+      /*
+       $TODO : add functions and use it there
+      if (!isFunctionExist(_Materials[i],"GetTextureName", 0) ||
+          !isFunctionExist(_Materials[i],"GetMaterialID", 0))
+      {
+        continue;
+      }
+      */
+      if (_Materials[i].MaterialID == "")
+        continue;
+
+
+      if (_Materials[i].TextureName == _TextureName)
+        return _Materials[i].MaterialID;
+    }
+    return "";
+  }
+
+  void UpdateEngineParameters(
+      float   _Temperature,
+      float   _OilPressure,
+      boolean _Overheat
+    )
+  {
+  }
+
+
+  // ==========================================
+  // Events
+  // ==========================================
+
+  void OnSwitchChanged(
+      String    _ControlName,
+      boolean   _State
+    )
+  {
+  }
+
+
+
+  //
+  // Switches
+  //
+
+  //
+  // $TODO
+  //
+
+  event void OnTimeChanged(
+      float _Hours,
+      float _Minutes,
+      float _Seconds
+    )
+  {
+  }
+
+  event void UpdateNavpoint(
+      Component _NavPoint,
+      float     _NavAngle,
+      Vector    _NavDirection
+    )
+  {
+  }
+
+  event void UpdateHomeNavpoint(
+      Component _NavPoint,
+      float     _NavAngle,
+      Vector    _NavDirection
+    )
+  {
+  }
+
+  event void OnCockpitModeChanged(
+      int _CockpitMode
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    if (m_ViewMode != _CockpitMode)
+    {
+      m_ViewMode = _CockpitMode;
+      InitializeCockpitMode();
+    }
+    else
+    {
+      //$TMP
+      Component CockpitGroup = GetObject("CockpitGroup");
+      if (CockpitGroup != null)
+        CockpitGroup.SetPendingUpdate(true);
+    }
+  }
+
+  event void OnCockpitColorChanged(
+      int _ColorIndex
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    for (int i = 0; i < m_ControlsNames.size(); i++)
+    {
+      Component Control = GetObject(m_ControlsNames[i]);
+      if (Control != null)
+        if (isFunctionExist(Control, "SetColorScheme", 1))
+          Control.SetColorScheme(
+            CCockpitColorMap::m_CockpitDevicesColor[_ColorIndex]);
+    }
+  }
+
+  event void OnGunnerSitChanged(
+      int _GunnerSit
+    )
+  {
+    EnableCockpit(true);
+
+    if (!m_CockpitExists)
+      return;
+
+    InitializeCockpitMode();
+  }
+
+  event void OnPlayerSitChanged(
+      int _PlayerSit
+    )
+  {
+    EnableCockpit(true);
+
+    if (!m_CockpitExists)
+      return;
+
+    InitializeCockpitMode();
+  }
+
+  event void OnAltitudeChanged(
+      float   _BaroAltitude,
+      float   _EchoAltitude,
+      boolean _WorkingState
+    )
+  {
+  }
+
+  void OnFuelChanged(
+      float _ValueToSet
+    )
+  {
+  }
+
+  void OnTransmissionChanged(
+      float _OilPressure,
+      float _OilTemperature
+    )
+  {
+
+  }
+
+  event void OnSpeedChanged(
+      float  _RateOfMovement,
+      float  _RateOfClimb,
+      float  _Overload,
+      Vector _RelativeAccel,
+      Vector _RelativeAngleVelocity,
+      float  _RateOfSway
+    )
+  {
+  }
+
+  event void OnCompassChange(
+      float _CurrentAngle
+    )
+  {
+  }
+
+
+  void SendCockpitMessage(
+      WString _Callsign,
+      WString _Message,
+      Color   _Color,
+      String  _SoundId
+    )
+  {
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESTATUS, _Message, _Color, 10.0f);
+
+/*    if (!m_CockpitExists)
+      return;
+
+    if (_Message != L"")
+    {
+      Component MessageBar = GetObject("MessageBar");
+      if (null != MessageBar)
+        MessageBar.AddSignedMessage(
+             _Callsign,
+            m_CallsignFontName,
+             _Message,
+            m_MsgFontName,
+             _Color,
+            m_MsgFontSize
+          );
+    }
+    // $LOG
+    else
+      logWarning("[Cockpit] SendCockpitMessage called with empty message string");
+
+    if (_SoundId.length() != 0)
+    {
+      Component VoiceMessenger = GetObject("VoiceMessenger");
+      if (null != VoiceMessenger)
+        VoiceMessenger.PlaySound(_SoundId);
+    }
+
+    SetLightState("MessInd", true);
+*/
+  }
+
+  event void OnWeaponDirectionChanged(
+      float   _HAngle,
+      float   _VAngle
+    )
+  {
+
+    Component TargetPointer = GetObject("TargetPointer");
+    if (null != TargetPointer)
+      TargetPointer.SetWeaponDirection(_HAngle, _VAngle);
+  }
+
+  event void RefreshAllNavpoints()
+  {
+    if (!m_CockpitExists)
+      return;
+
+    Component Navigator = GetObject("Navigator");
+    if (null != Navigator)
+    {
+      Component Navigator = GetObject("Navigator");
+      Component Mission   = GetMission();
+      Component HomePoint = Mission.GetObject(Mission.GetMainRadioHomePoint());
+      if (HomePoint == null)
+        logWarning("cockpit navigator homepoint is null");
+      Navigator.SetHomeNavpoint(HomePoint);
+      Navigator.RefreshNavpointList();
+    }
+  }
+
+  void SetCurrentNavpoint(
+      Component _Navpoint
+    )
+  {
+    for (int i = 0; i < m_ControlsNames.size(); i++)
+    {
+      Component Control = GetObject(m_ControlsNames[i]);
+      if (null != Control)
+        if (isFunctionExist(Control, "SetCurrentNavpoint", 1))
+          Control.SetCurrentNavpoint(_Navpoint);
+    }
+  }
+
+
+  void AddMapNavpoints(
+      Array NavPoints
+    )
+  {
+//    TerrainMap.AddNavpointsList(NavPoints[0], NavPoints[1], NavPoints[2]);
+  }
+
+  void SetSwitchState(
+      String  _Name,
+      boolean _State
+    )
+  {
+    Component CockpitPanel        = GetObject("CockpitPanel");
+    Component CopilotCockpitPanel = GetObject("CopilotCockpitPanel");
+
+    if (null != CockpitPanel)
+      CockpitPanel.SetSwitchState(_Name, _State);
+    if (null != CopilotCockpitPanel)
+      CopilotCockpitPanel.SetSwitchState(_Name, _State);
+  }
+
+  void SetSwitchState(
+      String  _Name,
+      boolean _State,
+      boolean _PlaySound
+    )
+  {
+    Component CockpitPanel        = GetObject("CockpitPanel");
+    Component CopilotCockpitPanel = GetObject("CopilotCockpitPanel");
+
+    if (null != CockpitPanel)
+      CockpitPanel.SetSwitchState(_Name, _State, _PlaySound);
+    if (null != CopilotCockpitPanel)
+      CopilotCockpitPanel.SetSwitchState(_Name, _State);
+  }
+
+  boolean GetSwitchState(
+      String  _Name
+    )
+  {
+    Component CockpitPanel = GetObject("CockpitPanel");
+    if (null != CockpitPanel)
+      return CockpitPanel.GetSwitchState(_Name);
+
+    return false;
+  }
+
+  void SetLightState(
+      String  _Name,
+      boolean _State
+    )
+  {
+    Component CockpitPanel        = GetObject("CockpitPanel");
+    Component CopilotCockpitPanel = GetObject("CopilotCockpitPanel");
+
+    if (null != CockpitPanel)
+      CockpitPanel.SetLightState(_Name, _State);
+    if (null != CopilotCockpitPanel)
+      CopilotCockpitPanel.SetLightState(_Name, _State);
+  }
+
+  void SetAnimationPhase(
+      String _Name,
+      float  _Phase
+    )
+  {
+    m_AnimManager.AnimateTo(_Name, _Phase);
+  }
+
+  void SetAnimationPhase(
+      String _Name,
+      float  _Phase,
+      float  _Time // 0.0-1.0 time
+    )
+  {
+    m_AnimManager.AnimateTo(_Name, _Phase, _Time);
+  }
+
+  boolean IsAnimating(
+      String _Name
+    )
+  {
+    return m_AnimManager.IsAnimating(_Name);
+  }
+
+  float GetCurrentPhase(
+      String _Name
+    )
+  {
+    return m_AnimManager.GetCurrentPhase(_Name);
+  }
+
+  void EnablePanelsSwitch(
+      String  _Name,
+      boolean _bEnable
+    )
+  {
+    Component CockpitPanel        = GetObject("CockpitPanel");
+    Component CopilotCockpitPanel = GetObject("CopilotCockpitPanel");
+
+    if (null != CockpitPanel)
+      CockpitPanel.EnableManualSwitch(_Name, _bEnable);
+    if (null != CopilotCockpitPanel)
+      CopilotCockpitPanel.EnableManualSwitch(_Name, _bEnable);
+  }
+
+  event void OnGameSpeedChanged()
+  {
+    if (!m_CockpitExists)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+    {
+      Component GameController = new #GameController();
+      float Time = 0.0f;
+      if (GameController.IsNormalGameSpeed())
+        Time = 3.0f;
+
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_GAMESPEED, GameController.GetCurrentGameSpeedMsg(), new Color(1.0, 0.0, 0.0), Time);
+    }
+  }
+
+  event void OnGamePaused(
+      boolean _IsGamePaused
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    Component MessageInfoBar = GetObject("MessageInfoBar");
+    if (MessageInfoBar != null)
+    {
+
+      WString Text = L"";
+      if (_IsGamePaused)
+        Text = CGameMessages::str_msg_Pause;
+
+      MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_PAUSE, Text, new Color(1.0, 0.0, 0.0), 0.0);
+    }
+  }
+
+  void ChangeMFD(
+      int _Appearance
+    )
+  {
+    if (!m_CockpitExists)
+      return;
+
+    int PlayerSit = m_PlayerSit;
+    if (CM_Person1rd == m_ViewMode)
+    {
+       PlayerSit = m_PlayerSit + Shift1stPerson;
+    }
+    else
+    if (CM_Cockpit == m_ViewMode && m_ViewMode != CM_CockpitBinocular) // jeff if (CM_Cockpit == m_ViewMode) no effect
+    {
+       PlayerSit = m_PlayerSit + ShiftCockpit;
+    }
+
+    m_MFD.NextScreen(_Appearance, PlayerSit, 0);
+    UpdateCursorAndMouse();
+  }
+  static Array T34Voices  =  [
+      ["DriverFast1",           "Resources/SFast01.wav"],
+      ["DriverFast2",           "Resources/SFast02.wav"],
+      ["DriverFast3",           "Resources/SFast03.wav"],
+      ["DriverFast4",           "Resources/SFast04.wav"],
+
+      ["DriverSlow1",           "Resources/SSlow01.wav"],
+      ["DriverSlow2",           "Resources/SSlow02.wav"],
+      ["DriverBack1",           "Resources/SReverse01.wav"],
+      ["DriverBack2",           "Resources/SReverse02.wav"],
+      ["DriverStop1",           "Resources/SStop01.wav"],
+      ["DriverStop2",           "Resources/SStop02.wav"],
+      ["DriverStay1",           "Resources/SStay01.wav"],
+      ["DriverReverse1",        "Resources/SReverse01.wav"],
+      ["DriverReverse2",        "Resources/SReverse01.wav"],
+      ["DriverLeft1",           "Resources/STurnLeft01.wav"],
+      ["DriverLeft2",           "Resources/STurnLeft02.wav"],
+      ["DriverRight1",          "Resources/STurnRight01.wav"],
+      ["DriverRight2",          "Resources/STurnRight02.wav"],
+      ["DriverSlowForward1",    "Resources/SMovingSlow.wav"],
+      ["DriverShortStop1",      "Resources/SStay01.wav"],
+
+      ["EngineWarm",            "Resources/SEngineWarm01.wav"],
+      ["EngineHot",             "Resources/SEngineHot01.wav"],
+      ["EngineFire",            "Resources/SEngineFire01.wav"],
+      ["DamageVoice1",          "Resources/SHitted01.wav"],
+      ["DamageVoice2",          "Resources/SHitted02.wav"],
+      ["GunnerHit1",            "Resources/SGunnerHit01.wav"],
+      ["GunnerHit2",            "Resources/SGunnerHit02.wav"],
+      ["GunnerKilled1",         "Resources/SGunnerKilled01.wav"],
+      ["GunnerKilled2",         "Resources/SGunnerKilled02.wav"],
+      ["TurretHit1",            "Resources/SLoaderHit01.wav"],
+      ["TurretHit2",            "Resources/SLoaderHit02.wav"],
+      ["TurretHit3",            "Resources/SLoaderHit03.wav"],
+      ["TurretKilled1",          "Resources/SLoaderTurretDmg01.wav"],
+      ["TurretKilled2",          "Resources/SLoaderTurretDmg02.wav"],
+      ["TurretKilled3",          "Resources/SLoaderTurretDmg03.wav"],
+      ["DriverHit",             "Resources/SDriverHit.wav"],
+      ["DriverKilled1",          "Resources/SDriverKilled01.wav"],
+      ["DriverKilled2",          "Resources/SDriverKilled02.wav"],
+      ["DriverKilled3",          "Resources/SDriverKilled03.wav"],
+      ["DriverLeftHit1",         "Resources/SDriverLeftHit01.wav"],
+      ["DriverLeftHit2",         "Resources/SDriverLeftHit02.wav"],
+      ["DriverLeftHit3",         "Resources/SDriverLeftHit03.wav"],
+      ["DriverLeftHit4",         "Resources/SDriverLeftHit04.wav"],
+      ["DriverLeftKilled1",      "Resources/SDriverLeftDead01.wav"],
+      ["DriverLeftKilled2",      "Resources/SDriverLeftDead02.wav"],
+      ["DriverLeftKilled3",      "Resources/SDriverLeftDead03.wav"],
+      ["DriverRightHit1",        "Resources/SDriverRightHit01.wav"],
+      ["DriverRightHit2",        "Resources/SDriverRightHit02.wav"],
+      ["DriverRightHit3",        "Resources/SDriverRightHit03.wav"],
+      ["DriverRightHit4",        "Resources/SDriverRightHit04.wav"],
+      ["DriverRightKilled1",     "Resources/SDriverRightDead01.wav"],
+      ["DriverRightKilled2",     "Resources/SDriverRightDead02.wav"],
+      ["DriverRightKilled3",     "Resources/SDriverRightDead03.wav"],
+      ["DriverEngineHit",       "Resources/SDriverEngineHit.wav"],
+      ["DriverEngineKilled1",   "Resources/SDriverEngineDead01.wav"],
+      ["DriverEngineKilled2",   "Resources/SDriverEngineDead02.wav"],
+      ["DriverEngineKilled3",   "Resources/SDriverEngineDead03.wav"],
+      ["DriverEngineKilled4",   "Resources/SDriverEngineDead04.wav"],
+
+      ["WeaponShellAP1",        "Resources/SWeaponShellAP01.wav"],
+      ["WeaponShellAP2",        "Resources/SWeaponShellAP02.wav"],
+      ["WeaponShellAP3",        "Resources/SWeaponShellAP03.wav"],
+      ["WeaponShellAP4",        "Resources/SWeaponShellAP04.wav"],
+      ["WeaponShellHE1",        "Resources/SWeaponShellHE01.wav"],
+      ["WeaponShellHE2",        "Resources/SWeaponShellHE02.wav"],
+      ["WeaponShellHE3",        "Resources/SWeaponShellHE03.wav"],
+      ["WeaponShellHE4",        "Resources/SWeaponShellHE04.wav"],
+      ["WeaponShellSubAP1",     "Resources/SWeaponShellSubAP01.wav"],
+      ["WeaponShellSubAP2",     "Resources/SWeaponShellSubAP02.wav"],
+      ["WeaponShellSubAP3",     "Resources/SWeaponShellSubAP03.wav"],
+      ["WeaponShellSubAP4",     "Resources/SWeaponShellSubAP04.wav"],
+      ["WeaponShellMachinegun1","Resources/SWeaponShellMachinegun01.wav"],
+      ["WeaponShellMachinegun2","Resources/SWeaponShellMachinegun02.wav"],
+      ["WeaponShellMachinegun3","Resources/SWeaponShellMachinegun03.wav"],
+      ["WeaponShellMachinegun4","Resources/SWeaponShellMachinegun04.wav"],
+      ["AmmoLoad1",             "Resources/SGunnerLoad01.wav"],
+      ["AmmoLoad2",             "Resources/SGunnerLoad02.wav"],
+      ["AmmoLoad3",             "Resources/SGunnerLoad03.wav"],
+      ["AmmoLoad4",             "Resources/SGunnerLoad04.wav"],
+      ["AmmoLoad5",             "Resources/SGunnerLoad05.wav"],
+      ["AmmoLoad6",             "Resources/SGunnerLoad06.wav"],
+      ["AmmoLoaded1",            "Resources/SLoaderReady01.wav"],
+      ["AmmoLoaded2",            "Resources/SLoaderReady02.wav"],
+      ["AmmoLoaded3",            "Resources/SLoaderReady03.wav"],
+      ["AmmoLoaded4",            "Resources/SLoaderReady04.wav"],
+      ["AmmoLoaded5",            "Resources/SLoaderReady05.wav"],
+      ["TargetLocked01",        "Resources/STargetLockedMsg01.wav"],
+      ["TargetLocked02",        "Resources/STargetLockedMsg02.wav"],
+    //["NoTarget",              "Resources/SNoTarget.wav"],   -soviet commander voice
+      ["NoTarget1",              "Resources/SGunnerNoTarget01.wav"],      // soviet gunner voice
+      ["NoTarget2",              "Resources/SGunnerNoTarget02.wav"],
+      ["NoTarget3",              "Resources/SGunnerNoTarget03.wav"],
+      ["NoTarget4",              "Resources/SGunnerNoTarget04.wav"],
+      ["NoTarget5",              "Resources/SGunnerNoTarget05.wav"],
+      ["NoTarget6",              "Resources/SGunnerNoTarget06.wav"],
+      ["TargetOnLeft",          "Resources/STargetOnLeft.wav"],
+      ["TargetOnRight",         "Resources/STargetOnRight.wav"],
+
+      ["TargetIsHuman",         "Resources/STargetIsHuman.wav"],
+      ["TargetIsLightTank",     "Resources/STargetIsLightTank.wav"],
+      ["TargetIsMediumTank",    "Resources/STargetIsMediumTank.wav"],
+      ["TargetIsT34Tank",       "Resources/STargetIsMediumTank.wav"],
+      ["TargetIsHeavyTank",     "Resources/STargetIsHeavyTank.wav"],
+      ["TargetIsAPC",           "Resources/STargetIsAPC.wav"],
+      ["TargetIsSAU",           "Resources/STargetIsSAU.wav"],
+      ["TargetIsCannon",        "Resources/STargetIsCannon.wav"],
+      ["TargetIsDot",           "Resources/STargetIsDot.wav"],
+      ["TargetIsTruck",         "Resources/STargetIsTruck.wav"],
+
+//       ["WeaponShellHE",         "Resources/SWeaponShellHE.wav"],
+//       ["WeaponShellSubAP",      "Resources/SWeaponShellSubAP.wav"],
+//       ["WeaponShellMachinegun", "Resources/SWeaponShellMachinegun.wav"],
+
+//      ["Distance",              "Resources/Sdistance.wav"],
+      ["Distance",              ""],
+      ["Order1",                 "Resources/SOrder1.wav"],
+      ["Order2",                 "Resources/SOrder2.wav"],
+      ["Order3",                 "Resources/SOrder3.wav"],
+      ["Order4",                 "Resources/SOrder4.wav"],
+      ["Order5",                 "Resources/SOrder5.wav"],
+//    ["FireAtWill",            "Resources/SCommanderFireAtWill.wav"],
+      ["StopFire",              "Resources/SCommanderStopFire.wav"],
+      ["TurretToZero",          "Resources/SCommanderTurret12.wav"],
+
+      ["Angle0",               "Resources/SAngle000.wav"],
+      ["Angle1",               "Resources/SAngle000.wav"],
+      ["Angle2",               "Resources/SAngle000.wav"],
+      ["Angle3",               "Resources/SAngle030.wav"],
+      ["Angle4",               "Resources/SAngle030.wav"],
+      ["Angle5",               "Resources/SAngle030.wav"],
+      ["Angle6",               "Resources/SAngle060.wav"],
+      ["Angle7",               "Resources/SAngle060.wav"],
+      ["Angle8",               "Resources/SAngle060.wav"],
+      ["Angle9",               "Resources/SAngle090.wav"],
+      ["Angle10",              "Resources/SAngle090.wav"],
+      ["Angle11",              "Resources/SAngle090.wav"],
+      ["Angle12",              "Resources/SAngle120.wav"],
+      ["Angle13",              "Resources/SAngle120.wav"],
+      ["Angle14",              "Resources/SAngle120.wav"],
+      ["Angle15",              "Resources/SAngle150.wav"],
+      ["Angle16",              "Resources/SAngle150.wav"],
+      ["Angle17",              "Resources/SAngle150.wav"],
+      ["Angle18",              "Resources/SAngle180.wav"],
+      ["Angle19",              "Resources/SAngle150.wav"],
+      ["Angle20",              "Resources/SAngle150.wav"],
+      ["Angle21",              "Resources/SAngle150.wav"],
+      ["Angle22",              "Resources/SAngle120.wav"],
+      ["Angle23",              "Resources/SAngle120.wav"],
+      ["Angle24",              "Resources/SAngle120.wav"],
+      ["Angle25",              "Resources/SAngle090.wav"],
+      ["Angle26",              "Resources/SAngle090.wav"],
+      ["Angle27",              "Resources/SAngle090.wav"],
+      ["Angle28",              "Resources/SAngle060.wav"],
+      ["Angle29",              "Resources/SAngle060.wav"],
+      ["Angle30",              "Resources/SAngle060.wav"],
+      ["Angle31",              "Resources/SAngle030.wav"],
+      ["Angle32",              "Resources/SAngle030.wav"],
+      ["Angle33",              "Resources/SAngle030.wav"],
+      ["Angle34",              "Resources/SAngle000.wav"],
+      ["Angle35",              "Resources/SAngle000.wav"],
+
+      ["Distance100",         "Resources/SDistance100.wav"],
+      ["Distance200",         "Resources/SDistance200.wav"],
+      ["Distance300",         "Resources/SDistance300.wav"],
+      ["Distance400",         "Resources/SDistance400.wav"],
+      ["Distance500",         "Resources/SDistance500.wav"],
+      ["Distance600",         "Resources/SDistance600.wav"],
+      ["Distance700",         "Resources/SDistance700.wav"],
+      ["Distance800",         "Resources/SDistance800.wav"],
+      ["Distance900",         "Resources/SDistance900.wav"],
+      ["Distance1000",        "Resources/SDistance1000.wav"],
+      ["Distance1100",        "Resources/SDistance1100.wav"],
+      ["Distance1200",        "Resources/SDistance1200.wav"],
+      ["Distance1300",        "Resources/SDistance1300.wav"],
+      ["Distance1400",        "Resources/SDistance1400.wav"],
+      ["Distance1500",        "Resources/SDistance1500.wav"],
+      ["Distance1600",        "Resources/SDistance1600.wav"]
+                        ];
+
+  static Array TigerVoices  =  [
+      ["DriverFast1",           "Resources/GFast01.wav"],
+      ["DriverFast2",           "Resources/GFast02.wav"],
+      ["DriverFast3",           "Resources/GFast03.wav"],
+      ["DriverFast4",           "Resources/GFast04.wav"],
+      ["DriverSlow1",           "Resources/GSlow01.wav"],
+      ["DriverSlow2",           "Resources/GSlow01.wav"],
+      ["DriverBack1",           "Resources/GReverse01.wav"],
+      ["DriverBack2",           "Resources/GReverse02.wav"],
+      ["DriverStop1",           "Resources/GStop01.wav"],
+      ["DriverStop2",           "Resources/GStop02.wav"],
+      ["DriverStay1",           "Resources/GStay01.wav"],
+      ["DriverReverse1",        "Resources/GReverse01.wav"],
+      ["DriverReverse2",        "Resources/GReverse01.wav"],
+      ["DriverLeft1",           "Resources/GTurnLeft01.wav"],
+      ["DriverLeft2",           "Resources/GTurnLeft02.wav"],
+      ["DriverRight1",          "Resources/GTurnRight01.wav"],
+      ["DriverRight2",          "Resources/GTurnRight02.wav"],
+      ["DriverSlowForward1",    "Resources/GMovingSlow.wav"],
+      ["DriverShortStop1",      "Resources/GStay01.wav"],
+
+      ["EngineWarm",            "Resources/GEngineWarm01.wav"],
+      ["EngineHot",             "Resources/GEngineHot01.wav"],
+      ["EngineFire",            "Resources/GEngineFire01.wav"],
+      ["DamageVoice1",          "Resources/GHitted01.wav"],
+      ["DamageVoice2",          "Resources/GHitted02.wav"],
+      ["GunnerHit1",            "Resources/GGunnerHit01.wav"],
+      ["GunnerHit2",            "Resources/GGunnerHit02.wav"],
+      ["GunnerKilled1",         "Resources/GGunnerKilled01.wav"],
+      ["GunnerKilled2",         "Resources/GGunnerKilled02.wav"],
+      ["TurretHit1",            "Resources/GLoaderHit01.wav"],
+      ["TurretHit2",            "Resources/GLoaderHit02.wav"],
+      ["TurretHit3",            "Resources/GLoaderHit03.wav"],
+      ["TurretKilled1",          "Resources/GLoaderTurretDmg01.wav"],
+      ["TurretKilled2",          "Resources/GLoaderTurretDmg02.wav"],
+      ["TurretKilled3",          "Resources/GLoaderTurretDmg03.wav"],
+      ["DriverHit",             "Resources/GDriverHit.wav"],
+      ["DriverKilled1",          "Resources/GDriverKilled01.wav"],
+      ["DriverKilled2",          "Resources/GDriverKilled02.wav"],
+      ["DriverKilled3",          "Resources/GDriverKilled03.wav"],
+      ["DriverLeftHit1",         "Resources/GDriverLeftHit01.wav"],
+      ["DriverLeftHit2",         "Resources/GDriverLeftHit02.wav"],
+      ["DriverLeftHit3",         "Resources/GDriverLeftHit03.wav"],
+      ["DriverLeftHit4",         "Resources/GDriverLeftHit04.wav"],
+      ["DriverLeftKilled1",      "Resources/GDriverLeftDead01.wav"],
+      ["DriverLeftKilled2",      "Resources/GDriverLeftDead02.wav"],
+      ["DriverLeftKilled3",      "Resources/GDriverLeftDead03.wav"],
+      ["DriverRightHit1",        "Resources/GDriverRightHit01.wav"],
+      ["DriverRightHit2",        "Resources/GDriverRightHit02.wav"],
+      ["DriverRightHit3",        "Resources/GDriverRightHit03.wav"],
+      ["DriverRightHit4",        "Resources/GDriverRightHit04.wav"],
+      ["DriverRightKilled1",     "Resources/GDriverRightDead01.wav"],
+      ["DriverRightKilled2",     "Resources/GDriverRightDead02.wav"],
+      ["DriverRightKilled3",     "Resources/GDriverRightDead03.wav"],
+      ["DriverEngineHit",       "Resources/GDriverEngineHit.wav"],
+      ["DriverEngineKilled1",    "Resources/GDriverEngineDead01.wav"],
+      ["DriverEngineKilled2",    "Resources/GDriverEngineDead02.wav"],
+      ["DriverEngineKilled3",    "Resources/GDriverEngineDead03.wav"],
+      ["DriverEngineKilled4",    "Resources/GDriverEngineDead04.wav"],
+
+//       ["WeaponShellAP",         "Resources/GWeaponShellAP.wav"],
+//       ["WeaponShellHE",         "Resources/GWeaponShellHE.wav"],
+//       ["WeaponShellSubAP",      "Resources/GWeaponShellSubAP.wav"],
+      ["AmmoLoad1",              "Resources/GGunnerLoad01.wav"],
+      ["AmmoLoad2",              "Resources/GGunnerLoad02.wav"],
+      ["AmmoLoad3",              "Resources/GGunnerLoad03.wav"],
+      ["AmmoLoad4",              "Resources/GGunnerLoad04.wav"],
+      ["AmmoLoad5",              "Resources/GGunnerLoad05.wav"],
+      ["AmmoLoad6",              "Resources/GGunnerLoad06.wav"],
+      ["AmmoLoaded1",           "Resources/GLoaderReady01.wav"],
+      ["AmmoLoaded2",           "Resources/GLoaderReady02.wav"],
+      ["AmmoLoaded3",           "Resources/GLoaderReady03.wav"],
+      ["AmmoLoaded4",           "Resources/GLoaderReady04.wav"],
+      ["AmmoLoaded5",           "Resources/GLoaderReady05.wav"],
+      ["TargetLocked01",        "Resources/GGunnerReady.wav"],
+      ["TargetLocked02",        "Resources/GGunnerReady.wav"],
+   // ["NoTarget",              "Resources/GNoTarget.wav"], - german commander voice
+      ["NoTarget1",              "Resources/GGunnerNoTarget01.wav"],          //  - german gunner voice
+      ["NoTarget2",              "Resources/GGunnerNoTarget02.wav"],
+      ["NoTarget3",              "Resources/GGunnerNoTarget03.wav"],
+      ["NoTarget4",              "Resources/GGunnerNoTarget04.wav"],
+      ["NoTarget5",              "Resources/GGunnerNoTarget05.wav"],
+      ["NoTarget6",              "Resources/GGunnerNoTarget06.wav"],
+      
+      ["TargetOnFront",         "Resources/GAngle000.wav"],
+      ["TargetOnBack",          "Resources/GAngle180.wav"],
+      ["TargetOnLeft",          ""],
+      ["TargetOnRight",         ""],
+
+      ["TargetIsHuman",         "Resources/GTargetIsHuman.wav"],
+      ["TargetIsLightTank",     "Resources/GTargetIsLightTank.wav"],
+      ["TargetIsMediumTank",    "Resources/GTargetIsMediumTank.wav"],
+      ["TargetIsT34Tank",       "Resources/GTargetIsT34.wav"],
+      ["TargetIsHeavyTank",     "Resources/GTargetIsHeavyTank.wav"],
+      ["TargetIsAPC",           "Resources/GTargetIsAPC.wav"],
+      ["TargetIsSAU",           "Resources/GTargetIsSAU.wav"],
+      ["TargetIsCannon",        "Resources/GTargetIsCannon.wav"],
+      ["TargetIsDot",           "Resources/GTargetIsDot.wav"],
+      ["TargetIsTruck",         "Resources/GTargetIsTruck.wav"],
+
+      ["WeaponShellHE1",         "Resources/GWeaponShellHE01.wav"],
+      ["WeaponShellHE2",         "Resources/GWeaponShellHE02.wav"],
+      ["WeaponShellHE3",         "Resources/GWeaponShellHE03.wav"],
+      ["WeaponShellHE4",         "Resources/GWeaponShellHE04.wav"],
+      
+      ["WeaponShellAP1",         "Resources/GWeaponShellAP01.wav"],
+      ["WeaponShellAP2",         "Resources/GWeaponShellAP02.wav"],
+      ["WeaponShellAP3",         "Resources/GWeaponShellAP03.wav"],
+      ["WeaponShellAP4",         "Resources/GWeaponShellAP04.wav"],
+      
+      ["WeaponShellSubAP1",      "Resources/GWeaponShellSubAP01.wav"],
+      ["WeaponShellSubAP2",      "Resources/GWeaponShellSubAP02.wav"],
+      ["WeaponShellSubAP3",      "Resources/GWeaponShellSubAP03.wav"],
+      ["WeaponShellSubAP4",      "Resources/GWeaponShellSubAP04.wav"],
+      
+      ["WeaponShellMachinegun1", "Resources/GWeaponShellMachinegun01.wav"],
+      ["WeaponShellMachinegun2", "Resources/GWeaponShellMachinegun02.wav"],
+      ["WeaponShellMachinegun3", "Resources/GWeaponShellMachinegun03.wav"],
+      ["WeaponShellMachinegun4", "Resources/GWeaponShellMachinegun04.wav"],
+
+//      ["Distance",              "Resources/GDistance.wav"],
+      ["Distance",              ""],
+      ["Order1",                "Resources/GOrder1.wav"],
+      ["Order2",                "Resources/GOrder2.wav"],
+      ["Order3",                "Resources/GOrder3.wav"],
+      ["Order4",                "Resources/GOrder4.wav"],
+      ["Order5",                "Resources/GOrder5.wav"],
+//    ["FireAtWill",            "Resources/GCommanderFireAtWill.wav"],
+      ["StopFire",              "Resources/GCommanderStopFire.wav"],
+      ["TurretToZero",          "Resources/GCommanderTurret12.wav"],
+/*
+      ["Angle0",               "Resources/GAngle000.wav"],
+      ["Angle1",               "Resources/GAngle000.wav"],
+      ["Angle2",               "Resources/GAngle000.wav"],
+      ["Angle3",               "Resources/GAngle030.wav"],
+      ["Angle4",               "Resources/GAngle030.wav"],
+      ["Angle5",               "Resources/GAngle030.wav"],
+      ["Angle6",               "Resources/GAngle060.wav"],
+      ["Angle7",               "Resources/GAngle060.wav"],
+      ["Angle8",               "Resources/GAngle060.wav"],
+      ["Angle9",               "Resources/GAngle090.wav"],
+      ["Angle10",              "Resources/GAngle090.wav"],
+      ["Angle11",              "Resources/GAngle090.wav"],
+      ["Angle12",              "Resources/GAngle120.wav"],
+      ["Angle13",              "Resources/GAngle120.wav"],
+      ["Angle14",              "Resources/GAngle120.wav"],
+      ["Angle15",              "Resources/GAngle150.wav"],
+      ["Angle16",              "Resources/GAngle150.wav"],
+      ["Angle17",              "Resources/GAngle150.wav"],
+      ["Angle18",              "Resources/GAngle180.wav"],
+      ["Angle19",              "Resources/GAngle210.wav"],
+      ["Angle20",              "Resources/GAngle210.wav"],
+      ["Angle21",              "Resources/GAngle210.wav"],
+      ["Angle22",              "Resources/GAngle240.wav"],
+      ["Angle23",              "Resources/GAngle240.wav"],
+      ["Angle24",              "Resources/GAngle240.wav"],
+      ["Angle25",              "Resources/GAngle270.wav"],
+      ["Angle26",              "Resources/GAngle270.wav"],
+      ["Angle27",              "Resources/GAngle270.wav"],
+      ["Angle28",              "Resources/GAngle300.wav"],
+      ["Angle29",              "Resources/GAngle300.wav"],
+      ["Angle30",              "Resources/GAngle300.wav"],
+      ["Angle31",              "Resources/GAngle330.wav"],
+      ["Angle32",              "Resources/GAngle330.wav"],
+      ["Angle33",              "Resources/GAngle330.wav"],
+      ["Angle34",              "Resources/GAngle360.wav"],
+      ["Angle35",              "Resources/GAngle360.wav"],
+*/
+      ["Angle0",               "Resources/GAngle000.wav"],
+      ["Angle1",               "Resources/GAngle000.wav"],
+      ["Angle2",               "Resources/GAngle030.wav"],
+      ["Angle3",               "Resources/GAngle030.wav"],
+      ["Angle4",               "Resources/GAngle030.wav"],
+      ["Angle5",               "Resources/GAngle060.wav"],
+      ["Angle6",               "Resources/GAngle060.wav"],
+      ["Angle7",               "Resources/GAngle060.wav"],
+      ["Angle8",               "Resources/GAngle090.wav"],
+      ["Angle9",               "Resources/GAngle090.wav"],
+      ["Angle10",              "Resources/GAngle090.wav"],
+      ["Angle11",              "Resources/GAngle120.wav"],
+      ["Angle12",              "Resources/GAngle120.wav"],
+      ["Angle13",              "Resources/GAngle120.wav"],
+      ["Angle14",              "Resources/GAngle150.wav"],
+      ["Angle15",              "Resources/GAngle150.wav"],
+      ["Angle16",              "Resources/GAngle150.wav"],
+      ["Angle17",              "Resources/GAngle180.wav"],
+      ["Angle18",              "Resources/GAngle180.wav"],
+      ["Angle19",              "Resources/GAngle180.wav"],
+      ["Angle20",              "Resources/GAngle210.wav"],
+      ["Angle21",              "Resources/GAngle210.wav"],
+      ["Angle22",              "Resources/GAngle210.wav"],
+      ["Angle23",              "Resources/GAngle240.wav"],
+      ["Angle24",              "Resources/GAngle240.wav"],
+      ["Angle25",              "Resources/GAngle240.wav"],
+      ["Angle26",              "Resources/GAngle270.wav"],
+      ["Angle27",              "Resources/GAngle270.wav"],
+      ["Angle28",              "Resources/GAngle270.wav"],
+      ["Angle29",              "Resources/GAngle300.wav"],
+      ["Angle30",              "Resources/GAngle300.wav"],
+      ["Angle31",              "Resources/GAngle300.wav"],
+      ["Angle32",              "Resources/GAngle330.wav"],
+      ["Angle33",              "Resources/GAngle330.wav"],
+      ["Angle34",              "Resources/GAngle330.wav"],
+      ["Angle35",              "Resources/GAngle000.wav"],
+
+      ["Distance100",         "Resources/GDistance100.wav"],
+      ["Distance200",         "Resources/GDistance200.wav"],
+      ["Distance300",         "Resources/GDistance300.wav"],
+      ["Distance400",         "Resources/GDistance400.wav"],
+      ["Distance500",         "Resources/GDistance500.wav"],
+      ["Distance600",         "Resources/GDistance600.wav"],
+      ["Distance700",         "Resources/GDistance700.wav"],
+      ["Distance800",         "Resources/GDistance800.wav"],
+      ["Distance900",         "Resources/GDistance900.wav"],
+      ["Distance1000",        "Resources/GDistance1000.wav"],
+      ["Distance1100",        "Resources/GDistance1100.wav"],
+      ["Distance1200",        "Resources/GDistance1200.wav"],
+      ["Distance1300",        "Resources/GDistance1300.wav"],
+      ["Distance1400",        "Resources/GDistance1400.wav"],
+      ["Distance1500",        "Resources/GDistance1500.wav"],
+      ["Distance1600",        "Resources/GDistance1600.wav"]
+                        ];
+/*
+  static Array GermanAngleMessages = [
+           CGameMessages::msg_GAngle0,
+           CGameMessages::msg_GAngle10,
+           CGameMessages::msg_GAngle20,
+           CGameMessages::msg_GAngle30,
+           CGameMessages::msg_GAngle40,
+           CGameMessages::msg_GAngle50,
+           CGameMessages::msg_GAngle60,
+           CGameMessages::msg_GAngle70,
+           CGameMessages::msg_GAngle80,
+           CGameMessages::msg_GAngle90,
+           CGameMessages::msg_GAngle100,
+           CGameMessages::msg_GAngle110,
+           CGameMessages::msg_GAngle120,
+           CGameMessages::msg_GAngle130,
+           CGameMessages::msg_GAngle140,
+           CGameMessages::msg_GAngle150,
+           CGameMessages::msg_GAngle160,
+           CGameMessages::msg_GAngle170,
+           CGameMessages::msg_GAngle180,
+           CGameMessages::msg_GAngle190,
+           CGameMessages::msg_GAngle200,
+           CGameMessages::msg_GAngle210,
+           CGameMessages::msg_GAngle220,
+           CGameMessages::msg_GAngle230,
+           CGameMessages::msg_GAngle240,
+           CGameMessages::msg_GAngle250,
+           CGameMessages::msg_GAngle260,
+           CGameMessages::msg_GAngle270,
+           CGameMessages::msg_GAngle280,
+           CGameMessages::msg_GAngle290,
+           CGameMessages::msg_GAngle300,
+           CGameMessages::msg_GAngle310,
+           CGameMessages::msg_GAngle320,
+           CGameMessages::msg_GAngle330,
+           CGameMessages::msg_GAngle340,
+           CGameMessages::msg_GAngle350
+        ];*/
+  static Array GermanAngleMessages = [
+           CGameMessages::msg_GAngle0,
+           CGameMessages::msg_GAngle0,
+           CGameMessages::msg_GAngle30,
+           CGameMessages::msg_GAngle30,
+           CGameMessages::msg_GAngle30,
+           CGameMessages::msg_GAngle60,
+           CGameMessages::msg_GAngle60,
+           CGameMessages::msg_GAngle60,
+           CGameMessages::msg_GAngle90,
+           CGameMessages::msg_GAngle90,
+           CGameMessages::msg_GAngle90,
+           CGameMessages::msg_GAngle120,
+           CGameMessages::msg_GAngle120,
+           CGameMessages::msg_GAngle120,
+           CGameMessages::msg_GAngle150,
+           CGameMessages::msg_GAngle150,
+           CGameMessages::msg_GAngle150,
+           CGameMessages::msg_GAngle180,
+           CGameMessages::msg_GAngle180,
+           CGameMessages::msg_GAngle180,
+           CGameMessages::msg_GAngle210,
+           CGameMessages::msg_GAngle210,
+           CGameMessages::msg_GAngle210,
+           CGameMessages::msg_GAngle240,
+           CGameMessages::msg_GAngle240,
+           CGameMessages::msg_GAngle240,
+           CGameMessages::msg_GAngle270,
+           CGameMessages::msg_GAngle270,
+           CGameMessages::msg_GAngle270,
+           CGameMessages::msg_GAngle300,
+           CGameMessages::msg_GAngle300,
+           CGameMessages::msg_GAngle300,
+           CGameMessages::msg_GAngle330,
+           CGameMessages::msg_GAngle330,
+           CGameMessages::msg_GAngle330,
+           CGameMessages::msg_GAngle0
+        ];
+}

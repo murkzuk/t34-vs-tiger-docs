@@ -1,0 +1,611 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Effects skin classes
+//
+class CBaseEffectsSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "GunFire Forward",          // material id
+          "Textures/Effect_1.tex",    // texture name
+          "ADDITIVE",                 // transparency
+          0, 32, 96, 32               // texture page
+        ),
+
+      new CEffectMaterial(
+          "GunFire Side",             // material id
+          "Textures/Effect_1.tex",    // texture name
+          "ADDITIVE",                 // transparency
+          64, 0, 32, 32               // texture page
+        ),
+
+      new CEffectMaterial(
+          "BulletTrace",              // material id
+          "Textures/Effect_1.tex",    // texture name
+          "ADDITIVE",                 // transparency
+          0, 0, 64, 32                // texture page
+        ),
+      new CEffectMaterial(
+          "Halo",                     // material id
+          "Textures/Effect_1.tex",    // texture name
+          "ADDITIVE",                 // transparency
+          64, 64, 64, 64              // texture page
+        )
+
+      ];
+}
+
+class CSignEffectsSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "CalibreGround",                    // material id
+          "Textures/Effect_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 0, 128, 128,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "SubcalibreGround",                    // material id
+          "Textures/Effect_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          128, 0, 128, 128,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "HEGround",                    // material id
+          "Textures/Effect_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 128, 128, 128,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "CalibreArmour",                    // material id
+          "Textures/Effect_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                    // transparency
+          128, 128, 64, 64,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "SubcalibreArmour",                     // material id
+          "Textures/Effect_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          192, 128, 64, 64,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "HEArmour",                     // material id
+          "Textures/Effect_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          128, 192, 64, 64,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "BulletGround",                     // material id
+          "Textures/Effect_sign1.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 0, 64, 64,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "BulletArmour",        // material id
+          "Textures/Effect_sign1.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          64, 0, 64, 64,                // texture page
+          false
+        ),
+       new CEffectMaterial(
+          "BulletMetal",          // material id
+          "Textures/Effect_sign1.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 64, 64, 64,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "BulletWood",            // material id
+          "Textures/Effect_sign1.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          64, 64, 64, 64,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "T34TrackSign",            // material id
+          "Textures/TankTrack_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 0, 256, 128,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "HanomagTrackSign",            // material id
+          "Textures/TankTrack_sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 128, 256, 128,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "WaterSign",            // material id
+          "Textures/Water_Sign.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "ADDITIVE",                   // transparency
+//          0, 128, 256, 128
+          0, 0, 255, 255,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "PzVIETrackSign",            // material id
+          "Textures/TankTrack_sign1.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 0, 256, 128,                // texture page
+          false
+        ),
+      new CEffectMaterial(
+          "PzIVGTrackSign",            // material id
+          "Textures/TankTrack_sign1.tex", // texture name
+          new Color(1.0, 1.0, 1.0),
+          "NORMAL",                   // transparency
+          0, 128, 256, 128,                // texture page
+          false
+        )
+    ];
+}
+
+class CAnimatedEffectSkin
+{
+  Array Materials = [];
+
+  GenerateMaterials(
+      String _TextureName,
+      String _Transparency,
+      int    _TextureSize,
+      int    _ItemSizeX,
+      int    _ItemSizeY
+    )
+  {
+    GenerateMaterials(
+      _TextureName,
+      _Transparency,
+      _TextureSize,
+      _TextureSize,
+      _ItemSizeX,
+      _ItemSizeY);
+  }
+
+  GenerateMaterials2(
+      String _TextureName,
+      String _Transparency,
+      int    _TextureSize,
+      int    _ItemSizeX,
+      int    _ItemSizeY
+    )
+  {
+    GenerateMaterials2(
+      _TextureName,
+      _Transparency,
+      _TextureSize,
+      _TextureSize,
+      _ItemSizeX,
+      _ItemSizeY);
+  }
+
+  GenerateMaterials(
+      String _TextureName,
+      String _Transparency,
+      int    _TextureWidth,
+      int    _TextureHeight,
+      int    _ItemSizeX,
+      int    _ItemSizeY
+    )
+  {
+    final int PageSizeX = _TextureWidth  / _ItemSizeX;
+    final int PageSizeY = _TextureHeight / _ItemSizeY;
+
+    int MaterialID = Materials.size();
+
+    for (int y = 0; y < PageSizeY; y++)
+      for (int x = 0; x < PageSizeX; x++)
+      {
+        Materials.add(new CEffectMaterial(
+            new String(MaterialID),           // material id
+            _TextureName,                     // texture name
+            _Transparency,                    // transparency
+            x * _ItemSizeX,
+            y * _ItemSizeY,
+            _ItemSizeX,
+            _ItemSizeY                        // texture page
+          ));
+        MaterialID++;
+      }
+  }
+
+  GenerateMaterials2(
+      String _TextureName,
+      String _Transparency,
+      int    _TextureWidth,
+      int    _TextureHeight,
+      int    _ItemSizeX,
+      int    _ItemSizeY
+    )
+  {
+    final int PageSizeX = _TextureWidth  / _ItemSizeX;
+    final int PageSizeY = _TextureHeight / _ItemSizeY;
+
+    int MaterialID = Materials.size();
+
+    for (int y = 0; y < PageSizeY; y++)
+      for (int x = 0; x < PageSizeX; x++)
+      {
+        Materials.add(new CEffectMaterial(
+            new String(MaterialID),           // material id
+            _TextureName,                     // texture name
+            _Transparency,                    // transparency
+            x * _ItemSizeX,
+            (y+1) * _ItemSizeY,
+            _ItemSizeX,
+            _ItemSizeY * -1  // texture page
+          ));
+        MaterialID++;
+      }
+  }
+
+  void DuplicateFirstFrame(
+      int _RepeatCount
+    )
+  {
+    Component Pattern = Materials[0];
+
+    for (int i = 0; i < _RepeatCount; i++)
+      Materials.insert(0, new CEffectMaterial(Pattern));
+
+    CalculateMaterialIndices();
+  }
+
+  void DuplicateLastFrame(
+      int _RepeatCount
+    )
+  {
+    Component Pattern = Materials[Materials.size() - 1];
+
+    for (int i = 0; i < _RepeatCount; i++)
+      Materials.add(new CEffectMaterial(Pattern));
+
+    CalculateMaterialIndices();
+  }
+
+  void CalculateMaterialIndices()
+  {
+    for (int Index = 0; Index < Materials.size(); Index++)
+      Materials[Index].MaterialID = new String(Index);
+  }
+}
+
+class CLightFireCloudEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CLightFireCloudEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_3.tex", "ADDITIVE", 512, 64, 64);
+  }
+}
+
+class CGroundDustEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CGroundDustEffectSkin()
+  {
+//    for (int I = 0; I < 3; I++)
+      GenerateMaterials("Textures/Effect_01.tex", "NORMAL", 256, 64, 64);
+
+  }
+}
+
+class CBaseRefuseEffectSkin
+  extends CAnimatedEffectSkin
+{
+  static String TexName = "";
+  static String Transparency = "NORMAL";
+  static int    Size = 0;
+  static int XSize = 0;
+  static int YSize = 0;
+
+  CBaseRefuseEffectSkin()
+  {
+      GenerateMaterials(TexName, Transparency, Size, XSize, YSize);
+      //GenerateMaterials("Textures/Effect_3.tex", "NORMAL", 512, 512/8, 512/8);
+  }
+}
+
+class CGroundRefuseEffectSkin
+  extends CAnimatedEffectSkin
+{
+  static String TexName = "Textures/Effect_01.tex";
+  static String Transparency = "NORMAL";
+  CGroundRefuseEffectSkin()
+  {
+    logWarning("construct 0: " + TexName + " " + Transparency);
+//    for (int I = 0; I < 3; I++)
+      GenerateMaterials(TexName, /*"NORMAL"*/Transparency, 256, 64, 64);
+
+  }
+}
+
+class CGunFireSplashEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CGunFireSplashEffectSkin()
+  {
+      GenerateMaterials("Textures/Effect_01.tex", "ADDITIVE", 256, 64, 64);
+  }
+}
+
+class CGunFireSmokeEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CGunFireSmokeEffectSkin()
+  {
+      GenerateMaterials("Textures/Effect_Muzzle.tex", "NORMAL", 256, 64, 64);
+  }
+}
+
+class CWaterSprayEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CWaterSprayEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_12.tex", "NORMAL", 256, 64, 64);
+    DuplicateLastFrame(16);
+  }
+}
+
+class CTraceEffectSkin
+{
+    Array Materials = [
+      new CEffectMaterial(
+          "0",                      // material id
+          "Textures/Effect_12.tex", // texture name
+          "NORMAL",                 // transparency
+          128, 0, 64, 64              // texture page
+        ),
+
+      new CEffectMaterial(
+          "1",                      // material id
+          "Textures/Effect_12.tex", // texture name
+          "NORMAL",                 // transparency
+          128, 0, 64, 64             // texture page
+        ),
+
+      new CEffectMaterial(
+          "2",                      // material id
+          "Textures/Effect_12.tex", // texture name
+          "NORMAL",                 // transparency
+          0, 64, 64, 64             // texture page
+        ),
+      new CEffectMaterial(
+          "3",                      // material id
+          "Textures/Effect_12.tex", // texture name
+          "NORMAL",                 // transparency
+          64, 64, 64, 64            // texture page
+        )
+                       ];
+}
+
+
+
+class CGroundSprayEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CGroundSprayEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_13.tex", "NORMAL", 128, 64, 64);
+  }
+}
+
+class CGroundSprayAdditiveEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CGroundSprayAdditiveEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_13.tex", "ADDITIVE", 128, 64, 64);
+  }
+}
+
+class CGroundLightedCloudEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CGroundLightedCloudEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_35.tex", "NORMAL", 256, 64, 64);
+  }
+}
+
+class CExplosionSmokeEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CExplosionSmokeEffectSkin()
+  {
+//    for (int I = 0; I < 3; I++)
+    GenerateMaterials("Textures/Effect_Smoke5.tex", "NORMAL", 512, 128, 128);
+  }
+}
+
+
+class CFireEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "0",                      // material id
+          "Textures/Effect_33.tex", // texture name
+          "ADDITIVE",               // transparency
+          0, 0, 64, 64              // texture page
+        ),
+
+      new CEffectMaterial(
+          "1",                      // material id
+          "Textures/Effect_33.tex", // texture name
+          "ADDITIVE",               // transparency
+          64, 0, 64, 64             // texture page
+        ),
+
+      new CEffectMaterial(
+          "2",                      // material id
+          "Textures/Effect_33.tex", // texture name
+          "ADDITIVE",               // transparency
+          128, 0, 64, 64            // texture page
+        ),
+      new CEffectMaterial(
+          "3",                      // material id
+          "Textures/Effect_33.tex", // texture name
+          "ADDITIVE",               // transparency
+          192, 0, 64, 64            // texture page
+        ),
+      new CEffectMaterial(
+          "4",                      // material id
+          "Textures/Effect_33.tex", // texture name
+          "ADDITIVE",               // transparency
+          0, 64, 64, 64             // texture page
+        ),
+      new CEffectMaterial(
+          "5",                      // material id
+          "Textures/Effect_33.tex", // texture name
+          "ADDITIVE",               // transparency
+          64, 64, 64, 64            // texture page
+        )
+      ];
+}
+
+class CSplashBulletGroundEffectSkin
+{
+  Array Materials = [
+    new CEffectMaterial(
+      "0",                      // material id
+      "Textures/Effect_33.tex", // texture name
+      "ADDITIVE",               // transparency
+      128, 64, 64, 64           // texture page
+                       ),
+
+    new CEffectMaterial(
+      "1",                      // material id
+      "Textures/Effect_33.tex", // texture name
+      "ADDITIVE",               // transparency
+      128, 64, 64, 64           // texture page
+                       )
+                    ];
+}
+
+class CDarkFireCloudEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CDarkFireCloudEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_5.tex", "ADDITIVE", 512, 64, 64);
+  }
+}
+
+/*class CSmokeCloudEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CSmokeCloudEffectSkin()
+  {
+    for (int I = 0; I < 4; I++)
+      GenerateMaterials("Textures/Effect_01.tex", "NORMAL", 256, 64, 64);
+  }
+} */
+class CSplashCloudLiteEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CSplashCloudLiteEffectSkin()
+  {
+    for (int I = 0; I < 4; I++)
+      GenerateMaterials("Textures/Effect_7.tex", "ADDITIVE", 256, 64, 64);
+  }
+}
+
+
+class CSmokeCloudLiteEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CSmokeCloudLiteEffectSkin()
+  {
+//    for (int I = 0; I < 4; I++)
+      GenerateMaterials("Textures/Effect_7.tex", "NORMAL", 256, 64, 64);
+  }
+}
+
+class CMetalDebrisEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CMetalDebrisEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_14.tex", "NORMAL", 128, 32, 32);
+  }
+}
+
+class CWoodDebrisEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CWoodDebrisEffectSkin()
+  {
+    GenerateMaterials("Textures/Effect_16.tex", "NORMAL", 128, 32, 32);
+  }
+}
+
+class CBulletSparkEffectSkin
+{
+  Array Materials = [
+    new CEffectMaterial(
+      "0",                      // material id
+      "Textures/Effect_35.tex", // texture name
+      "ADDITIVE",               // transparency
+      64, 0, 64, 64             // texture page
+                       ),
+
+    new CEffectMaterial(
+      "1",                      // material id
+      "Textures/Effect_35.tex", // texture name
+      "ADDITIVE",               // transparency
+      64, 0, 64, 64             // texture page
+                       )
+                    ];
+}
+
+/*
+  class CAnimFireEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CAnimFireEffectSkin()
+  {
+    GenerateMaterials2("Textures/anim_fire2.tex", "NORMAL", 1024, 256, 256);
+    //GenerateMaterials("Textures/anim_fire1.tex", "NORMAL", 512, 128, 128);
+  }
+} */
+
+class CAnimWoodEffectSkin
+  extends CAnimatedEffectSkin
+{
+  CAnimWoodEffectSkin()
+  {
+    GenerateMaterials2("Textures/anim_wood.tex", "NORMAL", 256, 64, 64);
+    //GenerateMaterials("Textures/anim_fire1.tex", "NORMAL", 512, 128, 128);
+  }
+}
+

@@ -1,0 +1,87 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CFreePlayerCameraCam extends CCamera
+{
+}
+
+class CFreePlayerCamera
+{
+
+
+  CFreePlayerCamera()
+  {
+    addClassificator(user, CLASSIFICATOR_NOTVISIBLEONRADAR);
+    addClassificator(user, CLASSIFICATOR_NOTEDITABLE);
+    addClassificator(user, CLASSIFICATOR_CONTROLLABLE);
+  }
+
+  void Construct(
+      Component _Mission
+    )
+  {
+    // camera
+    Component Camera = new #Camera<CFreePlayerCameraCam>();
+    SetPositionProvider(Camera);
+    RegisterObject("Camera", Camera);
+
+    // Manual control
+    Component Control = new #ManualCameraControl<CMissionEditorCameraControl>();
+    setSlaveObject(Control, Camera);
+    RegisterObject("Control", Control);
+    Control.SetInputMode(IMID_Play);
+    Control.UseSystemTime(true);
+
+    Component CameraCollision = new #CameraCollisionControl<CPlayerCameraCollisionControl>();
+    setSlaveObject(CameraCollision, Camera);
+    RegisterObject("CameraCollisionControl", CameraCollision);
+    CameraCollision.EnableControl(true);
+  }
+
+  void OnInputCommand(
+      int _Command
+    )
+  {
+
+  }
+
+  void OnInputEnabled(
+      boolean _Enabled
+    )
+  {
+
+  }
+
+  Component GetPlayerMainUnit()
+  {
+    Component Mission = (new #GameController()).GetMission();
+
+    if (null != Mission)
+      return (new #GameController()).GetObject(Mission.GetMainPlayerObjectID());
+
+    return null;
+  }
+
+  void SetPosition(
+      Matrix _Target
+    )
+  {
+    Vector DirectionX   = new Vector(_Target.xvec[0], _Target.xvec[1], 0.0);
+    DirectionX.Normalize();
+    Vector CameraOrigin = _Target.origin + DirectionX * -20.0;
+    CameraOrigin       += new Vector(0.0, 0.0, 10.0);
+    Vector DirectionY   = getCrossProduct(new Vector(0.0, 0.0, 1.0), DirectionX);
+    DirectionY.Normalize();
+    Vector DirectionZ   = getCrossProduct(DirectionX, DirectionY);
+    DirectionZ.Normalize();
+
+    Matrix Camera = new Matrix(DirectionX, DirectionY, DirectionZ, CameraOrigin);
+    setPosition(this, Camera);
+  }
+}

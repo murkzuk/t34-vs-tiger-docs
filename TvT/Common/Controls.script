@@ -1,0 +1,891 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+//
+// Base ListElement control
+//
+
+class CBaseUIListElement
+  extends CBaseUIControl
+{
+  static float m_ElementHeight = 0.1;
+
+  static float GetElementHeight()
+  {
+    return m_ElementHeight;
+  }
+
+  void SetSelectedItemState(
+      boolean _Selected
+    )
+  {
+    CBaseUIControl::SetSelectedItemState(_Selected);
+  }
+}
+
+//
+// Base Openable ListElement control
+//
+
+class CBaseUIOpenableListElement
+  extends CBaseUIListElement, IPersistent
+{
+  boolean m_IsInfoOpen = false;
+
+  void SetSelectedItemState(
+      boolean _Selected,
+      int     _SubItem
+    )
+  {
+  }
+
+  //
+  // IPersistent
+  //
+
+  variant GetToken()
+  {
+    return GetControlID();
+  }
+
+  variant GetState()
+  {
+    return GetOpenState();
+  }
+
+  void SetState(
+      variant _State
+    )
+  {
+    SetOpenState(_State);
+  }
+
+  //
+  // Interface
+  //
+
+  boolean GetOpenState()
+  {
+    return m_IsInfoOpen;
+  }
+
+  void SetOpenState(
+      boolean _Open
+    )
+  {
+    m_IsInfoOpen = _Open;
+
+    UpdateHeight();
+  }
+
+  void ToggleOpenState()
+  {
+    SetOpenState(!m_IsInfoOpen);
+  }
+
+}
+
+//
+// List control
+//
+
+class CUIListControl
+  extends CBaseUIControl, CBasePersistentContainer
+{
+  static float DefaultZ = 0.01;
+
+  float ControlZ        = DefaultZ;
+
+  // attributes
+
+  // compounds
+  Array     m_Controls;
+  Array     m_ControlsSorted;
+
+  Component m_Scroller       = null;
+  float     m_ListHeight     = 0.0;          //     
+  float     m_ListPosition   = 0.0;          //    
+  float     m_ListScrollStep = 1.0 / 768.0;  //   
+  int       m_CurrentItem    = -1;
+  int       m_CurrentSubItem = -1;
+
+  String    m_ControlID;
+
+  String    m_ItemsCompare   = "";
+  boolean   m_SortDescending = true;
+
+  CUIListControl()
+  {
+  }
+
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID  = _ControlID;
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+  }
+
+  // Implementation of CBaseUIControl methods
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    CBaseUIControl::SetPosition(_UIPosition);
+
+    // set paren rects
+    for (int Index = 0; Index < m_Controls.size(); Index++)
+      GetObject(m_Controls[Index]).SetParentRect(m_Position);
+
+    // set wheel area
+    if (null != m_Scroller)
+      m_Scroller.SetWheelArea(m_Position.X, m_Position.Y, m_Position.Width, m_Position.Height);
+
+    PositionList();
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    ControlZ = _Z;
+
+    for (int Index = 0; Index < m_Controls.size(); Index++)
+      GetObject(m_Controls[Index]).SetZ(_Z + 0.01);
+  }
+
+  // special functions
+
+  void AddControl(
+      String _ControlID
+    )
+  {
+    AddControl(_ControlID, true);
+  }
+
+  void AddControl(
+      String  _ControlID,
+      boolean _UpdateListNow
+    )
+  {
+    m_Controls.add(_ControlID);
+    m_ControlsSorted.add(_ControlID);
+
+    Component Control = GetObject(_ControlID);
+    Control.SetParentRect(m_Position);
+    m_ListHeight += Control.GetUIPosition().Height;
+
+    if (_UpdateListNow)
+      UpdateList();
+
+    if (-1 == m_CurrentItem)
+      SelectItemByIndex(0);
+  }
+
+  void ClearWithUnregister()
+  {
+    for (int Index = 0; Index < m_Controls.size(); Index++)
+    {
+      Component Control = GetObject(m_Controls[Index]);
+      if (isFunctionExist(Control, "UnregisterControl", 0))
+        Control.UnregisterControl();
+      else
+        m_ParentMenu.m_MenuController.UnregisterObject(Control.GetControlID());
+    }
+
+    ClearList();
+  }
+
+  void DeleteWithUnregister(
+      String _ControlID
+    )
+  {
+    final int Index = m_Controls.find(_ControlID);
+    if (-1 == Index)
+      return;
+
+    Component Control = GetObject(m_Controls[Index]);
+    if (isFunctionExist(Control, "UnregisterControl", 0))
+      Control.UnregisterControl();
+    else
+      m_ParentMenu.m_MenuController.UnregisterObject(Control.GetControlID());
+
+    m_Controls.remove(Index);
+    m_ControlsSorted.remove(m_ControlsSorted.find(_ControlID));
+
+    m_CurrentItem    = -1;
+    m_CurrentSubItem = -1;
+  }
+
+  void ClearList()
+  {
+    m_Controls.clear();
+    m_ControlsSorted.clear();
+
+    m_CurrentItem    = -1;
+    m_CurrentSubItem = -1;
+    m_ListPosition   = 0.0;
+
+    UpdateScroller();
+  }
+
+  void SetSlaveScroller(
+      Component _Scroller
+    )
+  {
+    if (null != m_Scroller)
+    {
+      m_Scroller.SetScrollHandler(null);
+      m_Scroller.SetWheelArea(0.0, 0.0, 0.0, 0.0);
+    }
+
+    m_Scroller = _Scroller;
+
+    if (null != m_Scroller)
+    {
+      m_Scroller.SetScrollHandler(this);
+      m_Scroller.SetWheelArea(m_Position.X, m_Position.Y, m_Position.Width, m_Position.Height);
+    }
+  }
+
+  void ScrollUp(
+      float _Step
+    )
+  {
+    m_ListPosition -= _Step;
+
+    if (m_ListPosition < 0.0)
+      m_ListPosition = 0.0;
+
+    UpdateList();
+  }
+
+  void ScrollDown(
+      float _Step
+    )
+  {
+    if (m_ListPosition + _Step + m_Position.Height <= m_ListHeight)
+      m_ListPosition += _Step;
+
+    UpdateList();
+  }
+
+  void SetListScrollStep(
+      float _ScrollStep
+    )
+  {
+    m_ListScrollStep = _ScrollStep;
+  }
+
+  void SetScrollPos(
+      int _Pos
+    )
+  {
+    float Position = 0.0;
+    if (!m_Controls.isEmpty())
+      Position = m_ListScrollStep * float(_Pos);
+
+    if (Position != m_ListPosition)
+    {
+      m_ListPosition = Position;
+      UpdateList();
+    }
+  }
+
+  float GetScrollableRange()
+  {
+    float ScrollableRange = m_ListHeight - m_Position.Height;
+
+    if (ScrollableRange > 0.0)
+      return ScrollableRange;
+
+    return 0.0;
+  }
+
+  void UpdateScroller()
+  {
+    if (null == m_Scroller) return;
+
+    float ScrollPhase     = 0.0;
+    float ScrollableRange = GetScrollableRange();
+
+    if (ScrollableRange != 0.0)
+      ScrollPhase = m_ListPosition / ScrollableRange;
+
+    m_Scroller.SetScrollRange(max(0, ifloor((m_ListHeight - m_Position.Height) / m_ListScrollStep)));
+    m_Scroller.SetScrollPos(iround(m_ListPosition / m_ListScrollStep));
+  }
+
+  void PositionList()
+  {
+    float PositionY = m_Position.Y - 1.0/768.0 - m_ListPosition;
+    m_ListHeight = 0.0;
+    Component Element;
+    Component Position;
+    for (int Index = 0; Index < m_ControlsSorted.size(); Index++)
+    {
+      Element  = GetObject(m_ControlsSorted[Index]);
+      Position = Element.GetUIPosition();
+
+      Position.X = m_Position.X;
+      Position.Y = PositionY;
+
+      Element.SetPosition(Position);
+
+      PositionY += Position.Height;
+      m_ListHeight += Position.Height;
+    }
+  }
+
+  void SelectItemByIndex(
+      int _Index
+    )
+  {
+    SelectItemByIndex(_Index, -1);
+  }
+
+  void SelectItemByIndex(
+      int _Index,
+      int _SubItem
+    )
+  {
+    m_CurrentItem    = -1;
+    m_CurrentSubItem = -1;
+
+    for (int Index = 0; Index < m_Controls.size(); Index++)
+    {
+      Component Control = GetObject(m_Controls[Index]);
+
+      if (_Index == Index)
+      {
+        if (isFunctionExist(Control, "SetSelectedItemState", 2))
+        {
+          Control.SetSelectedItemState(true, _SubItem);
+          m_CurrentSubItem = _SubItem;
+        }
+        else
+          Control.SetSelectedItemState(true);
+
+        m_CurrentItem = Index;
+      }
+      else
+        Control.SetSelectedItemState(false);
+    }
+  }
+
+  boolean SelectItem(
+      String _ID
+    )
+  {
+    return SelectItem(_ID, -1);
+  }
+
+  boolean SelectItem(
+      String _ID,
+      int    _SubItem
+    )
+  {
+    m_CurrentItem    = -1;
+    m_CurrentSubItem = -1;
+
+    boolean Result = false;
+
+    for (int Index = 0; Index < m_Controls.size(); Index++)
+    {
+      Component Control = GetObject(m_Controls[Index]);
+
+      if (_ID == m_Controls[Index])
+      {
+        if (isFunctionExist(Control, "SetSelectedItemState", 2))
+        {
+          Control.SetSelectedItemState(true, _SubItem);
+          m_CurrentSubItem = _SubItem;
+        }
+        else
+          Control.SetSelectedItemState(true);
+
+        m_CurrentItem = Index;
+        Result        = true;
+      }
+      else
+        Control.SetSelectedItemState(false);
+    }
+
+    return Result;
+  }
+
+  int GetCurrentItem()
+  {
+    return m_CurrentItem;
+  }
+
+  int GetCurrentSubItem()
+  {
+    return m_CurrentSubItem;
+  }
+
+  void SelectCurrentItem(
+      int _CurrentItem
+    )
+  {
+    SetCurrentItem(_CurrentItem);
+  }
+
+  void SetCurrentItem(
+      int _CurrentItem
+    )
+  {
+    SetCurrentItem(_CurrentItem, -1);
+  }
+
+  void SetCurrentItem(
+      int _CurrentItem,
+      int _SubItem
+    )
+  {
+    m_CurrentItem    = _CurrentItem;
+    m_CurrentSubItem = _SubItem;
+  }
+
+  String GetItemID(
+      int _Index
+    )
+  {
+    if (_Index >= 0 && _Index < m_Controls.size())
+      return m_Controls[_Index];
+
+    return "";
+  }
+
+  int GetItemIndex(
+      String _ID
+    )
+  {
+    int nItem = -1;
+
+    for (int Index = 0; Index < m_Controls.size(); Index++)
+    {
+      if (_ID == m_Controls[Index])
+      {
+        nItem = Index;
+        break;
+      }
+    }
+    return nItem;
+  }
+
+  int size()
+  {
+    return m_Controls.size();
+  }
+
+  void UpdateList()
+  {
+    PositionList();
+    UpdateScroller();
+  }
+
+  //
+  // Sorting
+  //
+
+  void ToggleSorting(
+      String _Compare
+    )
+  {
+    if (_Compare != m_ItemsCompare)
+    {
+      m_ItemsCompare   = _Compare;
+      m_SortDescending = false;
+    }
+    else
+      m_SortDescending = !m_SortDescending;
+
+    Sort();
+  }
+
+  void Sort()
+  {
+    if (!m_ItemsCompare.isEmpty())
+      m_ControlsSorted.sort(this, "Compare");
+
+    UpdateList();
+  }
+
+  boolean Compare(
+      String _A,
+      String _B
+    )
+  {
+    if (m_SortDescending)
+      return (
+          getObjectVariable(GetObject(_B), m_ItemsCompare) <
+          getObjectVariable(GetObject(_A), m_ItemsCompare)
+        );
+    else
+      return (
+          getObjectVariable(GetObject(_A), m_ItemsCompare) <
+          getObjectVariable(GetObject(_B), m_ItemsCompare)
+        );
+  }
+
+  void SetItemToTop(
+      String _ItemId
+    )
+  {
+    int Index = m_ControlsSorted.find(_ItemId);
+    if (Index > 0)
+    {
+      m_ControlsSorted.remove(Index);
+      m_ControlsSorted.insert(0, _ItemId);
+    }
+
+    UpdateList();
+  }
+
+  //
+  // CBasePersistentContainer
+  //
+
+  Array GetPersistents()
+  {
+    Array Result = [];
+
+    for (int i = 0; i < m_Controls.size(); i++)
+      Result.add(GetObject(m_Controls[i]));
+
+    return Result;
+  }
+
+  //
+  // IPersistent
+  //
+
+  variant GetToken()
+  {
+    return GetControlID();
+  }
+
+  variant GetState()
+  {
+    int ScrollPos = 0;
+
+    if (null != m_Scroller)
+      ScrollPos = m_Scroller.GetScrollPos();
+
+    return [
+        CBasePersistentContainer::GetState(),
+        GetItemID(GetCurrentItem()),
+        ScrollPos,
+        m_SortDescending,
+        m_ItemsCompare,
+        GetCurrentSubItem()
+      ];
+  }
+
+  void SetState(
+      variant _State
+    )
+  {
+    CBasePersistentContainer::SetState(_State[0]);
+
+    SelectItem(_State[1], _State[5]);
+
+    m_SortDescending = _State[3];
+    m_ItemsCompare   = _State[4];
+    Sort();
+
+    SetScrollPos(_State[2]);
+  }
+}
+
+
+class CUIPlayerStatusField
+  extends CUITextElement
+{
+  Component   m_Name;
+  Component   m_Status;
+
+  float       m_NameWidth   = 0.8;
+  float       m_StatusWidth = 0.2;
+
+  String      m_ID;
+  static float m_Delta = 2.0/1024.0;
+
+  Color m_NormalColor;
+  Color m_SelectedColor;
+
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ID = _ControlID;
+
+    CUITextElement::Initialize(m_ID);
+
+    m_Name    = new #TextControl<CUITextElement>();
+    m_Status  = new #TextControl<CUITextElement>();
+
+    RegisterObject(m_ID + "_Name",   m_Name);
+    RegisterObject(m_ID + "_Status", m_Status);
+
+  }
+
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CUITextElement::Construct(_PropMap);
+    m_NameWidth   =   _PropMap.Get("NameWidth", 0.8);
+    m_StatusWidth =   _PropMap.Get("StatusWidth", 0.2);
+
+    SetText(L"Default Objective");
+    m_NormalColor    = _PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0));
+    m_SelectedColor  = _PropMap.Get("SelectedColor", new Color(1.0, 1.0, 1.0));
+
+    m_Name.SetText(L"Default Objective");     
+    m_Name.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Name.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Name.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Name.SetAlignment(ALIGNMENT_LEFT);
+    m_Name.SetZ(_PropMap.Get("Z", 0.01));
+
+    m_Status.SetText(L"Default Objective");     
+    m_Status.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Status.SetFont(_PropMap.Get("FontName", "Arial"), _PropMap.Get("FontSize", 0.032));
+    m_Status.SetTextColor(_PropMap.Get("NormalColor", new Color(1.0, 1.0, 1.0)));
+    m_Status.SetAlignment(ALIGNMENT_RIGHT);
+    m_Status.SetZ(_PropMap.Get("Z", 0.01));
+  }
+
+  void SetText(
+      WString _Name,
+      WString _Status
+    )
+  {
+    m_Name.SetText(_Name);
+    m_Status.SetText(_Status);
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_Name.SetZ(_Z);
+    m_Status.SetZ(_Z);
+  }
+
+  void SetRenderLayer(
+      int _Layer
+    )
+  {
+    m_Name.SetRenderLayer(_Layer);
+    m_Status.SetRenderLayer(_Layer);
+  }
+
+
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    CUITextElement::SetPosition(_UIPosition);
+
+    m_Name.SetPosition(_UIPosition.X + m_Delta, _UIPosition.Y);
+    m_Name.SetDimensions(m_NameWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+
+    m_Status.SetPosition(_UIPosition.X + m_NameWidth * _UIPosition.Width + m_Delta, _UIPosition.Y);
+    m_Status.SetDimensions(m_StatusWidth * _UIPosition.Width - m_Delta*2 , _UIPosition.Height);
+  }
+
+  void SetParentRect(
+      Component _UIPosition
+    )
+  {
+    CUITextElement::SetParentRect(_UIPosition);
+
+    m_Name.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+    m_Status.SetParentRect(m_ParentRect.X, m_ParentRect.Y, m_ParentRect.Width, m_ParentRect.Height);
+  }
+
+  String GetControlID()
+  {
+    return m_ID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ID);
+    UnregisterObject(m_ID + "_Name");
+    UnregisterObject(m_ID + "_Status");
+  }
+
+}
+//
+// ObjectiveElement control
+//
+
+class CUIObjectiveElement
+  extends CBaseUIListElement
+{
+  static float DefaultZ = 0.01;
+
+  // objective status materials ($WARNING in order of CMission::MOSID_..)
+  final static Array StatusMaterial = [
+      "ObjectiveInProgress",
+      "ObjectiveCompleted",
+      "ObjectiveInProgress" //$TMP
+    ];
+
+  // attributes
+
+  // compounds
+  Component m_ObjectiveText;
+  Component m_Status;
+
+  String    m_ControlID;
+  boolean   m_IsSelected = false;
+
+  final static Color TextColor       = new Color(0.635294, 0.611765, 0.525490, 1.0);
+  final static float m_ElementHeight = 30.0 / 768.0;
+  final static float FontSize        = 32.0 / 1024.0;        //18
+
+  // Service functions
+  void Initialize(
+      String _ControlID
+    )
+  {
+    m_ControlID = _ControlID;
+
+    m_ObjectiveText = new #TextControl<CUIEditField>();
+    m_Status        = new #BitmapControl<CUIBitmap>();
+
+    RegisterObject(m_ControlID + "_ObjectiveText", m_ObjectiveText);
+    RegisterObject(m_ControlID + "_Status",        m_Status);
+  }
+
+  String GetControlID()
+  {
+    return m_ControlID;
+  }
+
+  void UnregisterControl()
+  {
+    UnregisterObject(m_ControlID);
+    UnregisterObject(m_ControlID + "_ObjectiveText");
+    UnregisterObject(m_ControlID + "_Status");
+  }
+
+  // Implementation of CBaseUIControl methods
+
+  // Construct UI control
+  void Construct(
+      Component _PropMap
+    )
+  {
+    CBaseUIControl::Construct(_PropMap);
+
+    m_ObjectiveText.SetFont("Arial", FontSize);
+    m_ObjectiveText.SetText(L"Kill them all");
+    m_ObjectiveText.SetTextColor(TextColor);
+    m_ObjectiveText.SetAlignment(0.0);
+    m_ObjectiveText.SetDimensions(350.0 / 1024.0, m_ElementHeight);
+
+    m_Status.SetMaterialManager(m_MenuController.GetMaterialManager());
+    m_Status.SetMaterial(StatusMaterial[0]);
+    m_Status.SetRenderLayer(m_MenuController.GetCurrentLayer());
+    m_Status.EnableHitTest(false);
+    m_Status.SetDimensions(28.0 / 1024.0, 28.0 / 768.0);          //21
+  }
+
+  // Setup position and dimension
+  void SetPosition(
+      Component _UIPosition
+    )
+  {
+    m_ObjectiveText.SetPosition(_UIPosition.X, _UIPosition.Y);
+    m_Status       .SetPosition(_UIPosition.X + 360.0 / 1024.0, _UIPosition.Y + 0.0 / 768.0);
+
+    CBaseUIControl::SetPosition(_UIPosition);
+
+    UpdateHeight();
+  }
+
+  void SetZ(
+      float _Z
+    )
+  {
+    m_ObjectiveText.SetZ(_Z + 0.001);
+    m_Status       .SetZ(_Z + 0.002);
+  }
+
+  // Appearance settings
+
+  void SetSelectedItemState(
+      boolean _Selected
+    )
+  {
+    m_IsSelected = _Selected;
+
+    CBaseUIListElement::SetSelectedItemState(_Selected);
+  }
+
+  void UpdateHeight()
+  {
+    Component Position = m_Position;
+
+    Position.Width  = 0.3;
+    Position.Height = m_ElementHeight;
+
+    CBaseUIListElement::SetPosition(Position);
+  }
+
+  void SetParentRect(
+      Component _Rect
+    )
+  {
+    m_ObjectiveText.SetParentRect(_Rect);
+    m_Status       .SetParentRect(_Rect);
+  }
+
+  // Set info functions
+
+  void SetObjectiveText(
+      WString _Text
+    )
+  {
+    m_ObjectiveText.SetText(_Text);
+  }
+
+  void SetObjectiveStatus(
+      int _Status
+    )
+  {
+    m_Status.SetMaterial(StatusMaterial[_Status]);
+  }
+}

@@ -1,0 +1,393 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CConsole
+{
+  // Console initialization parameters
+  Color  EditLineColor    = new Color(0.0, 1.0, 1.0);
+  Color  TextColor        = new Color(0.7, 0.7, 0.7);
+  Color  CursorColor      = new Color(1.0, 1.0, 1.0);
+  Color  BackgroundColor  = new Color(0.2, 0.2, 0.2);
+
+  int    HistorySize      = 100;
+  int    ScreenAreaSize   = 100;
+  String FontName         = "White Rabbit";
+  float  FontSize         = 0.015;
+
+  // Construction
+  void CConsole()
+  {
+  }
+
+  // Mission editor
+  Component GetMissionEditor()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission != null)
+      return Mission.GetObject("MissionEditor");
+    return null;
+  }
+
+  // Help function
+  void help()
+  {
+    logMessage("Console Help:");
+    logMessage("  quit                              - quit from game");
+    logMessage("  load <MissionName> [WithObjects]  - load new mission");
+    logMessage("  unload                            - unload current mission");
+    logMessage("  edit                              - create editor");
+    logMessage("  objectz                           - create all objects at zero position with default properties");
+    logMessage("  goto0                             - move editor camera to (0, 0, 0) position");
+    logMessage("  exportGroups                      - export all object groups in mission to their scripts");
+    logMessage("  killobj                           - eliminate selected object");
+    logMessage("  killobj <ObjectID>                - eliminate object with current object ID");
+    logMessage("  showaniminf <true/false>          - shows animation status for all units with state animator");
+    logMessage("  showbehinf <true/false>           - shows behavior information for all units");
+    logMessage("  enablebeh                         - enables AI for units");
+    logMessage("  disablebeh                        - disables AI for units");
+    logMessage("  logClassificatorsList <ObjectID>  - log object classificators list");
+    logMessage("  immortal <true|false>             - enabe / disable immortal mode for player units");
+    logMessage("  kick <NickName>                   - kick a player or bot");
+    logMessage("");
+  }
+
+  // Game control
+  void quit()
+  {
+    (new #GameController()).QuitGame();
+  }
+
+  // Load mission
+  void load(
+      String _Mission
+    )
+  {
+    // Load mission
+    (new #GameController()).StartMission(_Mission);
+  }
+
+  void load(
+      String  _Mission,
+      boolean _CreateObjects
+    )
+  {
+    // Load mission
+    (new #GameController()).StartMission(_Mission);
+  }
+
+  void unload()
+  {
+    // Call Game to unload mission
+    (new #GameController()).UnloadMission();
+  }
+
+  void edit()
+  {
+    Component GameController = new #GameController();
+
+    // Create object
+    Component Mission = GameController.GetLoadedMission();
+    if (null != Mission)
+      Mission.CreateEditorObject();
+
+    // Activate object
+    GameController.ActivateObject("MissionEditor", true, true);
+  }
+
+  void objectz()
+  {
+    objectz(CEditorApplication::ObjectInsertList);
+  }
+
+  void objectz(
+      Array _ObjectInsertList
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    for (int i = 0; i < _ObjectInsertList.size(); i++)
+      if (getVariableType(_ObjectInsertList[i][1]) == ST_ARRAY)
+        objectz(_ObjectInsertList[i][1]);
+      else
+      {
+        String ObjectID    = _ObjectInsertList[i][0];
+        String ComponentID = _ObjectInsertList[i][1].m_ComponentID;
+        String ScriptClass = _ObjectInsertList[i][1].m_ScriptClass;
+
+        Mission.CreateAndInitObject(
+            ObjectID,
+            ComponentID,
+            ScriptClass,
+            IdentityMatrix,
+            []
+          );
+      }
+  }
+
+  void goto0()
+  {
+    Component Editor = GetMissionEditor();
+    if (Editor != null)
+      Editor.GoTo0();
+  }
+
+  void exportGroups()
+  {
+    String GroupsDir = "Scripts\\Groups\\";
+
+    // Get loaded mission
+    Component Mission = new #GameController().GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("exportGroups(): no mission loaded");
+      return;
+    }
+
+    // Get mission groups
+    Array Groups = Mission.GetObjects([CLASSIFICATOR_GROUP], []);
+    logWarning("exportGroups(): found " + new String(Groups.size()) + " object groups");
+
+    // Generate scripts
+    for (int i = 0; i < Groups.size(); i++)
+    {
+      String FileName = GroupsDir + getIdentificator(Groups[i]) + ".script";
+      Groups[i].WriteScriptFile(FileName);
+    }
+
+    // Compile new scripts
+    scanForAdditionalScripts();
+
+    // Get group scripts list
+    Array      GroupList = [];
+    Collection ClassList = getClassList();
+
+    ClassList.gotoBegin();
+    while (!ClassList.isAtEnd())
+    {
+      String ClassName = ClassList.getValue();
+      String FileName  = getClassFileName(ClassName);
+
+      if (FileName.IsStartsWith(GroupsDir) &&
+          ClassName != "CGroupsList")
+        GroupList.add(ClassName);
+
+      ClassList.gotoNext();
+    }
+
+    // Update registry script
+    String FileName = GroupsDir + "GroupsList.script";
+    String ScriptContents =
+      CApplicationSettings::m_ScriptFileHeader +
+      "class CGroupsList\n" +
+      "{\n" +
+      "  Array ObjectInsertList = [ \n";
+
+    for (int i = 0; i < GroupList.size(); i++)
+    {
+      String ClassName = GroupList[i];
+
+      ScriptContents += "      [";
+
+      ScriptContents += " \"" + ClassName.GetSubString(1, ClassName.length()) +
+        "\", new CInsertObjectDescr(\"ObjectsGroup\", \"" + ClassName + "\", \"\")";
+
+      String Suffix = "\n";
+      if (i + 1 != GroupList.size())
+        Suffix = ",\n";
+
+      ScriptContents += " ]" + Suffix;
+    }
+
+    ScriptContents +=
+      "    ];\n" +
+      "}\n";
+
+    if (!saveStringToFile(FileName, ScriptContents))
+      logError("exportGroups(): failed writing to file '" + FileName + "' (read only?)");
+  }
+
+  void killobj()
+  {
+    Component Editor = new #GameController().GetObject("MissionEditor");
+    if (null != Editor)
+    {
+      Component SelectedObject = Editor.GetSelectedObject();
+      if (null != SelectedObject)
+         killobj(getIdentificator(SelectedObject));
+      else
+        logError("No selected object");
+    }
+    else
+      logError("Only in editing mode");
+  }
+
+  void killobj(
+      String _ObjectID
+    )
+  {
+    Component Object = new #GameController().GetObject(_ObjectID);
+    if (null != Object)
+    {
+      Component StateControl = Object.GetStateControl();
+      if (null != StateControl)
+        StateControl.SetHitPoints(0.0);
+    }
+    else
+      logError("Object \"" + _ObjectID + "\" not found");
+  }
+  
+  void kick(
+      String _PlayerName
+    )
+  {
+    logMessage("kicking " + _PlayerName);        
+    if ((new #GameController()).GetGameMode() != "Server")
+    {
+        logError("Only the server can kick a player");        
+        return;
+    }
+    
+    Component Session  = (new #GameController()).GetGameSession();
+    Component Mission  = (new #GameController()).GetMission();
+    int       PlayerID = Session.GetPlayerIDbyName(_PlayerName);
+    if(PlayerID != -1)
+    {
+        int       Slot     = Session.FindPlayerSlot(PlayerID);
+        Session.FireNetEvent(PlayerID, "Server_ShutdownMission", []);
+        //Session.FireNetEvent(PlayerID, "Server_KickAllPlayers", []);
+        //Session.RemoveObject(Slot);
+//         String ObjectID = Mission.FindObjectBySlot(Slot);
+//         Mission.Server_InformRemoveObject(PlayerID, Slot, ObjectID);
+    }
+    else
+    {
+        int Slot = Session.GetBotSlotByName(_PlayerName);
+        if(Slot != -1)
+            Session.RemoveObject(Slot);
+        else
+            logError("Player \"" + _PlayerName + "\" not found");  
+    }
+        
+  }
+  
+  void allbots()
+  {
+    if ((new #GameController()).GetGameMode() != "Server")
+    {
+        logError("Only the server can gets that info");        
+        return;
+    }
+    
+    Component Session  = (new #GameController()).GetGameSession();
+    
+    Array bots = Session.GetBotsInfo();
+    
+    for(int i=0; i<bots.size(); i++)
+        if (bots[i] != null)
+            logWarning("bot " + new String(i) + ": " + new String(bots[i].Name));
+    
+  }
+
+  void showbehinf(
+      boolean _Show
+    )
+  {
+    fireEvent( 0.0, [], "ShowDebugInfo", [_Show]);
+  }
+
+  void showcells(
+      int _Layer
+    )
+  {
+    // $TMP
+//    logMessage( "ShowCells " + new String(_Layer) );
+    Component Editor = GetMissionEditor();
+    if (Editor != null)
+        Editor.ShowCells( _Layer);
+  }
+
+  void showpath(
+      int _Layer
+    )
+  {
+    Component Editor = GetMissionEditor();
+    if ( Editor != null)
+        Editor.ShowPath( _Layer);
+  }
+
+  void enablebeh()
+  {
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission != null)
+      Mission.EnableBehavior();
+  }
+
+  void disablebeh()
+  {
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission != null)
+      Mission.DisableBehavior();
+  }
+
+  void setitemhp(
+      String _ItemName,
+      float  _HPPercent
+    )
+  {
+    Component Mission = (new #GameController()).GetMission();
+    Component Player = (new #GameController()).GetObject(Mission.GetMainPlayerObjectID());
+
+    if (null == Player)
+      return;
+
+    Player.SetPartLifePercent(_ItemName, _HPPercent);
+  }
+
+ void showaniminf(
+      boolean _Show
+    )
+  {
+    fireEvent( 0.0, [], "ShowAnimDebugInfo", [_Show]);
+  }
+
+  void showbehkin()
+  {
+    fireEvent( 0.0, [], "ShowKinematicsDebugInfo", [false]);
+
+    Component Editor = new #GameController().GetObject("MissionEditor");
+    if (null != Editor)
+    {
+      Component SelectedObject = Editor.GetSelectedObject();
+      if (null != SelectedObject)
+      {
+         fireEvent( 0.1, [getIdentificator(SelectedObject)], "ShowKinematicsDebugInfo", [true]);
+      }
+      else
+        logError("No selected object");
+    }
+    else
+      logError("Only in editing mode");
+  }
+
+  void logClassificatorsList(
+      String _ObjectID
+    )
+  {
+    logMessage(new String(getClassificatorsList(new #GameController().GetObject(_ObjectID))));
+  }
+
+  void immortal(
+      boolean _Immortal
+    )
+  {
+    fireEvent( 0.0, ["PLAYERUNIT"], "OnSetImmortalMode", [_Immortal]);
+  }
+}

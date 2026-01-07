@@ -1,0 +1,33 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2006 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+// Author: Vladimir Ivchenkov (ivchenkov@g5software.com)
+//-------------------------------------------------------------------
+
+class CAutoCommander {
+  Array   PreferedTargets = [
+            // classificators allow, restict| [ distance m, weight ]
+              [ [ [ "TANK"        ], [] ],[   [       1000.0f,     100.0f ], [ 0.0f,  1000.0f ] ] ],   // some tank
+              [ [ [ "HUMAN"       ], [] ],[   [       1000.0f,       60.0f ], [ 0.0f,    10.0f ] ] ],   // air unit
+              [ [ [ "ANTITANK"    ], [] ],[   [       1000.0f,      90.0f ], [ 0.0f,   800.0f ] ] ],
+              [ [ [ "BTR"         ], [] ],[   [       1000.0f,       60.0f ], [ 0.0f,    50.0f ] ] ],   // air unit
+              [ [ [ "TRUCK"       ], [] ],[   [       1000.0f,       0.0f ], [ 0.0f,     0.0f ] ] ],   // air unit
+              [ [ [ "AIR"         ], [] ],[   [       1000.0f,       0.0f ], [ 0.0f,     0.0f ] ] ],   // air unit
+			  [ [ ["ARTILLERY"], [] ], [ [ 1500.0f, 200.0f ], [ 400.0f, 120.0f ] ] ],
+			  [ [ ["AA_GUN"], [] ], [ [ 1500.0f, 250.0f ], [ 400.0f, 100.0f ] ] ],
+              [ [ [ "BLD_WAR"     ], [] ],[   [       1000.0f,      30.0f ], [ 0.0f,   100.0f ] ] ]   // ground unit
+                            ];
+
+                          // угол   коэффициент опасности
+  Array   FrontDanger   = [ 120.0f, 1.0f ];    // для передней части
+  Array   BackDanger    = [ 60.0f, 1.1f ];    // для задней части
+
+  float   LastTargetDangerAdd = 50.0f;        // additional priority for a target that is already considered the highest priority
+
+  float   RadarUpdateTime     = 1.0f;         // время обновления радара, в секундах
+  float   RadarMaxDistance    = 1500.0f;      // дальность зрения командира
+}

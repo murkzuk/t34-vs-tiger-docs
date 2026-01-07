@@ -1,0 +1,1583 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Bullets trace effects
+//
+class CMachineGunBulletEffect
+  extends CBulletTraceEffectGenerator
+{
+  void CMachineGunBulletEffect()
+  {
+    GenerateBulletTracePlane(new Color(1.0, 0.86, 0.42, 1.0));
+  }
+}
+
+class CCalibreBulletTraceEffect
+  extends CTankBulletTraceEffectGenerator
+{
+  void CCalibreBulletTraceEffect()
+  {
+    GenerateBulletTracePlane(new Color(1.0, 0.86, 0.12, 1.0));
+  }
+}
+
+class CDiselAccelSmokeEffect
+  extends CBaseTankSmokeEffect
+{
+  float GenerationTime = 2.5f;
+
+  CDiselAccelSmokeEffect()
+  {
+    CBaseTankSmokeEffect(
+        CEffectsArray::GroundDustEffectSkin,
+        3.0f,
+        5.5f,
+        10.0f,
+        new Vector(1.5, 0.0, 0.0),
+        1.0f,
+        new Color(0.1, 0.1, 0.1, 0.5)
+      );
+  }
+}
+
+class CPetrolAccelSmokeEffect
+  extends CBaseTankSmokeEffect
+{
+  float GenerationTime = 1.5f;
+
+  CPetrolAccelSmokeEffect()
+  {
+    CBaseTankSmokeEffect(
+        CEffectsArray::GroundDustEffectSkin,
+        3.0f,
+        5.5f,
+        10.0f,
+        new Vector(-0.5, 0.0, 1.0),
+        1.0f,
+        new Color(0.9, 0.9, 0.9, 0.3)
+      );
+  }
+}
+
+class CT34EngineSmokeEffect
+  extends CBaseTankSmokeEffect
+{
+  CT34EngineSmokeEffect()
+  {
+    CBaseTankSmokeEffect(
+        CEffectsArray::GroundDustEffectSkin,
+        1.5f,
+        -1.0f,
+        10.0f,
+        new Vector(1.5, 0.0, 0.0),
+        1.0f,
+        new Color(0.1, 0.1, 0.1, 0.2)
+      );
+    LinkToHost(true);
+  }
+}
+
+class CTigerEngineSmokeEffect
+   extends CBaseTankSmokeEffect
+{
+  CTigerEngineSmokeEffect()
+  {
+    CBaseTankSmokeEffect(
+        CEffectsArray::GroundDustEffectSkin,
+        1.0f,
+        -1.0f,
+        10.0f,
+        new Vector(-0.3, 0.0, 0.8),
+        1.0f,
+        new Color(0.9, 0.9, 0.9, 0.05)
+      );
+    LinkToHost(true);
+  }
+}
+
+
+
+
+
+class CDiselSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  CDiselSmokeEffect()
+  {
+    SetAnimationTime(1.3);
+    SetTraceStepSize(0.3);
+    SetMaxJumpItems(10);
+    SetExpiredOnStop(false);
+    SetSizeParams(0.5, 0.75);
+    m_PlacePower = 1.0;
+    m_Gravity    = new Vector(0.0, 0.0, 0.0);
+    SetBaseColor(new Color(0.1, 0.1, 0.1, 0.3));
+    SetStartAndFinalFade(0.0, 0.0);
+
+    int FramesQty = CEffectsArray::GroundDustEffectSkin.Materials.size();
+    logWarning(" CDiselSmokeEffect FramesQty = "+new String(FramesQty));
+
+    for (int I = 0; I < FramesQty; I++)
+    {
+      SetFixedMaterial(new String(I % CEffectsArray::GroundDustEffectSkin.Materials.size()));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(0.5), rand(0.5), 0.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(2.0, 2.0, 2.0)
+        );
+    }
+  }
+}
+
+class CPetrolSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  CPetrolSmokeEffect()
+  {
+    SetAnimationTime(1.3);
+    SetTraceStepSize(0.3);
+    SetMaxJumpItems(10);
+    SetExpiredOnStop(false);
+
+    SetSizeParams(0.5, 0.75);
+    m_PlacePower = 1.0;
+    m_Gravity    = new Vector(0.0, 0.0, 0.0);
+    SetBaseColor(new Color(0.9, 0.9, 0.9, 0.2));
+    //SetBaseColor(new Color(1.0, 1.0, 1.0));//, 0.7));
+    SetStartAndFinalFade(0.0, 0.0);
+
+    int FramesQty = CEffectsArray::GroundDustEffectSkin.Materials.size();
+
+    for (int I = 0; I < FramesQty; I++)
+    {
+      SetFixedMaterial(new String(I % CEffectsArray::GroundDustEffectSkin.Materials.size()));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(0.5), rand(0.5), 0.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(2.0, 2.0, 2.0)
+        );
+    }
+  }
+}
+
+class CPzVIPetrolSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  CPzVIPetrolSmokeEffect()
+  {
+    SetAnimationTime(2.0);
+    SetTraceStepSize(0.3);
+    SetMaxJumpItems(10);
+    SetExpiredOnStop(false);
+
+    SetSizeParams(0.1, 0.5);
+    m_PlacePower = 0.5;
+    m_Gravity    = new Vector(0.0, 0.0, 0.0);
+    SetBaseColor(new Color(0.7, 0.7, 0.7, 0.3));
+    //SetBaseColor(new Color(1.0, 1.0, 1.0));//, 0.7));
+    SetStartAndFinalFade(0.0, 0.0);
+
+    int FramesQty = CEffectsArray::GroundDustEffectSkin.Materials.size();
+
+    for (int I = 0; I < FramesQty; I++)
+    {
+      SetFixedMaterial(new String(I % CEffectsArray::GroundDustEffectSkin.Materials.size()));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(0.5), rand(0.5), 1.5),
+          new Vector(0.0, 0.0, 0.0), new Vector(1.0, 1.0, 1.0)
+        );
+    }
+  }
+}
+
+class CGenericUnitEngineSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  boolean m_LightingParticle    = true;
+  float   m_LightingInterpolate = 0.4;
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESize, float _ZDelta)
+  {
+    SetEffectTime(_EffectTime);
+    SetAnimationTime(_AnimTime);
+    SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, _Speed));
+    SetSizeParams(3.0, 0.75);
+
+    for (int I = 0; I < 7; I++)
+    {
+      SetBaseColor(_Color);
+      SetStartAndFinalFade(0.1, 0.2, 0.3);
+      SetFixedMaterial(new String(I % CEffectsArray::SmokeCloudLiteEffectSkin.Materials.size()));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), (_ZDelta / 4.0) - 0.5), new Vector(rand(_EPos), rand(_EPos), (_ZDelta / 2.0) - 0.5),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESize, _ESize, _ESize)
+        );
+    }
+  }
+
+  CGenericUnitEngineSmokeEffect()
+  {
+  // EffectTime, AnimTime, ItemsPerSec, Speed, Color, SPos, EPos, SSize, ESize, ZDelta
+    Init(800.0, 4.5, 4.0, 4.0, new Color(0.68, 0.68, 0.68), 0.2, 1.2, 0.1, 1.5, -1.0);
+  }
+}
+
+//
+// Complex effects
+//
+
+class CForestComplexTraceEffect extends CBaseEffect
+{
+  CForestComplexTraceEffect()
+  {
+    CreateEffect("ForestUnitTraceEffect", 0.3);
+    CreateEffect("ForestUnitDustTraceEffect", 0.2);
+  }
+}
+
+// Gun fire effects
+
+class CMachineGunFireEffect
+  extends CBaseEffect
+{
+  void CMachineGunFireEffect()
+  {
+    CreateEffect("MachineGunFirePlanes", 0.0);
+    CreateEffect("GunFireLightSplash", 0.0);
+  }
+}
+
+class CMachineGunFirePlanes
+  extends CGunFireTripleGenerator
+{
+  float m_SizeFactor = 0.3;
+
+  Vector SideIDPosition    = new Vector(-0.03, 0.0, 0.0);
+
+  void CMachineGunFirePlanes()
+  {
+    SetAnimationTime(0.2);
+    SetEffectTime(0.2);
+
+    GenerateGunFireTriple();
+  }
+}
+
+class CGunFireLightSplash
+  extends CBaseEffect
+{
+  CGunFireLightSplash()
+  {
+    SetEffectTime(0.2);
+    SetAnimationTime(0.2);
+
+    ExpandFramesTable(3);
+
+    SetLightType(LIGHTTYPE_POINT);
+    SetAttenuation(0.1, 0.15, 5.1);
+    SetDynamicMode(true);
+
+    for (int FrameNum = 0; FrameNum < GetFramesQuantity(); FrameNum++)
+    {
+      float Phase = float(FrameNum) / float(GetFramesQuantity() - 1);
+
+      SetPosition(FrameNum, new Vector(0.1, 0.0, 0.0));
+      //SetRange(FrameNum, 0.01);
+      SetRange(0.1, 0.01);
+      SetColor(FrameNum, new Color(1.0, 1.0, 0.5) * sin(Phase* Math_PI));
+    }
+  }
+}
+
+class CLightExplosionSplash
+  extends CBaseEffect
+{
+  CLightExplosionSplash()
+  {
+    SetEffectTime(0.4);
+    SetAnimationTime(0.4);
+    ExpandFramesTable(3);
+    SetLightType(LIGHTTYPE_POINT);
+    SetAttenuation(1.0, 0.0, 0.1);
+    SetDynamicMode(true);
+
+    for (int FrameNum = 0; FrameNum < GetFramesQuantity(); FrameNum++)
+    {
+      float Phase = float(FrameNum) / float(GetFramesQuantity() - 1);
+      SetPosition(FrameNum, new Vector(0.0, 0.0, 2.0));
+      SetRange(100.0, 200.0);
+      SetColor(FrameNum, new Color(255.0/255.0, 222.0/255.0, 222.0/255.0) * sin(Phase * Math_PI));
+    }
+  }
+}
+// Heavy Gunfire No Muzzle
+class CHeavyGunFireNoMuzzle
+  extends CAnimatedParticleGenerator
+{
+  CHeavyGunFireNoMuzzle()
+  {
+    SetAnimationTime(0.4);
+    SetEffectTime(0.4);
+    SetSizeParams(0.7, 0.75);
+    SetStartAndFinalFade(0.1, 1.0);
+    SetBaseColor(new Color(1.0, 0.6, 0.2, 1.0));
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 0, 1.0,
+        new Vector(-0.5, 0.0, 0.0), new Vector(1.5, 0.0, 0.0),
+        new Vector(4.0, 4.0, 4.0), new Vector(0.2, 0.2, 0.2)
+      );
+    SetPlaceParams(0.5);
+    SetStartAndFinalFade(0.0, 0.4);
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 0, 1.0,
+        new Vector(-0.4, 0.0, 0.0), new Vector(2.0, 0.0, 0.0),
+        new Vector(2.5, 2.5, 2.5), new Vector(0.2, 0.2, 0.2)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 2, 1.0,
+        new Vector(-0.1, 0.0, 0.0), new Vector(2.3, 0.0, 0.0),
+        new Vector(1.2, 1.2, 1.2), new Vector(0.2, 0.2, 0.2)
+      );
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 3, 1.0,
+        new Vector(0.1, 0.0, 0.0), new Vector(2.5, 0.0, 0.0),
+        new Vector(1.1, 1.1, 1.1), new Vector(0.2, 0.2, 0.2)
+      );
+    SetPlaceParams(1.0);
+    SetStartAndFinalFade(0.0, 0.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 4, 1.0,
+        new Vector(0.5, 0.0, 0.0), new Vector(2.5, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(0.2, 0.2, 0.2)
+      );
+    SetStartAndFinalFade(0.0, 0.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 5, 1.0,
+        new Vector(1.0, 0.0, 0.0), new Vector(2.5, 0.0, 0.0),
+        new Vector(0.9, 0.9, 0.9), new Vector(0.2, 0.2, 0.2)
+      );
+  }
+}
+// Heavy Gunfire Muzzle
+class CHeavyGunFireMuzzle
+  extends CAnimatedParticleGenerator
+{
+  CHeavyGunFireMuzzle()
+  {
+    SetAnimationTime(0.4);
+    SetEffectTime(0.4);
+    SetSizeParams(0.7, 0.85);
+    SetStartAndFinalFade(0.1, 1.0);
+    SetBaseColor(new Color(1.0, 0.6, 0.2, 1.0));
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 0, 1.0,
+        new Vector(-0.5, 0.0, 0.0), new Vector(1.5, 0.0, 0.0),
+        new Vector(2.5, 2.5, 2.5), new Vector(0.2, 0.2, 0.2)
+      );
+    SetPlaceParams(0.5);
+    SetStartAndFinalFade(0.0, 0.4);
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 0, 1.0,
+        new Vector(-0.4, 0.0, 0.0), new Vector(2.0, 0.0, 0.0),
+        new Vector(2.0, 2.0, 2.0), new Vector(0.2, 0.2, 0.2)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 2, 1.0,
+        new Vector(-0.1, 0.0, 0.0), new Vector(2.3, 0.0, 0.0),
+        new Vector(1.2, 1.2, 1.2), new Vector(0.2, 0.2, 0.2)
+      );
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 3, 1.0,
+        new Vector(0.1, 0.0, 0.0), new Vector(2.5, 0.0, 0.0),
+        new Vector(1.1, 1.1, 1.1), new Vector(0.2, 0.2, 0.2)
+      );
+    SetPlaceParams(1.0);
+    SetStartAndFinalFade(0.0, 0.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 4, 1.0,
+        new Vector(0.5, 0.0, 0.0), new Vector(2.5, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(0.2, 0.2, 0.2)
+      );
+    SetStartAndFinalFade(0.0, 0.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 5, 1.0,
+        new Vector(1.0, 0.0, 0.0), new Vector(2.5, 0.0, 0.0),
+        new Vector(0.9, 0.9, 0.9), new Vector(0.2, 0.2, 0.2)
+      );
+/*    SetPlaceParams(0.2);
+    //SetFixedMaterial("1");
+    SetSizeParams(1.0, 1.0);
+    //SetBaseColor(new Color(0.8, 0.8, 0.7));
+    SetStartAndFinalFade(0.0, 0.0);
+ */
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 0, 1.0,
+        new Vector(-0.15, 0.0, 0.0), new Vector(-0.15, 0.25, 0.0),
+        new Vector(0.2, 0.2, 0.2), new Vector(0.4, 1.5, 0.4)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSplashEffectSkin, 0, 1.0,
+        new Vector(-0.15, 0.0, 0.0), new Vector(-0.15, -0.25, 0.0),
+        new Vector(0.2, 0.2, 0.2), new Vector(0.4, 1.5, 0.4)
+      );
+  }
+}
+
+class CHeavyGunFireLight
+  extends CBaseEffect
+{
+  CHeavyGunFireLight()
+  {
+    SetEffectTime(0.3);
+    SetAnimationTime(0.3);
+    ExpandFramesTable(3);
+    SetLightType(LIGHTTYPE_POINT);
+    SetAttenuation(1.0, 0.0, 0.1);
+    SetDynamicMode(true);
+
+    for (int FrameNum = 0; FrameNum < GetFramesQuantity(); FrameNum++)
+    {
+      float Phase = float(FrameNum) / float(GetFramesQuantity() - 1);
+
+      SetPosition(FrameNum, new Vector(0.0, 0.0, 0.0));
+      SetRange(FrameNum, 50.0);
+      SetColor(FrameNum, new Color(1.5, 1.2, 0.7) * sin(Phase) * Math_PI);
+    }
+  }
+}
+
+// Gun fire cloud effects
+class CHeavyGunMuzzleCloudEffect
+ extends CAnimatedParticleGenerator
+{
+  CHeavyGunMuzzleCloudEffect()
+  {
+
+    boolean m_LightingParticle    = true;
+    float   m_LightingInterpolate = 0.5;
+    m_Gravity                     = new Vector(0.0, 0.0, 0.0);
+
+    SetAnimationTime(2.0);
+    SetEffectTime(2.0);
+
+    SetSizeParams(0.85, 0.85);
+/*    //forward
+    SetStartAndFinalFade(0.0, 1.0);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 1.0));
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 0, 0.7,
+        new Vector(0.0, 0.0, 0.0), new Vector(1.0, 0.0, -2.0),
+        new Vector(1.5, 0.2, 0.2), new Vector(1.5, 1.5, 1.0)
+      );
+
+    SetSizeParams(0.85, 0.85);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 0.7,
+        new Vector(0.0, 0.0, 0.0), new Vector(1.0, 0.0, -4.0),
+        new Vector(0.5, 0.5, 0.5), new Vector(2.5, 2.5, 0.5)
+
+/*    //side
+    SetSizeParams(1.5, 1.5);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 0.7,
+        new Vector(-0.15, 0.0, 0.0), new Vector(-0.5, 3.0, -3.0),
+        new Vector(0.0, 0.0, 0.0), new Vector(2.5, 2.5, 0.5)
+        //new Vector(0.2, 1.5, 0.2), new Vector(1.5, 1.5, 1.0)
+      );
+    //side
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 12, 0.7,
+        new Vector(-0.15, 0.0, 0.0), new Vector(-0.5, -3.0, -3.0),
+        new Vector(0.0, 0.0, 0.0), new Vector(2.5, 2.5, 0.5)
+      );
+*/
+    //forward
+    SetSizeParams(0.90, 0.90);
+
+    SetPlaceParams(0.5);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 0.4));
+    SetStartAndFinalFade(0.0, 1.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 0, 4.0,
+        new Vector(0.5, 0.0, 0.0), new Vector(2.5, 0.0, -0.5),
+        new Vector(1.5, 0.2, 0.2), new Vector(1.5, 1.5, 1.0)
+      );
+
+    SetPlaceParams(0.5);
+    SetStartAndFinalFade(0.0, 0.4);
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 2, 4.0,
+        new Vector(2.5, 0.0, 0.0), new Vector(4.5, 0.0, -0.5),
+        new Vector(1.5, 1.5, 1.5), new Vector(3.5, 3.5, 3.5)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 4, 4.0,
+        new Vector(4.5, 0.0, 0.0), new Vector(6.5, 0.0, -0.5),
+        new Vector(2.0, 2.0, 2.0), new Vector(4.0, 4.0, 4.0)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 4.0,
+        new Vector(0.5, 0.0, 0.0), new Vector(1.5, 0.0, -2.0),
+        new Vector(2.0, 2.0, 2.0), new Vector(4.5, 4.5, 4.5)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 8, 4.0,
+        new Vector(0.5, 0.0, 0.0), new Vector(2.0, 0.0, -2.0),
+        new Vector(2.0, 2.0, 2.0), new Vector(4.5, 4.5, 4.5)
+      );
+
+    //side
+    SetPlaceParams(0.4);
+    //SetFixedMaterial("1");
+    SetSizeParams(2.4, 2.0);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 1.0));
+    SetStartAndFinalFade(0.0, 0.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 4.0,
+        new Vector(-0.25, 0.0, 0.0), new Vector(-0.25, 1.5, -1.0),
+        new Vector(0.5, 0.5, 0.5), new Vector(4.5, 4.5, 4.5)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 4.0,
+        new Vector(-0.25, 0.0, 0.0), new Vector(-0.25, -1.5, -1.0),
+        new Vector(0.5, 0.5, 0.5), new Vector(4.5, 4.5, 4.5)
+      );
+  }
+}
+
+class CHeavyGunNoMuzzleGroundEffect
+ extends CAnimatedParticleGenerator
+{
+  CHeavyGunNoMuzzleGroundEffect()
+  {
+    SetAnimationTime(2.0);
+    SetEffectTime(2.0);
+    SetSizeParams(0.7, 0.75);
+    SetBaseColor(new Color(0.5, 0.5, 0.4, 1.0));
+    SetStartAndFinalFade(0.0, 0.35, 0.5);
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 5, 2.0,
+        new Vector(3.0, 2.0, -1.7), new Vector(3.5, 3.5, -1.0),
+        new Vector(2.5, 0.5, 0.2), new Vector(3.0, 3.0, 1.1)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 4, 2.0,
+        new Vector(0.0, 2.0, -1.5), new Vector(0.0, 3.5, -1.0),
+        new Vector(2.3, 1.0, 0.5), new Vector(3.0, 3.0, 1.1)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 2.0,
+        new Vector(-3.0, 2.0, -1.2), new Vector(-3.5, 3.5, -1.0),
+        new Vector(2.0, 1.0, 0.7), new Vector(3.0, 3.0, 1.0)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 5, 2.0,
+        new Vector(3.0, -2.0, -1.5), new Vector(3.5, -3.5, -1.0),
+        new Vector(2.5, 1.0, 0.7), new Vector(3.0, 3.0, 1.0)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 4, 2.0,
+        new Vector(0.0, -2.0, -1.7), new Vector(0.0, -3.5, -1.0),
+        new Vector(2.0, 1.0, 1.0), new Vector(3.0, 3.0, 1.1)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 5, 2.0,
+        new Vector(-3.0, -2.0, -1.5), new Vector(-3.5, -3.5, -1.0),
+        new Vector(2.0, 1.0, 0.7), new Vector(3.0, 3.0, 1.6)
+      );
+    }
+}
+
+
+class CHeavyGunNoMuzzleCloudEffect
+ extends CAnimatedParticleGenerator
+{
+  CHeavyGunNoMuzzleCloudEffect()
+  {
+    boolean m_LightingParticle    = true;
+    float   m_LightingInterpolate = 0.5;
+    m_Gravity                     = new Vector(0.0, 0.0, 2.0);
+
+    SetAnimationTime(2.0);
+    SetEffectTime(2.0);
+    SetSizeParams(0.7, 0.75);
+    SetStartAndFinalFade(0.0, 1.0);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 0.2));
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSmokeEffectSkin, 0, 0.7,
+        new Vector(0.0, 0.0, 0.0), new Vector(1.0, 0.0, -0.5),
+        new Vector(1.5, 0.2, 0.2), new Vector(1.5, 1.5, 1.0)
+      );
+    SetPlaceParams(0.5);
+    SetStartAndFinalFade(0.0, 0.4);
+
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSmokeEffectSkin, 6, 4.0,
+        new Vector(0.5, 0.0, 0.0), new Vector(2.5, 0.0, -0.5),
+        new Vector(1.5, 1.5, 1.5), new Vector(3.5, 3.5, 3.5)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSmokeEffectSkin, 12, 4.0,
+        new Vector(2.5, 0.0, 0.0), new Vector(4.5, 0.0, -1.0),
+        new Vector(2.0, 2.0, 2.0), new Vector(4.0, 4.0, 4.0)
+      );
+    GenerateAnimatedParticle(
+        CEffectsArray::GunFireSmokeEffectSkin, 18, 4.0,
+        new Vector(4.5, 0.0, 0.0), new Vector(6.5, 0.0, -1.0),
+        new Vector(2.0, 2.0, 2.0), new Vector(4.5, 4.5, 4.5)
+      );
+  }
+}
+
+class CTerrainBulletHitEffect
+  extends CAnimatedParticleGenerator
+{
+  Vector  StartPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  FinalPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  StartSize  = new Vector(1.0, 1.0, 1.0);
+  Vector  FinalSize  = new Vector(5.0, 5.0, 5.0);
+
+  CTerrainBulletHitEffect()
+  {
+    SetAnimationTime(4.0);
+    SetEffectTime(4.2);
+
+    SetSamplesQty(15);
+    SetSpeed(3.0, 5.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 7.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.2, 0.1);
+  }
+
+  GenerateSamples(
+      Component _SkinClass
+    )
+  {
+    GenerateAnimatedParticle(
+        _SkinClass, 0, 1.0,
+        StartPlace, FinalPlace,
+        StartSize, FinalSize
+      );
+  }
+}
+
+class CWaterBulletHitDustEffect
+  extends CAnimatedParticleGenerator
+{
+  /*
+  Vector  StartPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  FinalPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  StartSize  = new Vector(1.0, 1.0, 1.0);
+  Vector  FinalSize  = new Vector(3.0, 3.0, 3.0);
+  */
+  CWaterBulletHitDustEffect()
+  {
+    SetAnimationTime(4.0);
+    SetEffectTime(4.2);
+
+    SetSamplesQty(15);
+    SetSpeed(2.0, 1.5);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 9.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.1, 0.1);
+
+    final int SamplesQty =
+      CEffectsArray::WaterSprayEffectSkin.Materials.size();
+
+    //m_AnimLength = 16;
+
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+        CEffectsArray::WaterSprayEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(3.0, 3.0, 3.0)
+      );
+    }
+  }
+}
+
+class CForestBulletHitDustEffect
+  extends CTerrainBulletHitEffect
+{
+  Vector  StartPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  FinalPlace = new Vector(0.0, 0.0, 0.0);
+  Vector  StartSize  = new Vector(0.3, 0.3, 0.3);
+  Vector  FinalSize  = new Vector(2.0, 2.0, 2.0);
+
+  CForestBulletHitDustEffect()
+  {
+    final int SamplesQty =
+      CEffectsArray::GroundSprayEffectSkin.Materials.size();
+
+    m_AnimLength = 16;
+
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateSamples(CEffectsArray::GroundSprayEffectSkin);
+    }
+  }
+}
+
+class CBulletHitMetalSplashEffect
+  extends CAnimatedParticleGenerator
+{
+  CBulletHitMetalSplashEffect()
+  {
+    SetAnimationTime(0.2);
+    SetEffectTime(0.2);
+
+    ExpandFramesTable(2);
+    SetSkinClass(CEffectsArray::BaseEffectsSkin);
+
+    final int ID1 = CreateParticle(
+        EPPID_STATIC_PLANE_XY,
+        new Vector(0.0, 0.0, 0.1),
+        new Vector(0.0, 0.0, 0.0),
+        "Halo",
+        new Color(0.929411, 0.964705, 0.960784, 0.5)
+      );
+    SetSizeFactor(ID1, 0, new Vector(0.01, 0.01, 0.01));
+    SetSizeFactor(ID1, 1, new Vector(0.1, 0.1, 0.1));
+
+    final int ID2 = CreateParticle(
+        EPPID_BILLBOARD_PLANE,
+        new Vector(0.0, 0.0, 0.1),
+        new Vector(0.0, 0.0, 0.0),
+        "Halo",
+        new Color(0.929411, 0.964705, 0.960784, 0.5)
+      );
+    SetSizeFactor(ID2, 0, new Vector(0.01, 0.01, 0.01));
+    SetSizeFactor(ID2, 1, new Vector(0.1, 0.1, 0.1));  }
+}
+
+
+//
+//Bullet explosion effects
+//
+class CWeaponExplosionPlanes
+  extends CAnimatedParticleGenerator
+{
+  void CWeaponExplosionPlanes(
+      float   _Size,
+      float   _AnimationTime,
+      float   _EffectTime,
+      Array   _EffectSkins
+    )
+  {
+    SetAnimationTime(_AnimationTime);
+    SetEffectTime(_EffectTime);
+    SetCoordSystemType(CRDSYS_Origin);
+
+    SetSizeParams(_Size, 0.75);
+
+    for (int i = 0; i < _EffectSkins.size(); i++)
+    {
+      GenerateAnimatedParticle(
+          _EffectSkins[i][0],
+          _EffectSkins[i][1],
+          _EffectSkins[i][2],
+          _EffectSkins[i][3],
+          _EffectSkins[i][4],
+          _EffectSkins[i][5],
+          _EffectSkins[i][6]
+        );
+    }
+  }
+}
+
+class CCalibre7576_85_88GunBulletExplosionPlanes
+  extends CWeaponExplosionPlanes
+{
+  void CCalibre7576_85_88GunBulletExplosionPlanes()
+  {
+    CWeaponExplosionPlanes(0.3, 0.7, 0.7,
+        [
+          [CEffectsArray::LightFireCloudEffectSkin, 0, 1.0,
+           new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+           new Vector(2.0, 2.0, 2.0), new Vector(2.5, 2.5, 3.0)],
+           [CEffectsArray::LightFireCloudEffectSkin, 0, 1.0,
+           new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 4.0),
+           new Vector(0.5, 0.5, 2.0), new Vector(2.0, 2.0, 4.0)]
+         ]);
+  }
+}
+
+class CHE7576_85_88GunBulletExplosionPlanes
+  extends CWeaponExplosionPlanes
+{
+  void CHE7576_85_88GunBulletExplosionPlanes()
+  {
+    CWeaponExplosionPlanes(0.3, 0.7, 0.7,
+        [
+          [CEffectsArray::LightFireCloudEffectSkin, 0, 1.0,
+           new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+           new Vector(2.0, 2.0, 2.0), new Vector(2.5, 2.5, 3.0)],
+           [CEffectsArray::LightFireCloudEffectSkin, 0, 1.0,
+           new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 4.0),
+           new Vector(0.5, 0.5, 2.0), new Vector(2.0, 2.0, 4.0)]
+         ]);
+  }
+}
+
+//
+// Armour hit effects
+//
+
+//
+// Metal hit effects
+//
+
+//
+//Body hit effect
+//
+class CBulletHitBodyEffect
+ extends CAnimatedParticleGenerator
+{
+  CBulletHitBodyEffect()
+  {
+    SetAnimationTime(3.2);
+    SetEffectTime(3.2);
+
+    SetSizeParams(0.4, 0.75);
+    //SetRotation(0.0, 180.0);
+    //SetBaseColor(new Color(1.0, 0.0, 0.0, 1.0));
+    SetBaseColor(new Color(209.0 / 255.0, 93.0 / 255.0, 93.0 / 255.0, 0.40000));
+    //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+    SetAnimLength(16);
+    SetFixedMaterial("1");
+    SetStartAndFinalFade(0.3, 0.7);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.1), new Vector(0.0, 0.0, 0.5),
+        new Vector(0.0, 0.0, 0.0), new Vector(0.3, 0.3, 0.6)
+      );
+
+    //SetAnimLength(16);
+    SetFixedMaterial("1");
+    SetStartAndFinalFade(0.3, 1.0);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 4, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.3),
+        new Vector(0.0, 0.0, 0.0), new Vector(0.5, 0.5, 0.5)
+      );
+
+    //SetAnimLength(16);
+    SetStartAndFinalFade(0.0, 0.0);
+    SetRotation(0.0, 180.0);
+   // SetRotation(180.0, 360.0);
+    EnableItemCreation(false);
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 20, 6.0,
+        new Vector(0.0, 0.0, 0.3), new Vector(0.0, 0.0, 0.3),
+        new Vector(0.5, 0.5, 0.5), new Vector(1.0, 1.0, 1.0)
+      );
+  }
+}
+
+//
+//Explosion effects
+
+class CBaseBuildingExplosionSmokeEffect
+ extends CAnimatedParticleGenerator
+{
+  CBaseBuildingExplosionSmokeEffect()
+  {
+    //SetCoordSystemType(CRDSYS_World);
+
+    SetAnimationTime(3.2);
+    SetEffectTime(3.2);
+
+    SetPlaceParams(0.1);
+
+    SetBaseColor(new Color(106.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 0.45000));
+    //SetBaseColor(new Color(1.0, 0.0, 0.0));
+    SetSizeParams(1.0, 0.2);
+    SetStartAndFinalFade(0.1, 0.7);
+    for (int I = 0; I < 12; I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-2.0, 2.0), rand(-2.0, 2.0), float(randnum(2)) + 1.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+
+    SetSizeParams(0.8, 0.75);
+    for (int I = 0; I < 8; I++)
+    //for (int I = 0; I < CEffectsArray::GroundDustEffectSkin.Materials.size(); I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(0.0, 2.0)),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+
+    SetSizeParams(0.5, 0.75);
+    for (int I = 0; I < 5; I++)
+    //for (int I = 0; I < CEffectsArray::GroundDustEffectSkin.Materials.size(); I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-0.5, 0.5), rand(-0.5, 0.5), rand(0.0, 0.5)),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+  }
+}
+
+//
+//Unit explosion
+//
+class CGenericUnitExplosionSmokeEffect
+ extends CAnimatedParticleGenerator
+{
+  CGenericUnitExplosionSmokeEffect()
+  {
+    SetCoordSystemType(CRDSYS_Local);
+
+    SetAnimationTime(3.2);
+    SetEffectTime(3.2);
+
+    SetPlaceParams(0.1);
+
+    for (int I = 0; I < 2; I++)
+    {
+      SetStartAndFinalFade(0.1, 0.5);
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      SetSizeParams(2.0, 0.2);
+      SetBaseColor(new Color(68.0 / 255.0, 66.0 / 255.0, 55.0 / 255.0, 0.80000));
+      SetAnimLength(32);
+      SetFixedMaterial(new String(randnum(15)));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 2.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(1.0, 1.0, 2.5)
+        );
+    }
+
+    SetBaseColor(new Color(98.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 0.65000));
+    SetSizeParams(2.0, 0.2);
+    SetStartAndFinalFade(0.1, 0.7);
+    for (int I = 0; I < 12; I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-2.0, 2.0), rand(-2.0, 2.0), float(randnum(2)) + 1.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+
+    SetSizeParams(1.6, 0.75);
+    for (int I = 0; I < 8; I++)
+    //for (int I = 0; I < CEffectsArray::GroundDustEffectSkin.Materials.size(); I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(0.0, 2.0)),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+
+    SetSizeParams(1.0, 0.75);
+    for (int I = 0; I < 5; I++)
+    //for (int I = 0; I < CEffectsArray::GroundDustEffectSkin.Materials.size(); I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-0.5, 0.5), rand(-0.5, 0.5), rand(0.0, 0.5)),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+  }
+}
+
+//
+//
+// Complex effects
+//
+
+class CBaseBuildingExplosionEffect
+  extends CBaseEffect
+{
+  CBaseBuildingExplosionEffect()
+  {
+    //CreateEffect("BaseBuildingExplosionSmokeEffect", 0.0);
+    CreateAndForgetEffect("BaseBuildingExplosionSignEffect", 0.0);
+  }
+}
+
+class CGenericUnitExplosionEffect
+  extends CBaseEffect
+{
+  CGenericUnitExplosionEffect()
+  {
+    CreateEffect("GenericUnitExplosionSmokeEffect", 0.0);
+    CreateAndForgetEffect("GenericUnitExplosionSignEffect", 0.0);
+  }
+}
+
+class CTankSmallDustEffect
+  extends CAnimatedParticleGenerator
+{
+  CTankSmallDustEffect()
+  {
+    SetAnimationTime(4.0);
+    SetEffectTime(4.2);
+
+    SetSamplesQty(30);
+    SetSpeed(10.0, 3.0);
+    SetDirection(new Vector(0.85, 0.0, 0.52678), 15.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.2, 0.1);
+
+    final int SamplesQty =
+      CEffectsArray::AnimWoodEffectSkin.Materials.size();
+
+    m_AnimLength = 16;
+
+    for (int I = 0; I < 9; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+        CEffectsArray::AnimWoodEffectSkin, 0, 1.0,
+        new Vector(rand(0.3), rand(0.3), 0.0), new Vector(rand(0.3), rand(0.3), 0.0),
+        new Vector(0.2, 0.2, 0.2), new Vector(0.2, 0.2, 0.2)
+                              );
+    }
+  }
+}
+
+class CHullGunLayerFireEffect
+ extends CAnimatedParticleGenerator
+
+{
+  boolean m_LightingParticle    = false;
+  float   m_LightingInterpolate = 0.4;
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESize, float _ZDelta)
+  {
+    SetEffectTime(_EffectTime);
+    SetAnimationTime(_AnimTime);
+    SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, _Speed));
+    SetSizeParams(3.0, 0.75);
+
+    for (int I = 0; I < 7; I++)
+    {
+      SetBaseColor(_Color);
+      SetStartAndFinalFade(0.1, 0.5, 0.3);
+      SetFixedMaterial(new String(I % CEffectsArray::FireEffectSkin.Materials.size()));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::FireEffectSkin, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), (_ZDelta / 4.0) - 0.5), new Vector(rand(_EPos), rand(_EPos), (_ZDelta / 2.0) - 0.5),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESize, _ESize, _ESize)
+        );
+     }
+  }
+
+   CHullGunLayerFireEffect()
+  {
+  // EffectTime, AnimTime, ItemsPerSec, Speed, Color, SPos, EPos, SSize, ESize, ZDelta
+    Init(598.0, 1.0, 5.0, 3.5, new Color(1.0, 1.0, 1.0), 0.1, 0.5, 0.5, 1.0, -1.0);
+  }
+
+}
+
+class CHullGunLayerExplosionBlackSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  boolean m_LightingParticle    = true;
+  float   m_LightingInterpolate = 0.4;
+
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESize, float _ZDelta)
+  {
+    SetEffectTime(_EffectTime);
+    SetAnimationTime(_AnimTime);
+    SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, _Speed));
+
+    SetSizeParams(3.0, 0.75);
+
+    for (int I = 0; I < 7; I++)
+    {
+      SetBaseColor(_Color);
+      SetStartAndFinalFade(0.1, 0.1, 0.4);
+      SetFixedMaterial(new String(I % CEffectsArray::SmokeCloudLiteEffectSkin.Materials.size()));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), (_ZDelta / 4.0) - 0.5), new Vector(rand(_EPos), rand(_EPos), (_ZDelta / 2.0) - 0.5),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESize, _ESize, _ESize)
+        );
+    }
+  }
+  CHullGunLayerExplosionBlackSmokeEffect()
+  {
+  // EffectTime, AnimTime, ItemsPerSec, Speed, Color, SPos, EPos, SSize, ESize, ZDelta
+    Init(600.0, 8.5, 3.0, 4.0, new Color(0.68, 0.68, 0.68), 0.2, 3.0, 0.5, 3.0, -1.0);
+  }
+}
+
+
+class CHullGunLayerExplosionSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  boolean m_LightingParticle    = true;
+  float   m_LightingInterpolate = 0.8;
+
+  CHullGunLayerExplosionSmokeEffect()
+  {
+    float m_RandX = rand(2.0);
+    float m_RandY = rand(2.0);
+
+    SetCoordSystemType(CRDSYS_Local);
+    SetAnimationTime(5.2);
+    SetEffectTime(5.2);
+
+    SetPlaceParams(0.3);
+
+    for (int I = 0; I < 1; I++)
+    {
+      SetStartAndFinalFade(0.0, 0.5);
+      SetSizeParams(2.0, 0.2);
+      SetBaseColor(new Color(65.0 / 255.0, 65.0 / 255.0, 65.0 / 255.0, 0.90000));
+      SetFixedMaterial(new String(randnum(15)));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 4.0,
+          new Vector(0.0, 0.0, 1.0), new Vector(m_RandX, m_RandY, 2),
+          new Vector(0.0, 0.0, 0.0), new Vector(1.0, 1.0, 0.8)
+        );
+    }
+
+    SetBaseColor(new Color(55.0 / 255.0, 55.0 / 255.0, 55.0 / 255.0, 0.9500));
+    SetSizeParams(2.0, 0.2);
+    SetStartAndFinalFade(0.0, 0.5);
+
+    for (int I = 0; I < 1; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 20, 4.0,
+          new Vector(0.0, 0.0, 1.0), new Vector(m_RandX, m_RandY, 3),
+          new Vector(0.0, 0.0, 0.0), new Vector(1.5, 1.5, 1.2)
+        );
+    }
+
+    SetBaseColor(new Color(35.0 / 255.0, 35.0 / 255.0, 35.0 / 255.0, 1.0));
+    SetSizeParams(2.0, 0.2);
+    SetStartAndFinalFade(0.0, 0.1);
+    SetPlaceParams(0.2);
+
+    for (int I = 0; I < 1; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 35, 4.0,
+          new Vector(0.0, 0.0, 1.0), new Vector(m_RandX, m_RandY, 4.5),
+          new Vector(0.0, 0.0, 0.0), new Vector(1.9, 1.9, 1.7)
+        );
+    }
+
+    SetBaseColor(new Color(70.0 / 255.0, 70.0 / 255.0, 70.0 / 255.0, 0.8));
+    SetSizeParams(2.0, 0.2);
+    SetStartAndFinalFade(0.1, 0.7);
+    SetPlaceParams(0.3);
+
+    for (int I = 0; I < 12; I++)
+    {
+      //SetRotation(0.0, 180.0 * (1.0 - (2.0 * float(rand(0, 2)))));
+      //SetBaseColor(new Color(0.70, 0.70, 0.6, 0.9));
+      //SetAnimLength(48);
+      SetFixedMaterial(new String(I));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::SmokeCloudLiteEffectSkin, 0, 4.0,
+          new Vector(0.0, 0.0, 0.1), new Vector(rand(-2.0, 2.0), rand(-2.0, 2.0), float(randnum(2)) + 1.0),
+          new Vector(0.0, 0.0, 0.0), new Vector(rand(1.0, 2.0), rand(1.0, 2.0), rand(1.0, 2.0))
+        );
+    }
+  }
+}
+
+class CDamagedSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  CDamagedSmokeEffect()
+  {
+    SetEffectTime(8.0);
+    SetAnimationTime(8.0);
+
+    SetSamplesQty(8);
+    SetSpeed(0.2, 0.1);
+
+    SetDirection(new Vector(0.0, 0.0, 1.0), 80.0, 90.0);
+
+    SetRingMode(true);
+
+    SetSizeParams(1.0, 0.75);
+    SetStartAndFinalFade(0.0, 0.8, 0.5);
+
+    //SetBaseColor(new Color(0.52, 0.48, 0.35));
+    SetBaseColor(new Color(98.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 0.85000));
+    for (int i = 0; i < CEffectsArray::GroundDustEffectSkin.Materials.size(); i++)
+    {
+    SetFixedMaterial(new String(i));
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, -0.1), new Vector(0.0, 0.0, -0.1),
+        new Vector(0.5, 0.5, 0.5), new Vector(1.0, 1.0, 1.0)
+      );
+    }
+  }
+}
+
+class CDamagedBigSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  CDamagedBigSmokeEffect()
+  {
+    SetCoordSystemType(CRDSYS_Local);
+
+    SetAnimationTime(3.0);
+    SetEffectTime(3.0);
+
+    SetSizeParams(1.5, 2.0);
+    SetAnimLength(16);
+
+    //SetBaseColor(new Color(0.8, 0.8, 0.7));
+    SetBaseColor(new Color(98.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 1.00000));
+    SetStartAndFinalFade(0.1, 0.5);
+    EnableItemCreation(true);
+    //SetFixedMaterial("0");
+    GenerateAnimatedParticle(
+        CEffectsArray::SmokeCloudLiteEffectSkin, 1, 4.0,
+        new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 0.5),
+        new Vector(0.3, 0.3, 0.3), new Vector(3.0, 3.0, 3.0)
+      );
+
+    //SetFixedMaterial("1");
+    GenerateAnimatedParticle(
+        CEffectsArray::SmokeCloudLiteEffectSkin, 2, 4.0,
+        new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 1.5),
+        new Vector(0.7, 0.7, 0.7), new Vector(3.2, 3.2, 3.2)
+      );
+    //SetFixedMaterial("2");
+    GenerateAnimatedParticle(
+        CEffectsArray::SmokeCloudLiteEffectSkin, 4, 4.0,
+        new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 0.5),
+        new Vector(1.2, 1.2, 1.2), new Vector(3.3, 3.3, 3.3)
+      );
+    //SetFixedMaterial("3");
+    GenerateAnimatedParticle(
+        CEffectsArray::SmokeCloudLiteEffectSkin, 5, 4.0,
+        new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 1.5),
+        new Vector(1.5, 1.5, 1.5), new Vector(3.5, 3.5, 3.5)
+      );
+    //SetFixedMaterial("5");
+    GenerateAnimatedParticle(
+        CEffectsArray::GroundDustEffectSkin, 6, 4.0,
+        new Vector(0.0, 0.0, 0.5), new Vector(0.0, 0.0, 0.5),
+        new Vector(1.8, 1.8, 1.8), new Vector(4.0, 4.0, 3.0)
+      );
+  }
+}
+
+
+class CDamagedFireEffect
+ extends CAnimatedParticleGenerator
+{
+  CDamagedFireEffect()
+  {
+    SetCoordSystemType(CRDSYS_Origin);
+
+    SetAnimationTime(600.0);
+    SetEffectTime(600.0);
+
+    SetAnimScale(420.0);
+
+    //SetPrimitiveType(EPPID_STATIC_CYLINDER);
+    //SetSizeParams(2.0, 0.75);
+    SetStartAndFinalFade(0.006, 0.013);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 0.9));
+    GenerateAnimatedParticle(
+        CEffectsArray::FireEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.3), new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(0.0, 0.0, 0.0)
+      );
+    /*GenerateAnimatedParticle(
+        CEffectsArray::FireEffectSkin, 0, 1.0,
+        new Vector(1.5, -0.8, 0.3), new Vector(1.5, -0.8, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(0.0, 0.0, 0.0)
+      );*/
+
+  }
+}
+
+class CDamagedBlackSmokeEffect
+  extends CAnimatedParticleGenerator
+{
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESize, float _ZDelta)
+  {
+    //SetEffectTime(_EffectTime);
+    //SetAnimationTime(_AnimTime);
+    //SetMaxWind(4.0);
+    //SetAlphaByWind(1.0, 0.7, []);
+    //SetRotationByWind(0.0, degreeToRadian(40.0), [[0.5, degreeToRadian(40.0)]]);
+    //SetSizeByWind(1.0, 0.8, []);
+    //SetWindEffect(0.5);
+
+    //SetItemsPerSecond(_ItemsPerSecond);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, _Speed));
+
+    //SetSizeParams(3.0, 0.75);
+
+    for (int I = 0; I < 9; I++)
+    {
+      //SetBaseColor(_Color);
+      //SetStartAndFinalFade(0.03, 0.5, 0.5);
+      SetFixedMaterial(new String(I % CEffectsArray::GroundDustEffectSkin.Materials.size()));
+
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), (_ZDelta / 4.0) - 0.5), new Vector(rand(_EPos), rand(_EPos), (_ZDelta / 2.0) - 0.5),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESize, _ESize, _ESize)
+        );
+    }
+  }
+
+  CDamagedBlackSmokeEffect()
+  {
+  // EffectTime, AnimTime, ItemsPerSec, Speed, Color, SPos, EPos, SSize, ESize, ZDelta
+    Init(600.0, 8.5, 3.0, 3.0, new Color(0.1, 0.1, 0.1, 0.7), 0.0, 1.8, 0.0, 2.0, -0.6);
+  }
+}
+
+
+class CDamagedBlackRefuseEffect
+  extends CAnimatedParticleGenerator,
+          CRefuseParticleGenerator
+{
+  //static Component EffectSkin = null;
+  void Init(float _EffectTime, float _AnimTime, float _ItemsPerSecond, float _Speed, Color _Color, float _SPos, float _EPos, float _SSize, float _ESize, float _ZDelta)
+  {
+    //SetEffectTime(_EffectTime);
+    //SetAnimationTime(_AnimTime);
+    //SetMaxWind(4.0);
+    //SetAlphaByWind(1.0, 0.7, []);
+    //SetRotationByWind(0.0, degreeToRadian(40.0), [[0.5, degreeToRadian(40.0)]]);
+    //SetSizeByWind(1.0, 0.8, []);
+    //SetWindEffect(0.5);
+    SetGravity(CWorldPhysics::GravityVector);
+
+//     SetEffectTime(LifetimeMS);
+// 
+    //SetItemsPerSecond(20);
+    SetMoveUpSpeed(new Vector(0.0, 0.0, EjectionVelocity + randnum(VelocityVariance)));
+
+    //SetSizeParams(3.0, 0.75);
+
+    String Transparency = "NORMAL";
+    if(!UseInvAlpha)
+      Transparency = "ADDITIVE";
+
+    CGroundRefuseEffectSkin::TexName = TexName;
+    CGroundRefuseEffectSkin::Transparency = Transparency;
+
+    Component EffectSkin = new #MaterialManager<CGroundRefuseEffectSkin>();
+
+    for (int I = 0; I < EffectSkin.Materials.size(); I++)
+    {
+      //SetBaseColor(_Color);
+      //SetStartAndFinalFade(0.03, 0.5, 0.5);
+      
+      SetFixedMaterial(new String(I % EffectSkin.Materials.size()));
+
+      
+      GenerateAnimatedParticle(
+          EffectSkin/*CEffectsArray::GroundRefuseEffectSkin*/, 0, 4.0,
+          new Vector(rand(_SPos), rand(_SPos), (_ZDelta / 4.0) - 0.5), new Vector(rand(_EPos), rand(_EPos), (_ZDelta / 2.0) - 0.5),
+          new Vector(_SSize, _SSize, _SSize), new Vector(_ESize, _ESize, _ESize)
+        );
+    }
+  }
+
+  CDamagedBlackRefuseEffect()
+  {
+  // EffectTime, AnimTime, ItemsPerSec, Speed, Color, SPos, EPos, SSize, ESize, ZDelta
+    Init(600.0, 8.5, 3.0, 3.0, new Color(0.1, 0.1, 0.1, 0.7), 0.0, 1.8, 0.0, 2.0, -0.6);
+  }
+}
+
+class CRoadUnitTraceEffect
+  extends CAnimatedParticleGenerator
+{
+  boolean m_LightingParticle    = true;
+  float   m_LightingInterpolate = 0.3;
+
+  CRoadUnitTraceEffect()
+  {
+    SetAnimationTime(10.0);
+    SetTraceStepSize(0.4);
+    SetMaxJumpItems(2);
+    SetExpiredOnStop(false);
+
+    SetSizeParams(0.45, 0.75);
+    m_PlacePower = 1.0;
+    m_Gravity    = new Vector(0.0, 0.0, 1.0);
+    SetStartAndFinalFade(0.0, 0.2, 0.2);  //first param - FadeTo;  sec param - FadeFrom
+
+    for (int I = 0; I < 9; I++)
+    {
+      SetBaseColor(new Color(0.52, 0.48, 0.35, rand(0.2, 0.9)));  //      restore!!!!!!!!!!!
+      GenerateAnimatedParticle(
+          CEffectsArray::TraceEffectSkin, 0, 1.0,
+          new Vector(0.0, rand(1.0), rand(0.4, 1.0)), new Vector(0.0, rand(1.0)*(float(rand(2))*2.0-1.0), rand(2.0, 3.5)),
+          new Vector(rand(0.5, 2.0), rand(0.5, 2.0), rand(0.3, 1.0)), new Vector(rand(1.0, 3.0), rand(2.4, 5.0), rand(1.0, 4.5))
+        );
+    }
+  }
+}
+
+class CForestUnitDustTraceEffect
+  extends CAnimatedParticleGenerator
+{
+  CForestUnitDustTraceEffect()
+  {
+    SetAnimationTime(3.0);
+    SetTraceStepSize(0.2);
+    SetMaxJumpItems(10);
+    SetExpiredOnStop(false);
+    SetSizeParams(0.3, 0.75);           //first param - Factor;  sec param - Power
+    m_PlacePower = 1.0;
+    m_Gravity    = new Vector(0.0, 0.0, 1.0);
+    SetBaseColor(new Color(0.48, 0.45, 0.35, 0.3));
+    SetStartAndFinalFade(0.0, 0.4);     //first param - FadeTo;  sec param - FadeFrom
+
+    for (int I = 0; I < 9; I++)
+    {
+      GenerateAnimatedParticle(
+          CEffectsArray::GroundDustEffectSkin, 0, 1.0,
+          new Vector(5.0, 0.0, 0.2), new Vector(5.0, rand(1.0)*(float(rand(2))*2.0-1.0), -0.5 ),
+          new Vector(2.0, 2.0, 0.5), new Vector(2.0, rand(2.0, 3.0), rand(1.5, 2.5))
+                              );
+    }
+  }
+}
+
+class CForestUnitTraceEffect
+  extends CAnimatedParticleGenerator
+{
+  CForestUnitTraceEffect()
+  {
+    SetAnimationTime(1.5);
+    SetTraceStepSize(0.1);
+    SetMaxJumpItems(10);
+    SetExpiredOnStop(false);
+    SetSizeParams(0.1, 1.0);           //first param - Factor;  sec param - Power
+    m_PlacePower = 1.0;
+    m_Gravity    = new Vector(0.0, 0.0, -100.0);
+    SetBaseColor(new Color(0.40, 0.38, 0.27, 1.0));
+    SetStartAndFinalFade(1.0, 1.0);    //first param - FadeTo;  sec param - FadeFrom
+
+     for (int I = 0; I < 9; I++)
+    {
+          GenerateAnimatedParticle(
+          CEffectsArray::AnimWoodEffectSkin, 0, 1.0,
+          new Vector(1.5, 0.0, float(rand(1))-0.5), new Vector(1.55, rand(3.0)*(float(rand(2))*2.0-1.2), rand(-7.0,3.0)*(float(rand(0,2))*4.0-1.0)+50.0),
+          new Vector(0.6+rand(0.3), 0.6+rand(0.4), 0.6+rand(0.3)), new Vector(0.6+rand(0.3), 0.6+rand(0.3), 0.6+rand(0.3))
+                              );
+    }
+  }
+}
+
+class CTankWaterEffect
+{
+  CTankWaterEffect() {
+    SetSkinClass( CEffectsArray::SignEffectsSkin );
+    SetRenderLayer( PRIMLAYER_ONWATER_EFFECTS );
+
+     AddWakeLayer(
+        "WaterSign",                               // material id
+        0.3,                                       // segment length
+        1,                                         // max velocity
+        12,                                        // max distance
+        20,                                        // max age
+        0.1,                                       // born width
+        1,                                         // born length
+        [ 1.0, [ 0.9, 0.8 ], [ 0.5, 0.3 ], 0.0 ],  // life alpha
+        [ 0.1, [ 0.3, 0.4 ], [ 0.4, 0.43 ], 0.46 ],// life width
+        [ 1.0, [ 0.5, 0.4 ], 0.0 ],                // after unit alpha
+        [ 0.0, [ 0.5, 0.0 ], 1.0 ],                // along unit alpha
+        [ 0.4, [ 1.5, 2.0 ], [ 2.0, 3.0 ], 4.0 ],  // after unit width
+        [ 0.3, 0.45 ]                              // along unit width
+    /*
+  AddWakeLayer(
+       "WaterSign",                              // material id
+        0.4,                                      // segment length
+        2.0,                                      // max velocity
+       12.5,                                     // max distance
+        100,                                       // max age
+        0.5,                                        // born width
+        3,                                        // born length
+        [ 1.0, 0.0 ],                             // life alpha
+        [ 0.5, 1.0 ],                             // life width
+        [ 1.0, 0.0 ],                             // after unit alpha
+        [ 0.0, [ 0.5, 0.0 ], 1.0 ],               // along unit alpha
+        [ 1.0, [ 0.5, 2.0 ], [ 0.8, 3.0 ], 4.0 ], // after unit width
+        [ 0.0, 1.0 ]                              // along unit width
+         */
+      );
+  }
+}

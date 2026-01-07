@@ -1,0 +1,108 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CArmourPoints
+{
+  //Pz4
+  final static Array TankPzIVAusfGUnitArmourTurretFWD   =   [50.0,    15.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourTurretREAR  =   [30.0,    15.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourTurretTOP   =   [20.0,    15.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourTurretLEFT  =   [30.0,    15.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourTurretRIGHT =   [30.0,    15.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourHullFWD     =   [41.0,    15.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourHullREAR    =   [20.0,     9.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourHullTOP     =   [20.0,     9.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourHullBOTTOM  =   [21.0,     9.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourHullRIGHT   =   [23.0,     9.0,    0.5];
+  final static Array TankPzIVAusfGUnitArmourHullLEFT    =   [23.0,     9.0,    0.5];
+
+  //PZ6
+  final static Array TankPzVIAusfEUnitArmourTurretFWD   =   [108.0,   15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourTurretREAR  =   [82.0,    15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourTurretTOP   =   [28.0,    10.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourTurretLEFT  =   [82.0,    15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourTurretRIGHT =   [82.0,    15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourHullFWD     =   [108.0,   15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourHullREAR    =   [82.0,    15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourHullTOP     =   [28.0,    10.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourHullBOTTOM  =   [28.0,    10.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourHullRIGHT   =   [72.0,    15.0,    0.5];
+  final static Array TankPzVIAusfEUnitArmourHullLEFT    =   [72.0,    15.0,    0.5];
+
+  //T34_76_42
+  final static Array TankT34_76_42UnitArmourTurretFWD   =   [65.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourTurretREAR  =   [47.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourTurretTOP   =   [15.0,     7.0,    0.5];
+  final static Array TankT34_76_42UnitArmourTurretLEFT  =   [65.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourTurretRIGHT =   [65.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourHullFWD     =   [47.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourHullREAR    =   [47.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourHullTOP     =   [20.0,     9.0,    0.5];
+  final static Array TankT34_76_42UnitArmourHullBOTTOM  =   [21.0,     9.0,    0.5];
+  final static Array TankT34_76_42UnitArmourHullRIGHT   =   [47.0,    15.0,    0.5];
+  final static Array TankT34_76_42UnitArmourHullLEFT    =   [47.0,    15.0,    0.5];
+
+  //T34_85_44
+  final static Array TankT34_85_44UnitArmourTurretFWD   =   [90.0,    15.0,    0.5];
+  final static Array TankT34_85_44UnitArmourTurretREAR  =   [60.0,    15.0,    0.5];
+  final static Array TankT34_85_44UnitArmourTurretTOP   =   [20.0,     9.0,    0.5];
+  final static Array TankT34_85_44UnitArmourTurretLEFT  =   [75.0,    15.0,    0.5];
+  final static Array TankT34_85_44UnitArmourTurretRIGHT =   [75.0,    15.0,    0.5];
+  final static Array TankT34_85_44UnitArmourHullFWD     =   [47.0,    15.0,    0.5];
+  final static Array TankT34_85_44UnitArmourHullREAR    =   [47.0,    15.0,    0.5];
+  final static Array TankT34_85_44UnitArmourHullTOP     =   [20.0,     9.0,    0.5];
+  final static Array TankT34_85_44UnitArmourHullBOTTOM  =   [21.0,     9.0,    0.5];
+  final static Array TankT34_85_44UnitArmourHullRIGHT   =   [45.0,    15.0,    0.5]; //jm was 60 it is now historical
+  final static Array TankT34_85_44UnitArmourHullLEFT    =   [45.0,    15.0,    0.5]; //jm was 60 it is now historical
+
+  //SU_85
+  final static Array SAUSU85UnitArmourTurretFWD   =   [90.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourTurretREAR  =   [60.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourTurretTOP   =   [20.0,     9.0,    0.5];
+  final static Array SAUSU85UnitArmourTurretLEFT  =   [75.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourTurretRIGHT =   [75.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourHullFWD     =   [47.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourHullREAR    =   [47.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourHullTOP     =   [20.0,     9.0,    0.5];
+  final static Array SAUSU85UnitArmourHullBOTTOM  =   [21.0,     9.0,    0.5];
+  final static Array SAUSU85UnitArmourHullRIGHT   =   [60.0,    15.0,    0.5];
+  final static Array SAUSU85UnitArmourHullLEFT    =   [60.0,    15.0,    0.5];
+
+  //StuG_40
+  final static Array SAUStuG40UnitArmourTurretFWD   =   [80.0,    15.0,    0.5];
+  final static Array SAUStuG40UnitArmourTurretREAR  =   [30.0,    10.0,    0.5];
+  final static Array SAUStuG40UnitArmourTurretTOP   =   [17.0,     7.0,    0.5];
+  final static Array SAUStuG40UnitArmourTurretLEFT  =   [30.0,    10.0,    0.5];
+  final static Array SAUStuG40UnitArmourTurretRIGHT =   [30.0,    10.0,    0.5];
+  final static Array SAUStuG40UnitArmourHullFWD     =   [70.0,    15.0,    0.5];
+  final static Array SAUStuG40UnitArmourHullREAR    =   [80.0,    15.0,    0.5];
+  final static Array SAUStuG40UnitArmourHullTOP     =   [30.0,     9.0,    0.5];
+  final static Array SAUStuG40UnitArmourHullBOTTOM  =   [23.0,     9.0,    0.5];
+  final static Array SAUStuG40UnitArmourHullRIGHT   =   [30.0,    15.0,    0.5];
+  final static Array SAUStuG40UnitArmourHullLEFT    =   [30.0,    15.0,    0.5];
+
+
+  //BtrHanomag251AusfC
+  final static Array BtrHanomag251AusfCUnitArmourTurretFWD   =   [6.0,     3.0,    0.5];
+  final static Array BtrHanomag251AusfCUnitArmourHullFWD     =   [14.5,    7.0,    0.5];
+  final static Array BtrHanomag251AusfCUnitArmourHullREAR    =   [8.0,     4.0,    0.5];
+  final static Array BtrHanomag251AusfCUnitArmourHullTOP     =   [10.0,    5.0,    0.5];
+  final static Array BtrHanomag251AusfCUnitArmourHullBOTTOM  =   [6.0,     3.0,    0.5];
+  final static Array BtrHanomag251AusfCUnitArmourHullRIGHT   =   [8.0,     4.0,    0.5];
+  final static Array BtrHanomag251AusfCUnitArmourHullLEFT    =   [8.0,     4.0,    0.5];
+
+  //BtrM3A1Halftruck
+  final static Array BtrM3A1HalftruckUnitArmourTurretFWD   =   [6.0,     3.0,    0.5];
+  final static Array BtrM3A1HalftruckUnitArmourHullFWD     =   [6.5,     3.0,    0.5];
+  final static Array BtrM3A1HalftruckUnitArmourHullREAR    =   [6.0,     3.0,    0.5];
+  final static Array BtrM3A1HalftruckUnitArmourHullTOP     =   [13.0,    6.0,    0.5];
+  final static Array BtrM3A1HalftruckUnitArmourHullBOTTOM  =   [6.0,     3.0,    0.5];
+  final static Array BtrM3A1HalftruckUnitArmourHullRIGHT   =   [6.0,     3.0,    0.5];
+  final static Array BtrM3A1HalftruckUnitArmourHullLEFT    =   [6.0,     3.0,    0.5];
+}

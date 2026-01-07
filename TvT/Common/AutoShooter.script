@@ -1,0 +1,17 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//  Author: Vladimir Ivchenkov (ivchenkov@g5software.com)
+//-------------------------------------------------------------------
+
+class CAutoShooter {
+  float ViewAngle = 12.0f; // wider targeting cone test to stop the sniping
+  float RadarUpdateTime = 2.0f; // slowing down ai gunners test
+  float RadarMaxDistance = 3000.0f;
+};
+
+  

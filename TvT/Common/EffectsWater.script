@@ -1,0 +1,115 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//Subcalibre 7576_85_88
+class CWaterSubcalibre7576_85_88BulletHitDustEffect
+  extends CAnimatedParticleGenerator
+{
+  CWaterSubcalibre7576_85_88BulletHitDustEffect()
+  {
+    SetAnimationTime(4.0);
+    SetEffectTime(4.2);
+
+    SetSamplesQty(20);
+    SetSpeed(3.0, 3.0);
+    SetDirection(new Vector(0.0, 0.0, 1.0), 9.0);
+    SetGravity(CWorldPhysics::GravityVector);
+
+    SetSizeParams(0.2, 0.1);
+
+    final int SamplesQty =
+      CEffectsArray::WaterSprayEffectSkin.Materials.size();
+
+    //m_AnimLength = 16;
+
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      SetFixedMaterial(new String(I));
+      GenerateAnimatedParticle(
+        CEffectsArray::WaterSprayEffectSkin, 0, 1.0,
+        new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0), new Vector(4.0, 4.0, 4.0)
+      );
+    }
+  }
+}
+
+//Calibre 7576_85_88
+class CWaterCalibre7576_85_88BulletHitDustEffect
+  extends CTerrainExplosionDustEffect
+{
+  Vector  StartPlace = new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(-1.0, 1.0));
+  Vector  FinalPlace = new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(-1.0, 1.0));
+  Vector  StartSize  = new Vector(0.5, 0.5, 0.5);
+  Vector  FinalSize  = new Vector(1.2, 1.2, 1.2);
+
+  //float   m_PlacePower = 0.5;
+
+  CWaterCalibre7576_85_88BulletHitDustEffect()
+  {
+    SetAnimationTime(3.0);
+    SetEffectTime(3.0);
+
+    SetSamplesQty(16);
+    SetSpeed(7.0, 4.0);
+    SetSizeParams(1.4, 0.75);
+    SetStartAndFinalFade(0.0, 0.7);
+    SetGravity(CWorldPhysics::GravityVector);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 0.5));
+    SetDirection(new Vector(0.0, 0.0, 1.0), 0.0, 5.0);
+
+    final int SamplesQty =
+      CEffectsArray::WaterSprayEffectSkin.Materials.size();
+
+    //m_AnimLength = 16;
+
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      //SetFixedMaterial(new String(I));
+      GenerateSamples(CEffectsArray::WaterSprayEffectSkin);
+    }
+  }
+}
+
+//HE 7576_85_88
+class CWaterHE7576_85_88BulletHitDustEffect
+  extends CTerrainExplosionDustEffect
+{
+  Vector  StartPlace = new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(-1.0, 1.0));
+  Vector  FinalPlace = new Vector(rand(-1.0, 1.0), rand(-1.0, 1.0), rand(-1.0, 1.0));
+  Vector  StartSize  = new Vector(0.5, 0.5, 0.5);
+  Vector  FinalSize  = new Vector(1.2, 1.2, 1.2);
+
+  //float   m_PlacePower = 0.5;
+
+  CWaterHE7576_85_88BulletHitDustEffect()
+  {
+    SetAnimationTime(3.0);
+    SetEffectTime(3.0);
+
+    SetSamplesQty(16);
+    SetSpeed(7.0, 4.0);
+    SetSizeParams(1.4, 0.75);
+    SetStartAndFinalFade(0.0, 0.7);
+    SetGravity(CWorldPhysics::GravityVector);
+    SetBaseColor(new Color(1.0, 1.0, 1.0, 0.5));
+    SetDirection(new Vector(0.0, 0.0, 1.0), 0.0, 5.0);
+
+    final int SamplesQty =
+      CEffectsArray::WaterSprayEffectSkin.Materials.size();
+
+    //m_AnimLength = 16;
+
+    for (int I = 0; I < SamplesQty; I++)
+    {
+      //SetFixedMaterial(new String(I));
+      GenerateSamples(CEffectsArray::WaterSprayEffectSkin);
+    }
+  }
+}

@@ -1,0 +1,78 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseFeedbackEffect
+{
+  int m_EffectType = FFET_ConstantForce;
+}
+
+class CAirStreamFeedbackEffect 
+  extends CBaseFeedbackEffect
+{
+  int m_EffectType = FFET_ConstantForce;
+
+  void PlayEffect(
+      float _Force
+    )
+  {
+    if (AdjustEffect(FFET_ConstantForce, [ _Force / 10000.0, rand(0.0, 1.0), rand(0.1, 0.2) ]))
+      StartEffect(1);
+  }
+}
+
+class CVortexRingFeedbackEffect 
+  extends CBaseFeedbackEffect
+{
+  int m_EffectType = FFET_ConstantForce;
+  
+  void PlayEffect()
+  {
+    if (AdjustEffect(FFET_ConstantForce, [ rand(-1.0, 1.0), rand(0.0, 1.0), rand(0.1, 0.2) ]))
+      StartEffect(1);
+  }
+}
+
+class CRetreatingBladeStallFeedbackEffect 
+  extends CBaseFeedbackEffect
+{
+  int m_EffectType = FFET_ConstantForce;
+  
+  void PlayEffect()
+  {
+    if (AdjustEffect(FFET_ConstantForce, [ rand(-1.0, 1.0), rand(0.0, 1.0), rand(0.1, 0.2) ]))
+      StartEffect(1);
+  }
+}
+
+class CDamageFeedbackEffect 
+  extends CBaseFeedbackEffect
+{
+  int m_EffectType = FFET_ConstantForce;
+  
+  void PlayEffect(
+      float _Force,
+      float _Direction
+    )
+  {
+    if (AdjustEffect(FFET_ConstantForce, [ _Force / 10.0, _Direction, rand(0.2, 0.3) ]))
+      StartEffect(1);
+  }
+}
+
+class CGroundHitFeedbackEffect 
+  extends CBaseFeedbackEffect
+{
+  int m_EffectType = FFET_ConstantForce;
+  
+  void PlayEffect()
+  {
+    if (AdjustEffect(FFET_ConstantForce, [ rand(-1.0, 1.0), rand(0.0, 1.0), rand(0.2, 0.3) ]))
+      StartEffect(3);
+  }
+}

@@ -1,0 +1,607 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CUIPosition
+{
+  CUIPosition(
+      float _X,
+      float _Y,
+      float _Width,
+      float _Height
+    )
+  {
+    X      = _X;
+    Y      = _Y;
+    Width  = _Width;
+    Height = _Height;
+  }
+
+  CUIPosition(
+      Component _UIPosition
+    )
+  {
+    X      = _UIPosition.X;
+    Y      = _UIPosition.Y;
+    Width  = _UIPosition.Width;
+    Height = _UIPosition.Height;
+  }
+
+  float X;
+  float Y;
+  float Width;
+  float Height;
+}
+
+class CMenuWrapper
+{
+  Component m_MenuController = null;
+
+  // Set menu controller
+  void SetMenuController(
+      Component _MenuController
+    )
+  {
+    m_MenuController = _MenuController;
+  }
+
+  // Get object from menu controller
+  Component GetObject(
+      String _ID
+    )
+  {
+    return m_MenuController.GetObject(_ID);
+  }
+
+  // Register UI control in menu controller
+  void RegisterObject(
+      String    _ID,
+      Component _Object
+    )
+  {
+    m_MenuController.RegisterDynamicObject(_ID, _Object);
+  }
+
+  // Unregister UI control in menu controller
+  void UnregisterObject(
+      String    _ID
+    )
+  {
+    m_MenuController.UnregisterObject(_ID);
+  }
+
+  //
+  // Navigation methods
+  //
+
+  void GoTo(
+      String _MenuName
+    )
+  {
+    m_MenuController.SendEventGoTo(_MenuName);
+  }
+
+  void Invoke(
+      String _MenuName
+    )
+  {
+    m_MenuController.SendEventInvoke(_MenuName, true);
+  }
+
+  void Invoke(
+      String  _MenuName,
+      boolean _PushToStack
+    )
+  {
+    m_MenuController.SendEventInvoke(_MenuName, _PushToStack);
+  }
+
+  void GoBack()
+  {
+    m_MenuController.SendEventGoBack();
+  }
+
+  void OpenWindow(
+      String _WindowName
+    )
+  {
+    m_MenuController.SendEventOpenWindow(_WindowName);
+  }
+
+  void OpenContextMenu(
+      Component _HandlerMenu,
+      float     _X,
+      float     _Y,
+      Array     _MenuCommands
+    )
+  {
+    m_MenuController.SendEventOpenContextMenu(_HandlerMenu, _X, _Y, _MenuCommands);
+  }
+
+  // open menu at cursor position
+  void OpenContextMenu(
+      Component _HandlerMenu,
+      Array     _MenuCommands
+    )
+  {
+    m_MenuController.SendEventOpenContextMenu(_HandlerMenu, _MenuCommands);
+  }
+
+  void OpenSheet(
+      String _BookName,
+      String _SheetName
+    )
+  {
+    m_MenuController.SendEventOpenSheet(this, _SheetName, _BookName);
+  }
+
+  void CloseWindow()
+  {
+    m_MenuController.SendEventCloseWindow();
+  }
+
+  Component WindowOpen(
+      String _WindowClass,
+      String _WindowID,
+      float  _PositionX,
+      float  _PositionY
+    )
+  {
+    return m_MenuController.SendEventWindowOpen(_WindowClass, _WindowID, _PositionX, _PositionY);
+  }
+
+  Component WindowOpen(
+      String _WindowClass,
+      String _WindowID
+    )
+  {
+    return WindowOpen(_WindowClass, _WindowID, 0.0, 0.0);
+  }
+  
+  void WindowClose(
+      String _WindowID
+    )
+  {
+    Component Window = WindowGetWindow(_WindowID);
+    if (null != Window)
+      Window.OnWindowClosed();
+    
+    m_MenuController.SendEventWindowClose(_WindowID);
+  }
+  
+  Component WindowGetWindow(
+      String _WindowID
+    )
+  {
+    return m_MenuController.WindowGetWindow(_WindowID);
+  }
+
+  boolean WindowIsExists(
+      String _WindowID
+    )
+  {
+    return m_MenuController.WindowIsExists(_WindowID);
+  }
+
+  Vector WindowGetPosition(
+      String _WindowID
+    )
+  {
+    return m_MenuController.WindowGetPosition(_WindowID);
+  }
+
+  void WindowSetPosition(
+      String _WindowID,
+      Vector _Position
+    )
+  {
+    return m_MenuController.WindowSetPosition(_WindowID, _Position);
+  }
+
+  Array WindowGetWindows()
+  {
+    return m_MenuController.WindowGetWindows();
+  }
+
+  Array WindowGetZOrderedWindows()
+  {
+    return m_MenuController.WindowGetZOrderedWindows();
+  }
+
+  String WindowGetTopmost()
+  {
+    return m_MenuController.WindowGetTopmost();
+  }
+
+  void WindowSetTopmost(
+      String _WindowID
+    )
+  {
+    m_MenuController.WindowSetTopmost(_WindowID);
+  }
+
+  String WindowGetParent(
+      String _WindowID
+    )
+  {
+    return m_MenuController.WindowGetParent(_WindowID);
+  }
+
+  void WindowSetParent(
+      String _WindowID,
+      String _ParentID
+    )
+  {
+    m_MenuController.WindowSetParent(_WindowID, _ParentID);
+  }
+
+  boolean WindowGetVisibleState(
+      String _WindowID
+    )
+  {
+    return m_MenuController.WindowGetVisibleState(_WindowID);
+  }
+
+  void WindowSetVisibleState(
+      String  _WindowID,
+      boolean _IsVisible
+    )
+  {
+    m_MenuController.WindowSetVisibleState(_WindowID, _IsVisible);
+  }
+
+  //
+  // Control events
+  //
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+  }
+
+  void OnControlActivatedDouble(
+      String _ID
+    )
+  {
+  }
+
+  void OnControlActivatedContext(
+      String _ID
+    )
+  {
+  }
+
+  void OnControlHilited(
+      String _ID
+    )
+  {
+  }
+
+  void OnControlDehilited(
+      String _ID
+    )
+  {
+  }
+
+  //
+  // Misc
+  //
+
+  static String ValidateWindowID(
+      String _WindowID
+    )
+  {
+    return _WindowID.ReplaceSubstring("_", "");
+  }
+
+  Component GetObjectAtCursor(
+      Component _Mission,
+      Array     _RestrictTo,
+      Array     _Exclude
+    )
+  {
+    return m_MenuController.GetObjectAtCursor(_Mission, _RestrictTo, _Exclude);
+  }
+}
+
+class CBaseMenu
+  extends CMenuWrapper
+{
+  // object list operations
+  final static int INDEX_ControlID   = 0;
+  final static int INDEX_ComponentID = 1;
+  final static int INDEX_ScriptClass = 2;
+  final static int INDEX_Position    = 3;
+  final static int INDEX_Properties  = 4;
+
+  final static String m_Music = CMusicController::MENU_Main;
+  
+  float m_MenuPositionX = 0.0f;
+  float m_MenuPositionY = 0.0f;
+
+  static Map     ActionSounds  = new Map();
+  static boolean SoundsEnabled = true;
+
+  // This metod is called when menu is loaded. Here you can place menu initialization code.
+  void OnInitMenu()
+  {
+  }
+  
+  // This metod is called when all controls are deleted. Here you can place menu finalization code.
+  void OnCloseMenu()
+  {
+  }
+
+  // This metod is called when menu is loaded.
+  Component CreateUIControl(
+      String    _ControlID,
+      String    _ComponentID,
+      String    _ScriptClass,
+      Component _Position,
+      Array     _Properties
+    )
+  {
+    // Check ID duplication
+    if (GetObject(_ControlID) != null)
+    {
+      logError("Duplicate identificator: " + _ControlID);
+      return null;
+    }
+
+    // Create UI component
+    Component Control;
+
+    if ("" != _ComponentID)
+    {
+      Control = createComponent(_ComponentID);
+      if (Control == null)
+      {
+        logError("Unable to create component: " + _ComponentID);
+        return null;
+      }
+
+      if (!loadFromScript(Control, _ScriptClass))
+      {
+        logError("Unable to load object from script: " + _ScriptClass);
+        return null;
+      }
+    }
+    else
+    {
+      Control = createScriptClass(_ScriptClass);
+      if (Control == null)
+      {
+        logError("Unable to create component: " + _ScriptClass);
+        return null;
+      }
+    }
+
+    Control.SetMenuController(m_MenuController);
+    Control.SetParentMenu(this);
+    Control.Initialize(_ControlID);
+
+    // Get properties map
+    Component Properties = new CPropertiesMap(_Properties);
+
+    // create control before register
+    Control.Construct(Properties);
+    Control.SetPosition(_Position);
+
+    RegisterObject(_ControlID, Control);
+
+    return Control;
+  }
+ 
+  void CreateUIControls()
+  {
+    // menu controls
+    for (int Index = 0; Index < m_UIControls.size(); Index++)
+    {
+      // Create UI control
+      CreateUIControl(m_UIControls[Index][INDEX_ControlID],
+                      m_UIControls[Index][INDEX_ComponentID],
+                      m_UIControls[Index][INDEX_ScriptClass],
+                      m_UIControls[Index][INDEX_Position],
+                      m_UIControls[Index][INDEX_Properties]);
+    }
+  }
+
+  void UnRegisterControls()
+  {
+    for (int Index = 0; Index < m_UIControls.size(); Index++)
+      UnregisterControl(m_UIControls[Index][INDEX_ControlID]);
+  }
+
+  void UnregisterControl(
+      String _ControlID
+    )
+  {
+    Component Control = GetObject(_ControlID);
+
+    if (isFunctionExist(Control, "UnregisterControl", 0))
+      Control.UnregisterControl();
+    else
+      UnregisterObject(_ControlID);
+  }
+
+  // Construct method
+  void Construct(
+      Component _MenuController
+    )
+  {
+    SetMenuController(_MenuController);
+  }
+
+  // Call when need create all UI controls
+  void OpenMenu()
+  {
+    if (!m_Music.isEmpty())
+      new #MusicController().SetMenuState(m_Music);
+
+    CreateUIControls();
+
+    OnInitMenu();
+    OnAction("MenuOpen");
+  }
+
+  // move all menu controls in specified direction
+  void MoveMenu(
+      Vector _DeltaPosition
+    )
+  {
+    m_MenuPositionX += _DeltaPosition.x;
+    m_MenuPositionY += _DeltaPosition.y;
+
+    for (int Index = 0; Index < m_UIControls.size(); Index++)
+    {
+      String    ControlID  = m_UIControls[Index][INDEX_ControlID];
+      if ("ModalMaker" == ControlID) continue;
+      Component ControlPos = m_UIControls[Index][INDEX_Position];
+      Component Control    = GetObject(ControlID);
+
+      Component NewPos = new CUIPosition(
+             ControlPos.X + m_MenuPositionX,
+             ControlPos.Y + m_MenuPositionY,
+             ControlPos.Width,
+             ControlPos.Height
+           );
+
+      Control.SetPosition(NewPos);
+    }
+  }
+
+  void CloseMenu()
+  {
+    OnAction("MenuClose");
+    OnCloseMenu();
+  }
+  
+  //
+  // Control events
+  //
+
+  void OnControlActivated(
+      String _ID
+    )
+  {
+    OnAction("MenuLeftClick");
+  }
+
+  void OnControlActivatedDouble(
+      String _ID
+    )
+  {
+    OnAction("MenuDoubleClick");
+  }
+
+  void OnControlActivatedContext(
+      String _ID
+    )
+  {
+    OnAction("MenuRightClick");
+  }
+
+  void OnControlHilited(
+      String _ID
+    )
+  {
+    OnAction("MenuMouseOver");
+  }
+
+  void OnControlDehilited(
+      String _ID
+    )
+  {
+  }
+
+  //
+  // Misc
+  //
+
+  float GetWindowZ()
+  {
+    return 0.0f;
+  }
+
+  void SetupTimer(
+      String _EventName,
+      float  _Frequency
+    )
+  {
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent(_EventName, _Frequency);
+    RegisterObject("Timer_" + _EventName, Timer);
+  }
+
+  void OnAction(
+      String _ActionID
+    )
+  {
+    if (SoundsEnabled)
+      if (ActionSounds.find(_ActionID))
+        ActionSounds.getValue().PlaySoundBuffer(false);
+  }
+
+  static Array ComputeBounds(
+      Collection _ControlsToExclude
+    )
+  {
+    Array Result = [FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN];
+
+    for (int i = 0; i < m_UIControls.size(); i++)
+    {
+      if (_ControlsToExclude.find(m_UIControls[i][INDEX_ControlID]))
+        continue;
+
+      Component Pos = m_UIControls[i][INDEX_Position];
+
+      final float Left   = Pos.X;
+      final float Top    = Pos.Y;
+      final float Right  = Left + Pos.Width;
+      final float Bottom = Top  + Pos.Height;
+
+
+      if (Result[0] > Left)
+        Result[0] = Left;
+        
+      if (Result[1] > Top)
+        Result[1] = Top;
+
+      if (Result[2] < Right)
+        Result[2] = Right;
+        
+      if (Result[3] < Bottom)
+        Result[3] = Bottom;
+    }
+
+    return Result;
+  }
+
+  static void SetControlBounds(
+      String _ControlID,
+      Array  _Bounds
+    )
+  {
+    for (int i = 0; i < m_UIControls.size(); i++)
+    {
+      if (_ControlID == m_UIControls[i][INDEX_ControlID])
+      {
+        Component Pos = m_UIControls[i][INDEX_Position];
+
+        Pos.X      = _Bounds[0];
+        Pos.Y      = _Bounds[1];
+        Pos.Width  = _Bounds[2] - _Bounds[0];
+        Pos.Height = _Bounds[3] - _Bounds[1];
+ 
+        return;
+      }
+    }
+  }
+}

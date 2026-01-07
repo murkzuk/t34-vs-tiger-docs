@@ -1,0 +1,256 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2002 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//-------------------------------------------------------------------
+//  Enhanced Audio System for T-34 vs Tiger - Summer 1941 Eastern Front
+//  Added CAudioPerformance1941 for historical accuracy and performance
+//-------------------------------------------------------------------
+
+class CAudioPerformance1941
+{
+  // Hardware-appropriate settings for summer 1941 Eastern Front
+  boolean UseSummerEnhancedAudio = true;      // Enable for summer 1941 realism
+  boolean UseHighQualityReverb = false;       // Disable for older PCs
+  boolean Use3DPositionalAudio = true;        // Keep for tank positioning
+  int MaxConcurrentEffects = 20;             // Historical battle density
+  boolean UseDistanceFiltering = true;       // Far sound natural attenuation
+}
+
+class CBaseEAXReverb
+{
+  final static int FXType = SE_EAXREVERB;
+
+  // Historically accurate WWII tank combat volumes
+  int    ulEnvironment           = 0;
+  float  flEnvironmentSize       = 7.5;
+  float  flEnvironmentDiffusion  = 1.;
+  int    lRoom                   = -150;     // Was -1000 (WWII battlefield realistic)
+  int    lRoomHF                 = -150;     // Was -100 (preserve weapon clarity)
+  int    lRoomLF                 = 0;        // Keep bass for engine rumble
+  float  flDecayTime             = 1.49000001;
+  float  flDecayHFRatio          = 0.8299999833;
+  float  flDecayLFRatio          = 1.;
+  int    lReflections            = -800;     // Was -2602 (natural reflections)
+  float  flReflectionsDelay      = 7.000000216e-003;
+  Vector vReflectionsPan        = new Vector(0., 0., 0.);
+  int    lReverb                 = -100;     // Was +200 (balanced reverb)
+  float  flReverbDelay           = 1.099999994e-002;
+  Vector vReverbPan             = new Vector(0., 0., 0.);
+  float  flEchoTime              = 0.25;
+  float  flEchoDepth             = 0.;
+  float  flModulationTime        = 0.25;
+  float  flModulationDepth       = 0.;
+  float  flAirAbsorptionHF       = -3.;      // Was -5 (summer air quality)
+  float  flHFReference           = 5000.;
+  float  flLFReference           = 250.;
+  float  flRoomRolloffFactor     = 0.;
+  int    ulFlags                 = 63;
+
+  /*
+  int    ulEnvironment;   	 // sets all reverb properties
+  float  flEnvironmentSize;      // environment size in meters
+  float  flEnvironmentDiffusion; // environment diffusion
+  int    lRoom;                  // room effect level (at mid frequencies)
+  int    lRoomHF;                // relative room effect level at high frequencies
+  int    lRoomLF;                // relative room effect level at low frequencies  
+  float  flDecayTime;            // reverberation decay time at mid frequencies
+  float  flDecayHFRatio;         // high-frequency to mid-frequency decay time ratio
+  float  flDecayLFRatio;         // low-frequency to mid-frequency decay time ratio   
+  int    lReflections;           // early reflections level relative to room effect
+  float  flReflectionsDelay;     // initial reflection delay time
+  Vector vReflectionsPan;        // early reflections panning vector
+  int    lReverb;                // late reverberation level relative to room effect
+  float  flReverbDelay;          // late reverberation delay time relative to initial reflection
+  Vector vReverbPan;             // late reverberation panning vector
+  float  flEchoTime;             // echo time
+  float  flEchoDepth;            // echo depth
+  float  flModulationTime;       // modulation time
+  float  flModulationDepth;      // modulation depth
+  float  flAirAbsorptionHF;      // change in level per meter at high frequencies
+  float  flHFReference;          // reference high frequency
+  float  flLFReference;          // reference low frequency 
+  float  flRoomRolloffFactor;    // like DS3D flRolloffFactor but for room effect
+  int    ulFlags;                // modifies the behavior of properties
+  */
+}
+
+class CBaseEAXAutoWAH
+{
+  final static int FXType = SE_EAXAUTOWAH;
+
+  float  flAttackTime    = 0.06;         // Attack time (seconds)
+  float  flReleaseTime   = 0.06;         // Release time (seconds)
+  int    lResonance      = 6000;         // Resonance (mB)
+  int    lPeakLevel      = 2100;         // Peak level (mB)
+}
+
+class CBaseEAXChorus
+{
+  final static int FXType = SE_EAXCHORUS;
+
+  // enum
+  final static int EAX_CHORUS_SINUSOID = 0;
+  final static int EAX_CHORUS_TRIANGLE = 1;
+
+
+  int    ulWaveform      = EAX_CHORUS_TRIANGLE; // Waveform selector - see enum above
+  int    lPhase          = 90;                  // Phase (Degrees)
+  float  flRate          = 1.1;                 // Rate (Hz)
+  float  flDepth         = 0.1;                 // Depth (0 to 1)
+  float  flFeedback      = 0.25;                // Feedback (-1 to 1)
+  float  flDelay         = 0.016;               // Delay (seconds)
+}
+
+class CBaseEAXDistortion
+{
+  final static int FXType = SE_EAXDISTORTION;
+
+  float  flEdge              = 0.2;           // Controls the shape of the distortion (0 to 1)
+  int    lGain               = -600;          // Was -2600 (audible distortion)
+  float  flLowPassCutOff     = 8000.0;        // Controls the cut-off of the filter pre-distortion (Hz)
+  float  flEQCenter          = 3600.0;        // Controls the center frequency of the EQ post-distortion (Hz)
+  float  flEQBandwidth       = 3600.0;        // Controls the bandwidth of the EQ post-distortion (Hz)
+}
+
+class CBaseEAXEcho
+{
+  final static int FXType = SE_EAXECHO;
+
+  float  flDelay          = 0.1;                // Controls the initial delay time (seconds)
+  float  flLRDelay        = 0.1;                // Controls the delay time between the first and second taps (seconds)
+  float  flDamping        = 0.5;                // Controls a low-pass filter that dampens the echoes (0 to 1)
+  float  flFeedback       = 0.5;                // Controls the duration of echo repetition (0 to 1)
+  float  flSpread         = -1.0;               // Controls the left-right spread of the echoes
+}
+
+class CBaseEAXEqualizer
+{
+  final static int FXType = SE_EAXEQUALIZER;
+
+  int    lLowGain         = 0;              // (mB)
+  float  flLowCutOff      = 800.0;          // (Hz)
+  int    lMid1Gain        = 0;              // (mB)
+  float  flMid1Center     = 500.0;          // (Hz)
+  float  flMid1Width      = 1.0;            // (octaves)
+  int    lMid2Gain        = 0;              // (mB)
+  float  flMid2Center     = 3000.0;         // (Hz)
+  float  flMid2Width      = 1.0;            // (octaves)
+  int    lHighGain        = 0;              // (mB)
+  float  flHighCutOff     = 6000;           // (Hz)
+}
+
+class CBaseEAXFlanger
+{
+  final static int FXType = SE_EAXFLANGER;
+
+  // enum
+  final static int EAX_FLANGER_SINUSOID = 0;
+  final static int EAX_FLANGER_TRIANGLE = 1;
+
+  int    ulWaveform     = EAX_FLANGER_TRIANGLE; // Waveform selector - see enum above
+  int    lPhase         = 0;                    // Phase (Degrees)
+  float  flRate         = 0.27;                 // Rate (Hz)
+  float  flDepth        = 0.1;                  // Depth (0 to 1)
+  float  flFeedback     = -0.5;                 // Feedback (0 to 1)
+  float  flDelay        = 0.002;                // Delay (seconds)
+}
+
+class CBaseEAXFqShifter
+{
+  final static int FXType = SE_EAXFQSHIFTER;
+
+  // enum
+  final static int EAX_FREQUENCYSHIFTER_DOWN = 0;
+  final static int EAX_FREQUENCYSHIFTER_UP   = 1;
+  final static int EAX_FREQUENCYSHIFTER_OFF  = 2;
+
+  float  flFrequency       = 0.0;                         // (Hz)
+  int    ulLeftDirection   = EAX_FREQUENCYSHIFTER_DOWN;   // see enum above
+  int    ulRightDirection  = EAX_FREQUENCYSHIFTER_DOWN;   // see enum above
+}
+
+class CBaseEAXVocalMorpher
+{
+  final static int FXType = SE_EAXVOCALMORPHER;
+
+  // enum
+  final static int EAX_VOCALMORPHER_SINUSOID = 0;
+  final static int EAX_VOCALMORPHER_TRIANGLE = 1;
+  final static int EAX_VOCALMORPHER_SAWTOOTH = 2;
+
+  Array Phonems = [
+      "A", "E", "I", "O", "U", "AA", "AE", "AH", "AO", "EH", "ER", "IH", "IY", "UH", "UW", "B", "D", "F", "G",
+      "J", "K", "L", "M", "N", "P", "R", "S", "T", "V", "Z"
+    ];
+
+  int    ulPhonemeA            = 0;                           // see array above
+  int    lPhonemeACoarseTuning = 0;                           // (semitones)
+  int    ulPhonemeB            = 10;                          // see array above
+  int    lPhonemeBCoarseTuning = 0;                           // (semitones)
+  int    ulWaveform            = EAX_VOCALMORPHER_SINUSOID;   // Waveform selector - see enum above
+  float  flRate                = 1.41;                        // (Hz)
+}
+
+class CBaseEAXPitchShifter
+{
+  final static int FXType = SE_EAXPITCHSHIFTER;
+
+  int    lCoarseTune = 12;            // Amount of pitch shift (semitones)
+  int    lFineTune   = 0;             // Amount of pitch shift (cents)
+}
+
+class CBaseEAXRingModulator
+{
+  final static int FXType = SE_EAXRINGMODULATOR;
+
+  // enum
+  final static int EAX_RINGMODULATOR_SINUSOID = 0;
+  final static int EAX_RINGMODULATOR_SAWTOOTH = 1;
+  final static int EAX_RINGMODULATOR_SQUARE   = 2;
+
+  float  flFrequency       = 440.0;                      // Frequency of modulation (Hz)
+  float  flHighPassCutOff  = 800.0;                      // Cut-off frequency of high-pass filter (Hz)
+  int    ulWaveform        = EAX_RINGMODULATOR_SINUSOID; // Waveform selector - see enum above
+} 
+
+
+//
+// Exact effects
+//
+
+class CEAXReverbForest
+{
+  final static int FXType = SE_EAXREVERB;
+
+  // Enhanced for summer 1941 Soviet Union
+  int    ulEnvironment           = 15;
+  float  flEnvironmentSize       = 45.;        // Was 38 (summer acoustic expansion)
+  float  flEnvironmentDiffusion  = 0.35;       // Was 0.30 (summer clarity)
+  int    lRoom                   = -120;       // Was -1000 (realistic volume)
+  int    lRoomHF                 = -200;       // Was -3300 (better weapon clarity)
+  int    lRoomLF                 = 0;
+  float  flDecayTime             = 2.1;        // Was 1.49 (summer sound carries farther)
+  float  flDecayHFRatio          = 0.75;       // Was 0.54 (summer air retention)
+  float  flDecayLFRatio          = 1.;
+  int    lReflections            = -600;       // Was -2560 (natural summer reflections)
+  float  flReflectionsDelay      = 0.15;       // Was 0.162 (natural timing)
+  Vector vReflectionsPan         = new Vector(0., 0., 0.);
+  int    lReverb                 = -80;        // Was -229 (balanced reverb)
+  float  flReverbDelay           = 0.09;       // Was 0.088 (summer timing)
+  Vector vReverbPan              = new Vector(0., 0., 0.);
+  float  flEchoTime              = 0.125;
+  float  flEchoDepth             = 1.;
+  float  flModulationTime        = 0.25;
+  float  flModulationDepth       = 0.;
+  float  flAirAbsorptionHF       = -2.5;       // Was -5 (summer air quality)
+  float  flHFReference           = 5000.;
+  float  flLFReference           = 250.;
+  float  flRoomRolloffFactor     = 0.;
+  int    ulFlags                 = 63;
+}

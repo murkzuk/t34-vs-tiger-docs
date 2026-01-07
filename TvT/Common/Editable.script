@@ -1,0 +1,155 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CEditable
+{
+  //
+  // Interface functions
+  //
+
+  Array GetPropertiesList(
+      Component _Mission
+    )
+  {
+    Array _Properties = [];
+
+    Component Content = _Mission.GetContent();
+    if (null != Content)
+    {
+      Array Record = Content.FindObjectRecord(getIdentificator(this));
+      if (!Record.isEmpty())
+        _Properties = Record[CBaseContent::INDEX_Properties];
+    }
+
+    return BuildTruePropertiesArray(_Properties);
+  }
+
+  void SetPropertiesList(
+      Component _Mission,
+      Array     _List
+    )
+  {
+    Array Properties = BuildTruePropertiesArray(_List);
+
+    Component Content = _Mission.GetContent();
+    if (null != Content)
+    {
+      Array Record = Content.FindObjectRecord(getIdentificator(this));
+      if (!Record.isEmpty())
+        Record[CBaseContent::INDEX_Properties] = Properties;
+    };
+
+    SetProperties(new CPropertiesMap(Properties));
+  }
+
+  Component GetBoundingInfo()
+  {
+    return null;
+  }
+
+  Component GetMeshComponent()
+  {
+    return null;
+  }
+
+  Component Clone(
+      String _CloneID,
+      Matrix _ClonePosition
+    )
+  {
+    Component Mission = (new #GameController()).GetObject(SOID_MissionController);
+    if (null == Mission)
+      return null;
+
+    String ObjectID = getIdentificator(this);
+    Array  Record   = Mission.GetContent().FindObjectRecord(ObjectID);
+    if (Record.isEmpty())
+      return null;
+
+    Array CloneProps = clone(Record[CBaseContent::INDEX_Properties]);
+
+    Mission.CreateAndInitObject(
+        _CloneID,
+        Record[CBaseContent::INDEX_ComponentID],
+        Record[CBaseContent::INDEX_ScriptClass],
+        _ClonePosition,
+        CloneProps
+      );
+
+    Component Clone = Mission.GetObject(_CloneID);
+    if (null == Clone)
+    {
+      logError("Clone creation failed");
+      return null;
+    }
+
+    Mission.GetContent().CreateObjectRecord(
+        _CloneID,
+        Record[CBaseContent::INDEX_ComponentID],
+        Record[CBaseContent::INDEX_ScriptClass],
+        _ClonePosition,
+        CloneProps
+      );
+
+    return Clone;
+  }
+
+  //
+  // Service functions
+  //
+
+  Array GetDefaultProperties()
+  {
+    return [];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+  }
+
+  Array BuildTruePropertiesArray(
+      Array _Source
+    )
+  {
+    Component PropMap = new CPropertiesMap(new Array(_Source));
+
+    Array Default = clone(GetDefaultProperties());
+    for (int i = 0; i < Default.size(); i++)
+    {
+      int Index = PropMap.Find(Default[i][0]);
+      if (-1 == Index)
+        PropMap.Set(Default[i][0], Default[i][1]);
+      else
+      {
+        // $HACK to immediately set default value when default flag changes to true
+        if (PropMap.IsDefaultValue(Index))
+          PropMap.m_Properties[Index][CPropertiesMap::INDEX_PropertyValue] = Default[i][1];
+      }
+    }
+
+    return PropMap.m_Properties;
+  }
+
+  Array GetPropStrings()
+  {
+    return [];
+  }
+
+  boolean IsModified()
+  {
+    return false;
+  }
+
+  void ApplyModifications()
+  {
+    logWarning("ApplyModifications(): not implemented");
+  }
+}

@@ -1,0 +1,126 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+// Without MUZZLE
+class CHeavyGunFireNoMuzzleEffect
+  extends CBaseEffect
+{
+  void CHeavyGunFireNoMuzzleEffect()
+  {
+    CreateEffect("HeavyGunFireNoMuzzle", 0.0);
+    CreateEffect("HeavyGunFireLight", 0.0);
+    CreateEffect("HeavyGunNoMuzzleCloudEffect", 0.0);
+  }
+}
+// With MUZZLE
+class CHeavyGunFireMuzzleEffect
+  extends CBaseEffect
+{
+  void CHeavyGunFireMuzzleEffect()
+  {
+    CreateEffect("HeavyGunFireMuzzle", 0.0);
+    CreateEffect("HeavyGunFireLight", 0.0);
+    CreateEffect("HeavyGunMuzzleCloudEffect", 0.0);
+  }
+}
+// MachineGun DT
+class CMachineGunDTFireEffect
+  extends CBaseEffect
+{
+  void CMachineGunDTFireEffect()
+  {
+    CreateEffect("MachineGunFirePlanes", 0.0);
+    CreateEffect("GunFireLightSplash", 0.0);
+  }
+}
+//-------------------------
+// Bullet explosion effects
+//-------------------------
+class CCalibre7576_85_88BulletExplosionEffect
+  extends CBaseEffect
+{
+  CCalibre7576_85_88BulletExplosionEffect()
+  {
+    //CreateEffect("Calibre7576_85_88GunBulletExplosionPlanes", 0.0);
+    CreateEffect("GunFireLightSplash", 0.0);
+  }
+}
+
+class CHE7576_85_88BulletExplosionEffect
+  extends CBaseEffect
+{
+  CHE7576_85_88BulletExplosionEffect()
+  {
+    //CreateEffect("HE7576_85_88GunBulletExplosionPlanes", 0.0);
+    CreateEffect("GunFireLightSplash", 0.0);
+  }
+}
+
+//-------------------
+// Ground hit effects
+//-------------------
+
+// Subcalibre 7576_85_88
+class CSubcalibre7576_85_88BulletGroundHitEffect
+  extends CBaseEffect
+{
+  CSubcalibre7576_85_88BulletGroundHitEffect()
+  {
+    CreateEffect("LightExplosionSplash", 0.0);
+    CreateEffect("GroundSubcalibre7576_85_88BulletHitDustEffect", 0.0);
+    CreateEffect("GroundSubcalibre7576_85_88BulletHitRingEffect", 0.0);
+    CreateAndForgetEffect("Subcalibre7576_85_88GroundSignEffect", 0.0);
+  }
+}
+//------------------
+// Metal hit effects
+//------------------
+
+//Calibre 7576_85_88
+class CCalibre7576_85_88BulletMetalHitEffect
+  extends CBaseEffect
+{
+  CCalibre7576_85_88BulletMetalHitEffect()
+  {
+    CreateEffect("LightExplosionSplash", 0.0);
+    CreateEffect("Calibre7576_85_88BulletMetalHitSplashEffect", 0.0);
+    CreateEffect("Calibre7576_85_88BulletMetalHitSmokeEffect", 0.0);
+    CreateAndForgetEffect("CalibreMetalSignEffect", 0.0);
+  }
+}
+
+// Subcalibre 7576_85_88
+class CSubcalibre7576_85_88BulletMetalHitEffect
+  extends CBaseEffect
+{
+  CSubcalibre7576_85_88BulletMetalHitEffect()
+  {
+    CreateEffect("LightExplosionSplash", 0.0);
+    CreateEffect("Subcalibre7576_85_88BulletMetalHitSmokeEffect", 0.0);
+    CreateAndForgetEffect("SubcalibreMetalSignEffect", 0.0);
+  }
+}
+
+//-----------------
+// Wood hit effects
+//-----------------
+
+// Calibre 7576_85_88
+class CCalibre7576_85_88BulletWoodHitEffect
+  extends CBaseEffect
+{
+  CCalibre7576_85_88BulletWoodHitEffect()
+  {
+    CreateEffect("LightExplosionSplash", 0.0);
+    CreateEffect("Calibre7576_85_88BulletWoodHitSmokeEffect", 0.0);
+    CreateEffect("Calibre7576_85_88BulletWoodHitDebrisEffect", 0.0);
+    CreateEffect("Calibre7576_85_88BulletWoodHitSplashEffect", 0.0);
+    CreateEffect("WoodCalibre7576_85_88BulletHitRingEffect", 0.0);
+    CreateAndForgetEffect("Calibre7576_85_88WoodSignEffect", 0.0);
+  }
+}

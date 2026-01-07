@@ -1,0 +1,602 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Effects array component script
+//
+
+class CEffectsArray
+{
+  static Array m_EffectsMap          = [];
+  static Array m_EffectsAliases      = [];
+  static Array m_EffectsGroups       = [];
+  static Array m_EffectsExplosionMap = [];
+
+  static Component BaseEffectsSkin              = null;
+  static Component EditorEffectSkin             = null;
+
+  static Component SignEffectsSkin              = null;
+
+  static Component GroundRefuseEffectSkin       = null;
+
+  static Component GroundSprayAdditiveEffectSkin= null;
+  static Component SplashCloudLiteEffectSkin    = null;
+  static Component TraceEffectSkin              = null;
+  static Component FireEffectSkin               = null;
+  static Component LightFireCloudEffectSkin     = null;
+  static Component GroundDustEffectSkin         = null;
+  static Component DarkFireCloudEffectSkin      = null;
+  static Component GroundDustEffectSkin         = null;
+  static Component SmokeCloudLiteEffectSkin     = null;
+  static Component GroundSprayEffectSkin        = null;
+  static Component GroundLightedCloudEffectSkin = null;
+  static Component WaterSprayEffectSkin         = null;
+  static Component MetalDebrisEffectSkin        = null;
+  static Component WoodDebrisEffectSkin         = null;
+  static Component BulletSparkEffectSkin        = null;
+  static Component GunFireSplashEffectSkin      = null;
+  static Component GunFireSmokeEffectSkin       = null;
+  static Component HeavyGunFireNoMuzzleEffect   = null;
+  static Component ExplosionSmokeEffectSkin     = null;
+
+// static Component AnimFireEffectSkin           = null;
+  static Component AnimWoodEffectSkin           = null;
+
+  static Component SplashBulletGroundEffectSkin = null;
+
+
+  static void StaticInitialization()
+  {
+    // Create materials
+    BaseEffectsSkin              = new #MaterialManager<CBaseEffectsSkin>();
+    EditorEffectSkin             = new #MaterialManager<CEditorEffectSkin>();
+
+    // Sign
+    SignEffectsSkin              = new #MaterialManager<CSignEffectsSkin>();
+
+    //Refuse
+    //GroundRefuseEffectSkin     = new #MaterialManager<CGroundRefuseEffectSkin>();
+
+    // Dust
+    GroundDustEffectSkin         = new #MaterialManager<CGroundDustEffectSkin>();
+    GroundSprayEffectSkin        = new #MaterialManager<CGroundSprayEffectSkin>();
+    GroundSprayAdditiveEffectSkin= new #MaterialManager<CGroundSprayAdditiveEffectSkin>();
+    GroundLightedCloudEffectSkin = new #MaterialManager<CGroundLightedCloudEffectSkin>();
+    WaterSprayEffectSkin         = new #MaterialManager<CWaterSprayEffectSkin>();
+    GunFireSplashEffectSkin      = new #MaterialManager<CGunFireSplashEffectSkin>();
+    GunFireSmokeEffectSkin       = new #MaterialManager<CGunFireSmokeEffectSkin>();
+
+    // Clouds
+    LightFireCloudEffectSkin     = new #MaterialManager<CLightFireCloudEffectSkin>();
+    DarkFireCloudEffectSkin      = new #MaterialManager<CDarkFireCloudEffectSkin>();
+    ExplosionSmokeEffectSkin     = new #MaterialManager<CExplosionSmokeEffectSkin>();
+
+    // Fire
+    FireEffectSkin               = new #MaterialManager<CFireEffectSkin>();
+    //AnimFireEffectSkin         = new #MaterialManager<CAnimFireEffectSkin>();
+
+    // Trace
+    TraceEffectSkin              = new #MaterialManager<CTraceEffectSkin>();
+
+    // Smokes
+    GroundDustEffectSkin         = new #MaterialManager<CGroundDustEffectSkin>();
+    SmokeCloudLiteEffectSkin     = new #MaterialManager<CSmokeCloudLiteEffectSkin>();
+
+    // Debris
+    MetalDebrisEffectSkin        = new #MaterialManager<CMetalDebrisEffectSkin>();
+    WoodDebrisEffectSkin         = new #MaterialManager<CWoodDebrisEffectSkin>();
+
+    // Spark
+    BulletSparkEffectSkin        = new #MaterialManager<CBulletSparkEffectSkin>();
+
+    // Wood
+    AnimWoodEffectSkin           = new #MaterialManager<CAnimWoodEffectSkin>();
+
+    // Splash
+    SplashBulletGroundEffectSkin = new #MaterialManager<CSplashBulletGroundEffectSkin>();
+    SplashCloudLiteEffectSkin    = new #MaterialManager<CSplashCloudLiteEffectSkin>();
+
+    // Create effects
+    m_EffectsMap = [
+          // ============================
+          // Service effects
+          // ============================
+          // Editor visualization
+          ["ObjectCursorSystem",              new #StaticEffect<CObjectCursorSystemEffect>()],
+          ["ObjectCursorBounds",              new #StaticEffect<CObjectCursorBoundsEffect>()],
+          // Gunfire effects
+          // Gunfire without compensation
+          ["HeavyGunFireNoMuzzleEffect",      new #ComplexEffect<CHeavyGunFireNoMuzzleEffect>()],
+          ["HeavyGunFireNoMuzzle",            new #DynamicEffect<CHeavyGunFireNoMuzzle>()],
+          ["HeavyGunNoMuzzleCloudEffect",     new #DynamicEffect<CHeavyGunNoMuzzleCloudEffect>()],
+          ["HeavyGunNoMuzzleGroundEffect",    new #DynamicEffect<CHeavyGunNoMuzzleGroundEffect>()],
+          // Gunfire with compensation
+          ["HeavyGunFireMuzzleEffect",        new #ComplexEffect<CHeavyGunFireMuzzleEffect>()],
+          ["HeavyGunFireMuzzle",              new #DynamicEffect<CHeavyGunFireMuzzle>()],
+          ["HeavyGunMuzzleCloudEffect",       new #DynamicEffect<CHeavyGunMuzzleCloudEffect>()],
+          //Generic gunfire effect
+          ["HeavyGunFireLight",               new #LightEffect<CHeavyGunFireLight>()],
+          ["GunFireLightSplash",              new #LightEffect<CGunFireLightSplash>()],
+          ["LightExplosionSplash",            new #LightEffect<CLightExplosionSplash>()],
+
+          // Unit trace effects
+          //["GroundUnitTraceEffect",               new #TraceEffect<CGroundUnitTraceEffect>()],
+          ["RoadUnitTraceEffect",             new #TraceEffect<CRoadUnitTraceEffect>()],
+          ["ForestUnitTraceEffect",           new #TraceEffect<CForestUnitTraceEffect>()],
+          ["ForestUnitDustTraceEffect",       new #TraceEffect<CForestUnitDustTraceEffect>()],
+          ["GroundUnitTraceEffect",           new #TraceEffect<CGroundUnitTraceEffect>()],
+          ["TankWaterEffect",                 new #WaterWakeEffect<CTankWaterEffect>()],
+          ["TankSmallDustEffect",             new #SprayEffect<CTankSmallDustEffect>()],
+          ["ForestComplexTraceEffect",        new #ComplexEffect<CForestComplexTraceEffect>()],
+
+          ["ForestBulletHitDustEffect",       new #SprayEffect<CForestBulletHitDustEffect>()],
+
+          //TrackEffects
+          ["T34TrackEffect",                  new #TrackEffect<CT34TrackEffect>()],
+          ["HanomagTrackEffect",              new #TrackEffect<CHanomagTrackEffect>()],
+          ["PzVIETrackEffect",                new #TrackEffect<CPzVIETrackEffect>()],
+          ["PzIVGTrackEffect",                new #TrackEffect<CPzIVGTrackEffect>()],
+
+          //Smoke effects
+          ["DiselAccelSmokeEffect",           new #SmokeEffect<CDiselAccelSmokeEffect>()],
+          ["PetrolAccelSmokeEffect",          new #SmokeEffect<CPetrolAccelSmokeEffect>()],
+
+          ["T34EngineSmokeEffect",            new #SmokeEffect<CT34EngineSmokeEffect>()],
+          ["TigerEngineSmokeEffect",          new #SmokeEffect<CTigerEngineSmokeEffect>()],
+
+
+          ["DiselSmokeEffect",                new #TraceEffect<CDiselSmokeEffect>()],
+          ["PetrolSmokeEffect",               new #TraceEffect<CPetrolSmokeEffect>()],
+          ["PzVIPetrolSmokeEffect",           new #TraceEffect<CPzVIPetrolSmokeEffect>()],
+
+
+          // Firing & Clouds
+          ["MachineGunFirePlanes",            new #DynamicEffect<CMachineGunFirePlanes>()],
+          ["MachineGunFireEffect",            new #ComplexEffect<CMachineGunFireEffect>()],
+          ["MachineGunDTFireEffect",          new #ComplexEffect<CMachineGunDTFireEffect>()],
+
+          // Explosion items effects
+          ["BuildingExplosionEffect",         new #ComplexEffect<CBuildingExplosionEffect>()],
+          ["BuildingDustSinkRefuseEffect",    new #RefuseEffect<CBuildingDustSinkRefuseEffect>()],
+          ["BuildingSmokeRefuseEffect",       new #RefuseEffect<CBuildingSmokeRefuseEffect>()],
+
+          //
+          //Bullet explsion effects
+          //
+          ["Calibre7576_85_88GunBulletExplosionPlanes",   new #DynamicEffect<CCalibre7576_85_88GunBulletExplosionPlanes>()],
+
+          ["HE7576_85_88GunBulletExplosionPlanes",        new #DynamicEffect<CHE7576_85_88GunBulletExplosionPlanes>()],
+
+          ["Calibre7576_85_88BulletExplosionEffect", new #ComplexEffect<CCalibre7576_85_88BulletExplosionEffect>()],
+          ["HE7576_85_88BulletExplosionEffect",      new #ComplexEffect<CHE7576_85_88BulletExplosionEffect>()],
+          //
+          // Hit Effects
+          //
+
+          //Ground
+          ["GroundBulletHitEffect",               new #ComplexEffect<CGroundBulletHitEffect>()],
+
+          ["WaterBulletHitDustEffect",            new #SprayEffect<CWaterBulletHitDustEffect>()],
+
+          ["GroundSubcalibre7576_85_88BulletHitDustEffect", new #SprayEffect<CGroundSubcalibre7576_85_88BulletHitDustEffect>()],
+          ["GroundSubcalibre7576_85_88BulletHitRingEffect", new #SprayEffect<CGroundSubcalibre7576_85_88BulletHitRingEffect>()],
+          ["Subcalibre7576_85_88BulletGroundHitEffect",     new #ComplexEffect<CSubcalibre7576_85_88BulletGroundHitEffect>()],
+
+          ["GroundCalibre7576_85_88BulletHitSprayEffect",   new #SprayEffect<CGroundCalibre7576_85_88BulletHitSprayEffect>()],
+
+          ["Calibre7576_85_88BulletGroundHitEffect",        new #ComplexEffect<CCalibre7576_85_88BulletGroundHitEffect>()],
+          ["Calibre7576_85_88BulletBodyHitEffect",        new #ComplexEffect<CCalibre7576_85_88BulletBodyHitEffect>()],
+
+          ["GroundHE7576_85_88BulletDustSplash",      new #DynamicEffect<CGroundHE7576_85_88BulletDustSplash>()],
+          //["GroundHE7576_85_88BulletHitDustEffect",   new #SprayEffect<CGroundHE7576_85_88BulletHitDustEffect>()],
+          ["GroundHE7576_85_88BulletHitDustEffect",   new #DynamicEffect<CGroundHE7576_85_88BulletHitDustEffect>()],
+          ["GroundHE7576_85_88BulletSinkDustEffect",  new #SprayEffect<CGroundHE7576_85_88BulletSinkDustEffect>()],
+          ["GroundHE7576_85_88BulletHitRingEffect",   new #SprayEffect<CGroundHE7576_85_88BulletHitRingEffect>()],
+          ["GroundHE7576_85_88BulletHitSprayEffect",  new #SprayEffect<CGroundHE7576_85_88BulletHitSprayEffect>()],
+          ["GroundHE7576_85_88BulletSmokeEffect",     new #SmokeEffect<CGroundHE7576_85_88BulletSmokeEffect>()],
+          ["HE7576_85_88BulletGroundHitSmokeEffect",  new #DynamicEffect<CHE7576_85_88BulletGroundHitSmokeEffect>()],
+          ["HE7576_85_88BulletGroundHitSplashEffect", new #DynamicEffect<CHE7576_85_88BulletGroundHitSplashEffect>()],
+          ["HE7576_85_88BulletGroundHitEffect",       new #ComplexEffect<CHE7576_85_88BulletGroundHitEffect>()],
+          ["HE7576_85_88BulletBodyHitEffect",       new #ComplexEffect<CHE7576_85_88BulletBodyHitEffect>()],
+
+
+          //Water
+          ["WaterSubcalibre7576_85_88BulletHitDustEffect", new #SprayEffect<CWaterSubcalibre7576_85_88BulletHitDustEffect>()],
+          ["WaterCalibre7576_85_88BulletHitDustEffect",    new #SprayEffect<CWaterCalibre7576_85_88BulletHitDustEffect>()],
+          ["WaterHE7576_85_88BulletHitDustEffect",         new #SprayEffect<CWaterHE7576_85_88BulletHitDustEffect>()],
+
+          //Armour
+          ["ArmourBulletHitEffect",                          new #ComplexEffect<CArmourBulletHitEffect>()],
+          ["Subcalibre7576_85_88BulletArmourHitEffect",      new #ComplexEffect<CSubcalibre7576_85_88BulletArmourHitEffect>()],
+
+          ["Calibre7576_85_88BulletArmourHitEffect",         new #ComplexEffect<CCalibre7576_85_88BulletArmourHitEffect>()],
+
+          ["ArmourHE7576_85_88BulletHitSplashEffect", new #DynamicEffect<CArmourHE7576_85_88BulletHitSplashEffect>()],
+          ["HE7576_85_88BulletArmourHitEffect",       new #ComplexEffect<CHE7576_85_88BulletArmourHitEffect>()],
+
+          //Metal
+          ["Calibre7576_85_88BulletMetalHitSplashEffect", new #DynamicEffect<CCalibre7576_85_88BulletMetalHitSplashEffect>()],
+          ["Calibre7576_85_88BulletMetalHitSmokeEffect",  new #DynamicEffect<CCalibre7576_85_88BulletMetalHitSmokeEffect>()],
+          ["Calibre7576_85_88BulletMetalHitEffect",       new #ComplexEffect<CCalibre7576_85_88BulletMetalHitEffect>()],
+
+          ["Subcalibre7576_85_88BulletMetalHitSmokeEffect",  new #DynamicEffect<CSubcalibre7576_85_88BulletMetalHitSmokeEffect>()],
+          ["Subcalibre7576_85_88BulletMetalHitEffect",       new #ComplexEffect<CSubcalibre7576_85_88BulletMetalHitEffect>()],
+
+          //Wood
+          ["WoodBulletHitEffect",     new #ComplexEffect<CWoodBulletHitEffect>()],
+
+          ["Calibre7576_85_88BulletWoodHitSmokeEffect",    new #DynamicEffect<CCalibre7576_85_88BulletWoodHitSmokeEffect>()],
+          ["Calibre7576_85_88BulletWoodHitSplashEffect",   new #DynamicEffect<CCalibre7576_85_88BulletWoodHitSplashEffect>()],
+          ["WoodCalibre7576_85_88BulletHitRingEffect",     new #SprayEffect<CWoodCalibre7576_85_88BulletHitRingEffect>()],
+          ["Calibre7576_85_88BulletWoodHitDebrisEffect",   new #SprayEffect<CCalibre7576_85_88BulletWoodHitDebrisEffect>()],
+          ["Calibre7576_85_88BulletWoodHitEffect",         new #ComplexEffect<CCalibre7576_85_88BulletWoodHitEffect>()],
+          ["Subcalibre7576_85_88BulletWoodHitSmokeEffect", new #DynamicEffect<CSubcalibre7576_85_88BulletWoodHitSmokeEffect>()],
+
+          ["HE7576_85_88BulletWoodHitSmokeEffect",   new #DynamicEffect<CHE7576_85_88BulletWoodHitSmokeEffect>()],
+          ["HE7576_85_88BulletWoodHitSplashEffect",  new #DynamicEffect<CHE7576_85_88BulletWoodHitSplashEffect>()],
+          ["WoodHE7576_85_88BulletHitRingEffect",    new #SprayEffect<CWoodHE7576_85_88BulletHitRingEffect>()],
+          ["HE7576_85_88BulletWoodHitDebrisEffect",  new #SprayEffect<CHE7576_85_88BulletWoodHitDebrisEffect>()],
+          ["HE7576_85_88BulletWoodHitEffect",        new #ComplexEffect<CHE7576_85_88BulletWoodHitEffect>()],
+
+          //body
+          ["BulletHitBodyEffect",                    new #DynamicEffect<CBulletHitBodyEffect>()],
+
+          //Explosions
+          ["BaseBuildingExplosionSmokeEffect",       new #DynamicEffect<CBaseBuildingExplosionSmokeEffect>()],
+          ["BaseBuildingExplosionEffect",            new #ComplexEffect<CBaseBuildingExplosionEffect>()],
+
+          ["GenericUnitExplosionSmokeEffect",        new #DynamicEffect<CGenericUnitExplosionSmokeEffect>()],
+          ["GenericUnitExplosionEffect",             new #ComplexEffect<CGenericUnitExplosionEffect>()],
+
+          //Sign effects
+          ["BulletGroundSignEffect",                 new #SignEffect<CBulletGroundSignEffect>()],
+          ["BulletWoodSignEffect",                   new #SignEffect<CBulletWoodSignEffect>()],
+          ["Calibre7576_85_88GroundSignEffect",      new #SignEffect<CCalibre7576_85_88GroundSignEffect>()],
+          ["Subcalibre7576_85_88GroundSignEffect",   new #SignEffect<CSubcalibre7576_85_88GroundSignEffect>()],
+          ["HE7576_85_88GroundSignEffect",           new #SignEffect<CHE7576_85_88GroundSignEffect>()],
+          ["CalibreArmourSignEffect",                new #SignEffect<CCalibreArmourSignEffect>()],
+          ["SubcalibreArmourSignEffect",             new #SignEffect<CSubcalibreArmourSignEffect>()],
+          ["HEArmourSignEffect",                     new #SignEffect<CHEArmourSignEffect>()],
+          ["CalibreMetalSignEffect",                 new #SignEffect<CCalibreMetalSignEffect>()],
+          ["Calibre7576_85_88WoodSignEffect",        new #SignEffect<CCalibre7576_85_88WoodSignEffect>()],
+          ["HE7576_85_88WoodSignEffect",             new #SignEffect<CHE7576_85_88WoodSignEffect>()],
+          ["BaseBuildingExplosionSignEffect",        new #SignEffect<CBaseBuildingExplosionSignEffect>()],
+          ["GenericUnitExplosionSignEffect",         new #SignEffect<CGenericUnitExplosionSignEffect>()],
+          // Complex Refuse Based effects
+          ["GenericSmallFireEffect",                 new #ComplexEffect<CGenericSmallFireEffect>()],
+          ["GenericLargeFireEffect",                 new #ComplexEffect<CGenericLargeFireEffect>()],
+
+          //refuse effects
+          ["DamagedBlackRefuseEffect",               new #RefuseEffect<CDamagedBlackRefuseEffect>()],
+          ["TemlateRefuse",                          new #RefuseEffect<CTemplateRefuseEffect>()],
+          ["MyRefuseEffect",                         new #RefuseEffect<CMyRefuseEffect>()],
+          ["HEGroundSplashRefuseEffect",             new #RefuseEffect<CHEGroundSplashRefuseEffect>()],
+          ["HEGroundDustRefuseEffect",               new #RefuseEffect<CHEGroundDustRefuseEffect>()],
+          ["HEGroundDustSinkRefuseEffect",           new #RefuseEffect<CHEGroundDustSinkRefuseEffect>()],
+          ["HEGroundSmokeRefuseEffect",              new #RefuseEffect<CHEGroundSmokeRefuseEffect>()],
+          ["HEGroundSprayRefuseEffect",              new #RefuseEffect<CHEGroundSprayRefuseEffect>()],
+          ["HEWoodSplashRefuseEffect",               new #RefuseEffect<CHEWoodSplashRefuseEffect>()],
+          ["HEWoodDustRefuseEffect",                 new #RefuseEffect<CHEWoodDustRefuseEffect>()],
+          ["HEWoodSmokeRefuseEffect",                new #RefuseEffect<CHEWoodSmokeRefuseEffect>()],
+          ["HEWoodSprayRefuseEffect",                new #RefuseEffect<CHEWoodSprayRefuseEffect>()],
+
+          ["HEMetalSplashRefuseEffect",              new #RefuseEffect<CHEMetalSplashRefuseEffect>()],
+          ["HEMetalSmokeRefuseEffect",               new #RefuseEffect<CHEMetalSmokeRefuseEffect>()],
+          ["HEMetalSparkRefuseEffect",               new #RefuseEffect<CHEMetalSparkRefuseEffect>()],
+
+          ["SubCaliberMetalSplashRefuseEffect",      new #RefuseEffect<CSubCaliberMetalSplashRefuseEffect>()],
+          ["APMetalSplashRefuseEffect",              new #RefuseEffect<CAPMetalSplashRefuseEffect>()],
+          ["APMetalDustSinkRefuseEffect",            new #RefuseEffect<CAPMetalDustSinkRefuseEffect>()],
+          ["APMetalSprayRefuseEffect",               new #RefuseEffect<CAPMetalSprayRefuseEffect>()],
+          ["APGroundSplashRefuseEffect",             new #RefuseEffect<CAPGroundSplashRefuseEffect>()],
+          ["APGroundDustRefuseEffect",               new #RefuseEffect<CAPGroundDustRefuseEffect>()],
+          ["APGroundDustSinkRefuseEffect",           new #RefuseEffect<CAPGroundDustSinkRefuseEffect>()],
+          ["APGroundSmokeRefuseEffect",              new #RefuseEffect<CAPGroundSmokeRefuseEffect>()],
+          ["APGroundSprayRefuseEffect",              new #RefuseEffect<CAPGroundSprayRefuseEffect>()],
+
+          ["BulletGroundSplashRefuseEffect",         new #RefuseEffect<CBulletGroundSplashRefuseEffect>()],
+          ["BulletGroundDustRefuseEffect",           new #RefuseEffect<CBulletGroundDustRefuseEffect>()],
+          ["BulletArmourSplashRefuseEffect",         new #RefuseEffect<CBulletArmourSplashRefuseEffect>()],
+          ["BulletArmourDustRefuseEffect",           new #RefuseEffect<CBulletArmourDustRefuseEffect>()],
+          ["BulletArmourRicochetEffect",             new #RefuseEffect<CBulletArmourRicochetEffect>()],
+          ["BulletWoodSplashRefuseEffect",           new #RefuseEffect<CBulletWoodSplashRefuseEffect>()],
+          ["BulletWoodDustRefuseEffect",             new #RefuseEffect<CBulletWoodDustRefuseEffect>()],
+          ["HullGunLayerExplosionSprayRefuseEffect", new #RefuseEffect<CHullGunLayerExplosionSprayRefuseEffect>()],
+          ["HullGunLayerExplosionSplashRefuseEffect",new #RefuseEffect<CHullGunLayerExplosionSplashRefuseEffect>()],
+          ["HullGunLayerExplosionRingFireRefuseEffect",new #RefuseEffect<CHullGunLayerExplosionRingFireRefuseEffect>()],
+          ["GenericDamageItemSplashRefuseEffect",  new #RefuseEffect<CGenericDamageItemSplashRefuseEffect>()],
+          ["GenericDamageItemSmokeRefuseEffect",     new #RefuseEffect<CGenericDamageItemSmokeRefuseEffect>()],
+
+          // refuse fire
+          ["GenericSmallFireRefuseEffect",           new #RefuseEffect<CGenericSmallFireRefuseEffect>()],
+          ["GenericSmallFireSmokeRefuseEffect",      new #RefuseEffect<CGenericSmallFireSmokeRefuseEffect>()],
+          ["GenericLargeFireRefuseEffect",           new #RefuseEffect<CGenericLargeFireRefuseEffect>()],
+          ["GenericLargeFireSmokeRefuseEffect",      new #RefuseEffect<CGenericLargeFireSmokeRefuseEffect>()],
+          ["GenericLargeFirePostSmokeRefuseEffect",  new #RefuseEffect<CGenericLargeFirePostSmokeRefuseEffect>()],
+
+          ["HullGunLayerFireEffect",                 new #SmokeEffect<CHullGunLayerFireEffect>()],
+          ["HullGunLayerExplosionBlackSmokeEffect",  new #SmokeEffect<CHullGunLayerExplosionBlackSmokeEffect>()],
+          ["HullGunLayerExplosionSmokeEffect",       new #DynamicEffect<CHullGunLayerExplosionSmokeEffect>()],
+          ["HullGunLayerExplosionEffect",            new #ComplexEffect<CHullGunLayerExplosionEffect>()],
+          ["GenericDamageItemEffect",                new #ComplexEffect<CGenericDamageItemEffect>()],
+
+          // Spray effects
+          // metal
+          ["BulletHitMetalSplashEffect",           new #DynamicEffect<CBulletHitMetalSplashEffect>()]
+      ];
+
+
+    m_EffectsGroups = [
+        [
+            [
+
+              "BulletGroundSignEffect",
+              "BulletWoodSignEffect",
+              "Calibre7576_85_88GroundSignEffect",
+              "Subcalibre7576_85_88GroundSignEffect",
+              "HE7576_85_88GroundSignEffect",
+              "CalibreArmourSignEffect",
+              "SubcalibreArmourSignEffect",
+              "HEArmourSignEffect",
+              "CalibreMetalSignEffect",
+              "Calibre7576_85_88WoodSignEffect",
+              "HE7576_85_88WoodSignEffect",
+              "BaseBuildingExplosionSignEffect",
+              "GenericUnitExplosionSignEffect"
+            ],
+            1000
+        ]
+      ];
+
+    // m_EffectsExplosionMap = [ Тип Материала , Тип повреждения -> Идентификатор Эфекта ]
+    m_EffectsExplosionMap = [
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretTOP,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretLEFT,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourTurretRIGHT, CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullFWD,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullREAR,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullTOP,     CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullRIGHT,   CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+        [CMaterialStructure::MSID_ArmourHullLEFT,    CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "WoodBulletHitEffect"       ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "BulletHitBodyEffect"       ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "WaterBulletHitDustEffect"  ],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "GroundBulletHitEffect"     ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "GroundBulletHitEffect"     ],
+        [CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "WoodBulletHitEffect"       ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "ArmourBulletHitEffect"],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "WoodBulletHitEffect"       ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "BulletHitBodyEffect"       ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "WaterBulletHitDustEffect"  ],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "GroundBulletHitEffect"     ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "GroundBulletHitEffect"     ],
+        [CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127,            "WoodBulletHitEffect"       ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletMetalHitEffect"    ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletWoodHitEffect"     ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletBodyHitEffect"     ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "WaterCalibre7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    "Calibre7576_85_88BulletGroundHitEffect"   ],
+        //[CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET7576,    ""                                         ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletMetalHitEffect"    ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletWoodHitEffect"     ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletBodyHitEffect"     ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "WaterCalibre7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      "Calibre7576_85_88BulletGroundHitEffect"   ],
+        //[CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET85,      ""                                         ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletMetalHitEffect"    ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletWoodHitEffect"     ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletBodyHitEffect"   ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "WaterCalibre7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      "Calibre7576_85_88BulletGroundHitEffect"   ],
+        //[CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_CALIBREBULLET88,      ""                                         ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletArmourHitEffect"   ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletWoodHitSmokeEffect"],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "BulletHitBodyEffect"                         ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "WaterSubcalibre7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "Subcalibre7576_85_88BulletGroundHitEffect"   ],
+        //[CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, ""                                            ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletMetalHitEffect"    ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletWoodHitSmokeEffect"],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576, "BulletHitBodyEffect"                         ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "WaterSubcalibre7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   "Subcalibre7576_85_88BulletGroundHitEffect"   ],
+        //[CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85,   ""                                            ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletMetalHitEffect"    ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletWoodHitSmokeEffect"],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "WaterSubcalibre7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   "Subcalibre7576_85_88BulletGroundHitEffect"   ],
+        //[CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88,   ""                                            ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletArmourHitEffect"   ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletWoodHitEffect"     ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletBodyHitEffect"   ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "WaterHE7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Bush,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET7576,         "HE7576_85_88BulletWoodHitEffect"     ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletArmourHitEffect"   ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletWoodHitEffect"     ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletBodyHitEffect"   ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "WaterHE7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Bush,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET85,           "HE7576_85_88BulletWoodHitEffect"     ],
+
+        [CMaterialStructure::MSID_Metal,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletArmourHitEffect"   ],
+        [CMaterialStructure::MSID_Wood,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletWoodHitEffect"     ],
+        [CMaterialStructure::MSID_Body,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletBodyHitEffect"     ],
+        [CMaterialStructure::MSID_Water,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "WaterHE7576_85_88BulletHitDustEffect"],
+        [CMaterialStructure::MSID_Ground,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Forest,            CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Bush,              CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletGroundHitEffect"   ],
+        [CMaterialStructure::MSID_Fence,             CBaseExplosion::CLASSIFICATOR_DAMAGE_HEBULLET88,           "HE7576_85_88BulletWoodHitEffect"     ]
+      ];
+  }
+
+  void CEffectsArray()
+  {
+    for (int Index = 0; Index < m_EffectsMap.size(); Index++)
+      RegisterPattern(m_EffectsMap[Index][0], m_EffectsMap[Index][1]);
+
+
+    for (int Index = 0; Index < m_EffectsAliases.size(); Index++)
+      RegisterAlias(m_EffectsAliases[Index][0], m_EffectsAliases[Index][1]);
+
+    for (int Index = 0; Index < m_EffectsGroups.size(); Index++)
+      RegisterGroup(m_EffectsGroups[Index][0], m_EffectsGroups[Index][1]);
+
+    for (int Index = 0; Index < m_EffectsExplosionMap.size(); Index++)
+      RegisterSubstanceAlias(
+          m_EffectsExplosionMap[Index][0],
+          m_EffectsExplosionMap[Index][1] ,
+          m_EffectsExplosionMap[Index][2]
+        );
+  }
+}

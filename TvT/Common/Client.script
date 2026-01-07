@@ -1,0 +1,687 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CClient extends CSession
+{
+  boolean m_bConnectToFirstFound = false;
+  WString m_PlayerName;
+
+  // Connection control functions
+  void Connect(
+      Component  _Server,
+      WString    _Player,
+      int        _PreferTeam
+    )
+  {
+    logWarning("[Client] Connect(" + new String(_Player) + ")");
+
+    m_PlayerName  = _Player;
+    m_SessionInfo = new CServerDescriptor(_Server);
+    //m_PreferTeam  = _PreferTeam;
+
+    ConnectToServer(_Server, _Player);
+  }
+
+  void ConnectByIP(
+      String     _ServerName,
+      WString    _Player,
+      int        _PreferTeam
+    )
+  {
+    //$TMP
+    if(_PreferTeam == -88)
+    {
+      Array Address = new Array([_ServerName]);
+      ScanAddressList(Address, true);
+      return;
+    }
+    m_PlayerName           = _Player;
+    //m_PreferTeam           = _PreferTeam;
+    m_bConnectToFirstFound = true;
+
+    m_AddressList.clear();
+
+    m_AddressList.add(_ServerName);
+
+    OnServersListChanged([]);
+  }
+
+  void Reconnect(
+      WString  _Player
+    )
+  {
+    logWarning("[Client] Reconnect(" + _Player + ")");
+
+    ConnectToServer(m_SessionInfo.m_Descriptor, _Player);
+  }
+
+  // Server events handlers
+  void OnConnectComplete()
+  {
+    logWarning("[Client] OnConnectComplete");
+
+    // Set connected status
+    SetSessionStatus(CPlayerStat::CS_Connected, false);
+
+    // Send player info to server
+//    SendPlayerInfo();
+
+    // Notify game
+    fireEvent(0.0, [], "OnConnectComplete", []);
+  }
+
+  void OnConnectFailed()
+  {
+    logWarning("[Client] OnConnectFailed");
+
+    // Notify game
+    fireEvent(0.0, [], "OnConnectFailed", []);
+  }
+
+  void OnServersListChanged(
+      Array _ServersList
+    )
+  {
+    logWarning("[Client] OnServersListChanged");
+
+    // add new servers to list
+    for (int i = 0; i < _ServersList.size(); i++)
+    {
+      String  ServerID  = _ServersList[i].InstanceUID;
+      int     CurrIndex = -1;
+
+      for (int j = 0; j < m_ServersList.size(); j++)
+        if (m_ServersList[j].InstanceUID == ServerID)
+        {
+          CurrIndex = j;
+          break;
+        }
+
+      if (-1 != CurrIndex)
+        m_ServersList.remove(CurrIndex);
+      m_ServersList.add(_ServersList[i]);
+    }
+
+    // continue enumeration
+    if (!m_AddressList.isEmpty() && (!m_bConnectToFirstFound || m_ServersList.isEmpty()))
+    {
+      String Address = m_AddressList[0];
+
+      if (!m_bConnectToFirstFound)
+        m_AddressList.remove(0);
+
+      if (!EnumerateServers(Address))
+      {
+        if (!m_ServersList.isEmpty())
+          fireEvent(0.0, [], "OnServersListChanged", [m_ServersList]);
+      }
+    }
+    else
+    {
+      fireEvent(0.0, [], "OnServersListChanged", [m_ServersList]);
+    }
+
+    Component MenuController = (new #GameController()).GetMenuController();
+    Component Menu = MenuController.GetActiveMenu();
+    Menu.OnServersListChanged();
+
+    if (m_bConnectToFirstFound && !m_ServersList.isEmpty())
+    {
+      m_AddressList.clear();
+
+      m_SessionInfo = new CServerDescriptor(m_ServersList[0]);
+
+      ConnectToServer(m_ServersList[0], m_PlayerName);
+    }
+  }
+
+  void OnSessionTerminated()
+  {
+    logWarning("[Client] OnSessionTerminated");
+
+    CleanupPlayersInfo();
+
+//    sendEvent(0.0, SOID_MissionController, "CloseMission", [false]);
+    sendEvent(0.0, SOID_MissionController, "TerminateMission", []);
+  }
+
+  event void ServerCloseMission(int _Status)
+  {
+    logWarning("[Client] ServerCloseMission");
+
+    CleanupPlayersInfo();
+
+    sendEvent(0.0, SOID_MissionController, "CloseMission", [_Status]);
+  }
+
+  void OnServerDescrChanged(
+      Component _ServerInfo
+    )
+  {
+  }
+
+  // Player info control
+  void SendPlayerInfo()
+  {
+    logWarning("[Client] SendPlayerInfo");
+
+    // Get player info
+    Array PlayerInfo = GetThisPlayerInfo();
+
+    // Set player info to local array
+    SetPlayerInfo(m_PlayerID, PlayerInfo);
+
+    // Send player info to server
+    FireNetEvent("Client_SetPlayerInfo", [PlayerInfo]);
+  }
+
+  // Mirror control service functions
+  void CreateObjectMirror(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    //logWarning("[Client] CreateObjectMirror(" + _ObjectID + ") " /*+ ne/* + new String(_Properties)*/w String(_Properties)*/);
+
+    FireNetEvent("Client_CreateObjectMirror",
+      [_ObjectID, _ComponentID, _ScriptClass, _Position, _Properties]);
+  }
+
+  // Servers list operations
+  Array m_AddressList = [];
+  Array m_ServersList = [];
+
+  void ScanAddressList(
+      Array   _AddressList,
+      boolean _bSearchOnLAN
+    )
+  {
+    logWarning("[Client] ScanAddressList");
+
+    m_AddressList = _AddressList;
+    m_ServersList = [];
+
+    if (_bSearchOnLAN)
+    {
+      if (!EnumerateServers(""))
+        fireEvent(0.0, [], "OnServersListChanged", [m_ServersList]);
+    }
+    else
+    {
+      fireEvent(0.0, [], "OnServersListChanged", [m_ServersList]);
+    }
+  }
+
+  // Server events handlers
+  event void Server_SetPlayerID(
+      int _PlayerID
+    )
+  {
+    logWarning("[Client] Server_SetPlayerID(" + new String(_PlayerID) + ")");
+
+    m_PlayerID = _PlayerID;
+  }
+
+  event void Server_ReloadMission()
+  {
+    logWarning("[Client] Server_ReloadMission");
+
+    Component Game = new #GameController();
+
+    Component Mission = Game.GetMission();
+    if (Mission == null)
+    {
+      logError("[Client] Cannot reload mission cause no mission is loaded");
+      return;
+    }
+
+    WString PlayerName = Mission.GetCurrentPlayer().GetName();
+
+    Component MainMenu = Game.GetObject("MainMenu");
+    if (MainMenu != null)
+      MainMenu.GoTo("ConnectingMenu");
+
+    setVisibleState(Mission, false);
+    Game.EnableControl("MainMenu", true);
+
+    Game.UnloadMission();
+
+    clearEventsQueue();
+
+    fireEvent(1.0, [], "Server_ContinueReloadMission", [PlayerName]);
+  }
+
+  event void Server_ContinueReloadMission(
+      WString _PlayerName
+    )
+  {
+    logWarning("[Client] RECONNECT EVENT");
+
+    Reconnect(_PlayerName);
+  }
+
+  event void Server_Reconnect()
+  {
+    logWarning("[Client] SERVER_RECONNECT EVENT");
+
+    (new #GameController()).CloseMultiplayer();
+
+    clearEventsQueue();
+
+    if (m_PlayerNameCache != L"")
+    {
+      logWarning("[Client] reconnecting player " + m_PlayerNameCache);
+
+      Reconnect(m_PlayerNameCache);
+      m_PlayerNameCache = L"";
+    }
+    else
+      logError("[Client] Server_Reconnect : no player name in cache");
+  }
+
+  event void Server_SetFreeRespawn(
+      String _Location
+    )
+  {
+    Component GameController = new #GameController();
+    Component Mission        = GameController.GetLoadedMission();
+
+    if (null == Mission)
+      return;
+
+    Mission.AddFreeRespawn(_Location);
+  }
+
+  event void Server_LoadMission(
+      String _MissionName,
+      int    _PlayerSlot,
+      int    _PlayerTeam,
+      Array  _MPSettings
+    )
+  {
+    logWarning("[Client] Server_LoadMission(" + _MissionName + ", " + new String(_PlayerSlot) + ")");
+
+    // Init player info
+    SetPlayerSlotID(_PlayerSlot);
+    SetPlayerTeam(_PlayerTeam);
+    
+
+    // Load mission
+    invokeClassFunction(_MissionName, "SetMultiplayerSettings", [_MPSettings]);
+    (new #GameController()).LoadMission(_MissionName, false);
+
+    //$TMP
+    Component GameController = new #GameController();
+    Component Mission        = GameController.GetLoadedMission();
+
+    if (null == Mission)
+      return;
+
+    Mission.SetCurrentPlayer(new WString(m_PlayerName));
+    SendPlayerInfo();
+
+    // Initialize history
+    //RegisterHistoryProvider((new #GameController()).GetObject("TerrainEditor").GetObject("LayerHistory"));
+
+    if(GameController.GetEditorMode())
+    {        
+        Mission.CreatePlayerObject();    
+        Mission.CreateEditorObject();
+        Mission.CreateCursorObject();
+        Mission.StartMission();
+
+       GameController.ActivateCamera("", false);
+       GameController.ActivateCamera("MissionEditor", true);
+    }
+    else
+    {
+      Mission.CreatePlayerObject();
+      Mission.StartMission();
+      GameController.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+      GameController.EnableControl(Mission.GetMainPlayerObjectID(), true);
+      GameController.ActivateCamera(SOID_MainCamera, false);
+    }
+
+  }
+
+  event void Server_LoadMission(
+      String _MissionName,
+      int    _PlayerSlot,
+      int    _PlayerTeam,
+      Array  _MPSettings,
+      Matrix _Position,
+      String _CheckSum
+    )
+  {
+    logWarning("[Client] Server_LoadMission(" + _MissionName + ", " + new String(_PlayerSlot) + ")");
+    
+    Component Game = new #GameController();    
+    String checkSum = GetCheckSum(Game.GetMissionFiles(_MissionName));
+    //logWarning("[Client] checkSum: " + checkSum);
+    if(checkSum != _CheckSum)
+    {
+      m_bConnectToFirstFound = false;
+      
+      Component MenuController = Game.GetMenuController();
+      
+      Game.CreateMainMenu();
+      MenuController.LoadNewMenu("MultiWrongContentMenu");
+    
+      return;
+    }
+
+    // Init player info
+    SetPlayerSlotID(_PlayerSlot);
+    SetPlayerTeam(_PlayerTeam);
+    
+
+    // Load mission
+    invokeClassFunction(_MissionName, "SetMultiplayerSettings", [_MPSettings]);
+    (new #GameController()).LoadMission(_MissionName, false);
+
+    //$TMP
+    Component GameController = new #GameController();
+    Component Mission        = GameController.GetLoadedMission();
+
+    if (null == Mission)
+      return;
+
+    Mission.SetCurrentPlayer(new WString(m_PlayerName));
+    SendPlayerInfo();
+
+    // Initialize history
+    //RegisterHistoryProvider((new #GameController()).GetObject("TerrainEditor").GetObject("LayerHistory"));
+
+    CGameSettings::PlayerName = Mission.GenerateFreeObjectID();
+    if(GameController.GetEditorMode())
+    {        
+        Mission.CreatePlayerObject(_Position);    
+        Mission.CreateEditorObject();
+        Mission.CreateCursorObject();
+        Mission.StartMission();
+
+       GameController.ActivateCamera("", false);
+       GameController.ActivateCamera("MissionEditor", true);
+    }
+    else
+    {
+      Mission.CreatePlayerObject(_Position);
+      Mission.StartMission();
+      GameController.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+      GameController.EnableControl(Mission.GetMainPlayerObjectID(), true);
+      GameController.ActivateCamera(SOID_MainCamera, false);
+    }
+
+  }
+
+  event void Server_ReloadMissionCF(
+      String _MissionName,
+      Array  _CFPlayers
+    )
+  {
+    logWarning("[Client] Server_ReloadMissionCF");
+
+    Component Game = new #GameController();
+    Component Mission        = Game.GetLoadedMission();
+    Mission.DeleteObject(Mission.GetMainPlayerObjectID());
+    for (int i = 0; i < _CFPlayers.size(); i++)
+      Mission.DeleteObject(_CFPlayers[i]);
+
+    WString PlayerName = Mission.GetCurrentPlayer().GetName();
+    Component ServerDescriptor = m_SessionInfo.m_Descriptor;
+//    Mission.Shutdown();
+    Game.UnloadMission();
+    Game.CloseMultiplayer();
+    CleanupPlayersInfo();
+    Game.ConnectToServer(ServerDescriptor, PlayerName, 0);
+
+//    Component Mission        = Game.GetLoadedMission();
+//    Mission.DeleteObject(Mission.GetMainPlayerObjectID());
+
+//    Component Mission        = Game.GetLoadedMission();
+  }
+
+  event void Server_LoadMissionCF(
+      String _MissionName,
+      int    _PlayerSlot,
+      int    _PlayerTeam,
+      Array  _MPSettings,
+      String _CheckSum
+    )
+  {
+    logWarning("[Client] Server_LoadMissionCF(" + _MissionName + ", " + new String(_PlayerSlot) + ")");
+    
+    Component Game = new #GameController();    
+    String checkSum = GetCheckSum(Game.GetMissionFiles(_MissionName));
+    //logWarning("[Client] checkSum: " + checkSum);
+    
+    if(checkSum != _CheckSum)
+    {
+      m_bConnectToFirstFound = false;
+      
+      Component MenuController = Game.GetMenuController();
+      
+      Game.CreateMainMenu();
+      MenuController.LoadNewMenu("MultiWrongContentMenu");
+    
+      return;
+    }
+
+    // Init player info
+    SetPlayerSlotID(_PlayerSlot);
+    SetPlayerTeam(_PlayerTeam);
+    
+
+    // Load mission
+    invokeClassFunction(_MissionName, "SetMultiplayerSettings", [_MPSettings]);
+    Component GameController = new #GameController();
+
+    GameController.UnLoadMission();
+    GameController.LoadMission(_MissionName, false);
+    Component Mission        = GameController.GetLoadedMission();
+
+    if (null == Mission)
+      return;
+
+    Mission.SetCurrentPlayer(new WString(m_PlayerName));
+    SendPlayerInfo();
+
+    // Initialize history
+    //RegisterHistoryProvider((new #GameController()).GetObject("TerrainEditor").GetObject("LayerHistory"));
+
+    if(GameController.GetEditorMode())
+    {        
+//        Mission.CreatePlayerObject(_Position);    
+        Mission.CreateEditorObject();
+        Mission.CreateCursorObject();
+//        Mission.StartMission();
+
+       GameController.ActivateCamera("", false);
+//       GameController.ActivateCamera("MissionEditor", true);
+    }
+    else
+    {
+//      Mission.CreatePlayerObject(_Position);
+//      Mission.StartMission();
+//      GameController.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+//      GameController.EnableControl(Mission.GetMainPlayerObjectID(), true);
+//      GameController.ActivateCamera(SOID_MainCamera, false);
+    }
+
+    CTeamPlayRoomMenu::m_Client = true;
+//    CTeamPlayRoomMenu::m_PlayerPosition = _Position;
+    Component MenuController = GameController.GetMenuController();
+    MenuController.LoadNewMenu("TeamPlayRoomMenu");
+    MenuController.GetObject("Cursor").ShowCursor(true);
+    MenuController.LockChangeInputMode(false);
+    GameController.EnableControl("GameMenu", true);
+  }
+
+  event void Server_UnloadMission()
+  {
+    Component Game = new #GameController();
+
+    setVisibleState(Game.GetMission(), false);
+
+    m_PlayerNameCache = Game.GetMission().GetCurrentPlayer().GetName();
+
+    Component MainMenu = Game.GetObject("MainMenu");
+    if (MainMenu != null)
+    {
+      setVisibleState(MainMenu, true);
+      Game.EnableControl("MainMenu", true);
+      MainMenu.GoTo("ConnectingMenu");
+    }
+
+    (new #GameController()).UnloadMultiplayerMission();
+  }
+
+  event void Server_LoadMission(
+      String  _MissionName
+    )
+  {
+    logWarning("[Client] Server_LoadMission(" + _MissionName + ") bare metal");
+
+    Component MainMenu = (new #GameController()).GetObject("MainMenu");
+    if (MainMenu != null)
+      MainMenu.GoTo("LoadingMenu");
+
+    (new #GameController()).LoadMission(_MissionName, false);    
+  }
+
+  event void Server_CreateObjectMirror(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass,
+      Matrix _Position,
+      Array  _Properties
+    )
+  {
+    logWarning("[Client] Server_CreateObjectMirror(" + _ObjectID + ")");
+
+    // Get current mission
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;
+
+    // Create object mirror
+    Mission.CreateObject(_ObjectID, _ComponentID,
+      _ScriptClass, _Position, Mission.GenerateMirrorProps(_Properties));
+    Mission.FinalizeObject(_ObjectID, Mission.GenerateMirrorProps(_Properties));
+  }
+
+  event void Server_DeleteObjectMirror(
+      String _ObjectID
+    )
+  {
+    logWarning("[Client] Server_DeleteObjectMirror(" + _ObjectID + ")");
+
+    // Get current mission
+    Component Mission = (new #GameController()).GetMission();
+    if (Mission == null)
+      return;
+
+    if(_ObjectID == Mission.GetMainPlayerObjectID())
+      logWarning("[Client] try delete MainPlayerUnit");
+
+    // Create object mirror
+    if (Mission.GetObject(_ObjectID) != null)
+      Mission.DeleteObject(_ObjectID);
+  }
+
+  event void Server_SetPlayerInfo(
+      int    _PlayerID,
+      Array  _PlayerInfo
+    )
+  {
+    logWarning("[Client] Server_SetPlayerInfo(" + new String(_PlayerID) + ") " + new String(_PlayerInfo));
+
+    SetPlayerInfo(_PlayerID, _PlayerInfo);
+  }
+
+  event void Server_DelPlayerInfo(
+      int    _PlayerID
+    )
+  {
+    logWarning("[Client] Server_DelPlayerInfo(" + new String(_PlayerID) + ")");
+
+    DelPlayerInfo(_PlayerID);
+  }
+
+  event void Server_StartPlayer()
+  {
+    logWarning("[Client] Server_StartPlayer");
+
+    FireNetEvent("Client_StartPlayer", [m_PreferTeam]);
+  }
+
+  event void Server_Disconnect(
+      String _Reason
+    )
+  {
+    logWarning("[Client] Server_Disconnect(" + _Reason + ")");
+
+    CloseConnection();
+    fireEvent(0.0, [], "OnConnectFailed", []);
+  }
+
+  event void Server_StartGameSession()
+  {
+    logWarning("[Client] Server_StartGameSession");
+
+    fireEvent(0.0, [], "OnStartSession", []);
+  }
+
+  event void Server_StartGameSessionCF(
+      Matrix _PlayerPosition,
+      String _PlayerID
+    )
+  {
+    logWarning("[Client] Server_StartGameSession");
+
+    Component GameController = new #GameController();
+//    Component Session = GameController.GetGameSession();
+//    if (CServerDescriptor::ST_CaptureTheFlag == Session.GetSessionInfo().GetSessionTypeID())
+    {
+      Component Mission = GameController.GetLoadedMission();
+
+      Mission.StartMission();
+      CGameSettings::PlayerName = _PlayerID;
+      Mission.CreatePlayerObject(_PlayerPosition);
+      GameController.ActivateObject(Mission.GetMainPlayerObjectID(), true, true);
+      GameController.EnableControl(Mission.GetMainPlayerObjectID(), true);
+      GameController.ActivateCamera(SOID_MainCamera, false);
+    }
+
+    fireEvent(0.0, [], "OnStartSession", []);
+  }
+
+  // $LOG method
+  void ReportClientLists()
+  {
+    logWarning("[Client] ReportClientLists");
+
+    int i = 0;
+
+   logWarning("m_PlayersInfo:");
+   for (i = 0; i < m_PlayersInfo.size(); i++)
+     logMessage(new String(i) + ": " + new String(m_PlayersInfo[i]));
+  }
+
+  // Attributes
+  int m_PreferTeam = -1;
+
+  WString m_PlayerNameCache = L"";
+}
+
+
+

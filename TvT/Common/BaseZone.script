@@ -1,0 +1,224 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2002 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CFillZoneMapTask1
+{
+  int     FillColor;
+  Array   FillFlags;
+  Array   ObjectMask;
+  Array   ZoneMask;
+
+  CFillZoneMapTask1(
+      int     _FillColor,
+      Array   _FillFlags,
+      Array   _ObjectMask,
+      Array   _ZoneMask
+    )
+  {
+    FillColor  = _FillColor;
+    FillFlags  = _FillFlags;
+    ObjectMask = _ObjectMask;
+    ZoneMask   = _ZoneMask;
+  }
+}
+
+class CFillZoneMapTask2
+{
+  Array   FillColors;
+  Array   Deviations;
+  Array   ZoneMask;
+
+  CFillZoneMapTask2(
+      Array   _FillColors,
+      Array   _Deviations,
+      Array   _ZoneMask
+    )
+  {
+    FillColors = _FillColors;
+    Deviations = _Deviations;
+    ZoneMask   = _ZoneMask;
+  }
+}
+
+class CBaseZoneMap
+{
+  // ****************** Константы для леса **********************
+  final static int ZMC_Forest01       = 11;
+  final static int ZMC_Forest02       = 12;
+  final static int ZMC_Forest03       = 13;
+  final static int ZMC_Forest04       = 14;
+
+  final static int ZMC_RoadForest     = 20; // road forest
+
+
+  final static int ZMC_Bush01         = 27;
+  final static int ZMC_Bush02         = 28;
+  final static int ZMC_Bush03         = 29;
+  final static int ZMC_Bush04         = 30;
+
+    final static int ZMC_ShrubberyLarge       = 49;
+    final static int ZMC_ShrubberyRegular     = 50;
+    final static int ZMC_ShrubberyCasual      = 51;
+    final static int ZMC_SpecialLongAloneTree = 52;
+
+    final static int ZMC_VillagePlanting01   = 60;
+    final static int ZMC_VillagePlanting02   = 61;
+    final static int ZMC_VillagePlanting03   = 62;
+
+    //final static int ZMC_VillagePlanting03   = 53;
+
+  // ****************** Константы для травы ******************
+  final static int ZMC_Grass01        = 32;  // Meadow group
+  final static int ZMC_Grass02        = 33;  // Forest group
+  final static int ZMC_Grass03        = 34;  // Field group
+  final static int ZMC_Grass04        = 35;  // Lowland group
+
+  // ****************** Константы для бездорожья *********************
+  final static int ZMC_OffRoad01      = 1;
+  final static int ZMC_OffRoad02      = 122;
+  final static int ZMC_OffRoad03      = 123;
+  final static int ZMC_OffRoad04      = 217;
+
+  final static int ZMC_NonPassable    = 150;
+
+  // ****************** Константы для дорог *********************
+  final static int ZMC_Road01         = 0;
+  final static int ZMC_Road01Add      = 39;
+
+  // ********* Специальные константы дл япроходимых зон ************
+  final static int ZMC_RoadObject     = 110; // Объекты по которым можно ездить
+  final static int ZMC_AllPassable    = 111; // Зона проходимая для всех юнитов
+
+  // ****************** Константы для воды *********************
+  final static int ZMC_Water01        = 101;
+  final static int ZMC_ShallowWater01 = 102;
+  final static int ZMC_BeachWater01   = 103;
+
+  // ****************** Константы столбов ************
+  final static int ZMC_PowerLine01    = 17;  // деревянный столб
+  final static int ZMC_PowerLine02    = 19;  // железный столб
+
+  // ****************** Константы столбов ************
+  final static int ZMC_Pole01         = 20;  // деревянный столб
+  final static int ZMC_Pole02         = 18;  // бетонный столб
+
+  // ****************** Константы для объектов ******************
+
+  final static Array FillZoneMapTasks1 = [
+      // Заполняем все зоны под объектами как непроходимые (пока как трудно проходимые)
+      new CFillZoneMapTask1(
+          ZMC_OffRoad02,                                              // Fill with this zone color
+          [false,true],                                               // [true if you want to fill cells with objects at every border,
+                                                                      //  true if to fill all cells in object bounding box]
+          [ ["STRUCTURE"], [CLASSIFICATOR_WALK_SURFACE, "BRIDGE"] ],  // Objects mask [restrict], [exclude]
+          [ [], [ZMC_Road01, ZMC_RoadObject,
+                 ZMC_Water01, ZMC_ShallowWater01, ZMC_BeachWater01,
+                 ZMC_NonPassable] ]                                   // Zone map [restrict], [exclude]
+        )/*,
+
+      // Заполняем все зоны под некоторыми объектами как трудно проходимые
+      new CFillZoneMapTask1(
+          ZMC_OffRoad03,                                    // Fill with this zone color
+          false,                                            // true if you want to fill object border
+          [ ["HELI_RECHARGE"], [] ],                        // Objects mask [restrict], [exclude]
+          [ [], [] ]                                        // Zone map [restrict], [exclude]
+        ),
+
+      new CFillZoneMapTask1(
+          ZMC_NonPassable,                                  // Fill with this zone color
+          true,                                             // true if you want to fill object border
+          [ ["BRIDGE"], [] ],                               // Objects mask [restrict], [exclude]
+          [ [], [ZMC_Road01, ZMC_Road02,
+                 ZMC_Water01, ZMC_ShallowWater01,
+                 ZMC_Pole01, ZMC_Pole02,
+                 ZMC_PowerLine01, ZMC_PowerLine02] ]        // Zone map [restrict], [exclude]
+        ),
+
+      // Заполняем все зоны под ROADOBJECT объектами мостами как проходимые для GROUND юнитов но не трогаем воду
+      new CFillZoneMapTask1(
+          ZMC_RoadObject,                                   // Fill with this zone color
+          false,                                            // true if you want to fill object border
+          [ ["ROADOBJECT"], [] ],                           // Objects mask [restrict], [exclude]
+          [ [], [ZMC_Water01, ZMC_ShallowWater01,
+                 ZMC_Pole01, ZMC_Pole02,
+                 ZMC_PowerLine01, ZMC_PowerLine02] ]        // Zone map [restrict], [exclude]
+        ),
+
+      // Заполняем воду под мостами как проходимую для всех
+      new CFillZoneMapTask1(
+          ZMC_AllPassable,                                  // Fill with this zone color
+          false,                                            // true if you want to fill object border
+          [ ["BRIDGE"], [] ],                               // Objects mask [restrict], [exclude]
+          [ [ZMC_Water01, ZMC_ShallowWater01, ZMC_BeachWater01], [] ]         // Zone map [restrict], [exclude]
+        )
+*/
+    ];
+
+
+  final static Array FillZoneMapTasks2 = [
+/*
+      new CFillZoneMapTask2(
+          [                                                 // Fill with this zone colors
+            ZMC_OffRoad01,
+            ZMC_OffRoad02,
+            ZMC_OffRoad03,
+            ZMC_NonPassable
+          ],
+          [                                                 // Deviations
+            15.0,
+            30.0,
+            45.0,
+            90.0
+          ],
+          [ [ZMC_OffRoad01], [] ]                           // Zone map [restrict], [exclude]
+        ),
+      new CFillZoneMapTask2(
+          [                                                 // Fill with this zone colors
+            ZMC_Grass01,
+            ZMC_Grass02,
+            ZMC_Grass03,
+            ZMC_NonPassable
+          ],
+          [                                                 // Deviations
+            15.0,
+            30.0,
+            45.0,
+            90.0
+          ],
+          [ [ZMC_Grass01], [] ]                             // Zone map [restrict], [exclude]
+        )
+  */
+    ];
+
+  // ******** Цвета текстуры для зон которых нет в палитре ********
+  final static Array ColorTable = [
+      // water
+      [ ZMC_Water01,        new Color(0.0, 0.0, 0.6) ],
+      [ ZMC_ShallowWater01, new Color(0.0, 0.0, 0.8) ],
+      [ ZMC_BeachWater01,   new Color(0.0, 0.0, 1.0) ],
+
+      // roads
+      [ ZMC_Road01,         new Color(1.0, 0.0, 1.0) ],
+
+      // special
+      [ ZMC_RoadObject,     new Color(0.6, 0.0, 1.0) ],
+      [ ZMC_AllPassable,    new Color(0.8, 0.0, 1.0) ],
+
+      // non passible
+      [ ZMC_NonPassable,    new Color(0.0, 0.0, 0.0) ],
+
+      [ ZMC_OffRoad01,      new Color(1.0, 0.9, 0.0) ],
+      [ ZMC_OffRoad02,      new Color(1.0, 0.8, 0.0) ],
+      [ ZMC_OffRoad03,      new Color(1.0, 0.7, 0.0) ],
+
+      [ ZMC_Grass01,        new Color(0.5, 1.0, 0.1) ]
+    ];
+}
+
+

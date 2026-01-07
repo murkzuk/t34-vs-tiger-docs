@@ -1,0 +1,52 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseModel
+{
+  final static int     DefaultInstancesQty          = 1;
+  final static int     DefaultShadowCheckMode       = SVCM_BoxDown;
+
+  final static boolean DefaultPlanarShadow          = false; // эмуляция теней (проекция меша на плоскость)
+  final static float   DefaultPlanarShadowLodShift  = 0.0f;
+  
+  final static boolean DefaultFakeShadow            = false; 
+  final static float   DefaultFakeShadowScale       = 1.0f;
+  
+  final static float   DefaultLodForShadowChange    = 9999.0f;
+
+  final static boolean DefaultUseBoxForIsection     = false;
+
+  final static boolean DefaultUseShapesAsWalkedMesh = false;
+
+  final static float   DefaultLodForShadowHide      = 9999.0f;
+
+  // default model settings
+  String MeshFile         = "";
+  String SkinClass        = "";
+  String RouterMapFile    = "";
+  Array  Animation        = [];
+  Map    ConfigSets       = new Map([]);  
+  Map    MaterialsNameId  = new Map([]);
+
+  // common functions
+  static void PreloadResources()
+  {
+    Component Model = createScriptClass(classname);
+    Model.PreloadModelResources();
+  }      
+
+  void PreloadModelResources()
+  {
+    Component SkinManager = new #SkinManager();
+    SkinManager.PreloadSkin(SkinClass);
+    
+    Component ResourceManager = new #ResourceManager();
+    ResourceManager.PreloadResource(MeshFile);
+  }      
+}

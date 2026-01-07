@@ -1,0 +1,494 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseExplosion
+{
+  final static String CLASSIFICATOR_DAMAGE_BULLET762792         = "DAMAGE_BULLET762792";
+  final static String CLASSIFICATOR_DAMAGE_BULLET127            = "DAMAGE_BULLET127";
+
+  final static String CLASSIFICATOR_DAMAGE_CALIBREBULLET7576    = "DAMAGE_CALIBREBULLET7576";
+  final static String CLASSIFICATOR_DAMAGE_CALIBREBULLET85      = "DAMAGE_CALIBREBULLET85";
+  final static String CLASSIFICATOR_DAMAGE_CALIBREBULLET88      = "DAMAGE_CALIBREBULLET88";
+
+  final static String CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576 = "DAMAGE_SUBCALIBREBULLET7576";
+  final static String CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85   = "DAMAGE_SUBCALIBREBULLET85";
+  final static String CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88   = "DAMAGE_SUBCALIBREBULLET88";
+
+  final static String CLASSIFICATOR_DAMAGE_HEBULLET7576         = "DAMAGE_HEBULLET7576";
+  final static String CLASSIFICATOR_DAMAGE_HEBULLET85           = "DAMAGE_HEBULLET85";
+  final static String CLASSIFICATOR_DAMAGE_HEBULLET88           = "DAMAGE_HEBULLET88";
+  final static String CLASSIFICATOR_DAMAGE_AIRBOMB              = "DAMAGE_AIRBOMB";
+  final static String CLASSIFICATOR_DAMAGE_EXPLOSION            = "DAMAGE_EXPLOSION";
+
+  final static String CLASSIFICATOR_DAMAGE_COLLISION            = "DAMAGE_COLLISION";
+  final static String CLASSIFICATOR_DAMAGE_BUILDING             = "DAMAGE_BUILDING";
+  String DamageType = CLASSIFICATOR_DAMAGE_GENERIC;
+}
+
+// Common explosion classes
+class CCollisionExplosion
+  extends CBaseExplosion
+{
+  String EffectId   = "";
+  String SoundId    = "";
+  float  Damage     = 0.0;
+  float  Radius     = 0.0;
+  float  Duration   = 0.0;
+
+  String DamageType = CLASSIFICATOR_DAMAGE_COLLISION;
+}
+
+class CDebrisExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_BULLET762792;
+}
+
+class CMachineGun762792BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_BULLET762792;
+}
+
+class CMachineGun127BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_BULLET127;
+}
+
+class CRifleBulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_BULLET762792;
+}
+class CLightGunBulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+//  String DamageType      = CLASSIFICATOR_DAMAGE_BULLET;
+}
+
+class CHeavyGunBulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+//  String DamageType      = CLASSIFICATOR_DAMAGE_BULLET;
+}
+
+class CCalibreGun7576BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "Calibre7576_85_88BulletExplosionEffect";
+  String SoundId  = "Calibre7576HitExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.5;
+
+  float AlarmRadius = 2.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_CALIBREBULLET7576;
+}
+
+class CCalibreGun85BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "Calibre7576_85_88BulletExplosionEffect";
+  String SoundId  = "Calibre85HitExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.5;
+
+  float AlarmRadius = 2.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_CALIBREBULLET85;
+}
+
+class CCalibreGun88BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "Calibre7576_85_88BulletExplosionEffect";
+  String SoundId  = "Calibre88HitExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.5;
+
+  float AlarmRadius = 2.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_CALIBREBULLET88;
+}
+
+class CSubcalibreGun7576BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 2.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],["HUMAN"]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET7576;
+}
+
+class CSubcalibreGun85BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 2.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],["HUMAN"]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET85;
+}
+
+class CSubcalibreGun88BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 2.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],["HUMAN"]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_SUBCALIBREBULLET88;
+}
+
+class CHEGun7576BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "HE7576_85_88BulletExplosionEffect";
+  String SoundId  = "HE7576HitExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 7.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_HEBULLET7576;
+}
+
+class CHEGun85BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "HE7576_85_88BulletExplosionEffect";
+  String SoundId  = "HE85HitExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 7.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_HEBULLET85;
+}
+
+class CHEGun88BulletExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "HE7576_85_88BulletExplosionEffect";
+  String SoundId  = "HE88HitExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 7.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType      = CLASSIFICATOR_DAMAGE_HEBULLET88;
+}
+
+
+class CAirBombExplosion     ////////////////// AIRBOMB
+   extends CBaseExplosion
+{
+  String EffectId = "HE7576_85_88BulletGroundHitEffect";
+  String SoundId  = "HE88HitExplosionSound";
+  float  Damage   = 130.0;
+  float  Radius   = 5.0;
+  float  Duration = 0.0;
+
+  float AlarmRadius = 7.0f;
+  Array AlarmMask = [[CLASSIFICATOR_GAME_OBJECT],[]];
+
+  String DamageType = CLASSIFICATOR_DAMAGE_AIRBOMB;
+}
+
+
+class CAirVehicleExplosion                                   //////////////////VEHICLE_EXPLOSION
+  extends CBaseExplosion
+{
+  String EffectId = "";
+  String SoundId  = "";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+}
+
+
+class CNavPointExplosion
+  extends CBaseExplosion
+{
+  String    EffectId = "HullGunLayerExplosionEffect";
+  String    SoundId  = "";
+  float     Damage   = 60.0;
+  float     Radius   = 60.0;
+  float     Duration = 100.0;
+}
+
+class CBuildingExplosion
+  extends CBaseExplosion
+{
+  String EffectId = "BuildingExplosionEffect";
+  String SoundId  = "BuildingExplosionSound";
+  float  Damage   = 0.0;
+  float  Radius   = 0.0;
+  float  Duration = 0.0;
+
+  String DamageType = CLASSIFICATOR_DAMAGE_BUILDING;
+}
+
+class CUnitExplosion
+  extends CBaseExplosion
+{
+  String    EffectId = "BuildingExplosionEffect";
+  String    SoundId  = "BuildingExplosionSound";
+  float     Damage   = 0.0;
+  float     Radius   = 0.0;
+  float     Duration = 0.0;
+  float     AlarmRadius = 7.0f;
+}
+
+class CHeavyTankExplosion
+  extends CBaseExplosion
+{
+//  String    EffectId = "GenericUnitExplosionEffect";
+  String    EffectId = "";
+  String    SoundId  = "TankExplosionSound";
+  float     Damage   = 0.0;
+  float     Radius   = 0.0;
+  float     Duration = 0.0;
+  float     AlarmRadius = 7.0f;
+}
+
+// Array
+class CExplosionsArray
+{
+  void CExplosionsArray()
+  {
+    // Nav Point Explosion
+    RegisterPattern("CNavPointExplosion",
+      new #SphericExplosion<CNavPointExplosion>());
+
+    //
+    //Units
+    //
+
+    //T34_76_42
+    RegisterPattern("TankT34_76_42Explosion",
+      new #SphericExplosion<CTankT34_76_42Explosion>());
+    RegisterPattern("TankT34_76_42MachineGunBulletExplosion",
+      new #DotExplosion<CTankT34_76_42MachineGunBulletExplosion>());
+
+    RegisterPattern("TankT34_76_42GunCalibreBulletExplosion",
+      new #SphericExplosion<CTankT34_76_42GunCalibreBulletExplosion>());
+    RegisterPattern("TankT34_76_42GunCalibreBulletDebrisExplosion",
+      new #DotExplosion<CTankT34_76_42GunCalibreBulletDebrisExplosion>());
+    RegisterPattern("TankT34_76_42GunSubcalibreBulletExplosion",
+      new #DotExplosion<CTankT34_76_42GunSubcalibreBulletExplosion>());
+    RegisterPattern("TankT34_76_42GunHEBulletExplosion",
+      new #SphericExplosion<CTankT34_76_42GunHEBulletExplosion>());
+    RegisterPattern("TankT34_76_42GunHEBulletDebrisExplosion",
+      new #DotExplosion<CTankT34_76_42GunHEBulletDebrisExplosion>());
+
+    //T34_85_44
+    RegisterPattern("TankT34_85_44Explosion",
+      new #SphericExplosion<CTankT34_85_44Explosion>());
+    RegisterPattern("TankT34_85_44MachineGunBulletExplosion",
+      new #DotExplosion<CTankT34_85_44MachineGunBulletExplosion>());
+
+    RegisterPattern("TankT34_85_44GunCalibreBulletExplosion",
+      new #SphericExplosion<CTankT34_85_44GunCalibreBulletExplosion>());
+      //new #DotExplosion<CTankT34_85_44GunCalibreBulletExplosion>()); //$TMP
+    RegisterPattern("TankT34_85_44GunCalibreBulletDebrisExplosion",
+      new #DotExplosion<CTankT34_85_44GunCalibreBulletDebrisExplosion>());
+    RegisterPattern("TankT34_85_44GunSubcalibreBulletExplosion",
+      new #DotExplosion<CTankT34_85_44GunSubcalibreBulletExplosion>());
+    RegisterPattern("TankT34_85_44GunHEBulletExplosion",
+      new #SphericExplosion<CTankT34_85_44GunHEBulletExplosion>());
+      //new #DotExplosion<CTankT34_85_44GunHEBulletExplosion>()); //$TMP
+    RegisterPattern("TankT34_85_44GunHEBulletDebrisExplosion",
+      new #DotExplosion<CTankT34_85_44GunHEBulletDebrisExplosion>());
+
+   //SU_85
+    RegisterPattern("SAUSU85Explosion",
+      new #SphericExplosion<CSAUSU85Explosion>());
+
+   //StuG
+    RegisterPattern("SAUStuG40Explosion",
+      new #SphericExplosion<CSAUStuG40Explosion>());
+
+
+
+
+    //PzIVG
+    RegisterPattern("TankPzIVGExplosion",
+      new #SphericExplosion<CTankPzIVGExplosion>());
+    RegisterPattern("TankPzIVGMachineGunBulletExplosion",
+      new #DotExplosion<CTankPzIVGMachineGunBulletExplosion>());
+
+    RegisterPattern("TankPzIVGGunCalibreBulletExplosion",
+      new #SphericExplosion<CTankPzIVGGunCalibreBulletExplosion>());
+    RegisterPattern("TankPzIVGGunCalibreBulletDebrisExplosion",
+      new #DotExplosion<CTankPzIVGGunCalibreBulletDebrisExplosion>());
+    RegisterPattern("TankPzIVGGunSubcalibreBulletExplosion",
+      new #DotExplosion<CTankPzIVGGunSubcalibreBulletExplosion>());
+    RegisterPattern("TankPzIVGGunHEBulletExplosion",
+      new #SphericExplosion<CTankPzIVGGunHEBulletExplosion>());
+    RegisterPattern("TankPzIVGGunHEBulletDebrisExplosion",
+      new #DotExplosion<CTankPzIVGGunHEBulletDebrisExplosion>());
+
+    //TankPzVIAusfE
+    RegisterPattern("TankPzVIAusfExplosion",
+      new #SphericExplosion<CTankPzVIAusfEExplosion>());
+    RegisterPattern("TankPzVIAusfEMachineGunBulletExplosion",
+      new #DotExplosion<CTankPzVIAusfEMachineGunBulletExplosion>());
+
+    RegisterPattern("TankPzVIAusfEGunCalibreBulletExplosion",
+      new #SphericExplosion<CTankPzVIAusfEGunCalibreBulletExplosion>());
+    RegisterPattern("TankPzVIAusfEGunCalibreBulletDebrisExplosion",
+      new #DotExplosion<CTankPzVIAusfEGunCalibreBulletDebrisExplosion>());
+    RegisterPattern("TankPzVIAusfEGunSubcalibreBulletExplosion",
+      new #DotExplosion<CTankPzVIAusfEGunSubcalibreBulletExplosion>());
+    RegisterPattern("TankPzVIAusfEGunHEBulletExplosion",
+      new #SphericExplosion<CTankPzVIAusfEGunHEBulletExplosion>());
+    RegisterPattern("TankPzVIAusfEGunHEBulletDebrisExplosion",
+      new #DotExplosion<CTankPzVIAusfEGunHEBulletDebrisExplosion>());
+
+
+    // BtrHanomag251AusfC
+    RegisterPattern("BtrHanomag251AusfCExplosion",
+      new #SphericExplosion<CBtrHanomag251AusfCExplosion>());
+    RegisterPattern("BtrHanomag251AusfCMachineGunBulletExplosion",
+      new #DotExplosion<CBtrHanomag251AusfCMachineGunBulletExplosion>());
+
+    // BtrM3A1Halftruck
+    RegisterPattern("BtrM3A1HalftruckExplosion",
+      new #SphericExplosion<CBtrM3A1HalftruckExplosion>());
+    RegisterPattern("BtrM3A1HalftruckMachineGunBulletExplosion",
+      new #DotExplosion<CBtrM3A1HalftruckMachineGunBulletExplosion>());
+
+    //Zis3
+    RegisterPattern("GunZis3Explosion",
+      new #SphericExplosion<CGunZis3Explosion>());
+
+    RegisterPattern("GunZis3GunCalibreBulletExplosion",
+      new #SphericExplosion<CGunZis3GunCalibreBulletExplosion>());
+    RegisterPattern("GunZis3GunCalibreBulletDebrisExplosion",
+      new #DotExplosion<CGunZis3GunCalibreBulletDebrisExplosion>());
+    RegisterPattern("GunZis3GunSubcalibreBulletExplosion",
+      new #DotExplosion<CGunZis3GunSubcalibreBulletExplosion>());
+    RegisterPattern("GunZis3GunHEBulletExplosion",
+      new #SphericExplosion<CGunZis3GunHEBulletExplosion>());
+    RegisterPattern("GunZis3GunHEBulletDebrisExplosion",
+      new #DotExplosion<CGunZis3GunHEBulletDebrisExplosion>());
+
+
+    //Pak40
+    RegisterPattern("GunPak40Explosion",
+      new #SphericExplosion<CGunPak40Explosion>());
+
+    RegisterPattern("GunPak40GunCalibreBulletExplosion",
+      new #SphericExplosion<CGunPak40GunCalibreBulletExplosion>());
+    RegisterPattern("GunPak40GunCalibreBulletDebrisExplosion",
+      new #DotExplosion<CGunPak40GunCalibreBulletDebrisExplosion>());
+    RegisterPattern("GunPak40GunSubcalibreBulletExplosion",
+      new #DotExplosion<CGunPak40GunSubcalibreBulletExplosion>());
+    RegisterPattern("GunPak40GunHEBulletExplosion",
+      new #SphericExplosion<CGunPak40GunHEBulletExplosion>());
+    RegisterPattern("GunPak40GunHEBulletDebrisExplosion",
+      new #DotExplosion<CGunPak40GunHEBulletDebrisExplosion>());
+
+    //Trucks
+    RegisterPattern("TruckZis5Explosion",
+      new #SphericExplosion<CTruckZis5Explosion>());
+    RegisterPattern("TruckOpelBlitzExplosion",
+      new #SphericExplosion<CTruckOpelBlitzExplosion>());
+
+    //Airplanes
+
+    RegisterPattern("AirBombExplosion",
+      new #DotExplosion<CAirBombExplosion>());
+    RegisterPattern("IL2Explosion",
+      new #SphericExplosion<CIL2Explosion>());
+
+    //Units
+    RegisterPattern("GermanSoldierRifleBulletExplosion",
+      new #DotExplosion<CGermanSoldierRifleBulletExplosion>());
+    RegisterPattern("SovietSoldierRifleBulletExplosion",
+      new #DotExplosion<CSovietSoldierRifleBulletExplosion>());
+
+    //Buildings
+    RegisterPattern("USRCorralWoodExplosion",
+      new #SphericExplosion<CUSRCorralWoodExplosion>());
+    RegisterPattern("USRHouseWoodExplosion",
+      new #SphericExplosion<CUSRHouseWoodExplosion>());
+    RegisterPattern("USRShedWoodExplosion",
+      new #SphericExplosion<CUSRShedWoodExplosion>());
+    RegisterPattern("DzotWoodUnitExplosion",
+      new #SphericExplosion<CDzotWoodUnitExplosion>());
+  }
+}
+

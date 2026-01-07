@@ -1,0 +1,149 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CDefaultControls
+{
+
+  final static Array TankDefaultKeys = [
+
+//  PRIMARY KEYS
+    [ CTLCMD_ROTATE_LR_AXIS_DELTA,        "MOUSE_X",        0 ],
+    [ CTLCMD_ROTATE_UD_AXIS_DELTA,        "MOUSE_Y",        0 ],
+//    [ CTLCMD_SHOW_CURSOR,                 "KEY_TAB",        0 ],
+    [ CTLCMD_POV_ROTATE_AXIS,             "JOY_POV1",       0 ],
+    [ CTLCMD_POV_SIDE_L,                  "KEY_K",          0 ],
+    [ CTLCMD_POV_SIDE_R,                  "KEY_SEMICOLON",  0 ],
+    [ CTLCMD_POV_SIDE_T,                  "KEY_O",          0 ],
+    [ CTLCMD_POV_SIDE_B,                  "KEY_L",          0 ],
+    [ CTLCMD_POV_SIDE_NEAR,               "KEY_NUMPAD5",    0 ],
+
+    [ CTLCMD_SET_VIEW_COCKPIT,            "KEY_F1",         0 ],
+    [ CTLCMD_OPEN_HATCH,                  "KEY_F2",         0 ],
+    [ CTLCMD_SET_VIEW_BINOCUL,            "KEY_F3",         0 ],
+    [ CTLCMD_SET_VIEW_NEAREST,            "KEY_F4",         0 ],
+    [ CTLCMD_SET_VIEW_PERSON1RD,          "KEY_F5",         0 ],
+    [ CTLCMD_SET_VIEW_PERSON3RD,          "KEY_F6",         0 ],
+
+    [ CTLCMD_SET_SIT_0,                   "KEY_INSERT",     0 ],
+    [ CTLCMD_SET_SIT_1,                   "KEY_HOME",       0 ],
+    [ CTLCMD_SET_SIT_2,                   "KEY_PRIOR",      0 ],
+    [ CTLCMD_CHANGE_MFD1_VIEW,            "KEY_COMMA",      0 ],
+    [ CTLCMD_CHANGE_MFD2_VIEW,            "KEY_PERIOD",     0 ],
+    [ CTLCMD_NEAREST_TARGET,              "KEY_N",          0 ],
+    [ CTLCMD_AUTODRIVER,                  "KEY_F",          0 ],
+    [ CTLCMD_AUTOSHOOTER,                 "KEY_G",          0 ],
+    [ CTLCMD_AUTOCOMMANDER,               "KEY_H",          0 ],
+//    [ CTLCMD_SHOW_DBG_INFO,               "KEY_U",          0 ],
+//    [ CTLCMD_MENU_SELECT,                 "",               0 ],
+//    [ CTLCMD_CHANGE_SIT,                  "KEY_M",          0 ],
+//    [ CTLCMD_FIRE_THIRD,                  "KEY_SPACE",    0 ],
+
+//driver control
+    [ CTLCMD_FORWARD,                     "KEY_UP",         0 ],
+    [ CTLCMD_BACKWARD,                    "KEY_DOWN",       0 ],
+    [ CTLCMD_LEFT,                        "KEY_A",          0 ],
+    [ CTLCMD_RIGHT,                       "KEY_D",          0 ],
+    [ CTLCMD_ENGINE_CONTROL,              "KEY_E",          0 ],
+    [ CTLCMD_GOV_SPEED_UP,                "KEY_W",          0 ],
+    [ CTLCMD_GOV_SPEED_DOWN,              "KEY_S",          0 ],
+    [ CTLCMD_MAXSPEED,                    "KEY_MULTIPLY",   0 ],
+    [ CTLCMD_BRAKE,                       "KEY_SPACE",      0 ],
+// gunner control
+    [ CTLCMD_WEAPON_UP,                   "KEY_NUMPAD8",    0 ],
+    [ CTLCMD_WEAPON_DOWN,                 "KEY_NUMPAD2",    0 ],
+    [ CTLCMD_WEAPON_LEFT,                 "KEY_NUMPAD4",    0 ],
+    [ CTLCMD_WEAPON_RIGHT,                "KEY_NUMPAD6",    0 ],
+    [ CTLCMD_WEAPON_CHANGE_AMMO,          "KEY_NEXT",       0 ],
+    [ CTLCMD_WEAPON_LOAD_AMMO,            "KEY_BACK",       0 ],
+    [ CTLCMD_FIRE_PRIMARY,                "MOUSE_BUTTON0",  0 ],
+    [ CTLCMD_FIRE_SECONDARY,              "MOUSE_BUTTON1",  0 ],
+    [ CTLCMD_SIGHT_UP,                    "KEY_NUMPAD7",    0 ],
+    [ CTLCMD_SIGHT_DOWN,                  "KEY_NUMPAD1",    0 ],
+    [ CTLCMD_TOGGLE_SIGHT,                "KEY_NUMPAD9",    0 ],
+    [ CTLCMD_SHOW_TEXT_MESSAGES,          "KEY_T",          0 ],
+    [ CTLCMD_SHOW_COCKPIT_PANEL1,         "KEY_Y",          0 ],
+    [ CTLCMD_SHOW_COCKPIT_PANEL2,         "KEY_U",          0 ],
+    [ CTLCMD_SELF_DESTRUCTION,            "KEY_F11",         0 ],
+    [ CTLCMD_MAP_ZOOM_IN,                 "KEY_ADD",         0 ],
+    [ CTLCMD_MAP_ZOOM_OUT,                "KEY_SUBTRACT",         0 ],
+
+
+//  SECONDARY KEYS
+    [ CTLCMD_ROTATE_LR_AXIS_DELTA,        "", 1 ],
+    [ CTLCMD_ROTATE_UD_AXIS_DELTA,        "", 1 ],
+//    [ CTLCMD_ROTATE_LR_AXIS_ABS,          "", 1 ],
+//    [ CTLCMD_MOVE_FB_AXIS_ABS,            "", 1 ],
+//    [ CTLCMD_MOVE_LR_AXIS_ABS,            "", 1 ],
+//    [ CTLCMD_MAP_ZOOM_IN,                 "", 1 ],
+//    [ CTLCMD_MAP_ZOOM_OUT,                "", 1 ],
+//    [ CTLCMD_CAMERA_ZOOM_IN,              "", 1 ],
+//    [ CTLCMD_CAMERA_ZOOM_OUT,             "", 1 ],
+//    [ CTLCMD_CAMERA_ZOOM_DEF,             "", 1 ],
+//    [ CTLCMD_SHOW_CURSOR,                 "", 1 ],
+    [ CTLCMD_POV_ROTATE_AXIS,             "", 1 ],
+    [ CTLCMD_POV_SIDE_L,                  "", 1 ],
+//    [ CTLCMD_POV_SIDE_LT,                 "", 1 ],
+//    [ CTLCMD_POV_SIDE_LB,                 "", 1 ],
+    [ CTLCMD_POV_SIDE_R,                  "", 1 ],
+//    [ CTLCMD_POV_SIDE_RT,                 "", 1 ],
+//    [ CTLCMD_POV_SIDE_RB,                 "", 1 ],
+    [ CTLCMD_POV_SIDE_T,                  "", 1 ],
+    [ CTLCMD_POV_SIDE_B,                  "", 1 ],
+    [ CTLCMD_POV_SIDE_NEAR,               "", 1 ],
+    [ CTLCMD_FORWARD,                     "", 1 ],
+    [ CTLCMD_BACKWARD,                    "", 1 ],
+    [ CTLCMD_LEFT,                        "", 1 ],
+    [ CTLCMD_RIGHT,                       "", 1 ],
+    [ CTLCMD_ENGINE_CONTROL,              "", 1 ],
+    [ CTLCMD_GOV_SPEED_UP,                "", 1 ],
+    [ CTLCMD_GOV_SPEED_DOWN,              "", 1 ],
+//    [ CTLCMD_SHOW_DBG_INFO,               "", 1 ],
+    [ CTLCMD_MAXSPEED,                    "", 1 ],
+    [ CTLCMD_BRAKE,                       "", 1 ],
+    [ CTLCMD_WEAPON_UP,                   "", 1 ],
+    [ CTLCMD_WEAPON_DOWN,                 "", 1 ],
+    [ CTLCMD_WEAPON_LEFT,                 "", 1 ],
+    [ CTLCMD_WEAPON_RIGHT,                "", 1 ],
+    [ CTLCMD_WEAPON_CHANGE_AMMO,          "", 1 ],
+    [ CTLCMD_WEAPON_LOAD_AMMO,            "", 1 ],
+    [ CTLCMD_FIRE_PRIMARY,                "KEY_DELETE", 1 ],
+    [ CTLCMD_FIRE_SECONDARY,              "KEY_END", 1 ],
+//    [ CTLCMD_FIRE_THIRD,                  "", 1 ],
+    [ CTLCMD_SET_VIEW_COCKPIT,            "",         1 ],
+    [ CTLCMD_OPEN_HATCH,                  "",         1 ],
+    [ CTLCMD_SET_VIEW_BINOCUL,            "",         1 ],
+    [ CTLCMD_SET_VIEW_NEAREST,            "",         1 ],
+    [ CTLCMD_SET_VIEW_PERSON1RD,          "",         1 ],
+    [ CTLCMD_SET_VIEW_PERSON3RD,          "",         1 ],
+
+//    [ CTLCMD_CHANGE_SIT,                  "", 1 ],
+    [ CTLCMD_SET_SIT_0,                   "", 1 ],
+    [ CTLCMD_SET_SIT_1,                   "", 1 ],
+    [ CTLCMD_SET_SIT_2,                   "", 1 ],
+    [ CTLCMD_CHANGE_MFD1_VIEW,            "", 1 ],
+    [ CTLCMD_CHANGE_MFD2_VIEW,            "", 1 ],
+//    [ CTLCMD_MENU_SELECT,                 "", 1 ],
+    [ CTLCMD_NEAREST_TARGET,              "", 1 ],
+    [ CTLCMD_SIGHT_UP,                    "", 1 ],
+    [ CTLCMD_SIGHT_DOWN,                  "", 1 ],
+    [ CTLCMD_AUTODRIVER,                  "", 1 ],
+    [ CTLCMD_AUTOSHOOTER,                 "", 1 ],
+    [ CTLCMD_AUTOCOMMANDER,               "", 1 ],
+    [ CTLCMD_TOGGLE_SIGHT,                "", 1 ],
+    [ CTLCMD_SHOW_TEXT_MESSAGES,          "", 1 ],
+    [ CTLCMD_SHOW_COCKPIT_PANEL1,         "", 1 ],
+    [ CTLCMD_SHOW_COCKPIT_PANEL2,         "", 1 ],
+    [ CTLCMD_SELF_DESTRUCTION,            "", 1 ],
+    [ CTLCMD_MAP_ZOOM_IN,                 "", 1 ],
+    [ CTLCMD_MAP_ZOOM_OUT,                "", 1 ]
+
+  ];
+
+}
+

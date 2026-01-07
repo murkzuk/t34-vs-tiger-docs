@@ -1,0 +1,44 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBasePhysicsController
+{
+  //
+  // Base properties
+  //
+
+  static boolean  FixedTimeStepMethod = true;       // If thsis flag is true then time step is divide by frequency on steps
+                                                    // with fixed time delta.
+  static float    HighEndPhysicsFrequency = 0.03f;  // Frequency of physics for update, by default
+  static float    MidEndPhysicsFrequency  = 0.05f;  // Frequency of physics for update, when FPS is slow
+  static float    LowEndPhysicsFrequency  = 0.07f;  // Frequency of physics for update, when FPS is slowest
+  static int      Iterations              = 50;       // Maximum ranges for split update time, if FPS is slow
+
+
+  //
+  // Physics properties
+  //
+
+  //
+  // Contact-constraint properties
+  //
+
+  Array   ContactConstraintProperties = [
+                                            1.0,             // The minimum incoming velocity necessary for bounce (in m/s).
+                                                             // Incoming velocities below this will effectively have a
+                                                             // restitution parameter of 0
+
+                                            0.8,             // The error reduction parameter value, that controls how
+                                                             // much error correction is performed in each time step.
+                                                             // Typical values are in the range 0.1-0.8. The default is 0.2.
+
+                                            0.00001          // The constraint force mixing value. Typical values are in
+                                                             // the range 1e-9 - 1. The default is 1e-3.
+                                        ];
+}

@@ -1,0 +1,113 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2007 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+// #########################################################################################
+//                                       Subcaliber in metal / armour
+// #########################################################################################
+class CSubcalibre7576_85_88BulletArmourHitEffect
+  extends CBaseEffect
+{
+  CSubcalibre7576_85_88BulletArmourHitEffect()
+  {
+    CreateEffect("LightExplosionSplash", 0.0);
+    CreateEffect("SubCaliberMetalSparkRefuseEffectEnhanced", 0.0);
+    CreateEffect("SubCaliberMetalSplashRefuseEffect", 0.0);
+    CreateAndForgetEffect("SubcalibreArmourSignEffect", 0.0);
+  }
+}
+
+// ==================================================== Enhanced Sparks ==========================
+// NOTE: The original CSubCaliberMetalSparkRefuseEffect class definition
+// has been REMOVED from this file. The enhanced version is now in
+// EffectSAPMetalEnhanced.script file.
+
+// ==================================================== Splash ==========================
+class CSubCaliberMetalSplashRefuseEffect
+  extends CBaseRefuseEffect
+{
+// Data block ..............................................................................
+   float EjectionPeriodMS   = 0.05;		//ïåðèîä ãåíåðàöèè ÷àñòèöû, (ñåê)
+   float PeriodVarianceMS   = 0.0;   	//ðàíäîìèçàöèÿ ïåðèîäà (ñåê)
+   float LifetimeMS         = 0.1;   	//âðåìÿ æèçíè ýìèòååðà (âðåìÿ âûáðîñà ÷àñòèö, ñ)
+   float EjectionVelocity   = 0.0;   	//íà÷àëüíàÿ ñêîðîñòü ÷àñòèöû (ì/ñ)
+   float VelocityVariance   = 0.0;   	//ðàíäîìèçàöèÿ íà÷àëüíîé ñêîðîñòè (ì/ñ)
+   float EjectionOffsetMin  = 0.0;   	//ìèí ðàäèóñ ýìèòååðà â íîðìàëüíîé ïëîñêîñòè (ì)
+   float EjectionOffsetMax  = 0.0;   	//ìàêñ ðàäèóñ ýìèòååðà â íîðìàëüíîé ïëîñêîñòè (ì)
+   float ShiftVariance      = 0.0;   	//ñìåùåíèå âäîëü âåêòîðà íà÷àëüíîé ñêîðîñòè (ì)
+   float Shift              = 0.0;   	//ðàíäîìèçàöèÿ ñìåùåíèÿ
+
+   int ThetaMin             = 0;    	//ìèí îòêëîíåíèå ñêîðîñòè ÷àñòèöû îò íîðì ýìèòòåðà
+   int ThetaMax             = 0;    	//ìàêñ îòêëîíåíèå
+   int PhiReferenceVel      = 0;     	//íà÷àëî ñåêòîðà ãåíåðàöèè â íîðì ïëîñêîñòè (ãðàä)
+   int PhiVariance          = 360;   	//êîíåö ñåêòîðà ãåíåðàöèè â  (ãðàä, 0-360 -êðóã)
+   boolean OverrideAdvances = false; 	//èñïîëüçîâàíèå ÷àñòèöàìè ëîêàëà ýìèòååðà
+								//  (true-äà, false - íåò)
+   boolean OrientParticles  = true;  	//îðèåíòàöèÿ íîðìàëåé ÷àñòèö "íà êàìåðó" 
+								//  (true-äà, false - íåò)
+   boolean m_LightingParticle = false; 	//îñâåùåííîñòü ïàòèêëîâ (true-äà, false - íåò)
+   float m_LightingInterpolate = 0.5;  	//ñìåùåíèå ñåðîãî ê ñâåòó (0-1)
+
+   String TexName           = "textures/Effect_1.tex";	//èìÿ ôàéëà òåêñòóðû
+
+   boolean UseInvAlpha      = false;  	//òèï ïðîçðà÷íîñòè false - àääèòèâíàÿ,
+								//  true - íîðìàëüíàÿ 		
+   int     TexSize          = 128;    	//ðàçìåð òåêñòóðû â ïèêñåëàõ 
+   int     TexFrameX        = 64;     	//ðàçìåð êàäðà ïî øèðèíå
+   int     TexFrameY        = 64;     	//ðàçìåð êàäðà ïî âûñîòå
+
+   String ParticlesClass    = "CSubCaliberMetalSplashRefuseParticle"; //èìÿ îïèñàòåëÿ ÷àñòèö
+// Data block .............................................................................
+ CSubCaliberMetalSplashRefuseEffect()
+   {
+     String Transparency = "NORMAL";
+     if(!UseInvAlpha)
+       Transparency = "ADDITIVE";
+     CBaseRefuseEffectSkin::TexName = TexName;
+     CBaseRefuseEffectSkin::Transparency = Transparency;
+     CBaseRefuseEffectSkin::Size = TexSize;
+     CBaseRefuseEffectSkin::XSize = TexFrameX;
+     CBaseRefuseEffectSkin::YSize = TexFrameY;
+     CBaseRefuseEffect::Init();
+   }
+}
+// ÎÏÈÑÀÍÈÅ ×ÀÑÒÈÖ ------------------------------------------------------------------------
+class CSubCaliberMetalSplashRefuseParticle
+  extends CBaseRefuseParticle
+{
+// Data block ............................................................................
+   float ParticleLifetimeMS         = 0.5; 		//âðåìÿ æèçíè ÷àñòèöû (ñåê)
+   float ParticleLifetimeVarianceMS = 0.0;		//âàðèàöèÿ âðåìåíè æèçíè(ñåê)
+   float DragCoefficient            = 1.0;		//not in use
+   float GravityCoefficient         = 0.0;		//êîýôôèöèåíò âëèÿíèÿ ãðàâèòàöèè
+   float InheritedVelFactor         = 1.0;		//êîýôôèöèåíò íàñëåäîâàíèÿ íà÷àëüíîé
+									// ñêîðîñòè ýìèòååðà
+   float ConstantAcceleration       = 0.0;		//ñîáñòâåííîå óñîêðåíèå
+   
+   float SpinRandomMin              = -3.1;		//ìèí ïîâîðîò ÷àñòèöû âîêðóã
+									//  ñâîåé íîðìàëè (-3.14 äî 3.14)
+   float SpinRandomMax              = 3.1;		//ìàêñ (-3.14 äî 3.14)
+   float SpinSpeed                  = 0.0;		//ñêîðîñòü âðàùåíèÿ
+   
+//ÁËÎÊ ÄÈÍÀÌÈÊÈ ---------------------------------------------------------------------------
+  Array times  = [0.0, 0.2, 1.0];				//âðåìåííûå ïåðèîäû â òå÷åíèå
+									// æèçíè ÷àñòèöû (äî 8 ïåðèîäîâ)
+
+  Array colors = [ 						//öâåò è àëüôà ÷àñòèöû ïî ïåðèîäàì
+                 	new Color(0.9, 0.9, 0.9, 0.9),
+                  new Color(0.9, 0.9, 0.5, 0.5),
+                  new Color(0.1, 0.1, 0.1, 0.1)
+                  ];	
+
+   Array sizes  = [1.0, 0.5, 0.1];			//ðàçìåð ÷àñòèöû ïî ïåðèîäàì (ìàñøòàá)
+
+   Array frames = [                           		//êàäðû àíèìàöèè ìåæäó ïåðèîäàìè
+                    [2],
+                    [2]
+                  ];
+// Data block ..............................................................................
+}

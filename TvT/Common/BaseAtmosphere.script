@@ -1,0 +1,180 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseAtmosphere
+  extends CEditable
+{
+  boolean IsLightEnabled            = true;
+  boolean IsAntiSunEnabled          = false;
+  boolean IsShadowEnabled           = true;  //jeff was false
+
+  Vector  SunDirection              = new Vector(0.0, 0.0, -1.0);
+  Color   SunColor                  = new Color(0.0, 0.0, 0.0);
+  Color   BlindColor                = new Color(1.0, 1.0, 1.0);
+  Color   AntiSunColor              = new Color(0.0, 0.0, 0.0);
+  float   SunSpecularIntensity      = 1.0;
+  float   AntiSunSpecularIntensity  = 1.0;
+
+  float   AntiSunIntensity          = 1.0;
+  float   SunIntensity              = 1.0;
+
+  float   DistanceToSun             = 20000.0;
+  Array   HorizontPos               = [300.0, 2000.0];
+
+  Color   AmbientLight              = new Color(0.1, 0.1, 0.1);
+	
+  String  DefaultFogMode            = "Linear";
+  float   FogNear                   = 0.0;
+  float   FogFar                    = 10000.0;
+  float   FogFarMax                 = 11000.0;
+  float   FogDensity                = 0.0001;
+  Color   FogColorXPos              = new Color(0.7, 0.7, 0.7); // S
+  Color   FogColorXNeg              = new Color(0.7, 0.7, 0.7); // N
+  Color   FogColorYPos              = new Color(0.7, 0.7, 0.7); // E
+  Color   FogColorYNeg              = new Color(0.7, 0.7, 0.7); // W
+
+  Color   ShadowColor               = new Color(0.8, 0.8, 0.8);
+  Color   StencilShadowColor        = new Color(0.3, 0.3, 0.3);
+  float   ShadowFar                 = FogFar * 0.7;
+
+  Vector  WindVector                = new Vector(0.0, 0.0, 0.0);
+
+  boolean EnableHorizontAdjustment  = true;
+  boolean IsSunVisible              = false;
+
+  boolean IsCameraAdjustEnabled     = false;
+
+  float   AntiSunAngle              = 30.0;
+  float   AntiSunHorAngle           = 0.0;
+
+  float   CenterHeight              = 230.0;
+  
+  float	  TreeLightKoef             = 0.0;	//tree lighting smooth koef: 0 - min range; 0.3 - middle; 0.8 - high range  
+  float   SunShines                 = 0.5;
+  float   TreeShadowLodDistance     = 500;
+
+  //
+  // CEditable
+  //
+
+  Array GetDefaultProperties()
+  {
+    return [
+        [ "IsLightEnabled",           IsLightEnabled            ],
+        [ "IsShadowEnabled",          IsShadowEnabled           ],
+        [ "SunDirection",             SunDirection              ],
+        [ "SunColor",                 SunColor                  ],
+        [ "BlindColor",               BlindColor                ],
+        [ "SunSpecularIntensity",     SunSpecularIntensity      ],
+        [ "SunIntensity",             SunIntensity              ],
+        [ "DistanceToSun",            DistanceToSun             ],
+        [ "HorizontPos",              HorizontPos               ],
+        [ "AmbientLight",             AmbientLight              ],
+        [ "FogNear",                  FogNear                   ],
+        [ "FogFar",                   FogFar                    ],
+        [ "FogFarMax",                FogFarMax                 ],
+        [ "FogDensity",               FogDensity                ],
+        [ "FogColorXPos",             FogColorXPos              ],
+        [ "FogColorXNeg",             FogColorXNeg              ],
+        [ "FogColorYPos",             FogColorYPos              ],
+        [ "FogColorYNeg",             FogColorYNeg              ],
+        [ "ShadowColor",              ShadowColor               ],
+        [ "StencilShadowColor",       StencilShadowColor        ],
+        [ "ShadowFar",                ShadowFar                 ],
+        [ "IsSunVisible",             IsSunVisible              ],
+        [ "EnableHorizontAdjustment", EnableHorizontAdjustment  ],
+        [ "CenterHeight",             CenterHeight              ],
+        [ "AntiSunEnabled",           IsAntiSunEnabled          ],
+        [ "AntiSunColor",             AntiSunColor              ],
+        [ "AntiSunSpecularIntensity", AntiSunSpecularIntensity  ],
+        [ "AntiSunIntensity",         AntiSunIntensity          ],
+        [ "AntiSunAngle",             AntiSunAngle              ],
+        [ "AntiSunHorAngle",          AntiSunHorAngle           ],
+        [ "TreeLightKoef",            TreeLightKoef             ],
+        [ "SunShines",                SunShines                 ],
+        [ "TreeShadowLodDistance",    TreeShadowLodDistance     ]
+      ];
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    Color SunColor      = _PropMap.Get("SunColor",          SunColor) *
+                          _PropMap.Get("SunIntensity",      SunIntensity);
+    Color AntiSunColor  = _PropMap.Get("AntiSunColor",      AntiSunColor) * 
+                          _PropMap.Get("AntiSunIntensity",  AntiSunIntensity);
+
+
+    SetIsLightEnabled           (_PropMap.Get("IsLightEnabled",           IsLightEnabled));
+    SetIsShadowEnabled          (_PropMap.Get("IsShadowEnabled",          IsShadowEnabled));
+    SetSunDirection             (_PropMap.Get("SunDirection",             SunDirection));
+    SetSunColor                 (SunColor);
+    SetBlindColor               (_PropMap.Get("BlindColor",               BlindColor));
+    SetSunSpecularColor         (SunColor *
+                                 _PropMap.Get("SunSpecularIntensity",     SunSpecularIntensity));
+    SetDistanceToSun            (_PropMap.Get("DistanceToSun",            DistanceToSun));
+    SetHorizontPos              (_PropMap.Get("HorizontPos",              HorizontPos));
+    SetAmbientLight             (_PropMap.Get("AmbientLight",             AmbientLight));
+    SetFogMode                  (_PropMap.Get("FogMode",                  DefaultFogMode));
+    SetFogNear                  (_PropMap.Get("FogNear",                  FogNear));
+    SetFogFar                   (_PropMap.Get("FogFar",                   FogFar));
+    SetFogFarMax                (_PropMap.Get("FogFarMax",                FogFarMax));
+    SetFogDensity               (_PropMap.Get("FogDensity",               FogDensity));
+    SetFogColorXPos             (_PropMap.Get("FogColorXPos",             FogColorXPos));
+    SetFogColorXNeg             (_PropMap.Get("FogColorXNeg",             FogColorXNeg));
+    SetFogColorYPos             (_PropMap.Get("FogColorYPos",             FogColorYPos));
+    SetFogColorYNeg             (_PropMap.Get("FogColorYNeg",             FogColorYNeg));
+    SetShadowColor              (_PropMap.Get("ShadowColor",              ShadowColor));
+    SetStencilShadowColor       (_PropMap.Get("StencilShadowColor",       StencilShadowColor));
+    SetShadowFar                (_PropMap.Get("ShadowFar",                ShadowFar));
+    SetIsSunVisible             (_PropMap.Get("IsSunVisible",             IsSunVisible));
+    SetEnableHorizontAdjustment (_PropMap.Get("EnableHorizontAdjustment", EnableHorizontAdjustment ));
+    SetCenterHeight             (_PropMap.Get("CenterHeight",             CenterHeight));
+    SetAntiSunColor             (AntiSunColor);
+    SetAntiSunSpecularColor     (AntiSunColor * 
+                                 _PropMap.Get("AntiSunSpecularIntensity", AntiSunSpecularIntensity));
+    SetIsAntiSunEnabled         (_PropMap.Get("AntiSunEnabled",           IsAntiSunEnabled));
+    SetAntiSunDirectionAngle    (_PropMap.Get("AntiSunAngle",             AntiSunAngle));
+    SetAntiSunDirectionHorAngle (_PropMap.Get("AntiSunHorAngle",          AntiSunHorAngle));
+    
+    SetTreeLightKoef		        (_PropMap.Get("TreeLightKoef",	  	      TreeLightKoef));
+    SetSunShines                (_PropMap.Get("SunShines",	  	          SunShines));
+    SetTreeShadowLodDistance    (_PropMap.Get("TreeShadowLodDistance",	  TreeShadowLodDistance));
+  }
+
+  //
+  // Service
+  //
+  
+  Array GetPropStrings()
+  {
+    return [
+        [ "FogMode", [ "None", "Linear", "Exp", "Exp2" ] ]
+      ];
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    SetProperties(_PropMap);
+  }
+
+  void UpdateIngameState()
+  {
+  }
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+  }
+}

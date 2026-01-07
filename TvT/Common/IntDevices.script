@@ -1,0 +1,853 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+//
+// Base class for devices
+//
+
+class CInternalDevice
+{
+  // overridable members
+
+  static Array DeviceHPModes           = [DDM_Functioning, DDM_Damaged, DDM_Destroyed];
+  static Array DeviceHPPercents        = [0.3, 0.0];
+
+  // members
+
+  int     m_DamageMode      = DDM_Functioning;
+  boolean m_Destroyed       = false;
+
+  String  m_DeviceName;
+  WString m_DamageString;
+  String  m_DamageSound;
+
+  String  m_NormalSetId;
+  String  m_CrashedSetId;
+
+  int     m_EffectInstanceID = -1;
+
+  CInternalDevice()
+  {
+    if (DeviceHPPercents.size() != DeviceHPModes.size() - 1)
+      logError("DeviceHPPercents.size != DeviceHPModes.size() - 1");
+  }
+
+  // public
+
+  void SetDeviceName(
+      String _Name
+    )
+  {
+    m_DeviceName = _Name;
+  }
+
+  void SetHPPercent(
+      Component _HostObject,
+      float     _Percent
+    )
+  {
+    int DeviceMode = DeviceHPModes[DeviceHPModes.size() - 1];
+
+    for (int i = 0 ; i < DeviceHPPercents.size(); i ++)
+    {
+      if (_Percent > DeviceHPPercents[i])
+      {
+        DeviceMode = DeviceHPModes[i];
+        break;
+      }
+    }
+
+    if (DeviceMode != m_DamageMode)
+    {
+      m_DamageMode = DeviceMode;
+      SetDamageState(_HostObject, DeviceMode);
+    }
+  }
+
+  void GetDamageState()
+  {
+    return m_DamageMode;
+  }
+
+  // overridable service
+
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    UpdateDeviceStateScreen(_HostObject, m_DeviceName, _DamageMode);
+    UpdateSignalPanel(_HostObject, m_DeviceName, _DamageMode);
+
+    // Create functionality
+    if (_DamageMode == DDM_Damaged)
+    {
+      // Create effects
+      Array EffectData = _HostObject.GetDamageEffectName(m_DeviceName, 0);
+//      if (m_EffectInstanceID != -1)
+//        (new #EffectsArray()).DeleteEffect(m_EffectInstanceID);
+      m_EffectInstanceID = (new #EffectsArray()).CreateEffect(EffectData[1], getPosition(EffectData[0]), EffectData[0]);
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      // Switch models
+      SwitchJoints(_HostObject);
+
+      // Create effects
+      Array EffectData = _HostObject.GetDamageEffectName(m_DeviceName, 1);
+//      if (m_EffectInstanceID != -1)
+//        (new #EffectsArray()).DeleteEffect(m_EffectInstanceID);
+      m_EffectInstanceID = (new #EffectsArray()).CreateEffect(EffectData[1], getPosition(EffectData[0]), EffectData[0]);
+    }
+  }
+
+  void ShutdownEffect()
+  {
+    if (m_EffectInstanceID != -1)
+        (new #EffectsArray()).DeleteEffect(m_EffectInstanceID);
+  }
+
+  // service
+
+  void UpdateDeviceStateScreen(
+      Component _HostObject,
+      String    _DeviceID,
+      int       _DamageMode
+    )
+  {
+    Component CommonStatusScreen = _HostObject.GetObject("CommonStatusScreen");
+    if (CommonStatusScreen != null)
+      CommonStatusScreen.SetDamage(_DeviceID, _DamageMode);
+  }
+
+  void UpdateWeaponStateScreen(
+      Component _HostObject,
+      String    _DeviceID,
+      int       _DamageMode
+    )
+  {
+    Component WeaponsStatusScreen = _HostObject.GetObject("WeaponsStatusScreen");
+    if (WeaponsStatusScreen != null)
+      WeaponsStatusScreen.SetDamage(_DeviceID, _DamageMode);
+  }
+
+  void UpdateSignalPanel(
+      Component _HostObject,
+      String    _DeviceID,
+      int       _DamageMode
+    )
+  {
+  }
+
+  void SetDamageMessage(
+      WString _DamageString,
+      String  _DamageSound
+    )
+  {
+    m_DamageString = _DamageString;
+    m_DamageSound  = _DamageSound;
+  }
+
+  void SendDamageMessage(
+      Component _Cockpit
+    )
+  {
+    _Cockpit.SendCockpitMessage(m_DamageString, CCockpitColorMap::m_BadNewsColor, m_DamageSound);
+  }
+
+  void SwitchJoints(
+      Component _HostObject
+    )
+  {
+    // Hide base joint name and show crashed
+    Component Mesh = _HostObject.GetMeshComponent();
+    if (null != Mesh)
+    {
+      if (m_NormalSetId != "" && Mesh.ConfigSets.find(m_NormalSetId))
+      {
+        Array Names = Mesh.ConfigSets.getValue();
+        for (int i = 0; i < Names.size(); i++)
+          Mesh.EnableJoint2(Names[i],  0, false, false);
+      }
+      if (m_CrashedSetId != "" && Mesh.ConfigSets.find(m_CrashedSetId))
+      {
+        Array Names = Mesh.ConfigSets.getValue();
+        for (int i = 0; i < Names.size(); i++)
+          Mesh.EnableJoint2(Names[i], 0, true,  false);
+      }
+    }
+  }
+
+  void Initialize(
+      Component _HostObject
+    )
+  {
+    // Hide crashed joints
+    Component Mesh = _HostObject.GetMeshComponent();
+    if (null != Mesh)
+    {
+      if (m_CrashedSetId != "")
+      {
+        if (Mesh.ConfigSets.find(m_CrashedSetId))
+        {
+          Array Names = Mesh.ConfigSets.getValue();
+          for (int i = 0; i < Names.size(); i++)
+            Mesh.EnableJoint2(Names[i], 0, false,  false);
+        }
+        else
+          logError("Cant find set with name: " + m_CrashedSetId);
+      }
+
+      if (m_NormalSetId != "")
+      {
+        if (!Mesh.ConfigSets.find(m_NormalSetId))
+          logError("Cant find set with name: " + m_NormalSetId);
+      }
+    }
+  }
+}
+
+// ==================================
+// Hull driver virtual device
+// ==================================
+
+class CHullDriverDevice
+  extends CInternalDevice
+{
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if (_DamageMode == DDM_Damaged)
+    {
+      Component Mission = new #GameController().GetObject(SOID_MissionController);
+      if ( null == Mission)
+      {
+        logError("HullDriverDevice have null Mission component");
+        return;
+      }
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if ( null == Object )
+      {
+        logError("HullDriverDevice have null Object component");
+        return;
+      }
+      if(checkMask(Object, ["PLAYERUNIT"], []))
+      {
+       Component VehicleController = _HostObject.GetVehicleController();
+       if (VehicleController != null)
+       {
+         // Stop engine
+         VehicleController.StartEngine(false);
+       }
+      }
+      else
+      {
+        HullDriverDeviceDamaged(_HostObject);
+      }
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      Component Mission = new #GameController().GetObject(SOID_MissionController);
+      if ( null == Mission)
+      {
+        logError("HullDriverDevice have null Mission component");
+        return;
+      }
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if ( null == Object )
+      {
+        logError("HullDriverDevice have null Object component");
+        return;
+      }
+      if(checkMask(Object, ["PLAYERUNIT"], []))
+      {
+       Component VehicleController = _HostObject.GetVehicleController();
+       if (VehicleController != null)
+       {
+        // Disable engine
+        VehicleController.EnableEngine(false);
+       }
+      }
+      else
+      {
+        HullDriverDeviceDestroyed(_HostObject);
+      }
+    }
+  }
+
+  void HullDriverDeviceDamaged(Component _HostObject)   // called when damaged  HullDriverDevice
+  {
+    logWarning("HullDriverDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void HullDriverDeviceDestroyed(Component _HostObject) // called when destroyed  HullDriverDevice
+  {
+    logWarning("HullDriverDeviceDestroyed  for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+// ==================================
+// Hull gunlayer virtual device
+// ==================================
+
+class CHullGunlayerDevice
+  extends CInternalDevice
+{
+  Vector TurretOutForceMin       = new Vector(0.0,0.0,0.0);
+  Vector TurretOutForceMax       = new Vector(0.0,0.0,0.0);
+  float  TurretOutForceThetaMin  = 0;
+  float  TurretOutForceThetaMax  = 0;
+  Vector TurretOutRadiusMin      = new Vector(0.0,0.0,0.0);
+  Vector TurretOutRadiusMax      = new Vector(0.0,0.0,0.0);
+
+  Vector GetForce()
+  {
+    return new Vector(rand(TurretOutForceMin.x, TurretOutForceMax.x),
+                      rand(TurretOutForceMin.y, TurretOutForceMax.y ),
+                      rand(TurretOutForceMin.z, TurretOutForceMax.z  )
+                     );
+  }
+
+  float GetThetaForce()
+  {
+    return rand(TurretOutForceThetaMin, TurretOutForceThetaMax);
+  }
+
+  Vector GetRadius()
+  {
+    return new Vector(rand(TurretOutRadiusMin.x, TurretOutRadiusMax.x),
+                      rand(TurretOutRadiusMin.y, TurretOutRadiusMax.y),
+                      rand(TurretOutRadiusMin.z, TurretOutRadiusMax.z)
+                     );
+  }
+
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if (_DamageMode == DDM_Damaged)
+    {
+      Component Mission = new #GameController().GetObject(SOID_MissionController);
+      if ( null == Mission)
+      {
+        logError("HullDriverDevice have null Mission component");
+        return;
+      }
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if ( null == Object )
+      {
+        logError("HullDriverDevice have null Object component");
+        return;
+      }
+      if(checkMask(Object, ["PLAYERUNIT"], []))
+      {
+       Component VehicleController = _HostObject.GetVehicleController();
+       if (VehicleController != null)
+       {
+         // Stop engine
+         VehicleController.StartEngine(false);
+       }
+      }
+      else
+      {
+        HullGunlayerDeviceDamaged(_HostObject);
+      }
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      Component Mission = new #GameController().GetObject(SOID_MissionController);
+      if ( null == Mission)
+      {
+        logError("HullDriverDevice have null Mission component");
+        return;
+      }
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if ( null == Object )
+      {
+        logError("HullDriverDevice have null Object component");
+        return;
+      }
+      if(checkMask(Object, ["PLAYERUNIT"], []))
+      {
+       Component VehicleController = _HostObject.GetVehicleController();
+       if (VehicleController != null)
+       {
+         // Disable engine
+         VehicleController.EnableEngine(false);
+       }
+      }
+      else
+      {
+        HullGunlayerDeviceDestroyed(_HostObject);
+      }
+    }
+  }
+
+  void HullGunlayerDeviceDamaged(Component _HostObject)   // called when damaged  HullDriverDevice
+  {
+    logWarning("HullGunlayerDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void HullGunlayerDeviceDestroyed(Component _HostObject) // called when destroyed  HullDriverDevice
+  {
+    logWarning("HullGunlayerDeviceDestroyed  for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+// ==================================
+// Hull engine virtual device
+// ==================================
+
+class CHullEngineDevice
+  extends CInternalDevice
+{
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if (_DamageMode == DDM_Damaged)
+    {
+      Component Mission = new #GameController().GetObject(SOID_MissionController);
+      if ( null == Mission)
+      {
+        logError("HullDriverDevice have null Mission component");
+        return;
+      }
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if ( null == Object )
+      {
+        logError("HullDriverDevice have null Object component");
+        return;
+      }
+      if(checkMask(Object, ["PLAYERUNIT"], []))
+      {
+        Component VehicleController = _HostObject.GetVehicleController();
+        if (VehicleController != null)
+        {
+         // Stop engine
+         VehicleController.StartEngine(false);
+        }
+      }
+      else
+      {
+        HullEngineDeviceDamaged(_HostObject);
+      }
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      Component Mission = new #GameController().GetObject(SOID_MissionController);
+      if ( null == Mission)
+      {
+        logError("HullDriverDevice have null Mission component");
+        return;
+      }
+      Component Object = Mission.GetObject(getIdentificator(_HostObject));
+      if ( null == Object )
+      {
+        logError("HullDriverDevice have null Object component");
+        return;
+      }
+      if(checkMask(Object, ["PLAYERUNIT"], []))
+      {
+        Component VehicleController = _HostObject.GetVehicleController();
+        if (VehicleController != null)
+        {
+          // Disable engine
+          VehicleController.EnableEngine(false);
+        }
+      }
+      else
+      {
+        HullEngineDeviceDestroyed(_HostObject);
+      }
+    }
+  }
+
+  void HullEngineDeviceDamaged(Component _HostObject)   // called when damaged  HullDriverDevice
+  {
+    logWarning("HullEngineDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void HullEngineDeviceDestroyed(Component _HostObject) // called when destroyed  HullDriverDevice
+  {
+    logWarning("HullEngineDeviceDamaged  for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+// ==================================
+// Track left virtual device
+// ==================================
+
+class CTrackLeftDevice
+  extends CInternalDevice
+{
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if ((_DamageMode == DDM_Damaged) && (!m_Destroyed))
+    {
+      Component StateControl = _HostObject.GetObject("StateControl");
+      if (StateControl != null)
+      {
+        StateControl.ScheduleCustomState(0.0,
+          CUnitStateControl::USID_LeftTrack, CUnitStateControl::US_TrackDisabled);
+        StateControl.ScheduleCustomState(60.0,
+          CUnitStateControl::USID_LeftTrack, CUnitStateControl::US_TrackEnabled);
+
+        TrackLeftDeviceDamaged(_HostObject);
+      }
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      Component StateControl = _HostObject.GetObject("StateControl");
+      if (StateControl != null)
+      {
+        StateControl.ClearScheduleState(CUnitStateControl::USID_LeftTrack);
+        StateControl.SetCustomState(CUnitStateControl::USID_LeftTrack, CUnitStateControl::US_TrackDisabled);
+      }
+
+      TrackLeftDeviceDestroyed(_HostObject);
+      m_Destroyed = true;
+    }
+  }
+
+  void TrackLeftDeviceDamaged(Component _HostObject)   // called when damaged  HullDriverDevice
+  {
+    logWarning("TrackLeftDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void TrackLeftDeviceDestroyed(Component _HostObject) // called when destroyed  HullDriverDevice
+  {
+    logWarning("TrackLeftDeviceDestroyed  for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+// ==================================
+// Track right virtual device
+// ==================================
+
+class CTrackRightDevice
+  extends CInternalDevice
+{
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if ((_DamageMode == DDM_Damaged) && (!m_Destroyed))
+    {
+      Component StateControl = _HostObject.GetObject("StateControl");
+      if (StateControl != null)
+      {
+        StateControl.ScheduleCustomState(0.0,
+          CUnitStateControl::USID_RightTrack, CUnitStateControl::US_TrackDisabled);
+        StateControl.ScheduleCustomState(60.0,
+          CUnitStateControl::USID_RightTrack, CUnitStateControl::US_TrackEnabled);
+
+        TrackRightDeviceDamaged(_HostObject);
+      }
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      Component StateControl = _HostObject.GetObject("StateControl");
+      if (StateControl != null)
+      {
+        StateControl.ClearScheduleState(CUnitStateControl::USID_RightTrack);
+        StateControl.SetCustomState(CUnitStateControl::USID_RightTrack, CUnitStateControl::US_TrackDisabled);
+      }
+
+      TrackRightDeviceDestroyed(_HostObject);
+      m_Destroyed = true;
+    }
+  }
+
+  void TrackRightDeviceDamaged(Component _HostObject)   // called when damaged  HullDriverDevice
+  {
+    logWarning("TrackRightDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void TrackRightDeviceDestroyed(Component _HostObject) // called when destroyed  HullDriverDevice
+  {
+    logWarning("TrackRightDeviceDestroyed  for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+// ==================================
+// Bulk virtual device
+// ==================================
+
+class CBulkDevice
+  extends CInternalDevice
+{
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if (_DamageMode == DDM_Damaged)
+    {
+      BulkDeviceDamaged(_HostObject);
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      BulkDeviceDestroyed(_HostObject);
+    }
+  }
+
+  void BulkDeviceDamaged(Component _HostObject)   // called when damaged  TurretDevice
+  {
+    logWarning("BulkDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void BulkDeviceDestroyed(Component _HostObject) // called when destroyed  TurretDevice
+  {
+    logWarning("BulkDeviceDestroyed  for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+// ==================================
+// Turret device
+// ==================================
+
+class CTurretDevice
+  extends CInternalDevice
+{
+
+  void SetDamageState(
+      Component _HostObject,
+      int       _DamageMode
+    )
+  {
+    CInternalDevice::SetDamageState(_HostObject, _DamageMode);
+
+    // Create functionality
+    if (_DamageMode == DDM_Damaged)
+    {
+      TurretDeviceDamaged(_HostObject);
+    }
+    else
+    if (_DamageMode == DDM_Destroyed)
+    {
+      TurretDeviceDestroyed(_HostObject);
+    }
+  }
+
+  void TurretDeviceDamaged(Component _HostObject)   // called when damaged  TurretDevice
+  {
+    logWarning("TurretDeviceDamaged for class " + m_DeviceName + " do not redifine.");
+  }
+  void TurretDeviceDestroyed(Component _HostObject) // called when destroyed  TurretDevice
+  {
+    logWarning("TurretDeviceDestroyed for class " + m_DeviceName + " do not redifine.");
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+// Special version for tanks. Not suitable for SAU, and other vechicles
+////////////////////////////////////////////////////////////////////////////////////
+class CTankTurretDevice
+  extends CTurretDevice
+{
+
+  // override if main turret is not "Weapon_A"
+  String    GetLinkedWeapon() {
+    return "Weapon_A";
+  }
+
+  // override if autocommander/autoshooter/autodriver is not registered as "AutoThingsUI"
+  String    GetLinkedAutoThingsUI() {
+    return "AutoThingsUI";
+  }
+
+  void TurretDeviceDamaged(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 60);
+      Behavior.SetAimAbility(false, 300);
+    }
+
+    Component Weapon = _HostObject.GetObject( GetLinkedWeapon() );
+    if( Weapon != null ) {
+      Weapon.SetDamagedState();
+    }
+
+    Component CommonStatusScreen = _HostObject.GetObject("CommonStatusScreen");
+    if( CommonStatusScreen != null )
+    {
+      CommonStatusScreen.SetDamage("Turret_A", DDM_Damaged);
+    }
+
+    Component AutoThingsUI = _HostObject.GetObject( GetLinkedAutoThingsUI() );
+    if( AutoThingsUI != null ) {
+      AutoThingsUI.InjureAutoShooter();
+    }
+  }
+
+  void TurretDeviceDestroyed(Component _HostObject)
+  {
+    Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetFireAbility(false, 0);
+      Behavior.SetAimAbility(false, 0);
+    }
+
+// Это все Вовина фигня, которая не работает:
+//    Component Weapon = _HostObject.GetObject( GetLinkedWeapon() );
+//    if( Weapon != null ) {
+//      Weapon.SetDestroyedState();
+//    }
+
+// Вот так правильно
+    Component WeaponSelector = _HostObject.GetObject("WeaponSelector");
+    if( WeaponSelector != null )
+    {
+      WeaponSelector.SetWeaponStatus(DDM_Destroyed);
+    }
+
+    Component CommonStatusScreen = _HostObject.GetObject("CommonStatusScreen");
+    if( CommonStatusScreen != null )
+    {
+      CommonStatusScreen.SetDamage("Turret_A", DDM_Destroyed);
+    }
+
+    Component AutoThingsUI = _HostObject.GetObject( GetLinkedAutoThingsUI() );
+    if( AutoThingsUI != null ) {
+      AutoThingsUI.KillAutoShooter();
+    }
+  }
+}
+
+
+// ==================================
+// Devices controller
+// ==================================
+
+class CDevicesController
+{
+  // ==================================
+  // Attributes
+  // ==================================
+
+  Map m_DevicesLinks;
+
+  // ==================================
+  // Methods
+  // ==================================
+
+  void Shutdown(
+      Component _Mission
+    )
+  {
+    m_DevicesLinks.gotoBegin();
+    while (!m_DevicesLinks.isAtEnd())
+    {
+      Component Device = m_DevicesLinks.getValue();
+      Device.ShutdownEffect();
+
+      m_DevicesLinks.gotoNext();
+    }
+    m_DevicesLinks.clear();
+  }
+
+  void LinkDeviceToUnitItem(
+      String    _ItemName,
+      Component _Device
+    )
+  {
+    // Initialize device
+    _Device.Initialize(this);
+    _Device.SetDeviceName(_ItemName);
+
+    // Link device to item
+    m_DevicesLinks.insert(_ItemName, _Device);
+  }
+
+  Component GetDevice(
+      String _Name
+    )
+  {
+    if (!m_DevicesLinks.find(_Name))
+      return null;
+
+    return m_DevicesLinks.getValue();
+  }
+
+  void CreateInternalDevices()
+  {
+  }
+
+  // recieved from damaged item
+  void SetPartLifePercent(
+      String _PartName,
+      float  _HPPercent
+    )
+  {
+    if (m_DevicesLinks.find(_PartName))
+    {
+      Component Device = m_DevicesLinks.getValue();
+      Device.SetHPPercent(this, _HPPercent);
+    }
+  }
+
+  void SetCrashedSet(
+      String _PartName
+    )
+  {
+    if (m_DevicesLinks.find(_PartName))
+    {
+      Component Device = m_DevicesLinks.getValue();
+      Device.SwitchJoints(this);
+    }
+  }
+
+  void RestoreAllDevices()
+  {
+    m_DevicesLinks.gotoBegin();
+    while (!m_DevicesLinks.isAtEnd())
+    {
+      Component Device = m_DevicesLinks.getValue();
+      Device.SetHPPercent(this, 1.0);
+
+      m_DevicesLinks.gotoNext();
+    }
+    // restore all possible damages
+
+    Component VehicleController = GetVehicleController();
+
+  }
+}

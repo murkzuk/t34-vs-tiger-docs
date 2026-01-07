@@ -1,0 +1,796 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CHumanStateControl
+  extends CUnitStateControl
+{
+}
+
+class CHumanTargetingAnimator
+  extends CTargetingAnimator
+{
+  String HorAnimName    = "";
+  String VerAnimName    = "";
+
+  float  LeftEndAngle   = -180.0;
+  float  RightEndAngle  =  180.0;
+  float  TopEndAngle    =  40.0;
+  float  BottomEndAngle = -15.0;
+}
+
+class CHumanUnit
+  extends CUnit, CHumanStateControl
+{
+  final static String DefaultSurfaceControl = "PutonGroundUpright";
+
+  final static boolean CanStayAttack = true;
+
+  final static float  FastDieAnimationTime = 1.0 / 8.0;   // Время анимации быстрой гибели юнита, например, при переезде юнита танком
+
+  int SpecHeliLoadAnim = -1;
+
+  final static Array DeathRunAnimations = [ ["death_run", 6.36f] ];
+
+  final static Array DeathAnimations = [["death_stand_fr", 4.33],
+                                        ["death_sit_fr", 4.0],
+                                        ["death_sit_fr", 4.0]];
+;
+
+  boolean m_Guncrew = false;
+  boolean m_RuningToGun = false;
+  Matrix  m_GuncrewPos;
+
+  final static boolean DefaultShowInCinema = false;
+
+  boolean   m_PassiveUnit           = true;
+
+//  Animation Arrays
+/*
+  final static int STATE_Default              = 0;
+  final static int STATE_NearHeli             = 1;
+  final static int STATE_Ready                = 2;
+  final static int STATE_Aim                  = 3;
+*/
+  // from CHumanAnimatorConfig
+
+  final static Array RunAnimations = [
+                                        [
+                                          CHumanAnimatorConfig::iANIM_RunCommon,
+                                          CHumanAnimatorConfig::iANIM_RunReady,
+                                          CHumanAnimatorConfig::iANIM_RunChasovoy
+                                        ],
+                                        [
+                                          CHumanAnimatorConfig::iANIM_RunHeli
+                                        ],
+                                        [
+                                          CHumanAnimatorConfig::iANIM_RunCommon,
+                                          CHumanAnimatorConfig::iANIM_RunReady,
+                                          CHumanAnimatorConfig::iANIM_RunChasovoy,
+                                          CHumanAnimatorConfig::iANIM_RunHeli
+                                        ],
+                                        [
+                                          CHumanAnimatorConfig::iANIM_RunCommon,
+                                          CHumanAnimatorConfig::iANIM_RunReady,
+                                          CHumanAnimatorConfig::iANIM_RunChasovoy,
+                                          CHumanAnimatorConfig::iANIM_RunHeli
+                                        ]
+                                      ];
+
+  final static Array StayAnimations = [
+                                        [
+                                          CHumanAnimatorConfig::iANIM_StayFree
+                                        ],
+                                        [
+                                          CHumanAnimatorConfig::iANIM_StayFree
+                                        ],
+                                        [
+                                          CHumanAnimatorConfig::iANIM_StayReady
+                                        ]
+                                      ];
+
+  // ==================================
+  // Costruction
+  // ==================================
+
+  CHumanUnit()
+  {
+    m_FrontAlarmAngle       = Math_PI;
+  }
+
+  // ==================================
+  // Interface
+  // ==================================
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    // Call inherited function
+    CUnit::Construct(_Mission, _PropMap);
+
+    // Setup animator
+    SetupAnimator("HumanAnimator", new #StateAnimator<CHumanAnimator>());
+    GetObject("HumanAnimator").SetEventHandler(this);
+
+    if (!DeathAnimations.isEmpty() ||
+        !DeathRunAnimations.isEmpty())
+      SetupAnimator("DeathAnimator", new #LineAnimator());
+
+    SpecHeliLoadAnim = _PropMap.Get("SpecHeliLoadAnim", -1);
+    if (SpecHeliLoadAnim != -1)
+      SetupHeliLoadAnimator();
+
+    Component SurfaceControl = GetObject("SurfaceControl");
+    Component Mesh  = GetMeshComponent();
+    Component Joint = Mesh.GetJoint("WalkPoint");
+    if (Joint == null)
+      logWarning("Invalid WalkPoint joint for human: " + getIdentificator(user));
+    else
+      SurfaceControl.SetGearJoints([Joint]);
+
+    SetupDestroyController(
+        "CBodySubstance",
+//        400.0,
+        70.0,
+        ComputeTouchParams(4000.0, 2.0)
+      );
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CUnit::Initialize(_Mission, _PropMap);
+
+    Component HumanAnimator = GetHumanAnimator();
+    HumanAnimator.Initialize(GetMeshComponent());
+
+    HumanAnimator.InitPossibleAnimations(GetHumanAnimations(RunAnimations, _PropMap.Get("RunAnimations", [])),
+                                         GetHumanAnimations(StayAnimations, _PropMap.Get("StayAnimations", [])));
+
+    HumanAnimator.SetMinVisibleLOD(3.0f);
+
+    // Register animator in mesh for send show/hide messages
+    GetMeshComponent().AppendRenderNotifyObject(HumanAnimator);
+
+    if (!m_WeaponList.isEmpty())
+    {
+      HumanAnimator.InitializeWeaponJoint(m_WeaponList[0]);
+
+      Component Behavior = GetBehavior();
+      if (Behavior != null)
+      {
+        if (CHumanAnimatorConfig::MaxHAngle < Behavior.GetSpecParams().NonRotatableAngle)
+          Behavior.SetWeaponAnimatedHAngle(CHumanAnimatorConfig::MaxHAngle);
+        Behavior.InvokeTaskFunction("SetIsHuman", [true]);
+      }
+    }
+
+    // initial anim
+    OnAttackStateChanged(CHumanAttackStates::STATE_Default);
+
+    m_Guncrew = _PropMap.Get("Guncrew", false);
+    _PropMap.Set("Guncrew", m_Guncrew);
+
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CUnit::SetProperties(_PropMap);
+    m_Guncrew = _PropMap.Get("Guncrew", false);
+    SetGuncrewMode(m_Guncrew);
+
+  }
+
+  void SetGuncrewMode(
+      boolean _Enable
+    )
+  {
+    if (checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+
+    Component Behavior = GetBehavior();
+    if (Behavior != null)
+      Behavior.ActivateBehavior(!_Enable);
+
+    m_GuncrewPos = getPosition(this);
+    EnableAnimators(!_Enable);
+    if (_Enable)
+    {
+      Behavior.ActivateFire(false);
+      Behavior.ActivateRadar(false);
+      GetMeshComponent().SetAnimationPhase("sit_ready", 1.0f);
+    }
+    else
+      OnAttackStateChanged(CHumanAttackStates::STATE_Default);
+
+    setVisibleState(GetMeshComponent().GetJoint("Gun"), !_Enable);
+
+  }
+
+  void GuncrewRun(
+      boolean _Enable
+    )
+  {
+    if (!m_Guncrew || checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+
+    Component Behavior = GetBehavior();
+    Behavior.ActivateBehavior(true);
+    if (_Enable)
+    {
+      setVisibleState(GetMeshComponent().GetJoint("Gun"), true);
+      m_RuningToGun = false;
+      EnableAnimators(true);
+      Component Task = Behavior.GetTaskScriptHost();
+      if (Task != null && Task.m_Group != null)
+        Task.m_Group.SoldierRun(getIdentificator(this));
+    }
+    else
+    {
+      Vector CurPos = getPosition(this).origin;
+      if ((m_GuncrewPos.origin - CurPos).Magnitude() > 0.5f)
+      {
+        m_RuningToGun = true;
+        sendEvent(3.0, getIdentificator(this), "ReturnToGun", []);
+      }
+      else
+      {
+        setVisibleState(GetMeshComponent().GetJoint("Gun"), false);
+        Behavior.ActivateBehavior(false);
+        EnableAnimators(false);
+        GetMeshComponent().SetAnimationPhase("sit_ready", 1.0f);
+        Behavior.SetPosition(m_GuncrewPos);
+        Component Task = Behavior.GetTaskScriptHost();
+        if (Task != null && Task.m_Group != null)
+          Task.m_Group.SoldierReturn(getIdentificator(this));
+      }
+    }
+  }
+
+  event void ReturnToGun()
+  {
+    if (!m_Guncrew || checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+    return;
+
+    if (m_RuningToGun)
+    {
+      Component Behavior = GetBehavior();
+      Behavior.setOrder_MoveTo(m_GuncrewPos.origin, 100.0f);
+    }
+  }
+
+  // ==================================
+  // Service
+  // ==================================
+  event void OnChangeStateAnimation(
+      Component _Animator,
+      String    _FromState,
+      String    _ToState,
+      float     _Speed
+    )
+  {
+    Component HumanAnimator = GetHumanAnimator();
+
+    if (_Speed > 2.5f)
+      HumanAnimator.SetPose(GetMeshComponent(), ["weapon_carry"]);
+    else
+      HumanAnimator.SetPose(GetMeshComponent(), ["weapon_m16_attack"]);
+  }
+
+  void SetupLoadTransportAnimation(
+      Component _LoadLineAnimator,
+      Component _UnloadLineAnimator
+    )
+  {
+    Component Mesh = GetMeshComponent();
+
+    setSlaveObject(_LoadLineAnimator, Mesh);
+    RegisterObject("LoadAnimator", _LoadLineAnimator);
+
+    setSlaveObject(_UnloadLineAnimator, Mesh);
+    RegisterObject("UnloadAnimator", _UnloadLineAnimator);
+  }
+
+  Component GetHumanAnimator()
+  {
+    return GetObject("HumanAnimator");
+  }
+
+  void OnLifeStateChanged(
+      boolean _IsAlive
+    )
+  {
+    // check if this is destructible
+    if (-1.0 == m_MaxHitPoints)
+      return;
+
+    if (!_IsAlive)
+    {
+//      DestroyHuman( false );
+      sendEvent(0.5, getIdentificator(this), "DestroyHuman", [false]);
+    }
+    else
+      sendEvent(0.0, getIdentificator(this), "RestoreObject", []);
+  }
+
+  event void DestroyHuman( boolean _FastDie )
+  {
+    if (!_FastDie && checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+
+    logMessage(getIdentificator(this) + "::DestroyHuman()");
+
+    // Set dead classificator
+    addClassificator(this, CLASSIFICATOR_DEAD_OBJECT);
+    addClassificator(this, CLASSIFICATOR_DO_NOT_COLLISION_CHECK);
+
+    Component DeathAnimator = GetObject("DeathAnimator");
+    if (DeathAnimator == null)
+    {
+      sendEvent(0.0, getIdentificator(this), "DestroyObject", []);
+      return;
+    }
+
+    // Create death effects & sound
+    if (!PrevDeathEffect.isEmpty())
+    {
+      Component EffectsArray = new #EffectsArray();
+      for (int i = 0; i < PrevDeathEffect.size(); i++)
+      {
+        EffectsArray.CreateEffect(
+          PrevDeathEffect[i][1], GetPositionOfItem(PrevDeathEffect[i][0]), this);
+      }
+    }
+
+    if ("" != PrevDeathSound)
+      (new #SoundsArray()).
+        CreateSound(PrevDeathSound, getPosition(this));
+
+    // clear events scheduled earlier for this object
+    clearEventsForObject(getIdentificator(this));
+
+    // get beh component
+    Component Behavior = GetBehavior();
+    if (Behavior != null)
+    {
+      // deactivate beh
+      Behavior.ActivateBehavior(false);
+    }
+
+    Map ContextInfo = GetHumanAnimator().GetContextInfo();
+
+    EnableAnimators(false);
+
+    boolean Visible = true;
+
+    if (ContextInfo.find("Visible"))
+      Visible = ContextInfo.getValue();
+
+    if (ContextInfo.find("Speed"))
+    {
+      float Speed = ContextInfo.getValue();
+      if (Speed >= 0.5f) //$TODO Constant
+      {
+        float Time = DeathRunAnimations[0][1] / sqrt(Speed);
+        if( _FastDie ) {
+          Time = FastDieAnimationTime;
+        }
+
+        if( Visible )
+        {
+          DeathAnimator.SetAnimationName(DeathRunAnimations[0][0]);
+          DeathAnimator.SetAnimationTime(Time);
+          DeathAnimator.AnimateForward();
+        }
+        else
+        {
+          // dont play anim just set last phase
+          Time = 0.0;
+          GetMeshComponent().SetAnimationPhase(DeathRunAnimations[0][0], 1.0f);
+        }
+
+        sendEvent(Time, getIdentificator(GetMission()), "OnObjectDestroyed", [getIdentificator(this)]);
+        sendEvent(Time, getIdentificator(this), "OnObjectDestroyed", [getIdentificator(this)]);
+        return;
+      }
+    }
+
+    int CurAnim = GetSitState();
+    if (CurAnim >= DeathAnimations.size())
+      CurAnim = 0;
+
+    float Time = DeathAnimations[CurAnim][1];
+    if( _FastDie ) {
+      Time = FastDieAnimationTime;
+    }
+
+    if( Visible )
+    {
+      DeathAnimator.SetAnimationName(DeathAnimations[CurAnim][0]);
+      DeathAnimator.SetAnimationTime(Time);
+      DeathAnimator.AnimateForward();
+    }
+    else
+    {
+      // dont play anim just set last phase
+      Time = 0.0;
+      GetMeshComponent().SetAnimationPhase(DeathAnimations[CurAnim][0], 1.0f);
+    }
+
+    // Send destruction event
+    sendEvent(Time, getIdentificator(GetMission()), "OnObjectDestroyed", [getIdentificator(this)]);
+    sendEvent(Time, getIdentificator(this), "OnObjectDestroyed", [getIdentificator(this)]);
+    //sendEvent(Time, getIdentificator(this), "EnableSurfaceControl", [false]);
+  }
+
+  void KillHuman()
+  {
+    logMessage(getIdentificator(this) + "::KillHuman()");
+
+    // Set dead classificator
+    addClassificator(this, CLASSIFICATOR_DEAD_OBJECT);
+    addClassificator(this, CLASSIFICATOR_DO_NOT_COLLISION_CHECK);
+
+    // clear events scheduled earlier for this object
+//    clearEventsForObject(getIdentificator(this));
+
+    // get beh component
+    Component Behavior = GetBehavior();
+    if (Behavior != null)
+      Behavior.ActivateBehavior(false);
+
+    EnableAnimators(false);
+
+    GetMeshComponent().SetAnimationPhase("death_stand_fr", 0.25f);
+    sendEvent(0.0f, getIdentificator(GetMission()), "OnObjectDestroyed", [getIdentificator(this)]);
+    sendEvent(0.0f, getIdentificator(this), "OnObjectDestroyed", [getIdentificator(this)]);
+
+//    Component DestroyController = GetDestroyController();
+//    DestroyController.EnableControl(false);
+//    DestroyController.Activate(false);
+  }
+
+  int GetAttackState()
+  {
+    return GetHumanAnimator().GetAttackState();
+  }
+
+  int GetSitState()
+  {
+    return GetHumanAnimator().GetSitState();
+  }
+
+
+  // ==================================
+  // Events
+  // ==================================
+
+  event void RestoreObject()
+  {
+    removeClassificator(this, CLASSIFICATOR_DO_NOT_COLLISION_CHECK);
+    Component DeathAnimator = GetObject("DeathAnimator");
+    if (DeathAnimator != null)
+    {
+      DeathAnimator.Stop();
+    }
+
+    EnableAnimators(true);
+
+    Component DestroyController = GetDestroyController();
+    DestroyController.EnableControl(false);
+    DestroyController.Activate(false);
+    SetSurfaceControl("PutonGround");
+
+    CObject::RestoreObject();
+  }
+
+  event void EnableAnimators(
+      boolean _IsEnabled
+    )
+  {
+    GetHumanAnimator().EnableControl(_IsEnabled);
+  }
+
+  event void OnAttackStateChanged(
+      int _StateID
+    )
+  {
+
+    GetHumanAnimator().OnAttackStateChanged(_StateID);
+
+    if (!CanStayAttack &&
+        _StateID >= CHumanAttackStates::STATE_Ready)
+    {
+      OnSitStateChanged(CHumanAttackStates::STATE_Sit);
+    }
+  }
+
+  void OnMoveOrder()
+  {
+    GetHumanAnimator().SetMoveState(1);
+    GetHumanAnimator().SetPose(GetMeshComponent(), CHumanAnimatorConfig::POSE_Attack);
+    logWarning("Human Move");
+  }
+
+  void OnMoveOrderEnd()
+  {
+    GetHumanAnimator().SetMoveState(0);
+    GetHumanAnimator().SetPose(GetMeshComponent(), CHumanAnimatorConfig::POSE_Attack_M16);
+    logWarning("Human Move end");
+  }
+
+  event void OnSitStateChanged(
+      int _StateID
+    )
+  {
+
+    if (!CanStayAttack &&
+        GetAttackState() >= CHumanAttackStates::STATE_Ready)
+    {
+      _StateID = CHumanAttackStates::STATE_Sit;
+    }
+
+    GetHumanAnimator().OnSitStateChanged(_StateID);
+  }
+
+  event void ShowAnimDebugInfo(
+      boolean _Show
+    )
+  {
+    GetHumanAnimator().ShowDebugInfo(_Show);
+  }
+
+  event void ShowAnimParams(
+      int     _Param,
+      boolean _Show
+    )
+  {
+    GetHumanAnimator().ShowParameter(_Param, _Show);
+  }
+
+  void PlayLoadTransportAnimation(
+      String _TransportID,
+      Array  _AnimInfo
+    )
+  {
+    Component LoadAnimator = GetObject("LoadAnimator");
+    if (LoadAnimator != null)
+    {
+      EnableAnimators(false);
+      if (_AnimInfo.size() == 2)
+      {
+        LoadAnimator.SetAnimationName(_AnimInfo[0]);
+        LoadAnimator.SetAnimationTime(_AnimInfo[1]);
+      }
+      LoadAnimator.AnimateForward();
+      GetMeshComponent().SetAnimationPhase(LoadAnimator.GetAnimationName(), 0.0);
+      sendEvent(LoadAnimator.GetAnimationTime(), getIdentificator(this), "LoadAnimationEnd", []);
+      sendEvent(LoadAnimator.GetAnimationTime() + 1.0, getIdentificator(this), "LoadAnimationContinue", []);
+    }
+    else
+      sendEvent(0.0, getIdentificator(this), "LoadAnimationEnd", []);
+  }
+
+  event void LoadAnimationContinue()
+  {
+    EnableAnimators(true);
+  }
+
+  void PlayUnloadTransportAnimation(
+      String _TransportID
+    )
+  {
+    Component UnloadAnimator = GetObject("UnloadAnimator");
+    if (UnloadAnimator != null)
+    {
+      EnableAnimators(false);
+      UnloadAnimator.AnimateForward();
+
+      sendEvent(UnloadAnimator.GetAnimationTime(), getIdentificator(this), "EnableAnimators", [true]);
+      sendEvent(UnloadAnimator.GetAnimationTime(), getIdentificator(this), "UnloadAnimationEnd", []);
+    }
+    else
+      sendEvent(0.0, getIdentificator(this), "UnloadAnimationEnd", []);
+  }
+
+  void SetupHeliLoadAnimator()
+  {
+    Component HeliLoadAnimator = new #StateAnimator();
+    loadFromScript(HeliLoadAnimator, "CHumanLoadHeliAnimator", [SpecHeliLoadAnim]);
+
+    setSlaveObject(HeliLoadAnimator, GetSlaveObject());
+    RegisterObject("HeliLoadAnimator", HeliLoadAnimator);
+
+    if (CHumanLoadHeliAnimatorConfig::AnimationsInitPos[SpecHeliLoadAnim] == new Vector(0.0, 0.0, 0.0))// assume 0.0 vector is spec value
+    {
+      Component Mesh = GetMeshComponent();
+      Mesh.SetAnimateAlways(true);
+      Mesh.SetAnimationPhase(CHumanLoadHeliAnimatorConfig::Animations[SpecHeliLoadAnim][1][0], 0.0f);
+      Mesh.SetAnimateAlways(false);
+
+      // initial pos relative to root joint
+      CHumanLoadHeliAnimatorConfig::AnimationsInitPos[SpecHeliLoadAnim] = getPosition(Mesh.GetRootJoint()).multInvVrt(getPosition(Mesh.GetJoint("m_Hips")).origin);
+    }
+
+    HeliLoadAnimator.EnableControl(false);
+    // $TMP
+//    HeliLoadAnimator.EnableControl(true);
+//    GetHumanAnimator().EnableControl(false);
+  }
+
+  void HeliLoadRun()
+  {
+    GetObject("HeliLoadAnimator").SetRunState();
+  }
+
+  float GetHeliLoadTime()
+  {
+    return CHumanLoadHeliAnimatorConfig::Animations[SpecHeliLoadAnim][1][1];
+  }
+
+  Matrix GetHeliLoadInitPos(
+      Matrix _HeliPos
+    )
+  {
+    Matrix T = new Matrix(_HeliPos);
+    T.xvec = - T.xvec;
+    T.yvec = - T.yvec;
+    T.origin =  _HeliPos.multVrt(CHumanLoadHeliAnimatorConfig::AnimationsInitPos[SpecHeliLoadAnim]);
+    return T;
+  }
+
+  Array GetHumanAnimations(
+      Array _Default,
+      Array _Local
+    )
+  {
+    if (_Local.isEmpty())
+      return _Default;
+
+    Array CurAnimations = clone(_Default);
+    for (int i = 0; i < _Local.size(); i++)
+    {
+      CurAnimations[_Local[0]] = _Local[1];
+    }
+    return CurAnimations;
+  }
+
+  // ==========================================
+  // Building physics controller
+  // ==========================================
+
+  Component GetDestroyController()
+  {
+    return GetObject("DestroyController");
+  }
+
+  event void OnPhysicsEnabled(
+      boolean _Enable
+    )
+  {
+    //if (!_Enable)
+//      GetDestroyController().EnableControl(false);
+  }
+
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+    if (-1.0 == m_MaxHitPoints) {
+      Component StateControl = GetStateControl();
+      StateControl.SetHitPoints( 0.0 );
+    } else {
+      DestroyHuman( true );
+    }
+  }
+
+  event void PushHuman(
+      float _Energy,
+      Vector _Point
+    )
+  {
+    if(checkMask(this, [CLASSIFICATOR_DEAD_OBJECT], []))
+      return;
+
+    if (m_Guncrew)
+    {
+      Component StateControl = GetStateControl();
+      StateControl.SetHitPoints( 0.0 );
+      return;
+    }
+
+    KillHuman();
+
+
+//    Vector Force = (new Vector(15.0f, 15.0f, 15.0f) - (getPosition(user).origin - _Point))/3.0f;
+    Vector Force = (getPosition(user).origin - _Point);
+/*    if (Force.x > 0)
+      Force.x = 1.0 - Force.x;
+    else
+      Force.x = -1.0 + Force.x;
+
+    if (Force.y > 0)
+      Force.y = 1.0 - Force.y;
+    else
+      Force.y = -1.0 + Force.y;
+*/
+
+//    Force.z = 0.5f;
+
+    Force.x = Force.x;
+    Force.y = Force.y;
+    Force.z = sqrt(Force.x*Force.x + Force.y*Force.y);
+
+//    logWarning("MODForce bef X: " + new String(Force.x));
+//    logWarning("MODForce bef Y: " + new String(Force.y));
+//    logWarning("MODForce bef Z: " + new String(Force.z));
+
+//    Force = 10.0f * Force / Force.SquareMagnitude();
+    Force.z = 5.0f * Force.z / (Force.z*Force.z);
+
+//    logWarning("MODForce af X: " + new String(Force.x));
+//    logWarning("MODForce af Y: " + new String(Force.y));
+//    logWarning("MODForce af Z: " + new String(Force.z));
+
+
+    Component DestroyController = GetDestroyController();
+    DestroyController.EnableControl(true);
+    DestroyController.Activate(true);
+    SetSurfaceControl("None");
+    DestroyController.AppendExternalForce(Force, new Vector(0.01, 0.01, 0.02));
+//    logWarning("Push: " + new String(Force));
+  }
+
+  void SetupDestroyController(
+      String _SubstaceScriptClass,
+      float  _HumanMass,
+      float  _DestroyEnergy
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupDestroyPhysicsController function call");
+      return;
+    }
+
+    // Create physics controller
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, _SubstaceScriptClass);
+
+    // Initialize controller
+    PhysicsController.SetEventHandler(this);
+    PhysicsController.SetMass(_HumanMass);
+    setSlaveObject(PhysicsController, Mesh);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    // Register object physics controller
+    RegisterObject("DestroyController", PhysicsController);
+
+    // Create base physics body and fix it
+    Array Shapes = Mesh.GetCollisionShapes(Mesh.GetRootJoint(), false);
+    PhysicsController.CreateRigidBody("Body", Mesh, Shapes);
+//    PhysicsController.SetFixedBody("Body", true);
+
+    // Append classificator for physics controllable object
+    addClassificator(user, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+
+    PhysicsController.SetIsectionModeAsSkipContacts();
+    PhysicsController.CreateTouchTrigger(_DestroyEnergy);
+    PhysicsController.EnableControl(false);
+  }
+}

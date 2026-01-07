@@ -1,0 +1,92 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+// Author: Vladimir Ivchenkov (ivchenkov@g5software.com)
+//-------------------------------------------------------------------
+
+class CBaseTankAutoThingUI {
+  Component MaterialManager = new #MaterialManager<CTankAutoThingUIMaterials>();
+
+  Array Fonts = [
+    [ "Interface", 0.04 ]
+  ];
+
+  float PixelScale = 1.0f / 1024.0f;
+  float XScale = 64.0f * PixelScale * 2.0f;
+  float XScale2 = XScale / 2.0f;
+  float ControlHeight = 52.0f;
+
+//  Array shift = [ 343, 407, 471, 535, 599, 671, 743, 853 ];
+  Array shift = [ 283, 330, 377, 451, 478, 535, 600, 679 ];
+
+  // Inactive color ()
+  // Active color (244,255,215)
+  //Color ActiveColor   = new Color(242.0/256.0, 119.0/256.0, 23.0/256.0);
+  //Color InactiveColor = new Color( 0.5, 0.5, 0.5 );
+  //Color DisabledColor = new Color( 1.0, 0.0, 0.0 );
+  Color ActiveColor   = new Color(244.0/256.0, 255.0/256.0, 215.0/256.0);
+  Color InactiveColor = new Color(244.0/256.0, 255.0/256.0, 215.0/256.0);
+  Color DisabledColor = new Color(244.0/256.0, 255.0/256.0, 215.0/256.0);
+
+  Array AutoDriverIcon    = [ shift[0], 0, [
+      // x    y     align               ws      hs          mat    renderf  color          sx   sy
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autodriverA",      0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autodriver",      0, InactiveColor, 0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autodriverP",      0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autodriverD",      0, ActiveColor,   0.0, 0.0 ]
+    ]
+  ];
+  Array AutoGunnerIcon    = [ shift[1], 0, [
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autogunnerA",      0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autogunner",      0, InactiveColor, 0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autogunnerP",      0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autogunnerD",      0, ActiveColor,   0.0, 0.0 ]
+    ]
+  ];
+  Array AutoCommanderIcon = [ shift[2], 0, [
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autocommanderA",   0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autocommander",   0, InactiveColor, 0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autocommanderP",   0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "autocommanderD",   0, ActiveColor,   0.0, 0.0 ]
+    ]
+  ];
+  Array GearBox = [ shift[4], 0,
+    [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "gear", 0, ActiveColor, 0.0, 0.0 ],
+    [ float( shift[5] + shift[4] ) / 2.0f * PixelScale, 5 * PixelScale, "N", "N", "N", "N", 0, L"", ActiveColor ]
+  ];
+  Array SpeedBox = [ shift[5], 0,
+    [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "speed", 0, ActiveColor, 0.0, 0.0 ],
+    [ float( shift[6] + shift[5] ) / 2.0f * PixelScale, 5 * PixelScale, "N", "N", "N", "N", 0, L"", ActiveColor ]
+  ];
+  Array RPMBox = [ shift[6], 0,
+    [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "rpm", 0, ActiveColor, 0.0, 0.0 ],
+    [ float( shift[7] + shift[6] ) / 2.0f * PixelScale, 5 * PixelScale, "N", "N", "N", "N", 0, L"", ActiveColor ]
+  ];
+  Array Handbrake = [ shift[7], 0, [
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "handbrake on",   0, ActiveColor,   0.0, 0.0 ],
+      [ 0.0, 0.0, "N", "N", "N", "N", XScale, -XScale, "handbrake off",   0, InactiveColor, 0.0, 0.0 ]
+    ]
+  ];
+
+
+  Array MessagesWindow = [ 0.0, 0.1, 0.5, 0.2 ];
+  Array AutoDriverMessages = [
+    [ 0, ["Вперед","Вперед помаленьку","Давай вперед"]],
+    [ 1, ["Медленнее","Помедленней"]],
+    [ 2, ["Назад","Быстрее назад"]],
+    [ 3, ["Влево","Поворачивай налево"]],
+    [ 4, ["Вправо"]],
+    [ 5, ["Стой","Стой, гнида!"]],
+    [ 6, ["Вот дерьмо!","Заводи!"]]
+  ];
+
+  Array AutoGunnerMessages = [
+  ];
+
+  Array AutoCommanderMessages = [
+  ];
+}

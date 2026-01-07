@@ -1,0 +1,374 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseMenuController
+{
+  final static float WindowTimerFrequency = 0.25;
+
+  // Create material manager
+  Component  m_MaterialManager  = new #MaterialManager<CMenuSkin>();
+
+  boolean    m_MusicEnabled     = false;
+  boolean    m_NewMenuLoaded    = false;
+
+  Collection m_WindowTimerUsers;
+
+
+  CBaseMenuController()
+  {
+    // Create cursor $TMP
+    CreateDefaultCursor();
+  }
+
+  //
+  // Internal methods
+  //
+
+  void BaseMenu_FreeUnusedMaterials()
+  {
+    m_MaterialManager.FreeUnusedMaterials();
+  }
+
+  // Method for define nevigation stack
+  void OnNullNavigationStack()
+  {
+    // Call base menu screen
+    GoTo("MainMenu");
+  }
+
+  //
+  // Cursor control
+  //
+
+  Component CreateCursor(
+      String _Material,
+      float  _X,
+      float  _Y,
+      float  _Width,
+      float  _Height,
+      float  _PivotPointX,
+      float  _PivotPointY
+    )
+  {
+    Component Cursor = new #CursorControl();
+    Cursor.SetPosition(_X, _Y);
+    Cursor.SetDimensions(_Width, _Height);
+    Cursor.SetPivotPoint(_PivotPointX, _PivotPointY);
+    Cursor.SetMaterial(_Material);
+    Cursor.SetMaterialManager(m_MaterialManager);
+    Cursor.SetEventHandler(this);
+    Cursor.SyncWithWindowsCursor(true);
+    Cursor.ShowCursor(true);
+    RegisterStaticObject("Cursor", Cursor);
+
+    return Cursor;
+  }
+
+  Component CreateDefaultCursor()
+  {
+    return CreateCursor(
+        "Cursor",
+        0.5,
+        0.5,
+        36.0 / 1024.0,
+        36.0 / 768.0,
+        4.0 / 1024.0,
+        4.0 / 768.0
+      );
+  }
+
+  //
+  // Services methods
+  //
+
+  Component GetMaterialManager()
+  {
+    return m_MaterialManager;
+  }
+
+  Component CreateMenuComponent(
+      String _MenuName
+    )
+  {
+    // Create component
+    Component MenuComponent = createScriptClass("C" + _MenuName);
+
+    // Construct
+    MenuComponent.Construct(this);
+
+    return MenuComponent;
+  }
+
+  Component CreateWindowComponent(
+      String _WindowClass,
+      String _WindowID
+    )
+  {
+    // Create component
+    Component WindowComponent = createScriptClass(_WindowClass);
+    WindowComponent.WindowID = _WindowID;
+
+    // Construct
+    WindowComponent.Construct(this);
+
+    return WindowComponent;
+  }
+
+  //
+  // Navigation methods
+  //
+
+  void SendEventGoTo(
+      String _MenuName
+    )
+  {
+    clearEventsForObject(getIdentificator(this));
+    sendEvent(0.0, getIdentificator(this), "GoTo", [ CreateMenuComponent(_MenuName) ]);
+  }
+
+  Component SendEventInvoke(
+      String  _MenuName,
+      boolean _PushToStack
+    )
+  {
+    Component Menu = CreateMenuComponent(_MenuName);
+
+    clearEventsForObject(getIdentificator(this));
+    sendEvent(0.0, getIdentificator(this), "Invoke", [ Menu, _PushToStack ]);
+
+    return Menu;
+  }
+
+  void SendEventGoBack()
+  {
+    clearEventsForObject(getIdentificator(this));
+    sendEvent(0.0, getIdentificator(this), "GoBack", [ ]);
+  }
+
+  void SendEventOpenWindow(
+      String _WindowName
+    )
+  {
+    clearEventsForObject(getIdentificator(this));
+    sendEvent(0.0, getIdentificator(this), "OpenWindow", [ CreateMenuComponent(_WindowName) ]);
+  }
+
+  void SendEventOpenContextMenu(
+      Component _HandlerMenu,
+      float     _X,
+      float     _Y,
+      Array     _MenuCommands
+    )
+  {
+    if (null != WindowGetWindow("ContextMenu"))
+      return;
+
+    Component Menu = CreateWindowComponent("CContextMenu", "ContextMenu");
+    Menu.SetHandlerMenu(_HandlerMenu);
+    Menu.SetMenuCommands(_MenuCommands);
+    Menu.SetMenuPosition(_X, _Y);
+ 
+    sendEvent(0.0, getIdentificator(this), "WindowOpen", [Menu, Menu.WindowID]);
+  }
+
+  void SendEventOpenContextMenu(
+      Component _HandlerMenu,
+      Array     _MenuCommands
+    )
+  {
+    Array pos = GetObject("Cursor").GetCursorPosition();
+    SendEventOpenContextMenu(_HandlerMenu, pos[0], pos[1], _MenuCommands);
+  }
+
+  void SendEventOpenSheet(
+      Component _Parent,
+      String    _SheetName,
+      String    _BookName
+    )
+  {
+    clearEventsForObject(getIdentificator(this));
+    sendEvent(0.0, getIdentificator(this), "OpenSheet", [ _Parent, CreateMenuComponent(_SheetName), _BookName ]);
+  }
+
+  void SendEventCloseWindow()
+  {
+    clearEventsForObject(getIdentificator(this));
+    sendEvent(0.0, getIdentificator(this), "CloseWindow", [ ]);
+  }
+
+  void LoadNewMenu(
+      String _MenuName
+    )
+  {
+    LoadMenu(CreateMenuComponent(_MenuName));
+    m_NewMenuLoaded = true;
+
+//    if (m_MusicEnabled)
+//      new #MusicController().SetMenuState(CMusicController::MENU_Main);
+  }
+
+  //
+  // Window subsystem
+  //
+
+  Component SendEventWindowOpen(
+      String _WindowClass,
+      String _WindowID,
+      float  _PositionX,
+      float  _PositionY
+    )
+  {
+    Component Window = CreateWindowComponent(_WindowClass, _WindowID);
+
+    Window.m_MenuPositionX = _PositionX;
+    Window.m_MenuPositionY = _PositionY;
+    
+    sendEvent(0.0, getIdentificator(this), "WindowOpen", [Window, _WindowID]);
+
+    return Window;
+  }
+
+  Component SendEventWindowOpen(
+      String _WindowClass,
+      String _WindowID
+    )
+  {
+    return SendEventWindowOpen(_WindowClass, _WindowID, 0.0, 0.0);
+  }
+
+  void SendEventWindowClose(
+      String _WindowID
+    )
+  {
+    sendEvent(0.0, getIdentificator(this), "WindowClose", [_WindowID]);
+  }
+
+  void WindowSetupTimer(
+      String _WindowID
+    )
+  {
+    Component Timer = GetObject("WindowTimer");
+    if (null == Timer)
+    {
+      Timer = new #Timer();
+      Timer.SetEventHandler(this);
+      Timer.SetTickEvent("OnWindowTimer", WindowTimerFrequency);
+      RegisterStaticObject("WindowTimer", Timer);
+    }
+
+    m_WindowTimerUsers.insert(_WindowID);
+  }
+
+  void EnableWindowUpdates(
+      boolean _IsEnabled
+    )
+  {
+    Component Timer = GetObject("WindowTimer");
+    if (null != Timer)
+      Timer.Enable(_IsEnabled);
+  }
+
+  boolean WindowIsExists(
+      String _WindowID
+    )
+  {
+    return null != WindowGetWindow(_WindowID);
+  }
+
+  void OnWindowTimer(
+      float _TimeDelta
+    )
+  {
+    m_WindowTimerUsers.gotoBegin();
+    while (!m_WindowTimerUsers.isAtEnd())
+    {
+      String    WindowID = m_WindowTimerUsers.getValue();
+      Component Window   = WindowGetWindow(WindowID);
+
+      if (null == Window)
+      {
+        m_WindowTimerUsers.remove(WindowID);
+        continue;
+      }
+
+      Window.Update(_TimeDelta);
+      
+      m_WindowTimerUsers.gotoNext();
+    }
+  }
+
+  //
+  // Menu music
+  //
+
+  void EnableMenuMusic(
+      boolean _Enable
+    )
+  {
+    m_MusicEnabled = _Enable;
+    if (m_MusicEnabled)
+    {
+      if (m_NewMenuLoaded)
+      {    
+//        new #MusicController().SetMenuState(CMusicController::MENU_Main);
+        m_NewMenuLoaded = false;
+      }
+    }  
+    else    
+      new #MusicController().SetMenuState(CMusicController::MENU_Null);
+  }  
+
+  // Notifies menu editor, that active menu has been changed
+  void NotifyMenuEditor()
+  {
+    Component MenuEditor = GetObject("MenuEditor");
+    if (null == MenuEditor) return;
+
+    Component ActiveMenu = GetActiveMenu();
+    if (null == ActiveMenu) return;
+
+/*    if (m_MusicEnabled)
+    {
+      new #MusicController().SetMenuState(ActiveMenu.m_Music);
+    }  
+*/
+    MenuEditor.OnActiveMenuChanged(ActiveMenu.m_UIControls);
+  }
+
+  //
+  // Misc methods
+  //
+
+  Component GetObjectAtCursor(
+      Component _Mission,
+      Array     _RestrictTo,
+      Array     _Exclude
+    )
+  {
+    if (null == _Mission)
+      return null;
+
+    Component Cursor = GetObject("Cursor");
+    if (null != Cursor)
+    {
+      Array Ray = Cursor.GetCursorRay();
+
+      Array Isection = _Mission.GetIsectionWithRay(DF_COMPONENT, 
+        _RestrictTo, _Exclude, Ray[0], Ray[1]);
+
+      if (DF_NONE != Isection[0])
+        if (isIdentifiable(Isection[5]))
+          return _Mission.GetObject(getIdentificator(Isection[5]));
+    }
+    else
+      logError("GetObjectAtCursor: no cursor found");
+
+    return null;
+  }
+};

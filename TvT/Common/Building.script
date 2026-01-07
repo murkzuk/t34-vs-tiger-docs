@@ -1,0 +1,464 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CDestructibleBuildingItem
+{
+  void CDestructibleBuildingItem(
+      String _JointName,
+      int    _JointType
+    )
+  {
+    JointName = _JointName;
+    JointType = _JointType;
+  }
+
+  void CDestructibleBuildingItem(
+      String    _JointName,
+      int       _JointType,
+      Component _JointComp
+    )
+  {
+    JointName = _JointName;
+    JointType = _JointType;
+    JointComp = _JointComp;
+  }
+
+  static final int NormalType = 0;
+  static final int DamageType = 1;
+  static final int FixedType  = 2;
+
+  String           JointName;
+  int              JointType;
+  Component        JointComp;
+  boolean          IsValidBody;
+};
+
+class CBuilding
+  extends CObject, CBuildingStateControl
+{
+  final static String DefaultSurfaceControl = "PutonGroundUpright";
+  
+  Array               DestructibleItems;
+
+  boolean             AnimationWasPlayed    = false;
+
+  void CBuilding()
+  {
+    addClassificator(user, "STRUCTURE");
+    addClassificator(user, "OBSTACLE");
+  }
+
+  void Construct(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    // Call inherited construct
+    CObject::Construct(_Mission, _PropMap);
+  }
+
+  void Initialize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Initialize(_Mission, _PropMap);
+  }
+
+  void Finalize(
+      Component _Mission,
+      Component _PropMap
+    )
+  {
+    CObject::Finalize(_Mission, _PropMap);
+
+    // Remove surface control for buildings
+    // EnableSurfaceControl(false);
+    RemoveSurfaceControl();
+  }
+
+  Array GetDefaultProperties()
+  {
+    Array Default = CObject::GetDefaultProperties();
+
+    return Default;
+  }
+
+  void SetProperties(
+      Component _PropMap
+    )
+  {
+    CObject::SetProperties(_PropMap);
+  }
+
+  event void SetModelViewState(
+      boolean _State
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (Mesh == null)
+      return;
+    
+    logError( "SetModelViewState" );
+
+    if (_State)
+    {
+      setVisibleState(Mesh.GetRootJoint(), true);
+
+      for (int Index = 0; Index < DestructibleItems.size(); Index++)
+      {
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::FixedType)
+          setVisibleState(DestructibleItems[Index].JointComp, false);
+        else
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::DamageType)
+          setVisibleState(DestructibleItems[Index].JointComp, false);
+        else
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::NormalType)
+          setVisibleState(DestructibleItems[Index].JointComp, true);
+      }
+
+      UpdateVisibleState();
+    }
+    else
+    {
+      setVisibleState(Mesh.GetRootJoint(), false);
+
+      for (int Index = 0; Index < DestructibleItems.size(); Index++)
+      {
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::FixedType)
+          setVisibleState(DestructibleItems[Index].JointComp, true);
+        else
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::DamageType)
+          setVisibleState(DestructibleItems[Index].JointComp, true);
+        else
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::NormalType)
+          setVisibleState(DestructibleItems[Index].JointComp, false);
+      }
+    }
+  }
+
+  // ==========================================
+  // Building physics controller
+  // ==========================================
+
+  void PlayPhysicsDestroyAnimation()
+  {
+    logError( "PlayPhysicsDestroyAnimation" );
+    if (!AnimationWasPlayed)
+    {
+      Component PhysicsController = GetDestroyController();
+      for (int Index = 0; Index < DestructibleItems.size(); Index++)
+      {
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::FixedType)
+        {
+          if (DestructibleItems[Index].IsValidBody)
+            PhysicsController.SetFixedBody(DestructibleItems[Index].JointName, true);
+          setVisibleState(DestructibleItems[Index].JointComp, true);
+        }
+        else
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::DamageType)
+        {
+          if (DestructibleItems[Index].IsValidBody)
+            PhysicsController.SetFixedBody(DestructibleItems[Index].JointName, false);
+          setVisibleState(DestructibleItems[Index].JointComp, true);
+        }
+        else
+        if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::NormalType)
+        {
+          if (DestructibleItems[Index].IsValidBody)
+            PhysicsController.SetFixedBody(DestructibleItems[Index].JointName, false);
+          setVisibleState(DestructibleItems[Index].JointComp, false);
+        }
+      }
+
+      // activate physics
+      PhysicsController.Activate(true);
+
+      // Disable normal items after this step
+      sendEvent(0.0, getIdentificator(user), "OnFixNormalItems", []);
+    }
+
+    // We cant play animation because house already destroed
+    AnimationWasPlayed = true;
+  }
+
+  Component GetDestroyController()
+  {
+    return GetObject("DestroyController");
+  }
+
+  event void OnPhysicsEnabled(
+      boolean _Enable
+    )
+  {
+    //OneTime physics enabled. If comment - physics always works
+    //if (!_Enable && AnimationWasPlayed)
+    //  GetDestroyController().EnableControl(false);
+  }
+
+  event void OnFixNormalItems()
+  {
+    Component PhysicsController = GetDestroyController();
+    for (int Index = 0; Index < DestructibleItems.size(); Index++)
+    {
+      if (DestructibleItems[Index].JointType == CDestructibleBuildingItem::NormalType &&
+          DestructibleItems[Index].IsValidBody)
+        PhysicsController.SetFixedBody(DestructibleItems[Index].JointName, true);
+    }
+  }
+
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+    PlayPhysicsDestroyAnimation();
+
+    // Destroy house object
+    Component StateControl = GetStateControl();
+    StateControl.SetHitPoints(0.0);
+  }
+  
+  void SetupDestroyController(
+      String _SubstaceScriptClass,
+      float  _BuildingMass,
+      float  _DestroyEnergy,
+      Array  _Items
+    )
+  {
+    Component Mesh = GetMeshComponent();
+    if (null == Mesh)
+    {
+      logMessage("Mesh not found in SetupDestroyPhysicsController function call");
+      return;
+    }
+
+    // Create physics controller
+    Component PhysicsController = new #ObjectPhysicsController();
+    loadFromScript(PhysicsController, _SubstaceScriptClass);
+
+    // Initialize controller
+    PhysicsController.SetEventHandler(this);
+    PhysicsController.SetMass(_BuildingMass);
+    setSlaveObject(PhysicsController, Mesh);
+
+    // Compute volume of object
+    Vector Sizes = getBoundingSize(Mesh);
+    PhysicsController.SetVolume(Sizes.x * Sizes.y * Sizes.z);
+
+    // Register object physics controller
+    RegisterObject("DestroyController", PhysicsController);
+
+    // Unlink all joints
+    for (int Index = 0; Index < _Items.size(); Index++)
+    {
+      Component BodyJoint = Mesh.GetJoint(_Items[Index].JointName);
+      if (BodyJoint == null)
+      {
+        logError("Unable to find joint " + _Items[Index].JointName + " in SetupDestroyPhysicsController function call");
+        continue;
+      }
+
+      DestructibleItems.add(new CDestructibleBuildingItem(
+          _Items[Index].JointName,
+          _Items[Index].JointType,
+          BodyJoint
+        ));
+      Mesh.UnlinkJoint(BodyJoint);
+
+      // Hide or show item
+      setVisibleState(BodyJoint, _Items[Index].JointType == CDestructibleBuildingItem::NormalType);
+    }
+
+    // Create bodies
+    for (int Index = 0; Index < DestructibleItems.size(); Index++)
+    {
+      Component Item = DestructibleItems[Index];
+
+      // Initialize physics controller
+      Array Shapes = Mesh.GetCollisionShapes(Item.JointComp, false);
+      if (Item.JointComp != Mesh.GetRootJoint())
+        Item.IsValidBody = PhysicsController.CreateRigidBody(Item.JointName, Item.JointComp, Shapes);
+      else
+        Item.IsValidBody = PhysicsController.CreateRigidBody(Item.JointName, Mesh,           Shapes);
+
+      // Fix body
+      if (Item.IsValidBody) {
+        PhysicsController.SetFixedBody(Item.JointName, true);
+        PhysicsController.SetIsBuildingCollisionShape(Item.JointName);
+      }
+    }
+
+    // Append classificator for physics controllable object
+    addClassificator(user, CLASSIFICATOR_PHYSICS_CONTROLLABLE);
+
+    //# comment for vector solver # PhysicsController.SetIsectionModeAsGroupTriangles();
+    PhysicsController.CreateTouchTrigger(_DestroyEnergy);
+
+    PhysicsController.EnableControl(true);
+    PhysicsController.Activate(false);
+
+    PhysicsController.SetExcludeSet([ CLASSIFICATOR_TERRAINFOREST, CLASSIFICATOR_WATER ]);
+    
+  }
+
+  //
+  // Destroy process
+  //
+
+  void PlayDestroyAnimation()
+  {
+    logError( "PlayDestroyAnimation" );
+    PlayPhysicsDestroyAnimation();
+
+    // Continue play destroy animation
+    CObject::PlayDestroyAnimation();
+  }
+}
+
+class CComplexDestructibleBuilding
+    extends CBuilding
+{
+  boolean m_IsCrashing = false;
+  float   m_DestroyEnergy = 1;
+ 
+  void SetupDestroyController(
+    String _SubstaceScriptClass,
+    float  _BuildingMass,
+    float  _DestroyEnergy,
+    Array  _Items
+  ) {
+    logError( "Don't do that again! Use SetupDestroyController( String _SubstaceScriptClass, float  _BuildingMass, float  _DamageEnergy, float  _DestroyEnergy, Array  _Items )" );
+  }
+  
+  void SetupDestroyController(
+    String _SubstaceScriptClass,
+    float  _BuildingMass,
+    float  _DamageEnergy,
+    float  _DestroyEnergy,
+    Array  _Items
+   ) {
+    m_DestroyEnergy = _DestroyEnergy;
+     
+    CBuilding::SetupDestroyController( _SubstaceScriptClass, _BuildingMass, _DamageEnergy, _Items );
+     
+    Component animator = new #LineAnimator();
+    Component mesh = GetMeshComponent();
+       
+    Component joint_body = mesh.GetJoint( "Body" );
+    Component joint_crash = mesh.GetJoint( "Crash" );
+    Component joint_crashed = mesh.GetJoint( "Crashed" );
+     
+    setVisibleState( joint_crash, false );
+    setVisibleState( joint_crashed, false );
+    setVisibleState( joint_body, true );
+     
+    animator.SetAnimationName( "do_crash" );
+    animator.SetAnimationTime( 0.5f );
+    setSlaveObject( animator, mesh );
+    RegisterObject( "CrashAnimator", animator );
+    animator.SetEventHandler( this );
+     
+    GetStateControl().EnableHPEvent( true );
+    GetStateControl().SetEventHandler( this );
+  }
+   
+  void SetCrashAnimationTime( float Time ) {
+    GetCrashAnimator().SetAnimationTime( Time );
+  }
+   
+  Component GetCrashAnimator() {
+    return GetObject( "CrashAnimator" );
+  }
+  
+  event void OnHitPointsChanged( float v ) {
+    logError( "mhp: " + new String( m_MaxHitPoints ) + " v " + new String( v ) );
+    
+    if( ( v / m_MaxHitPoints < 0.3 ) && !m_IsCrashing ) {
+      DoCrashBuilding();
+    } else {
+      if( v / m_MaxHitPoints == 0 ) {
+        DoDestroyBuilding();
+      }
+    }
+  }
+  
+  void DoCrashBuilding() {
+    Component mesh = GetMeshComponent();
+    Component joint_body = mesh.GetJoint( "Body" );
+    Component joint_crash = mesh.GetJoint( "Crash" );
+    Component joint_crashed = mesh.GetJoint( "Crashed" );
+
+    setVisibleState( joint_crash, true );
+    setVisibleState( joint_crashed, false );
+    setVisibleState( joint_body, false );
+    
+    GetCrashAnimator().AnimateForward();
+    GetStateControl().EnableHPEvent( false );
+    m_IsCrashing = true;
+  }
+  
+  void DoDestroyBuilding() {
+    Component mesh = GetMeshComponent();
+    Component joint_body = mesh.GetJoint( "Body" );
+    Component joint_crash = mesh.GetJoint( "Crash" );
+    Component joint_crashed = mesh.GetJoint( "Crashed" );
+    setVisibleState( joint_crash, false );
+    setVisibleState( joint_crashed, true );
+    setVisibleState( joint_body, false );
+  
+    CBuilding::OnSuccessTouchTrigger( m_DestroyEnergy + 1 );
+  }
+
+  event void SetCrashed() {
+    Component mesh = GetMeshComponent();
+    Component joint_crash = mesh.GetJoint( "Crash" );
+
+    Component     physics_controller = GetDestroyController();
+      
+    Array Shapes = mesh.GetCollisionShapes( joint_crash, false);
+    boolean IsValidBody = physics_controller.CreateRigidBody("Crash", mesh,           Shapes);
+    physics_controller.SetFixedBody("Crash", true);
+    physics_controller.SetIsBuildingCollisionShape("Crash");
+      
+    physics_controller.CreateTouchTrigger( m_DestroyEnergy );
+  }
+  
+  event void OnSuccessTouchTrigger(
+      float _Energy
+    )
+  {
+    
+    if( _Energy > m_DestroyEnergy ) {
+      DoDestroyBuilding();
+      return;
+    }
+    
+    if( !m_IsCrashing ) {
+      DoCrashBuilding();
+    } else {
+      CBuilding::OnSuccessTouchTrigger( _Energy );
+    }
+  }
+  
+}
+
+class CGroundBuilding
+  extends CBuilding
+{
+}
+
+class CWaterBuilding
+  extends CBuilding
+{
+  final static String DefaultSurfaceControl      = "PutonWater";
+  final static float  DefaultPutonWaterStability = 0.0f;
+
+  // Water waves stability factor
+  float m_WaveStability = 0.0f;
+}
