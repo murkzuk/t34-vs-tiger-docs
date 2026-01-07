@@ -21,7 +21,7 @@ To make this "mountain" easier to climb, we have organized the project into key 
 
 * **[Technical Manuals](./Documentation):** Comprehensive guides for Maya 5.0 and the G5 Engine export pipeline.
 * **[Mission Scripting & Templates](./Templates):** Standardized Atmosphere and Terrain headers to fix "Duplicate Class" errors.
-* **[Legacy Assets (Scripts)](./):** Access folders for **ALL_TvT_SCRIPTS**, **ALL_WoV_SCRIPTS**, and **ALL_ZW_SCRIPTS** for cross-referencing logic.
+* **[Legacy Assets (Scripts)](./Executables):** Access folders for **ALL_TvT_SCRIPTS**, **ALL_WoV_SCRIPTS**, and **ALL_ZW_SCRIPTS** for cross-referencing logic.
 * **[Tools & Fixes](./):** Find the 4GB patch, LAA instructions, and driver fixes here.
 
 💡 Quick Start Troubleshooting
