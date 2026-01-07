@@ -1,0 +1,467 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M4Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/c2m4_Map.tex"; //Textures/C1M3_Map.tex
+
+  static String m_MissionBriefingPicMaterial = "C2M4BriefingPic"; //C1M3BriefingPic
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary, CC2M4Mission_Strings::Objective01, MOSID_InProgress, true],
+      [MOTID_Primary, CC2M4Mission_Strings::Objective02, MOSID_InProgress, true],
+      [MOTID_Primary, CC2M4Mission_Strings::Objective03, MOSID_InProgress, false]
+                               ];
+  static WString ObjectivesText = CC2M4Mission_Strings::ObjectivesText;
+  boolean isDebug = true;
+  int Penalty_count = 0;
+
+  Array m_NavpointsForPlayerMap = [];
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4500.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2402, 1582.0, 0.0), new Vector(6902.0, 6082.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  Array KillList_Primary1 = ["AvantGuard76_1", "AvantGuard76_2"];
+  Array KillList_Primary2 = ["BaseForce_1", "BaseForce_2", "BaseForce_3", "BaseForce_4", "BaseForce_5SAU", "BaseForce_6SAU"];
+  Array KillList_Primary3 = ["RearGuard_1", "RearGuard_2", "RearGuard_3"];
+  Array KillListSau = [ "SAU_1","SAU_2"];
+
+  boolean isPhase1 = true;
+  boolean isPhase2 = false;
+  boolean isPhase3 = false;
+
+  String CL_Invisible = "INVISIBLE_ON_RADAR";
+
+  boolean PlayerInDuckBlind = false;
+  boolean BaseForceReached  = false;
+  boolean SAUDeath  = false;
+  boolean MainPlayerStart = false;
+
+  Component ClosingProof;
+
+  void CC2M4Mission()
+  {
+    // Construct mission
+    CSPMission("CC2M4Mission", "CC2M4Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC2M4Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC2M4Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky10Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare = new #LensFlare<CC2M4LensFlare>();
+    SetMissionWorldMatrices(new #WorldMatrices<CC2M4WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME, "CC2M4LandscapeLayer"      ],
+        [LAYER_TERRAIN_ZONE, "CC2M4TerrainZoneLayer"    ],
+        [LAYER_ROUTER_ZONE,  "CC2M4RouterZoneLayer"     ],
+        [LAYER_MICROTEXTURE_MAP1, "CC2M4MicroTextures1" ],
+        //["Landing Zone Texture",  "CC2M4LZTexture"    ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC2M4WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+    ClosingProof = new ClosingProof();
+    ClosingProof.Initialize(this, "ClosingProof");
+
+
+    sendEvent(50.0, "CC2M4Gr_RetreatForce", "PopDelayedOrder", []);
+    sendEvent(30.0, "GCol1Group", "PopDelayedOrder", []);
+    sendEvent(20.0, "GCol2Group", "PopDelayedOrder", []);
+    sendEvent(60.0, "CC2M4Gr_SAU", "TakeGround", [1]);
+    sendEvent(10.0, "GSoldGroup", "PopDelayedOrder", []);
+
+    //Component console = new #GameController().GetObject(SOID_Console);
+    //console.disablebeh();
+    //console.showbehinf(true);
+//    sendEvent(0.0, "AmbushHouseCorral", "OnSuccessTouchTrigger", [11000]);
+    sendEvent(0.0,  SOID_MissionController, "DestroyBuildingWithFire", ["AmbushHouseCorral"]);
+  }
+
+  event void DestroyBuildingWithFire(String _BuildingID)
+  {
+    //logWarning("Call Fire. ObjectID = "+_BuildingID);
+    Matrix  Position = getPosition(GetObject(_BuildingID));
+    sendEvent(0.0, _BuildingID, "OnSuccessTouchTrigger", [11000]);
+    (new #GameController()).GetObject("ExplosionsArray").
+    CreateExplosion("CNavPointExplosion", Position, null, getIdentificator(this));
+  }
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+  }
+
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+    if (!MainPlayerStart)
+    {
+      //logWarning("Start cinema!!");
+      MainPlayerStart = true;
+      Component _Game = new #GameController();
+      if ( null != _Game)
+        _Game.RunCinema("EngineStart");
+    }
+  }
+
+  int SAUDuckBlindIndex = 0;
+
+  void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
+  {
+    //logMessage("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+
+    if ((_ObjectID == "SAU_1" && _NavPointID == "TakeGround1_SAU1_4") ||
+        (_ObjectID == "SAU_2" && _NavPointID == "TakeGround1_SAU2_4"))
+    {
+//      if (isDebug)
+//        logWarning(getIdentificator(user) + " " + _ObjectID + " reached " + _NavPointID + " point and going to hide.");
+
+      Component UnitTask = GetUnitTask(_ObjectID);
+      if (UnitTask != null)
+        UnitTask.ActivateMovement(false);
+
+      addClassificatorObject(_ObjectID, CL_Invisible);
+      fireEvent(0.0, [], "SetRadarUnit", [CL_Invisible]);
+
+      SAUDuckBlindIndex++;
+
+      if (SAUDuckBlindIndex == 2)
+      {
+        sendEvent(60.0, SOID_MissionController, "PreinitPhase2", []);
+        //logWarning("[StartRussianTanks]Information_RussianTanksStart");
+        SendCockpitMessage(CGameMessages::msg_RusAdvanceWarning, new Color(1.0, 1.0, 0.0));
+      }
+    }
+
+    if (_ObjectID == GetMainPlayerObjectID() && _NavPointID == "DuckBlind" && isPhase1)
+      PlayerAndAmbush(true);
+  }
+
+  void OnObjectLeaveNavPoint(String _NavPointID, String _ObjectID)
+  {
+    //logMessage("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+
+    if (_ObjectID == GetMainPlayerObjectID() && _NavPointID == "DuckBlind")
+      PlayerAndAmbush(false);
+  }
+
+   event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+
+    // TMP
+    Component DeadThing = GetObject(_ObjectID);
+    if (null == DeadThing)
+    {
+      //logError("Component 'DeadThing' == null");
+      return;
+    }
+    // TMP
+
+    //logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String (DeadThing.GetLastDamager()));
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+      //logWarning("CheckMadPlayer");
+      //logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+      //logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+        //logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+          //logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+            //logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+
+    if (_ObjectID.IsStartsWith("SAU_"))
+    {
+      int _Index = KillListSau.find(_ObjectID);
+      /*
+      if (_Index == -1)
+      {
+        if (isDebug)
+          logError("Object: " + _ObjectID + " not find in KillListSau: " + new String(KillListSau) + ".");
+        return;
+      }*/
+
+      if(_Index != -1)
+      {
+        KillListSau.remove(_Index);
+        sendEvent(0.0, "CC2M4Tsk_AvantGuard76", "ABattleNonStop", []);
+        //logWarning("Avante!BattleNonStop!");
+      }
+
+      if (KillListSau.size() == 0)
+      {
+//        if (isDebug)
+//          logError("All SAU Destroyed, Rear forse begin attack MPU");
+        SAUDeath = true;
+        sendEvent(0.0, "CC2M4Gr_RearGuard", "RearAttack", []);
+
+      }
+    }
+
+    if (_ObjectID.IsStartsWith("AvantGuard76"))
+    {
+      int _Index = KillList_Primary1.find(_ObjectID);
+
+      /*if (_Index == -1)
+      {
+        if (isDebug)
+          logError("Object: " + _ObjectID + " not find in KillList_Primary1: " + new String(KillList_Primary1) + ".");
+        return;
+      }*/
+
+      if(_Index != -1)
+        KillList_Primary1.remove(_Index);
+
+      if (KillList_Primary1.size() == 0)
+      {
+//        if (isDebug)
+//          logError("We congratulate!!! You have executed first problem.");
+
+        CompleteObjective(0);
+      }
+    }
+    else if (_ObjectID.IsStartsWith("BaseForce"))
+    {
+      int _Index = KillList_Primary2.find(_ObjectID);
+
+      /*if (_Index == -1)
+      {
+        if (isDebug)
+          logError("Object: " + _ObjectID + " not find in KillList_Primary2: " + new String(KillList_Primary2) + ".");
+        return;
+      }*/
+
+      if(_Index != -1)
+      {
+        KillList_Primary2.remove(_Index);
+        sendEvent(0.0, "CC2M4Gr_BaseForce", "BattleNonStop", []);
+        sendEvent(0.0, "CC2M4Tsk_AvantGuard76", "StartAttack", []);
+        //logWarning("Guys!Come_on!BattleNonStop!");
+      }
+
+      if (KillList_Primary2.size() == 1)
+      {
+//        if (isDebug)
+//          logWarning("Attention! Bandits_on_left_Flank");
+
+        sendEvent(0.0, "CC2M4Gr_BaseForce", "LastChance", []);
+      }
+
+      if (KillList_Primary2.size() == 0)
+      {
+//        if (isDebug)
+//          logError("We congratulate!!! You have executed second problem.");
+
+        CompleteObjective(1);
+      }
+    }
+    else if (_ObjectID.IsStartsWith("RearGuard"))
+    {
+      int _Index = KillList_Primary3.find(_ObjectID);
+
+      /*if (_Index == -1)
+      {
+        if (isDebug)
+          logError("Object: " + _ObjectID + " not find in KillList_Primary3: " + new String(KillList_Primary3) + ".");
+        return;
+      } */
+
+      if(_Index != -1)
+      {
+        KillList_Primary3.remove(_Index);
+        sendEvent(0.0, "CC2M4Gr_RepaireTrucks", "RetreatNow", []);
+        //logWarning("RepaireTrucks_Have_Retreat");
+        sendEvent(0.0, "CC2M4Gr_BaseForce", "InitPhase3", []);
+      }
+
+      if (KillList_Primary3.size() == 0)
+      {
+//        if (isDebug)
+//          logError("We congratulate!!! You have executed third problem.");
+
+        CompleteObjective(2);
+      }
+    }
+  }
+
+  //--------------------------
+  //  Initialization of phases
+  //--------------------------
+  event void PreinitPhase2()
+  {
+    if (isPhase1)
+    {
+      isPhase1 = false;
+      isPhase2 = true;
+      fireEvent(0.0, [], "InitPhase2", []);
+    }
+//    else
+//      logError("This cannot be! Error: 01-02P.");
+  }
+
+  event void InitPhase2()
+  {
+//    if (isDebug)
+//    {
+//      logError("The second phase began.");
+//      logError(" Phase 1: " + new String(isPhase1));
+//      logError(" Phase 2: " + new String(isPhase2));
+//      logError(" Phase 3: " + new String(isPhase3));
+//    }
+  }
+
+  event void PreinitPhase3()
+  {
+    if (isPhase2)
+    {
+      isPhase2 = false;
+      isPhase3 = true;
+      fireEvent(0.0, [], "InitPhase3", []);
+    }
+//    else
+//      logError("This cannot be! Error: 02-03P.");
+  }
+
+  event void InitPhase3()
+  {
+//    if (isDebug)
+//    {
+//      logError("The third phase began.");
+//      logError(" Phase 1: " + new String(isPhase1));
+//      logError(" Phase 2: " + new String(isPhase2));
+//      logError(" Phase 3: " + new String(isPhase3));
+//    }
+
+    SetObjectiveVisible(2, true);
+
+    if (PlayerInDuckBlind)
+      PlayerAndAmbush(false);
+  }
+
+  //-----------------
+  //  Another classes
+  //-----------------
+  void PlayerAndAmbush(boolean _PlayerInAmbush)
+  {
+    PlayerInDuckBlind = _PlayerInAmbush;
+
+    if (_PlayerInAmbush)
+    {
+//      if (isDebug)
+//        logWarning(getIdentificator(user) + " " + GetMainPlayerObjectID() + " reached an ambush place.");
+
+      addClassificatorObject(GetMainPlayerObjectID(), CL_Invisible);
+    }
+    else
+    {
+//      if (isDebug)
+//        logWarning(getIdentificator(user) + " " + GetMainPlayerObjectID() + " left an ambush place.");
+
+      removeClassificatorObject(GetMainPlayerObjectID(), CL_Invisible);
+    }
+
+    fireEvent(0.0, [], "SetRadarUnit", [CL_Invisible]);
+  }
+
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+//    else
+//      logError("Component NavPoint with ID = " + _NavPointID + " - null!" );
+  }
+
+  void ShutdownWatcher(Component _Watcher)
+  {
+    _Watcher.SetEventHandler(null);
+    _Watcher = null;
+  }
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+  event void Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+    float m_CurrentDistance;
+    Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+    Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+
+    if (null == Between_1 && null == Between_2)
+    {
+      //logError("Component - null!");
+      return;
+    }
+
+    Vector m_Pos_1 = getPosition(Between_1).origin;
+    Vector m_Pos_2 = getPosition(Between_2).origin;
+
+    m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+    //logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + " distance = " + new String(m_CurrentDistance));
+  }
+}

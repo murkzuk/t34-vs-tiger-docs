@@ -1,0 +1,37 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+   class ClosingProof extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "WatcherPoint";    // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit"]; // за кем следим
+
+  // количество зон
+  final static Array RegionDefs = [600.0];
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+//    if (GetMission().isDebug)
+//       logWarning("CLOSINGPROOF WATCHER IS ON");
+
+    sendEvent(0.0, "CC2M4Gr_AvantGuard76", "StartAttack", []);  //all attack player
+    sendEvent(0.0, "CC2M4Gr_BaseForce", "StartBaseForce", [true]);
+    sendEvent(0.0, "CC2M4Gr_RearGuard", "RearAttack", []);
+
+    GetMission().ShutdownWatcher(_PositionWatcher);
+   }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+

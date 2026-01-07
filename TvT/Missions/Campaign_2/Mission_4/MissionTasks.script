@@ -1,0 +1,844 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+                                   //------------------------------------------------
+                                   //---------------   GERMAN UNITS   ---------------
+                                   //------------------------------------------------
+class CC2M4Gr_RetreatForce extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+      addClassificatorObject(m_Units[i], GetMission().CL_Invisible);
+
+    fireEvent(0.0, [], "SetRadarUnit", [GetMission().CL_Invisible]);
+  }
+
+  void ShowOpel(boolean _On)
+  {
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component unit = GetMission().GetObject(m_Units[i]);
+      if (unit != null)
+        if (!checkMask(unit, [CLASSIFICATOR_DEAD_OBJECT], []))
+        {
+           unit.ShowObject(_On);
+        }
+    }
+   }
+
+  void OnPathEndReached()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Retreat is successfully.");
+
+    CBaseUnitGroup::OnPathEndReached();
+
+    SetEnemyReactionType(ERT_FRIGID);
+    ShowOpel(false);
+  }
+}
+class GCol1Group extends CC2M4Gr_RetreatForce
+{
+}
+
+ class GCol2Group extends CC2M4Gr_RetreatForce
+{
+}
+
+ class GCol3Group extends CC2M4Gr_RetreatForce
+{
+}
+
+ class GSoldGroup extends CC2M4Gr_RetreatForce
+{
+  void OnPathEndReached()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Retreat is successfully.");
+
+    CBaseUnitGroup::OnPathEndReached();
+
+    SetEnemyReactionType(ERT_FRIGID);
+    ShowGroup(false);
+    sendEvent(10.0, "GCol3Group", "PopDelayedOrder", []);
+
+  }
+}
+//-------------
+//  SAU classes
+//-------------
+class CC2M4Gr_SAU extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    ActivateRadar(false);
+  }
+
+  event void TakeGround(int _Position)
+  {
+    Array NavPoints;
+
+    if (_Position == 1)
+    {
+//      if (GetMission().isDebug)
+//        logWarning("[" + getIdentificator(user) + "] Start to take ground [Position 1].");
+
+      NavPoints = [
+        [GetNavPointBehPos("TakeGround1_SAU1_1"), GetNavPointBehPos("TakeGround1_SAU1_2"), GetNavPointBehPos("TakeGround1_SAU1_3"), GetNavPointBehPos("TakeGround1_SAU1_4")],
+        [GetNavPointBehPos("TakeGround1_SAU2_1"), GetNavPointBehPos("TakeGround1_SAU2_2"), GetNavPointBehPos("TakeGround1_SAU2_3"), GetNavPointBehPos("TakeGround1_SAU2_4")]
+                  ];
+    }
+    else
+    {
+//      if (GetMission().isDebug)
+//        logWarning("[" + getIdentificator(user) + "] Start to take ground [Position 2].");
+
+      NavPoints = [
+        [GetNavPointBehPos("TakeGround2_SAU1_1"), GetNavPointBehPos("TakeGround2_SAU1_2")],
+        [GetNavPointBehPos("TakeGround2_SAU2_1"), GetNavPointBehPos("TakeGround2_SAU2_2")]
+                  ];
+
+      ActivateMovement(true);
+    }
+
+    float Speed = 5.0;
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component UnitTask = GetUnitTask(m_Units[i]);
+
+      if (UnitTask != null)
+        UnitTask.SetOrder_MoveToEx(NavPoints[i], Speed);
+    }
+  }
+
+  event void InitPhase3()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Now have a radar.");
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+      removeClassificatorObject(m_Units[i], GetMission().CL_Invisible);
+
+    fireEvent(0.0, [], "SetRadarUnit", [GetMission().CL_Invisible]);
+
+    ActivateMovement(true);
+    ActivateRadar(true);
+  }
+}
+
+                                   //------------------------------------------------
+                                   //----------------   USSR UNITS   ----------------
+                                   //------------------------------------------------
+
+//---------------------
+//  Avant-guard classes
+//---------------------
+class CC2M4Gr_AvantGuard76 extends CBaseUnitGroup
+{
+  boolean m_StartBaseForce = false;
+  boolean m_PlayerAttacks  = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    ActivateRadar(false);
+  }
+
+  event void InitPhase2()
+  {
+    ActivateRadar(true);
+    PopDelayedOrder();
+  }
+
+  void OnStopped(Component _UnitTask)
+  {
+    CBaseUnitGroup::OnStopped(_UnitTask);
+
+    Array CurrentPath = m_CurrentOrder.m_PatrolPath;
+    int CurrentPoint = m_CurrentOrder.m_NextPatrolPoint;
+
+    if (!m_PlayerAttacks && !m_StartBaseForce)
+      if (CurrentPoint < CurrentPath.size())
+        if (CurrentPath[CurrentPoint] == "RetreatPath_3")
+        {
+          sendEvent(0.0, "CC2M4Gr_SAU", "TakeGround", [2]);
+
+          m_StartBaseForce = true;
+          sendEvent(0.0, "CC2M4Gr_BaseForce", "StartBaseForce", [m_PlayerAttacks]); // In fact m_PlayerAttacks is false
+        }
+  }
+
+  event void InitPhase3()
+  {
+    if (m_PlayerAttacks)
+    {
+//      if (GetMission().isDebug)
+//        logWarning("[" + getIdentificator(user) + "] Kill them all!");
+
+      CancelAllOrders();
+    }
+    else
+    {
+//      if (GetMission().isDebug)
+//        logWarning("[" + getIdentificator(user) + "] We are going to kill some SAU.");
+
+      CancelAllOrders();
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      SetOrder_MoveTo(GetNavPointBehPos("AvantGuard_AttackPoint"), 3.3, true);
+    }
+  }
+}
+
+class CC2M4Tsk_AvantGuard76 extends CBaseAITankTask, CC2M4Tsk_USSR_RadarTask
+{
+  void OnRadarUpdate()
+  {
+    if (GetMission().isPhase2)
+    {
+      String USSRTarget = GetTargetedEnemy();
+      if (!m_Group.m_PlayerAttacks && USSRTarget == GetMission().GetMainPlayerObjectID())
+      {
+//        if (GetMission().isDebug)
+//          logWarning(USSRTarget + " appeared on " + getIdentificator(user) + " radar [" + getIdentificator(m_Group) + " group]");
+
+        AvantGuardSwitch(m_Group.m_StartBaseForce);
+      }
+    }
+
+    CBaseAITankTask::OnRadarUpdate();
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    if (GetMission().isPhase2)
+    {
+      if (!m_Group.m_PlayerAttacks && _OwnerID == GetMission().GetMainPlayerObjectID())
+      {
+        if (GetMission().PlayerInDuckBlind)
+        {
+//          if (GetMission().isDebug)
+//            logWarning(_OwnerID + " attacked " + getIdentificator(user) + " [" + getIdentificator(m_Group) + " group].");
+
+          GetMission().PlayerAndAmbush(false);
+        }
+        //else
+        //  logError("This cannot be! Error: 02-76E.");
+
+        AvantGuardSwitch(m_Group.m_StartBaseForce);
+      }
+    }
+
+    CBaseAITankTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+  }
+
+  void AvantGuardSwitch(boolean _StartBaseForce)
+  {
+    m_Group.m_PlayerAttacks = true;
+
+    if (_StartBaseForce)
+      sendEvent(0.0, SOID_MissionController, "PreinitPhase3", []);
+    else
+    {
+      m_Group.m_StartBaseForce = true;
+      sendEvent(0.0, "CC2M4Gr_BaseForce", "StartBaseForce", [m_Group.m_PlayerAttacks]);
+    }
+  }
+
+  void StartAttack()
+  {
+    ActivateRadar(true);
+    ActivateFire(true);
+    SetFormation("CFrontFormation", 50.0, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_TargetsMPU, ERT_AGGRESSIVE);
+  }
+
+  event void ABattleNonStop()
+  {
+    RepeatOrder();
+    //logWarning("AvantGuardRusForcesRepeatOrderByKillingUnit");
+  }
+}
+
+//--------------------
+//  Base force classes
+//--------------------
+class CC2M4Gr_BaseForce extends CBaseUnitGroup
+{
+  boolean m_PlayerAttacks = false;
+  boolean LastAttempt     = false;
+
+  Array m_Targets = ["SAU_1", "SAU_2"];
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    ActivateRadar(false);
+  }
+
+  event void StartBaseForce(boolean _PlayerAttacks)
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Start to move and player attacks is " + new String(_PlayerAttacks) + ".");
+
+    if (_PlayerAttacks)
+    {
+      RefreshUnitsList();
+      for (int i = 0; i < m_Units.size(); i++)
+      {
+        Component CurrentUnit = GetMission().GetObject(m_Units[i]);
+        if (checkMask(CurrentUnit, [], ["TANK", "SAU"]))
+          RemoveUnit(m_Units[i]);
+      }
+
+      RefreshUnitsList();
+      PopDelayedOrder();
+
+      SetFormation("CFrontFormation", 40.0, false, false);
+      RepeatOrder();
+
+      sendEvent(0.0, SOID_MissionController, "PreinitPhase3", []);
+      sendEvent(1.0, getIdentificator(user), "ActivateRadar", [true]);
+      sendEvent(1.0, "CC2M4Gr_HiddenForce",  "StartForceAttack", [true]);
+    }
+    else
+    {
+      sendEvent(1.0, "CC2M4Gr_HiddenForce",  "StartForceAttack", [false]);
+      ActivateRadar(true);
+      PopDelayedOrder();
+    }
+  }
+
+  void OnPathEndReached()
+  {
+    if (GetMission().isPhase2)
+    {
+//      if (GetMission().isDebug)
+//        logWarning("[" + getIdentificator(user) + "] Group reached the end of patrol, and now is second phase.");
+
+      GetMission().BaseForceReached = true;
+      sendEvent(0.0, SOID_MissionController, "PreinitPhase3", []);
+    }
+//    else
+//      logError("[" + getIdentificator(user) + "] Group reached the end of patrol while THIRD PHASE!!!"); // Maybe it is nothing
+
+    CBaseUnitGroup::OnPathEndReached();
+  }
+
+  event void InitPhase3()
+  {
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    //logWarning("LastPhase_for_Main_RusColumn");
+
+    if ((GetMission().BaseForceReached) || (!m_PlayerAttacks))
+    {
+      /*if (GetMission().isDebug)
+        logWarning("[" + getIdentificator(user) + "] Crap going back.");
+
+      float Radius = 20;
+      float Speed  = 3.3;
+
+      RefreshUnitsList();
+      for (int i = 0; i < m_Units.size(); i++)
+      {
+        Component CurrentUnit = GetMission().GetObject(m_Units[i]);
+        if (checkMask(CurrentUnit, [], ["TANK", "SAU"]))
+        {
+          Component UnitTask = GetUnitTask(m_Units[i]);
+          if (UnitTask != null)
+          {
+            Vector HomePoint = GetNavPointBehPos("Home") + new Vector(rand(-Radius, Radius), rand(-Radius, Radius), 0.0);
+            UnitTask.SetOrder_MoveTo(HomePoint, Speed);
+          }
+
+          RemoveUnit(m_Units[i]);
+        }
+      }
+
+      if (m_PlayerAttacks)
+        m_Targets.add(GetMission().GetMainPlayerObjectID());*/
+
+      float SpeedRusHeavyAdvance  = 5.0f;
+
+      CancelAllOrders();
+      RefreshUnitsList();
+      SetFormation("CFrontFormation", 40.0, false, false);
+      //logWarning("Base_RusColumn_Advance");
+
+      Array ApproachPoints = [
+                      GetNavPointBehPos("WarZone1"),
+                      GetNavPointBehPos("RetreatPath_1"),
+                      GetNavPointBehPos("TakeGround1_SAU2_2"),
+                      GetNavPointBehPos("SecureZone_01"),
+                      GetNavPointBehPos("RearAttackPath_3")
+                      ];
+
+      SetFirstQueueOrders([
+                          ["CC2M4Gr_BaseForce", "SetOrder_MoveToEx", [ApproachPoints, SpeedRusHeavyAdvance], ""],
+                          ["CC2M4Gr_BaseForce", "", [], ""]
+                        ]);
+
+      m_PlayerAttacks = true;
+    }
+
+    else
+    {
+//      if (GetMission().isDebug)
+//        logWarning("[" + getIdentificator(user) + "] Everyone going to be BERSERK! Uha-ha-ha-ha-...");
+
+      m_Targets.add(GetMission().GetMainPlayerObjectID());
+    }
+
+    SetOrder_Attack(m_Targets, ERT_AGGRESSIVE);
+  }
+
+  event void BattleNonStop()
+  {
+    RepeatOrder();
+    //logWarning("MainRusForcesRepeatOrderByKillingUnit");
+  }
+
+  event void LastChance()
+  {
+    float SpeedRusHeavyAdvance  = 5.0f;
+    if (!LastAttempt)
+    {
+      CancelAllOrders();
+      RefreshUnitsList();
+      SetFormation("CFrontFormation", 40.0, false, false);
+      //logWarning("RusLastChance");
+
+      Array ApproachPoints = [
+                      GetNavPointBehPos("LastLeftPath_1"),
+                      GetNavPointBehPos("LastLeftPath_2"),
+                      GetNavPointBehPos("LastLeftPath_3"),
+                      GetNavPointBehPos("LastLeftPath_4"),
+                      GetNavPointBehPos("LastLeftPath_4"),
+                      GetNavPointBehPos("LastLeftPath_5"),
+                      GetNavPointBehPos("LastLeftPath_6"),
+                      GetNavPointBehPos("LastLeftPath_7"),
+                      GetNavPointBehPos("LastLeftPath_8"),
+                      GetNavPointBehPos("LastLeftPath_9"),
+                      GetNavPointBehPos("LastLeftPath_91")
+                      ];
+
+      SetFirstQueueOrders([
+                          ["CC2M4Gr_BaseForce", "SetOrder_MoveToEx", [ApproachPoints, SpeedRusHeavyAdvance], ""],
+                          ["CC2M4Gr_BaseForce", "", [], ""]
+                        ]);
+
+      LastAttempt = true;
+    }
+  }
+}
+
+//------------------------------
+//  Just redirect some functions
+//------------------------------
+class CC2M4Tsk_BaseForce_Tank extends CBaseAITankTask, CC2M4Tsk_USSR_RadarTask, CC2M4Tsk_BaseForce
+{
+  void OnRadarUpdate()
+  {
+    CC2M4Tsk_BaseForce::OnRadarUpdate();
+    CBaseAITankTask::OnRadarUpdate();
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    CC2M4Tsk_BaseForce::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+    CBaseAITankTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+  }
+}
+
+class CC2M4Tsk_BaseForce_SAU extends CBaseAISAUTask, CC2M4Tsk_USSR_RadarTask, CC2M4Tsk_BaseForce
+{
+  void OnRadarUpdate()
+  {
+    CC2M4Tsk_BaseForce::OnRadarUpdate();
+    CBaseAISAUTask::OnRadarUpdate();
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    CC2M4Tsk_BaseForce::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+    CBaseAISAUTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+  }
+}
+
+//----------------------------------
+//  Up here redirect below functions
+//----------------------------------
+class CC2M4Tsk_BaseForce
+{
+  void OnRadarUpdate()
+  {
+    if (GetMission().isPhase2)
+    {
+      String USSRTarget = GetTargetedEnemy();
+      if ((!m_Group.m_PlayerAttacks) && (USSRTarget == GetMission().GetMainPlayerObjectID()))
+      {
+//        if (GetMission().isDebug)
+//          logWarning(USSRTarget + " appeared on " + getIdentificator(user) + " radar [" + getIdentificator(m_Group) + " group].");
+
+        BaseForceSwitch();
+      }
+    }
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    if (GetMission().isPhase2)
+    {
+      if ((!m_Group.m_PlayerAttacks) && (_OwnerID == GetMission().GetMainPlayerObjectID()))
+      {
+        if (GetMission().PlayerInDuckBlind)
+        {
+//          if (GetMission().isDebug)
+//            logWarning(_OwnerID + " attacked " + getIdentificator(user) + " [" + getIdentificator(m_Group) + " group].");
+
+          GetMission().PlayerAndAmbush(false);
+        }
+//        else
+//          logError("This cannot be! Error: 02-??E");
+
+        BaseForceSwitch();
+      }
+    }
+  }
+
+  void BaseForceSwitch()
+  {
+    m_Group.m_PlayerAttacks  = true;
+    sendEvent(0.0, SOID_MissionController, "PreinitPhase3", []);
+  }
+}
+
+//--------------------
+//  Rear-guard classes
+//--------------------
+class CC2M4Gr_RearGuard extends CBaseUnitGroup
+{
+  Array AlternativePath = [ "RightPath_1", "RightPath_2", "RightPath_3", "RightPath_4", "RightPath_5", "RightPath_6", "RightPath_7"];
+  Array RearAttackPath = ["RearAttackPath_0", "RearAttackPath_1", "RearAttackPath_2", "RearAttackPath_3", "RearAttackPath_4"];
+  Array m_TargetsMPU    = ["SAU_1", "SAU_2"];
+
+  boolean m_GroupHasRadar;
+  float   SpeedAttackPlayer  = 3.0f;
+  boolean  RearAttack = false;
+  boolean  RearPhase3 = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    ActivateGroupRadar(false);
+    m_TargetsMPU.add(GetMission().GetMainPlayerObjectID());
+  }
+
+  event void InitPhase3()
+  {
+    if (!RearPhase3)
+    {
+      if (GetMission().BaseForceReached)
+      {
+//        if (GetMission().isDebug)
+//          logWarning("[" + getIdentificator(user) + "] Move to left attack vector.");
+
+        sendEvent(60.0, getIdentificator(user), "PopDelayedOrder", []);
+      }
+      else
+      {
+//        if (GetMission().isDebug)
+//          logWarning("[" + getIdentificator(user) + "] Move to right attack vector.");
+
+        PopDelayedOrderAlt();
+      }
+    }
+    RearPhase3 = true;
+  }
+
+  void PopDelayedOrderAlt()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Call PopDelayedOrderAlt(). m_DelayedOrder.m_Order is " + m_DelayedOrder.m_Order);
+
+    if (m_DelayedOrder.m_Order != "")
+    {
+      if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver")
+        PushOrder();
+
+      m_CurrentOrder = new CGroupOrder(m_DelayedOrder);
+      m_CurrentOrder.m_PatrolPath = AlternativePath;
+
+      if (m_CurrentOrder.m_Formation != "")
+        SetFormation(m_CurrentOrder.m_Formation, m_CurrentOrder.m_FormationDistance, false, false);
+
+      RepeatOrder();
+    }
+  }
+
+  void OnPathEndReached()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Reached attack position.");
+
+    ActivateGroupRadar(true);
+
+    CBaseUnitGroup::OnPathEndReached();
+     if (GetMission().SAUDeath == true)
+     {  //logWarning("CALL RearAttack from OnPathEndReached.");
+        sendEvent(0.0, getIdentificator(user), "RearAttack", []);
+     }
+  }
+
+  event void RearAttack()
+  {
+    if  (!RearAttack)
+    {
+//      if (GetMission().isDebug)
+//         logWarning(getIdentificator(user) +" RearAttack ENTER");
+      SetFormation("CFrontFormation", 60.0, true, true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+
+      Array AttackArray;
+      for (int i = 0; i < RearAttackPath.size(); i++)
+      {
+        AttackArray.add(GetNavPointPos(RearAttackPath[i]));
+        //logWarning("AttackArray  value = " + RearAttackPath[i] + "AttackArray = " + new String(AttackArray[i]));
+      }
+
+      CancelAllOrders();
+      //logWarning("AttackArray = " + new String(AttackArray));
+      SetOrder_MoveToEx(AttackArray, SpeedAttackPlayer);
+      RearAttack = true;
+    }
+  }
+
+  void ActivateGroupRadar(boolean _On)
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Call PopDelayedOrderAlt(). _On is " + new String(_On));
+
+//    if (_On)
+//    {
+//      SetOrder_Attack(m_TargetsMPU, ERT_AGGRESSIVE);
+//      sendEvent(10.0, getIdentificator(user), "RearAttack", []); //TMP disabled Tche
+//      if (GetMission().isDebug)
+//      { 
+//         logWarning(getIdentificator(user)+"  - RearAttack CALLED");
+//         logError("    m_TargetsMPU =" + new String(m_TargetsMPU));
+//      }
+//    }
+    m_GroupHasRadar = _On;
+    ActivateRadar(_On);
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3RussianTank76Group2] OnUnitHitByEnemy  unit ID = " + _UnitID + " enemy ID = " + _EnemyID );
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["FRIEND"], []))
+    {
+      //ForEachUnitTask("ActivateBehavior", [true]);
+      ActivateGroupRadar(true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      //logWarning("Aggressive_Mode By On_UnitHitByEnemy");
+    }
+  }
+}
+
+class CC2M4Tsk_RearGuard extends CC1M3OnUnreacheableUnitProcessingTask, CC2M4Tsk_USSR_RadarTask
+{
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    if (!m_Group.m_GroupHasRadar)
+      m_Group.ActivateGroupRadar(true);
+
+    CBaseAITankTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+  }
+}
+//Soviet_trucks
+class CC2M4Gr_RepaireTrucks extends CBaseUnitGroup
+{
+  event void RetreatNow()
+  {
+    float SpeedTrucksRetreat  = 5.0f;
+
+    //CancelAllOrders();
+    RefreshUnitsList();
+    //logWarning("RepaireTrucks_Retreat");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("SecureZone_04"),
+                    GetNavPointBehPos("SecureZone_03"),
+                    GetNavPointBehPos("SecureZone_02"),
+                    GetNavPointBehPos("SecureZone_01"),
+                    GetNavPointBehPos("SecureZone")
+                    ];
+
+    SetFirstQueueOrders([
+                        ["CC2M4Gr_RepaireTrucks", "SetOrder_MoveToEx", [ApproachPoints, SpeedTrucksRetreat], ""],
+                        ["CC2M4Gr_RepaireTrucks", "", [], ""]
+                      ]);
+
+    ShowGroup(false);
+  }
+}
+//-----------------------------
+//  Class for update USSR radar
+//-----------------------------
+class CC2M4Tsk_USSR_RadarTask
+{
+  event void SetRadarUnit(String _Classificator)
+  {
+    Component Object = GetMission().GetObject(getIdentificator(user));
+
+    Component Behavior = GetBehavior();
+    if (Behavior == null)
+      return;
+
+    Component Content = GetMission().GetMission().GetContent();
+    if (Content == null)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(user));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    Array DefaultMask = [["FRIEND", "MainMesh"], ["NEUTRAL"]];
+    Array CurrentMask = PropertiesMap.Get("BehRadarMask", DefaultMask);
+
+    int Index = CurrentMask[1].find(_Classificator);
+
+    if (Index == -1)
+      CurrentMask[1].add(_Classificator);
+
+    /*if (GetMission().isDebug)
+    {
+      logWarning("[" + getIdentificator(user) + "] Changes Radar Mask");
+      logWarning("NewMask = " + new String(CurrentMask));
+    }*/
+
+    PropertiesMap.Set("BehRadarMask", CurrentMask);
+    Object.SetBehRadarMask(Behavior, PropertiesMap);
+
+//    if(GetMission().isDebug)
+//      logWarning(getIdentificator(user) + " - CALLED SetRadarUnit");
+
+  }
+}
+// Hidden russian reinforc
+class CC2M4Gr_HiddenForce extends CBaseUnitGroup
+{
+  Array m_TargetsMPU = ["MainPlayerUnit", "SAU_1", "SAU_2"];
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetEnemyReactionType(ERT_FRIGID);
+    ShowGroup(false);
+  }
+
+  event void StartForceAttack(boolean _AttackedPlayer)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("CC2M4Gr_HiddenForce - StartForceAttack()");
+
+    if (!_AttackedPlayer)
+      return;
+
+    ActivateRadar(false);
+    ActivateFire(false);
+    ShowGroup(true);
+    PopDelayedOrder();
+  }
+
+  void OnPathEndReached()
+  {
+//    if (GetMission().isDebug)
+//      logWarning("[" + getIdentificator(user) + "] Reached attack position.");
+
+    StartAttack();
+
+    CBaseUnitGroup::OnPathEndReached();
+  }
+
+  void StartAttack()
+  {
+    ActivateRadar(true);
+    ActivateFire(true);
+    SetFormation("CFrontFormation", 50.0, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack(m_TargetsMPU, ERT_AGGRESSIVE);
+  }
+}

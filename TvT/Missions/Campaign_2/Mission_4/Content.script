@@ -1,0 +1,2319 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated mission script file                      
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class CC2M4Content
+{
+  static String m_ObjectListClassFile = "Missions/Campaign_2/Mission_4/Content.script";
+  static String m_ObjectListClassName = "CC2M4Content";
+
+  static Array  m_MissionObjectList   = [
+    [
+      "Atmosphere",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["AmbientLight", new Color(0.196078, 0.156863, 0.117647, 1.000000)],
+        ["AntiSunAngle", 10.000000],
+        ["AntiSunColor", new Color(0.509804, 0.474510, 0.431373, 1.000000)],
+        ["AntiSunEnabled", true],
+        ["AntiSunIntensity", 0.300000],
+        ["EnableHorizontAdjustment", true],
+        ["FogColorXPos", new Color(0.466667, 0.517647, 0.552941, 1.000000)],
+        ["FogColorXNeg", new Color(0.105882, 0.117647, 0.082353, 1.000000)],
+        ["FogColorYPos", new Color(0.486275, 0.486275, 0.486275, 1.000000)],
+        ["FogColorYNeg", new Color(0.486275, 0.486275, 0.486275, 1.000000)],
+        ["FogDensity", 0.001500],
+        ["FogNear", 10.000000],
+        ["FogFar", 800.000000],
+        ["FogFarMax", 3500.000000],
+        ["FogMode", "Exp"],
+        ["ShadowColor", new Color(0.313726, 0.274510, 0.235294, 0.300000)],
+        ["SunColor", new Color(0.890196, 0.807843, 0.584314, 1.000000)],
+        ["SunDirection", new Vector(0.990000, -0.080000, -0.350000)],
+        ["SunIntensity", 0.900000],
+        ["TreeShadowLodDistance", 20.000000]
+      ]
+    ],
+
+    [
+      "Terrain",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["ForestTextureScale", 0.500000],
+        ["ForestShadowBorderScale", 0.400000],
+        ["ForestShadowAlphaScale", 0.500000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],
+        ["IsAntiLighting", true],
+        ["TerrainShadowPower", 3.000000],
+        ["VertForestDistMin", 800.000000],
+        ["VertForestDistMax", 8000.000000],
+        ["VertForestAngleMin", 0.000000],
+        ["VertForestAngleMax", 45.000000],
+        ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+        ["WaterBorderColor", new Color(0.568627, 0.537255, 0.435294, 1.000000)]
+      ]
+    ],
+
+    [
+      "MainPlayerUnit",
+      "GameObject",
+      "CTankPzVIAusfEUnit",
+      new Matrix(
+          0.025525, 0.999674, 0.000000, 5099.805176,
+          -0.999674, 0.025525, 0.000000, 4643.442383,
+          0.000000, 0.000000, 1.000000, 603.704956,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["IsPlayer", true],
+        ["IsManual", true],
+        ["Affiliation", "FRIEND"],
+        ["Number", "223"]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_RetreatForce",
+      "UnitGroup",
+      "CC2M4Gr_RetreatForce",
+      new Matrix(
+          -0.063974, -0.997912, -0.008922, 4916.941406,
+          0.997840, -0.064098, 0.014380, 4078.724609,
+          -0.014922, -0.007983, 0.999857, 592.082031,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["RetreatForce_1", "RetreatForce_2"]],
+        ["Path", ["RetreatPath_1", "RetreatPath_2", "RetreatPath_3", "RetreatPath_4"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["MovingSpeed", 5],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
+      ]
+    ],
+
+    [
+      "RetreatForce_1",
+      "GameObject",
+      "CTruckOpelBlitzUnit",
+      new Matrix(
+          -0.063974, -0.997912, -0.008904, 4916.941406,
+          0.997840, -0.064098, 0.014384, 4078.724609,
+          -0.014925, -0.007964, 0.999857, 592.081909,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "RetreatForce_2",
+      "GameObject",
+      "CTruckOpelBlitzUnit",
+      new Matrix(
+          -0.076327, -0.997076, -0.003731, 4917.437988,
+          0.997034, -0.076360, 0.009571, 4059.765137,
+          -0.009828, -0.002989, 0.999947, 592.193787,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "RetreatPathObj",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.494761, -0.869029, 0.000000, 4922.940918,
+          0.869029, 0.494761, 0.000000, 4741.812500,
+          0.000000, 0.000000, 1.000000, 608.897095,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["RetreatPath_1", "RetreatPath_2", "RetreatPath_3", "RetreatPath_4"]]
+      ]
+    ],
+
+    [
+      "RetreatPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4919.176270,
+          0.999552, -0.029926, 0.000000, 4418.901367,
+          0.000000, 0.000000, 1.000000, 594.338074,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RetreatPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4920.674805,
+          0.999552, -0.029926, 0.000000, 4595.252441,
+          0.000000, 0.000000, 1.000000, 602.285339,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RetreatPath_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4917.133789,
+          0.999552, -0.029926, 0.000000, 4884.339844,
+          0.000000, 0.000000, 1.000000, 618.508545,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RetreatPath_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4926.706543,
+          0.999552, -0.029926, 0.000000, 5064.724609,
+          0.000000, 0.000000, 1.000000, 623.456177,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_SAU",
+      "UnitGroup",
+      "CC2M4Gr_SAU",
+      new Matrix(
+          -0.906686, 0.417968, 0.056775, 5051.963379,
+          -0.419809, -0.907264, -0.025139, 4643.066895,
+          0.041003, -0.046628, 0.998070, 606.290710,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["SAU_1", "SAU_2"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
+      ]
+    ],
+
+    [
+      "SAU_1",
+      "GameObject",
+      "CSAUStuG40Unit",
+      new Matrix(
+          -0.906686, 0.417968, 0.056775, 5051.963379,
+          -0.419809, -0.907265, -0.025131, 4643.066895,
+          0.041006, -0.046621, 0.998071, 606.323608,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAISAUTask"],
+        ["Number", "323"]
+      ]
+    ],
+
+    [
+      "SAU_2",
+      "GameObject",
+      "CSAUStuG40Unit",
+      new Matrix(
+          -0.895391, 0.441127, 0.060679, 5065.396973,
+          -0.442657, -0.896583, -0.013906, 4629.023438,
+          0.048270, -0.039311, 0.998060, 605.363525,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAISAUTask"],
+        ["Number", "324"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU1_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4992.754883,
+          0.999552, -0.029926, 0.000000, 4614.820313,
+          0.000000, 0.000000, 1.000000, 606.628784,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU1_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4881.652344,
+          0.999552, -0.029926, 0.000000, 4526.256348,
+          0.000000, 0.000000, 1.000000, 599.061829,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU1_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4820.073242,
+          0.999552, -0.029926, 0.000000, 4393.188965,
+          0.000000, 0.000000, 1.000000, 594.665527,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU1_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4834.974121,
+          0.999552, -0.029926, 0.000000, 4371.003906,
+          0.000000, 0.000000, 1.000000, 594.290894,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 4.000000],
+        ["PositionType", "Ground"],
+        ["Detect", true],
+        ["Mask", [["MainMesh"], []]]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU2_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5043.554688,
+          0.999552, -0.029926, 0.000000, 4606.063965,
+          0.000000, 0.000000, 1.000000, 605.193420,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU2_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5019.263184,
+          0.999552, -0.029926, 0.000000, 4534.989746,
+          0.000000, 0.000000, 1.000000, 600.724609,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU2_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5008.434082,
+          0.999552, -0.029926, 0.000000, 4404.171875,
+          0.000000, 0.000000, 1.000000, 594.523438,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround1_SAU2_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4989.479492,
+          0.999552, -0.029926, 0.000000, 4381.727051,
+          0.000000, 0.000000, 1.000000, 594.075134,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 4.000000],
+        ["PositionType", "Ground"],
+        ["Detect", true],
+        ["Mask", [["MainMesh"], []]]
+      ]
+    ],
+
+    [
+      "TakeGround2_SAU1_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4896.039063,
+          0.999552, -0.029926, 0.000000, 4403.529297,
+          0.000000, 0.000000, 1.000000, 594.154785,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround2_SAU1_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4895.544922,
+          0.999552, -0.029926, 0.000000, 4379.357422,
+          0.000000, 0.000000, 1.000000, 593.808777,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 4.000000],
+        ["PositionType", "Ground"],
+        ["Detect", true],
+        ["Mask", [["MainMesh"], []]]
+      ]
+    ],
+
+    [
+      "TakeGround2_SAU2_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4936.833984,
+          0.999552, -0.029926, 0.000000, 4404.252441,
+          0.000000, 0.000000, 1.000000, 594.063049,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "TakeGround2_SAU2_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4937.170410,
+          0.999552, -0.029926, 0.000000, 4380.172363,
+          0.000000, 0.000000, 1.000000, 593.371094,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 4.000000],
+        ["PositionType", "Ground"],
+        ["Detect", true],
+        ["Mask", [["MainMesh"], []]]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_AvantGuard76",
+      "UnitGroup",
+      "CC2M4Gr_AvantGuard76",
+      new Matrix(
+          -0.009983, -0.999845, -0.014529, 4918.832031,
+          0.997961, -0.009046, -0.063185, 3792.550049,
+          0.063043, -0.015130, 0.997896, 585.869690,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["AvantGuard76_1", "AvantGuard76_2"]],
+        ["Path", ["RetreatPath_1", "RetreatPath_2", "RetreatPath_3"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["MovingSpeed", 5],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
+      ]
+    ],
+
+    [
+      "AvantGuard76_1",
+      "GameObject",
+      "CTankT34_76_42Unit",
+      new Matrix(
+          -0.009983, -0.999844, -0.014546, 4918.832031,
+          0.997961, -0.009045, -0.063181, 3792.550049,
+          0.063039, -0.015147, 0.997896, 585.869690,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_AvantGuard76"],
+        ["Number", "01_02"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "AvantGuard76_2",
+      "GameObject",
+      "CTankT34_76_42Unit",
+      new Matrix(
+          0.031022, -0.999517, 0.001987, 4918.619141,
+          0.997624, 0.030841, -0.061599, 3770.348877,
+          0.061508, 0.003893, 0.998099, 584.607422,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_AvantGuard76"],
+        ["Number", "01_03"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "AvantGuardPointsObj",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.494761, -0.869029, 0.000000, 4920.079590,
+          0.869029, 0.494761, 0.000000, 4555.915039,
+          0.000000, 0.000000, 1.000000, 600.382568,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["AvantGuard_AttackPoint"]]
+      ]
+    ],
+
+    [
+      "AvantGuard_AttackPoint",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4920.079590,
+          0.999552, -0.029926, 0.000000, 4555.915039,
+          0.000000, 0.000000, 1.000000, 600.382568,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_RepaireTrucks",
+      "UnitGroup",
+      "CC2M4Gr_RepaireTrucks",
+      new Matrix(
+          -0.022042, -0.999248, -0.031908, 4946.892578,
+          0.999641, -0.021542, -0.015939, 3523.014404,
+          0.015240, -0.032248, 0.999364, 578.737549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["Truck_1", "Truck_2"]],
+        ["Formation", "Column"],
+        ["FormationDistance", 60],
+        ["CyclePath", false],
+        ["GroupEnemyReaction", "ERT_PASSIVE"]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_BaseForce",
+      "UnitGroup",
+      "CC2M4Gr_BaseForce",
+      new Matrix(
+          0.012800, -0.999918, 0.001024, 4907.392090,
+          0.998783, 0.012737, -0.047656, 3643.241699,
+          0.047639, 0.001633, 0.998863, 581.092712,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["BaseForce_1", "BaseForce_2", "BaseForce_3", "BaseForce_4", "BaseForce_5SAU", "BaseForce_6SAU"]],
+        ["Path", ["WarZone"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["FormationDistance", 60],
+        ["MovingSpeed", 4],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false],
+        ["GroupEnemyReaction", "ERT_PASSIVE"]
+      ]
+    ],
+
+    [
+      "BaseForce_1",
+      "GameObject",
+      "CTankT34_76_42Unit",
+      new Matrix(
+          0.012800, -0.999918, 0.001035, 4907.392090,
+          0.998783, 0.012736, -0.047653, 3643.241699,
+          0.047636, 0.001643, 0.998863, 581.092651,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_BaseForce_Tank"],
+        ["Number", "22_13"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "BaseForce_2",
+      "GameObject",
+      "CTankT34_76_42Unit",
+      new Matrix(
+          -0.003432, -0.999944, 0.010036, 4935.291504,
+          0.999365, -0.003786, -0.035435, 3642.719238,
+          0.035471, 0.009908, 0.999322, 580.612549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_BaseForce_Tank"],
+        ["Number", "22_14"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "BaseForce_3",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          -0.557818, -0.829843, 0.014130, 4906.015137,
+          0.829259, -0.557965, -0.031699, 3598.632568,
+          0.034190, -0.005965, 0.999398, 579.578430,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_BaseForce_Tank"],
+        ["Number", "22_18"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "BaseForce_4",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          0.485262, -0.874369, -0.000188, 4947.903320,
+          0.874261, 0.485206, -0.015566, 3610.277832,
+          0.013702, 0.007389, 0.999879, 579.452393,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_BaseForce_Tank"],
+        ["Number", "22_22"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "BaseForce_5SAU",
+      "GameObject",
+      "CSAUSU85Unit",
+      new Matrix(
+          0.242058, -0.970258, 0.002596, 4907.886230,
+          0.970093, 0.241965, -0.019312, 3558.726807,
+          0.018109, 0.007193, 0.999810, 578.457458,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_BaseForce_SAU"],
+        ["Number", "SAU_303"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "BaseForce_6SAU",
+      "GameObject",
+      "CSAUSU85Unit",
+      new Matrix(
+          0.027598, -0.999492, -0.015953, 4944.714844,
+          0.999619, 0.027601, -0.000004, 3567.556885,
+          0.000444, -0.015947, 0.999873, 578.969421,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_BaseForce_SAU"],
+        ["Number", "SAU_305"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "Truck_1",
+      "GameObject",
+      "CTruckZis5Unit",
+      new Matrix(
+          -0.022042, -0.999249, -0.031878, 4946.892578,
+          0.999641, -0.021542, -0.015942, 3523.014404,
+          0.015243, -0.032218, 0.999365, 578.737549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "Truck_2",
+      "GameObject",
+      "CTruckZis5Unit",
+      new Matrix(
+          -0.015612, -0.999752, -0.015909, 4905.773926,
+          0.999379, -0.015099, -0.031847, 3526.517090,
+          0.031599, -0.016396, 0.999366, 577.843262,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "BaseForcePointsObj",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.494761, -0.869029, 0.000000, 4889.616699,
+          0.869029, 0.494761, 0.000000, 3704.340576,
+          0.000000, 0.000000, 1.000000, 582.693359,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Home"]]
+      ]
+    ],
+
+    [
+      "Home",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4889.616699,
+          0.999552, -0.029926, 0.000000, 3704.340576,
+          0.000000, 0.000000, 1.000000, 582.693359,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_RearGuard",
+      "UnitGroup",
+      "CC2M4Gr_RearGuard",
+      new Matrix(
+          -0.878592, -0.469773, -0.085962, 5037.689453,
+          0.471931, -0.881618, -0.005519, 3512.747559,
+          -0.073193, -0.045417, 0.996283, 584.012756,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["RearGuard_1", "RearGuard_2", "RearGuard_3"]],
+        ["Path", ["LeftPath_1", "LeftPath_2"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["MovingSpeed", 5],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
+      ]
+    ],
+
+    [
+      "RearGuard_1",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          -0.878593, -0.469770, -0.085969, 5037.689453,
+          0.471931, -0.881618, -0.005560, 3512.747559,
+          -0.073179, -0.045456, 0.996282, 584.012695,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_RearGuard"],
+        ["Number", "22_24"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "RearGuard_2",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          -0.788423, -0.607183, -0.098575, 5019.124023,
+          0.609653, -0.792644, 0.006244, 3492.484863,
+          -0.081926, -0.055174, 0.995110, 582.248535,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_RearGuard"],
+        ["Number", "22_25"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "RearGuard_3",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          -0.824913, -0.555963, -0.102093, 5034.871582,
+          0.561965, -0.826089, -0.042093, 3464.716064,
+          -0.060936, -0.092096, 0.993884, 583.329346,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CC2M4Tsk_RearGuard"],
+        ["Number", "22_26"],
+        ["BehRadarMask", [["FRIEND", "MainMesh"], ["NEUTRAL", "INVISIBLE_ON_RADAR"]]]
+      ]
+    ],
+
+    [
+      "LeftPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4840.809082,
+          0.999552, -0.029926, 0.000000, 3814.512939,
+          0.000000, 0.000000, 1.000000, 590.186279,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LeftPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4854.162109,
+          0.999552, -0.029926, 0.000000, 4000.734863,
+          0.000000, 0.000000, 1.000000, 593.848755,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5060.780762,
+          0.999552, -0.029926, 0.000000, 3707.294189,
+          0.000000, 0.000000, 1.000000, 578.852783,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5114.270996,
+          0.999552, -0.029926, 0.000000, 3782.617676,
+          0.000000, 0.000000, 1.000000, 577.802063,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5158.507813,
+          0.999552, -0.029926, 0.000000, 3844.340332,
+          0.000000, 0.000000, 1.000000, 577.473633,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5158.135254,
+          0.999552, -0.029926, 0.000000, 3896.112549,
+          0.000000, 0.000000, 1.000000, 578.188477,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_5",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5147.466797,
+          0.999552, -0.029926, 0.000000, 3973.006836,
+          0.000000, 0.000000, 1.000000, 581.607300,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_6",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5169.453125,
+          0.999552, -0.029926, 0.000000, 4034.248291,
+          0.000000, 0.000000, 1.000000, 583.870056,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RightPath_7",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5206.629883,
+          0.999552, -0.029926, 0.000000, 4072.779541,
+          0.000000, 0.000000, 1.000000, 584.275696,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "WarZone",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4917.332031,
+          0.999552, -0.029926, 0.000000, 4218.934570,
+          0.000000, 0.000000, 1.000000, 590.940369,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 160.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "DuckBlind",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5171.533203,
+          0.999552, -0.029926, 0.000000, 4488.585938,
+          0.000000, 0.000000, 1.000000, 602.146423,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 50.000000],
+        ["PositionType", "Ground"],
+        ["Detect", true],
+        ["Mask", [["MainMesh"], []]]
+      ]
+    ],
+
+    [
+      "SingleVillageShed1",
+      "InteriorObject",
+      "CUSRShedWood02Unit",
+      new Matrix(
+          -0.999899, -0.014236, -0.000003, 5127.805664,
+          0.014236, -0.999899, 0.000000, 4074.437012,
+          -0.000003, 0.000000, 1.000000, 587.499756,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "SingleVillageFence_01",
+      "InteriorObject",
+      "CFencePoleUnit",
+      new Matrix(
+          0.021113, -0.999777, 0.000000, 5120.129395,
+          0.999777, 0.021113, 0.000000, 4069.292480,
+          0.000000, 0.000000, 1.000000, 587.439819,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 4]
+      ]
+    ],
+
+    [
+      "SingleVillageFence_02",
+      "InteriorObject",
+      "CFencePoleUnit",
+      new Matrix(
+          0.997528, 0.070268, -0.000024, 5120.065918,
+          -0.070268, 0.997528, 0.000000, 4069.362793,
+          0.000024, 0.000002, 1.000000, 587.509888,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "SingleVillageFence_03",
+      "InteriorObject",
+      "CFencePoleUnit",
+      new Matrix(
+          0.026036, -0.999661, -0.000705, 5135.859375,
+          0.999661, 0.026036, 0.000000, 4068.169434,
+          0.000018, -0.000705, 1.000000, 587.509766,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "SingleVillageWell11",
+      "InteriorObject",
+      "CWaterWell_1Unit",
+      new Matrix(
+          -0.044380, 0.999015, 0.000000, 5132.222656,
+          -0.999015, -0.044380, 0.000000, 4092.707764,
+          0.000000, 0.000000, 1.000000, 587.513977,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "SingleVillageWell12",
+      "InteriorObject",
+      "CWaterWell_2Unit",
+      new Matrix(
+          -0.994257, -0.107021, 0.000000, 5132.298340,
+          0.107021, -0.994257, 0.000000, 4092.181641,
+          0.000000, 0.000000, 1.000000, 587.510010,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "HiddenForce_01",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          0.231910, -0.970915, -0.059503, 4786.943848,
+          0.969108, 0.225333, 0.100275, 3850.803467,
+          -0.083951, -0.080920, 0.993179, 589.417725,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITankTask"],
+        ["Number", "22_32"]
+      ]
+    ],
+
+    [
+      "HiddenForce_02",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          0.190612, -0.981621, 0.009330, 4786.059570,
+          0.965559, 0.189191, 0.178611, 3816.511963,
+          -0.177094, -0.025037, 0.983876, 590.013306,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITankTask"],
+        ["Number", "22_33"]
+      ]
+    ],
+
+    [
+      "HiddenForce_03",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          -0.352574, -0.935659, -0.015278, 4791.042969,
+          0.933627, -0.352823, 0.062102, 3792.984619,
+          -0.063497, 0.007632, 0.997953, 589.638123,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITankTask"],
+        ["Number", "22_34"]
+      ]
+    ],
+
+    [
+      "CC2M4Gr_HiddenForce",
+      "UnitGroup",
+      "CC2M4Gr_HiddenForce",
+      new Matrix(
+          0.233295, -0.970458, -0.061528, 4786.943848,
+          0.966678, 0.224598, 0.122837, 3850.803467,
+          -0.105389, -0.088135, 0.990518, 589.394409,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["HiddenForce_01", "HiddenForce_02", "HiddenForce_03"]],
+        ["Path", ["HiddenForce_NP01", "HiddenForce_NP02", "HiddenForce_NP03", "HiddenForce_NP04", "HiddenForce_NP05"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["FormationDistance", 60],
+        ["MovingSpeed", 5],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
+      ]
+    ],
+
+    [
+      "HiddenForce_NP01",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.353281, -0.935517, 0.000000, 4783.998047,
+          0.935517, -0.353281, 0.000000, 3871.611328,
+          0.000000, 0.000000, 1.000000, 588.480957,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "HiddenForce_NP02",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.353281, -0.935517, 0.000000, 4788.272949,
+          0.935517, -0.353281, 0.000000, 3923.493408,
+          0.000000, 0.000000, 1.000000, 589.529968,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "HiddenForce_NP03",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.353281, -0.935517, 0.000000, 4783.799805,
+          0.935517, -0.353281, 0.000000, 3961.588623,
+          0.000000, 0.000000, 1.000000, 591.318359,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "HiddenForce_NP04",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.353281, -0.935517, 0.000000, 4800.593750,
+          0.935517, -0.353281, 0.000000, 4001.915283,
+          0.000000, 0.000000, 1.000000, 591.226501,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "HiddenForce_NP05",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.353281, -0.935517, 0.000000, 4791.982422,
+          0.935517, -0.353281, 0.000000, 4063.935791,
+          0.000000, 0.000000, 1.000000, 591.752991,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "AmbushHouseFence_01",
+      "InteriorObject",
+      "CFencePoleUnit",
+      new Matrix(
+          -0.988291, -0.109599, -0.106155, 5174.024414,
+          0.116937, -0.990974, -0.065539, 4495.015137,
+          -0.098014, -0.077185, 0.992187, 603.291870,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "AmbushHouseFence_02",
+      "InteriorObject",
+      "CFencePoleUnit",
+      new Matrix(
+          -0.097070, 0.993791, -0.054378, 5174.032715,
+          -0.991315, -0.101410, -0.083734, 4494.825684,
+          -0.088728, 0.045777, 0.995003, 603.260010,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "AmbushHouseFence_03",
+      "InteriorObject",
+      "CFencePoleUnit",
+      new Matrix(
+          -0.987777, -0.155518, -0.010513, 5171.739746,
+          0.155871, -0.985823, -0.062104, 4471.128418,
+          -0.000706, -0.062984, 0.998014, 601.141052,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 5]
+      ]
+    ],
+
+    [
+      "AmbushHouseCorral",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          -0.987391, -0.156229, -0.025521, 5164.128418,
+          0.157133, -0.986830, -0.038418, 4477.849609,
+          -0.019183, -0.041944, 0.998936, 601.400269,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "AmbushHouseDrova_01",
+      "InteriorObject",
+      "CPileLogsUnit",
+      new Matrix(
+          0.003194, -0.989826, -0.142245, 5172.195313,
+          0.987451, 0.025581, -0.155838, 4493.641602,
+          0.157892, -0.139962, 0.977487, 602.836243,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "RearAttackPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.418737, -0.908107, 0.000000, 5257.075195,
+          0.908107, -0.418737, 0.000000, 4252.057129,
+          0.000000, 0.000000, 1.000000, 591.378479,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RearAttackPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5242.053711,
+          0.999552, -0.029926, 0.000000, 4411.592773,
+          0.000000, 0.000000, 1.000000, 593.808228,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RearAttackPath_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5097.882813,
+          0.999552, -0.029926, 0.000000, 4613.774902,
+          0.000000, 0.000000, 1.000000, 601.946167,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RearAttackPath_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4967.156738,
+          0.999552, -0.029926, 0.000000, 4763.631348,
+          0.000000, 0.000000, 1.000000, 615.213074,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "RearAttackPath_0",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5258.933594,
+          0.999552, -0.029926, 0.000000, 4171.984863,
+          0.000000, 0.000000, 1.000000, 589.969177,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GCol_T43",
+      "GameObject",
+      "CTankPzIVGUnit",
+      new Matrix(
+          -0.986556, 0.152606, 0.058463, 5070.234863,
+          -0.144379, -0.981511, 0.125657, 4668.150879,
+          0.076558, 0.115527, 0.990350, 604.349854,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITankTask"],
+        ["Number", "231"]
+      ]
+    ],
+
+    [
+      "GCol_T44",
+      "GameObject",
+      "CTankPzIVGUnit",
+      new Matrix(
+          -0.986356, 0.154035, 0.058094, 5087.131836,
+          -0.156051, -0.987233, -0.031912, 4670.622559,
+          0.052437, -0.040542, 0.997801, 603.878418,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITankTask"],
+        ["Number", "232"]
+      ]
+    ],
+
+    [
+      "GCol2BTR1",
+      "GameObject",
+      "CBtrHanomag251AusfCUnit",
+      new Matrix(
+          -0.989165, 0.139687, 0.045170, 4992.527344,
+          -0.140848, -0.989750, -0.023613, 4641.198242,
+          0.041408, -0.029719, 0.998700, 608.989136,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAIBtrTask"]
+      ]
+    ],
+
+    [
+      "GCol2BTR2",
+      "GameObject",
+      "CBtrHanomag251AusfCUnit",
+      new Matrix(
+          -0.988367, 0.148238, 0.034015, 5004.600098,
+          -0.149117, -0.988505, -0.024938, 4643.272461,
+          0.029927, -0.029720, 0.999110, 608.542297,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAIBtrTask"]
+      ]
+    ],
+
+    [
+      "GCol2Group",
+      "UnitGroup",
+      "GCol2Group",
+      new Matrix(
+          -0.989116, 0.139328, 0.047304, 4992.527344,
+          -0.140881, -0.989534, -0.031237, 4641.198242,
+          0.042457, -0.037561, 0.998392, 608.990173,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["GCol2BTR1", "GCol2BTR2"]],
+        ["Path", ["GRetrPath_1", "GRetrPath_2", "GRetrPath_3", "GRetrPath_4", "GRetrPath_5", "GRetrPath_5_6", "GRetrPath_6", "GRetrPath_7"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["FormationDistance", 20],
+        ["MovingSpeed", 5],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
+      ]
+    ],
+
+    [
+      "GCol3Group",
+      "UnitGroup",
+      "GCol3Group",
+      new Matrix(
+          -0.989809, 0.140331, 0.024187, 5092.568359,
+          -0.142400, -0.975293, -0.168898, 4693.469238,
+          -0.000112, -0.170621, 0.985337, 607.368591,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["GCol3BTR1"]],
+        ["Path", ["GRetrPath_0", "GRetrPath_1", "GRetrPath_2", "GRetrPath_3", "GRetrPath_4", "GRetrPath_5", "GRetrPath_5_6", "GRetrPath_6", "GRetrPath_7"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["FormationDistance", 20],
+        ["MovingSpeed", 4.600000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
+      ]
+    ],
+
+    [
+      "GSoldGroup",
+      "UnitGroup",
+      "GSoldGroup",
+      new Matrix(
+          -0.107291, -0.994228, 0.000000, 5102.802246,
+          0.994228, -0.107291, 0.000000, 4651.456055,
+          0.000000, 0.000000, 1.000000, 603.164490,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["gsold_1", "gsold_2", "gsold_3", "gsold_4"]],
+        ["Path", ["GSPath_0", "GSPath_1", "GSPath_2", "GSPath_3", "GSPath_4"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["FormationDistance", 3],
+        ["MovingSpeed", 3.000000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
+      ]
+    ],
+
+    [
+      "GCol3BTR1",
+      "GameObject",
+      "CBtrHanomag251AusfCUnit",
+      new Matrix(
+          -0.989778, 0.140267, 0.025771, 5092.568359,
+          -0.142611, -0.974873, -0.171129, 4693.469238,
+          0.001120, -0.173055, 0.984912, 607.365173,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAIBtrTask"]
+      ]
+    ],
+
+    [
+      "GCol1Group",
+      "UnitGroup",
+      "GCol1Group",
+      new Matrix(
+          -0.986558, 0.152606, 0.058441, 5070.234863,
+          -0.144382, -0.981511, 0.125656, 4668.150879,
+          0.076537, 0.115529, 0.990351, 604.350098,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Units", ["GCol_T43", "GCol_T44"]],
+        ["Path", ["GRetrPath_1", "GRetrPath_2", "GRetrPath_3", "GRetrPath_4", "GRetrPath_5", "GRetrPath_5_6", "GRetrPath_6", "GRetrPath_7"]],
+        ["DelayedOrder", true],
+        ["Formation", "Column"],
+        ["FormationDistance", 20],
+        ["MovingSpeed", 4.800000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
+      ]
+    ],
+
+    [
+      "GRetrPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4930.706055,
+          0.999552, -0.029926, 0.000000, 4640.318359,
+          0.000000, 0.000000, 1.000000, 606.036865,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4917.267090,
+          0.999552, -0.029926, 0.000000, 4657.124512,
+          0.000000, 0.000000, 1.000000, 607.000061,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4917.755371,
+          0.999552, -0.029926, 0.000000, 4796.352051,
+          0.000000, 0.000000, 1.000000, 614.315369,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4916.577637,
+          0.999552, -0.029926, 0.000000, 4981.576660,
+          0.000000, 0.000000, 1.000000, 620.675476,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_5",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4925.610840,
+          0.999552, -0.029926, 0.000000, 5236.416016,
+          0.000000, 0.000000, 1.000000, 629.126831,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_6",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4937.786621,
+          0.999552, -0.029926, 0.000000, 5736.744629,
+          0.000000, 0.000000, 1.000000, 622.674011,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_7",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4682.359375,
+          0.999552, -0.029926, 0.000000, 6000.120605,
+          0.000000, 0.000000, 1.000000, 619.219849,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "WatcherPoint",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5020.054199,
+          0.999552, -0.029926, 0.000000, 3807.250488,
+          0.000000, 0.000000, 1.000000, 588.893494,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 300.000000],
+        ["PositionType", "Ground"],
+        ["Detect", false],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false]
+      ]
+    ],
+
+    [
+      "GRetrPath_5_6",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4930.854004,
+          0.999552, -0.029926, 0.000000, 5421.644043,
+          0.000000, 0.000000, 1.000000, 634.558960,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "gsold_1",
+      "GameObject",
+      "CGermanSoldierRifleUnit",
+      new Matrix(
+          -0.107291, -0.994228, 0.000000, 5102.802246,
+          0.994228, -0.107291, 0.000000, 4651.456055,
+          0.000000, 0.000000, 1.000000, 603.164551,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "gsold_2",
+      "GameObject",
+      "CGermanSoldierRifleUnit",
+      new Matrix(
+          -0.107291, -0.994228, 0.000000, 5103.649414,
+          0.994228, -0.107291, 0.000000, 4650.257813,
+          0.000000, 0.000000, 1.000000, 603.082581,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "gsold_3",
+      "GameObject",
+      "CGermanSoldierRifleUnit",
+      new Matrix(
+          -0.107291, -0.994228, 0.000000, 5104.370605,
+          0.994228, -0.107291, 0.000000, 4648.893066,
+          0.000000, 0.000000, 1.000000, 603.010254,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "gsold_4",
+      "GameObject",
+      "CGermanSoldierRifleUnit",
+      new Matrix(
+          -0.107291, -0.994228, 0.000000, 5104.927734,
+          0.994228, -0.107291, 0.000000, 4647.247070,
+          0.000000, 0.000000, 1.000000, 602.966675,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "GSPath_0",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5103.434082,
+          0.999552, -0.029926, 0.000000, 4654.454590,
+          0.000000, 0.000000, 1.000000, 602.500183,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GSPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5109.786133,
+          0.999552, -0.029926, 0.000000, 4678.221191,
+          0.000000, 0.000000, 1.000000, 603.433289,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GSPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5110.049805,
+          0.999552, -0.029926, 0.000000, 4690.642090,
+          0.000000, 0.000000, 1.000000, 605.542908,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GSPath_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5102.337891,
+          0.999552, -0.029926, 0.000000, 4703.044922,
+          0.000000, 0.000000, 1.000000, 606.756714,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GSPath_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5091.639160,
+          0.999552, -0.029926, 0.000000, 4706.222168,
+          0.000000, 0.000000, 1.000000, 607.180237,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "GRetrPath_0",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5078.219727,
+          0.999552, -0.029926, 0.000000, 4667.407715,
+          0.000000, 0.000000, 1.000000, 602.600342,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "SecureZone",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.022046, -0.999757, 0.000000, 4572.933105,
+          0.999757, -0.022046, 0.000000, 3112.937744,
+          0.000000, 0.000000, 1.000000, 574.740112,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 10.000000]
+      ]
+    ],
+
+    [
+      "SecureZone_01",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.022046, -0.999757, 0.000000, 4716.847168,
+          0.999757, -0.022046, 0.000000, 3116.599121,
+          0.000000, 0.000000, 1.000000, 580.803345,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 10.000000]
+      ]
+    ],
+
+    [
+      "SecureZone_02",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.022046, -0.999757, 0.000000, 4857.928223,
+          0.999757, -0.022046, 0.000000, 3116.047363,
+          0.000000, 0.000000, 1.000000, 579.834351,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 10.000000]
+      ]
+    ],
+
+    [
+      "SecureZone_03",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.022046, -0.999757, 0.000000, 4927.087891,
+          0.999757, -0.022046, 0.000000, 3200.415283,
+          0.000000, 0.000000, 1.000000, 582.227966,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 10.000000]
+      ]
+    ],
+
+    [
+      "SecureZone_04",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.022046, -0.999757, 0.000000, 4929.218750,
+          0.999757, -0.022046, 0.000000, 3400.468506,
+          0.000000, 0.000000, 1.000000, 574.373901,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 10.000000]
+      ]
+    ],
+
+    [
+      "WarZone1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4930.098633,
+          0.999552, -0.029926, 0.000000, 4132.520020,
+          0.000000, 0.000000, 1.000000, 590.405945,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 10.000000],
+        ["PositionType", "Ground"],
+        ["Detect", false],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false]
+      ]
+    ],
+
+    [
+      "LastLeftPath_1",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4878.401855,
+          0.999552, -0.029926, 0.000000, 3910.200439,
+          0.000000, 0.000000, 1.000000, 590.022339,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_2",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4841.750977,
+          0.999552, -0.029926, 0.000000, 3977.542236,
+          0.000000, 0.000000, 1.000000, 594.810364,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_3",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4815.094238,
+          0.999552, -0.029926, 0.000000, 4078.585938,
+          0.000000, 0.000000, 1.000000, 594.724854,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_4",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4872.648926,
+          0.999552, -0.029926, 0.000000, 4122.935547,
+          0.000000, 0.000000, 1.000000, 590.099854,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_5",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4872.245605,
+          0.999552, -0.029926, 0.000000, 4177.870605,
+          0.000000, 0.000000, 1.000000, 590.568665,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_6",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4891.051758,
+          0.999552, -0.029926, 0.000000, 4275.002441,
+          0.000000, 0.000000, 1.000000, 591.975220,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_7",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 4921.996582,
+          0.999552, -0.029926, 0.000000, 4388.121094,
+          0.000000, 0.000000, 1.000000, 593.567749,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_8",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5086.247070,
+          0.999552, -0.029926, 0.000000, 4448.925293,
+          0.000000, 0.000000, 1.000000, 595.515808,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_9",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5138.692871,
+          0.999552, -0.029926, 0.000000, 4497.446289,
+          0.000000, 0.000000, 1.000000, 600.126038,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "LastLeftPath_91",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.029926, -0.999552, 0.000000, 5151.112305,
+          0.999552, -0.029926, 0.000000, 4320.673340,
+          0.000000, 0.000000, 1.000000, 590.605408,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 2.000000],
+        ["PositionType", "Ground"]
+      ]
+    ],
+
+    [
+      "pak_1",
+      "GameObject",
+      "CGunPak40Unit",
+      new Matrix(
+          -0.347795, 0.937571, 0.000000, 5082.760254,
+          -0.937571, -0.347795, 0.000000, 4534.172852,
+          0.000000, 0.000000, 1.000000, 602.064636,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "blitz_1",
+      "GameObject",
+      "CTruckOpelBlitzUnit",
+      new Matrix(
+          -0.015828, -0.997849, 0.063618, 4910.827637,
+          0.999110, -0.018272, -0.038029, 3694.375732,
+          0.039109, 0.062960, 0.997249, 582.709106,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "FRIEND"]
+      ]
+    ]
+  ];
+
+  static Array  m_MissionCameraScriptList  = [
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "Default"],
+        []
+      ]
+    ],
+
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "EngineStart"],
+        []
+      ]
+    ],
+
+    [
+      0.000000,
+      "KEY_SETPOS",
+      [
+        ["Direction", new Vector(-0.293023, 0.955617, -0.030559)],
+        ["Lock", false],
+        ["NoLock", false],
+        ["Position", new Vector(5099.567871, 4633.301270, 604.056091)]
+      ]
+    ],
+
+    [
+      2.000000,
+      "KEY_MOVE",
+      [
+        ["Direction", new Vector(0.384982, -0.904502, -0.183480)],
+        ["Lock", false],
+        ["NoLock", false],
+        ["Position", new Vector(5094.195313, 4648.248047, 606.766296)]
+      ]
+    ],
+
+    [
+      6.000000,
+      "KEY_MOVE",
+      [
+        ["Direction", new Vector(0.513314, -0.855224, -0.071413)],
+        ["Lock", false],
+        ["NoLock", false],
+        ["Position", new Vector(5140.000488, 4504.448242, 605.269348)]
+      ]
+    ],
+
+    [
+      7.000000,
+      "KEY_FADE",
+      [
+        ["TargetFade", 0.000000],
+        ["TimeToFade", 1.000000]
+      ]
+    ],
+
+    [
+      7.500000,
+      "KEY_MOVE",
+      [
+        ["Direction", new Vector(-0.569485, -0.818893, -0.071420)],
+        ["Lock", false],
+        ["NoLock", false],
+        ["Position", new Vector(5140.000488, 4504.448242, 605.269348)]
+      ]
+    ],
+
+    [
+      8.000000,
+      "KEY_END",
+      [
+      ]
+    ],
+
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "StartEngine"],
+        [["IngameCinema", false], ["Test", "xyz"]]
+      ]
+    ]
+  ];
+
+  static Array  m_TriggersList = [
+  ];
+
+  Array GetMissionObjectList()
+  {
+    return m_MissionObjectList;
+  }
+
+  Array GetMissionCameraScriptList()
+  {
+    return m_MissionCameraScriptList;
+  }
+
+  Array GetTriggersList()
+  {
+    return m_TriggersList;
+  }
+
+  String GetObjectListClassFile()
+  {
+    return m_ObjectListClassFile;
+  }
+
+  String GetObjectListClassName()
+  {
+    return m_ObjectListClassName;
+  }
+}
