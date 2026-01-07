@@ -1,0 +1,29 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+//-----------------
+//  Mission strings
+//-----------------
+class CC1M6Mission_Strings extends CCommonStrings
+{
+  final static WString MissionName    = getLocalized("MissionC1M6", "MissionName");
+  final static WString BriefingText   = getLocalized("MissionC1M6", "BriefingText");
+  final static WString ObjectivesText = getLocalized("MissionC1M6", "ObjectivesText");
+  final static WString Objective01    = getLocalized("MissionC1M6", "Objective01");
+  final static WString Objective02    = getLocalized("MissionC1M6", "Objective02");
+  final static WString Objective03    = getLocalized("MissionC1M6", "Objective03");
+  final static WString Objective04    = getLocalized("MissionC1M6", "Objective04");
+  final static WString Objective05    = getLocalized("MissionC1M6", "Objective05");
+
+  final static WString str_NavPointVis   =  getLocalized("MissionC1M6", "NavpointVis");
+  final static WString str_NavPointKurt  =  getLocalized("MissionC1M6", "NavpointKurt");
+  final static WString str_NavPointKrin  =  getLocalized("MissionC1M6", "NavpointKrin");
+  final static WString str_NavPointBer   =  getLocalized("MissionC1M6", "NavpointBer");
+  final static WString str_NavPointGerHQ =  getLocalized("MissionC1M6", "NavPointHQ_1");
+}

@@ -1,0 +1,234 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+class CC1M6PRussianPanzer extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "CC1M6GerGroup_Stug";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit", /*"Russian_TankGroup1_76_1", "Russian_TankGroup1_76_2", "Russian_TankGroup1_76_3",*/
+      "MainPlayerUnit_RussianTank_T34_85_1", "MainPlayerUnit_RussianTank_T34_85_2"];
+
+  float distanceForFight = 700;
+  float distancePlayer;
+  float distanceTank1;
+  float distanceTank2;
+  //float distanceTank3;
+  //float distanceTank4;
+  //float distanceTank5;
+  float distancePlayer2;
+
+
+  Initialize(Component _Mission, String _Name)
+  {
+//    if (GetMission().isDebug)
+//      logWarning("CC1M6PRussianPanzer::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M6PRussianPanzer").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Array PointInfoMPU = _PositionWatcher.GetPointInfo(0);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(1);
+    Array PointInfo2   = _PositionWatcher.GetPointInfo(2);
+    Array PointInfo3   = _PositionWatcher.GetPointInfo(3);
+    Array PointInfo4   = _PositionWatcher.GetPointInfo(4);
+    Array PointInfo5   = _PositionWatcher.GetPointInfo(5);
+
+    distancePlayer = PointInfoMPU[INDEX_Distance];
+    distanceTank1 = PointInfo1[INDEX_Distance];
+    distanceTank2 = PointInfo2[INDEX_Distance];
+    //distanceTank3 = PointInfo3[INDEX_Distance];
+    //distanceTank4 = PointInfo4[INDEX_Distance];
+    //distanceTank5 = PointInfo5[INDEX_Distance];
+
+    /*
+    logError("CC1M6PRussianPanzer distancePlayer = " + new String(distancePlayer));
+    logError("CC1M6PRussianPanzer distanceTank1 = " + new String(distanceTank1));
+    logError("CC1M6PRussianPanzer distanceTank2 = " + new String(distanceTank2));
+    logError("CC1M6PRussianPanzer distanceTank3 = " + new String(distanceTank3));
+    logError("CC1M6PRussianPanzer distanceTank4 = " + new String(distanceTank4));
+    loError("CC1M6PRussianPanzer distanceTank5 = " + new String(distanceTank5));
+     */
+    if(
+        distancePlayer < distanceForFight ||
+        distanceTank1 < distanceForFight ||
+        distanceTank2 < distanceForFight //||
+        //distanceTank3 < distanceForFight ||
+        //distanceTank4 < distanceForFight ||
+        //distanceTank5 < distanceForFight
+        )
+    {
+      if(!GetMission().StartFightStug)
+      {
+        sendEvent(0.0, SOID_MissionController, "StartFightStug", []);
+        GetMission().ShutdownWatcher("CC1M6PRussianPanzer");
+      }
+    }
+  }
+}
+
+class CC1M6PRussianPanzerPak1 extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "CC1M6GerGroup_Pak1";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit","Russian_TankGroup1_85_1", "Russian_TankGroup1_85_2", "Russian_TankGroup1_85_3"];
+
+  Initialize(Component _Mission, String _Name)
+  {
+  //  if (GetMission().isDebug)
+  //    logWarning("CC1M6PRussianPanzerPak1::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M6PRussianPanzerPak1").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  float distanceForFight = 700;
+  float distancePlayer;
+  float distanceTank1;
+  float distanceTank2;
+  float distanceTank3;
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Array PointInfoMPU   = _PositionWatcher.GetPointInfo(0);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(1);
+    Array PointInfo2   = _PositionWatcher.GetPointInfo(2);
+    Array PointInfo3   = _PositionWatcher.GetPointInfo(3);
+
+    distancePlayer = PointInfoMPU[INDEX_Distance];
+    distanceTank1 = PointInfo1[INDEX_Distance];
+    distanceTank2 = PointInfo2[INDEX_Distance];
+    distanceTank3 = PointInfo3[INDEX_Distance];
+
+
+    //logError("CC1M6PRussianPanzerPak1 distancePlayer = " + new String(distancePlayer));
+   // logWarning("CC1M6PRussianPanzerPak1 distanceTank1 = " + new String(distanceTank1));
+   // logWarning("CC1M6PRussianPanzerPak1 distanceTank2 = " + new String(distanceTank2));
+   // logWarning("CC1M6PRussianPanzerPak1 distanceTank3 = " + new String(distanceTank3));
+    if(
+        //distancePlayer < distanceForFight ||
+        distanceTank1 < distanceForFight ||
+        distanceTank2 < distanceForFight ||
+        distanceTank3 < distanceForFight
+        )
+    {
+      if(!GetMission().StartFightPak1)
+      {
+        sendEvent(0.0, SOID_MissionController, "StartFightPak1", []);
+        GetMission().ShutdownWatcher("CC1M6PRussianPanzerPak1");
+      }
+    }
+  }
+}
+
+class CC1M6PRussianPanzerPak2 extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "CC1M6GerGroup_Pak2";                     // кто следимт
+  final static Array  ControlPoints = ["MainPlayerUnit","Russian_TankGroup2_76_1", "Russian_TankGroup2_76_2", "Russian_TankGroup2_76_3"];
+
+  Initialize(Component _Mission, String _Name)
+  {
+    if (GetMission().isDebug)
+      logWarning("CC1M6PRussianPanzerPak2::Initialize");
+
+    CPositionWatcher::Initialize(_Mission, _Name);
+    GetMission().GetObject("CC1M6PRussianPanzerPak2").SetUpdatePeriod(10000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo    = _Watcher.GetPointInfo(0);
+    Array PositionInfo = _Watcher.GetPositionInfo();
+
+    PointRegionChanged(_Watcher, 0, PointInfo[INDEX_RegionMask]);
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+
+  float distanceForFight = 600;
+  float distancePlayer;
+  float distanceTank1;
+  float distanceTank2;
+  float distanceTank3;
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+    )
+  {
+    Array PointInfo = _PositionWatcher.GetPointInfo(_Point);
+
+    Array PointInfoMPU   = _PositionWatcher.GetPointInfo(0);
+    Array PointInfo1   = _PositionWatcher.GetPointInfo(1);
+    Array PointInfo2   = _PositionWatcher.GetPointInfo(2);
+    Array PointInfo3   = _PositionWatcher.GetPointInfo(3);
+
+    distancePlayer = PointInfoMPU[INDEX_Distance];
+    distanceTank1 = PointInfo1[INDEX_Distance];
+    distanceTank2 = PointInfo2[INDEX_Distance];
+    distanceTank3 = PointInfo3[INDEX_Distance];
+
+
+    //logError("CC1M6PRussianPanzerPak2 distancePlayer = " + new String(distancePlayer));
+    //logWarning("CC1M6PRussianPanzerPak2 distanceTank1 = " + new String(distanceTank1));
+    //logWarning("CC1M6PRussianPanzerPak2 distanceTank2 = " + new String(distanceTank2));
+    //logWarning("CC1M6PRussianPanzerPak2 distanceTank3 = " + new String(distanceTank3));
+    if(
+        //distancePlayer < distanceForFight ||
+        distanceTank1 < distanceForFight ||
+        distanceTank2 < distanceForFight ||
+        distanceTank3 < distanceForFight
+        )
+    {
+      if(!GetMission().StartFightPak2)
+      {
+        sendEvent(0.0, SOID_MissionController, "StartFightPak2", []);
+        GetMission().ShutdownWatcher("CC1M6PRussianPanzerPak2");
+      }
+    }
+  }
+}
