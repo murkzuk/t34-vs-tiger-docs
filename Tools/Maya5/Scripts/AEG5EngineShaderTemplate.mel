@@ -1,0 +1,293 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: AEG5EngineShaderTemplate.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+//
+// Base texture attribute
+//
+global proc AEshaderBaseTextureNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Base Texture" -at $attrName baseTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderBaseTextureReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName baseTextureControl;
+}
+
+//
+// Height texture attribute
+//
+global proc AEshaderHeightMapNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Height Map Texture" -at $attrName heightTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderHeightMapReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName heightTextureControl;
+}
+
+//
+// Bump texture attribute
+//
+global proc AEshaderBumpNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Bump Mapping" -at $attrName bumpControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderBumpReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName bumpControl;
+}
+
+//
+// Light Map texture attribute
+//
+global proc AEshaderLightMapTextureNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Light Map Texture" -at $attrName lightMapTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderLightMapTextureReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName lightMapTextureControl;
+}
+
+//
+// Environment Map texture attribute
+//
+global proc AEshaderEnvMapTextureNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Environment Map Texture" -at $attrName envMapTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderEnvMapTextureReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName envMapTextureControl;
+}
+
+
+//
+// Micro texture attribute
+//
+global proc AEshaderMicroTextureNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Micro Texture" -at $attrName microTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderMicroTextureReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName microTextureControl;
+}
+
+//
+// Emissive texture attribute
+//
+global proc AEshaderEmissiveTextureNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Emissive Texture" -at $attrName emissiveTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderEmissiveTextureReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName emissiveTextureControl;
+}
+
+global proc AEshaderEmissive(string $nodeName) 
+{
+  string $nodeAttr = $nodeName + ".UseEmissiveEffect";
+  int $value = `getAttr $nodeAttr`;
+  editorTemplate -dimControl $nodeName "EmissiveColor"   ($value == 0);
+  editorTemplate -dimControl $nodeName "EmissiveTexture" ($value == 0);
+}
+
+//
+// Specular texture attribute
+//
+global proc AEshaderSpecularTextureNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Specular Texture" -at $attrName specularTextureControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderSpecularTextureReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName specularTextureControl;
+}
+
+global proc AEshaderSpecular(string $nodeName) 
+{
+  string $nodeAttr = $nodeName + ".UseSpecularShading";
+  int $value = `getAttr $nodeAttr`;
+  editorTemplate -dimControl $nodeName "SpecularPower"   ($value == 0);
+  editorTemplate -dimControl $nodeName "SpecularColor"   ($value == 0);
+  editorTemplate -dimControl $nodeName "SpecularTexture" ($value == 0);
+}
+
+//
+// Transparecncy attribute
+//
+
+global proc AEshaderOpacMapNew (string $attrName)
+{
+  setUITemplate -pst attributeEditorTemplate;
+  attrNavigationControlGrp -l "Opacity Map" -at $attrName opMapControl;
+  setUITemplate -ppt;
+}
+
+global proc AEshaderOpacMapReplace (string $attrName)
+{
+  attrNavigationControlGrp -edit -at $attrName opMapControl;
+}
+
+global proc AEshaderOpacityControl(string $nodeName) 
+{
+  string $nodeAttr = $nodeName + ".MixingMode";
+  int $value = `getAttr $nodeAttr`;
+  editorTemplate -dimControl $nodeName "Opacity"    ($value == 0);
+  editorTemplate -dimControl $nodeName "OpacityMap" ($value == 0);
+}
+
+global proc AEshaderOpacityMapControl(string $nodeName) 
+{
+//  string $nodeAttr = $nodeName + ".MixingMode";
+//  int $value = `getAttr $nodeAttr`;
+//  editorTemplate -dimControl $nodeName "Opacity"    ($value == 0);
+//  editorTemplate -dimControl $nodeName "OpacityMap" ($value == 0);
+}
+
+global proc AEshaderSurfaceTypeControl(string $nodeName) 
+{
+  string $nodeAttrST = $nodeName + ".SurfaceType";
+  int $valueST = `getAttr $nodeAttrST`;
+
+  string $nodeAttrDR = $nodeName + ".DecayRate";
+  int $valueDR = `getAttr $nodeAttrDR`;
+
+  editorTemplate -dimControl $nodeName "Intensity"        ($valueST != 3);
+  editorTemplate -dimControl $nodeName "DecayRate"        ($valueST != 3);
+  editorTemplate -dimControl $nodeName "DecayValue"       ($valueST != 3 || $valueDR == 0);
+  editorTemplate -dimControl $nodeName "StaticFactor"     ($valueST != 3);
+  editorTemplate -dimControl $nodeName "GenerateShadows"  ($valueST != 3);
+  editorTemplate -dimControl $nodeName "DirectionSurface" ($valueST != 3);
+}
+
+global proc AEshaderDecayRateControl(string $nodeName) 
+{
+  string $nodeAttr = $nodeName + ".DecayRate";
+  int $value = `getAttr $nodeAttr`;
+
+  editorTemplate -dimControl $nodeName "DecayValue"        ($value == 0);
+}
+
+//
+// Base shader menu
+//
+global proc AEG5EngineShaderTemplate( string $nodeName )
+{
+  AEswatchDisplay $nodeName;
+  editorTemplate -beginScrollLayout;
+
+  //editorTemplate -callCustom AEshaderTypeNew AEshaderTypeReplace "message";
+
+  editorTemplate -beginLayout "Common Material Attributes" -collapse 0;
+    editorTemplate -addControl "BaseTexture";
+    editorTemplate -addControl "AmbientColor";
+    editorTemplate -addControl "DiffuseColor";
+    editorTemplate -callCustom "AEshaderBumpNew" "AEshaderBumpReplace" "normalCamera";
+    editorTemplate -callCustom "AEshaderHeightMapNew" "AEshaderHeightMapReplace" "HeightMapTexture";
+    editorTemplate -addControl "Parallax";
+    editorTemplate -callCustom "AEshaderLightMapTextureNew" "AEshaderLightMapTextureReplace" "LightMapTexture";
+    editorTemplate -addControl "IsDoubleSided";
+    editorTemplate -callCustom "AEshaderEnvMapTextureNew" "AEshaderEnvMapTextureReplace" "EnvironmentMapTexture";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Micro Texture Attributes" -collapse true;
+    editorTemplate -callCustom "AEshaderMicroTextureNew" "AEshaderMicroTextureReplace" "MicroTexture";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Emissive Attributes" -collapse true;
+    editorTemplate -addControl "UseEmissiveEffect" "AEshaderEmissive";
+    editorTemplate -addControl "EmissiveColor";
+    editorTemplate -callCustom "AEshaderEmissiveTextureNew" "AEshaderEmissiveTextureReplace" "EmissiveTexture";
+
+    editorTemplate -beginLayout "Emissive Light Attributes" -collapse true;
+      editorTemplate -addControl "Intensity";
+      editorTemplate -addControl "DecayRate" "AEshaderDecayRateControl";
+      editorTemplate -addControl "DecayValue";
+      editorTemplate -addControl "StaticFactor";
+      editorTemplate -addControl "GenerateShadows";
+      editorTemplate -addControl "DirectionSurface";
+    editorTemplate -endLayout;
+
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Specular Shading" -collapse true;
+    editorTemplate -addControl "UseSpecularShading" "AEshaderSpecular";
+    editorTemplate -addControl "SpecularPower";
+    editorTemplate -addControl "SpecularColor";
+    editorTemplate -callCustom "AEshaderSpecularTextureNew" "AEshaderSpecularTextureReplace" "SpecularTexture";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Transparency Attributes" -collapse true;
+    editorTemplate -addControl "MixingMode" "AEshaderOpacityControl";
+    editorTemplate -addControl "Opacity";
+    editorTemplate -callCustom "AEshaderOpacMapNew" "AEshaderOpacMapReplace" "OpacityMap";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Special Attributes" -collapse true;
+    editorTemplate -addControl "SurfaceType" "AEshaderSurfaceTypeControl";
+    editorTemplate -addControl "LightingModel";
+    editorTemplate -addControl "SubstanceType";
+    editorTemplate -addControl "Glossiness";
+    editorTemplate -addControl "Fresnel";
+    editorTemplate -addControl "GroupID";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Hardware Attributes" -collapse true;
+    editorTemplate -addControl "UseFilter";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Radiosity Attributes" -collapse true;
+    editorTemplate -addControl "IsNotUseForTracing";
+  editorTemplate -endLayout;
+
+/*  editorTemplate -beginLayout "Hardware Texturing" -collapse true;
+            AEhardwareTextureTemplate $nodeName 
+      ("BaseTexture normalCamera AmbientColor DiffuseColor normalCamera LightMapTexture" + 
+    " MicroTexture EmissiveColor EmissiveTexture SpecularColor SpecularTexture");
+  editorTemplate -endLayout;*/
+
+  // include/call base class/node attributes
+  AEdependNodeTemplate $nodeName;
+  
+  editorTemplate -addExtraControls;
+  editorTemplate -endScrollLayout;
+}
+
+

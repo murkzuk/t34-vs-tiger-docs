@@ -1,0 +1,32 @@
+global proc disableShadowVolume() 
+{
+  select -all -hi;
+  string $nodes[] = `selectedNodes`;
+
+  int $NumSelectedNodes = size($nodes);
+  int $iNode;
+  for ($iNode = 0; $iNode < $NumSelectedNodes; $iNode++)
+  {
+    string $SelectedNodeName = $nodes[$iNode];
+    select($SelectedNodeName);
+
+    string $TypeOfNode = `nodeType $SelectedNodeName`;
+
+    if ($TypeOfNode == "transform")
+    {
+      if (`attributeExists "HasShadowVolume" $SelectedNodeName` != 0) 
+      {
+        string $cmd = "getAttr " + $SelectedNodeName + ".HasShadowVolume";
+        int $val = `evalEcho $cmd`;
+
+        string $cmd = ("setAttr " + $SelectedNodeName + ".HasShadowVolume false");
+        evalEcho $cmd;
+      }
+      else
+      {
+        if (`attributeExists "HasShadowVolume" $SelectedNodeName` == 0) 
+          addAttr -ln "HasShadowVolume" -at bool -dv false;
+      }
+    }
+  }
+}

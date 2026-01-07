@@ -1,0 +1,25 @@
+global proc ConvertProp() 
+{
+  select -all -hi;
+  string $nodes[] = `selectedNodes`;
+
+  int $NumSelectedNodes = size($nodes);
+  int $iNode;
+  for ($iNode = 0; $iNode < $NumSelectedNodes; $iNode++)
+  {
+    string $SelectedNodeName = $nodes[$iNode];
+    select($SelectedNodeName);
+
+    if (`attributeExists "IsNonLightingObject" $SelectedNodeName` != 0) 
+    {
+      string $cmd = "getAttr " + $SelectedNodeName + ".IsNonLightingObject";
+      int $val = `evalEcho $cmd`;
+
+      string $cmd = ("renameAttr " + $SelectedNodeName + ".IsNonLightingObject \"DoNotGenerateShadows\"");
+      evalEcho $cmd;
+
+      if (`attributeExists "IsNotReciveLighting" $SelectedNodeName` == 0) 
+        addAttr -ln "IsNotReciveLighting" -at bool -dv $val;
+    }
+  }
+}

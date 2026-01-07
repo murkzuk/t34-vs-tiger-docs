@@ -1,0 +1,48 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: addMeshProperties.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc createPortal() 
+{
+  string $nodes[] = `selectedNodes`;
+
+  string $result[] = `ls Portals`;
+  if ($result[0] != "Portals")
+    createDisplayLayer -name "Portals" -number 1 -empty;
+
+  // get portal pair ID
+  int $NumSelectedNodes = size($nodes);
+  int $iNode;
+  for ($iNode = 0; $iNode < $NumSelectedNodes; $iNode++)
+  {
+    string $SelectedNodeName = $nodes[$iNode];
+    select($SelectedNodeName);
+
+    string $TypeOfNode = `nodeType $SelectedNodeName`;
+
+    if (`attributeExists "IsPortal" $SelectedNodeName` == 0)
+    {
+      addAttr -ln "IsClosed" -at bool -dv false;
+      addAttr -ln "IsPortal" -at bool -dv true;
+      addAttr -ln "ReverseNormal" -at bool -dv false;
+      setAttr ($SelectedNodeName+".doubleSided") 0;
+      instance -n ($SelectedNodeName+"_instance") $SelectedNodeName;
+      setAttr ($SelectedNodeName+"_instance.ReverseNormal") 1;
+
+      // append portals to layer
+      string $cmd = "editDisplayLayerMembers Portals " + $SelectedNodeName;
+      evalEcho $cmd;
+      $cmd = "editDisplayLayerMembers Portals " + $SelectedNodeName + "_instance";
+      evalEcho $cmd;
+    }
+  }
+}

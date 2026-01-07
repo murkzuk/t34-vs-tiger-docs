@@ -1,0 +1,54 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: createPhysicsShape.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+proc string getTransformNode(string $shapeNode)
+{
+  string $transformList[] = `listRelatives -parent $shapeNode`;
+  string $transform = $transformList[0];
+  
+  return $transform;
+}
+
+// This methiod create mesh with special unit shape and assign to this mesh 
+// Physics Shape Material. If $shapeId is:
+//    1 - Box
+//    2 - Capsule
+global proc createPhysicsShape(int $shapeId) 
+{
+  string $cmd;
+
+  if ($shapeId == 1)  // Create Box shape
+  {
+    $cmd  = "createNode BoxShape";
+  }
+  else if ($shapeId == 2)  // Create Capsule shape
+  {
+    $cmd  = "createNode CapsuleShape";
+  }
+  else if ($shapeId == 3)  // Create Cylinder shape
+  {
+    $cmd  = "createNode CylinderShape";
+  }
+  else
+  {
+    return;
+  }
+
+  string $shapeNode     = `evalEcho $cmd`;
+  string $transformNode = `getTransformNode $shapeNode`;
+
+  select -r $transformNode;
+
+  addAttr -ln "IsPhysicsShape"  -at bool -dv true     -h true;
+  addAttr -ln "ShapeType"       -at long -dv $shapeId -h true;
+}

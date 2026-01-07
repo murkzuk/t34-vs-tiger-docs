@@ -1,0 +1,96 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: ExportBatch.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+{
+  // $TODO  this string must be added in maya/5.0/prefs/pluginPrefs.mel
+  //        before run this script
+  //
+  // evalDeferred("autoLoadPlugin(\"\", \"MayaExp\", \"MayaExp\")");
+
+  string $ModelDstDir = "d:/Projects/Metro2/Bin/Models/";
+  string $ModelSrcDir = "d:/Projects/Metro-2/Artwork/Projects/";
+
+  // ===================================================
+  //  Export scenes
+  // ===================================================
+
+  doExportScene(
+      $ModelDstDir,   // Output directory
+      $ModelSrcDir + "Levels/LVL_SO.mb", // Scene File
+      "Model",          // Command: Model/Animation
+      "CLVL_SOModel",   // Class name
+      1,                // ExportModel
+      1,                // ExportAnimation
+      1,                // UseAnimationsByJoints
+      1,                // ExportLights,
+      1,                // ExportPortals,
+      1,                // ExportBehaviorInfo,
+      1,                // RegionsByJoints,
+      0.5,              // CellSize,
+      0,                // ExportShapes,
+      0,                // LifeHeadExportEnabled,
+      "HeadLink",       // LifeHeadHeadJoint,
+      "NeckLink",       // LifeHeadNeckJoint,
+      ""                // LifeHeadClassName
+    );
+}
+
+global proc doExportScene(
+    string $OutpuDirectory,
+    string $SceneFile,
+    string $Command,
+    string $ClassName,
+    int    $ExportModel,
+    int    $ExportAnimation,
+    int    $UseAnimationsByJoints,
+    int    $ExportLights,
+    int    $ExportPortals,
+    int    $ExportBehaviorInfo,
+    int    $RegionsByJoints,
+    int    $CellSize,
+    int    $ExportShapes,
+    int    $LifeHeadExportEnabled,
+    string $LifeHeadHeadJoint,
+    string $LifeHeadNeckJoint,
+    string $LifeHeadClassName
+  )
+{
+  // Change directory for export file
+  chdir $OutpuDirectory;
+  // Load exported file
+  file -f -o $SceneFile;
+
+  print "Export: ";
+  print $SceneFile;
+  print " ...";
+
+  exportG5Resource(
+      $Command,
+      $ClassName,
+      $ExportModel,
+      $ExportAnimation,
+      $UseAnimationsByJoints,
+      $ExportLights,
+      $ExportPortals,
+      $ExportBehaviorInfo,
+      $RegionsByJoints,
+      $CellSize,
+      $ExportShapes,
+      $LifeHeadExportEnabled,
+      $LifeHeadHeadJoint,
+      $LifeHeadNeckJoint,
+      $LifeHeadClassName
+    );
+
+  print " done\n";
+}

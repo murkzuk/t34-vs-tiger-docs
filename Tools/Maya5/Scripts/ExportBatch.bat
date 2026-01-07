@@ -1,0 +1,1 @@
+maya -batch -script ExportBatch.mel -log "d:/batch.log"

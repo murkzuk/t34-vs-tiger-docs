@@ -1,0 +1,26 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: generateInstance.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc generateInstance() 
+{
+  string $nodes[] = `selectedNodes`;
+
+  if (1 != size($nodes))
+  {
+    // Log error
+    error "You must select only one object";
+    return;
+  }
+
+  genInstance($nodes[0]);
+}

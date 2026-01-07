@@ -1,0 +1,41 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: addLightProperties.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc addLightProperties() 
+{
+  string $nodes[] = `selectedNodes`;
+  string $CurrentNodeType = `nodeType $nodes[0]`;
+
+  // set for all selected nodes attributes
+  int $NumSelectedNodes = size($nodes);
+  int $iNode;
+  for ($iNode = 0; $iNode < $NumSelectedNodes; $iNode++)
+  {
+    string $SelectedNodeName = $nodes[$iNode];
+    select($SelectedNodeName);
+
+    string $TypeOfNode = `nodeType $SelectedNodeName`;
+
+    if ($TypeOfNode == "transform")
+    {
+      if (`attributeExists "DecayValue" $SelectedNodeName` == 0) 
+        addAttr -ln "DecayValue" -at double -min 0.0 -max 10.0 -dv 1.0;
+      if (`attributeExists "StaticFactor" $SelectedNodeName` == 0) 
+        addAttr -ln "StaticFactor" -at double -min 0.0 -max 1.0 -dv 0.0;
+      if (`attributeExists "GenerateShadows" $SelectedNodeName` == 0) 
+        addAttr -ln "GenerateShadows" -at bool -dv false;
+      if (`attributeExists "IsMask" $SelectedNodeName` == 0) 
+        addAttr -ln "IsMask" -at bool -dv false;
+    }
+  }
+}

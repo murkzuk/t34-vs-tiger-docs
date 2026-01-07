@@ -1,0 +1,57 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: addHeadProperties.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc addHeadProperties() 
+{
+  string $nodes[] = `selectedNodes`;
+  string $CurrentNodeType = `nodeType $nodes[0]`;
+
+  string $enumFiles;
+
+  // Build head models strings
+  string $headModels[] = `getHeadModels`;
+  int $NumHeadModels = size($headModels);
+  int $iFile;
+  for ($iFile = 0; $iFile < $NumHeadModels; $iFile++)
+  {
+    $enumFiles = $enumFiles + $headModels[$iFile];
+    if ($iFile != $NumHeadModels - 1)
+      $enumFiles = $enumFiles + ":";
+  }
+
+  // set for all selected nodes attributes
+  int $NumSelectedNodes = size($nodes);
+  int $iNode;
+  for ($iNode = 0; $iNode < $NumSelectedNodes; $iNode++)
+  {
+    string $SelectedNodeName = $nodes[$iNode];
+    select($SelectedNodeName);
+
+    string $TypeOfNode = `nodeType $SelectedNodeName`;
+
+    if ($TypeOfNode == "joint" || $TypeOfNode == "transform")
+    {
+      if (`attributeExists "HeadModel" $SelectedNodeName` == 0) 
+        addAttr -ln "HeadModel" -dt "string";
+
+      if (`attributeExists "HeadMuscules" $SelectedNodeName` == 0) 
+        addAttr -ln "HeadMuscules" -dt "string";
+
+        addAttr -ln "HeadLinkJointName" -dt "string";
+        setAttr ($SelectedNodeName+".HeadLinkJointName") -type "string" "HeadLink";
+
+        addAttr -ln "NeckLinkJointName" -dt "string";
+        setAttr ($SelectedNodeName+".NeckLinkJointName") -type "string" "NeckLink";
+    }
+  }
+}

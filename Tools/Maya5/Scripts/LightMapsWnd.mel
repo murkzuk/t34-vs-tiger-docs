@@ -1,0 +1,365 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: LightMapsWnd.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc CreateLightNode(
+    string $objectName,
+    string $textureName,
+    string $items,
+    string $linkedSetName
+  )
+{
+  // Create material and shading group
+  string $material = `shadingNode -asShader G5EngineShader`;
+  string $sg = `sets -renderable true -noSurfaceShader true 
+                    -empty -name ($material + "SG")`;
+
+  // Connect the material to the shading group
+  defaultNavigation -connectToExisting -source $material -destination $sg;
+
+  // Select the items to which the shading group is to be assigned.
+  string $cmd = "select -r " + $items;
+  evalEcho $cmd;
+  
+  // Assign the shading group to the selected objects.
+  hyperShade -assign $sg;
+
+  $cmd = "shadingNode -asTexture file";
+  string $node = `evalEcho $cmd`;
+      
+  $cmd = "shadingNode -asUtility place2dTexture";
+  string $place2d = `evalEcho $cmd`;
+        
+  // Correct #repeats for certain 2d textures
+  fileTexturePlacementConnect $node $place2d;
+
+  $cmd = ("connectAttr "+$place2d+".outUV "+$node+".uv");
+  evalEcho $cmd;
+  $cmd = ("connectAttr "+$place2d+".outUvFilterSize "+$node+".uvFilterSize");
+  evalEcho $cmd;
+
+  $cmd = ("connectAttr -force "+$node+".outColor "+$material+".LightMapTexture");
+  evalEcho $cmd;
+
+  $cmd = "setAttr "+$node+".fileTextureName -type \"string\" \""+$textureName+"\"";
+  evalEcho $cmd;
+
+  $cmd = "polyUVSet -q -allUVSets "+$objectName;
+  string $result[] = `evalEcho $cmd`;
+
+  int $i;
+  for ($i = 0; $i < size($result); $i++)
+  {
+    if ($result[$i] == $linkedSetName)
+    {
+      $cmd = "uvLink -uvSet "+$objectName+".uvSet[" + $i + "].uvSetName -texture "+$node;
+      evalEcho $cmd;
+    }
+  }
+}
+
+global proc DuplicateAndCreateLightNode(
+    string $baseMaterial,
+    string $objectName,
+    string $textureName,
+    string $items,
+    string $linkedSetName
+  )
+{
+  // Duplicate material
+  string $cmd = "select -r "+$baseMaterial;
+  evalEcho $cmd;
+
+  string $materials[] = `duplicate -inputConnections`;
+  string $material = $materials[0];
+
+  // Create material and shading group
+  string $sg = `sets -renderable true -noSurfaceShader true 
+                    -empty -name ($material + "SG")`;
+
+  // Connect the material to the shading group
+  defaultNavigation -connectToExisting -source $material -destination $sg;
+
+  // Select the items to which the shading group is to be assigned.
+  $cmd = "select -r " + $items;
+  evalEcho $cmd;
+  
+  // Assign the shading group to the selected objects.
+  hyperShade -assign $sg;
+
+  $cmd = "shadingNode -asTexture file";
+  string $node = `evalEcho $cmd`;
+      
+  $cmd = "shadingNode -asUtility place2dTexture";
+  string $place2d = `evalEcho $cmd`;
+        
+  // Correct #repeats for certain 2d textures
+  fileTexturePlacementConnect $node $place2d;
+
+  $cmd = ("connectAttr "+$place2d+".outUV "+$node+".uv");
+  evalEcho $cmd;
+  $cmd = ("connectAttr "+$place2d+".outUvFilterSize "+$node+".uvFilterSize");
+  evalEcho $cmd;
+
+  $cmd = ("connectAttr -force "+$node+".outColor "+$material+".LightMapTexture");
+  evalEcho $cmd;
+
+  $cmd = "setAttr "+$node+".fileTextureName -type \"string\" \""+$textureName+"\"";
+  evalEcho $cmd;
+
+  $cmd = "polyUVSet -q -allUVSets "+$objectName;
+  string $result[] = `evalEcho $cmd`;
+
+  int $i;
+  for ($i = 0; $i < size($result); $i++)
+  {
+    if ($result[$i] == $linkedSetName)
+    {
+      $cmd = "uvLink -uvSet "+$objectName+".uvSet[" + $i + "].uvSetName -texture "+$node;
+      evalEcho $cmd;
+    }
+  }
+}
+
+global proc int SelectFolderAction(
+    string $Dir, 
+    string $Action
+  )
+{
+  textFieldButtonGrp 
+    -e 
+    -fi $Dir
+    ms2MapsFolder;
+  
+  return true;
+}
+
+global proc LightMapsFileBrowser()
+{
+  string $MapsFolder  = `textFieldButtonGrp -q -fi ms2MapsFolder`;  
+  workspace -dir $MapsFolder;
+  fileBrowser "SelectFolderAction" "Select" "image" 4;
+}
+
+global proc UpdateSmoothShadowsFlag() 
+{
+  int $UseSmoothShadows = `checkBoxGrp -q -v1 ms2SmoothShadows`;
+
+  floatSliderGrp 
+    -e 
+    -en ($UseSmoothShadows == 1)
+    ms2SmoothCoeff;
+}
+
+global proc LightMapsWnd()
+{
+  window -t "Options For Light Maps Generator" -w 500 -h 576 ms2GenLightMapsWndC13;
+
+  string $MapsFolder = `getMapsFolder`;
+
+  columnLayout -adjustableColumn true -rs 10 ms2BaseLayout;
+
+    textFieldButtonGrp 
+      -l    "Maps Folder" 
+      -fi   $MapsFolder
+      -bl   "Select Folder"
+      -bc   "LightMapsFileBrowser"
+      ms2MapsFolder;
+
+    intSliderGrp 
+      -l      "Size of light maps" 
+      -field  true 
+      -min    0
+      -max    1024 
+      -v      512
+      ms2Size;
+
+    floatSliderGrp 
+      -l      "Texels per meter" 
+      -field  true 
+      -min    0.0 
+      -max    100.0 
+      -v      20.0
+      ms2Density;
+
+    floatSliderGrp 
+      -l      "Scale intensity coeff" 
+      -field  true 
+      -min    0.0 
+      -max    10.0 
+      -v      1.0
+      ms2ScaleFactor;
+
+    floatSliderGrp 
+      -l      "Refraction coeff" 
+      -field  true 
+      -min    0.0 
+      -max    1000.0 
+      -v      100.0
+      ms2RefractionCoeff;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Use smooth shadows" 
+      -v1                 1
+      -cc1                "UpdateSmoothShadowsFlag"
+      ms2SmoothShadows;
+
+    floatSliderGrp 
+      -l      "Smooth coefficient" 
+      -field  true 
+      -min    0.0 
+      -max    10.0 
+      -v      0.8
+      ms2SmoothCoeff;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Use only first iteration" 
+      -v1                 1
+      -en                 0
+      ms2ComputeEmissive;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Skip shadows" 
+      -v1                 1
+      -en                 0
+      ms2SkipShadows;
+
+    intSliderGrp 
+      -l      "Random samples" 
+      -field  true 
+      -min    0 
+      -max    512 
+      -v      64
+      ms2RandomSamples;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Generate for selected" 
+      -v1                 0
+      ms2SelectedGeneration;
+
+    floatSliderGrp 
+      -l      "Light distance (m)" 
+      -field  true 
+      -min    0.0 
+      -max    100.0 
+      -v      10.0
+      ms2LightDistance;
+
+    floatSliderGrp 
+      -l      "Point light radius (cm)" 
+      -field  true 
+      -min    0.0 
+      -max    100.0 
+      -v      2.0
+      ms2PointLightRadius;
+
+    colorSliderGrp 
+      -l "Ambient color" 
+      -rgb 0 0 0 
+      ms2AmbientColor;
+
+    floatSliderGrp 
+      -l      "Intensity curve scale C" 
+      -field  true 
+      -min    0.0 
+      -max    100.0 
+      -v      1.2
+      ms2IntensityCurveScaleC;
+
+    floatSliderGrp 
+      -l      "Intensity curve scale L" 
+      -field  true 
+      -min    0.0 
+      -max    100.0 
+      -v      1.0
+      ms2IntensityCurveScaleL;
+
+    textScrollList 
+      -numberOfRows 8 
+      -ams          false 
+      ms2MessageWindow;
+
+  setParent ..;
+
+  UpdateSmoothShadowsFlag();
+
+  button -label "Begin generate process" -command ("TransferGenerateData") ms2GenerateButton;
+
+  showWindow ms2GenLightMapsWndC13;
+}
+
+global proc TransferGenerateData()
+{
+  // clear message window
+  textScrollList 
+    -e
+    -ra
+    ms2MessageWindow;
+
+  // begin export process
+  string  $MapsFolder         = `textFieldButtonGrp -q -fi ms2MapsFolder`;
+  int     $TextureSize        = `intSliderGrp -q -v ms2Size`;
+  float   $Density            = `floatSliderGrp -q -v ms2Density`;
+  float   $ScaleFactor        = `floatSliderGrp -q -v ms2ScaleFactor`;
+  float   $RefractionCoeff    = `floatSliderGrp -q -v ms2RefractionCoeff`;
+  int     $UseOnlyFirst       = `checkBoxGrp -q -v1 ms2ComputeEmissive`;
+  int     $SkipShadows        = `checkBoxGrp -q -v1 ms2SkipShadows`;
+  int     $RandomSamples      = `intSliderGrp -q -v ms2RandomSamples`;
+  int     $SelectedGeneration = `checkBoxGrp -q -v1 ms2SelectedGeneration`;
+
+  int     $UseSmoothCoeff     = `checkBoxGrp -q -v1 ms2SmoothShadows`;
+  float   $SmoothCoeff        = `floatSliderGrp -q -v ms2SmoothCoeff`;
+  float   $LightDistance      = `floatSliderGrp -q -v ms2LightDistance`;
+  float   $PointLightRadius   = `floatSliderGrp -q -v ms2PointLightRadius`;
+  float   $IntCurveScaleC     = `floatSliderGrp -q -v ms2IntensityCurveScaleC`;
+  float   $IntCurveScaleL     = `floatSliderGrp -q -v ms2IntensityCurveScaleL`;
+
+  float   $ambient[3]         = `colorSliderGrp -q -rgb ms2AmbientColor`;
+
+  if ($UseSmoothCoeff == 0)
+    $SmoothCoeff = 0.0;
+
+  // delete all history
+  delete -all -constructionHistory;
+
+  generateLightMaps( 
+      $MapsFolder, 
+      "light", 
+      $TextureSize,
+      $Density,
+      $ScaleFactor,
+      $UseOnlyFirst, 
+      $SkipShadows,
+      $RandomSamples,
+      $SelectedGeneration,
+      $RefractionCoeff,
+      $SmoothCoeff,
+      $LightDistance,
+      $PointLightRadius / 100.0,
+      $IntCurveScaleC,
+      $IntCurveScaleL,
+      $ambient[0], $ambient[1], $ambient[2]
+    );
+}
+
+global proc InsertMessageLM(
+    string $message
+  )
+{
+  window -e ms2GenLightMapsWndC13;
+
+  textScrollList -e -append $message ms2MessageWindow;
+}

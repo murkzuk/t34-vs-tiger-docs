@@ -1,0 +1,355 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: ExportMS2Model.mel
+//  Description: This script posts the MS2 file translator options.
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc UpdateExportAnimationFlag() 
+{
+  int $ExportAnimation = `checkBoxGrp -q -v1 ms2ExportAnimation`;
+
+  checkBoxGrp 
+    -e 
+    -en ($ExportAnimation == 0)
+    ms2ExportSkin;
+
+  checkBoxGrp 
+    -e 
+    -v1 $ExportAnimation
+    ms2ExportSkin;
+}
+
+global proc UpdateExportBehaviorInfo() 
+{
+  int $ExportBehaviorInfo = `checkBoxGrp -q -v1 ms2ExportBehaviorInfo`;
+
+  checkBoxGrp
+    -e
+    -en ($ExportBehaviorInfo == 1)
+    ms2RegionsByJoints;
+
+  floatSliderGrp 
+    -e
+    -en ($ExportBehaviorInfo == 1)
+    ms2CellSize;
+
+  //
+}
+
+global proc UpdateExportModel()
+{
+  int $Enable = `checkBoxGrp -q -v1 ms2ExportModel`;
+
+  checkBoxGrp -e -en $Enable ms2ExportAnimation;
+  checkBoxGrp -e -en $Enable ms2ExportLights;
+  checkBoxGrp -e -en $Enable ms2ExportPortals;
+  checkBoxGrp -e -en $Enable ms2ExportShapes;
+
+  if ($Enable == 1)
+  {
+    UpdateExportAnimationFlag();
+  }
+}
+
+global proc CreateMs2ExportOptionsWnd(
+    string $ScriptClassName,
+    int    $ExportModel,
+    int    $ExportLights,
+    int    $ExportPortals,
+    int    $ExportShapes,
+    int    $ExportTangentSpace,
+    // Animation params
+    int    $ExportSkin,
+    int    $ExportAnimation,
+    // Behavior params
+    int    $ExportBehaviorInfo,
+    int    $RegionsByJoints,
+    float  $CellSize
+  )
+{
+  window 
+      -title        "Model Export Options" 
+      -width        435
+      -height       535
+    ms2ExportOptionsWndC14;
+
+  scrollLayout 
+      -childResizable               true 
+      -horizontalScrollBarThickness 0
+      -verticalScrollBarThickness   16 
+    ;
+
+  columnLayout 
+      -adjustableColumn true 
+      -rowSpacing       5 
+      -columnAttach     "both" 5 
+    ;
+
+  frameLayout 
+      -borderStyle "etchedIn" 
+      -label       "Common options" 
+    ;
+
+  columnLayout 
+      -adjustableColumn true 
+      -rowSpacing       10 
+      -columnAttach     "both" 5
+    ;
+
+    textFieldGrp 
+      -l    "Script Class Name" 
+      -text $ScriptClassName 
+      ms2ScriptClassName;
+
+    checkBoxGrp
+      -numberOfCheckBoxes 1
+      -label              "Export Model"
+      -v1                 $ExportModel
+      -cc1                "UpdateExportModel"
+      ms2ExportModel;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Lights" 
+      -v1                 $ExportLights
+      ms2ExportLights;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Portals" 
+      -v1                 $ExportPortals
+      ms2ExportPortals;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Shapes" 
+      -v1                 $ExportShapes
+      ms2ExportShapes;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Tangent Space" 
+      -v1                 $ExportTangentSpace
+      ms2ExportTangentSpace;
+
+    setParent ..;
+    setParent ..;
+
+    frameLayout 
+        -collapsable true 
+        -collapse    true // $TMP
+        -borderStyle "etchedIn" 
+        -label       "Animation options" 
+      ms2AnimationFrame;
+
+    columnLayout 
+        -adjustableColumn true 
+        -rowSpacing       10 
+        -columnAttach     "both" 5
+      ;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Skin Data" 
+      -v1                 $ExportSkin
+      ms2ExportSkin;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Animation Info" 
+      -v1                 $ExportAnimation 
+      -cc1                "UpdateExportAnimationFlag"
+      ms2ExportAnimation;
+
+    setParent ..;
+    setParent ..;
+
+    frameLayout 
+        -collapsable true 
+        -collapse    true // $TMP
+        -borderStyle "etchedIn" 
+        -label       "Behavior options" 
+      ms2BehaviorFrame;
+
+    columnLayout 
+        -adjustableColumn true 
+        -rowSpacing       10 
+        -columnAttach     "both" 5
+      ;
+
+    checkBoxGrp 
+      -numberOfCheckBoxes 1 
+      -label              "Export Behavior Info" 
+      -v1                 $ExportBehaviorInfo
+      -cc1                "UpdateExportBehaviorInfo"
+      ms2ExportBehaviorInfo;
+
+    checkBoxGrp
+      -numberOfCheckBoxes 1
+      -label              "Treat regions by joints"
+      -v1                 $RegionsByJoints
+      ms2RegionsByJoints;
+
+    floatSliderGrp 
+      -l      "Cell Size" 
+      -field  true 
+      -min    0.0 
+      -max    10.0 
+      -v      $CellSize
+      ms2CellSize;
+
+    setParent ..;
+    setParent ..;
+
+  textScrollList 
+      -numberOfRows 16 
+      -ams          false 
+    ms2MessageWindow;
+
+  UpdateExportAnimationFlag();
+  UpdateExportBehaviorInfo();
+  UpdateExportModel();
+
+  button 
+      -label   "Export Process" 
+      -align   "center" 
+      -command ("TransferModelExportData") 
+    ;
+
+  showWindow ms2ExportOptionsWndC14;
+}
+
+global proc TransferModelExportData()
+{
+  // clear message window
+  textScrollList 
+    -e
+    -ra
+    ms2MessageWindow;
+    
+
+  string  $ScriptClassName       = `textFieldGrp -q -text ms2ScriptClassName`;
+  int     $ExportModel           = `checkBoxGrp -q -v1 ms2ExportModel`;
+  int     $ExportSkin            = `checkBoxGrp -q -v1 ms2ExportSkin`;
+  int     $ExportAnimation       = `checkBoxGrp -q -v1 ms2ExportAnimation`;
+  int     $ExportLights          = `checkBoxGrp -q -v1 ms2ExportLights`;
+  int     $ExportPortals         = `checkBoxGrp -q -v1 ms2ExportPortals`;
+  int     $ExportBehaviorInfo    = `checkBoxGrp -q -v1 ms2ExportBehaviorInfo`;
+  int     $RegionsByJoints       = `checkBoxGrp -q -v1 ms2RegionsByJoints`;
+  float   $CellSize              = `floatSliderGrp -q -v ms2CellSize`;
+  int     $ExportShapes          = `checkBoxGrp -q -v1 ms2ExportShapes`;
+  int     $ExportTangentSpace    = `checkBoxGrp -q -v1 ms2ExportTangentSpace`;
+
+  // begin export process
+  exportG5Resource(
+      "Model",
+      $ScriptClassName, 
+      $ExportModel,
+      $ExportSkin,
+      $ExportAnimation,
+      $ExportLights,
+      $ExportPortals,
+      $ExportBehaviorInfo,
+      $RegionsByJoints,
+      $CellSize,
+      $ExportShapes,
+      $ExportTangentSpace
+    );
+
+  // close export options window $TMP
+//  deleteUI -window ms2ExportOptionsWndC6;
+}
+
+global proc CreateAnimExportOptionsWnd(
+    string $ScriptClassName
+  )
+{
+  window 
+      -title        "Animation Export Options" 
+      -width        435
+      -height       535
+    ms2ExportOptionsWndC14;
+
+  scrollLayout 
+      -childResizable               true 
+      -horizontalScrollBarThickness 0
+      -verticalScrollBarThickness   16 
+    ;
+
+  columnLayout 
+      -adjustableColumn true 
+      -rowSpacing       5 
+      -columnAttach     "both" 5 
+    ;
+
+  frameLayout 
+      -borderStyle "etchedIn" 
+      -label       "Common options" 
+    ;
+
+  columnLayout 
+      -adjustableColumn true 
+      -rowSpacing       10 
+      -columnAttach     "both" 5
+    ;
+
+  textFieldGrp 
+      -l    "Script Class Name" 
+      -text $ScriptClassName 
+      animScriptClassName;
+
+  textScrollList 
+      -numberOfRows 16 
+      -ams          false 
+    ms2MessageWindow;
+
+  button 
+      -label   "Export Process" 
+      -align   "center" 
+      -command ("TransferAnimExportData") 
+    ;
+
+  showWindow ms2ExportOptionsWndC14;
+}
+
+global proc TransferAnimExportData()
+{
+  // clear message window
+  textScrollList 
+    -e
+    -ra
+    ms2MessageWindow;
+
+  string  $ScriptClassName = `textFieldGrp -q -text animScriptClassName`;
+
+  // begin export process (only animations)
+  exportG5Resource(
+      "Animation",
+      $ScriptClassName, 
+      0, // $ExportModel,
+      1, // $ExportSkin
+      1, // $ExportAnimation,
+      0, // $ExportLights,
+      0, // $ExportPortals,
+      0, // $ExportBehaviorInfo,
+      0, // $RegionsByJoints,
+      0.0, // $CellSize,
+      0    // $ExportShapes,
+    );
+}
+
+global proc InsertMessageEX(
+    string $message
+  )
+{
+  window -e ms2ExportOptionsWndC14;
+
+  textScrollList -e -append $message ms2MessageWindow;
+}

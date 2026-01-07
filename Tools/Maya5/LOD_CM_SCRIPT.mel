@@ -1,0 +1,41 @@
+select -r "*_LOD1";
+
+addMeshProperties;
+
+setAttr "*_LOD1.LodNumber" 1;
+
+
+
+select -r "*_LOD2";
+
+addMeshProperties;
+
+setAttr "*_LOD2.LodNumber" 2;
+
+
+
+select -r "*_LOD3";
+
+addMeshProperties;
+
+setAttr "*_LOD3.LodNumber" 3;
+
+
+
+select -r "*_LOD4";
+
+addMeshProperties;
+
+setAttr "*_LOD4.LodNumber" 4;
+
+
+
+
+
+
+
+select -r "*_CM";
+
+addMeshProperties;
+
+setAttr "*_CM.IsCollisionMesh" 1;

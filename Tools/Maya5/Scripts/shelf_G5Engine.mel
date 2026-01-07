@@ -1,0 +1,112 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: shelf_G5Engine.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc shelf_G5Engine () 
+{
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Add Mesh Properties" 
+        -label "MeshProp" 
+        -image1 "AddMeshProp.bmp" 
+        -command "addMeshProperties" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Add Light Properties" 
+        -label "LgtProp" 
+        -image1 "AddLightProp.bmp" 
+        -command "addLightProperties" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Create Portal Geometry" 
+        -label "Portal" 
+        -image1 "Portal.bmp" 
+        -command "createPortal" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Generate instance objects" 
+        -label "Instance" 
+        -image1 "Duplicate.bmp" 
+        -command "generateInstance" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Generate light maps" 
+        -label "LightMaps" 
+        -image1 "GenLMaps.bmp" 
+        -command "LightMapsWnd" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Create Box Physics Shape" 
+        -label "BoxShape" 
+        -image1 "CubeShape.bmp" 
+        -command "createPhysicsShape(1)" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Create Capsule Physics Shape" 
+        -label "CapsuleShape" 
+        -image1 "CapsuleShape.bmp" 
+        -command "createPhysicsShape(2)" 
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -annotation "Create Cylinder Physics Shape" 
+        -label "CylinderShape" 
+        -image1 "CylinderShape.bmp" 
+        -command "createPhysicsShape(3)" 
+    ;
+}

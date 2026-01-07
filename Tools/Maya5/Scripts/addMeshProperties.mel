@@ -1,0 +1,90 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//         File: addMeshProperties.mel
+//  Description: 
+//       Author: Andrey Davydov (andav@g5software.com)
+
+global proc addMeshProperties() 
+{
+  string $nodes[] = `selectedNodes`;
+  string $CurrentNodeType = `nodeType $nodes[0]`;
+
+  // set for all selected nodes attributes
+  int $NumSelectedNodes = size($nodes);
+  int $iNode;
+  for ($iNode = 0; $iNode < $NumSelectedNodes; $iNode++)
+  {
+    string $SelectedNodeName = $nodes[$iNode];
+    select($SelectedNodeName);
+
+    string $TypeOfNode = `nodeType $SelectedNodeName`;
+
+    if ($TypeOfNode == "joint" || $TypeOfNode == "transform")
+    {
+      if (`attributeExists "DoNotExport" $SelectedNodeName` == 0) 
+        addAttr -ln "DoNotExport" -at bool -dv false;
+  
+      // create properties
+      if ($TypeOfNode != "joint")
+      {
+        if (`attributeExists "IsWalkMesh" $SelectedNodeName` == 0) 
+          addAttr -ln "IsWalkMesh" -at bool -dv false;
+
+        if (`attributeExists "IsRouterMesh" $SelectedNodeName` == 0)
+          addAttr -ln "IsRouterMesh" -at bool -dv false;
+
+        if (`attributeExists "IsCollisionMesh" $SelectedNodeName` == 0) 
+          addAttr -ln "IsCollisionMesh" -at bool -dv false;
+
+        if (`attributeExists "IsBoneNode" $SelectedNodeName` == 0) 
+          addAttr -ln "IsBoneNode" -at bool -dv false;
+
+        if (`attributeExists "IsHidden" $SelectedNodeName` == 0) 
+          addAttr -ln "IsHidden" -at bool -dv false;
+
+        if (`attributeExists "IsNear" $SelectedNodeName` == 0) 
+          addAttr -ln "IsNear" -at bool -dv false;
+
+        if (`attributeExists "LodNumber" $SelectedNodeName` == 0) 
+          addAttr -ln "LodNumber" -at long -min 0 -max 4 -dv 0;
+
+        if (`attributeExists "DoNotGenerateShadows" $SelectedNodeName` == 0) 
+          addAttr -ln "DoNotGenerateShadows" -at bool -dv false;
+
+        if (`attributeExists "IsNotReciveLighting" $SelectedNodeName` == 0) 
+          addAttr -ln "IsNotReciveLighting" -at bool -dv false;
+
+        if (`attributeExists "IsDoorObject" $SelectedNodeName` == 0) 
+          addAttr -ln "IsDoorObject" -at bool -dv false;
+
+        if (`attributeExists "HasShadowVolume" $SelectedNodeName` == 0) 
+          addAttr -ln "HasShadowVolume" -at bool -dv true;
+
+        if (`attributeExists "TransparentShadows" $SelectedNodeName` == 0) 
+          addAttr -ln "TransparentShadows" -at bool -dv true;
+
+        if (`attributeExists "IsSelfLOD" $SelectedNodeName` == 0) 
+          addAttr -ln "IsSelfLOD" -at bool -dv false;
+
+        if (`attributeExists "DoNotCastShadow" $SelectedNodeName` == 0) 
+          addAttr -ln "DoNotCastShadow" -at bool -dv false;
+
+        if (`attributeExists "DoNotUseInIsection" $SelectedNodeName` == 0) 
+          addAttr -ln "DoNotUseInIsection" -at bool -dv false;
+          
+        if (`attributeExists "IsNearGeometry" $SelectedNodeName` == 0) 
+          addAttr -ln "IsNearGeometry" -at bool -dv false;
+          
+        if (`attributeExists "OnlyCastShadow" $SelectedNodeName` == 0) 
+          addAttr -ln "OnlyCastShadow" -at bool -dv false;
+      }
+    }
+  }
+}
