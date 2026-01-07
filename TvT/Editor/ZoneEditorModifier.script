@@ -1,0 +1,217 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CZoneEditorModifier
+  extends CBaseWorldModifier
+{
+
+  final static int m_CommandLButtonClicked  = CTLCMD_MENU_SELECT;
+  Component m_MissionTerrain   = null; 
+  Component m_WorldMatrices    = null;
+
+  String m_MicroTexture1      = "";
+  String m_MicroTexture2      = "";
+  String m_ToggledTerrainLayer = "";
+
+  //
+  // cached values
+  //
+
+  final static float MinCellWidth = 1.0 ;// meters in pixel
+  Vector  Center_Cached;
+  boolean isValidCache = false;
+
+  //
+  // methods
+  // 
+
+  void Construct(
+      Component _GeometryCursor
+    )
+  {
+    CBaseWorldModifier::Construct(_GeometryCursor);
+   
+    Component ZoneEditor = new #TerrainZoneEditor();
+    RegisterObject("ZoneEditor", ZoneEditor);
+
+    Component TextControl = new #TextControl();
+    TextControl.SetPosition(0.01, 0.01);
+    TextControl.SetDimensions(0.9, 0.1);
+    TextControl.SetFont("White Rabbit", 0.0170000);
+    TextControl.SetTextColor(new Color(1.0, 1.0, 1.0, 0.5));
+    TextControl.SetRenderLayer(PRIMLAYER_MENU);
+    RegisterObject("ZoneEditorLabel", TextControl);
+    UpdateLabel();
+  }
+
+  void Initialize(
+      Component _Mission
+    )
+  {
+    CBaseWorldModifier::Initialize(_Mission);
+
+    m_MicroTexture1 = _Mission.LAYER_MICROTEXTURE_MAP1;
+    m_MicroTexture2 = _Mission.LAYER_MICROTEXTURE_MAP2;
+
+    m_WorldMatrices = _Mission.GetMissionWorldMatrices();
+    Component ZoneEditor  = GetObject("ZoneEditor");
+    if (null != ZoneEditor)
+    {
+      //ZoneEditor.SetZoneMap(m_WorldMatrices.GetLayer(m_ZoneMap));
+      ZoneEditor.SetTerrain(m_WorldMatrices.GetLayer(m_MatrixLayer));
+    }
+  }
+
+  void SetTerraformType(
+      int _Type
+    )
+  {
+    Component Terraformer = GetObject("ZoneEditor");
+    if (null != Terraformer)
+      Terraformer.TerraformType = _Type;
+
+    isValidCache = false;
+    UpdateLabel();
+  }
+
+  void SetToggledTerrainLayer(
+      String _ToggledTerrainLayer
+    )
+  {
+    m_ToggledTerrainLayer = _ToggledTerrainLayer;
+    isValidCache = false; 
+  }
+
+  void OnTimerTick(
+      float _TimePast
+    )
+  {
+    CBaseWorldModifier::OnTimerTick(_TimePast);
+
+    boolean ButtonClicked = new #InputController().GetButtonState(m_CommandLButtonClicked);
+
+    if (!ButtonClicked)
+    {
+      isValidCache = false;
+      return;
+    }
+
+    Component GeometryCursor = GetGeometryCursor();
+    if (null == GeometryCursor)
+      return;
+
+
+    Vector    Center         = GeometryCursor.GetCenter();
+    float     Radius         = GeometryCursor.GetRadius();
+
+    // do nothing if cursor(with pressed button) moved less than precision of layers
+    if ((Center - Center_Cached).Magnitude() < MinCellWidth &&
+         isValidCache)
+      return;
+
+    Component ZoneEditor     = GetObject("ZoneEditor");
+    Component LandClass      = CEditorApplication::ZoneEditorClasses[ZoneEditor.TerraformType];
+
+    isValidCache  = true;
+    Center_Cached = Center;
+
+    Component TerrainTexture = m_MissionTerrain.GetTerrainTexture();
+    Component ZoneMapTexture = m_MissionTerrain.GetToggledTexture();
+    // Component TerrainTexture2 = m_MissionTerrain.GetTerrainTexture2();
+
+    if(LandClass.ModifyMicroTextureOnly)
+    {
+      ZoneEditor.FillLayerCircle(LandClass.MicroTextureIndex, Center, Radius, m_WorldMatrices.GetLayer(m_MicroTexture1));
+    }
+    else
+    {
+      // paint on layers
+      ZoneEditor.FillLayerCircle(LandClass.ZoneMapValue, Center, Radius, m_WorldMatrices.GetLayer(m_ZoneMap));    
+      
+      if (!LandClass.ModifyZoneMapOnly)
+      {
+        ZoneEditor.FillLayerCircle(LandClass.MicroTextureIndex, Center, Radius, m_WorldMatrices.GetLayer(m_MicroTexture1));    
+      }
+    }
+    
+    // ZoneEditor.FillLayerCircle(LandClass.MicroTextureIndex2, Center, Radius, m_WorldMatrices.GetLayer(m_MicroTexture2));
+   
+    // paint on toggled texture in progressive terrain (if exists one)
+    if (m_ToggledTerrainLayer != "" &&
+        ZoneMapTexture != null)
+    {
+      int CurColor = -1;
+      if (m_ToggledTerrainLayer == m_ZoneMap)
+        CurColor = LandClass.ZoneMapValue;
+      else 
+      if (m_ToggledTerrainLayer == m_MicroTexture1)
+        CurColor = LandClass.MicroTextureIndex;
+      // else 
+      // if (m_ToggledTerrainLayer == m_MicroTexture2)
+      //   CurColor = LandClass.MicroTextureIndex2;
+
+      if (CurColor != -1)
+      {
+       ZoneEditor.FillTerrainTextureCircle(ZoneEditor.ConvertValue2Color(CurColor, m_WorldMatrices.GetLayer(m_ToggledTerrainLayer)),
+              Center, Radius, ZoneMapTexture);              
+      }
+    }
+
+    // paint on terrain textures
+     if (!LandClass.ModifyZoneMapOnly || LandClass.ModifyMicroTextureOnly)
+     {
+       ZoneEditor.FillTerrainTextureCircle(LandClass.MainTerrainColor, Center, Radius, TerrainTexture);
+     }
+    // ZoneEditor.FillTerrainTextureCircle(LandClass.MainTerrainColor2, Center, Radius, TerrainTexture2);    
+  }
+
+  void OnTimerEnabled(
+      boolean _IsEnabled
+    )
+  {
+    CBaseWorldModifier::OnTimerEnabled(_IsEnabled);
+    UpdateLabel();
+  }
+
+  void Enable(
+      boolean _Enable
+    )
+  {
+    CBaseWorldModifier::Enable(_Enable);
+    UpdateLabel();
+  }
+
+  void UpdateLabel()
+  {
+    WString Text = L"";
+
+    if (m_IsEnabled && m_IsTimerEnabled)
+    {
+      Text = L"Zone editing";
+
+      Component ZoneEditor = GetObject("ZoneEditor");
+      if (null != ZoneEditor)
+        Text = Text + L": " + new WString(GetZoneEditorTypeName(ZoneEditor.TerraformType));
+    }
+
+    GetLabel().SetText(Text);
+  }
+  
+  Component GetLabel()
+  {
+    return GetObject("ZoneEditorLabel");
+  }
+
+  String GetZoneEditorTypeName(
+      int _Type
+    )
+  {
+    return CEditorApplication::ZoneEditorClasses[_Type].Label;
+  }
+}

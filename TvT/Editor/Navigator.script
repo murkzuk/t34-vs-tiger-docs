@@ -1,0 +1,159 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CNavigator
+{
+  //
+  // Protected members
+  //
+
+  boolean m_IsTextureEnabled = false;
+  String  m_LayerID          = "";
+
+  //
+  // Interface
+  //
+
+  Array GetLayersList()
+  {
+    Array Result = [];
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Map Layers = Mission.GetMissionWorldMatrices().GetLayers();
+      Layers.gotoBegin();
+      while (!Layers.isAtEnd())
+      {
+        Result.add(Layers.getKey());
+        Layers.gotoNext();
+      }
+    }
+
+    return Result;
+  }
+
+  Component GetLayer(
+      String _LayerID
+    )
+  {
+    Component Result = null;
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+      Result = Mission.GetMissionWorldMatrices().GetLayer(_LayerID);
+
+    return Result;
+  }
+
+  Array GetNavigatorObjects()
+  {
+    Array Result = [];
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Result.add(["Object Groups",     Mission.GetObjects([CLASSIFICATOR_GROUP], [])]);
+      Result.add(["Navigation Points", Mission.GetObjects([CLASSIFICATOR_NAVIGATION_POINT], [])]);
+    }
+
+    return Result;
+  }
+
+  //
+  // Events
+  //
+
+  void OnMapPoint(
+      float _X,
+      float _Y
+    )
+  {
+    Component MissionEditor = (new #GameController()).GetObject("MissionEditor");
+    if (null == MissionEditor)
+      return;
+
+    Component Camera = MissionEditor.GetObject("EditorCamera");
+    if (null == Camera)
+      return;
+
+    Matrix Position = getPosition(Camera);
+    Position.origin = new Vector(_X, _Y, Position.origin.z);
+    setPosition(Camera, Position);
+  }
+ 
+  void OnLayerSelected(
+      String _LayerID
+    )
+  {
+    if (_LayerID == m_LayerID)
+      return;
+
+    m_LayerID = _LayerID;
+    
+    UpdateTextureState();
+  }
+
+  void OnToggleTexture(
+      boolean _IsTextureEnabled
+    )
+  {
+    if (_IsTextureEnabled == m_IsTextureEnabled)
+      return;
+
+    m_IsTextureEnabled = _IsTextureEnabled;
+
+    UpdateTextureState();
+  }
+
+  Array GetNavigatorPath()
+  {
+    Array Result = [];
+
+    Component SelectedObject = GetSelectedObject();
+    if (null != SelectedObject)
+    {
+      if (isFunctionExist(SelectedObject, "GetNavPath", 0))
+      {
+        return SelectedObject.GetNavPath();
+      }
+    }
+
+    return Result;
+  }
+
+  //
+  // Service
+  //
+
+  void UpdateTextureState()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    Component Terrain = Mission.GetMissionTerrain();
+    if (null == Terrain)
+      return;
+
+    if (m_IsTextureEnabled)
+    {
+      Terrain.SetMatrixLayerTexture(Mission.GetMissionWorldMatrices().GetLayer(m_LayerID));
+      Mission.GetObject("ZoneEditorController").SetToggledTerrainLayer(m_LayerID);
+    }
+    else
+    {
+      Mission.GetObject("ZoneEditorController").SetToggledTerrainLayer("");
+      Terrain.SetMatrixLayerTexture(null);
+    }
+
+    Terrain.EnableMatrixLayerTexture(m_IsTextureEnabled);
+  }
+}
+

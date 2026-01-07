@@ -1,0 +1,128 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTerrainEditor
+{
+  String  m_ActiveModifierID = "";
+  boolean m_IsTimerEnabled   = false;
+
+  CTerrainEditor()
+  {
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("OnTimerTick", 0.0);
+    Timer.SetEnableEvent("OnTimerEnabled");
+    RegisterObject("Timer", Timer);
+
+  }
+
+  void Construct(
+      Component _Mission
+    )
+  {
+    // Layer history
+    Component LayerHistory = new #MatrixLayerHistory<CLayerHistory>();
+    RegisterObject("LayerHistory", LayerHistory);
+
+    // TerraformModifier
+    Component TerraformModifier = new #GameObject<CTerraformModifier>();
+    TerraformModifier.Construct(new #GeometryCursor<CCircleGeometryCursor>());
+    RegisterObject("TerraformController", TerraformModifier);
+
+    // ZoneEditor
+    Component ZoneEditorModifier = new #GameObject<CZoneEditorModifier>();
+    ZoneEditorModifier.Construct(new #GeometryCursor<CZoneEditorGeometryCursor>());
+    RegisterObject("ZoneEditorController", ZoneEditorModifier);
+  }
+
+  void Initialize(
+      Component _Mission
+    )
+  {
+    // LayerHistory
+    Component LayerHistory = GetObject("LayerHistory");
+    if (null != LayerHistory)
+      LayerHistory.Initialize(_Mission);
+
+    // TerraformModifier
+    Component TerraformModifier = GetObject("TerraformController");
+    if (null != TerraformModifier)
+      TerraformModifier.Initialize(_Mission);
+
+    // Zone Editor
+    Component ZoneEditorModifier = GetObject("ZoneEditorController");
+    if (null != ZoneEditorModifier)
+      ZoneEditorModifier.Initialize(_Mission);    
+  }
+
+  void SetTerraformType(
+      int _TerraformType
+    )
+  {
+    Component ActiveModifier = GetActiveModifier();
+    if (null != ActiveModifier)
+      ActiveModifier.SetTerraformType(_TerraformType);
+  }
+
+  void OnTimerTick(
+      float _TimePast
+    )
+  {
+    Component LayerHistory = GetObject("LayerHistory");
+    if (null != LayerHistory)
+      LayerHistory.OnTick();
+
+    Component ActiveModifier = GetActiveModifier();
+    if (null != ActiveModifier)
+      ActiveModifier.OnTimerTick(_TimePast);
+  }
+
+  void OnTimerEnabled(
+      boolean _IsEnabled
+    )
+  {
+    m_IsTimerEnabled = _IsEnabled;
+
+    Component ActiveModifier = GetActiveModifier();
+    if (null != ActiveModifier)
+      ActiveModifier.OnTimerEnabled(_IsEnabled);
+  }
+
+  void SetActiveModifier(
+      String _ObjectID
+    )
+  {
+    Component ActiveModifier = GetActiveModifier();
+    if (null != ActiveModifier)
+      ActiveModifier.Enable(false);
+
+    m_ActiveModifierID = _ObjectID;
+
+    Component ActiveModifier = GetActiveModifier();
+    if (null != ActiveModifier)
+    {
+      ActiveModifier.Enable(true);
+      ActiveModifier.OnTimerEnabled(m_IsTimerEnabled);
+    }
+  }
+
+  Component GetActiveModifier()
+  {
+    return GetObject(m_ActiveModifierID);
+  }
+
+  Component GetGeometryCursor()
+  {
+    Component ActiveModifier = GetActiveModifier();
+    if (null == ActiveModifier)
+      return null;
+
+    return ActiveModifier.GetGeometryCursor();
+  }
+}

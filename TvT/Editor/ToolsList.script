@@ -1,0 +1,85 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CToolsList
+{
+  //
+  // List
+  //
+
+  Array m_ToolsList = [
+      "Terrain::Fill Water Texture",
+      "Terrain::Refine Water Texture",
+      "Terrain::Refine Rivers",
+      "Terrain::Fill Terrain Texture",
+      "Terrain::Fill Terrain Texture with Objects",
+      "Terrain::Fill Patches Textures",
+      "Terrain::Fill Patches Textures with Objects",
+      "Terrain::Light Terrain Texture",
+      "Terrain::Reload Terrain Texture",
+      "Terrain::Reload Patches Textures",
+      "Terrain::Reload and Light Terrain Texture"
+    ];
+
+  //
+  // Interface
+  //
+
+  Array GetToolsList()
+  {
+    if (null != GetLoadedMission())
+      return m_ToolsList;
+
+    return [];
+  }
+
+  void ExecuteTool(
+      String _ToolName
+    )
+  {
+    Component Mission = GetLoadedMission();
+    if (null == Mission)
+      return;
+
+    if ("Terrain::Refine Rivers"                      == _ToolName)
+      Mission.RefineRivers();
+    else
+    if ("Terrain::Refine Water Texture"               == _ToolName)
+      Mission.RefineWaterTexture();
+    else
+    if ("Terrain::Fill Water Texture"                 == _ToolName)
+      Mission.FillWaterTexture();
+    else
+    if ("Terrain::Fill Terrain Texture"               == _ToolName)
+      Mission.FillTerrainTexture(false);
+    else
+    if ("Terrain::Fill Terrain Texture with Objects"  == _ToolName)
+      Mission.FillTerrainTexture(true);
+    else
+    if ("Terrain::Fill Patches Textures"              == _ToolName)
+      Mission.FillPatchesTextures(false);
+    else
+    if ("Terrain::Fill Patches Textures with Objects" == _ToolName)
+      Mission.FillPatchesTextures(true);
+    else
+    if ("Terrain::Light Terrain Texture"              == _ToolName)
+      Mission.LightTerrainTexture();
+    else
+    if ("Terrain::Reload Terrain Texture"             == _ToolName)
+      Mission.ReloadTerrainTexture();
+    else
+    if ("Terrain::Reload Patches Textures"            == _ToolName)
+      Mission.ReloadPatchesTextures();
+    if ("Terrain::Reload and Light Terrain Texture"   == _ToolName)
+    {    
+      Mission.ReloadTerrainTexture();
+      Mission.LightTerrainTexture();
+    }
+  }
+}

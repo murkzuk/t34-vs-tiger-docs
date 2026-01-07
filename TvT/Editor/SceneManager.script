@@ -1,0 +1,74 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CSceneManager
+{
+  //
+  // Constants
+  //
+
+  final static String SCENE_DEFAULT     = "";
+  final static String SCENE_ASSETVIEWER = "CAssetViewer";
+
+  //
+  // Protected members
+  //
+
+  Component m_MainMission  = null;
+  String    m_CurrentScene = SCENE_DEFAULT;
+
+  //
+  // Interface
+  //
+
+  void ActivateScene(
+      String _SceneID
+    )
+  {
+    if (_SceneID == m_CurrentScene)
+      return;
+
+    Component Game = new #GameController();
+
+    // Disable current scene
+    if (SCENE_DEFAULT == m_CurrentScene)
+    {
+      // Disable main mission
+      m_MainMission = Game.GetObject(SOID_MissionController);
+      if (null != m_MainMission)
+        Game.UnregisterObject(SOID_MissionController);
+    }
+    else
+    if (SCENE_ASSETVIEWER == m_CurrentScene)
+    {
+      EnableAssetViewer(false);
+    }
+
+    // Enable new scene
+    if (SCENE_DEFAULT == _SceneID)
+    {
+      // Enable main mission
+      Game.RegisterObject(SOID_MissionController, m_MainMission);
+      m_MainMission = null;
+    }
+    else
+    if (SCENE_ASSETVIEWER == _SceneID)
+    {
+      EnableAssetViewer(true);
+    }
+
+    m_CurrentScene      = _SceneID;
+    m_IsObjectListValid = false;
+  }
+
+  void Shutdown()
+  {
+    shutdownComponent(m_MainMission);
+  }
+}

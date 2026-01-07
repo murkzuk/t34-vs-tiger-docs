@@ -1,0 +1,31 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CInsertObjectDescr
+{
+  CInsertObjectDescr(
+      String _ComponentID,
+      String _ScriptClass,
+      String _IconFilename
+    )
+  {
+    m_ComponentID = _ComponentID;
+    m_ScriptClass = _ScriptClass;
+    m_IconFilename = _IconFilename;
+  }
+
+  String m_ComponentID;
+  String m_ScriptClass;
+  String m_IconFilename;
+
+  String GetIconFilename()
+  {
+    return "Icons\\" + m_IconFilename;
+  }
+}

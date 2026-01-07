@@ -1,0 +1,94 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Base geometry cursor class
+//
+
+class CBaseGeometryCursor
+{
+  // Constants
+  Component MaterialManager = new #MaterialManager<CGeometryCursorSkin>();
+  String    MaterialId      = "";
+
+  Color     CursorColor     = new Color(0.0, 0.0, 0.0);
+
+  float     HeightOffset    = 1.5;
+
+  // Properties
+  float m_Radius = 0.0;
+
+  // Class methods
+  float GetRadius()
+  {
+    return m_Radius;
+  }
+
+  void SetRadius(
+      float _Radius
+    )
+  {
+    m_Radius = _Radius;
+  }
+}
+
+//
+// Geometry cursor classes
+//
+
+class CCircleGeometryCursor
+  extends CBaseGeometryCursor
+{
+  // Constants
+  String MaterialId  = "CircleMaterial";
+  Color  CursorColor = new Color(0.0, 1.0, 0.0);
+
+  final static float CircleRadius       = 50.0;
+  final static int   CircleSegmentCount = 256;
+  final static float CircleWidth        = 5.0;
+
+  // Properties
+  float m_Radius = CircleRadius;
+
+  // Class methods
+  CCircleGeometryCursor()
+  {
+    SetCircleMode(m_Radius, CircleSegmentCount, CircleWidth);
+  }
+
+  void SetRadius(
+      float _Radius
+    )
+  {
+    CBaseGeometryCursor::SetRadius(_Radius);
+    SetCircleMode(m_Radius, CircleSegmentCount, CircleWidth);
+  }
+}
+
+class CZoneEditorGeometryCursor
+  extends CCircleGeometryCursor
+{
+  Color CursorColor = new Color (0.0, 1.0, 1.0);
+}
+
+//
+// Geometry cursor skin class
+//
+
+class CGeometryCursorSkin
+{
+  Array Materials = [
+    new CGeometryCursorMaterial(
+        "CircleMaterial",                   
+        "Textures/GeometryCursor.tex",           
+        0, 0, 32, 32,          
+        new Color(1.0, 1.0, 1.0)
+      )
+  ];
+}

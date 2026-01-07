@@ -1,0 +1,57 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CLayerHistory
+  extends IEditHistoryProvider
+{
+  int MaxHistorySize = 100000;
+
+  //
+  // Interface
+  //
+
+  void Initialize(
+      Component _Mission
+    )
+  {
+    // Bind layers
+    Map Layers = _Mission.GetMissionWorldMatrices().GetLayers();
+    Layers.gotoBegin();
+    while (!Layers.isAtEnd())
+    {
+      if (!Bind(Layers.getValue()))
+        logError("can't setup layer history for " + Layers.getKey());
+
+      Layers.gotoNext();
+    }
+  }
+
+  //
+  // IEditHistoryProvider
+  //
+
+  
+
+  //
+  // Events
+  //
+
+  void OnTick()
+  {
+    this.IsCombineMode = (new #InputController()).GetButtonState(CTLCMD_MENU_SELECT);
+  }
+
+  event void OnMissionContentSaved(
+      Component _Mission
+    )
+  {
+    Clear();
+  }
+}
+

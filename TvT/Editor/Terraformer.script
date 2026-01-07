@@ -1,0 +1,58 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class TerraformerOptions
+{
+
+  Array m_SpeedCoefs = [   // коэфициенты дл€ увеличени€\уменьшени€ скорости терраформинга дл€ конкретного типа
+    [ TT_Cliffs,          1.0  ], 
+    [ TT_Valley,          2.0  ],
+    [ TT_Trench,          20.0 ],
+    [ TT_Plateau,         0.3  ], // в 3 раза медленнее QuickLevelBrush (алгоритм тот же)
+    [ TT_QuickLevelBrush, 3.0  ],
+    [ TT_Soften,          3.0  ],
+    [ TT_Erosion,         1.0  ]
+  ];
+
+  Array m_SoftenWeights = [ 
+      1.0, 2.0, 1.0, 
+      2.0, 4.0, 2.0,       // веса высот соседей дл€ центральной €чейки матрицы (там где 4.0)
+      1.0, 2.0, 1.0        // так и см€гчаетс€ матрица
+    ];
+
+  float m_IrregularityCount   = 10.0;
+
+  float m_BoundsRoundedWeight = 1.2;
+
+  float m_SteepLength         = 0.75;
+
+  float m_CraterRockHeight    = 2.0;
+  float m_CraterRockWidth     = 0.25;
+  float m_CraterRockCount     = 10.0;
+  float m_CraterProbability   = 0.2;
+
+  float m_CanyonBottomWidth   = 1.0;
+  float m_CanyonSideWidth     = 0.25;
+  float m_CanyonSideHeight    = 0.3;
+
+  float m_ShallowCanyonBottomWidth  = 1.0;
+  float m_ShallowCanyonSideWidth    = 0.15;
+  float m_ShallowCanyonSideHeight   = 0.7;
+  float m_ShallowCanyonSize         = 0.7;
+
+  float m_ValleyBottomWidth   = 1.0;
+
+  float m_TrenchSize          = 0.8;
+
+  float m_ErosionProbability  = 1.0;
+  float m_ErosionLevel        = -0.1;
+
+  float m_Epsilon             = 0.0001;
+
+}

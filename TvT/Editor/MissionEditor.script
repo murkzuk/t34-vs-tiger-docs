@@ -1,0 +1,1420 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMissionEditorCamera
+  extends CMainCamera
+{
+  Color ClearColor = new Color(73.0 / 255.0, 95.0 / 255.0, 116.0 / 255.0);
+}
+
+class CMissionEditor
+{
+  Component m_SelectedObject  = null;
+  Component m_SelectedJoint   = null;
+
+  // debug support data
+  int m_ShowPathMode  = 0;
+  int m_ShowCellsMode = 0;
+
+  CMissionEditor()
+  {
+    addClassificator(user, CLASSIFICATOR_NOTVISIBLEONRADAR);
+    addClassificator(user, CLASSIFICATOR_CONTROLLABLE);
+    addClassificator(user, CLASSIFICATOR_BEH_PHANTOM_OBJECT);
+
+    Component Dummy = new #GameObject<CEditorDummy>();
+    if (null != Dummy)
+    {
+      Dummy.Construct(this);
+      RegisterObject("Dummy", Dummy);
+    }
+
+    Component Camera = new #Camera<CMissionEditorCamera>();
+    SetPositionProvider(Camera);
+    RegisterObject("EditorCamera", Camera);
+
+    Component Control = new #ManualCameraControl<CMissionEditorCameraControl>();
+    setSlaveObject(Control, Camera);
+    RegisterObject("Control", Control);
+    Control.UseSystemTime(true);
+
+    Component Radar = new #RadarObject();
+    setPositionable(Radar, Camera);
+    Radar.SetDetectAllObjectsMode();
+    Radar.EnableVisibilityCheck(false);
+    Radar.SetObjectsDetectionMask(              // enable all objects except not editable
+        [ ],
+        [ CLASSIFICATOR_NOTEDITABLE ]
+      );
+    Radar.SetBulletsDetectionMask(              // disable all bullets
+        [ CLASSIFICATOR_PROHIBITED ],
+        [ ]
+      );
+    RegisterObject("Radar", Radar);
+
+    Component Editor = new #MissionEditor();
+    setPositionable(Editor, Camera);
+    Editor.SetInputFilter(
+        [
+          CTLCMD_AFFECT_OBJECT,
+          CTLCMD_UNIT_SEND_SLOW,
+          CTLCMD_UNIT_SEND_FAST,
+          CTLCMD_UNIT_SEND_RUN,
+          CTLCMD_UNIT_SEND_STOP
+        ]
+      );
+    Editor.SetRadarObject(Radar);
+    Editor.SetEventHandler(this);
+    Editor.SetSurfaceMask(
+        [ CLASSIFICATOR_MAIN_GEOMETRY ],
+        [ ]
+      );
+    RegisterObject("Editor", Editor);
+
+    // Create gizmo cursor
+    Component GizmoCursor = CGizmoCursor::GetInstance();
+    setIdentificator(GizmoCursor, "GizmoCursor");
+    GizmoCursor.SetEventHandler(this);
+    RegisterObject("GizmoCursor", GizmoCursor);
+
+    // input controller
+    Component InputThroughputControl = new #InputThroughputControl();
+    InputThroughputControl.SetInputFilter(
+      [ CTLCMD_TOGGLE_MFD1]);
+    InputThroughputControl.SetEventHandler(this);
+    InputThroughputControl.EnableControl(true);
+    RegisterObject("MFDScreenInput", InputThroughputControl);
+  }
+
+  void Construct(
+      Component _Mission
+    )
+  {
+    CCockpitSkin::TerrainMapTextureName = _Mission.GetTerrainMapTextureName();
+
+    // TerrainMap
+//    Component TerrainMap = new #TerrainMap<CTerrainMapView>();
+    Component TerrainMap = new #TerrainMap<CUh1bMapView>();
+
+    TerrainMap.SetAppearance(0.62, 0.0305, 0.36);
+    RegisterObject("TerrainMap", TerrainMap);
+
+    // navpoints for map
+    Array NavPoints = _Mission.GetNavpointsForPlayerMap();
+    for (int i = 0; i< NavPoints.size();i++)
+    {
+      TerrainMap.AddNavpointsList(NavPoints[i][0], NavPoints[i][1], NavPoints[i][2]);
+    }
+    TerrainMap.SetRanges(_Mission.CockpitMapMinRange, 
+                         _Mission.CockpitMapMaxRange,
+                         _Mission.CockpitMapNavNameMaxRange, 
+                         _Mission.CockpitMapZoomSteps,
+                         _Mission.CockpitMapAccessBox);
+
+    TerrainMap.SetMarksInitPoint(_Mission.MarksInitPoint);
+    TerrainMap.SetCursorControl(GetObject("EditorCursor"));    
+    TerrainMap.Enable(false);
+  }
+
+  int m_ObjectCursorSystemEffectID = INVALID_EFFECT_ID;
+  int m_ObjectCursorBoundsEffectID = INVALID_EFFECT_ID;
+
+  //
+  // Save / Load
+  //
+
+  boolean SaveContent(
+      Component _Mission
+    )
+  {
+    Component Editor = GetObject("Editor");
+    if (null == Editor)
+      return false;
+
+    _Mission.SaveBinaryContent();
+
+    Component Content = _Mission.GetContent().m_SourceContent;
+
+    fireEvent(0.0, [], "OnMissionContentSaved", [_Mission]);
+
+    return Editor.ExportObjectList(
+              Content.GetObjectListClassName(),
+              Content.GetObjectListClassFile(),
+              _Mission.GetContent().GetObjectsCompactedList(),
+              _Mission.GetContent().GetCameraScriptList(),
+              Content.GetTriggersList()
+            );
+  }
+
+  //
+  // Current object
+  //
+
+  Component GetSelectedObject()
+  {
+    return m_SelectedObject;
+  }
+
+  void SelectObject(
+      Component _Object
+    )
+  {
+    if (m_SelectedObject == _Object)
+      return;
+
+    if (isIdentifiable(_Object))
+      GetObject("Editor").SetCurrentTarget(getIdentificator(_Object));
+    else
+      GetObject("Editor").SetCurrentTarget("");
+  }
+
+  Component GetSelectedJoint()
+  {
+    return m_SelectedJoint;
+  }
+
+  void SelectJoint(
+      Component _Joint
+    )
+  {
+    // delete old cursor effect
+    HideObjectCursor();
+
+    // Set gizmo slave
+    GetObject("GizmoCursor").SetSlaveObject(_Joint);
+
+    // return if no selection
+    m_SelectedJoint = _Joint;
+    if (null == _Joint)
+      return;
+
+    // show new cursor
+    ShowObjectCursor(_Joint);
+  }
+
+  //
+  // Events
+  //
+
+  void OnObjectSelected(
+      Component _Object
+    )
+  {
+    // if no changes do nothing
+    if (m_SelectedObject == _Object)
+      return;
+
+    // Set gizmo slave
+    GetObject("GizmoCursor").SetSlaveObject(_Object);
+
+    // Set selected joint to null
+    m_SelectedJoint = null;
+
+    // delete old cursor effect
+    HideObjectCursor();
+
+    // debug support: turn deselected object
+    // rendering options off
+    if (m_SelectedObject != null)
+    {
+      if ((0 != m_ShowPathMode)
+          && isFunctionExist(m_SelectedObject, "ShowPath", 1))
+        m_SelectedObject.ShowPath(0);
+
+      if ((0 != m_ShowCellsMode)
+          && isFunctionExist(m_SelectedObject, "ShowCells", 1))
+        m_SelectedObject.ShowCells(0);
+    }
+
+    m_SelectedObject = _Object;
+
+    // return if no selection
+    if (null == _Object)
+      return;
+
+    // show new cursor
+    ShowObjectCursor(_Object);
+
+    // debug support: set currently selected rendering options
+    // for newly selected object
+    if ((0 != m_ShowPathMode)
+        && isFunctionExist(_Object, "ShowPath", 1))
+      _Object.ShowPath(m_ShowPathMode);
+
+    if ((0 != m_ShowCellsMode)
+        && isFunctionExist(_Object, "ShowCells", 1))
+      _Object.ShowCells(m_ShowCellsMode);
+  }
+
+  void OnObjectPositionChanged(
+      Matrix _OldPosition,
+      Matrix _Position
+    )
+  {
+    Array SelectedObjectRecord = [];
+
+    Component Mission = new #GameController().GetLoadedMission();
+    if (null != Mission)
+      SelectedObjectRecord = Mission.GetContent().
+        FindObjectRecord(getIdentificator(m_SelectedObject));
+
+    if (!SelectedObjectRecord.isEmpty())
+      SelectedObjectRecord[CMissionContent::INDEX_Position] = _Position;
+
+    sendEvent(0.0, getIdentificator(m_SelectedObject), "OnPositionEdited", [_OldPosition, _Position]);
+    sendEvent(0.0, getIdentificator(m_SelectedObject), "OnPositionEdited", []);
+  }
+
+  void OnInputCommand(
+      int _Command
+    )
+  {
+
+    if (CTLCMD_TOGGLE_MFD1 == _Command)
+    {
+      GetObject("TerrainMap").Enable(!GetObject("TerrainMap").IsEnabled());
+    }
+  }
+
+  void OnInputEnabled(
+      int _Enable
+    )
+  {
+  }
+
+  event void OnCameraScriptDone()
+  {
+    sendEvent(0.0, getIdentificator(this), "ActivateEditor", []);
+  }
+
+  event void ActivateEditor()
+  {
+    (new #GameController()).ActivateCamera(getIdentificator(this), true);
+  }
+
+  //
+  // Cursor functions
+  //
+
+  void HideObjectCursor()
+  {
+    // delete old cursor effect
+    if (INVALID_EFFECT_ID != m_ObjectCursorSystemEffectID)
+      (new #EffectsArray()).DeleteEffect(m_ObjectCursorSystemEffectID);
+    m_ObjectCursorSystemEffectID = INVALID_EFFECT_ID;
+
+    if (INVALID_EFFECT_ID != m_ObjectCursorBoundsEffectID)
+      (new #EffectsArray()).DeleteEffect(m_ObjectCursorBoundsEffectID);
+    m_ObjectCursorBoundsEffectID  = INVALID_EFFECT_ID;
+  }
+
+  void ShowObjectCursor(
+      Component _Object
+    )
+  {
+    Component Bounding = _Object;
+    if (isFunctionExist(_Object, "GetBoundingInfo", 0))
+      Bounding = _Object.GetBoundingInfo();
+    if (null == Bounding)
+      Bounding = _Object;
+
+    // create new cursor effect
+    if (!isPositionable(Bounding))
+      return;
+
+    Matrix SystemPosition = getPosition(Bounding);
+    Matrix BoundsPosition = getPosition(Bounding);
+
+    if (isBoundingInfo(Bounding))
+    {
+      Vector Center = getBoundingSphere(Bounding)[0];
+      Vector Size   = getBoundingSize(Bounding);
+
+      if (0.0 == Size.x)
+        SystemPosition.xvec *= 0.09;
+      else
+        SystemPosition.xvec *= Size.x * 0.6;
+
+      if (0.0 == Size.y)
+        SystemPosition.yvec *= 0.09;
+      else
+        SystemPosition.yvec *= Size.y * 0.6;
+
+      if (0.0 == Size.z)
+        SystemPosition.zvec *= 0.09;
+      else
+        SystemPosition.zvec *= Size.z * 0.6;
+
+      BoundsPosition.xvec  *= Size.x * 0.5;
+      BoundsPosition.yvec  *= Size.y * 0.5;
+      BoundsPosition.zvec  *= Size.z * 0.5;
+      BoundsPosition.origin = Center;
+    }
+    else
+    {
+      SystemPosition.xvec *= 0.09;
+      SystemPosition.yvec *= 0.09;
+      SystemPosition.zvec *= 0.09;
+
+      BoundsPosition.xvec *= 0.08;
+      BoundsPosition.yvec *= 0.08;
+      BoundsPosition.zvec *= 0.08;
+    }
+
+    m_ObjectCursorSystemEffectID = (new #EffectsArray()).
+      CreateEffect("ObjectCursorSystem", SystemPosition, Bounding);
+
+    m_ObjectCursorBoundsEffectID  = (new #EffectsArray()).
+      CreateEffect("ObjectCursorBounds", BoundsPosition, Bounding);
+  }
+
+  void EnableObjectCursor(
+      boolean _IsEnabled
+    )
+  {
+    GetObject("Editor").EnableObjectControl(_IsEnabled);
+  }
+
+
+  //
+  // Edit functions
+  //
+
+  String m_CurrentViewMode = "FreeMove";
+  Matrix m_CurrFreeCamPos  = IdentityMatrix;
+
+  void GetViewMode()
+  {
+    return m_CurrentViewMode;
+  }
+
+  void SetViewMode(
+      Component _Mission,
+      String    _Mode
+    )
+  {
+    if (_Mode == m_CurrentViewMode)
+      return;
+
+    Component Control = GetObject("Control");
+    if (null == Control)
+      return;
+    Component Camera = GetObject("EditorCamera");
+    if (null == Camera)
+      return;
+
+    // Restore canera position after player view mode
+    if ("FromPlayer" == m_CurrentViewMode)
+      setPosition(Camera, m_CurrFreeCamPos);
+
+    if ("FreeMove" == _Mode)
+    {
+      setPosition(Camera, m_CurrFreeCamPos);
+      Control.EnableLookControl(true);
+    }
+    else
+    if ("LookDown" == _Mode)
+    {
+      m_CurrFreeCamPos = getPosition(Camera);
+
+      Vector Origin = getPosition(Camera).origin;
+
+      Control.EnableLookControl(false);
+      setPosition(Camera, createMatrixFromOriginAndXVec(new Vector(0.0, 0.0, -1.0), Origin));
+    }
+    else
+    if ("FromPlayer" == _Mode)
+    {
+      // Save camera position after free move
+      if ("FreeMove" == m_CurrentViewMode)
+        m_CurrFreeCamPos = getPosition(Camera);
+    }
+    else
+      logError("View mode is not implemented: " + _Mode);
+
+    // Change mode
+    m_CurrentViewMode = _Mode;
+  }
+
+  void GotoObject(
+      Component _TargetObject,
+      boolean   _Immediately
+    )
+  {
+    if (null != _TargetObject)
+    {
+      Component Camera = GetObject("EditorCamera");
+      if (null != Camera)
+      {
+        Component Bounding = _TargetObject;
+
+        if (isFunctionExist(_TargetObject, "GetBoundingInfo", 0))
+          Bounding = _TargetObject.GetBoundingInfo();
+        if (null == Bounding)
+          Bounding = _TargetObject;
+
+        // position camera near object and focus on it
+        if (!isPositionable(Bounding))
+          return;
+
+        Matrix CameraPos = getPosition(Bounding);
+        if (isBoundingInfo(Bounding))
+        {
+          Vector AxisZ       = new Vector(0.0f, 0.0f, 1.0f);
+          Vector Source      = getPosition(Camera).origin;
+          Vector Destination = getBoundingSphere(Bounding)[0];
+          float Size         = getBoundingSize(Bounding).Magnitude();
+
+          Vector ToObject = Destination - Source;
+          ToObject.Normalize();
+
+          CameraPos.origin = Source + ((Destination - Source).Magnitude() - Size) * ToObject + 0.5f * Size * AxisZ;
+
+          Vector dir = Destination - CameraPos.origin;
+          dir.Normalize();
+          Vector side = getCrossProduct(AxisZ, dir);
+          side.Normalize();
+          Vector up = getCrossProduct(dir, side);
+          up.Normalize();
+
+          CameraPos.xvec = dir;
+          CameraPos.yvec = side;
+          CameraPos.zvec = up;
+        }
+
+        float TransitionTime = 1.0f;
+        if (_Immediately)
+          TransitionTime = 0.0f;
+
+        //$LOG
+        logWarning("TransitCamera");
+
+        GetObject("Editor").TransitCamera(CameraPos, TransitionTime);
+      }
+    }
+  }
+
+  void GotoSelectedObject(
+      boolean _Immediately
+    )
+  {
+    GotoObject(m_SelectedObject, _Immediately);
+  }
+
+  void GotoSelectedJoint(
+      boolean _Immediately
+    )
+  {
+    GotoObject(m_SelectedJoint, _Immediately);
+  }
+
+  Matrix GetTargetLocation()
+  {
+    return GetObject("Editor").GetTargetLocation();
+  }
+
+  void InvokeEditObjCmd(
+      String _Command,
+      int    _Axis,
+      float  _Param1
+    )
+  {
+    if (null == m_SelectedObject)
+    {
+      logWarning("No objects selected");
+      return;
+    }
+
+    Component Editor = GetObject("Editor");
+    if (null == Editor)
+      return;
+
+    if ("AlignToNearestWall"   == _Command)
+    {
+      Array Wall = FindNearestWall(Editor);
+      AlignObjectToWall(Editor, Wall);
+    }
+    else
+    if ("MoveToNearestWall"    == _Command)
+    {
+      Array Wall = FindNearestWall(Editor);
+      MoveObjectToWall(Editor, Wall);
+    }
+    else
+    if ("MoveToNearestCorner"  == _Command)
+    {
+      Array Corner = FindNearestCorner(Editor);
+      MoveObjectToWall(Editor, Corner[0]);
+      MoveObjectToWall(Editor, Corner[1]);
+    }
+    else
+    if ("LeanToNearestWall"    == _Command)
+    {
+      Array Wall = FindNearestWall(Editor);
+      AlignObjectToWall(Editor, Wall);
+      MoveObjectToWall(Editor, Wall);
+    }
+    else
+    if ("LeanToNearestCorner"  == _Command)
+    {
+      Array Corner = FindNearestCorner(Editor);
+      AlignObjectToWall(Editor, Corner[0]);
+      MoveObjectToWall(Editor, Corner[0]);
+      MoveObjectToWall(Editor, Corner[1]);
+    }
+    else
+    if ("Rotate"               == _Command)
+    {
+      RotateObject(Editor, _Axis, _Param1);
+    }
+    else
+    if ("ResizeToFitRoom"      == _Command)
+    {
+      ResizeObject(Editor, _Axis);
+    }
+    else
+      logError("Command is not implemented: " +
+        _Command + "(" + new String(_Axis) + ", " + new String(_Param1) + ")");
+  }
+
+
+  final float IsectionCheckDistance = 1000.0;
+
+  Array FindNearestWall(
+      Component _Editor
+    )
+  {
+    final float  CheckStep = 2.0 * Math_PI / 10.0;
+    final Vector ObjCenter = _Editor.GetTargetPosition().origin;
+
+    Array Result = [
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(0.0, 0.0, 0.0),
+        FLT_MAX
+      ];
+
+    for (float Alpha = 0.0; Alpha < 2.0 * Math_PI; Alpha += CheckStep)
+    {
+      Vector CheckRay = new Vector(cos(Alpha), sin(Alpha), 0.0);
+      Array  Isection = _Editor.GetIsectionWithRay(
+          DF_POINT | DF_NORMAL | DF_DISTANCE,
+          [CLASSIFICATOR_MAIN_GEOMETRY],
+          [],
+          ObjCenter,
+          ObjCenter + CheckRay * IsectionCheckDistance
+        );
+
+      if (0 != (Isection[0] & DF_POINT))
+        if (Isection[3] < Result[2])
+        {
+          Result[0] = Isection[1];
+          Result[1] = Isection[2];
+          Result[2] = Isection[3];
+        }
+    }
+
+    return Result;
+  }
+
+  Array FindNearestCorner(
+      Component _Editor
+    )
+  {
+    Array  Wall1 = FindNearestWall(_Editor);
+
+    Vector ObjCenter = _Editor.GetTargetPosition().origin;
+    Vector Direction = new Vector(Wall1[1].y, -Wall1[1].x, 0.0);
+
+    Array  Isection1 = _Editor.GetIsectionWithRay(
+        DF_POINT | DF_NORMAL | DF_DISTANCE,
+        [CLASSIFICATOR_MAIN_GEOMETRY],
+        [],
+        ObjCenter,
+        ObjCenter + Direction * IsectionCheckDistance
+      );
+
+    Array  Isection2 = _Editor.GetIsectionWithRay(
+        DF_POINT | DF_NORMAL | DF_DISTANCE,
+        [CLASSIFICATOR_MAIN_GEOMETRY],
+        [],
+        ObjCenter,
+        ObjCenter - Direction * IsectionCheckDistance
+      );
+
+    Array Wall2 = new Array(Wall1);
+
+    if (Isection1[3] < Isection2[3])
+    {
+      Wall2[0] = Isection1[1];
+      Wall2[1] = Isection1[2];
+      Wall2[2] = Isection1[3];
+    }
+    else
+    {
+      Wall2[0] = Isection2[1];
+      Wall2[1] = Isection2[2];
+      Wall2[2] = Isection2[3];
+    }
+
+    return [Wall1, Wall2];
+  }
+
+  void AlignObjectToWall(
+      Component _Editor,
+      Array     _Wall
+    )
+  {
+    Matrix Position = _Editor.GetTargetPosition();
+
+    float MetricX = getDotProduct(Position.xvec, _Wall[1]);
+    float MetricY = getDotProduct(Position.yvec, _Wall[1]);
+
+    Vector dir;
+    if (abs(MetricX) > abs(MetricY))
+    {
+      if (MetricX > 0.0)
+        dir = _Wall[1];
+      else
+        dir = -_Wall[1];
+    }
+    else
+    {
+      if (MetricY > 0.0)
+        dir = new Vector(_Wall[1].y, -_Wall[1].x, 0.0);
+      else
+        dir = -new Vector(_Wall[1].y, -_Wall[1].x, 0.0);
+    }
+    dir.Normalize();
+    Vector side = getCrossProduct(new Vector(0.0f, 0.0f, 1.0f), dir);
+    side.Normalize();
+    Vector up = getCrossProduct(dir, side);
+    up.Normalize();
+
+    Position.xvec = dir;
+    Position.yvec = side;
+    Position.zvec = up;
+
+    _Editor.SetTargetPosition(Position);
+  }
+
+  void MoveObjectToWall(
+      Component _Editor,
+      Array     _Wall
+    )
+  {
+    Component Bounding = m_SelectedObject.GetBoundingInfo();
+    if (null == Bounding)
+      return;
+
+    Array  BBox = getBoundingBox(Bounding);
+
+    float Distance = FLT_MAX;
+    for (int Index = BOX_FIRST; Index < BOX_COUNT; Index++)
+    {
+      float PointDist = getDotProduct(_Wall[0] - BBox[Index], _Wall[1]);
+      if (abs(PointDist) < abs(Distance))
+        Distance = PointDist;
+    }
+
+    Matrix Position = _Editor.GetTargetPosition();
+    Position.origin += Distance * _Wall[1];
+    _Editor.SetTargetPosition(Position);
+  }
+
+  void RotateObject(
+      Component _Editor,
+      int       _Axis,
+      float     _Angle
+    )
+  {
+    float Alpha = _Angle * Math_PI / 180.0;
+
+    if (AXIS_X == _Axis)
+    {
+      _Editor.SetTargetPosition(_Editor.GetTargetPosition() * new Matrix(
+          1.0, 0.0,         0.0,        0.0,
+          0.0, cos(Alpha), -sin(Alpha), 0.0,
+          0.0, sin(Alpha),  cos(Alpha), 0.0,
+          0.0, 0.0,         0.0,        1.0
+        ));
+    }
+    else
+    if (AXIS_Y == _Axis)
+    {
+      _Editor.SetTargetPosition(_Editor.GetTargetPosition() * new Matrix(
+           cos(Alpha),  0.0, sin(Alpha), 0.0,
+           0.0,         1.0, 0.0,        0.0,
+          -sin(Alpha),  0.0, cos(Alpha), 0.0,
+           0.0,         0.0, 0.0,        1.0
+        ));
+    }
+    else
+    if (AXIS_Z == _Axis)
+    {
+      _Editor.SetTargetPosition(_Editor.GetTargetPosition() * new Matrix(
+          cos(Alpha), -sin(Alpha), 0.0, 0.0,
+          sin(Alpha),  cos(Alpha), 0.0, 0.0,
+          0.0,         0.0,        1.0, 0.0,
+          0.0,         0.0,        0.0, 1.0
+        ));
+    }
+    else
+      logError("Invalid rotation axis");
+  }
+
+  float GetMaxAxisRange(
+      Component _Editor,
+      Vector    _ObjCenter,
+      Vector    _Direction
+    )
+  {
+    Array Isection = _Editor.GetIsectionWithRay(DF_POINT | DF_NORMAL | DF_DISTANCE,
+                                                [CLASSIFICATOR_MAIN_GEOMETRY],
+                                                [],
+                                                _ObjCenter,
+                                                _ObjCenter + _Direction * IsectionCheckDistance);
+    if (0 != (Isection[0] & DF_POINT))
+      return Isection[3];
+
+    logWarning("Can't find intersection with ray");
+    return -1.0f;
+  }
+
+  void ResizeObject(
+      Component _Editor,
+      int       _Axis
+    )
+  {
+    if (null == m_SelectedObject)
+      return;
+
+    final Matrix ObjPosition = _Editor.GetTargetPosition();
+    final Vector ObjCenter   = ObjPosition.origin;
+
+    Vector MovePos = new Vector(0.0f, 0.0f, 0.0f);
+    Vector MoveNeg = new Vector(0.0f, 0.0f, 0.0f);
+
+    if (AXIS_X    == _Axis ||
+        AXIS_NULL == _Axis)
+    {
+      MovePos.x = GetMaxAxisRange(_Editor, ObjCenter,  ObjPosition.xvec);
+      MoveNeg.x = GetMaxAxisRange(_Editor, ObjCenter, -ObjPosition.xvec);
+
+      if (MovePos.x < 0 ||
+          MoveNeg.x < 0)
+        return;
+    }
+
+    if (AXIS_Y    == _Axis ||
+        AXIS_NULL == _Axis)
+    {
+      MovePos.y = GetMaxAxisRange(_Editor, ObjCenter,  ObjPosition.yvec);
+      MoveNeg.y = GetMaxAxisRange(_Editor, ObjCenter, -ObjPosition.yvec);
+
+      if (MovePos.y < 0 ||
+          MoveNeg.y < 0)
+        return;
+    }
+
+    if (AXIS_Z    == _Axis ||
+        AXIS_NULL == _Axis)
+    {
+      MovePos.z = GetMaxAxisRange(_Editor, ObjCenter,  ObjPosition.zvec);
+      MoveNeg.z = GetMaxAxisRange(_Editor, ObjCenter, -ObjPosition.zvec);
+
+      if (MovePos.z < 0 ||
+          MoveNeg.z < 0)
+        return;
+    }
+
+    if (isFunctionExist(m_SelectedObject, "SetSize", 1))
+      m_SelectedObject.SetSize((MovePos + MoveNeg) / 2.0f);
+
+    ObjPosition.origin += ObjPosition.xvec * (MovePos.x - MoveNeg.x) / 2.0f +
+                          ObjPosition.yvec * (MovePos.y - MoveNeg.y) / 2.0f +
+                          ObjPosition.zvec * (MovePos.z - MoveNeg.z) / 2.0f;
+    _Editor.SetTargetPosition(ObjPosition);
+  }
+
+  //
+  // Scripted camera
+  //
+
+  String m_CurrentCinemaID = new String(CMissionContent::DefaultCinemaID);
+
+  Array GetCinemaList()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return [];
+
+    return Mission.GetContent().GetCinemaList();
+  }
+
+  void SelectCinema(
+      String _CinemaID
+    )
+  {
+    m_CurrentCinemaID = _CinemaID;
+  }
+
+  void DeleteCinema()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission != null)
+      Mission.GetContent().DeleteCinema(m_CurrentCinemaID);
+  }
+
+  void AddCinema(
+      String _CinemaID
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission != null)
+      Mission.GetContent().AddCinema(_CinemaID);
+  }
+
+  Array GetCinemaProperties()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return [];
+
+    return Mission.GetContent().GetCinemaProperties(m_CurrentCinemaID);
+  }
+
+  void SetCinemaProperties(
+      Array _Properties
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission != null)
+      Mission.GetContent().SetCinemaProperties(m_CurrentCinemaID, _Properties);
+  }
+
+  void CreateCameraScriptRecord(
+      float   _Time,
+      String  _Operation,
+      variant _Param1,
+      variant _Param2,
+      variant _Param3
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    Vector  Position = new Vector();
+
+    Component Camera = GetObject("EditorCamera");
+    if (Camera != null)
+      Position = getPosition(Camera).origin;
+
+    String  LookTarget = "";
+    float   FParam = 0.0;
+    Vector  VParam = new Vector();
+
+    boolean dir       = false;
+    boolean nodir     = false;
+    boolean lock      = false;
+    boolean nolock    = false;
+    boolean selection = false;
+
+    String param1 = new String(_Param1);
+    String param2 = new String(_Param2);
+
+    Array Properties = [];
+
+    if (null != m_SelectedObject)
+      if (getIdentificator(m_SelectedObject) != "EditorCursor")
+      {
+        selection = true;
+        lock = true;
+      }
+
+    if ((param1 == "dir") || (param2 == "dir"))
+        dir = true;
+    if ((param1 == "nodir") || (param2 == "nodir"))
+        nodir = true;
+    if (dir && nodir)
+    {
+      logError("\"dir\" and \"nodir\" cannot be used together");
+      return;
+    }
+    if ((param1 == "lock") || (param2 == "lock"))
+        lock = true;
+    if ((param1 == "nolock") || (param2 == "nolock"))
+    {
+      lock = false;
+      nolock = true;
+    }
+    if (lock && nolock)
+    {
+      logError("\"lock\" and \"nolock\" cannot be used together");
+      return;
+    }
+
+    // SET POS
+    if (_Operation == KEY_SETPOS)
+    {
+      Properties.add(["Position", Position]);
+      if (!nodir)
+      {
+        if (dir || !selection)
+        {
+          VParam = new Vector(getPosition(Camera).xvec);
+          Properties.add(["Direction", VParam]);
+        }
+        else
+        {
+          LookTarget = getIdentificator(m_SelectedObject);
+          Properties.add(["LookTarget", LookTarget]);
+        }
+      }
+      else
+          Properties.add(["NoDir", true]);
+
+      Properties.add(["NoLock", nolock]);
+      Properties.add(["Lock",   lock]);
+    }
+    else
+    // MOVE
+    if (_Operation == KEY_MOVE)
+    {
+      Properties.add(["Position", Position]);
+      if (!nodir)
+      {
+        if (dir || !selection)
+        {
+          Properties.add(["Direction", new Vector(getPosition(Camera).xvec)]);
+        }
+        else
+        {
+          Properties.add(["LookTarget", getIdentificator(m_SelectedObject)]);
+        }
+      }
+      else
+          Properties.add(["NoDir", true]);
+
+      Properties.add(["NoLock", nolock]);
+      Properties.add(["Lock",   lock]);
+    }
+    else
+    // STAY
+    if (_Operation == KEY_STAY)
+    {
+      if (dir)
+      {
+        Properties.add(["Direction", new Vector(getPosition(Camera).xvec)]);
+      }
+
+      if (lock)
+      {
+        if (!dir && selection)
+        {
+          Properties.add(["LookTarget", getIdentificator(m_SelectedObject)]);
+        }
+        else if (!dir)
+        {
+          logError("\"lock\" option and no \"dir\" option or object specified");
+          return;
+        }
+      }
+
+      Properties.add(["NoLock", nolock]);
+      Properties.add(["Lock",   lock]);
+    }
+    else
+    // END
+    if (_Operation == KEY_END)
+    {
+      // no options - do nothing
+    }
+    else
+    // LOCK
+    if (_Operation == KEY_LOCK)
+    {
+      if (nolock || (param1 == "off") || (param1 == "OFF") || (param1 == "Off"))
+      {
+      }
+      else
+      {
+        if (dir)
+          Properties.add(["Direction", new Vector(getPosition(Camera).xvec)]);
+        else if (selection)
+          Properties.add(["LookTarget", getIdentificator(m_SelectedObject)]);
+        else
+        {
+          logError("\"Lock\" keyframe and no \"dir\" option or object specified");
+          return;
+        }
+      }
+
+      Properties.add(["NoLock", nolock]);
+      Properties.add(["Lock",   lock]);
+    }
+    else
+    // STICK TO
+    if (_Operation == KEY_STICKTO)
+    {
+      if (!selection)
+      {
+        logError("\"StickTo\" keyframe with no selected object");
+        return;
+      }
+
+      Properties.add(["LeaderID", getIdentificator(m_SelectedObject)]);
+
+      Component Leader = m_SelectedObject;
+      if (Leader == null)
+      {
+        logError("Bad object selected for \"StickTo\" command");
+        return;
+      }
+
+      Properties.add(["Position", new Vector(getPosition(Leader).multInvVrt(Position))]);
+          // Position - getPosition(Leader).origin)]);
+
+      if (dir)
+      {
+        Vector MyDir = new Vector(getPosition(Camera).xvec);
+        MyDir.Normalize();
+        Vector LeaderDir = new Vector(getPosition(Leader).xvec);
+        LeaderDir.Normalize();
+
+        Properties.add(["Direction", new Vector(MyDir - LeaderDir)]);
+      }
+      else 
+      if (((param1 == "LookAt") || (param1 == "lookat") || (param1 == "Lookat"))
+          && (param2 != "-1") && (param2 != ""))
+          Properties.add(["LookTarget", new String(param2)]);
+      else
+          Properties.add(["LookTarget", getIdentificator(m_SelectedObject)]);
+    }
+    else
+    // FOLLOW
+    if (_Operation == KEY_FOLLOW)
+    {
+      if (!selection)
+      {
+        logError("\"Follow\" keyframe with no selected object");
+        return;
+      }
+
+      Properties.add(["LeaderID", getIdentificator(m_SelectedObject)]);
+
+      Component Leader = m_SelectedObject;
+      if (Leader == null)
+      {
+        logError("Bad object selected for \"Follow\" command");
+        return;
+      }
+
+      Properties.add(["Distance", (Position - getPosition(Leader).origin).Magnitude()]);
+
+      if (dir)
+      {
+        Vector MyDir = new Vector(getPosition(Camera).xvec);
+        MyDir.Normalize();
+        Vector LeaderDir = new Vector(getPosition(Leader).xvec);
+        LeaderDir.Normalize();
+
+        Properties.add(["Direction", new Vector(MyDir - LeaderDir)]);
+      }
+      else if (((param1 == "LookAt") || (param1 == "lookat") || (param1 == "Lookat"))
+          && (param2 != "-1") && (param2 != ""))
+          Properties.add(["LookTarget", new String(param2)]);
+      else
+          Properties.add(["LookTarget", getIdentificator(m_SelectedObject)]);
+    }
+    else
+    // FADE
+    if (_Operation == KEY_FADE)
+    {
+      float Time = 0.0;
+      if (getVariableType(_Param1) == ST_FLOAT)
+        Time = _Param1;
+      float Targ = 0.0;
+      if (getVariableType(_Param2) == ST_FLOAT)
+        Targ = _Param2;
+
+      Properties.add(["TimeToFade", Time]);
+      Properties.add(["TargetFade", Targ]);
+    }
+    else
+    // TEXT
+    if (_Operation == KEY_TEXT)
+    {
+      float  Time = 0.0;
+      if (getVariableType(_Param1) == ST_FLOAT)
+        Time = _Param1;
+      String Text = "";
+      if (getVariableType(_Param2) == ST_STRING)
+        Text = _Param2;
+      String Sound = "";
+      if (getVariableType(_Param3) == ST_STRING)
+        Sound = _Param3;
+
+      Properties.add(["TimeToShow", Time]);
+      Properties.add(["TextRef",    Text]);
+      Properties.add(["SoundRef",   Sound]);
+    }
+    else
+    // FOV
+    if (_Operation == KEY_FOV)
+    {
+      float Time = 0.0;
+      if (getVariableType(_Param1) == ST_FLOAT)
+        Time = _Param1;
+      float Targ = 80.0;
+      if (getVariableType(_Param2) == ST_FLOAT)
+        Targ = _Param2;
+
+      Properties.add(["Duration", Time]);
+      Properties.add(["TargetFOV", Targ]);
+    }
+    else
+    // WideScreen
+    if (_Operation == KEY_WIDESCREEN)
+    {
+      float Time = 0.0;
+      if (getVariableType(_Param1) == ST_FLOAT)
+        Time = _Param1;
+      boolean Enabled = false;
+      if (getVariableType(_Param2) == ST_BOOL)
+        Enabled = _Param2;
+
+      Properties.add(["Duration", Time]);
+      Properties.add(["Enabled",  Enabled]);
+    }
+    else
+    // SendEvent
+    if (_Operation == KEY_SENDEVENT)
+    {
+      String ObjectID = "";
+      if (selection)
+        ObjectID = getIdentificator(m_SelectedObject);
+      String Event = "";
+      if (getVariableType(_Param1) == ST_STRING)
+        Event = _Param1;
+      String Parameters = "[]";
+      if (getVariableType(_Param2) == ST_STRING)
+        Parameters = _Param2;
+
+      Properties.add(["ObjectID",   ObjectID]);
+      Properties.add(["Event",      Event]);
+      Properties.add(["Parameters", Parameters]);
+    }
+    else
+    // Curve
+    if (_Operation == KEY_CURVE)
+    {
+      Properties.add(["ControlPoint", Position]);
+      Properties.add(["EndCurve",     false]);
+    }
+    else
+    // Options
+    if (_Operation == KEY_OPTIONS)
+    {
+      Properties.add(["SmoothVelocity", false]);
+    }
+    // default
+    else
+    {
+      logError("Unknown keyframe operation");
+      return;
+    }
+
+    Mission.CreateCameraScriptRecord(
+        m_CurrentCinemaID,
+        _Time,
+        _Operation,
+        Properties
+      );
+  }
+
+  void DeleteCameraScriptRecord(
+      float   _Time,
+      String  _Operation
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    Mission.DeleteCameraScriptRecord(
+        m_CurrentCinemaID,
+        _Time,
+        _Operation
+      );
+  }
+
+  Array GetCameraScriptRecords()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    return Mission.GetContent().GetCinema(m_CurrentCinemaID);
+  }
+
+  void SetCameraScriptRecords(
+      Array _Cinema
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    Mission.GetContent().SetCinema(m_CurrentCinemaID, _Cinema);
+  }
+
+  void ListCameraScriptRecords()
+  {
+    Array Records = GetCameraScriptRecords();
+    for (int i = 0; i < Records.size(); i++)
+    {
+      logMessage("Frame " + new String(i + 1));
+      logMessage("  Time:         " + new String(Records[i][0]));
+      logMessage("  Operation:    " + Records[i][1]);
+      logMessage("  Properties:");
+      for (int j = 0; j < Records[i][2].size(); j++)
+        logMessage("                " + new String(Records[i][2][j]));
+    }
+  }
+
+  void PlayCameraScript(
+      float _StartTime
+    )
+  {
+    PlayCameraScript(_StartTime, -1, -1);
+  }
+
+  void PlayCameraScript(
+      float _StartTime,
+      int   _StartIndex,
+      int   _EndIndex
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    Mission.PlayCameraScript(
+        m_CurrentCinemaID,
+        _StartTime,
+        "",
+        _StartIndex,
+        _EndIndex,
+        false
+      );
+  }
+
+  void StopCameraScript()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    Mission.StopCameraScript();
+  }
+
+  void ChangeKeyTime(
+      float   _Time,
+      String  _Operation,
+      float   _NewTime
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (Mission == null)
+      return;
+
+    Array Properties;
+
+    Array Records = Mission.GetContent().GetCinema(m_CurrentCinemaID);
+    int i = 0;
+    for (; i < Records.size(); i++)
+    {
+      if (_Time == Records[i][0])
+      {
+        if (_Operation == Records[i][1])
+        {
+          Properties = Records[i][2];
+          break;
+        }
+      }
+    }
+
+    if (i < Records.size())
+    {
+      Mission.DeleteCameraScriptRecord(
+          m_CurrentCinemaID,
+          _Time,
+          _Operation
+        );
+
+      Mission.CreateCameraScriptRecord(
+          m_CurrentCinemaID,
+          _NewTime,
+          _Operation,
+          Properties
+        );
+    }
+  }
+
+  //
+  //  Debug support methods
+  //
+
+  void ShowPath(
+      int _ShowPathMode
+    )
+  {
+    // sheck for 'no changes'
+    if (m_ShowPathMode == _ShowPathMode)
+      return;
+
+    m_ShowPathMode = _ShowPathMode;
+
+    if (m_SelectedObject != null)
+    {
+      if (isFunctionExist(m_SelectedObject, "ShowPath", 1))
+        m_SelectedObject.ShowPath(_ShowPathMode);
+      else
+        logError("CMissionEditor::ShowCells() : no function 'ShowPath' in selected object " + getIdentificator(m_SelectedObject));
+    }
+    // $LOG
+    else
+      logError("CMissionEditor::ShowPath() : no selected object");
+  }
+
+  void ShowCells(
+      int _ShowCellsMode
+    )
+  {
+    // check for 'no changes'
+    if (m_ShowCellsMode == _ShowCellsMode)
+      return;
+
+    m_ShowCellsMode = _ShowCellsMode;
+
+    if (m_SelectedObject != null)
+    {
+      if (isFunctionExist(m_SelectedObject, "ShowCells", 1))
+        m_SelectedObject.ShowCells(_ShowCellsMode);
+      // $LOG
+      else
+        logError("CMissionEditor::ShowCells() : no function 'ShowCells' in selected object " + getIdentificator(m_SelectedObject));
+    }
+    // $LOG
+    else
+      logError("CMissionEditor::ShowCells() : no selected object");
+  }
+}
+

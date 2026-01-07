@@ -1,0 +1,402 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CMenuConfig
+{
+  CMenuConfig()
+  {
+    FillZoneEditorTypeList();
+  }
+
+  //----------------------------
+  //  List of missions in editor
+  //----------------------------
+  final static Array MissionLoadList = [
+    ["USSR 1 - Break-through", "CC1M1Mission"],
+    ["USSS 2 - Defense",       "CC1M2Mission"],
+    ["USSR 3 - Tiger Trap",    "CC1M3Mission"],
+    ["USSR 4 - Battle Recon",  "CC1M4Mission"],
+    ["USSR 5 - Front Strike",  "CC1M5Mission"],
+    ["USSR 6 - Flank maneuver","CC1M6Mission"],
+    ["Forward Probe",     "CMurkz2025Mission"],
+    ["Germany 1",              "CC2M1Mission"],
+    ["Germany 2",              "CC2M2Mission"],
+    ["Germany 3",              "CC2M3Mission"],
+    ["Germany 4",              "CC2M4Mission"],
+    ["Germany 5",              "CC2M5Mission"],
+    ["Germany 6",              "CC2M6Mission"],
+    ["Test anything",          "CTestMission"],
+    ["Old Test Mission",       "CMtMission"  ],
+    ["My Test Mission V3", "CMyTestMissionV3Mission"]
+                                       ];
+
+  //----------------------------
+  //  List of DM missions in editor
+  //----------------------------
+  final static Array MPMissionLoadList = [
+    ["DM 1 - KILL them all (4)", "CDM1Mission"],
+    ["DM 2 - KILL them all (8)", "CDM2Mission"],
+    ["DM 3 - Two Villages (10)", "CDM3Mission"],
+    ["DM 4 - Battle 4 (10)"    , "CDM4Mission"],
+    ["DM 5 - Road Fire (16)"   , "CDM5Mission"],
+    ["DM 6 - Little Village (16)"   , "CDM6Mission"],
+    ["CF 1 - TeamPlay (8)"     , "CCF1Mission"],
+    ["CF 2 - TeamPlay (12)"    , "CCF2Mission"],
+    ["CF 3 - TeamPlay (12)"    , "CCF3Mission"],
+    ["CF 4 - Battle for Bridgehead (16)" , "CCF4Mission"],
+    ["CF 5 - Armour Hunters (16)"        , "CCF5Mission"],
+    ["CF 6 - Flags of the War (16)"      , "CCF6Mission"]
+                                         ];
+
+  //-------------------------
+  //  List of menus in editor
+  //-------------------------
+  final static Array MenuLoadList = [
+    ["Main Menu Screen",              "MainMenu"            ],
+    ["Single Menu Screen",            "SingleMenu"          ],
+    ["Missions Menu Screen",          "MissionsMenu"        ],
+    ["Settings Menu Screen",          "SettingsMenu"        ],
+    ["Video Settings Menu Screen",    "VideoSettingsMenu"   ],
+    ["Audio Settings Menu Screen",    "AudioSettingsMenu"   ],
+    ["Game Settings Menu Screen",     "GameSettingsMenu"    ],
+    ["Controls Settings Menu Screen", "ControlsSettingsMenu"],
+    ["Start Mission Screen",          "StartMissionMenu"    ],
+    ["Escape Screen",                 "EscapeMenu"          ],
+    ["MultiPlayer Escape Screen",     "MultiEscapeMenu"     ],
+    ["End Mission Screen",            "EndMissionMenu"      ],
+    ["Multi End Mission Screen",      "MultiEndMissionMenu" ],
+    ["Credits Screen",                "CreditsMenu"         ],
+    ["Loading Screen",                "LoadingScreenMenu"   ],
+    ["MultiPlayer Menu",              "MultiPlayerMenu"     ],
+    ["Multi Wrong Content",           "MultiWrongContentMenu" ],
+    ["Join Game Menu",                "JoinGameMenu"        ],
+    ["TeamPlay Room",                 "TeamPlayRoomMenu"    ],
+    ["TeamPlay End menu",             "CFEndMissionMenu"    ],
+    ["Quit Menu",                     "QuitConformationMenu"]
+
+                                    ];
+                                    
+  final static Array DedicateMenuLoadList = [
+    ["MultiPlayer Menu",              "MultiPlayerMenu"     ]
+
+                                    ];
+
+  //---------------------------
+  //  List of objects in editor
+  //---------------------------
+  final static Array ObjectInsertList = [
+      [ "Special objects", [
+          [ "Navigation points", [
+              [ "Sphere",             new CInsertObjectDescr("NavPoint", "CSphereNavPoint",   "") ],
+              [ "Box",                new CInsertObjectDescr("NavPoint", "CBoxNavPoint",      "NavPoint_Box.bmp") ],
+              [ "Z Axis Cylinder",    new CInsertObjectDescr("NavPoint", "CZAxisCylNavPoint", "") ],
+              [ "Player spawn point", new CInsertObjectDescr("NavPoint", "CPlayerSpawnPoint", "") ],
+              [ "Radio beacon",       new CInsertObjectDescr("NavPoint", "CRadioNavPoint",    "") ]
+             ]],
+
+          [ "Sound zones", [
+              [ "Sphere",             new CInsertObjectDescr("SoundEnvironmentZone", "CSphereSoundZone",   "") ],
+              [ "Box",                new CInsertObjectDescr("SoundEnvironmentZone", "CBoxSoundZone",      "") ]
+             ]],
+
+          [ "Terrain patches", [
+              [ "Patch",              new CInsertObjectDescr("Locator", "CTerrainPatch",   "") ]
+             ]]
+
+      ]],
+      [ "Air Unit", [
+          [ "Airplane_IL2",           new CInsertObjectDescr("GameObject", "CIL2Unit",  "Jeep.bmp") ],
+          [ "Airplane_FW190",         new CInsertObjectDescr("GameObject", "CFW190Unit","Jeep.bmp") ]
+        ]],
+      [ "Naval Unit", [
+        ]],
+      [ "Ground Unit", [
+          [ "Cannon_Pak40",           new CInsertObjectDescr("GameObject", "CGunPak40Unit",           "Jeep.bmp") ],
+          [ "Cannon_Zis3",            new CInsertObjectDescr("GameObject", "CGunZis3Unit",            "Jeep.bmp") ],
+          [ "Nebelwerfer",            new CInsertObjectDescr("GameObject", "CGunNebelUnit",           "Jeep.bmp") ],
+          [ "Tank_T34-76-42",         new CInsertObjectDescr("GameObject", "CTankT34_76_42Unit",      "Jeep.bmp") ],
+          [ "Tank_T34-85-44",         new CInsertObjectDescr("GameObject", "CTankT34_85_44Unit",      "Jeep.bmp") ],
+          [ "Tank_Pz.IV_Ausf.G",      new CInsertObjectDescr("GameObject", "CTankPzIVGUnit",          "MilitaryTruck.bmp") ],
+          [ "Tank_Pz.VI_Ausf.E",      new CInsertObjectDescr("GameObject", "CTankPzVIAusfEUnit",      "MilitaryTruck.bmp") ],
+          [ "SAU_SU85",               new CInsertObjectDescr("GameObject", "CSAUSU85Unit",            "MilitaryTruck.bmp") ],
+          [ "SAU_StuG40",             new CInsertObjectDescr("GameObject", "CSAUStuG40Unit",          "MilitaryTruck.bmp") ],
+          [ "Truck_Opel_Blitz",       new CInsertObjectDescr("GameObject", "CTruckOpelBlitzUnit",     "MilitaryTruck.bmp") ],
+          [ "Truck_Zis5",             new CInsertObjectDescr("GameObject", "CTruckZis5Unit",          "MilitaryTruck.bmp") ],
+          [ "BTR_Hanomag251Ausf.C",   new CInsertObjectDescr("GameObject", "CBtrHanomag251AusfCUnit", "MilitaryTruck.bmp") ],
+          [ "BTR_M3A1Halftruck",      new CInsertObjectDescr("GameObject", "CBtrM3A1HalftruckUnit",   "MilitaryTruck.bmp") ]
+        ]],
+      [ "Static Unit", [
+        ]],
+      [ "NPC Unit",   [
+        ]],
+      [ "Human Unit", [
+          [ "GermanSoldierRifle",   new CInsertObjectDescr("GameObject", "CGermanSoldierRifleUnit",  "MilitaryTruck.bmp") ],
+          [ "SovietSoldierRifle",   new CInsertObjectDescr("GameObject", "CSovietSoldierRifleUnit",  "MilitaryTruck.bmp") ],
+          [ "GermanTankman",        new CInsertObjectDescr("GameObject", "CGermanTankmanUnit",  "MilitaryTruck.bmp") ],
+          [ "SovietTankman",        new CInsertObjectDescr("GameObject", "CSovietTankmanUnit",  "MilitaryTruck.bmp") ]
+
+        ]],
+      [ "Structure", [
+            [ "Buildings", [
+              [ "DzotWoodUnit",       new CInsertObjectDescr("GameObject",     "CDzotWoodUnit",       "DzotWoodUnit.bmp") ],
+              [ "SandBagsUnit",       new CInsertObjectDescr("GameObject",     "CSandBagsUnit",       "DzotWoodUnit.bmp") ],
+              [ "DotConcreteUnit",    new CInsertObjectDescr("GameObject",     "CDotConcreteUnit",    "DotConcreteUnit.bmp") ],
+              [ "BarricadeFenceUnit", new CInsertObjectDescr("GameObject",     "CBarricadeFenceUnit", "DzotWoodUnit.bmp") ],
+              [ "BarricadePakUnit",   new CInsertObjectDescr("GameObject",     "CBarricadePakUnit",   "DzotWoodUnit.bmp") ],
+              [ "USR_HouseWoodUnit",  new CInsertObjectDescr("InteriorObject", "CUSRHouseWoodUnit",   "USRHouseWoodUnit.bmp") ],
+              [ "USR_ShedWoodUnit",   new CInsertObjectDescr("InteriorObject", "CUSRShedWoodUnit",    "USRShedWoodUnit.bmp") ],
+              [ "USR_ShedWood02Unit", new CInsertObjectDescr("InteriorObject", "CUSRShedWood02Unit",  "USRShedWood02Unit.bmp") ],
+              [ "USR_CorralWoodUnit", new CInsertObjectDescr("InteriorObject", "CUSRCorralWoodUnit",  "USRCorralWoodUnit.bmp") ],
+              [ "WaterWell_1Unit",    new CInsertObjectDescr("InteriorObject", "CWaterWell_1Unit",    "WaterWell_1Unit.bmp") ],
+              [ "WaterWell_2Unit",    new CInsertObjectDescr("InteriorObject", "CWaterWell_2Unit",    "WaterWell_2Unit.bmp") ],
+              [ "HaystackUnit",       new CInsertObjectDescr("InteriorObject", "CHaystackUnit",       "HaystackUnit.bmp") ],
+              [ "PileLogs",           new CInsertObjectDescr("InteriorObject", "CPileLogsUnit",       "PileLogsUnit.bmp") ],
+              [ "PostElectric",       new CInsertObjectDescr("InteriorObject", "CPostElectricUnit",   "WaterWell_2Unit.bmp") ],
+              [ "PostSpeaker",        new CInsertObjectDescr("InteriorObject", "CPostSpeakerUnit",    "WaterWell_2Unit.bmp") ],
+              [ "ShortTrench_01",     new CInsertObjectDescr("InteriorObject", "CTrench01Unit",       "USRCorralWoodUnit.bmp") ],
+              [ "TestSphere",         new CInsertObjectDescr("InteriorObject", "CSphereUnit",         "USRCorralWoodUnit.bmp") ]
+
+            ]],
+          [ "Multiplayer", [
+              [ "Reload USSRStyle",    new CInsertObjectDescr("InteriorObject", "CReloadUSSRUnit",  "BridgeWood.bmp") ],
+              [ "Reload GermanyStyle", new CInsertObjectDescr("InteriorObject", "CReloadGerUnit",  "BridgeWood.bmp") ]
+            ]],
+          [ "Bridge", [
+              [ "BridgeWood",   new CInsertObjectDescr("InteriorObject", "CBridgeWoodUnit",  "BridgeWood.bmp") ]
+            ]],
+          [ "Fence", [
+              ["FenceWicker", new CInsertObjectDescr("InteriorObject", "CFenceWickerUnit", "") ],
+              ["FencePole",   new CInsertObjectDescr("InteriorObject", "CFencePoleUnit", "") ],
+              ["FencePalisade", new CInsertObjectDescr("InteriorObject", "CFencePalisadeUnit", "") ]
+            ]]
+        ]],
+      [ "Environment", [
+            [ "Pacific", [
+              [ "Barrel",   new CInsertObjectDescr("InteriorObject", "CBarrelUnit",  "Barrel.bmp") ],
+			  [ "StepJM",   new CInsertObjectDescr("InteriorObject", "CstepTvTUnit",  "Barrel.bmp") ],
+              [ "BarrelPackA",   new CInsertObjectDescr("InteriorObject", "CBarrelPackAUnit",  "BarrelPackA.bmp") ],
+              [ "BarrelPackB",   new CInsertObjectDescr("InteriorObject", "CBarrelPackBUnit",  "BarrelPackB.bmp") ],
+              [ "Dartboard 4 meters",   new CInsertObjectDescr("InteriorObject", "C4MeterBoxUnit",  "USRHouseWoodUnit.bmp") ]
+            ]],
+            [ "Military", [
+              [ "WeaponBoxSmall",   new CInsertObjectDescr("InteriorObject", "CWeaponBoxSmallUnit",  "LittleContainer.bmp") ],
+			  [ "CZhedgehog",   new CInsertObjectDescr("InteriorObject", "CZhedgehogUnit",  "LittleContainer.bmp") ], 
+              [ "Antitank Hedge",   new CInsertObjectDescr("InteriorObject", "CAntiTankSingleUnit",  "LittleContainer.bmp") ]
+            ]],
+            [ "Entourage", [
+            ]]
+        ]],
+      [ "Groups", (new CGroupsList()).ObjectInsertList ]
+    ];
+
+  //
+  // List of ui controls in editor
+  //
+
+  final static Array UIControlsInsertList = [ "Controls",
+        [ "Bitmaps",                "BitmapControl",      "CUIBitmap" ],
+        [ "Frame",                  "FrameControl",       "CUIFrame" ],
+        [ "Buttons",                "BitmapButton",       "CUIButton" ],
+        [ "Text Field",             "TextControl",        "CUITextField"],
+        [ "Text Edit",              "EditField",          "CUIEditTextField"],
+        [ "Numeric Edit",           "EditField",          "CUIEditNumericField"],
+        [ "Vertical Scroll Bar",    "",                   "CUIVerticalScrollBar"],
+        [ "Horizontal Scroll Bar",  "",                   "CUIHorizontalScrollBar"],
+        [ "Check Box",              "",                   "CUICheckBox"],
+        [ "Bookmark",               "",                   "CUIBookmark"],
+        [ "Group Box",              "",                   "CUIGroupbox"],
+        [ "Progress Bar",           "ProgressBarControl", "CUIProgressBar"],
+        [ "Control Field",          "ControlField",       "CUIControlField"],
+        [ "List",                   "",                   "CUIListControl"],
+        [ "ComboBox",               "",                   "CUIComboBox"]
+      ];
+
+  //
+  // List of terraform types in editor
+  //
+
+  final static Array TerraformTypeList = [
+
+      [ "Cliffs",             TT_Cliffs         ],
+      [ "Mesa",               TT_Mesa           ],
+      [ "Mountain",           TT_Mountain       ],
+      [ "Steep Hill",         TT_SteepHill      ],
+      [ "Hill",               TT_Hill           ],
+
+      [ "Shallow Valley",     TT_ShallowValley  ],
+      [ "Crater",             TT_Crater         ],
+      [ "Canyon",             TT_Canyon         ],
+      [ "Shallow Canyon",     TT_ShallowCanyon  ],
+      [ "Valley",             TT_Valley         ],
+      [ "Steep Valley",       TT_SteepValley    ],
+      [ "Trench",             TT_Trench         ],
+
+      [ "Plateau",            TT_Plateau        ],
+      [ "Plains",             TT_Plains         ],
+      [ "Quick Level Brush",  TT_QuickLevelBrush],
+      [ "Soften",             TT_Soften         ],
+      [ "Erosion",            TT_Erosion        ],
+
+      [ "Water Cliffs",             -TT_Cliffs         ],
+      [ "Water Mesa",               -TT_Mesa           ],
+      [ "Water Mountain",           -TT_Mountain       ],
+      [ "Water Steep Hill",         -TT_SteepHill      ],
+      [ "Water Hill",               -TT_Hill           ],
+
+      [ "Water Shallow Valley",     -TT_ShallowValley  ],
+      [ "Water Crater",             -TT_Crater         ],
+      [ "Water Canyon",             -TT_Canyon         ],
+      [ "Water Shallow Canyon",     -TT_ShallowCanyon  ],
+      [ "Water Valley",             -TT_Valley         ],
+      [ "Water Steep Valley",       -TT_SteepValley    ],
+      [ "Water Trench",             -TT_Trench         ],
+
+      [ "Water Plateau",            -TT_Plateau        ],
+      [ "Water Plains",             -TT_Plains         ],
+      [ "Water Quick Level Brush",  -TT_QuickLevelBrush],
+      [ "Water Soften",             -TT_Soften         ],
+      [ "Water Erosion",            -TT_Erosion        ]
+
+
+    ];
+
+  //
+  // List of ZoneEditorTypes
+  //
+
+  final static Array ZoneEditorClasses = [
+          new Forest01(),
+          new Forest02(),
+          new Forest03(),
+          new Forest04(),
+          new RoadForest(),
+          new Bush01(),
+          new Bush02(),
+          new Bush03(),
+          new Bush04(),
+          new ShrubberyLarge(),
+          new ShrubberyRegular(),
+          new ShrubberyCasual(),
+          new SpecialLongAloneTree(),
+          new VillagePlanting01(),
+          new VillagePlanting02(),
+          new VillagePlanting03(),
+          new Grass01(),
+          new Grass02(),
+          new Grass03(),
+          new Grass04(),
+          new OffRoad01(),
+          new OffRoad02(),
+          new OffRoad03(),
+          new OffRoad04(),
+          new Road01(),
+          new Road01Add(),
+          new RoadObject(),
+          new AllPassable(),
+          new Water01(),
+          new ShallowWater01(),
+          new BeachWater01(),
+          //micro textures
+          new Micro0(),
+          new Micro1(),
+          new Micro2(),
+          new Micro3(),
+          new Micro4(),
+          new Micro5(),
+          new Micro6(),
+          new Micro7()
+
+          
+];
+
+  //
+  // Getters
+  //
+
+  Array GetLevelLoadList()
+  {
+    return MissionLoadList;
+  }
+
+  Array GetMPLevelLoadList()
+  {
+    return MPMissionLoadList;
+  }
+
+  Array GetMenuLoadList()
+  {
+    return MenuLoadList;
+  }
+  
+  Array GetDedicateMenuLoadList()
+  {
+    return DedicateMenuLoadList;
+  }  
+
+  Array GetObjectInsertList()
+  {
+    return ObjectInsertList;
+  }
+
+  Array GetUIControlsInsertList()
+  {
+    return UIControlsInsertList;
+  }
+
+  Array GetTerraformTypeList()
+  {
+    return TerraformTypeList;
+  }
+
+  Array GetZoneEditorTypeList()
+  {
+    return ZoneEditorTypeList;
+  }
+
+
+  //
+  // Setters
+  //
+
+  void SetTerraformType(
+      int _TerraformType
+    )
+  {
+    Component TerrainEditor = new #GameController().GetObject("TerrainEditor");
+    if (null != TerrainEditor)
+      TerrainEditor.SetTerraformType(_TerraformType);
+  }
+
+  void SetZoneEditorType(
+      int _TerraformType
+    )
+  {
+    SetTerraformType(_TerraformType);
+  }
+
+  //
+  // Service  methods
+  //
+
+  void FillZoneEditorTypeList()
+  {
+    ZoneEditorTypeList.clear();
+    for (int i = 0; i < ZoneEditorClasses.size(); i++)
+    {
+      ZoneEditorTypeList.add([ZoneEditorClasses[i].Label, i]);
+    }
+  }
+
+  //
+  // properties
+  //
+
+  Array ZoneEditorTypeList;
+
+}

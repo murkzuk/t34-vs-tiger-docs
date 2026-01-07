@@ -1,0 +1,245 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCinemaEditor
+{
+  void SelectCinema(
+      String _CinemaID
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.SelectCinema(_CinemaID);
+    }
+  }
+
+  Array GetCinema()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        return Editor.GetCameraScriptRecords();
+    }
+
+    return [];
+  }
+
+  void SetCinema(
+      Array _Cinema
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.SetCameraScriptRecords(_Cinema);
+    }
+  }
+
+  void DeleteCinema()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.DeleteCinema();
+    }
+  }
+
+  void AddCinema(
+      String _CinemaID
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.AddCinema(_CinemaID);
+    }
+  }
+
+  boolean m_IsCinemaPaused = false;
+  float   m_PauseTime      = 0.0;
+
+  void PlayCinema(
+      float _StartTime,
+      int   _StartIndex,
+      int   _EndIndex
+    )
+  {
+    m_IsCinemaPaused = false;
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.PlayCameraScript(_StartTime, _StartIndex, _EndIndex);
+    }
+  }
+
+  void StopCinema()
+  {
+    m_IsCinemaPaused = false;
+
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.StopCameraScript();
+    }
+  }
+
+  void PauseCinema()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+      {
+        Component ScriptedCamera = Mission.GetObject("ScriptedCamera");
+        if (null != ScriptedCamera)
+        {
+          m_IsCinemaPaused = !m_IsCinemaPaused;
+
+          if (m_IsCinemaPaused)
+          {
+            m_PauseTime = ScriptedCamera.GetCinemaTime();
+            Editor.StopCameraScript();
+          }
+          else
+          {
+            Editor.PlayCameraScript(m_PauseTime, -1, -1);
+          }
+
+          Mission.EnableBehavior(!m_IsCinemaPaused);
+        }
+      }
+    }
+  }
+
+  void AddKeyFrame(
+      float   _Time,
+      String  _Operation
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.CreateCameraScriptRecord(
+          _Time, _Operation, -1, -1, -1);
+
+    }
+  }
+
+  void CreateKeyMove()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component ScriptedCamera = Mission.GetObject("ScriptedCamera");
+      if (null != ScriptedCamera)
+        AddKeyFrame(ScriptedCamera.GetCinemaTime(), KEY_MOVE);
+    }
+  }
+
+  void EnableCinemaCamera(
+      boolean _IsEnabled
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component ScriptedCamera = Mission.GetObject("ScriptedCamera");
+      if (null != ScriptedCamera)
+        ScriptedCamera.m_DoActivation = _IsEnabled;
+    }
+  }
+
+  void EnableCinemaDebugInfo(
+      boolean _IsEnabled
+    )
+  {
+    clearEventsForObject("ScriptedCamera");
+
+    if (_IsEnabled)
+      sendEvent(0.0, "ScriptedCamera", "UpdateCinema",  [GetCinema()]);
+
+    sendEvent(0.0, "ScriptedCamera", "EnableDebugInfo", [_IsEnabled]);
+  }
+
+  Array GetCinemaProperties()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        return Editor.GetCinemaProperties();
+    }
+    
+    return [];
+  }
+
+  void SetCinemaProperties(
+      Array _Properties
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Component Editor = Mission.GetObject("MissionEditor");
+      if (null != Editor)
+        Editor.SetCinemaProperties(_Properties);
+    }
+  }
+
+  void OnCinemaEditorActivated(
+      boolean _IsActive
+    )
+  {
+    CMission::ObjectsShowModeResetEnabled = !_IsActive;
+  }
+
+  //
+  // Editor cursor
+  //
+
+  Component GetEditorCursor()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+      return null;
+
+    return Mission.GetEditorCursor();
+  }
+
+  void EnableEditorCursor(
+      boolean _IsEnabled
+    )
+  {
+    Component EditorCursor = GetEditorCursor();
+    if (null == EditorCursor)
+      return;
+
+    EditorCursor.Enable(_IsEnabled);
+  }
+}

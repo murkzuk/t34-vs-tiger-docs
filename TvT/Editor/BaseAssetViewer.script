@@ -1,0 +1,1774 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// CAssetViewerEnvironmentMap
+//
+
+class CAssetViewerEnvironmentMap
+{
+  String EnvrMapTexture = "Scripts/Editor/AssetViewerEnvrMap.tex";
+  Vector Dimensions     = new Vector(FLT_MAX, FLT_MAX, FLT_MAX);
+}
+
+
+//
+// CBaseAssetViewerObject
+//
+
+class CBaseAssetViewerObject
+  extends CEditable
+{
+  Array m_Properties = [];
+
+  CBaseAssetViewerObject()
+  {
+    if (null != user)
+      addClassificator(user, "EDITABLE");
+  }
+
+  Array GetPropertiesList(
+      Component _Mission
+    )
+  {
+    return BuildTruePropertiesArray(m_Properties);
+  }
+
+  void SetPropertiesList(
+      Component _Mission,
+      Array     _List
+    )
+  {
+    m_Properties = clone(_List);
+  }
+}
+
+//
+// CAssetViewerAtmosphere
+//
+
+class CAssetViewerAtmosphere
+  extends CBaseAtmosphere, CBaseAssetViewerObject
+{
+  boolean IsLightEnabled  = true;
+  boolean IsShadowEnabled = false;
+
+  Vector  SunDirection    = new Vector(0.52, -0.61, -0.59);
+  Color   AmbientLight    = new Color(0.3, 0.3, 0.3);
+  Color   SunColor        = new Color(1.7, 1.7, 1.7);
+  float   DistanceToSun   = 20000.0;
+  float   HorizontPos     = 0.0;
+
+  float   FogNear         = 700.0;
+  float   FogFar          = 2500.0;
+  Color   FogColorXPos    = new Color(0.0, 0.0, 0.0); // S
+  Color   FogColorXNeg    = new Color(0.0, 0.0, 0.0); // N
+  Color   FogColorYPos    = new Color(0.0, 0.0, 0.0); // E
+  Color   FogColorYNeg    = new Color(0.0, 0.0, 0.0); // W
+
+  Vector  WindVector      = new Vector(0.0, 0.0, 0.0);
+
+  boolean IsSunVisible    = true;
+
+  //
+  // CEditable
+  //
+
+  Array GetPropertiesList(
+      Component _Mission
+    )
+  {
+    return CBaseAssetViewerObject::GetPropertiesList(_Mission);
+  }
+
+  void SetPropertiesList(
+      Component _Mission,
+      Array     _List
+    )
+  {
+    CBaseAssetViewerObject::SetPropertiesList(_Mission, _List);
+    CBaseAtmosphere::SetPropertiesList(_Mission, _List);
+  }
+}
+
+//
+// CSphericPositionable
+//
+
+class CSphericPositionable
+{
+  Vector LookTarget  = new Vector(0.0, 0.0, 0.0);
+
+  float  Distance    = 0.5;
+  float  HAngle      = 0.0;
+  float  VAngle      = 0.0;
+
+  float  MinDistance = 0.0;
+  float  MaxDistance = 0.0;
+
+  float  MinVAngle   = -Math_HALFPI;
+  float  MaxVAngle   =  Math_HALFPI;
+
+  //
+  // Interface
+  //
+
+  void Update()
+  {
+    Update(this);
+  }
+
+  void Update(
+      Component _Positionable
+    )
+  {
+    Vector dir  = -(new Vector(cos(HAngle), sin(HAngle), 0.0));
+    Vector side = getCrossProduct(new Vector(0.0, 0.0, 1.0), dir);
+    Vector up   = getCrossProduct(dir, side);
+
+    // Update camera position
+    Matrix Position = 
+      (new Matrix(new Quaternion(VAngle, getCrossProduct(-dir, new Vector(0.0, 0.0, 1.0))))) * 
+      (new Matrix(dir, side, up, -dir * (MinDistance + Distance * (MaxDistance - MinDistance))));
+
+    Position.origin = Position.origin + LookTarget;
+    Position.normalize();
+
+    setPosition(_Positionable, Position);
+  }
+
+  float GetHPhase()
+  {
+    return (HAngle + Math_PI) / (2.0 * Math_PI);
+  }
+
+  void SetHPhase(
+      float _HPhase
+    )
+  {
+    HAngle = _HPhase * 2.0 * Math_PI - Math_PI;
+  }
+
+  float GetVPhase()
+  {
+    return (VAngle + Math_HALFPI) / Math_PI;
+  }
+
+  void SetVPhase(
+      float _VPhase
+    )
+  {
+    VAngle = max(min(_VPhase * Math_PI - Math_HALFPI, MaxVAngle), MinVAngle);
+  }
+
+  float GetDPhase()
+  {
+    return 1.0 - Distance;
+  }
+
+  void SetDPhase(
+      float _DPhase
+    )
+  {
+    Distance = 1.0 - min(max(_DPhase, 0.0), 1.0);
+  }
+
+  //
+  // Service
+  //
+
+  float GetMaxDistance(
+      float _TargetSize
+    )
+  {
+    return 2.0 * _TargetSize * (1.0 + cos(0.5 * FOV) / sin(0.5 * FOV));
+  }  
+}
+
+//
+// CAssetViewerBaseCamera
+//
+
+class CAssetViewerBaseCamera
+  extends CSphericPositionable
+{
+  float   FOV            = 1.13;
+
+  float   RectLeft       = 0;
+  float   RectTop        = 0;
+  float   RectRight      = 1.0;
+  float   RectBottom     = 1.0;
+
+  float   ZNear          = 0.1;
+  float   ZFar           = 10000.0;
+
+  float   LODFactor      = 0.04;
+  float   DistanceFactor = 3.0;
+  float   CutoffFactor   = 4.0;
+
+  boolean ClearScreen    = true;
+  Color   ClearColor     = new Color(0.3, 0.3, 0.3);
+
+  //
+  // Interface
+  //
+
+  void LookAt(
+      Component _TargetObject
+    )
+  {
+    Component Bounding = _TargetObject;
+
+    if (isFunctionExist(_TargetObject, "GetBoundingInfo", 0))
+      Bounding = _TargetObject.GetBoundingInfo();
+    if (null == Bounding)
+      Bounding = _TargetObject;
+
+    if (!isPositionable(Bounding))
+      return;
+
+    Array BoundingSphere = [new Vector(0.0, 0.0, 0.0), 2.0];
+
+    if (isBoundingInfo(Bounding))
+      BoundingSphere = getBoundingSphere(Bounding);
+
+    // set parameters
+    MaxDistance = GetMaxDistance(BoundingSphere[1]);
+
+    // adjust target position by bounding sphere center
+    Matrix TargetPos = getPosition(Bounding);
+    TargetPos.origin = TargetPos.origin - BoundingSphere[0];
+    setPosition(Bounding, TargetPos);
+
+    // apply parameters
+    Update();
+  }
+}
+
+//
+// CAssetViewerDefaultCamera
+//
+
+class CAssetViewerDefaultCamera
+  extends CAssetViewerBaseCamera
+{
+  float FOV = 1.13;
+}
+
+//
+// CAssetViewerOrthoCamera
+//
+
+class CAssetViewerOrthoCamera
+  extends CAssetViewerBaseCamera
+{
+  float FOV                = 0.0;   // zero FOV mean orthographic mode
+  float OrthographicWidth  = 200.0;
+
+  final static float CAMERA_Altitude  = 100.0;
+  final static float CAMERA_Elevation = degreeToRadian(60.0);
+
+  //
+  // Interface
+  //
+
+  void Update()
+  {
+    (new #SpriteViewManager()).SetAltitude(CAMERA_Altitude);
+
+    Matrix Position = getPosition(this);
+
+    Vector Origin = Position.origin;
+    Vector XVec   = Position.xvec;
+
+    float d = (Origin.z - LookTarget.z) / sin(-CAMERA_Elevation);
+
+    Origin.x = d * XVec.x;
+    Origin.y = d * XVec.y;
+
+    int View = int(3.0 * 0.5 * (HAngle + Math_PI) / Math_PI);
+
+    Position = (new #SpriteViewManager()).GetViewMatrix(View, View, Origin);
+
+    // Update camera position
+    setPosition(this, Position);
+
+    SetSpriteViewDirection(View);
+    SetOrthographicWidth(Distance * OrthographicWidth + MaxDistance);
+  }
+
+  //
+  // Service
+  //
+
+  float GetMaxDistance(
+      float _TargetSize
+    )
+  {
+    return 5.0 * _TargetSize;
+  }  
+}
+
+//
+// CAssetViewerCameraControl
+//
+
+class CAssetViewerCameraControl
+{
+  Array RotateAction = [ CTLCMD_LEFT_ALT, CTLCMD_MENU_SELECT    ]; // Alt + Mouse1
+  Array ZoomAction   = [ CTLCMD_LEFT_ALT, CTLCMD_NEAREST_TARGET ]; // Alt + Mouse2
+  Array PanAction    = [ CTLCMD_LEFT_ALT, CTLCMD_UNIT_ROTATE    ]; // Alt + Mouse3
+
+  float RotateFactor = 0.005;
+  float ZoomFactor   = 0.001;
+  float PanFactor    = 0.00075;
+}
+ 
+//
+// CAssetViewerLight
+//
+
+class CAssetViewerLight
+  extends CSphericPositionable, CBaseLightEmitter, CBaseAssetViewerObject
+{
+  static boolean DefaultIsEnabled          = true;
+  static boolean DefaultIsDebugInfoEnabled = true;
+
+  int     LightType        = LIGHTTYPE_POINT;
+  Color   LightColor       = new Color(1.0, 1.0, 1.0);
+  float   Illumination     = 10.0f;
+  float   LightRange       = 1000.0;
+  boolean LightDynamic     = true;
+  Array   LightAttenuation = [ 1.0, 0.0, 1.0 ];
+  Array   LightSpot        = [ 0.0, 0.0, 0.0 ];
+
+  float   HAngle           = Math_HALFPI;
+  float   MaxDistance      = 10.0; // $TMP
+
+  //
+  // CEditable
+  //
+
+  Array GetPropertiesList(
+      Component _Mission
+    )
+  {
+    return CBaseAssetViewerObject::GetPropertiesList(_Mission);
+  }
+
+  void SetPropertiesList(
+      Component _Mission,
+      Array     _List
+    )
+  {
+    CBaseAssetViewerObject::SetPropertiesList(_Mission, _List);
+    CBaseLightEmitter::SetPropertiesList(_Mission, _List);
+  }
+}
+
+//
+// CBaseAssetTypes
+//
+
+class CBaseAssetTypes
+{
+  final static String ASSETS_Model  = "Models";
+  final static String ASSETS_Effect = "Effects";
+  final static String ASSETS_Object = "Objects";
+  final static String ASSETS_Sprite = "Sprites";
+  final static String ASSETS_Lot    = "Lots";
+
+  final static String AssetTypeSeparator = "://";
+  final static String AssetPathSeparator = "/";
+
+  static String GetAssetType(
+      String _Asset
+    )
+  {
+    return _Asset.GetPartPreceding(AssetTypeSeparator);
+  }
+
+  static String GetAssetClass(
+      String _Asset
+    )
+  {
+    return _Asset.GetPartFollowing(AssetTypeSeparator);
+  }
+
+  static String GetAssetUI(
+      String    _Asset,
+      Component _Object
+    )
+  {
+    final String AssetType = GetAssetType(_Asset);
+
+    if (AssetType == ASSETS_Model ||
+        AssetType == ASSETS_Lot   ||
+        AssetType == ASSETS_Sprite)
+      return "CModelViewerUI";
+    else
+    if (AssetType == ASSETS_Effect)
+      return "CEffectViewerUI";
+    else
+    if (AssetType == ASSETS_Object)
+      return "CObjectViewerUI";
+
+    return "CSimpleAssetViewerUI";
+  }
+}
+
+//
+// CAssetMission
+//
+
+class CAssetMission
+  extends CAssetTypes, CAssetMissionBase
+{
+  //
+  // Constants
+  //
+
+  final static String AssetObjectID      = "Asset";
+  final static String AssetMenuID        = "UI";
+
+  final static String DefaultCameraID    = "Camera";
+  final static String OrthoCameraID      = "CameraOrtho";
+
+  //
+  // Protected members
+  //
+
+  String    m_CurrentAsset     = "";
+  Map       m_ObjectsInsertMap = new Map();
+  String    m_CurrentCameraID  = DefaultCameraID;
+  Component m_SelectedObject   = null;
+  Component m_SelectedJoint    = null;
+
+  //
+  // Construction
+  //
+
+  CAssetMission()
+  {
+    setIdentificator(user, SOID_MissionController);
+    SetGeometryTreeConfig([AXIS_X, AXIS_Y, AXIS_X, AXIS_Y, AXIS_Z]);
+
+    // Create main geometry
+    Component MainGeometry = new #AnimatedObject<CBackgroundModel>();
+    addClassificator(MainGeometry, CLASSIFICATOR_MAIN_GEOMETRY);
+    RegisterObject("MainGeometry", MainGeometry);
+
+    // Create atmosphere
+    RegisterObject("Atmosphere", new #Atmosphere<CAssetViewerAtmosphere>());
+    GetAtmosphere().SetPropertiesList(this, []);
+
+    Component Game = new #GameController();
+
+    // Create effects array
+    Game.InitializeArrays();
+
+    // Create effects array
+    Component EffectsArray = new #EffectsArray<CEffectsArray>();
+    if (null == GetObject("EffectsArray"))
+      RegisterObject("EffectsArray", EffectsArray);
+
+    // Create light
+    RegisterObject("Light", new #LightEmitter<CAssetViewerLight>());
+    GetLight().SetPropertiesList(this, []);
+
+    // Create environment map
+    RegisterObject("EnvironmentMap", new #EnvironmentMap<CAssetViewerEnvironmentMap>());
+
+    // Create cameras
+    RegisterObject(DefaultCameraID, new #Camera<CAssetViewerDefaultCamera>());
+    RegisterObject(OrthoCameraID,   new #Camera<CAssetViewerOrthoCamera>());
+
+    // Create camera control
+    Component CameraControl = new #ManualCameraControl2<CAssetViewerCameraControl>();
+    setIdentificator(CameraControl, "CameraControl");
+    setSlaveObject(CameraControl, GetCamera());
+    RegisterObject("CameraControl", CameraControl);
+
+    // Create timer
+    Component Timer = new #Timer();
+    Timer.SetEventHandler(this);
+    Timer.SetTickEvent("OnTimer", 0.0);
+    RegisterObject("Timer", Timer);
+
+    // Create gizmo cursor
+    Component GizmoCursor = CGizmoCursor::GetInstance();
+    setIdentificator(GizmoCursor, "GizmoCursor");
+    RegisterObject("GizmoCursor", GizmoCursor);
+
+    GetLight().Update();
+  }
+
+  //
+  // Interface
+  //
+
+  void OnEnabled(
+      boolean _IsEnabled
+    )
+  {
+    Component Game = new #GameController();
+    
+    if (_IsEnabled)
+      Game.ActivateCamera("", false);
+
+    Game.ActivateCamera(m_CurrentCameraID, _IsEnabled);
+    Game.EnableControl("CameraControl",    _IsEnabled);
+    Game.EnableControl("GizmoCursor",      _IsEnabled);
+  }
+
+  void OnAssetSelected(
+      String _Asset
+    )
+  {
+    m_CurrentAsset    = _Asset;
+    String AssetType  = GetAssetType(m_CurrentAsset);
+    String AssetClass = GetAssetClass(m_CurrentAsset);
+
+    UnloadAsset();
+    UnloadUI();
+
+    if (AssetType == ASSETS_Model)
+      LoadModel(AssetClass);
+    else
+    if (AssetType == ASSETS_Effect)
+      LoadEffect(AssetClass);
+    else
+    if (AssetType == ASSETS_Object)
+      LoadObject(AssetClass);
+    else
+    if (AssetType == ASSETS_Sprite)
+      LoadSprite(AssetClass);
+    else
+    if (AssetType == ASSETS_Lot)
+      LoadLot(AssetClass);
+
+    if (null == m_SelectedObject)
+      SelectObject(GetAsset());
+
+    addClassificator(GetAsset(), "EDITABLE");
+
+    GetCamera().LookAt(GetAsset());
+    GetCameraControl().LookTarget = GetCamera().LookTarget;
+
+    UpdateUI();
+
+    (new #InputController()).SetInputMode(AMID_Edit);
+  }
+
+  void EnableTimer(
+      boolean _IsEnabled
+    )
+  {
+    GetObject("Timer").Enable(_IsEnabled);
+  }
+
+  Component GetSelectedObject()
+  {
+    return m_SelectedObject;
+  }
+
+  void SelectObject(
+      Component _Object
+    )
+  {
+    m_SelectedObject = _Object;
+
+    GetGizmo().SetSlaveObject(m_SelectedObject);
+  }
+
+  Component GetSelectedJoint()
+  {
+    return m_SelectedJoint;
+  }
+
+  void SelectJoint(
+      Component _Joint
+    )
+  {
+    m_SelectedJoint = _Joint;
+
+    GetGizmo().SetSlaveObject(m_SelectedJoint);
+  }
+
+  void Shutdown()
+  {
+    SelectJoint(null);
+    SelectObject(null);
+
+    UnloadAsset();
+    UnloadUI();
+  }
+
+  //
+  // Events
+  //
+
+  void OnTimer(
+      float _TimeDelta
+    )
+  {
+    Component UI = GetUI();
+    if (null != UI)
+      UI.Update();
+  }
+
+  //
+  // Service
+  //
+
+  void SelectCamera(
+      String _CameraID
+    )
+  {
+    if (m_CurrentCameraID == _CameraID)
+      return;
+
+    Component GameController = new #GameController();
+
+    GameController.ActivateCamera("", false);
+    GameController.ActivateCamera(_CameraID, true);
+
+    m_CurrentCameraID = _CameraID;
+  }
+
+  void UnloadAsset()
+  {
+    Component Asset = GetAsset();
+    if (null != Asset)
+    {
+      SelectJoint(null);
+      SelectObject(null);
+
+      if (isFunctionExist(Asset, "Shutdown", 1))
+        Asset.Shutdown(this);
+
+      UnregisterObject(AssetObjectID);
+    }
+  }
+
+  void UnloadUI()
+  {
+    Component UI = GetUI();
+    if (null != UI)
+    {
+      UI.Shutdown();
+      UnregisterObject(AssetMenuID);
+    }
+  }
+
+  void LoadModel(
+      String _MeshClass
+    )
+  {
+    SelectCamera(DefaultCameraID);
+
+    Component Mesh = new #AnimatedObject();
+    if (loadFromScript(Mesh, _MeshClass))
+    {
+      setPosition(Mesh, IdentityMatrix);
+      RegisterObject(AssetObjectID, Mesh);
+    }
+    else
+      logError("CAssetMission: can't load mesh from script '" + _MeshClass + "'");
+  }
+
+  void LoadEffect(
+      String _EffectID
+    )
+  {
+    SelectCamera(DefaultCameraID);
+
+    Component Game = new #GameController();
+
+    // Create effects array
+    Game.InitializeArrays();
+
+//     if (null == Game.GetObject("EffectsArray")) 
+//       Game.RegisterObject("EffectsArray", new #EffectsArray<CEffectsArray>());
+    if (null == GetObject("EffectsArray")) 
+      RegisterObject("EffectsArray", new #EffectsArray<CEffectsArray>());
+
+    // Reregister mission
+    // Setup effect emitter
+    Component EffectEmitter = new #Locator();
+    if (loadFromScript(EffectEmitter, "CEffectEmitter"))
+    {
+      RegisterObject(AssetObjectID, EffectEmitter);
+
+      EffectEmitter.m_EffectID = _EffectID;
+      EffectEmitter.SetActive(1);
+    }
+  }
+
+  void LoadObject(
+      String _ObjectClass
+    )
+  {
+    if (m_ObjectsInsertMap.find(_ObjectClass))
+    {
+      Component InsertDescriptor = m_ObjectsInsertMap.getValue();
+      CreateAndInitObject(
+          AssetObjectID,
+          InsertDescriptor.m_ComponentID, 
+          InsertDescriptor.m_ScriptClass, 
+          IdentityMatrix, []
+        );
+    }
+  
+    // Check if orthographic camera is needed
+    Component Asset = GetAsset();
+    if (isFunctionExist(Asset, "GetMeshComponent", 0))
+    {
+      Component Mesh = Asset.GetMeshComponent();
+      if (checkMask(Mesh, [CLASSIFICATOR_SPRITE], []))
+      {
+        SelectCamera(OrthoCameraID);
+        return;
+      }
+    }
+
+    SelectCamera(DefaultCameraID);
+  }
+
+  void LoadSprite(
+      String _SpriteClass
+    )
+  {
+    SelectCamera(OrthoCameraID);
+
+    Component Sprite = new #SpriteObject();
+    if (loadFromScript(Sprite, "CBaseLot"))
+    {
+      setPosition(Sprite, IdentityMatrix);
+      Sprite.InsertJoint(0, _SpriteClass);
+
+      RegisterObject(AssetObjectID, Sprite);
+    }
+    else
+      logError("CAssetMission: can't load sprite from script '" + _SpriteClass + "'");
+  }
+
+  void LoadLot(
+      String _LotClass
+    )
+  {
+    SelectCamera(OrthoCameraID);
+
+    Component Lot = new #SpriteObject();
+    if (loadFromScript(Lot, _LotClass))
+    {
+      setPosition(Lot, IdentityMatrix);
+      RegisterObject(AssetObjectID, Lot);
+    }
+    else
+      logError("CAssetMission: can't load lot from script '" + _LotClass + "'");
+  }
+
+  void UpdateUI()
+  {
+    Component UI = new #MenuGroup();
+    UI.LockChangeInputMode(true);
+    RegisterObject(AssetMenuID, UI);
+
+    loadFromScript(UI, GetAssetUI(m_CurrentAsset, GetAsset()));
+
+    (new #GameController()).EnableControl(AssetMenuID, true);
+    EnableTimer(true);
+
+    GetUI().Refresh();
+  }
+
+  Component GetAtmosphere()
+  {
+    return GetObject("Atmosphere");
+  }
+
+  Component GetLight()
+  {
+    return GetObject("Light");
+  }
+
+  Component GetCamera()
+  {
+    return GetObject(m_CurrentCameraID);
+  }
+
+  Component GetCameraControl()
+  {
+    return GetObject("CameraControl");
+  }
+
+  Component GetAsset()
+  {
+    return GetObject(AssetObjectID);
+  }
+
+  Component GetUI()
+  {
+    return GetObject(AssetMenuID);
+  }
+  
+  Component GetGizmo()
+  {
+    return GetObject("GizmoCursor");
+  }
+
+  static Array GetClassList(
+      String _AssetType,
+      String _Suffix,
+      Array  _InternalClasses
+    )
+  {
+    Array Result = [];
+
+    Collection ClassList = getClassList();
+
+    // Find all classes with _Suffix
+    ClassList.gotoBegin();
+    while (!ClassList.isAtEnd())
+    {
+      String ClassName = ClassList.getValue();
+
+      if (ClassName.IsEndsWith(_Suffix) &&
+          _InternalClasses.find(ClassName) == -1)
+        Result.add(_AssetType + AssetTypeSeparator + ClassName);
+
+      ClassList.gotoNext();
+    }
+
+    return Result;
+  }
+
+  static Array GetModelsList()
+  {
+    return GetClassList(ASSETS_Model, "Model", []);
+  }
+
+  static Array GetSpritesList()
+  {
+    return GetClassList(ASSETS_Sprite, "Sprite", ["CBaseSprite"]);
+  }
+
+  static Array GetLotsList()
+  {
+    return GetClassList(ASSETS_Lot, "Lot", ["CBaseLot"]);
+  }
+
+  static Array GetEffectsList()
+  {
+    Array Result = [];
+
+    (new #GameController()).InitializeArrays();
+    Array EffectsList = CEffectsArray::m_EffectsMap;
+    for (int i = 0; i < EffectsList.size(); i++)
+      Result.add(ASSETS_Effect + AssetTypeSeparator + EffectsList[i][0]);
+
+    Result.sort();
+
+    return Result;
+  }
+
+  Array GetObjectsList()
+  {
+    Array Result = [];
+
+    GetObjectsList(Result, ASSETS_Object + AssetTypeSeparator, GetObjectInsertList());
+
+    return Result;
+  }
+
+  Array GetObjectsList(
+      Array  _List,
+      String _AssetPath,
+      Array  _ObjectInsertList
+    )
+  {
+    for (int i = 0; i < _ObjectInsertList.size(); i++)
+      if (getVariableType(_ObjectInsertList[i][1]) == ST_ARRAY)
+        GetObjectsList(_List, _AssetPath + _ObjectInsertList[i][0] + AssetPathSeparator, _ObjectInsertList[i][1]);
+      else
+      {
+        String Asset = _AssetPath + _ObjectInsertList[i][0];
+        m_ObjectsInsertMap.insert(GetAssetClass(Asset), _ObjectInsertList[i][1]);
+        _List.add(Asset);
+      }
+  }
+}
+
+//
+// CBaseAssetViewer
+//
+
+class CBaseAssetViewer
+  extends CAssetTypes
+{
+  //
+  // Constants
+  //
+
+  //
+  // Protected members
+  //
+
+  Component m_AssetMission = null;
+
+  //
+  // Construction
+  //
+
+  CBaseAssetViewer()
+  {
+  }
+
+  //
+  // Interface
+  //
+
+  Array GetAssetTypes()
+  {
+    return [ ASSETS_Model, ASSETS_Object, ASSETS_Effect ];
+  }
+
+  Array GetAssetList(
+      String _AssetType
+    )
+  {
+    Component AssetMission = GetAssetMission();
+
+    if (ASSETS_Model  == _AssetType)
+      return AssetMission.GetModelsList();
+    else
+    if (ASSETS_Lot    == _AssetType)
+      return AssetMission.GetLotsList();
+    else
+    if (ASSETS_Sprite == _AssetType)
+      return AssetMission.GetSpritesList();
+    else
+    if (ASSETS_Object == _AssetType)
+      return AssetMission.GetObjectsList();
+    else
+    if (ASSETS_Effect == _AssetType)
+      return AssetMission.GetEffectsList();
+
+    return [];
+  }
+
+  void EnableAssetViewer(
+      boolean _IsEnabled
+    )
+  {
+    Component Game         = new #GameController();
+    Component AssetMission = GetAssetMission();
+
+    if (_IsEnabled)
+    {
+      // Enable asset mission
+      Game.RegisterObject(SOID_MissionController, AssetMission);
+      AssetMission.OnEnabled(true);
+    }
+    else
+    {
+      // Disable asset mission
+      AssetMission.OnEnabled(false);
+      Game.UnregisterObject(SOID_MissionController);
+    }
+  }
+
+  void OnAssetSelected(
+      String _Asset
+    )
+  {
+    if ((new #GameController()).GetObject(SOID_MissionController) == GetAssetMission())
+    {
+      GetAssetMission().OnAssetSelected(_Asset);
+      m_IsObjectListValid = false;
+    }
+  }
+
+  void Shutdown()
+  {
+    shutdownComponent(m_AssetMission);
+    m_AssetMission = null;
+  }
+
+  //
+  // Service
+  //
+
+  Component GetAssetMission()
+  {
+    if (null == m_AssetMission)
+      m_AssetMission = new #MissionController<CAssetMission>();
+
+    return m_AssetMission;
+  }
+}
+
+//
+// CAssetViewerSkin
+//
+
+class CAssetViewerSkin
+{
+  Array Materials = [
+
+      new CUIMaterial(
+          "cursor",
+          "Textures/AssetViewer.tex",
+          2,
+          106,
+          74,
+          108
+        ),
+
+      new CUIMaterial(
+          "slider button",
+          "Textures/AssetViewer.tex",
+          19,
+          71,
+          16,
+          16
+        )
+    ];
+}
+
+//
+// CBaseAssetViewerUI
+// 
+
+class CBaseAssetViewerUI
+{
+  Component MatManager = new #MaterialManager<CAssetViewerSkin>();
+
+  String StdFontName = "White Rabbit";
+  float  StdFontSize = 0.0170000;
+
+  Color  WhiteColor = new Color(1.0, 1.0, 1.0);
+  Color  NoColor    = new Color(0.0, 0.0, 0.0, 0.0);
+
+  Color  NormalButtonTextColor     = new Color(1.0, 1.0, 1.0);
+  Color  HilitedButtonTextColor    = new Color(1.0, 0.0, 0.0);
+
+  Color  StdFrameColor   = new Color(159.0 / 255.0,  96.0 / 255.0,  96.0 / 255.0);
+  Color  StdFrameColorHL = new Color(255.0 / 255.0, 192.0 / 255.0, 192.0 / 255.0);
+
+  //
+  // Construction
+  //
+  
+  CBaseAssetViewerUI()
+  {
+    // Create default cursor
+    CreateCursor("cursor", 0.5, 0.5, 0.05, 0.05 / 0.75);
+
+    // Create Universal Asset Locator text area
+    CreateTextControl("UAL", StdFontName, StdFontSize, WhiteColor, L"", 0.01, 0.01, 0.9, 0.1);
+  }
+
+  //
+  // Interface
+  //
+
+  void Refresh()
+  {
+    // Refresh Universal Asset Locator
+    GetObject("UAL").SetText(new WString(GetMission().m_CurrentAsset));
+  }
+
+  void Update()
+  {
+  }
+  
+  Component GetMission()
+  {
+    return (new #GameController()).GetObject(SOID_MissionController);
+  }
+
+  void Shutdown()
+  {
+  }
+
+  //
+  // Events
+  //
+
+  void OnButtonActivated(
+      String _ID
+    )
+  {
+  }
+
+  void OnButtonHilited(
+      String _ID
+    )
+  {
+  }
+
+  void OnButtonDehilited(
+      String _ID
+    )
+  {
+  }
+
+  void BaseMenu_FreeUnusedMaterials()
+  {
+    MatManager.FreeUnusedMaterials();
+  }
+
+  void OnSliderMoved()
+  {
+  }
+
+  //
+  // Service
+  //
+
+  void CreateCursor(
+         String _Material,
+         float  _X,
+         float  _Y,
+         float  _Width,
+         float  _Height
+       )
+  {
+    Component Cursor = new #CursorControl();
+    Cursor.SetPosition(0.5, 0.5);
+    Cursor.SetDimensions(0.04, 0.05 / 0.75);
+    Cursor.SetMaterial("cursor");
+    Cursor.SetMaterialManager(MatManager);
+    Cursor.SetEventHandler(this);
+    Cursor.SyncWithWindowsCursor(true);
+    Cursor.ShowCursor(false);
+    RegisterObject("Cursor", Cursor);
+  }
+
+  void CreateTextControl(
+      String  _ID,
+      String  _FontName,
+      float   _FontSize,
+      Color   _TextColor,
+      WString _Text,
+      float   _X,
+      float   _Y,
+      float   _Width,
+      float   _Height
+    )
+  {
+    Component TextControl = new #TextControl();
+    TextControl.SetPosition(_X, _Y);
+    TextControl.SetDimensions(_Width, _Height);
+    TextControl.SetText(_Text);
+    TextControl.SetFont(_FontName, _FontSize);
+    TextControl.SetTextColor(_TextColor);
+    TextControl.SetRenderLayer(GetCurrentLayer());
+    TextControl.SetZ(0.01);
+    RegisterObject(_ID, TextControl);
+  }
+
+  void CreateTextButton(
+      String  _ID,
+      String  _FontName,
+      float   _FontSize,
+      Color   _TextColorNormal,
+      Color   _TextColorHilite,
+      WString _Text,
+      float   _X,
+      float   _Y,
+      float   _Width,
+      float   _Height
+    )
+  {
+    Component Button = new #BitmapButton();
+    Button.SetMaterialManager(MatManager);
+    Button.SetMaterials("", "");
+    Button.SetPosition(_X, _Y);
+    Button.SetDimensions(_Width, _Height);
+    Button.SetText(_Text);
+    Button.SetTextColors(_TextColorNormal, _TextColorHilite);
+    Button.SetFrameColors(StdFrameColor, StdFrameColorHL);
+    Button.SetFont(_FontName, _FontSize);
+    Button.SetTextColors(NormalButtonTextColor, HilitedButtonTextColor);
+    Button.EnableBitmap(false);
+    Button.EnableFrame(true);
+    Button.SetRenderLayer(GetCurrentLayer());
+    Button.SetZ(0.02);
+    RegisterObject(_ID, Button);
+  }
+
+  void CreateStaticFrame(
+      String _ID,
+      Color  _Color,
+      float  _X,
+      float  _Y,
+      float  _Width,
+      float  _Height
+    )
+  {
+    Component Button = new #BitmapButton();
+    Button.SetMaterialManager(MatManager);
+    Button.SetMaterials("", "");
+    Button.SetPosition(_X, _Y);
+    Button.SetDimensions(_Width, _Height);
+    Button.SetText(L"");
+    Button.SetTextColors(NormalButtonTextColor, HilitedButtonTextColor);
+    Button.SetFrameColors(_Color, _Color);
+    Button.EnableBitmap(false);
+    Button.EnableFrame(true);
+    Button.SetRenderLayer(GetCurrentLayer());
+    Button.SetZ(0.01);
+    RegisterObject(_ID, Button);
+  }
+
+  void CreateSliderCursor(
+      String _ID,
+      String _NormalMaterial,
+      String _HiliteMaterial,
+      float  _X,
+      float  _Y,
+      float  _Width,
+      float  _Height,
+      float  _LeftMargin,
+      float  _RightMargin
+    )
+  {
+    Component Control = new #SliderCursorControl();
+    Control.SetMaterialManager(MatManager);
+    Control.SetMaterials(_NormalMaterial, _HiliteMaterial);
+    Control.SetPosition(_X, _Y);
+    Control.SetDimensions(_Width, _Height);
+    Control.SetMargins(_LeftMargin, _RightMargin);
+    Control.SetEventHandler(this);
+    Control.SetTextColors(StdFrameColor, HilitedButtonTextColor);
+    Control.SetRenderLayer(GetCurrentLayer());
+    Control.SetZ(0.02);
+    RegisterObject(_ID, Control);
+  }
+
+  void CreateItemBackground(
+      String  _ID,
+      float   _X,
+      float   _Y,
+      float   _Width,
+      float   _Height
+    )
+  {
+    CreateStaticFrame(
+      _ID + "_ITEM_BACKGROUND_FRAME",
+      StdFrameColor,
+      _X,
+      _Y,
+      _Width,
+      _Height
+    );
+  }
+
+  void CreateSlider(
+      String  _ID,
+      float   _X,
+      float   _Y,
+      float   _Width,
+      float   _Height
+    )
+  {
+    //
+    //  Create background
+    //
+
+    CreateItemBackground(
+      _ID + "_BACK",
+      _X,
+      _Y,
+      _Width,
+      _Height
+    );
+
+    //
+    //  Create cursor
+    //
+
+    float CursorWidth  = _Height * 0.75;
+    float CursorHeight = _Height;
+
+    CreateSliderCursor(
+         _ID + "_CURSOR",
+         "slider button",
+         "slider button",
+         _X,
+         _Y,
+         CursorWidth,
+         CursorHeight,
+         _X,
+         _X + _Width - CursorWidth
+       );
+  }
+
+  Component GetSlider(
+      String _ID
+    )
+  {
+    return GetObject(_ID + "_CURSOR");
+  }
+
+}
+
+//
+// CSimpleAssetViewerUI - simple ui with camera control sliders
+//
+
+class CSimpleAssetViewerUI
+  extends CBaseAssetViewerUI
+{
+  String LabelFontName = "White Rabbit";
+  float  LabelFontSize = 0.0170000;
+  Color  LabelColor    = new Color(1.0, 1.0, 1.0, 0.8);
+  Color  LabelColorHL  = new Color(1.0, 1.0, 1.0, 1.0);
+
+  //
+  // Construction
+  //
+  
+  CSimpleAssetViewerUI()
+  {
+    if (0.0 == GetMission().GetCamera().FOV)
+    {
+      // Create camera position sliders
+      CreateLabel("CameraLabel", L"Camera", 0.01, 0.89, 0.2, 0.03);
+      CreateSlider("CameraH", 0.01,  0.93, 0.2, 0.02);
+      CreateSlider("CameraD", 0.01,  0.96, 0.2, 0.02);
+    }
+    else
+    {
+      // Create light position sliders
+      CreateLabel("LightLabel", L"Light", 0.01, 0.86, 0.2, 0.03);
+      CreateSlider("LightH", 0.01,  0.90,  0.2, 0.02);
+      CreateSlider("LightV", 0.01,  0.93,  0.2, 0.02);
+      CreateSlider("LightD", 0.01,  0.96,  0.2, 0.02);
+
+      // Create "enable light" button
+      CreateButton("LightEnable", L"", 0.11, 0.86, 0.1, 0.03);
+    }
+  }
+
+  //
+  // Interface
+  //
+
+  void Refresh()
+  {
+    Component Camera = GetMission().GetCamera();
+
+    if (0.0 == Camera.FOV)
+    {
+      GetSlider("CameraH").SetValue(Camera.GetHPhase());
+      GetSlider("CameraD").SetValue(Camera.GetDPhase());
+    }
+    else
+    {
+      Component Light = GetMission().GetLight();
+
+      GetSlider("LightH").SetValue(Light.GetHPhase());
+      GetSlider("LightV").SetValue(Light.GetVPhase());
+      GetSlider("LightD").SetValue(Light.GetDPhase());
+
+      if (Light.IsEnabled)
+        GetObject("LightEnable").SetText(L"Disable");
+      else
+        GetObject("LightEnable").SetText(L"Enable");
+
+      GetSlider("LightH").SetDisabled(!Light.IsEnabled);
+      GetSlider("LightV").SetDisabled(!Light.IsEnabled);
+      GetSlider("LightD").SetDisabled(!Light.IsEnabled);
+    }
+
+    CBaseAssetViewerUI::Refresh();
+  }
+
+  void Update()
+  {
+    Component Camera = GetMission().GetCamera();
+
+    if (0.0 == Camera.FOV)
+    {
+      Camera.SetHPhase(GetSlider("CameraH").GetValue());
+      Camera.SetDPhase(GetSlider("CameraD").GetValue());
+      Camera.Update();
+    }
+    else
+    {
+      Component Light = GetMission().GetLight();
+
+      float HPhase = GetSlider("LightH").GetValue();
+      float VPhase = GetSlider("LightV").GetValue();
+      float DPhase = GetSlider("LightD").GetValue();
+
+      // $TMP
+      if (abs(Light.GetHPhase() - HPhase) > 10.0 * FLT_EPSILON ||
+          abs(Light.GetVPhase() - VPhase) > 10.0 * FLT_EPSILON ||
+          abs(Light.GetDPhase() - DPhase) > 10.0 * FLT_EPSILON)
+      {
+        Light.SetHPhase(HPhase);
+        Light.SetVPhase(VPhase);
+        Light.SetDPhase(DPhase);
+        Light.Update();
+      }
+    }
+
+    CBaseAssetViewerUI::Update();
+  }
+
+  //
+  // Events
+  //
+
+  void OnButtonActivated(
+      String _ID
+    )
+  {
+    if ("LightEnable" == _ID)
+    {
+      Component Light = GetMission().GetLight();
+
+      // Toggle light
+      Light.IsEnabled = !Light.IsEnabled;
+
+      // Refresh controls
+      Refresh();
+    }
+
+    CBaseAssetViewerUI::OnButtonActivated(_ID);
+  }
+
+  //
+  // Service
+  //
+
+  void CreateLabel(
+      String  _ID,
+      WString _Text,
+      float   _X,
+      float   _Y,
+      float   _Width,
+      float   _Height
+    )
+  {
+    CreateTextControl(_ID, LabelFontName, LabelFontSize, LabelColor, _Text, _X, _Y, _Width, _Height);
+  }
+
+  void CreateButton(
+      String  _ID,
+      WString _Text,
+      float   _X,
+      float   _Y,
+      float   _Width,
+      float   _Height
+    )
+  {
+    CreateTextButton(_ID, LabelFontName, LabelFontSize, LabelColor, LabelColorHL, _Text, _X, _Y, _Width, _Height);
+  }
+}
+
+//
+// CModelViewerUI
+//
+
+class CModelViewerUI
+  extends CSimpleAssetViewerUI
+{
+  //
+  // Constants
+  //
+
+  //
+  // Protected members
+  //
+  
+  float          m_AmbientLightFactor = 0.0;
+  static float   m_LOD                = 0.0;
+  static boolean m_IsSunLightEnabled  = (new CAssetViewerAtmosphere()).IsLightEnabled;
+  boolean        m_AlphaColorEnabled  = true;
+
+  //
+  // Construction
+  //
+  
+  CModelViewerUI()
+  {
+    // Create sunlight button
+    CreateButton("SunLightEnable", L"", 0.22, 0.86, 0.15, 0.03);
+
+    // Create light control sliders
+    CreateLabel("AmbientLightLabel", L"Ambient Light", 0.22, 0.92, 0.15, 0.03);
+    CreateSlider("AmbientLight", 0.22,  0.96,  0.15, 0.02);
+
+    Color AmbientLight   = GetMission().GetAtmosphere().GetAmbientLight();
+    m_AmbientLightFactor = (AmbientLight.r + AmbientLight.g + AmbientLight.b) / 3.0;
+
+    // Create LOD control sliders
+    CreateLabel("LODLabel", L"LOD", 0.38, 0.92, 0.15, 0.03);
+    CreateSlider("LOD", 0.38,  0.96,  0.15, 0.02);
+
+    // Create color control sliders
+    CreateLabel("ColorLabel", L"Color", 0.79, 0.86, 0.2, 0.03);
+    CreateSlider("ColorR", 0.79,  0.90,  0.2, 0.02);
+    CreateSlider("ColorG", 0.79,  0.93,  0.2, 0.02);
+    CreateSlider("ColorB", 0.79,  0.96,  0.2, 0.02);
+  }
+
+  //
+  // Interface
+  //
+
+  void Refresh()
+  {
+    // Refresh sunlight button
+    if (m_IsSunLightEnabled)
+      GetObject("SunLightEnable").SetText(L"Disable Sun");
+    else
+      GetObject("SunLightEnable").SetText(L"Enable Sun");
+
+    // Refresh color sliders
+    if (m_AlphaColorEnabled)
+    {
+      Color AlphaColor = GetModelAlphaColor();
+
+      GetSlider("ColorR").SetValue(AlphaColor.r);
+      GetSlider("ColorG").SetValue(AlphaColor.g);
+      GetSlider("ColorB").SetValue(AlphaColor.b);
+    }
+
+    // Refresh light slider
+    GetSlider("AmbientLight").SetValue(m_AmbientLightFactor);
+
+    // Refresh log slider
+    GetSlider("LOD").SetValue(m_LOD);
+
+    CSimpleAssetViewerUI::Refresh();
+  }
+
+  void Update()
+  {
+    // Update color
+    if (m_AlphaColorEnabled)
+    {
+      Color AlphaColor = new Color(
+          GetSlider("ColorR").GetValue(), 
+          GetSlider("ColorG").GetValue(), 
+          GetSlider("ColorB").GetValue()
+        );
+
+      GetObject("ColorLabel").SetText(L"Color: " +
+          new WString(int(AlphaColor.r * 255.0)) + L", " +
+          new WString(int(AlphaColor.g * 255.0)) + L", " +
+          new WString(int(AlphaColor.b * 255.0))
+        );
+
+      m_AlphaColorEnabled = SetModelAlphaColor(AlphaColor);
+
+      // Disable useless controls
+      if (!m_AlphaColorEnabled)
+      {
+        GetSlider("ColorR").SetDisabled(true);
+        GetSlider("ColorG").SetDisabled(true);
+        GetSlider("ColorB").SetDisabled(true);
+      }
+    }
+
+    // Update light
+    float Factor = GetSlider("AmbientLight").GetValue();
+    if (Factor != m_AmbientLightFactor)
+    {
+      GetMission().GetAtmosphere().SetAmbientLight(new Color(Factor, Factor, Factor, 1.0));
+      m_AmbientLightFactor = Factor;
+    }
+
+    // Update LOD
+    float LOD = GetSlider("LOD").GetValue();
+    if (LOD != m_LOD)
+    {
+      GetMission().GetCamera().LockLOD(0.99 * LOD);
+
+      m_LOD = LOD;
+    }
+
+    CSimpleAssetViewerUI::Update();
+  }
+
+  //
+  // Events
+  //
+
+  void OnButtonActivated(
+      String _ID
+    )
+  {
+    if ("SunLightEnable" == _ID)
+    {
+      // Toggle light
+      m_IsSunLightEnabled = !m_IsSunLightEnabled;
+      GetMission().GetAtmosphere().SetIsLightEnabled(m_IsSunLightEnabled);
+
+      // Refresh controls
+      Refresh();
+    }
+
+    CSimpleAssetViewerUI::OnButtonActivated(_ID);
+  }
+
+  //
+  // Service
+  //
+
+  Component GetModel()
+  {
+    Component Mesh = GetMission().GetAsset();
+    if (isFunctionExist(Mesh, "GetMeshComponent", 0))
+      Mesh = Mesh.GetMeshComponent();
+
+    return Mesh;
+  }
+
+  Component GetMaterialManager()
+  {
+    Component Mesh = GetModel();
+    if (isFunctionExist(Mesh, "GetMaterials", 0))
+      return Mesh.GetMaterials();
+
+    return null;
+  }
+
+  Color GetModelAlphaColor()
+  {
+    Component Asset = GetMission().GetAsset();
+
+    if (null == Asset)
+      return new Color();
+
+    if (isFunctionExist(Asset, "GetColor", 0))
+      return Asset.GetColor();
+
+    Component MaterialManager = GetMaterialManager();
+
+    if (null != MaterialManager)
+    {
+      for (int i = 0; i < MaterialManager.Materials.size(); i++)
+      {
+        if ("COLOREDALPHA" == MaterialManager.Materials[i].AlphaMode)
+          return MaterialManager.GetAlphaColor(MaterialManager.Materials[i].MaterialID);
+      }
+    }
+
+    return new Color();
+  }
+
+  boolean SetModelAlphaColor(
+      Color _Color
+    )
+  {
+    Component Asset = GetMission().GetAsset();
+
+    if (null == Asset)
+      return false;
+
+    if (isFunctionExist(Asset, "SetColor", 1))
+      return Asset.SetColor(_Color);
+
+    Component MaterialManager = GetMaterialManager();
+
+    if (null != MaterialManager)
+    {
+      boolean bAnyMaterialFound = false;
+
+      for (int i = 0; i < MaterialManager.Materials.size(); i++)
+      {
+        if ("COLOREDALPHA" == MaterialManager.Materials[i].AlphaMode)
+        {
+          MaterialManager.SetAlphaColor(MaterialManager.Materials[i].MaterialID, _Color);
+
+          bAnyMaterialFound = true;
+        }
+      }
+
+      return bAnyMaterialFound;
+    }
+
+    return false;
+  }
+}
+
+//
+// CObjectViewerUI
+//
+
+class CObjectViewerUI
+  extends CModelViewerUI
+{
+  //
+  // Construction
+  //
+  
+  CObjectViewerUI()
+  {
+    // Create object class labels
+    Component Mission = GetMission();
+    if (Mission.m_ObjectsInsertMap.find(Mission.GetAssetClass(Mission.m_CurrentAsset)))
+    {
+      Component InsertDescriptor = Mission.m_ObjectsInsertMap.getValue();
+      WString ComponentID = new WString(InsertDescriptor.m_ComponentID);
+      WString ScriptClass = new WString(InsertDescriptor.m_ScriptClass);
+
+      CreateLabel("ObjectClassLabel", L"Class: #" + 
+        ComponentID + L"<" + ScriptClass + L">", 0.01, 0.06, 0.6, 0.03);
+    }  
+  }
+}
+
+//
+// CEffectViewerUI
+//
+
+class CEffectViewerUI
+  extends CSimpleAssetViewerUI
+{
+  //
+  // Construction
+  //
+  
+  CEffectViewerUI()
+  {
+    // Create effect restart button
+    CreateButton("EffectRestart", L"Restart", 0.84, 0.96, 0.15, 0.03);
+  }
+
+  //
+  // Events
+  //
+
+  void OnButtonActivated(
+      String _ID
+    )
+  {
+    if ("EffectRestart" == _ID)
+    {
+      // Restart effect
+      Component EffectEmitter = GetMission().GetAsset();
+      if (null != EffectEmitter)
+      {
+        EffectEmitter.SetActive(0);
+        EffectEmitter.SetActive(1);
+      }
+    }
+
+    CSimpleAssetViewerUI::OnButtonActivated(_ID);
+  }
+}

@@ -1,0 +1,17 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//  Modified by minimax agent and murkz
+//
+//-------------------------------------------------------------------
+
+class CMissionEditorCameraControl
+{
+  float InitSpeed   = 20.0; //jm removed a 0 
+  float MinSpeed    = 1.0; //jm removed a 0 
+  float MaxSpeed    = 1000.0; //jm removed a 0 
+  float SpeedStep   = 10.0; //jm removed a 0 
+}

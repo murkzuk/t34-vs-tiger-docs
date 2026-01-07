@@ -1,0 +1,101 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// Effects skin classes
+//
+
+class CEditorEffectSkin
+{
+  Array Materials = [
+      new CEffectMaterial(
+          "ObjectCursorSystem",    // material id
+          "NORMAL"                 // transparency
+        ),
+
+      new CEffectMaterial(
+          "ObjectCursorBounds",    // material id
+          "NORMAL"                 // transparency
+        ),
+
+      new CEffectMaterial(
+          "ObjectHighlightBounds", // material id
+          "NORMAL"                 // transparency
+        )
+    ];
+}
+
+//
+// Effects classes
+//
+
+class CObjectCursorSystemEffect
+{
+  CObjectCursorSystemEffect()
+  {
+    SetSkinClass(CEffectsArray::EditorEffectSkin);
+    
+    final float MaxSize = 0.7;
+    final float MinSize = 0.03;
+
+    CreateParticle(
+        EPPID_STATIC_LINE_XAXIS,
+        new Vector(MaxSize, 0.0,     0.0),
+        new Vector(MaxSize, MinSize, MinSize),
+        "ObjectCursorSystem",
+        new Color(0.75, 0.0, 0.0, 1.0)
+      );
+
+    CreateParticle(
+        EPPID_STATIC_LINE_YAXIS,
+        new Vector(0.0,     MaxSize, 0.0),
+        new Vector(MinSize, MaxSize, MinSize),
+        "ObjectCursorSystem",
+        new Color(0.0, 0.75, 0.0, 1.0)
+      );
+
+    CreateParticle(
+        EPPID_STATIC_LINE_ZAXIS,
+        new Vector(0.0,     0.0,     MaxSize),
+        new Vector(MinSize, MinSize, MaxSize),
+        "ObjectCursorSystem",
+        new Color(0.0, 0.0, 0.75, 1.0)
+      );
+  }
+}
+
+class CObjectCursorBoundsEffect
+{
+  CObjectCursorBoundsEffect()
+  {
+    SetSkinClass(CEffectsArray::EditorEffectSkin);
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "ObjectCursorBounds",
+        new Color(0.75, 0.75, 0.75, 1.0)
+      );
+  }
+}
+
+class CObjectHighlightBoundsEffect
+{
+  CObjectHighlightBoundsEffect()
+  {
+    SetSkinClass(CEffectsArray::EditorEffectSkin);
+    CreateParticle(
+        EPPID_STATIC_BOX_LINES,
+        new Vector(0.0, 0.0, 0.0),
+        new Vector(1.0, 1.0, 1.0),
+        "ObjectHighlightBounds",
+        new Color(0.75, 0.75, 0.0, 1.0)
+      );
+  }
+}

@@ -1,0 +1,55 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2004 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CEditorDummy
+{
+  Component m_Mission = null;
+
+  void Construct(
+      Component _Mission
+    )
+  {
+    m_Mission = _Mission;
+     
+    // input controller
+    Component InputThroughputControl = new #InputThroughputControl();
+    InputThroughputControl.SetInputFilter([CTLCMD_MAP_ZOOM_IN, CTLCMD_MAP_ZOOM_OUT]);
+    InputThroughputControl.SetEventHandler(this);
+    RegisterObject("DummyThroughput", InputThroughputControl);
+  }
+
+  void OnInputEnabled(
+      boolean _Enabled
+    )
+  {
+  }
+
+  void OnInputCommand(
+      int _Command
+    )
+  {
+    if (CTLCMD_MAP_ZOOM_IN == _Command)
+    {
+      Component SelectedObject = m_Mission.GetSelectedObject();  
+      if (SelectedObject != null)
+      {
+        sendEvent(0.0, getIdentificator(SelectedObject), "OnAddJoint", []);  
+      }
+    }
+
+    else if (CTLCMD_MAP_ZOOM_OUT == _Command)
+    {
+      Component SelectedObject = m_Mission.GetSelectedObject();  
+      if (SelectedObject != null)
+      {
+        sendEvent(0.0, getIdentificator(SelectedObject), "OnRemoveJoint", []);
+      }
+    }
+  }
+}

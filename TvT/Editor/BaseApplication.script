@@ -1,0 +1,849 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// IEditorApplicationConfig
+//
+
+class IEditorApplicationConfig
+{
+  Component GetMissionEditor()
+  {
+    return null;
+  }
+
+  Component GetMenuEditor()
+  {
+    return null;
+  }
+
+  Component GetLoadedMission()
+  {
+    return null;
+  }
+}
+
+//
+// IEditHistoryProvider
+//
+
+class IEditHistoryProvider
+{
+}
+
+//
+// CBaseEditorApplication
+//
+
+class CBaseEditorApplication
+  extends CEditorApplicationConfig
+{
+  boolean m_bMenuIsLoaded     = false;
+
+  //
+  // Constants
+  //
+
+  final static Array MeshDebugInfoFlags = [
+      [ "ObjectBoundingBox", ODIF_ObjectBoundingBox ],
+      [ "ObjectCoordSystem", ODIF_ObjectCoordSystem ],
+      [ "JointBoundingBox",  ODIF_JointBoundingBox  ],
+      [ "JointCoordSystem",  ODIF_JointCoordSystem  ],
+      [ "PortalSystem",      ODIF_PortalSystem      ],
+      [ "LightSources",      ODIF_LightSources      ],
+      [ "MeshPrimitives",    ODIF_MeshPrimitives    ],
+      [ "CollisionShapes",   ODIF_CollisionShapes   ],
+      [ "Normals",           ODIF_Normals           ],
+      [ "TanSpace",          ODIF_TanSpace          ],
+      [ "Sun/Antisun Dir",   ODIF_SunDir            ]
+    ];
+
+  // Item format: [ FilterName, [ RootGroupID, InterfaceID, ClassificatorMask ] ]
+  final static Array DefaultGameObjListFilters = [ 
+      [ "Game: All",                 [ SOID_GameController,    0x01, [[], []] ] ],
+      [ "Game: Component groups",    [ SOID_GameController,    0x31, [[], []] ] ],
+      [ "Mission: All",              [ SOID_MissionController, 0x01, [[], []] ] ],
+      [ "Mission: Component groups", [ SOID_MissionController, 0x31, [[], []] ] ]
+    ];
+
+  final static Array AssetGameObjListFilters = [
+      [ "Editable objects",          [ SOID_MissionController, 0x01, [["EDITABLE"], []] ] ]
+    ];
+
+  //
+  // Construction
+  //
+
+  CBaseEditorApplication()
+  {
+    // Show all special objects by default
+    for (int i = 0; i < CSpecialSettings::SpecObjectsVisibleState.size(); i++)
+      CSpecialSettings::SpecObjectsVisibleState[i][1] = true;
+  }
+
+  void Shutdown()
+  {
+  }
+
+  //
+  // Undo / Redo
+  //
+
+  Collection m_HistoryProviders;
+
+  void RegisterHistoryProvider(
+      Component _HistoryProvider
+    )
+  {
+    m_HistoryProviders.insert(_HistoryProvider);
+  }
+
+  int GetHistoryLocation()
+  {
+    if (m_HistoryProviders.isEmpty())
+      return -1;
+
+    // $TMP
+    m_HistoryProviders.gotoBegin();
+    return m_HistoryProviders.getValue().Location;
+  }
+
+  void SetHistoryLocation(
+      int _Location
+    )
+  {
+    if (m_HistoryProviders.isEmpty())
+      return;
+
+    // $TMP
+    m_HistoryProviders.gotoBegin();
+    m_HistoryProviders.getValue().Location = _Location;
+  }
+
+  Map GetHistory()
+  {
+    if (m_HistoryProviders.isEmpty())
+      return null;
+
+    // $TMP
+    m_HistoryProviders.gotoBegin();
+    return m_HistoryProviders.getValue().GetHistory();
+  }
+
+  //
+  // Test list
+  //
+
+  boolean m_IsTestListValid = false;
+
+  void InvalidateTestList()
+  {
+    m_IsTestListValid = false;
+  }
+
+  boolean IsTestListValid()
+  {
+    return m_IsTestListValid;
+  }
+
+  //
+  // Tools list
+  //
+
+  Array GetToolsList()
+  {
+    return [];
+  }
+
+  void ExecuteTool(
+      String _ToolName
+    )
+  {
+  }
+
+  //
+  // Debug info
+  //
+
+  Array GetSpecObjectsVisibleState()
+  {
+    return CSpecialSettings::SpecObjectsVisibleState;
+  }
+
+  void SetSpecObjectsVisibleState(
+      Array _SpecObjectsVisibleState
+    )
+  {
+    // Change state
+    Map SpecObjectsVisibleState = new Map(_SpecObjectsVisibleState);
+    for (int i = 0; i < CSpecialSettings::SpecObjectsVisibleState.size(); i++)
+      if (SpecObjectsVisibleState.find(CSpecialSettings::SpecObjectsVisibleState[i][0]))
+        CSpecialSettings::SpecObjectsVisibleState[i][1] = SpecObjectsVisibleState.getValue();
+
+    // Notify objects
+    fireEvent(0.0, [], "OnSpecObjectVisibleStateChanged", []);
+  }
+
+  Array GetDebugInfoState()
+  {
+    return [];
+  }
+
+  void SetDebugInfoState(
+      Array _DebugInfoState
+    )
+  {
+  }
+
+  Array GetObjectDebugInfoState(
+      Component _Object
+    )
+  {
+    Array Result = [];
+
+    Component Mesh = _Object;
+
+    if (isFunctionExist(_Object, "GetMeshComponent", 0))
+      Mesh = _Object.GetMeshComponent();
+
+    if (isFunctionExist(Mesh, "GetDebugInfoFlags", 0))
+    {
+      int Flags = Mesh.GetDebugInfoFlags();
+
+      // Build mesh debug info list
+      for (int i = 0; i < MeshDebugInfoFlags.size(); i++)
+        Result.add([MeshDebugInfoFlags[i][0], 0 != (Flags & MeshDebugInfoFlags[i][1])]);
+    }
+
+    return Result;
+  }
+
+  void SetObjectDebugInfoState(
+      Component _Object,
+      Array     _DebugInfoState
+    )
+  {
+    Component Mesh = _Object;
+
+    if (isFunctionExist(_Object, "GetMeshComponent", 0))
+      Mesh = _Object.GetMeshComponent();
+
+    if (isFunctionExist(Mesh, "SetDebugInfoFlags", 1))
+    {
+      Map DebugInfoState = new Map(_DebugInfoState);
+
+      int Flags = Mesh.GetDebugInfoFlags();
+
+      // Set mesh debug info flags
+      for (int i = 0; i < MeshDebugInfoFlags.size(); i++)
+        if (DebugInfoState.find(MeshDebugInfoFlags[i][0]))
+        {
+          if (DebugInfoState.getValue())
+            Flags |= MeshDebugInfoFlags[i][1];
+          else
+            Flags &= ~MeshDebugInfoFlags[i][1];
+        }
+
+      Mesh.SetDebugInfoFlags(Flags);
+    }
+  }
+
+  //
+  // Mission management
+  //
+
+  void LoadLevel(
+      String  _LevelName,
+      boolean _CreateObjects
+    )
+  {
+    InvalidateTestList();
+  }
+
+  void CloseLevel()
+  {
+    m_HistoryProviders.clear();
+    InvalidateTestList();
+  }
+
+  //
+  // Objects management
+  //
+
+  Component GetAnimateable()
+  {
+    return GetSelectedMesh();
+  }
+
+  boolean IsObjectIDValid(
+      String _ObjectID
+    )
+  {
+    if ("" == _ObjectID)
+      return false;
+
+    Component Game = new #GameController();
+    if (null != Game.GetObject(_ObjectID))
+      return false;
+
+    return true;
+  }
+
+  boolean m_IsObjectListValid = false;
+
+  boolean NeedUpdateObjectList()
+  {
+    if (m_IsObjectListValid)
+    {
+      Component MissionEditor = GetMissionEditor();
+      if (null != MissionEditor)
+        if (isFunctionExist(MissionEditor, "NeedUpdateObjectList", 0)) 
+          return MissionEditor.NeedUpdateObjectList();
+
+      return false;
+    }
+
+    m_IsObjectListValid = true;
+
+    return true;
+  }
+
+  //
+  // Current object
+  //
+
+  Component GetSelectedObject()
+  {
+    Component Edit;
+
+    // Selected Mission editor's object.
+    Edit = GetMissionEditor();
+    if (null != Edit)
+      return Edit.GetSelectedObject();
+
+    // Selected menu's ui control.
+    Edit = GetMenuEditor();
+    if (null != Edit)
+      return Edit.GetSelectedUIControl();
+
+    // Selected mission's object
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+      if (isFunctionExist(Mission, "GetSelectedObject", 0))
+        return Mission.GetSelectedObject();
+     
+    return null;
+  }
+
+  Component GetSelectedMesh()
+  {
+    Component Result = GetSelectedObject();
+
+    if (null != Result)
+      if (isFunctionExist(Result, "GetMeshComponent", 0))
+        Result = Result.GetMeshComponent();
+
+    return Result;
+  }
+
+  void OnObjectSelected(
+      Component _Object
+    )
+  {
+    Component Game = new #GameController();
+    Component Edit;
+
+    // Select Mission editor's object.
+    Edit = GetMissionEditor();
+    if (null != Edit)
+    {
+      Edit.SelectObject(_Object);
+      return;
+    }
+
+    // Select menu's ui control.
+    Edit = GetMenuEditor();
+    if (null != Edit)
+    {
+      Edit.SelectUIControl(_Object);
+      return;
+    }
+
+    // Select Mission object
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+      if (isFunctionExist(Mission, "SelectObject", 1))
+        Mission.SelectObject(_Object);
+  }
+
+  Component GetSelectedJoint()
+  {
+    // Selected Mission's object.
+    Component Edit = GetMissionEditor();
+
+    if (null != Edit)
+      return Edit.GetSelectedJoint();
+
+    // Selected mission's joint
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+      if (isFunctionExist(Mission, "GetSelectedJoint", 0))
+        return Mission.GetSelectedJoint();
+
+    return null;
+  }
+
+  void OnJointSelected(
+      Component _Joint
+    )
+  {
+    Component Edit = GetMissionEditor();
+
+    if (null != Edit)
+      Edit.SelectJoint(_Joint);
+
+    // Select Mission joint
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+      if (isFunctionExist(Mission, "SelectJoint", 1))
+        Mission.SelectJoint(_Joint);
+  }
+
+  void OnPropertyChange()
+  {
+    //Apply Menu ui control's property change
+
+    Component MenuEditor = GetMenuEditor();
+    if (null == MenuEditor)
+      return;
+
+    MenuEditor.m_SelectedUIControl.UpdateProperties();
+  }
+
+  Array GetObjectProperties()
+  {
+    Component Object = GetSelectedObject();
+    if (null == Object)
+      return [];
+
+    // Properties of Mission's object
+    if (isFunctionExist(Object, "GetPropertiesList", 1))
+      return Object.GetPropertiesList(GetLoadedMission());
+  
+    // Properties of menu's ui control.
+    if (isFunctionExist(Object, "GetPropertiesList", 0))
+      return Object.GetPropertiesList();
+
+    return [];
+  }
+
+  Array GetObjectPropStrings()
+  {
+    Component Object = GetSelectedObject();
+    if (null == Object)
+      return [];
+
+    if (isFunctionExist(Object, "GetPropStrings", 0))
+      return Object.GetPropStrings();
+  
+    return [];
+  }
+
+  void SetObjectProperties(
+      Array _Properties
+    )
+  {
+    Component Object = GetSelectedObject();
+    if (null == Object)
+      return;
+
+    if (!isFunctionExist(Object, "SetPropertiesList", 2))
+      return;
+
+    Object.SetPropertiesList(GetLoadedMission(), _Properties);
+
+    //обновляем отображение объекта
+    if (isFunctionExist(Object, "UpdateIngameState", 0))
+      Object.UpdateIngameState();
+  }
+
+  Array GetObjectDefaultProperties(
+      Component _Object
+    )
+  {
+    // Ensure properties are in decent format
+    return (new CPropertiesMap(_Object.GetDefaultProperties(), true)).m_Properties;
+  }
+
+  boolean IsObjectModified()
+  {
+    Component Object = GetSelectedObject();
+    if (null == Object)
+      return false;
+
+    if (isFunctionExist(Object, "IsModified", 0))
+      return Object.IsModified();
+  
+    return false;
+  }
+
+  void ApplyObjectModifications()
+  {
+    Component Object = GetSelectedObject();
+    if (null == Object)
+      return;
+
+    Object.ApplyModifications();
+  }
+
+  void ChangeObjectClass(
+      Component _ObjectDescr
+    )
+  {
+    Component OldObject = GetSelectedObject();
+    if (null == OldObject)
+      return;
+       
+    Matrix Position = getPosition(OldObject);
+
+    DeleteObject();
+    InsertObject(getIdentificator(OldObject), _ObjectDescr);
+
+    Component NewObject = (new #GameController()).GetObject(getIdentificator(OldObject));
+    setPosition(NewObject, Position);
+
+    OnObjectSelected(NewObject);
+  }
+
+  //
+  // Misc commands
+  //
+
+  void InvokeShowHideCmd(
+      String _Cmd
+    )
+  {
+    Component Object = GetSelectedObject();
+    Component Joint  = GetSelectedJoint();
+    Component Mesh   = Object;
+
+    if (null != Object)
+      if (isFunctionExist(Object, "GetMeshComponent", 0))
+        Mesh = Object.GetMeshComponent();
+
+    if (null == Mesh)
+      return;
+
+    if ("ShowObject" == _Cmd)
+    {
+      setVisibleState(Mesh, true);
+    }
+    else
+    if ("HideObject" == _Cmd)
+    {
+      setVisibleState(Mesh, false);
+    }
+    else
+    if ("ShowJoint" == _Cmd)
+    {
+      if (null != Joint)
+        Mesh.EnableJoint(Mesh.GetJointName(Joint), JOINT_USAGE_RENDER | JOINT_USAGE_SHADOW, -1, true);
+    }
+    else
+    if ("HideJoint" == _Cmd)
+    {
+      if (null != Joint)
+        Mesh.EnableJoint(Mesh.GetJointName(Joint), JOINT_USAGE_RENDER | JOINT_USAGE_SHADOW, -1, false);
+    }
+    else
+    if (("ShowAllJoints" == _Cmd) || ("HideAllJoints" == _Cmd))
+    {
+      boolean IsShow = ("ShowAllJoints" == _Cmd);
+      Array Joints = Mesh.GetChildren(Mesh.GetRootJoint(), true);
+      for (int i = 0; i < Joints.size(); i++)
+      {
+        Mesh.EnableJoint(Mesh.GetJointName(Joints[i]), JOINT_USAGE_RENDER | JOINT_USAGE_SHADOW, -1, IsShow);
+      }
+    }
+    else
+      logError("Command is not implemented: " + _Cmd);
+  }
+
+  void GotoSelectedObject(
+      boolean _Immediately
+    )
+  {
+    Component Mission = GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+      Editor.GotoSelectedObject(_Immediately);
+  }
+
+  void GotoSelectedJoint(
+      boolean _Immediately
+    )
+  {
+    Component Mission = GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+      Editor.GotoSelectedJoint(_Immediately);
+  }
+
+  // 
+  // Camera position methods
+  // 
+
+  Matrix GetLevelCameraPos()
+  {
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+    {
+      Component Camera = Editor.GetObject("EditorCamera");
+      if (null != Camera)
+        return getPosition(Camera);
+    }
+
+    return IdentityMatrix;
+  }
+
+  void SetLevelCameraPos(
+      Matrix _Position
+    )
+  {
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+    {
+      Component Camera = Editor.GetObject("EditorCamera");
+      if (null != Camera)
+        setPosition(Camera, _Position);
+    }
+  }
+
+  //
+  // Game objects list
+  //
+
+  Array GetGameObjListFilters()
+  {
+    if (SCENE_ASSETVIEWER == m_CurrentScene)
+      return AssetGameObjListFilters;
+  
+    return DefaultGameObjListFilters;
+  }
+
+  //
+  // Controllers management
+  //
+
+  void SetActiveController(
+      String _ActiveController
+    )
+  {
+    Component MissionEditor = GetMissionEditor();
+    if (null != MissionEditor)
+      MissionEditor.EnableObjectCursor(_ActiveController == "ObjectCursor");
+
+    Component GizmoCursor = (new #GameController()).GetObject("GizmoCursor");
+    if (null != GizmoCursor)
+    {
+      if (_ActiveController == "MoveObject")
+        GizmoCursor.SetMode(CGizmoCursor::GIZMO_Translate);
+      else
+      if (_ActiveController == "RotateObject")
+        GizmoCursor.SetMode(CGizmoCursor::GIZMO_Rotate);
+      else
+        GizmoCursor.SetMode(CGizmoCursor::GIZMO_None);
+    }
+  }
+
+  //
+  // Menu editor
+  //
+
+  void LoadMenu(
+      String _MenuClass
+    )
+  {
+    CloseLevel();
+    CloseMenu();
+
+    // Load menu
+    Component Game = new #GameController();
+    Game.CreateMenuController();
+
+    Component MenuController = Game.GetMenuController();
+    MenuController.GetObject("Cursor").ShowCursor(false);
+    MenuController.LoadNewMenu(_MenuClass);
+    MenuController.LockChangeInputMode(true);
+    Game.EnableControl("GameMenu", true);
+
+    Component MenuEditor = new #MenuEditor<CMenuEditor>();
+    setIdentificator(MenuEditor, "MenuEditor");
+    MenuController.RegisterStaticObject("MenuEditor", MenuEditor);
+    MenuController.NotifyMenuEditor();
+
+    Game.ActivateCamera("", true);
+    
+    // Set loaded menu flag
+    m_bMenuIsLoaded = true;
+  }
+
+  void CloseMenu()
+  {
+    Component Game = new #GameController();
+    if (null != Game.GetMenuController())
+      Game.DeleteMenuController();
+    m_bMenuIsLoaded = false;
+  }
+  
+  void SaveMenu()
+  {
+    // Menu save
+    Component MenuEditor = GetMenuEditor();
+    if (null != MenuEditor)
+      MenuEditor.SaveActiveMenu();
+  }
+
+  void BackMenu()
+  {
+    Component Game  = new #GameController();
+    Component Menu  = Game.GetMenuController();
+
+    if (null != Menu)
+      Menu.SendEventGoBack();
+  }
+
+  void InsertUIControl(
+      String _ControlID,
+      String _ComponentID,
+      String _ScriptClass,
+      float  _xPos,
+      float  _yPos,
+      float  _Width,
+      float  _Height
+    )
+  {
+    Component MenuEditor = GetMenuEditor();
+    if (null == MenuEditor)
+      return;
+
+    MenuEditor.AddUIControl(_ControlID, _ComponentID, _ScriptClass, _xPos, _yPos, _Width, _Height);
+  }
+
+  void ResizeUIControlToActualSize(
+      int _ScreenWidth,
+      int _ScreenHeight
+    )
+  {
+    Component MenuEditor = GetMenuEditor();
+    if (null == MenuEditor)
+      return;
+
+    MenuEditor.ResizeUIControlToActualSize(_ScreenWidth, _ScreenHeight);
+  }
+
+  void DeleteUIControl()
+  {
+    Component MenuEditor = GetMenuEditor();
+    if (null == MenuEditor)
+      return;
+
+    MenuEditor.DeleteUIControl();
+  }
+
+  int m_MenuIndexHelper = 0;
+
+  Array GetActiveMenuName(
+      Array  _MenuLoadList,
+      String _ActiveMenuClass
+    )
+  {
+    for (int index = 0; index < _MenuLoadList.size(); index++)
+    {
+      if (getVariableType(_MenuLoadList[index][1]) == ST_ARRAY)
+      {
+        Array Result = GetActiveMenuName(_MenuLoadList[index][1], _ActiveMenuClass);
+        if (Result[0] != -1)
+          return Result;
+      }
+      else
+      if (("C" + _MenuLoadList[index][1]) == _ActiveMenuClass)
+        return [m_MenuIndexHelper, _MenuLoadList[index][0]];
+
+      m_MenuIndexHelper++;
+    }
+
+    return [-1, ""];
+  }
+
+  Array GetActiveMenuName()
+  {
+    Component Mission = GetLoadedMission();
+    if (null != Mission)
+      return [-1, ""];
+
+    Component MenuController = (new #GameController()).GetMenuController();
+    if (null == MenuController)
+      return [-1, ""];
+
+    Component ActiveMenu = MenuController.GetActiveMenu();
+    if (null == ActiveMenu)
+      return [-1, ""];
+
+    m_MenuIndexHelper = 0;
+    return GetActiveMenuName(GetMenuLoadList(), ActiveMenu.m_MenuClassName);
+  }
+
+  boolean IsUIControlIDValid(
+      String _UIControlID
+    )
+  {
+    if ("" == _UIControlID)
+      return false;
+
+    Component Game = new #GameController();
+    Component MenuController = Game.GetMenuController();
+
+    if (null != MenuController.GetObject(_UIControlID))
+      return false;
+
+    return true;
+  }
+
+  boolean IsBackMenuItemEnabled()
+  {
+    Component MenuController = (new #GameController()).GetMenuController();
+
+    if (null == MenuController) return false;
+
+    return MenuController.IsCanGoBack();
+  }
+
+  boolean IsSaveMenuItemEnabled()
+  {
+    Component MenuController = (new #GameController()).GetMenuController();
+
+    if (null == MenuController) return false;
+
+    return (null != MenuController.GetActiveMenu());
+  }
+
+}

@@ -1,0 +1,437 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTriggerEditor
+{
+  final static Array EventTypes = [
+        [ CMission::ETID_NavigationPoint,             "NavigationPoint"],
+        [ CMission::ETID_VisualDetection,             "VisualDetection"],
+        [ CMission::ETID_SoundDetection,              "SoundDetection"],
+        [ CMission::ETID_VorSDetection,               "VisualOrSoundDetection"],
+        [ CMission::ETID_ObjectStateChange,           "ObjectStateChange"],
+        [ CMission::ETID_TriggerStateChange,          "TriggerStateChange"],
+        [ CMission::ETID_TriggerActivation,           "TriggerActivation"],
+        [ CMission::ETID_TriggerDirect,               "TriggerDirect"]
+      ];
+
+  final static Array ActionTypes = [
+        [ CMission::ATID_PlayCinema,                  "PlayCinema"],
+        [ CMission::ATID_SendMessage,                 "SendMessage"],
+        [ CMission::ATID_SetObjectState,              "SetObjectState"],
+        [ CMission::ATID_SetObjectActive,             "SetObjectActive"],
+        [ CMission::ATID_SetTriggerActive,            "SetTriggerActive"],
+        [ CMission::ATID_SetTriggerActivationsCount,  "SetTriggerActivationsCount"],
+        [ CMission::ATID_SendEvent,                   "SendEvent"],
+        [ CMission::ATID_FireEvent,                   "FireEvent"]
+      ];
+
+  final static Array ObjectTypes = [
+        [ CMission::OTID_GameObject,                  "Game object"],
+        [ CMission::OTID_Trigger,                     "Trigger"]
+      ];
+
+  Array GetTriggersList()
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return [];
+    }
+    return Mission.GetContent().GetTriggersList();
+  }
+
+  boolean AddTrigger(
+      String  _TriggerID,
+      int     _EventType,
+      String  _EventObject,
+      String  _TriggerInfo
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      return Mission.GetContent().AddTrigger(_TriggerID, _EventType, _EventObject, _TriggerInfo);
+
+    logError("No default Mission");
+    return false;
+  }
+
+  void UpdateTrigger(
+      String  _TriggerID,
+      int     _EventType,
+      String  _EventObject,
+      String  _TriggerInfo
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().UpdateTrigger(_TriggerID, _EventType, _EventObject, _TriggerInfo);
+    else
+      logError("No default Mission");
+  }
+
+  void RemoveTrigger(
+      String _TriggerID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().RemoveTrigger(_TriggerID);
+    else
+      logError("No default Mission");
+  }
+
+  Array FindTrigger(
+      String _TriggerID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return [];
+    }
+    return Mission.GetContent().FindTrigger(_TriggerID);
+  }
+
+  String GetTriggerNewActionID(
+      String _TriggerID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return "";
+    }
+    return Mission.GetContent().GetTriggerNewActionID(_TriggerID);
+  }
+
+  Array GetTriggerActionsList(
+      String _TriggerID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return [];
+    }
+    return Mission.GetContent().GetTriggerActionsList(_TriggerID);
+  }
+
+  boolean AddTriggerAction(
+      String  _TriggerID,
+      String  _ActionID,
+      int     _ActionRunState,
+      int     _ActionType,
+      float   _ActionDelay,
+      String  _ActionObject,
+      variant _ActionProp1,
+      variant _ActionProp2
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return false;
+    }
+    return Mission.GetContent().AddTriggerAction(_TriggerID, _ActionID, _ActionRunState,
+      _ActionType, _ActionDelay, _ActionObject, _ActionProp1, _ActionProp2);
+  }
+
+  void UpdateTriggerAction(
+      String  _TriggerID,
+      String  _ActionID,
+      int     _ActionRunState,
+      int     _ActionType,
+      float   _ActionDelay,
+      String  _ActionObject,
+      variant _ActionProp1,
+      variant _ActionProp2
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().UpdateTriggerAction(_TriggerID, _ActionID, _ActionRunState,
+        _ActionType, _ActionDelay, _ActionObject, _ActionProp1, _ActionProp2);
+    else
+      logError("No default Mission");
+  }
+
+  void RemoveTriggerAction(
+      String _TriggerID,
+      String _ActionID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().RemoveTriggerAction(_TriggerID, _ActionID);
+    else
+      logError("No default Mission");
+  }
+
+  boolean AddSpawnerMask(
+      String _TriggerID,
+      String _SpawnerMask
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      return Mission.GetContent().AddSpawnerMask(_TriggerID, _SpawnerMask);
+
+    logError("No default Mission");
+    return false;
+  }
+
+  void RemoveSpawnerMask(
+      String _TriggerID,
+      String _SpawnerMask
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().RemoveSpawnerMask(_TriggerID, _SpawnerMask);
+    else
+      logError("No default Mission");
+  }
+
+  boolean AddCondition(
+      String _TriggerID,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID,
+      String _CompareFunction,
+      int    _CompareValue,
+      String _ActionID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      return Mission.GetContent().AddCondition(
+        _TriggerID, _CheckObjectType, _CheckObjectID, _CheckStateID,
+        _CompareFunction, _CompareValue, _ActionID);
+
+    logError("No default Mission");
+    return false;
+  }
+
+  void UpdateCondition(
+      String _TriggerID,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID,
+      String _CompareFunction,
+      int    _CompareValue,
+      String _ActionID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().UpdateCondition(
+        _TriggerID, _CheckObjectType, _CheckObjectID, _CheckStateID,
+        _CompareFunction, _CompareValue, _ActionID);
+    else
+      logError("No default Mission");
+  }
+
+  void RemoveCondition(
+      String _TriggerID,
+      int    _CheckObjectType,
+      String _CheckObjectID,
+      String _CheckStateID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null != Mission)
+      Mission.GetContent().RemoveCondition(_TriggerID, _CheckObjectType, _CheckObjectID, _CheckStateID);
+    else
+      logError("No default Mission");
+  }
+
+  Array GetTriggerStatesList()
+  {
+    return CTrigger::GetStatesList();
+  }
+
+  Array GetTriggersStateList()
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return [];
+    }
+    return Mission.GetTriggersStateList();
+  }
+
+  //
+  // Trigger editor functions
+  //
+
+  Array GetEventTypes()
+  {
+    return EventTypes;
+  }
+
+  Array GetEventObjectsList(
+      int _EventType
+    )
+  {
+    Array ReturnList = [];
+    Component Mission  = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return ReturnList;
+    }
+
+    if (CMission::ETID_TriggerStateChange == _EventType ||
+        CMission::ETID_TriggerActivation  == _EventType ||
+        CMission::ETID_TriggerDirect      == _EventType)
+    {
+      Array TriggersList = GetTriggersList();
+      for (int i = 0; i < TriggersList.size(); i++)
+        ReturnList.add(TriggersList[i][CMissionContent::INDEX_TriggerID]);
+
+      return ReturnList;
+    }
+
+    Array ObjectsList = GetObjectsList();
+    for (int i = 0; i < ObjectsList.size(); i++)
+    {
+      String    ObjectID = ObjectsList[i][CMissionContent::INDEX_ObjectID];
+      Component Object   = Mission.GetObject(ObjectID);
+
+      if (CMission::ETID_NavigationPoint == _EventType)
+      {
+        if (checkMask(Object, [CLASSIFICATOR_NAVIGATION_POINT], []))
+          ReturnList.add(ObjectID);
+      }
+      else if (CMission::ETID_VisualDetection == _EventType)
+      {
+        if (Object.HasDetectionFlag(DF_Visual))
+          ReturnList.add(ObjectID);
+      }
+      else if (CMission::ETID_SoundDetection == _EventType)
+      {
+        if (Object.HasDetectionFlag(DF_Sound))
+          ReturnList.add(ObjectID);
+      }
+      else if (CMission::ETID_VorSDetection == _EventType)
+      {
+        if (Object.HasDetectionFlag(DF_Visual) &&
+            Object.HasDetectionFlag(DF_Sound ))
+          ReturnList.add(ObjectID);
+      }
+      else if (CMission::ETID_ObjectStateChange == _EventType)
+      {
+        if (Object.GetStatesList().size() > 0)
+          ReturnList.add(ObjectID);
+      }
+      else
+      {
+        logError("Incorrect event type");
+        break;
+      }
+    }
+    return ReturnList;
+  }
+
+  static Array GetActionTypes()
+  {
+    return ActionTypes;
+  }
+
+  static Array GetObjectTypes()
+  {
+    return ObjectTypes;
+  }
+
+  Array GetActionObjectsList(
+      int _ActionType
+    )
+  {
+    if (CMission::ATID_PlayCinema == _ActionType)
+    {
+      return ["Test1", "Test2"];
+    }
+    else
+    {
+      logError("Incorrect action type");
+      return [];
+    }
+  }
+
+  Array GetObjectsList()
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return [];
+    }
+    return Mission.GetContent().GetObjectsList();
+  }
+
+  Array GetObjectsExtendedList()
+  {
+    Array Result = GetObjectsList();
+
+    if (!Result.isEmpty())
+      Result.append([
+          [SOID_GameController],
+          [SOID_MissionController]
+        ]);
+
+    return Result;
+  }
+
+  Array GetObjectStatesList(
+      String _ObjectID
+    )
+  {
+    Component Mission = new #GameController().GetLoadedMission();
+
+    if (null == Mission)
+    {
+      logError("No default Mission");
+      return [];
+    }
+
+    Component Object = Mission.GetObject(_ObjectID);
+    if (null == Object)
+    {
+      logError("Object not found");
+      return [];
+    }
+
+    return Object.GetStatesList();
+  }
+
+}

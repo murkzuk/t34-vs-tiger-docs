@@ -1,0 +1,103 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTerrainMapView
+  extends CBaseCockpitTerrainMap
+{
+  Array Fonts = [
+      [ "Arial", 0.022 ]
+    ];
+
+  boolean ShowRulers         = true;
+  boolean ShowCross          = false;
+  boolean ShowHelicopter     = true;
+  boolean ShowBackground     = false;
+  boolean ShowTerrain        = true;
+
+
+  float XScale = 128.0 / 800.0 ;
+  float YScale = 128.0 / 600.0 ;
+
+  Array MapTexture          = [ 0.0, 0.0, "N", "N", "N", "N", 1.0, 1.0, "terrain map",    0 ];
+
+  Array NavPoint            = [ 0.0, 0.0, "N", "N", "C", "C", XScale, XScale, "navpoint icon",  0 ];
+  Array MainNavPoint        = [ 0.0, 0.0, "N", "N", "C", "C", XScale * 1.5f, XScale * 1.5f, "main navpoint icon",  0 ];
+  Array CompassNavPoint     = [ 0.0, 0.0, "N", "N", "C", "C", XScale * 2.0f, XScale * 2.0f, "compass navpoint icon",  0 ];
+
+  Array MapBackground       = [ 0.0, 0.0, "C", "C", "C", "C", 1.30, 1.30, "map background", 0 ];
+
+  Array NavpointName        = [ 0.0, 0.0, "C", "F", "C", "C" , 0, L"" ];
+
+
+  Array ThickRulerLine       = [ 0.0, 1.0, "N", "N", "N", "N", 1.0, 0.0, 3.0, 0.0f, 0.0f, new Color(0.50, 0.50, 0.50, 0.50)];
+  Array ThinRulerLine        = [ 0.0, 0.0, "N", "N", "N", "N", 0.0, 1.0, 1.0, 0.0f, 0.0f, new Color(0.50, 0.50, 0.50, 0.50)];
+
+  Array DirectionLine        = [ 0.00, 0.00, "N", "N", "N", "N", 1.00, 1.00, 1.0, 15.0f, 10.0f]; // arrowed line
+  Array MapBorder            = [ 0.0, 0.0, "N", "N", "N", "N", 1.0, 1.0, 1.0];  
+
+  float MarksSpacing    = 11000.0f / 6.0;
+  int   MarksSubSpacing = 10;
+  Vector MarksInitPoint = new Vector(1000.0f, 1000.0f, 0.0f);
+
+  Color FriendColor = new Color(0.0, 1.0, 0.0);
+
+  Array ObjectsUIElements = [
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale * 1.5f, XScale * 1.5f, "tank arrow",     0, FriendColor, 0.5, 0.5 ],
+       [ 0.0, 0.0, "N", "N", "N", "N", XScale * 1.5f, XScale * 1.5f, "airplane arrow", 0, FriendColor, 0.5, 0.5 ]
+    ];
+
+  // array indeces 
+  final static int PLAYER_BEHAVIOR          = 0;
+  final static int FIX_DIR_BEHAVIOR         = 1;
+    
+  Array ObjectsBehaviors = [      
+      [ 
+        BEH_FIT_MAP,                // Behavior Type mask
+        new Color(1.0, 0.0, 0.0)    // values
+      ],
+      [ 
+        BEH_NOT_ROTATE_TEX         // Behavior Type mask
+      ]
+
+    ];
+
+  Array ObjectsList = [
+      // main player unit
+      [
+        ["Foo", "MainMesh"],           // include
+        [CLASSIFICATOR_DEAD_OBJECT],              // exclude       
+        0,                            // ObjectsUIElements index
+        PLAYER_BEHAVIOR,              // ObjectBehavior index
+        COCKPIT_MAP_PLAYER,           // render priority level
+        DECREMENTAL_MASK_CHECKS,      // mask checking type
+        new Color(1.0, 1.0, 1.0)      // color if need
+      ],
+
+      [
+        ["TANK", "MainMesh"],       // include
+        ["Foo", 
+         CLASSIFICATOR_DEAD_OBJECT
+        ],                          // exclude
+        0,                          // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,           // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS,     // render priority level
+        DECREMENTAL_MASK_CHECKS     // mask checking type
+        // color if need
+      ],
+      [
+        ["AIRPLANE"],           // include
+        [],                     // exclude
+        1,                      // ObjectsUIElements index
+        DEFAULT_BEHAVIOR,       // ObjectBehavior index
+        COCKPIT_DETECT_OBJECTS, // render priority level
+        NO_EXTRA_MASK_CHECKS    // mask checking type
+        // color if need
+      ]
+    ];
+}

@@ -1,0 +1,192 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTerraformModifier
+  extends CBaseWorldModifier
+{
+  //
+  // Constants
+  //
+
+  final static float SpeedChangeSpeed = 10.0;
+  
+  int m_TerraformType;
+  
+  void Construct(
+      Component _GeometryCursor
+    )
+  {
+    CBaseWorldModifier::Construct(_GeometryCursor);
+
+    Component Terraformer = new #Terraformer<TerraformerOptions>();
+    RegisterObject("Terraformer", Terraformer);
+
+    Component WaterTerraformer = new #Terraformer<TerraformerOptions>();
+    RegisterObject("WaterTerraformer", WaterTerraformer);
+    
+    Component TextControl = new #TextControl();
+    TextControl.SetPosition(0.01, 0.01);
+    TextControl.SetDimensions(0.9, 0.1);
+    TextControl.SetFont("White Rabbit", 0.0170000);
+    TextControl.SetTextColor(new Color(1.0, 1.0, 1.0, 0.5));
+    TextControl.SetRenderLayer(PRIMLAYER_MENU);
+    RegisterObject("TerraformerLabel", TextControl);
+    UpdateLabel();
+  }
+
+  void Initialize(
+      Component _Mission
+    )
+  {
+    CBaseWorldModifier::Initialize(_Mission);
+
+    Component WorldMatrices = _Mission.GetMissionWorldMatrices();
+    Component Terraformer   = GetObject("Terraformer");
+    if (null != Terraformer)
+      Terraformer.SetMatrixLayer(WorldMatrices.GetLayer(m_MatrixLayer));
+      
+    Component WaterTerraformer = GetObject("WaterTerraformer");
+    if (null != WaterTerraformer)
+      WaterTerraformer.SetMatrixLayer(WorldMatrices.GetLayer(m_WaterMatrixLayer));
+      
+    SetTerraformType(TT_Cliffs);
+  }
+
+  void SetTerraformType(
+      int _Type
+    )
+  {
+    m_TerraformType = _Type;
+    if (_Type >= 0)
+    {
+      Component Terraformer = GetObject("Terraformer");
+      if (null != Terraformer)
+        Terraformer.TerraformType = _Type;
+    }
+    else
+    {
+      Component Terraformer = GetObject("WaterTerraformer");
+      if (null != Terraformer)
+        Terraformer.TerraformType = -_Type;
+    }
+       
+
+    UpdateLabel();
+  }
+
+  void OnTimerTick(
+      float _TimePast
+    )
+  {
+    CBaseWorldModifier::OnTimerTick(_TimePast);
+
+    Component Terraformer;
+    
+    if (m_TerraformType >= 0)
+      Terraformer = GetObject("Terraformer");
+    else
+      Terraformer = GetObject("WaterTerraformer");
+      
+    if (null == Terraformer)
+      return;
+
+    Component GeometryCursor = GetGeometryCursor();
+    if (null != GeometryCursor)
+    {
+      Terraformer.SetCenter(GeometryCursor.GetCenter());
+      Terraformer.SetRadius(GeometryCursor.GetRadius());
+      Terraformer.SetCircleBrushEnabled(true);
+    }
+
+    Component InputController = new #InputController();
+
+    if (InputController.GetButtonState(CTLCMD_MAP_ZOOM_IN))
+    {
+      int TerraformType = Terraformer.TerraformType;
+      Terraformer.SetSpeed(TerraformType, Terraformer.GetSpeed(TerraformType) - _TimePast * SpeedChangeSpeed);
+    }
+    else
+    if (InputController.GetButtonState(CTLCMD_MAP_ZOOM_OUT))
+    {
+      int TerraformType = Terraformer.TerraformType;
+      Terraformer.SetSpeed(TerraformType, Terraformer.GetSpeed(TerraformType) + _TimePast * SpeedChangeSpeed);
+    }
+
+    if (!InputController.GetButtonState(CTLCMD_MENU_SELECT))
+    {
+      Terraformer.SetContinueLastOperation(Terraformer.GetContinueLastOperation());
+      return;
+    }
+
+    Terraformer.TransformTerrain(_TimePast,1.0f);
+  }
+
+  void OnTimerEnabled(
+      boolean _IsEnabled
+    )
+  {
+    CBaseWorldModifier::OnTimerEnabled(_IsEnabled);
+    UpdateLabel();
+  }
+
+  void Enable(
+      boolean _Enable
+    )
+  {
+    CBaseWorldModifier::Enable(_Enable);
+    UpdateLabel();
+  }
+
+  void UpdateLabel()
+  {
+    WString Text = L"";
+
+    if (m_IsEnabled && m_IsTimerEnabled)
+    {
+      Text = L"Terraforming";
+
+      Component Terraformer = GetObject("Terraformer");
+      if (null != Terraformer)
+        Text = Text + L": " + new WString(GetTerraformTypeName(Terraformer.TerraformType));
+    }
+
+    GetLabel().SetText(Text);
+  }
+  
+  Component GetLabel()
+  {
+    return GetObject("TerraformerLabel");
+  }
+
+  String GetTerraformTypeName(
+      int _Type
+    )
+  {
+    Array TypeList = CEditorApplication::TerraformTypeList;
+
+    for (int i = 0; i < TypeList.size(); i++)
+      if (TypeList[i][1] == _Type)
+        return TypeList[i][0];
+
+    return "";
+  }
+
+  WString GetCursorText()
+  {
+    WString Text = CBaseWorldModifier::GetCursorText();
+
+    Component Terraformer = GetObject("Terraformer");
+
+    if (!Text.isEmpty() && 
+        null != Terraformer)
+      Text = Text + L", Speed: " + new WString(Terraformer.GetSpeed(Terraformer.TerraformType));
+
+    return Text;
+  }
+}

@@ -1,0 +1,136 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// CGizmoCursorBase
+//
+
+class CGizmoCursorBase
+{
+  int   PrimLayer  = PRIMLAYER_EFFECTS_ON_TOP;
+  float SizeFactor = 0.1;
+
+  final static Array VECTOR_Axis = [
+      new Vector(1.0, 0.0, 0.0),
+      new Vector(0.0, 1.0, 0.0),
+      new Vector(0.0, 0.0, 1.0)
+    ];
+
+  final static Color COLOR_Selected = new Color(1.0,  1.0, 0.0);
+  final static Color COLOR_Plane    = new Color(0.4, 0.86, 1.0);
+  final static Array COLOR_Axis     = [
+      new Color(1.0, 0.0,  0.0),
+      new Color(0.0, 0.6, 0.33),
+      new Color(0.0, 0.0,  1.0)
+    ];
+}
+
+//
+// CGizmoCursorTranslate
+//
+
+class CGizmoCursorTranslate
+  extends CGizmoCursorBase
+{
+  final static float SIZE_Axis      = 0.07;
+  final static float SIZE_PlaneRect = 0.15;
+
+  Array Axises = [
+      [ VECTOR_Axis[AXIS_X], COLOR_Axis[AXIS_X], COLOR_Selected, SIZE_Axis ],
+      [ VECTOR_Axis[AXIS_Y], COLOR_Axis[AXIS_Y], COLOR_Selected, SIZE_Axis ],
+      [ VECTOR_Axis[AXIS_Z], COLOR_Axis[AXIS_Z], COLOR_Selected, SIZE_Axis ]
+    ];
+
+  Array PlaneRect = [ SIZE_PlaneRect, COLOR_Plane, COLOR_Selected ];
+}
+
+//
+// CGizmoCursorRotate
+//
+
+class CGizmoCursorRotate
+  extends CGizmoCursorBase
+{
+  final static float SIZE_Axis   = 0.1;
+  final static float RADIUS_Axis = 1.25;
+
+  Array Axises = [
+      [ VECTOR_Axis[AXIS_X], COLOR_Axis[AXIS_X], COLOR_Selected, RADIUS_Axis, SIZE_Axis ],
+      [ VECTOR_Axis[AXIS_Y], COLOR_Axis[AXIS_Y], COLOR_Selected, RADIUS_Axis, SIZE_Axis ],
+      [ VECTOR_Axis[AXIS_Z], COLOR_Axis[AXIS_Z], COLOR_Selected, RADIUS_Axis, SIZE_Axis ]
+    ];
+
+  Array PlaneCircle = [ new Vector(0.0, 0.0, 0.0), COLOR_Plane, COLOR_Selected, 
+    1.2 * RADIUS_Axis, SIZE_Axis, new Color (0.5, 0.5, 0.5), RADIUS_Axis ];
+
+  Array Sphere = [ new Color(0.5, 0.5, 0.5, 0.1), RADIUS_Axis ];
+}
+
+//
+// CGizmoCursor
+//
+
+class CGizmoCursor
+{
+  final static String GIZMO_None      = "";
+  final static String GIZMO_Translate = "Translate";
+  final static String GIZMO_Rotate    = "Rotate";
+
+  final static Array  Gizmos          = [ GIZMO_Translate, GIZMO_Rotate ];
+
+  //
+  // Construction
+  //
+
+  CGizmoCursor()
+  {
+    // Create gizmos
+    RegisterObject(GIZMO_Translate, new #GizmoCursorTranslate<CGizmoCursorTranslate>());
+    RegisterObject(GIZMO_Rotate,    new #GizmoCursorRotate<CGizmoCursorRotate>());
+
+    // Set initial mode
+    SetMode(GIZMO_None);
+  }
+
+  //
+  // Interface
+  //
+  
+  static Component GetInstance()
+  {
+    return new #GameObject<CGizmoCursor>();
+  }
+
+  void SetEventHandler(
+      Component _EventHandler
+    )
+  {
+    // Set event handler for each gizmo
+    for (int i = 0; i < Gizmos.size(); i++)
+      GetObject(Gizmos[i]).SetEventHandler(_EventHandler);
+  }
+
+  void SetSlaveObject(
+      Component _Object
+    )
+  {
+    // Set slave for each gizmo
+    for (int i = 0; i < Gizmos.size(); i++)
+      setSlaveObject(GetObject(Gizmos[i]), _Object);
+  }
+
+  void SetMode(
+      String _GizmoMode
+    )
+  {
+    // Enable new & disable current gizmo
+    for (int i = 0; i < Gizmos.size(); i++)
+      GetObject(Gizmos[i]).IsEnabled = (Gizmos[i] == _GizmoMode);
+  }
+}

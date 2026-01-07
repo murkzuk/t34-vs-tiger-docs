@@ -1,0 +1,32 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMissionEditorAtmosphere
+  extends CCommonAtmosphere
+{
+  boolean IsLightEnabled  = true;
+  boolean IsShadowEnabled = false;
+
+  Vector  SunDirection    = new Vector(0.52, -0.61, -0.59);
+  Color   AmbientLight    = new Color(0.3, 0.3, 0.3);
+  Color   SunColor        = new Color(0.7, 0.7, 0.7);
+  float   DistanceToSun   = 20000.0;
+  float   HorizontPos     = 0.0;
+
+  float   FogNear         = 700.0;
+  float   FogFar          = 2500.0;
+  Color   FogColorXPos    = new Color(0.0, 0.0, 0.0); // S
+  Color   FogColorXNeg    = new Color(0.0, 0.0, 0.0); // N
+  Color   FogColorYPos    = new Color(0.0, 0.0, 0.0); // E
+  Color   FogColorYNeg    = new Color(0.0, 0.0, 0.0); // W
+
+  Vector  WindVector      = new Vector(0.0, 0.0, 0.0);
+
+  boolean IsSunVisible    = true;
+}

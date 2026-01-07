@@ -1,0 +1,924 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//
+// CApplicationSettings
+//
+
+class CApplicationSettings
+{
+  final static String m_CompanyName      = "G5 Software";
+  final static String m_ApplicationName  = "T34";
+  final static String m_AppVersionInfo   = "0.0.1";
+
+  final static String m_VersionLanguage  = "English";
+
+  final static String m_AppRegistryPath  = "Software\\" + m_CompanyName + "\\" + m_ApplicationName + " " + m_VersionLanguage;
+  final static String m_PathToSoundFiles = "Sounds\\";
+
+  final static String m_ScriptFileHeader =
+    "//-------------------------------------------------------------------\n" +
+    "//                                                                   \n" +
+    "//  This code is copyright 2001 by G5 Software.                      \n" +
+    "//  Any unauthorized usage, either in part or in whole of this code  \n" +
+    "//  is strictly prohibited. Violators WILL be prosecuted to the      \n" +
+    "//  maximum extent allowed by law.                                   \n" +
+    "//                                                                   \n" +
+    "//-------------------------------------------------------------------\n" +
+    "\n";
+}
+
+//
+// CEditorApplicationConfig
+//
+
+class CEditorApplicationConfig
+  extends IEditorApplicationConfig
+{
+  Component GetMissionEditor()
+  {
+    return (new #GameController()).GetObject("MissionEditor");
+  }
+
+  Component GetMenuEditor()
+  {
+    return (new #GameController()).GetObject("MenuEditor");
+  }
+
+  Component GetLoadedMission()
+  {
+    return (new #GameController()).GetLoadedMission();
+  }
+}
+
+//
+// CEditorApplication
+//
+
+class CEditorApplication
+  extends CBaseEditorApplication,
+    CMenuConfig, CCinemaEditor, CTriggerEditor, CAssetViewer,
+    CSceneManager, CNavigator, CTestList, CToolsList
+{
+  boolean m_bMissionIsLoaded = false;
+  static boolean m_bEditorEnabled   = false;
+
+  CEditorApplication()
+  {
+    Component GameController  = new #GameController();
+    //$TMP
+    //GameController.ConnectToServerByIP(/*"192.168.0.84"*/"127.0.0.1", L"VirT", -88);
+  }
+
+  void Shutdown()
+  {
+    CBaseEditorApplication::Shutdown();
+    CSceneManager::Shutdown();
+    CAssetViewer::Shutdown();
+  }
+
+  //
+  // View control
+  //
+
+  String GetCameraViewMode()
+  {
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+      return Editor.GetViewMode();
+    return "";
+  }
+
+  void SetCameraViewMode(
+      String _ViewMode
+    )
+  {
+    // Get current mission
+    Component GameController  = new #GameController();
+    Component Mission         = GameController.GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+
+    // Switch view mode
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+      Editor.SetViewMode(Mission, _ViewMode);
+
+    // Get current view state
+    boolean IsFromPlayerMode = ("FromPlayer" == GetCameraViewMode());
+
+    // Select activated object
+    String ActivatedObjectId = Mission.GetMainPlayerObjectID();
+    if (!IsFromPlayerMode)
+      ActivatedObjectId = "MissionEditor";
+
+    // Activate object
+    GameController.ActivateObject(ActivatedObjectId, true, true);
+
+    GameController.EnableControl("MissionEditor", !IsFromPlayerMode);
+    GameController.EnableControl("TerrainEditor", !IsFromPlayerMode);
+
+    // Update control of object
+    ActivateEditor(m_bEditorEnabled);
+  }
+
+  void UpdateObjectsShowMode(
+      int _Mode,
+      String _CinemaID
+    )
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+    Mission.SetObjectsShowMode(_Mode, _CinemaID);
+  }
+
+  int GetObjectsShowMode()
+  {
+    Component Game  = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      return OSM_All;
+    }
+    return Mission.m_ObjectsShowMode;
+  }
+
+  String GetCurrentCinemaID()
+  {
+    Component Game    = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      return "";
+    }
+    return Mission.m_CurrentCinemaID;
+  }
+
+  void HaxListJoints()
+  {
+  }
+
+  // =========================================
+  // Mission control methods
+  // =========================================
+
+  void LoadLevel(
+      String  _MissionName,
+      boolean _CreateObjects
+    )
+  {
+    CBaseEditorApplication::LoadLevel(_MissionName, _CreateObjects);
+
+    ActivateScene(SCENE_DEFAULT);
+
+    // Close previons mission and menu
+    CloseLevel();
+    CloseMenu();
+
+    Component GameController = new #GameController();
+    Component Console        = GameController.GetObject(SOID_Console);
+    Component Mission        = GameController.GetLoadedMission();
+
+    // Load new mission
+    GameController.SetEditorMode(true);
+    GameController.ActivateCamera("MissionEditor", false);
+    GameController.ActivateCamera("", true);
+    GameController.LoadMission(_MissionName, _CreateObjects);
+
+//     logMessage("load" + _MissionName);
+//     if(_MissionName == "CC2M1Mission")
+//     { 
+//       CGameSettings::PlayerName = "Boo";
+//       GameController.ConnectToServerByIP("127.0.0.1", L"VirT", -1);   
+//       // Set loaded Mission flag
+//       m_bMissionIsLoaded = true;
+//     }
+//     else
+//       GameController.LoadMission(_MissionName, _CreateObjects);
+//     else
+//     {
+//       Array PlayerSlots;
+//       PlayerSlots.add("MANUAL");
+//       PlayerSlots.add("MANUAL");
+//       PlayerSlots.add("BOT");
+//       PlayerSlots.add("CLOSED");
+//       CGameSettings::PlayerName = "Foo";
+//       GameController.CreateSession(
+//             L"MultyPlayer",
+//             0,
+//             0 + 1,
+//             PlayerSlots,
+//             -1,
+//             MCM_Both,
+//             false,
+//             false
+//           );
+//     }
+
+    OnMissionLoaded();
+  }
+
+    void LoadMPLevel(
+      String  _MissionName,
+      boolean _CreateObjects
+    )
+  {
+    CBaseEditorApplication::LoadLevel(_MissionName, _CreateObjects);
+
+    ActivateScene(SCENE_DEFAULT);
+
+    // Close previons mission and menu
+    CloseLevel();
+    CloseMenu();
+
+    Component GameController = new #GameController();
+    Component Console        = GameController.GetObject(SOID_Console);
+    Component Mission        = GameController.GetLoadedMission();
+
+    // Load new mission
+    GameController.SetEditorMode(true);
+    GameController.ActivateCamera("MissionEditor", false);
+    GameController.ActivateCamera("", true);
+
+    Array PlayerSlots;
+      //$TMP
+      //for testing. 
+      //Must be construct by the game
+      PlayerSlots.add("MANUAL");
+      PlayerSlots.add("MANUAL");
+      PlayerSlots.add("MANUAL");
+      PlayerSlots.add("MANUAL");
+      PlayerSlots.add("MANUAL");
+      PlayerSlots.add("MANUAL");
+//      PlayerSlots.add("BOT");
+//      PlayerSlots.add("BOT");
+//       PlayerSlots.add("BOT");
+//       PlayerSlots.add("BOT");
+//       PlayerSlots.add("BOT");
+      PlayerSlots.add("CLOSED");
+    int MissionID = 1;
+    Array MissionToID = CDMMission::MissionsID;
+    boolean Found = false;
+    for(int i = 0; i < MissionToID.size(); i++)
+      if(MissionToID[i][0] == _MissionName)
+      {
+        MissionID = MissionToID[i][1];
+        Found = true;
+        break;
+      }
+      
+    MissionToID = CCustomDMMIssion::MissionsID;
+    for(int i = 0; i < MissionToID.size(); i++)
+      if(MissionToID[i][0] == _MissionName)
+      {
+        MissionID = MissionToID[i][1];
+        logWarning("Custom found id:" + new String(MissionID));
+        Found = true;
+        break;
+      }
+
+    CGameSettings::PlayerName = "ServerPlayer"; //must be set from the game
+    if (!Found)
+    {
+      Array MissionToID = CDMMission::CFMissionsID;
+      for(int i = 0; i < MissionToID.size(); i++)
+        if(MissionToID[i][0] == _MissionName)
+        {
+          MissionID = MissionToID[i][1];
+          break;
+        }
+
+      GameController.CreateSession(
+          L"MultiPlayerTWO",                     //must be set from the game
+          CServerDescriptor::ST_CaptureTheFlag,
+          MissionID,
+          PlayerSlots,
+          -1,
+          MCM_Both,
+          false,
+          false
+        );
+    }
+    else
+      GameController.CreateSession(
+          L"MultiPlayerTWO",                     //must be set from the game
+          CServerDescriptor::ST_DeathMatch,
+          MissionID,
+          PlayerSlots,
+          -1,
+          MCM_Both,
+          false,
+          false
+        );
+
+    if(!GameController.IsDedicate())
+      OnMissionLoaded();
+  }
+
+  void OnMissionLoaded()
+  {
+    Component GameController = new #GameController();
+    Component Mission        = GameController.GetLoadedMission();
+
+    if (null == Mission)
+      return;
+
+    // insert default unit
+    Mission.CreatePlayerObject();
+    Mission.CreateEditorObject();
+    Mission.CreateCursorObject();
+    Mission.StartMission();
+
+    // Initialize history
+    RegisterHistoryProvider((new #GameController()).GetObject("TerrainEditor").GetObject("LayerHistory"));
+
+    GameController.ActivateCamera("", false);
+    GameController.ActivateCamera("MissionEditor", true);
+
+    // Set loaded Mission flag
+    m_bMissionIsLoaded = true;
+  }
+
+  String GetActiveLevelName()
+  {
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+      return Mission.GetMissionObjectClassName();
+    return "";
+  }
+
+  void CloseLevel()
+  {
+    CBaseEditorApplication::CloseLevel();
+
+    ActivateScene(SCENE_DEFAULT);
+
+    Component GameController = new #GameController();
+    if (null != GameController.GetLoadedMission())
+      GameController.UnloadMission();
+    m_bMissionIsLoaded = false;
+  }
+
+  boolean SaveLevel()
+  {
+    Component GameController = new #GameController();
+
+    // Mission save
+    Component Mission = GameController.GetLoadedMission();
+    if (null != Mission)
+    {
+      Component MissionEditor = GetMissionEditor();
+      if (null != MissionEditor)
+        return MissionEditor.SaveContent(Mission);
+    }
+
+    return false;
+  }
+
+  boolean GetActiveStatus()
+  {
+    return m_bEditorEnabled;
+  }
+
+  boolean SwitchControlMode()
+  {
+    boolean IsActivated = ActivateEditor(!m_bEditorEnabled);
+    if (IsActivated)
+      m_bEditorEnabled = !m_bEditorEnabled;
+    return IsActivated;
+  }
+
+  boolean ActivateEditor(
+      boolean _Activate
+    )
+  {
+    Component Game        = new #GameController();
+    boolean   IsActivated = false;
+
+    // Activate Mission editor
+    if (m_bMissionIsLoaded)
+    {
+      Component Mission = Game.GetLoadedMission();
+      if (null == Mission)
+        return false;
+
+      if ("FromPlayer" == GetCameraViewMode())
+      {
+        String ActivatedObject = Mission.GetMainPlayerObjectID();
+        if (isFunctionExist(Mission, "GetCurrentActiveObjectID", 0))
+          ActivatedObject = Mission.GetCurrentActiveObjectID();
+
+        IsActivated = Game.EnableControl(ActivatedObject, _Activate);
+      }
+      else
+      {
+        Component Editor = GetMissionEditor();
+        if (null != Editor)
+        {
+          Component Control = Editor.GetObject("Control");
+          if (null != Control)
+          {
+            Control.EnableLookControl(_Activate && ("FreeMove" == GetCameraViewMode()));
+            IsActivated = true;
+          }
+        }
+      }
+    }
+
+    // Activate menu editor
+    if (m_bMenuIsLoaded)
+    {
+      Component MenuController = Game.GetMenuController();
+      if (null == MenuController)
+        return false;
+      IsActivated = Game.EnableControl("MenuEditor", _Activate);
+    }
+
+    return IsActivated;
+  }
+
+  void InsertObject(
+      String    _ObjectID,
+      Component _ObjectDescr
+    )
+  {
+    InsertObject(_ObjectID, _ObjectDescr.m_ComponentID, _ObjectDescr.m_ScriptClass);
+  }
+
+  void InsertObject(
+      String _ObjectID,
+      String _ComponentID,
+      String _ScriptClass
+    )
+  {
+    Component Game  = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+
+    Matrix Position = new Matrix(new Vector(0.0, 0.0, 0.0));
+
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+      Position = clone(Editor.GetTargetLocation());
+
+    Mission.CreateAndInitObject(
+        _ObjectID,
+        _ComponentID,
+        _ScriptClass,
+        Position,
+        []
+      );
+
+    Component Object = Mission.GetObject(_ObjectID);
+    if (null == Object)
+    {
+      logError("Object creation failed");
+      return;
+    }
+
+    Mission.GetContent().CreateObjectRecord(
+        _ObjectID,
+        _ComponentID,
+        _ScriptClass,
+        Position,
+        clone(GetObjectDefaultProperties(Object))
+      );
+  }
+
+  void DeleteObject()
+  {
+    Component Game  = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+
+    Component Editor = GetMissionEditor();
+    if (null == Editor)
+      return;
+
+    Component SelectedObject = Editor.GetSelectedObject();
+    if (null == SelectedObject)
+      return;
+
+    Editor.SelectObject(null);
+    String ObjectID = getIdentificator(SelectedObject);
+
+    if (isFunctionExist(SelectedObject, "OnDelete", 0))
+      SelectedObject.OnDelete();
+
+    Mission.DeleteObject(ObjectID);
+    Mission.GetContent().DeleteObjectRecord(ObjectID);
+  }
+
+  Component CloneObject(
+      String _CloneID
+    )
+  {
+    Component Game  = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return null;
+    }
+
+    Component Editor = GetMissionEditor();
+    if (null == Editor)
+      return null;
+
+    Component SelectedObject = Editor.GetSelectedObject();
+    if (null == SelectedObject)
+      return null;
+
+    if (!isFunctionExist(SelectedObject, "Clone", 2))
+    {
+      logError("selected object is not cloneable");
+      return null;
+    }
+
+    return SelectedObject.Clone(_CloneID, clone(Editor.GetTargetLocation()));
+  }
+
+  boolean RenameObject(
+      String _NewID
+    )
+  {
+    Component Game  = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return false;
+    }
+
+    Component Editor = GetMissionEditor();
+    if (null == Editor)
+      return false;
+
+    Component SelectedObject = Editor.GetSelectedObject();
+    if (null == SelectedObject)
+      return false;
+
+    String ObjectID = getIdentificator(SelectedObject);
+
+    Component Group = (new #GameController()).FindObjectGroup(SelectedObject);
+    if (null != Group)
+      return Group.RenameObject(ObjectID, _NewID);
+
+    return false;
+  }
+
+  void ChangeObjectClass(
+      Component _ObjectDescr
+    )
+  {
+    Component OldObject = GetSelectedObject();
+    if (null == OldObject)
+      return;
+
+    Component Group = (new #GameController()).FindObjectGroup(OldObject);
+
+    Matrix Position = getPosition(OldObject);
+
+    DeleteObject();
+    InsertObject(getIdentificator(OldObject), _ObjectDescr);
+
+    Component NewObject = (new #GameController()).GetObject(getIdentificator(OldObject));
+    setPosition(NewObject, Position);
+
+    OnObjectSelected(NewObject);
+
+    if (null != Group)
+      if (GetLoadedMission() != Group)
+        MoveObjectToGroup(getIdentificator(Group));
+  }
+
+  void InvokeEditObjCmd(
+      String _Command,
+      int    _Axis,
+      float  _Param1
+    )
+  {
+    Component Game    = new #GameController();
+    Component Mission = Game.GetLoadedMission();
+    if (null == Mission)
+    {
+      logError("Mission not loaded");
+      return;
+    }
+
+    Component Editor = GetMissionEditor();
+    if (null != Editor)
+      Editor.InvokeEditObjCmd(_Command, _Axis, _Param1);
+  }
+
+  boolean FindObjectByJointName(
+      Component _Mission,
+      Array     _ObjectsList,
+      String    _JointName
+    )
+  {
+    for (int i = 0; i < _ObjectsList.size(); i++)
+    {
+      Component Object = _Mission.GetObject(_ObjectsList[i][CMissionContent::INDEX_ObjectID]);
+      if (Object == null ||
+          !isFunctionExist(Object, "GetJointID", 0))
+        continue;
+
+      if (Object.GetJointID() == _JointName)
+        return true;
+    }
+    return false;
+  }
+
+  void CreateDefaultObjects()
+  {
+  }
+
+  void DeleteDefaultObjects()
+  {
+  }
+
+  Array GetCinemaList()
+  {
+    return new #GameController().GetCinemaList();
+  }
+
+  //
+  // Objects grouping
+  //
+
+  Array GetGroupList()
+  {
+    Array Result = [];
+
+    // Get all objects with CLASSIFICATOR_GROUP
+    Component Mission = (new #GameController()).GetLoadedMission();
+    if (null != Mission)
+    {
+      Array GroupObjects = Mission.GetObjects([CLASSIFICATOR_GROUP], []);
+      for (int i = 0; i < GroupObjects.size(); i++)
+        Result.add(getIdentificator(GroupObjects[i]));
+    }
+
+    return Result;
+  }
+
+  void MoveObjectToGroup(
+      String _GroupID
+    )
+  {
+    // Get selected object
+    Component Object = GetSelectedObject();
+    if (null == Object)
+    {
+      logError("MoveObjectToGroup: no object selected");
+      return;
+    }
+
+    // Create group if not exists
+    Component Group = (new #GameController()).GetObject(_GroupID);
+    if (null == Group)
+    {
+      InsertObject(_GroupID, "ObjectsGroup", "CObjectsGroup");
+      Group = (new #GameController()).GetObject(_GroupID);
+    }
+    else
+    if (Group == Object)
+    {
+      logError("MoveObjectToGroup: selected object == group");
+      return;
+    }
+
+    // Add object to group
+    if (checkMask(Group, [CLASSIFICATOR_GROUP], []))
+      Group.AddObject(Object);
+    else
+      logError("MoveObjectToGroup: " + _GroupID + " is not an objects group");
+  }
+
+  void UngroupObject()
+  {
+    // Get selected object
+    Component Group = GetSelectedObject();
+    if (null == Group)
+    {
+      logError("UngroupObject: no object selected");
+      return;
+    }
+
+    // Ungroup
+    if (checkMask(Group, [CLASSIFICATOR_GROUP], []))
+      Group.Ungroup();
+    else
+      logError("UngroupObject: " + getIdentificator(Group) + " is not an objects group");
+  }
+
+  //
+  // Misc
+  //
+
+  boolean SaveObject(
+      String _FileName
+    )
+  {
+    // Get selected object
+    Component Object = GetSelectedObject();
+    if (null == Object)
+    {
+      logError("SaveObject: no object selected");
+      return false;
+    }
+
+    if (checkMask(Object, [CLASSIFICATOR_GROUP], []))
+      return Object.WriteScriptFile(_FileName);
+    else
+      logError("SaveObject: unknown object type");
+
+    return false;
+  }
+
+  void SetActiveController(
+      String _ActiveController
+    )
+  {
+    CBaseEditorApplication::SetActiveController(_ActiveController);
+
+    Component TerrainEditor = (new #GameController()).GetObject("TerrainEditor");
+    if (null != TerrainEditor)
+      TerrainEditor.SetActiveModifier(_ActiveController);
+  }
+
+  void OnSpecialCommand(
+      int _Command
+    )
+  {
+  }
+
+  //
+  // Load / save game
+  //
+
+  void SaveState(
+      String _FileName
+    )
+  {
+    logMessage("Saving " + _FileName + "...");
+
+    Component Game    = new #GameController();
+    Component Storage = new #FileDataStorage();
+
+    if ((null != Game) && (null != Storage))
+    {
+      Storage.FileFormat  = "M2_S";
+      Storage.FileVersion = 1;
+      if (Storage.OpenFile(_FileName, false))
+      {
+        Game.Export(Storage);
+        Storage.CloseFile();
+        logMessage("Saved");
+      }
+      else
+        logError("error opening file");
+    }
+    else
+      logError("failed");
+  }
+
+  void LoadState(
+      String _FileName
+    )
+  {
+    logMessage("Loading " + _FileName + "...");
+
+    Component Game    = new #GameController();
+    Component Storage = new #FileDataStorage();
+
+    if ((null != Game) && (null != Storage))
+    {
+      if (Storage.OpenFile(_FileName, true))
+      {
+        Game.Import(Storage);
+        Storage.CloseFile();
+        logMessage("Loaded");
+
+        m_bMissionIsLoaded = false;
+        OnMissionLoaded();
+      }
+      else
+        logError("error opening file");
+    }
+    else
+      logError("failed");
+  }
+
+  //
+  // Tools list
+  //
+
+  Array GetToolsList()
+  {
+    Array Result = CBaseEditorApplication::GetToolsList();
+
+    Result.append(CToolsList::GetToolsList());
+
+    return Result;
+  }
+
+  void ExecuteTool(
+      String _ToolName
+    )
+  {
+    CBaseEditorApplication::ExecuteTool(_ToolName);
+    CToolsList::ExecuteTool(_ToolName);
+  }
+
+  boolean IsCursorCenterLocked(
+      String _Mode
+    )
+  {
+    if (_Mode == "FromPlayer")
+      return false;
+    return true;
+  }
+
+  //
+  //Multi player
+  //
+  void EnumerateServers()
+  {
+    Component GameController  = new #GameController();
+    GameController.RefreshServersList(true);
+  }
+
+  Array GetServersList()
+  {
+    Component GameController  = new #GameController();
+    return GameController.GetServersList();
+  }
+
+  void ConnectToServer(
+      Component _ServerDesc,
+      String    _PlayerName
+    )
+  {
+    CGameSettings::PlayerName = _PlayerName;
+    Component GameController  = new #GameController();
+    GameController.ConnectToServer(_ServerDesc, new WString(_PlayerName), -1);   
+    // Set loaded Mission flag
+    m_bMissionIsLoaded = true;
+  }
+
+  void ConnectToServerByIP(
+      String    _ServerIP,
+      String    _PlayerName
+    )
+  {
+    CGameSettings::PlayerName = _PlayerName;
+    Component GameController  = new #GameController();
+    GameController.ConnectToServerByIP(_ServerIP, new WString(_PlayerName), -1);   
+    // Set loaded Mission flag
+    m_bMissionIsLoaded = true;
+  }
+
+  Array GetNewLevelDefaultProperties()
+  {
+    return new Array([
+        ["LevelName", "MyLevel"]
+      ]);
+
+  }
+  Array GetNewMPLevelDefaultProperties()
+  {
+    return new Array([
+        ["LevelName", "MyMPLevel"],
+        ["MaxPLayers", 8]
+      ]);
+
+  }
+  
+  String NewLevel(Array _prop)
+  {
+    return "C" + new String(_prop[1][1]) + "Mission";
+  }
+}

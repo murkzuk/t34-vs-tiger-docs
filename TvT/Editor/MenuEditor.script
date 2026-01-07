@@ -1,0 +1,166 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMenuEditor
+{
+  Component m_MenuController;
+  Component m_SelectedUIControl     = null;
+
+  CMenuEditor()
+  {
+    m_MenuController = (new #GameController()).GetMenuController();    
+  }
+
+  // Select control functions.
+  void SelectUIControl(
+      Component _Control
+    )
+  {
+    if (isFunctionExist(_Control, "GetControlID", 0))
+      SetCurrentTarget(_Control.GetControlID());
+    else
+      SetCurrentTarget("");
+
+    m_SelectedUIControl = _Control;
+  }
+
+  Component GetSelectedUIControl()
+  {
+    return m_SelectedUIControl;
+  }
+
+  // Service functions
+
+  int FindControlRecordIndex(Component ActiveMenu, String _ControlID)
+  {
+    Array ControlList = ActiveMenu.m_UIControls;
+
+    for (int Index = 0; Index < ControlList.size(); Index++)
+      if (ControlList[Index][0] == _ControlID) return Index;
+
+    return -1;
+  }
+
+  void SaveActiveMenu()
+  {
+    Component ActiveMenu = m_MenuController.GetActiveMenu();
+    if (null == ActiveMenu)
+      return;
+
+    SaveControlList(ActiveMenu.m_ControlListClassName, ActiveMenu.m_ControlListClassFile, ActiveMenu.m_UIControls);
+  }
+
+  void AddUIControl(String _ControlID, String _ComponentID, String _ScriptClass,
+    float  _xPos, float  _yPos, float  _Width, float  _Height)
+  {
+    Component ActiveMenu = m_MenuController.GetActiveMenu();
+    if (null == ActiveMenu) return;
+
+    // Creating control with default properties
+    ActiveMenu.CreateUIControl(_ControlID, _ComponentID, _ScriptClass,
+                               new CUIPosition(_xPos, _yPos, _Width, _Height), [] );
+    Component CreatedControl = ActiveMenu.GetObject(_ControlID);
+
+    // Add control to menu editor
+    InsertUIControl(_ControlID, _xPos, _yPos, _Width, _Height);
+
+    // Add control to menu's content
+    ActiveMenu.m_UIControls.add([
+                      _ControlID, 
+                      _ComponentID, 
+                      _ScriptClass, 
+                      new CUIPosition(_xPos, _yPos, _Width, _Height), 
+                      CreatedControl.GetPropertiesList() 
+                    ]);
+  }
+
+  void ResizeUIControlToActualSize(
+      int _ScreenWidth,
+      int _ScreenHeight
+    )
+  {
+    if (null == m_SelectedUIControl)
+      return;
+
+    Array     ActualSize = m_SelectedUIControl.GetActualSize();
+    if (ActualSize.size() == 2)
+    {
+      Component UIPosition = m_SelectedUIControl.GetUIPosition();
+      
+      UIPosition.Width  = float(ActualSize[0]) / float(_ScreenWidth);
+      UIPosition.Height = float(ActualSize[1]) / float(_ScreenHeight);
+
+      UpdateUIControl(
+          m_SelectedUIControl.GetControlID(),
+          UIPosition.X,
+          UIPosition.Y,
+          UIPosition.Width,
+          UIPosition.Height
+        );
+    }
+    else
+      logError("Can't retrieve actual size of UI control: " + m_SelectedUIControl.GetControlID());
+  }
+
+  void DeleteUIControl()
+  {
+    Component ActiveMenu = m_MenuController.GetActiveMenu();
+    if (null == ActiveMenu)
+      return;
+
+    String ActiveControlID = DeleteActiveControl();
+    if ("" == ActiveControlID) return;
+
+    m_MenuController.UnregisterObject(ActiveControlID);
+
+    int Index = FindControlRecordIndex(ActiveMenu, ActiveControlID);
+
+    if (-1 != Index)
+      ActiveMenu.m_UIControls.remove(Index);
+  }
+
+  void SetUIControlPosition(String _UIControlID, float _X, float _Y, float _Width, float _Height)
+  {
+    Component UIPosition = new CUIPosition( _X, _Y, _Width, _Height);
+
+    Component ActiveMenu = m_MenuController.GetActiveMenu();
+    if (null == ActiveMenu)
+      return;
+
+    Component UIControl = ActiveMenu.GetObject(_UIControlID);
+    if (null == UIControl)
+      return;
+
+    UIControl.SetPosition(UIPosition);
+  }
+
+  void ApplyUIControlChanges(String _ControlID)
+  {
+    Component ActiveMenu = m_MenuController.GetActiveMenu();
+    if (null == ActiveMenu)
+      return;
+
+    Component Control = m_MenuController.GetObject(_ControlID);
+    if (null == Control) return;
+
+    Array ControlList = ActiveMenu.m_UIControls;
+
+    int Index = FindControlRecordIndex(ActiveMenu, _ControlID);
+    if (-1 != Index)
+    {
+      ControlList[Index][3].X = Control.GetUIPosition().X;
+      ControlList[Index][3].Y = Control.GetUIPosition().Y;
+      ControlList[Index][3].Width = Control.GetUIPosition().Width;
+      ControlList[Index][3].Height = Control.GetUIPosition().Height;
+    }
+
+  }
+
+
+}

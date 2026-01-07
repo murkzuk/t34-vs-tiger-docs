@@ -1,0 +1,212 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CTestList
+{
+  //
+  // List
+  //
+
+  Array m_TestListGlobal =
+    [
+      [ "Mission1", [
+        [ "StartRussianPatrol1",             "C1M1StartRussianPatrol1" ],
+        [ "StartRussianPatrol2",             "C1M1StartRussianPatrol2" ],
+        [ "StartGermanGroup",                "C1M1StartGermanGroup" ],
+        [ "Start_IL2_Attack",                "C1M1StartUSR_IL2Group" ]
+      ]],
+      [ "Restore tests", [
+        ["HULL_DRIVER", "RestoreHULL_DRIVER"],
+        ["HULL_GUNLAYER", "RestoreHULL_GUNLAYER"],
+        ["HULL_ENGINE", "RestoreHULL_ENGINE"],
+        ["TRACK_LEFT", "RestoreTRACK_LEFT"],
+        ["TRACK_RIGHT", "RestoreTRACK_RIGHT"],
+        ["TURRET", "RestoreTURRET"],
+        ["DAMAGED", "RestoreDAMAGED"]
+      ]],
+      [ "Destroy tests", [
+        ["HULL_DRIVER", "DestroyHULL_DRIVER"],
+        ["HULL_GUNLAYER", "DestroyHULL_GUNLAYER"],
+        ["HULL_ENGINE", "DestroyHULL_ENGINE"],
+        ["TRACK_LEFT", "DestroyTRACK_LEFT"],
+        ["TRACK_RIGHT", "DestroyTRACK_RIGHT"],
+        ["TURRET", "DestroyTURRET"],
+        ["DAMAGED", "DestroyDAMAGED"]
+      ]],
+      [ "Damage tests", [
+        ["HULL_DRIVER", "DamageHULL_DRIVER"],
+        ["HULL_GUNLAYER", "RestoreHULL_GUNLAYER"],
+        ["HULL_ENGINE", "RestoreHULL_ENGINE"],
+        ["TRACK_LEFT", "DamageTRACK_LEFT"],
+        ["TRACK_RIGHT", "DamageTRACK_RIGHT"],
+        ["TURRET", "DamageTURRET"]
+     ]],
+      [ "Destroy selected object",           "DestroyObj"]
+    ];
+
+  Array GetTestList()
+  {
+    m_IsTestListValid = true;
+
+    Array Result = [];
+
+    Result.append(m_TestListGlobal);
+
+    return Result;
+  }
+
+  void ExecuteTest(
+      String _TestName
+    )
+  {
+    Component TestTarget = this;
+    String    TestMethod = _TestName;
+
+    invokeObjectFunction(TestTarget, TestMethod, []);
+  }
+
+  //
+  // Tests
+  //
+
+  //
+  // Mission 1 Event test
+  //
+
+  void C1M1StartRussianPatrol1()
+  {
+    sendEvent(5.0, SOID_MissionController, "StartRussianPatrol1", []);
+  }
+  void C1M1StartRussianPatrol2()
+  {
+    sendEvent(5.0, SOID_MissionController, "StartRussianPatrol2", []);
+  }
+  void C1M1StartGermanGroup()
+  {
+    sendEvent(5.0, SOID_MissionController, "StartGermanGroup", []);
+  }
+  void C1M1StartUSR_IL2Group()
+  {
+    sendEvent(5.0, SOID_MissionController, "StartAirBombAttack", []);
+  }
+
+  void DestroyObj()
+  {
+    Component Editor = new #GameController().GetObject("MissionEditor");
+    if (null != Editor)
+    {
+      Component SelectedObject = Editor.GetSelectedObject();
+      if (null != SelectedObject)
+      {
+        Component StateControl = SelectedObject.GetStateControl();
+        if (null != StateControl)
+          StateControl.SetHitPoints(0.0);
+      }
+    }
+  }
+
+  void RestoreHULL_DRIVER()
+  {
+    SetItemHP("HullDriver", 100.0);
+  }
+  void RestoreHULL_GUNLAYER()
+  {
+    SetItemHP("HullGunlayer", 100.0);
+  }
+  void RestoreHULL_ENGINE()
+  {
+    SetItemHP("HullEngine", 100.0);
+  }
+  void RestoreTRACK_LEFT()
+  {
+    SetItemHP("TrackLeft", 100.0);
+  }
+  void RestoreTRACK_RIGHT()
+  {
+    SetItemHP("TrachRight", 100.0);
+  }
+  void RestoreTURRET()
+  {
+    SetItemHP("Turret", 100.0);
+  }
+  void RestoreDAMAGED()
+  {
+    SetItemHP("Damaged", 100.0);
+  }
+
+
+
+  void DestroyHULL_DRIVER()
+  {
+    SetItemHP("HullDriver", 0.0);
+  }
+  void DestroyHULL_GUNLAYER()
+  {
+    SetItemHP("HullGunlayer", 0.0);
+  }
+  void DestroyHULL_ENGINE()
+  {
+    SetItemHP("HullEngine", 0.0);
+  }
+  void DestroyTRACK_LEFT()
+  {
+    SetItemHP("TrackLeft", 0.0);
+  }
+  void DestroyTRACK_RIGHT()
+  {
+    SetItemHP("TrackRight", 0.0);
+  }
+  void DestroyTURRET()
+  {
+    SetItemHP("Turret_A", 0.0);
+  }
+  void DestroyDAMAGED()
+  {
+    SetItemHP("Damaged", 0.0);
+  }
+
+
+
+  void DamageHULL_DRIVER()
+  {
+    SetItemHP("HullDriver", 19.0);
+  }
+  void DamageTRACK_LEFT()
+  {
+    SetItemHP("TrackLeft", 19.0);
+  }
+  void DamageTRACK_RIGHT()
+  {
+    SetItemHP("TrackRight", 19.0);
+  }
+  void DamageHULL_GUNLAYER()
+  {
+    SetItemHP("HullGunlayer", 19.0);
+  }
+  void DamageHULL_ENGINE()
+  {
+    SetItemHP("HullEngine", 19.0);
+  }
+  void DamageTURRET()
+  {
+    SetItemHP("Turret_A", 19.0);
+  }
+
+
+  void SetItemHP(String _ItemName, float _HPPers)
+  {
+    Component Editor = new #GameController().GetObject("MissionEditor");
+    if (null != Editor)
+    {
+      Component SelectedObject = Editor.GetSelectedObject();
+      if (null != SelectedObject)
+        SelectedObject.SetUnitItemHPPercent(_ItemName, _HPPers);
+    }
+  }
+}

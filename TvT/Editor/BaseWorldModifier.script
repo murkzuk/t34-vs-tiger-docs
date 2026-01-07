@@ -1,0 +1,153 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CBaseWorldModifier
+{
+  //
+  // Constants
+  //
+
+  final static float CursorRadiusChangeSpeed = 50.0;
+
+  //
+  // Properties
+  //
+
+  String m_MatrixLayer = "";
+  String m_ZoneMap     = "";
+  String m_WaterMatrixLayer = "";
+
+  Component m_MissionTerrain = null;
+  boolean   m_IsEnabled      = false;
+  boolean   m_IsTimerEnabled = false;
+
+  //
+  // Class methods
+  //
+
+  void Construct(
+      Component _GeometryCursor
+    )
+  {
+    _GeometryCursor.Enable(false);
+    RegisterObject("GeometryCursor", _GeometryCursor);
+
+    Component TextControl = new #TextControl();
+    TextControl.SetPosition(0.01, 0.05);
+    TextControl.SetDimensions(0.9, 0.1);
+    TextControl.SetFont("White Rabbit", 0.0170000);
+    TextControl.SetTextColor(new Color(1.0, 1.0, 1.0, 0.5));
+    TextControl.SetRenderLayer(PRIMLAYER_MENU);
+    RegisterObject("GeometryCursorLabel", TextControl);
+    UpdateCursorLabel();
+  }
+
+  void Initialize(
+      Component _Mission
+    )
+  {
+    m_MissionTerrain = _Mission.GetMissionTerrain();
+
+    m_MatrixLayer = _Mission.LAYER_TERRAIN_NAME;
+    m_WaterMatrixLayer = _Mission.LAYER_TERRAIN_WATERHEIGHTS;
+    m_ZoneMap     = _Mission.LAYER_TERRAIN_ZONE;
+
+    Component WorldMatrices  = _Mission.GetMissionWorldMatrices();
+    Component GeometryCursor = GetGeometryCursor();
+
+    if (null != GeometryCursor)
+      GeometryCursor.SetMatrixLayer(WorldMatrices.GetLayer(m_MatrixLayer));
+  }
+
+  Component GetGeometryCursor()
+  {
+    return GetObject("GeometryCursor");
+  }
+
+  void SetTerraformType(
+      int _TerraformType
+    )
+  {
+  }
+
+  void OnTimerTick(
+      float _TimePast
+    )
+  {
+    Component InputController = new #InputController();
+
+    if (InputController.GetButtonState(CTLCMD_CURSOR_RADIUS_DEC))
+    {
+      Component Cursor = GetGeometryCursor();
+      Cursor.SetRadius(max(0.0, Cursor.GetRadius() - _TimePast * CursorRadiusChangeSpeed));
+    }
+    else
+    if (InputController.GetButtonState(CTLCMD_CURSOR_RADIUS_INC))
+    {
+      Component Cursor = GetGeometryCursor();
+      Cursor.SetRadius(Cursor.GetRadius() + _TimePast * CursorRadiusChangeSpeed);
+    }
+
+    UpdateCursorLabel();
+  }
+
+  void OnTimerEnabled(
+      boolean _IsEnabled
+    )
+  {
+    m_IsTimerEnabled = _IsEnabled;
+    UpdateCursorLabel();
+  }
+
+  void Enable(
+      boolean _Enable
+    )
+  {
+    Component GeometryCursor = GetGeometryCursor();
+
+    if (null != GeometryCursor)
+      GeometryCursor.Enable(_Enable);
+
+    m_IsEnabled = _Enable;
+
+    UpdateCursorLabel();
+   }
+
+  Component GetCursorLabel()
+  {
+    return GetObject("GeometryCursorLabel");
+  }
+
+  WString GetCursorText()
+  {
+    WString Text = L"";
+
+    if (m_IsEnabled && m_IsTimerEnabled)
+    {
+      Component Cursor = GetGeometryCursor();
+      if (null != Cursor)
+      {
+        Vector Center = Cursor.GetCenter();
+        Text = L"Center: [" +
+          new WString(Center.x) + L", " +
+          new WString(Center.y) + L", " +
+          new WString(Center.z) + L"] Radius: " +
+          new WString(Cursor.GetRadius());
+      }
+    }
+
+    return Text;
+  }
+
+  void UpdateCursorLabel()
+  {
+    GetCursorLabel().SetText(GetCursorText());
+  }
+
+}
