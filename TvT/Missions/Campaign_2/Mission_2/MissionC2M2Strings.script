@@ -1,0 +1,23 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+//-----------------
+//  Mission strings
+//-----------------
+class CC2M2Mission_Strings extends CCommonStrings
+{
+  final static WString MissionName    = getLocalized("MissionC2M2", "MissionName");
+  final static WString BriefingText   = getLocalized("MissionC2M2", "BriefingText");
+  final static WString ObjectivesText = getLocalized("MissionC2M2", "ObjectivesText");
+  final static WString Objective01    = getLocalized("MissionC2M2", "Objective01");
+  final static WString Objective02    = getLocalized("MissionC2M2", "Objective02");
+  final static WString Objective03    = getLocalized("MissionC2M2", "Objective03");
+  final static WString str_NavPointKurt =  getLocalized("MissionC2M2", "NavpointKurt");
+  final static WString str_NavPointRend =  getLocalized("MissionC2M2", "NavpointRend");
+}

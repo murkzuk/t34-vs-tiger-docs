@@ -1,0 +1,637 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2BaseUnitGroup extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+
+    ActivateFire(false);
+    ActivateRadar(false);
+  }
+
+  event void SetActive()
+  {
+    //if (GetMission().isDebug)
+    //    logWarning("CC2M2BaseUnitGroup  call SetActive for Group with ID=" + getIdentificator(user));
+
+    ActivateFire(true);
+    ActivateRadar(true);
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// GerTankGroup
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2GerMPU_GroupAll extends CC2M2BaseUnitGroup
+{
+  float SpeedAttackKurtenki = 2.0f;
+  boolean HanomagRemoved = false;
+
+  event void StartGermanGroupAll()
+  {
+    //if(GetMission().isDebug)
+    //  logWarning(" CC2M2GerMPU_GroupAll  -  StartGermanGroupAll");
+
+    RefreshUnitsList();
+    PopDelayedOrder();
+  }
+
+  event void StartFight()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" CC2M2GerMPU_GroupAll  -  StartFight");
+
+    GetMission().SetObjectiveVisible(1, true);
+    RemoveGanomag();
+    SetFormation("CFrontFormation", 45.0, true, true);
+    //GermanPath1_See_1
+    Array ApproachPoints = [
+                    GetNavPointBehPos("GermanPath1_See_1"),
+                    GetNavPointBehPos("GermanPath1_See_2")
+                    ];
+
+ //    if (GetMission().StartFightPatrolFLag == false )
+//    {
+       SetOrder_MoveToEx(ApproachPoints, SpeedAttackKurtenki);
+//       GetMission().StartFightPatrolFLag = true;
+ //    }
+    //SetOrder_MoveTo(GetNavPointBehPos("RusianSuicidal"), 5.0f, true);
+    sendEvent(20.0, getIdentificator(user), "SetActive", []);
+  }
+  event void StopFight()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning("CC2M2GerMPU_GroupAll  -  StopFight");
+
+
+    //logWarning("[CC2M2GerMPU_GroupAll] StopFight. HasOrderedEnemies() is " + new String(HasOrderedEnemies()));
+    ActivateFire(false);
+    ActivateRadar(false);
+
+    if (HasOrderedEnemies())
+    {
+      //logWarning("[CC2M2GerMPU_GroupAll] StopFight. Clearing Enemies");
+      ClearEnemiesArray();
+      OnOrderFulfilled();
+    }
+
+    //logWarning("[CC2M2GerMPU_GroupAll] StopFight. HasOrderedEnemies() now is " + new String(HasOrderedEnemies()));
+
+    CancelAllOrders();
+    SetFormation("Column", 50, true, true);
+
+    //logWarning("[CC2M2GerMPU_GroupAll] StopFight. Group MoveTo GermanPath1_4 with column");
+
+    SetOrder_MoveTo(GetNavPointBehPos("GermanPath1_4"), 3.1, false);
+
+    MoveOutGanomag();
+
+   // logWarning("CC2M2GerMPU_GroupAll  -  StopFight  -  ContinueOrder()");
+  }
+
+  event void DropAll()
+  {
+    Array ETargets = ["RusGroup2_T76_1", "RusGroup2_T76_2", "RusGroup2_T76_3", "Russian_Su_1", "Zis_1", "Zis_2", "Zis_3"];
+    CancelAllOrders();
+    SetOrder_Attack(ETargets, ERT_AGGRESSIVE);
+    //logWarning(" CC2M2GerMPU_GroupAll  -  DROPALL ENTER");
+
+  }
+
+  event void AddReinforcementGroup()
+  {
+    Component ReinfGroup = GetMission().GetObject("CC2M2GerReinforcementGroup");
+    if (ReinfGroup == null)
+      return;
+
+    RefreshUnitsList();
+    RemoveGanomag();
+    ReinfGroup.RefreshUnitsList();
+
+    while (ReinfGroup.m_Units.size() != 0)
+    {
+      Component Unit = GetMission().GetObject(ReinfGroup.m_Units[0]);
+      if (Unit != null)
+        AddUnit(Unit);
+
+      ReinfGroup.RemoveUnit(ReinfGroup.m_Units[0]);
+      ReinfGroup.m_Units.remove(0);
+      ReinfGroup.RefreshUnitsList();
+    }
+    CancelAllOrders();
+    RefreshUnitsList();
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("GermanPath1_6"),
+                    GetNavPointBehPos("RusianPath1_4"),
+                    GetNavPointBehPos("RusianPath1_3"),
+                    GetNavPointBehPos("RusianPath1_2"),
+                    GetNavPointBehPos("RusianPath1_1")
+                    ];
+
+    SetFirstQueueOrders([
+                        ["CC2M2GerMPU_GroupAll", "SetOrder_MoveToEx", [ApproachPoints, SpeedAttackKurtenki], ""],
+                        ["CC2M2GerMPU_GroupAll", "EndMoveToAttack", [], ""]
+                      ]);
+
+    sendEvent(10.0, getIdentificator(user), "CloseGap", [60, 1.0f]);
+    sendEvent(20.0, getIdentificator(user), "CloseGap", [50, 2.0f]);
+    sendEvent(30.0, getIdentificator(user), "CloseGap", [40, 3.0f]);
+    sendEvent(40.0, getIdentificator(user), "CloseGap", [30, 4.0f]);
+    sendEvent(50.0, getIdentificator(user), "CloseGap", [20, SpeedAttackKurtenki]);
+  }
+
+  void RemoveGanomag()
+  {
+     //REmoveGanomag
+     if (HanomagRemoved)
+        return;
+
+    for (int i = 0; i < m_Units.size(); i++)
+      if (checkMask(GetMission().GetObject(m_Units[i]), ["BTR"], []))
+      {
+        //logError("remove unit ID = " + m_Units[i]);
+        RemoveUnit(m_Units[i]);
+      }
+
+    sendEvent(0.0, "CC2M2GerGroupHanomag", "RemoveGroup", []);
+    RefreshUnitsList();
+    //REmoveGanomag
+  }
+
+   void MoveOutGanomag()
+  {
+    SetFormation("Column", 50, true, true);
+    sendEvent(15.0, "CC2M2GerGroupHanomag", "MoveGroup", []);
+    RefreshUnitsList();
+    //REmoveGanomag
+  }
+
+
+
+
+  event void AllStartAttackKurtenki()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" CC2M2GerMPU_GroupAll  -  AllStartAttackKurtenki");
+
+   // CancelAllOrders(); /// not sure? but....Tche
+    ActivateRadar(false);
+    Array ApproachPoints = [
+                    GetNavPointBehPos("RusianPath1_5"),
+                    GetNavPointBehPos("RusianPath1_4_5"),
+                    GetNavPointBehPos("RusianPath1_4"),
+                    GetNavPointBehPos("RusianPath1_3_4"),
+                    GetNavPointBehPos("RusianPath1_3"),
+                    GetNavPointBehPos("RusianPath1_2"),
+                    GetNavPointBehPos("RusianPath1_1"),
+                    GetNavPointBehPos("NavPoint_village_Kurtenki")
+                    ];
+
+
+    SetOrder_MoveToEx(ApproachPoints, SpeedAttackKurtenki);
+  }
+
+  event void GermanFormationFront()
+  {
+    SetFormation("CFrontFormation", 45.0, true, true);
+  }
+
+  void EndMoveToAttack()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" CC2M2GerMPU_GroupAll  -  EndMoveToAttack");
+  }
+}
+
+class CC2M2GerMPUGroupTankTask extends CC1M3OnUnreacheableUnitProcessingTask
+{
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2GerGroupHanomag extends CBaseUnitGroup
+{
+  float HanomagSpeed = 4.0;
+  float HanomagOutSpeed = 2.8;
+  event void RemoveGroup()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning("[Ironweed]  Hanomag Remove");
+
+    RefreshUnitsList();
+    SetOrder_MoveTo(GetNavPointBehPos("GermanPath1_3"), HanomagSpeed, true);
+  }
+
+   event void MoveGroup()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" Hanomag Moved Out");
+
+    RefreshUnitsList();
+    SetOrder_MoveTo(GetNavPointBehPos("GermanHanomagStay"), HanomagOutSpeed, true);
+  }
+
+}
+class CC2M2GerHanomagTask extends CBaseAIBtrTask
+{
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2GerReinforcementGroup extends CC2M2BaseUnitGroup
+{
+  boolean CallReinforcement = false;
+  float SpeedAttackKurtenki = 3.0f;
+
+  event void StartGermanReinforcementGroup()
+  {
+    if (CallReinforcement)
+        return;
+
+    CallReinforcement = true;
+
+    //if(GetMission().isDebug)
+    //  logWarning(" CC2M2GerReinforcementGroup  -  StartGermanReinforcementGroup");
+
+    RefreshUnitsList();
+    SetActive();
+    PopDelayedOrder();
+  }
+
+  event void AllStartAttackKurtenki()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" CC2M2GerReinforcementGroup  -  AllStartAttackKurtenki");
+
+    Array ApproachPoints1 = [
+                    GetNavPointBehPos("GermanPathReinf_1"),
+                    GetNavPointBehPos("GermanPathReinf_2"),
+                    GetNavPointBehPos("GermanPathReinf_3"),
+                    GetNavPointBehPos("GermanPathReinf_4"),
+                    GetNavPointBehPos("GermanPathReinf_5")
+                    ];
+
+
+
+    sendEvent(40.0, getIdentificator(user), "GermanFormationFront", []);
+    SetFirstQueueOrders([
+                        ["GermanStartAttackKurtenki", "SetOrder_MoveToEx", [ApproachPoints1, SpeedAttackKurtenki], ""],
+                        ["GermanStartAttackKurtenki", "SetOrder_Attack", [["RusGroup1_T76_2"], ERT_AGGRESSIVE], ""] //,
+                        //["GermanStartAttackKurtenki", "SetOrder_MoveToEx", [ApproachPoints2, SpeedAttackKurtenki], ""]
+                      ]);
+  }
+
+  event void GermanFormationFront()
+  {
+    SetFormation("CFrontFormation", 30.0, true, true);
+  }
+
+  event void ContinueAttackKurtenki()
+  {
+    //logError("ContinueAttackKurtenki - ENTER ");
+    ActivateRadar(false);
+    CancelAllOrders();
+    Array ApproachPoints2 = [
+                    GetNavPointBehPos("GermanPathReinf_6"),
+                    GetNavPointBehPos("GermanPathReinf_7"),
+                    GetNavPointBehPos("GermanPathReinf_8"),
+                    GetNavPointBehPos("GermanPathReinf_9"),
+                    GetNavPointBehPos("GermanPathReinf_10"),
+                    GetNavPointBehPos("NavPoint_village_Kurtenki")
+                    ];
+
+    SetFirstQueueOrders([
+                        ["GermanStartAttackKurtenki", "SetOrder_Attack", [[], ERT_AGGRESSIVE], ""],
+                        ["GermanStartAttackKurtenki", "SetOrder_MoveToEx", [ApproachPoints2, SpeedAttackKurtenki], ""]
+                      ]);
+  //  logWarning("CC2M2GerReinforcementGroup  - ContinueAttackKurtenki() ENTER -  ContinueOrder()");
+  //  ContinueOrder();
+  }
+
+  void OnEnemyTargeted(Component _UnitAlerted)
+  {
+    CBaseUnitGroup::OnEnemyTargeted(_UnitAlerted);
+    //if (GetMission().isDebug)
+    //  logWarning("[Ironweed]  CC2M2GerReinforcementGroup  call OnEnemyTargeted   EnemyId = " + _UnitAlerted.GetTargetedEnemy());
+/*
+    if (_UnitAlerted.GetTargetedEnemy() == "RusGroup1_T76_2")
+    {
+      PushOrder();
+      SetOrder_Attack([_UnitAlerted.GetTargetedEnemy()],ERT_AGGRESSIVE);
+    }
+ */
+  }
+
+}
+class CC2M2GerReinforcementTask extends CC1M3OnUnreacheableUnitProcessingTask
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// RusTankGroup
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2RusGroup1_76Tank extends CC2M2BaseUnitGroup
+{
+  boolean m_bRetreatTank = false;
+
+  Array Classificators = ["SUICIDE_UNIT","STRANGE_UNIT", "COURIER_UNIT"];
+
+  void Init()
+  {
+    CC2M2BaseUnitGroup::Init();
+    for (int i = 0; i < m_Units.size(); i++)
+      addClassificatorObject(m_Units[i], Classificators[i]);
+  }
+
+  event void StartRussian76TankGroup1()
+  {
+    //if(GetMission().isDebug)
+    //  logWarning(" CC2M2RusGroup1_76Tank  -  StartRussian76TankGroup1");
+
+    RefreshUnitsList();
+    PopDelayedOrder();
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID) // calles when unit (member of the group) receive event OnExplosion
+  {
+    //if(GetMission().isDebug)
+    //  logWarning("[CC2M2RusGroup1_76Tank] OnUnitExplosion  unit ID = " + _UnitID + " owner ID = " + _OwnerID );
+
+    Component Owner = GetMission().GetObject(_OwnerID);
+    if (checkMask(Owner, ["FRIEND"], []))
+      GetMission().StartFightPatrol();
+  }
+
+  event void RetreatRusTank()
+  {
+    if (m_bRetreatTank)
+      return;
+
+    //if(GetMission().isDebug)
+    //  logWarning("[CC2M2RusGroup1_76Tank] RetreatRusTank");
+
+
+    m_bRetreatTank = true;
+
+    RefreshUnitsList();
+    //CancelAllOrders();
+
+    ForEachUnitTask("RussianRetreat", []);
+    while (m_Units.size() != 0)
+    {
+      RemoveUnit(m_Units[0]);
+      m_Units.remove(0);
+      RefreshUnitsList();
+    }
+  }
+
+  event void StartFight()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" CC2M2RusGroup1_76Tank  -  StartFight");
+
+    SetFormation("CFrontFormation", 20.0, true, true);
+    sendEvent(10.0, getIdentificator(user), "SetActive", []);
+    sendEvent(15.0, getIdentificator(user), "RetreatRusTank", []);
+  }
+}
+
+class CC2M2RusTank76Task extends  CC1M3OnUnreacheableUnitProcessingTask   // CBaseAITankTask
+{
+  //  "RusianTankRetreat_Suicide"
+  //  "RusianTankRetreat_Courier"
+  //  "RusianTankRetreat_Strange"
+
+  String classificator1 = "SUICIDE_UNIT";
+  String classificator2 = "COURIER_UNIT";
+  String classificator3 = "STRANGE_UNIT";
+  float AttackSpeed  = 0.0f;
+  float CourierSpeed = 10.0f;
+  float StrangeSpeed = 6.0f;
+
+  void RussianRetreat()
+  {
+    clearEventsForObject(getIdentificator(user));
+    if (checkMask(user, [classificator1], []))
+    {
+      String TargetedEnemy = GetTargetedEnemy();
+      SetOrder_Attack(TargetedEnemy, AttackSpeed);
+    }
+    else if (checkMask(user, [classificator2], []))
+    {
+      ActivateFire(false);
+      SetOrder_MoveTo(GetNavPointBehPos("RusianTankRetreat_Courier"), CourierSpeed);
+    }
+    else if (checkMask(user, [classificator3], []))
+    {
+      ActivateFire(false);
+
+      SetFirstQueueOrders([
+                          ["MoveToPointRetreat", "SetOrder_MoveTo", [GetNavPointBehPos("RusianTankRetreat_Strange_4"), StrangeSpeed], "OnStopped"],
+                          ["MoveToPointRetreat", "SetOrder_MoveTo", [GetNavPointBehPos("RusianTankRetreat_Strange_3"), StrangeSpeed], "OnStopped"],
+                          ["MoveToPointRetreat", "SetOrder_MoveTo", [GetNavPointBehPos("RusianTankRetreat_Strange_2"), StrangeSpeed], "OnStopped"],
+                          ["MoveToPointRetreat", "SetOrder_MoveTo", [GetNavPointBehPos("RusianTankRetreat_Strange_1"), StrangeSpeed], "OnStopped"],
+                          ["MoveToPointRetreat", "StopRetreat", [], ""]
+                        ]);
+
+      //SetOrder_MoveTo(GetNavPointBehPos("RusianTankRetreat_Strange_1"), StrangeSpeed);
+    }
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    if (checkMask(user, [classificator1], []))
+    {
+      // не фиг по полю за русскими гоняться ... сделаем пару выстрелов и будет
+      sendEvent(20.0,  "CC2M2GerMPU_GroupAll",   "StopFight", []);
+    }
+  }
+
+  void StopRetreat ()
+  {
+    //if(GetMission().isDebug)
+    //  logWarning("StopRetreat CALLED ");
+
+
+    if (checkMask(user, [classificator3], []))
+    {
+         if(GetMission().isDebug)
+      //logWarning("StrangeUnitReachedPoint");
+      //logWarning("StopRetreat ENTER ");
+
+      GetMission().StrangeUnitReachedPoint = true;
+      ActivateFire(true);
+      clearEventsForObject(getIdentificator(user));
+      CBaseAITankTask::OnStopped();
+    }
+  }
+
+  void OnStopped()
+  {
+    //if (GetMission().isDebug)
+    //  logWarning(" CC2M2RusTank76Task  -  OnStopped   Unit with classificators " );
+    //  (new #GameController().GetObject(SOID_Console)).logClassificatorsList(getIdentificator(user));
+
+    if (checkMask(user, [classificator2], []))
+    {
+      ActivateFire(true);
+      GetMission().CourierUnitReachedPoint = true;
+      clearEventsForObject(getIdentificator(user));
+    }
+
+    CBaseAITankTask::OnStopped();
+  }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+//    if (GetMission().isDebug)
+//      logWarning(" CC2M2RusTank76Task  -  OnHitByEnemy   Unit with classificators  ->");
+//      (new #GameController().GetObject(SOID_Console)).logClassificatorsList(getIdentificator(user));
+
+    if (checkMask(user, [classificator2], []) || checkMask(user, [classificator3], []))
+    {
+      Component Behavior = GetBehavior();
+      int TimeStop = Behavior.GetNoMoveTime();
+
+      if(TimeStop == -1)
+      {
+        //if (GetMission().isDebug)
+        //  logWarning("Tank can`t move -> ActivateFire(true)");
+        ActivateFire(true);
+      }
+    }
+
+    CBaseAITankTask::OnHitByEnemy(_EnemyID);
+  }
+
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2RusGroupReinforcement76Tank extends CC2M2BaseUnitGroup
+{
+  String PositionPoint1 = "RussionPosition1";
+  String PositionPoint2 = "RussionPosition2";
+  Array NavPointHide = ["RusianReinforcmentHidePos_1", "RusianReinforcmentHidePos_2", "RusianReinforcmentHidePos_3"];
+  Array NavPointAttack = ["RusianReinforcmentAttackPos_1", "RusianReinforcmentAttackPos_2", "RusianReinforcmentAttackPos_3"];
+  float SpeedMoveToHidePosition = 2.0f;
+
+  event void MoveToHidePosition()
+  {
+    RefreshUnitsList();
+    //
+    for (int i = 0; i < m_Units.size(); i++)
+      if (GetUnitTask(m_Units[i]) != null)
+        InvokeUnitTaskFunction(m_Units[i], "SetOrder_MoveTo_LookAt", [GetNavPointBehPos(NavPointHide[i]), GetNavPointBehPos("RusianReinforcmentHidePos_See"), SpeedMoveToHidePosition]);
+  }
+
+  event void MoveToAttackPosition()
+  {
+    GetMission().HideToAttack = false;
+    if (!HideToAttack)
+    {
+      RefreshUnitsList();
+      //
+      for (int i = 0; i < m_Units.size(); i++)
+        if (GetUnitTask(m_Units[i]) != null)
+          InvokeUnitTaskFunction(m_Units[i], "SetOrder_MoveTo_LookAt", [GetNavPointBehPos(NavPointAttack[i]), GetNavPointBehPos("RusianReinforcmentAttackPos_See"), SpeedMoveToHidePosition]);
+
+      HideToAttack = true;
+    }
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+    CC2M2BaseUnitGroup::OnUnitHitByEnemy(_UnitID, _EnemyID);
+    GetMission().ActivateRussianKurtenki();
+  }
+}
+
+class CC2M2RusTank76ReinforcementTask extends CC1M3OnUnreacheableUnitProcessingTask
+{
+}
+// Group task for forced tanks
+class CC2M2RusGroupForcedTank extends CC2M2BaseUnitGroup
+{
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+    CC2M2BaseUnitGroup::OnUnitHitByEnemy(_UnitID, _EnemyID);
+    GetMission().ActivateRussianKurtenki();
+  }
+}
+// Task for forcedt russian tank without moving
+class CC2M2RusTank76ForcedTask extends CBaseAITankTask
+{
+  void Init()
+  {
+    CBaseAITankTask::Init();
+    ActivateMovement(false);
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+    )
+  {
+    CBaseAITankTask::OnExplosion(
+      _Damage,               // - сила ударной волны (not used)
+      _Position,             // - источник волны
+      _Radius,               // - радиус взрыва (not used)
+      _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+      _DamageType,           // - тип повреждения - тип снаряда который попал
+      _SubstanceId,          // - материал в который попали
+      _ExtraAttribs,         // - дополнительные параметры
+      _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+      _DamageJoint
+    );
+    ActivateMovement(true);
+  }
+
+  void OnHitByEnemy(
+      String _EnemyID
+   )
+  {
+    CBaseAITankTask::OnHitByEnemy(_EnemyID);
+    ActivateMovement(true);
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2RusGroupSau extends CC2M2BaseUnitGroup
+{
+  event void StartRussianSauGroup1()
+  {
+    //if(GetMission().isDebug)
+    //  logWarning(" CC2M2RusGroupSau  -  StartRussianSauGroup1");
+
+    RefreshUnitsList();
+    PopDelayedOrder();
+  }
+
+}
+class CC2M2RusSuTask extends CBaseAISAUTask
+{
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+class CC2M2RusGroupZis extends CC2M2BaseUnitGroup
+{
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+    GetMission().ActivateRussianKurtenki();
+  }
+}
+

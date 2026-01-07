@@ -1,0 +1,119 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+class C2M2_MainPlayerUnit_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "RusGroup1_T76_1";                              // кто следит
+  final static Array  ControlPoints = ["MPU_Group_Tiger", "MainPlayerUnit"];          // за кем следим
+
+  Component WhoWatches;
+  Component WhomWatches0;
+  Component WhomWatches1;
+
+  float distbetween_RusGer = 650.0f;
+
+  final static int MPU_Tiger            = 0;
+  final static int MPU                  = 1;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+
+    WhoWatches   = GetMission().GetObject(Positionable);       // кто следит RusGroup1_T76_1
+    WhomWatches0 = GetMission().GetObject(ControlPoints[0]);   // за кем следим MPU_Group_Tiger
+    WhomWatches1 = GetMission().GetObject(ControlPoints[1]);   // за кем следим MainPlayerUnit
+
+    GetMission().GetObject("C2M2_MainPlayerUnit_Watcher").SetUpdatePeriod(5000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(MPU);
+
+    PointRegionChanged(_Watcher, MPU, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    Array PointInfo0   = _PositionWatcher.GetPointInfo(MPU_Tiger);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+      //logWarning("[C2M2_MainPlayerUnit_Watcher] Point region changed");
+      //logWarning("Distance  beetwen RusGroup1_T76_1  and MPU_Tiger  = " + new String(PointInfo0[INDEX_Distance]));
+
+    if(PointInfo0[INDEX_Distance] < distbetween_RusGer)
+      GetMission().StartFightPatrol();
+  }
+}
+
+
+class C2M2_MPU_Watcher extends CPositionWatcher, CBaseUtilities
+{
+  final static String Positionable  = "CC2M2RusGroupZis";                              // кто следит
+  final static Array  ControlPoints = ["MPU_Group_T4_1", "MPU_Group_T4_2", "MPU_Group_Tiger", "MainPlayerUnit"];          // за кем следим
+
+  float distbetween_RusGer = 600.0f;
+
+  Initialize(Component _Mission, String _Name)
+  {
+    CPositionWatcher::Initialize(_Mission, _Name);
+
+    GetMission().GetObject("C2M2_MPU_Watcher").SetUpdatePeriod(10000);
+  }
+
+  void Update(Component _Watcher)
+  {
+    Array PointInfo0 = _Watcher.GetPointInfo(0);
+    Array PointInfo1 = _Watcher.GetPointInfo(1);
+    Array PointInfo2 = _Watcher.GetPointInfo(2);
+    Array PointInfo3 = _Watcher.GetPointInfo(3);
+
+    PointRegionChanged(_Watcher, 0, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 1, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 2, PointInfo0[INDEX_RegionMask]);
+    PointRegionChanged(_Watcher, 3, PointInfo0[INDEX_RegionMask]);
+  }
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+        )
+  {
+    Array PointInfo   = _PositionWatcher.GetPointInfo(_Point);
+    Array PositionInfo = _PositionWatcher.GetPositionInfo();
+
+      //logWarning("[C2M2_MPU_Watcher] Point region changed");
+      //logWarning("Distance  beetwen CC2M2RusGroupZis  and "  + ControlPoints[_Point]+  "  = " + new String(PointInfo[INDEX_Distance]));
+
+    if(PointInfo[INDEX_Distance] < distbetween_RusGer + 100)
+       fireEvent(0.0, [], "FormationFront", []);
+
+    if(PointInfo[INDEX_Distance] < distbetween_RusGer)
+        GetMission().ActivateRussianKurtenki();
+  }
+
+  void PointRelativeSpeedChanged(Component _PositionWatcher, int _Point, float _RelativeSpeed)
+  {
+  }
+}
+
+
+
+
+
+
+
+
+
+
+

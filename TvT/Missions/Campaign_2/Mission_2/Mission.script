@@ -1,0 +1,378 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CC2M2Mission extends CSPMission
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+  String m_LocalTime             = "6:20:00";
+  String m_TerrainMapTextureName = "Textures/c2m2_Map.tex"; //Textures/C1M3_Map.tex
+
+  static String m_MissionBriefingPicMaterial = "C2M2BriefingPic"; //C1M3BriefingPic
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary,   CC2M2Mission_Strings::Objective01, MOSID_InProgress, true],
+      [MOTID_Secondary, CC2M2Mission_Strings::Objective02, MOSID_InProgress, false],
+      [MOTID_Primary,   CC2M2Mission_Strings::Objective03, MOSID_InProgress, true]
+                               ];
+  static WString ObjectivesText = CC2M2Mission_Strings::ObjectivesText;
+
+  boolean isDebug = true;
+  boolean isRadarUpdateDebug = false;
+
+  boolean HideToAttack = false;
+
+  boolean MainPlayerStartEgine = false;
+  boolean StartFightPatrolFLag = false;
+  boolean GroupReinfStopped = false;
+  boolean GroupAllGermanStopped = false;
+  boolean CourierUnitReachedPoint = false;
+  boolean StrangeUnitReachedPoint = false;
+  int ZiS_count = 0;
+  int def_count = 0;
+  int Penalty_count = 0;
+
+  boolean ActivatedRussianKurtenki = false;
+
+  Array m_NavpointsForPlayerMap = [
+      [
+        ["NavPointKurt"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+      ],
+      [
+        ["NavPointRend"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColor
+      ]
+                                   ];
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4500.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2402, 1502.0, 0.0), new Vector(6902.0, 6002.0, 0.0)];
+
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  Component C2M2_MainPlayerUnit_Watcher;
+  Component C2M2_MPU_Watcher;
+
+  Array KillList_Primary1   = [];
+  Array KillList_Primary2   = [];
+  Array KillList_Secondary1 = [];
+
+  Array KillList1 = ["RusGroup1_T76_1", "RusGroup1_T76_2", "RusGroup1_T76_3"];
+
+  void CC2M2Mission()
+  {
+    CShadowsHide::InitializeShadowsHide();
+
+    // Construct mission
+    CSPMission("CC2M2Mission", "CC2M2Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CC2M2Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CC2M2Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky08Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+     m_MissionLensFlare =  new #LensFlare<CC2M2LensFlare>();
+    SetMissionWorldMatrices(new #WorldMatrices<CC2M2WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME, "CC2M2LandscapeLayer"      ],
+        [LAYER_TERRAIN_ZONE, "CC2M2TerrainZoneLayer"    ],
+        [LAYER_ROUTER_ZONE,  "CC2M2RouterZoneLayer"     ],
+        [LAYER_MICROTEXTURE_MAP1, "CC2M2MicroTextures1" ],
+        //["Landing Zone Texture",  "CC2M2LZTexture"    ],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CC2M2WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+//    Component console = new #GameController().GetObject(SOID_Console);
+//    console.disablebeh();
+//    console.showbehinf(true);
+
+    C2M2_MainPlayerUnit_Watcher = new C2M2_MainPlayerUnit_Watcher();
+    C2M2_MainPlayerUnit_Watcher.Initialize(this, "C2M2_MainPlayerUnit_Watcher");
+
+    //sendEvent(100.0, SOID_MissionController, "OnEngineStateChanged", [true]);
+    sendEvent(230.0, SOID_MissionController, "OnEngineStateChanged", [true]);
+  }
+
+  event void OnMissionDialogEnd(String _DialogID)
+  {
+  }
+
+  //fireEvent(0.0, [], "OnEngineStateChanged", [true]);
+  event void OnEngineStateChanged(boolean _IsWorkEngine)
+  {
+    if (_IsWorkEngine && !MainPlayerStartEgine)
+    {
+      sendEvent(5.0,  "CC2M2GerMPU_GroupAll",   "StartGermanGroupAll", []);
+      sendEvent(10.0,  "CC2M2RusGroup1_76Tank",   "StartRussian76TankGroup1", []);
+      MainPlayerStartEgine = true;
+    }
+  }
+
+  void OnObjectEnterNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //if (isDebug)
+    //logMessage("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+
+   //if(isDebug)
+   //   logWarning("StrangeUnitReachedPoint is " + new String(StrangeUnitReachedPoint));
+
+/*
+    if(_NavPointID == "RusianPath2_2" && _ObjectID == "RusGroup2_T76_1")
+    {
+      if (KillList1.size() == 0)
+        sendEvent(0.0,  "CC2M2RusGroupReinforcement76Tank",   "MoveToPosition", [1]);
+      else
+        sendEvent(0.0,  "CC2M2RusGroupReinforcement76Tank",   "MoveToPosition", [2]);
+    }
+ */
+
+    if (_NavPointID == "GermanPath2_5" && _ObjectID.IsStartsWith("GermanTank_T4_") && !GroupReinfStopped)
+    {
+      GroupReinfStopped = true;
+      StartAttackKurtenki();
+    }
+    if (_NavPointID == "RusianTankRetreat_Courier" && _ObjectID == "RusGroup1_T76_3")
+    {
+      if (GetUnitTask("RusGroup1_T76_3") != null)
+        GetUnitTask("RusGroup1_T76_3").ActivateRadar(false);
+
+      sendEvent(0.0, "CC2M2RusGroupReinforcement76Tank", "MoveToHidePosition", []);
+    }
+    if (_NavPointID == "GermanPath1_4" && _ObjectID.IsStartsWith("MPU_Group_T") && !GroupAllGermanStopped)
+    {
+      GroupAllGermanStopped = true;
+      StartAttackKurtenki();
+
+      C2M2_MPU_Watcher = new C2M2_MPU_Watcher();
+      C2M2_MPU_Watcher.Initialize(this, "C2M2_MPU_Watcher");
+    }
+    if (_NavPointID == "GermanPathReinf_5" && _ObjectID.IsStartsWith("GermanTank_T4_") && !StrangeUnitReachedPoint)
+    {
+      //logError("ContinueAttackKurtenki - CALL from OnEnternavpoint");
+      sendEvent(0.0,  "CC2M2GerReinforcementGroup",   "ContinueAttackKurtenki", []);
+    }
+  }
+
+  void OnObjectLeaveNavPoint( String _NavPointID, String _ObjectID)
+  {
+    //if(isDebug)
+    //  logWarning("Object: " + _ObjectID + " leave NavPoint: " +  _NavPointID);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CMission::OnObjectDestroyed(_ObjectID);
+    Component DeadThing = GetObject(_ObjectID);
+    // TMP
+
+    if (null == DeadThing)
+    {
+      //logError("Component 'DeadThing' == null");
+      return;
+    }
+
+    String Affiliation  = DeadThing.GetAffiliation();
+    String Damager      = DeadThing.GetLastDamager();
+
+    if (Damager == "MainPlayerUnit")
+    {
+      //logWarning("CheckMadPlayer");
+      //logWarning("CheckMadPlayer. Affiliation is " + Affiliation);
+      //logWarning("CheckMadPlayer. Damager is " + Damager);
+
+      if (!checkMask(DeadThing, ["HUMAN"], []))
+      {
+        //logWarning("MadPlayer_kill_Non_Human");
+
+        if (Affiliation == "FRIEND")
+        {
+          //logWarning("MissionWillBeKilledByFriendlyFire");
+          Penalty_count = Penalty_count + 1;
+          SendCockpitMessage(CGameMessages::msg_FriendlyFireWarning, new Color(1.0, 1.0, 0.0));
+          // New report for Cocpit: "You kill friendly unit. Mission will be fail"
+          if (Penalty_count >= 2)
+          {
+            //logWarning("MissionKillingByFriendlyFire");
+            SendCockpitMessage(CGameMessages::msg_FriendlyFireFailed, new Color(1.0, 0.0, 0.0));
+            sendEvent(11.0, SOID_MissionController, "FailMissionMad", []);
+          }
+        }
+      }
+    }
+    // TMP
+
+     if (_ObjectID.IsStartsWith("RusGroup1_T76_1"))
+     {
+      SetObjectiveStatus(1, MOSID_Completed);
+     }
+
+     if (_ObjectID.IsStartsWith("Zis_"))
+     {  ZiS_count = ZiS_count + 1;
+           if (ZiS_count == 3)
+           {   SetObjectiveStatus(0, MOSID_Completed);
+               //logWarning("all AT ZiS destroyed  OBJ1 (0) COMPLETED");
+           }
+     }
+
+     if (_ObjectID.IsStartsWith("RusGroup2") ||  _ObjectID.IsStartsWith("Russian_Su") || _ObjectID.IsStartsWith("RuDefendGr_")   )
+     {  def_count = def_count + 1;
+           if (def_count == 8)
+           {   SetObjectiveStatus(2, MOSID_Completed);
+               //logWarning("all Defenders destroyed  OBJ3 (2) COMPLETED");
+           }
+     }
+
+   //if(isDebug)
+   //   logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String(DeadThing.GetLastDamager()));
+
+   //if(isDebug)
+   //   logWarning("StrangeUnitReachedPoint is " + new String(StrangeUnitReachedPoint));
+
+
+    int Index1 = KillList1.find(_ObjectID);
+    if (Index1 != -1)
+      KillList1.remove(Index1);
+
+  /*
+    if(_ObjectID == "RusGroup1_T76_1")
+     sendEvent(0.0,  "CC2M2GerMPU_GroupAll",   "StopFight", []); */
+    if(_ObjectID == "RusGroup1_T76_2" && StrangeUnitReachedPoint)
+    {
+     //logError("ContinueAttackKurtenki - CALL from Object Destroy " );
+     sendEvent(0.0,  "CC2M2GerReinforcementGroup",   "ContinueAttackKurtenki", []);
+    }
+  }
+
+  event void FailMissionMad()
+  {
+    FailMission(0.0);
+  }
+
+  event void SetNavPointIdentifiersArray(String _NavPointID, Array _ID)
+  {
+    Component NavPoint = GetMission().GetObject(_NavPointID);
+
+    if (null != NavPoint)
+    {
+      NavPoint.SetIdentifiers(_ID);
+    }
+    //else
+    //  logError("Component NavPoint with ID = " + _NavPointID + " - null!" );
+  }
+
+  void StartFightPatrol()
+  {
+    //logWarning(" StartFightPatrol  CALLED");
+   if (!StartFightPatrolFLag)
+    {
+      fireEvent(0.0, [], "StartFight", []);
+      sendEvent(0.0,  "CC2M2GerReinforcementGroup",   "StartGermanReinforcementGroup", []);
+      ShutdownWatcher("C2M2_MainPlayerUnit_Watcher");
+     StartFightPatrolFLag = true;
+      //logError(" StartFightPatrol  ENTER");
+    }
+  }
+
+  void StartAttackKurtenki()
+  {
+    //logWarning("[Mission] Call to function StartAttackKurtenki()");
+    //logWarning("[Mission] Call to function StartAttackKurtenki(). GroupReinfStopped is     " + new String(GroupReinfStopped));
+    //logWarning("[Mission] Call to function StartAttackKurtenki(). GroupAllGermanStopped is " + new String(GroupAllGermanStopped));
+    if (GroupReinfStopped && GroupAllGermanStopped)
+    {
+      //logWarning("[Mission] Call to function StartAttackKurtenki(). Interrupt success!");
+      fireEvent(10.0, [], "AllStartAttackKurtenki", []);
+    }
+  }
+
+  event void ActivateRussianKurtenki()
+  {
+    if(ActivatedRussianKurtenki)
+        return;
+
+    ActivatedRussianKurtenki = true;
+    ShutdownWatcher("C2M2_MPU_Watcher");
+
+    GetMission().GetUnitTask("RusGroup1_T76_3").ActivateRadar(true);
+ //   sendEvent(0.0,  "CC2M2RusGroupReinforcement76Tank",   "SetActive", []);
+ //   sendEvent(0.0,  "CC2M2RusGroupSau",   "SetActive", []);
+//    sendEvent(0.0,  "CC2M2RusGroupZis",   "SetActive", []);
+    fireEvent(0.0, [], "SetActive", []);
+    sendEvent(0.0,  "CC2M2GerMPU_GroupAll",   "DropAll", []);
+    sendEvent(240.0,  "CC2M2RusGroupReinforcement76Tank",   "MoveToAttackPosition", []);
+
+    //logWarning(" CC2M2GerMPU_GroupAll  -  DROPALL CALL");
+  }
+
+  event void ShutdownWatcher(String _WatcherName)
+  {
+    Component Watcher = GetObject(_WatcherName);
+    if (Watcher != null)
+    {
+      Watcher.SetEventHandler(null);
+      Watcher = null;
+    }
+    //else
+    //  logError("Object with ID = " + _WatcherName + " does not exist.");
+  }
+
+  void Shutdown()
+  {
+    CSPMission::Shutdown();
+  }
+
+  event void Distance(String _BetweenID_1, String _BetweenID_2)
+  {
+    float m_CurrentDistance;
+    Component Between_1 = new #GameController().GetObject(_BetweenID_1);
+    Component Between_2 = new #GameController().GetObject(_BetweenID_2);
+
+    if (null == Between_1 && null == Between_2)
+    {
+      //logError("Component - null!");
+      return;
+    }
+
+    Vector m_Pos_1 = getPosition(Between_1).origin;
+    Vector m_Pos_2 = getPosition(Between_2).origin;
+
+    m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+
+    //logWarning("[Distance] Unit`s " + _BetweenID_1 + " and " + _BetweenID_2 + " distance = " + new String(m_CurrentDistance));
+  }
+}

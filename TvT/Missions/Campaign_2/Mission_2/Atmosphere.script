@@ -1,0 +1,53 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC2M2Atmosphere extends CCommonAtmosphere
+{
+  boolean IsLightEnabled   = true;
+  boolean IsAntiSunEnabled = true;
+
+  Vector  SunDirection   = new Vector(0.320000, -0.180000, -0.200000); // Lowered sun angle for early dawn
+  Color   AmbientLight   = new Color(0.180392, 0.160784, 0.140196, 1.000000); // Warmer, darker ambient for dawn
+  Color   SunColor       = new Color(1.000000, 0.749020, 0.294118, 1.000000); // Warmer orange-amber for sunrise
+  Color   AntiSunColor   = new Color(0.498039, 0.521569, 0.607843, 1.000000); // Slightly warmer anti-sun
+  float   DistanceToSun  = 2000.0;
+
+  Array   HorizontPos    = [100.0f, 1000.0f];
+
+  String  DefaultFogMode = "Exp";
+
+  float   FogNear        = 1.0;
+  float   FogFar         = 1500; // Reduced from 5000 for realistic dawn visibility
+  float   FogFarMax      = 3000.0;
+
+  Color   FogColorXPos   = new Color(0.968627, 0.898039, 0.749020, 1.000000); // Warmer dawn fog (South)
+  Color   FogColorXNeg   = new Color(0.623529, 0.698039, 0.654902, 1.000000); // Warmer dawn fog (North) 
+  Color   FogColorYPos   = new Color(0.584314, 0.615686, 0.666667, 1.000000); // Warmer dawn fog (East)
+  Color   FogColorYNeg   = new Color(0.556863, 0.678431, 0.709804, 1.000000); // Warmer dawn fog (West)
+
+  Color   ShadowColor    = new Color(0.345098, 0.419608, 0.466667, 1.000000); // Warmer shadows
+  float   ShadowFar      = FogFar * 0.7;
+
+  Vector  WindVector     = new Vector(0.0, 1.5, 0.0);
+
+  boolean IsIllumination = false;
+  boolean IsSunVisible   = true;
+  boolean IsLightEnabled = true;
+
+  float   AntiSunIntensity         = 0.25; // Reduced for dawn
+  float   SunIntensity             = 0.35; // Significantly reduced for early dawn (was 0.7)
+  
+  float   SunSpecularIntensity     = 0.8; // Reduced specular for dawn light
+  float   AntiSunSpecularIntensity = 0.0;
+
+  boolean EnableHorizontAdjustment = true;
+
+  float   TreeLightKoef      = 0.6; //tree lighting smooth koef: 0 - min range; 0.3 - middle; 0.8 - high range
+  float   TerrainShadowPower = 4.0; // Reduced shadow contrast for softer dawn lighting
+}
