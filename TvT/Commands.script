@@ -1,0 +1,116 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CBatchCommand
+{
+  Component m_Game;
+  Component m_Console;
+
+  CBatchCommand()
+  {
+    m_Game    = new #GameController();
+    m_Console = m_Game.GetObject(SOID_Console);
+  }
+}
+
+class CAutorun
+  extends CBatchCommand
+{
+  CAutorun()
+  {
+    m_Game.StartGame();
+  }
+}
+
+//
+// Multiplayer
+//
+
+//
+// GameSpy Arcade command line
+//
+// #EXEPATH# host(#ROOMNAME#, #PLAYERNAME#, #GAMETYPECMD#) 
+// #EXEPATH# connect(#SERVERIP#, #PLAYERNAME#)
+
+
+class connect 
+  extends CBatchCommand
+{
+  connect(
+      String _HostName
+    )
+  {
+    m_Game.StartAndConnect(_HostName, getUserName());
+  }
+
+  connect(
+      String _HostName,
+      String _UserName
+    )
+  {
+    m_Game.StartAndConnect(_HostName, new WString(_UserName));
+  }
+}
+
+class host 
+  extends CBatchCommand
+{
+  host()
+  {
+    m_Game.StartAndHost(getComputerName(), getUserName());
+  }
+
+  host(
+      String _ServerName
+    )
+  {
+    m_Game.StartAndHost(new WString(_ServerName), getUserName());
+  }
+
+  host(
+      String _ServerName,
+      String _UserName
+    )
+  {
+    m_Game.StartAndHost(new WString(_ServerName), new WString(_UserName));
+  }
+
+//   host(
+//     String _ServerName,
+//     String _UserName,
+//     int    _GameType
+//   )
+//   {
+//     m_Game.StartAndHost(new WString(_ServerName), new WString(_UserName), _GameType);
+//   }
+
+  host(
+    String _ServerName,
+    String _UserName,
+    String _GameType
+  )
+  {
+    m_Game.StartAndHost(new WString(_ServerName), new WString(_UserName), 0/*_GameType*/);
+  }
+
+  host(
+    String _ServerName,
+    String _UserName,
+    String _GameType,
+    int    _MaxClients
+  )
+  {
+    logWarning("host( " + _ServerName + ", " + 
+                _UserName + ", " + 
+                _GameType + ", " +
+                new String(_MaxClients) + ")");
+    m_Game.StartAndHost(new WString(_ServerName), new WString(_UserName), _GameType, _MaxClients);
+  }
+}
