@@ -417,8 +417,8 @@ class CTankPzVITigerE1Gun
   final static float  LockAngleVMax   =   20.0;//33.0; Temp
   final static float  BlockedLockAngle  =  4.0;
 
-  final static float DirectionSpeedH  = 6.5; // deg / sec  • horizontal
-  final static float DirectionSpeedV  = 3.5; // deg / sec  • vertical
+  final static float DirectionSpeedH  = 6.5; // deg / sec  В• horizontal
+  final static float DirectionSpeedV  = 3.5; // deg / sec  В• vertical
   // for damaged state
   final static float DirectionDamagedSpeedH = 3.5;
   final static float DirectionDamagedSpeedV = 3.5;
@@ -471,8 +471,8 @@ class CTankPzVITigerE1PlayerGun
                               new CTankPzVITigerE1HEAmmoPlayer()
                             ];
 
-  final static float DirectionSpeedH  = 6.5; // deg / sec  • horizontal
-  final static float DirectionSpeedV  = 2.5; // deg / sec  • vertical
+  final static float DirectionSpeedH  = 6.5; // deg / sec  В• horizontal
+  final static float DirectionSpeedV  = 2.5; // deg / sec  В• vertical
   // for damaged state
   final static float DirectionDamagedSpeedH = 3.5;
   final static float DirectionDamagedSpeedV = 3.5;
@@ -560,8 +560,8 @@ class CTankPzVITigerE1EngineSystem
 
   Array    GearNames     = [L"R1", L"N", L"G1", L"G2", L"G3", L"G4", L"G5", L"G6", L"G7", L"High"];
 
- //Transmission capacity ч utilization rate  Factor    Factor   capacity   capacity.             sound of the engine                  reverse    animation animation
-  //                      before ч sine     *two.    Off*two. Lowerings  повышени
+ //Transmission capacity Г· utilization rate  Factor    Factor   capacity   capacity.             sound of the engine                  reverse    animation animation
+  //                      before Г· sine     *two.    Off*two. Lowerings  ГЇГ®ГўГ»ГёГҐГ­ГЁ
   //                                                              Turns   Turns
 
   Array    Gears         = [
@@ -710,7 +710,7 @@ class CTankPzVITigerE1BaseTrack
    float   TrackSoft           = 0.6; //
 
   // Collision mask [restrict], [exclude]
-  Array   CollisionMask = [[ CLASSIFICATOR_WALK_SURFACE], [CLASSIFICATOR_COLLISION_SHAPES]];// здесь exclude используется не как исключающий, а как дополнительный
+  Array   CollisionMask = [[ CLASSIFICATOR_WALK_SURFACE], [CLASSIFICATOR_COLLISION_SHAPES]];// Г§Г¤ГҐГ±Гј exclude ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї Г­ГҐ ГЄГ ГЄ ГЁГ±ГЄГ«ГѕГ·Г ГѕГ№ГЁГ©, Г  ГЄГ ГЄ Г¤Г®ГЇГ®Г«Г­ГЁГІГҐГ«ГјГ­Г»Г©
 }
 
 class CTankPzVITigerE1LeftTrack
@@ -1747,10 +1747,10 @@ class CTankPzVITigerE1Unit
   // Point collision detector
   // ======================================
 
-  // Call when tank deep in the water (Вызывается, когда танк глубоко заехал в воду)
+  // Call when tank deep in the water (Г‚Г»Г§Г»ГўГ ГҐГІГ±Гї, ГЄГ®ГЈГ¤Г  ГІГ Г­ГЄ ГЈГ«ГіГЎГ®ГЄГ® Г§Г ГҐГµГ Г« Гў ГўГ®Г¤Гі)
   event void OnPointCollisionDetect(String _ObjectID)
   {
-    // Destroy HullEngine may be changed (убиваем движок, можно заменить на что-то другое)
+    // Destroy HullEngine may be changed (ГіГЎГЁГўГ ГҐГ¬ Г¤ГўГЁГ¦Г®ГЄ, Г¬Г®Г¦Г­Г® Г§Г Г¬ГҐГ­ГЁГІГј Г­Г  Г·ГІГ®-ГІГ® Г¤Г°ГіГЈГ®ГҐ)
     SetUnitItemHPPercent("HullEngine", 0.0);
     
     GetObject("PointDetector").EnableDetector(false);
