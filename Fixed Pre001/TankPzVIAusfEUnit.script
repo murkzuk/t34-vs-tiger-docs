@@ -453,8 +453,8 @@ class CTankPzVIAusfEGun
   final static float  LockAngleVMax   =   17.0;//33.0; Temp
   final static float  BlockedLockAngle  =  4.0;
 
-  final static float DirectionSpeedH  = 6.5; // deg / sec  • horizontal
-  final static float DirectionSpeedV  = 3.5; // deg / sec  • vertical
+  final static float DirectionSpeedH  = 6.5; // deg / sec  В• horizontal
+  final static float DirectionSpeedV  = 3.5; // deg / sec  В• vertical
   // for damaged state
   final static float DirectionDamagedSpeedH = 3.5;
   final static float DirectionDamagedSpeedV = 3.5;
@@ -506,8 +506,8 @@ class CTankPzVIAusfEPlayerGun
                               new CTankPzVIAusfEHEAmmoPlayer()
                             ];
 
-  final static float DirectionSpeedH  = 6.5; // deg / sec  • horizontal
-  final static float DirectionSpeedV  = 2.5; // deg / sec  • vertical
+  final static float DirectionSpeedH  = 6.5; // deg / sec  В• horizontal
+  final static float DirectionSpeedV  = 2.5; // deg / sec  В• vertical
   // for damaged state
   final static float DirectionDamagedSpeedH = 3.5;
   final static float DirectionDamagedSpeedV = 3.5;
@@ -586,13 +586,13 @@ class CTankPzVIAusfEEngineSystem
 
   static Component EventHandler;
 
-  boolean  TwoTracksRotation = true; // возможность поворачивать враздрай
-  boolean  PlayReverseGearAnimation = false; //проигрывать анимацию возврата ручки передач в начальное значение
+  boolean  TwoTracksRotation = true; // ГўГ®Г§Г¬Г®Г¦Г­Г®Г±ГІГј ГЇГ®ГўГ®Г°Г Г·ГЁГўГ ГІГј ГўГ°Г Г§Г¤Г°Г Г©
+  boolean  PlayReverseGearAnimation = false; //ГЇГ°Г®ГЁГЈГ°Г»ГўГ ГІГј Г Г­ГЁГ¬Г Г¶ГЁГѕ ГўГ®Г§ГўГ°Г ГІГ  Г°ГіГ·ГЄГЁ ГЇГҐГ°ГҐГ¤Г Г· Гў Г­Г Г·Г Г«ГјГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ
 
   Array    GearNames     = [ L"R4", L"R3", L"R2", L"R1", L"N", L"I", L"II", L"III", L"IV", L"V", L"VI", L"VII", L"VIII", L"IX", L"X"];
 
-  // Gear box  ч         utilization rate  Factor    Factor   capacity   capacity.             sound of the engine                  reverse    animation animation
-  //                      before ч sine     *two.    Off*two. Lowerings повышени
+  // Gear box  Г·         utilization rate  Factor    Factor   capacity   capacity.             sound of the engine                  reverse    animation animation
+  //                      before Г· sine     *two.    Off*two. Lowerings ГЇГ®ГўГ»ГёГҐГ­ГЁ
   //                                                              Turns   Turns
   Array    Gears         = [
                              [  -0.12,     11000.0,   8000.0,      0.1,      0.5,     new #Emitter<CTankPzVIAusfE_Gear04Sound>(), new #LineAnimator<CTankPzVIAusfEGear4Animator>(), true],
@@ -747,7 +747,7 @@ class CTankPzVIAusfEBaseTrack
    float   TrackSoft           = 0.5;  //
 
   // Collision mask [restrict], [exclude]
-  Array   CollisionMask = [[ CLASSIFICATOR_WALK_SURFACE], [CLASSIFICATOR_COLLISION_SHAPES]];// здесь exclude используется не как исключающий, а как дополнительный
+  Array   CollisionMask = [[ CLASSIFICATOR_WALK_SURFACE], [CLASSIFICATOR_COLLISION_SHAPES]];// Г§Г¤ГҐГ±Гј exclude ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї Г­ГҐ ГЄГ ГЄ ГЁГ±ГЄГ«ГѕГ·Г ГѕГ№ГЁГ©, Г  ГЄГ ГЄ Г¤Г®ГЇГ®Г«Г­ГЁГІГҐГ«ГјГ­Г»Г©
 }
 
 class CTankPzVIAusfELeftTrack
@@ -1745,10 +1745,10 @@ class CTankPzVIAusfEUnit
   // Point collision detector
   // ======================================
 
-  // Call when tank deep in the water (Вызывается, когда танк глубоко заехал в воду)
+  // Call when tank deep in the water (Г‚Г»Г§Г»ГўГ ГҐГІГ±Гї, ГЄГ®ГЈГ¤Г  ГІГ Г­ГЄ ГЈГ«ГіГЎГ®ГЄГ® Г§Г ГҐГµГ Г« Гў ГўГ®Г¤Гі)
   event void OnPointCollisionDetect(String _ObjectID)
   {
-    // Destroy HullEngine may be changed (убиваем движок, можно заменить на что-то другое)
+    // Destroy HullEngine may be changed (ГіГЎГЁГўГ ГҐГ¬ Г¤ГўГЁГ¦Г®ГЄ, Г¬Г®Г¦Г­Г® Г§Г Г¬ГҐГ­ГЁГІГј Г­Г  Г·ГІГ®-ГІГ® Г¤Г°ГіГЈГ®ГҐ)
     SetUnitItemHPPercent("HullEngine", 0.0);
     
     GetObject("PointDetector").EnableDetector(false);
