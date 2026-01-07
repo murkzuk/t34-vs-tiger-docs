@@ -19,12 +19,15 @@ You don't need to be a coder to help! We want this project to be as open as poss
 
 To make this "mountain" easier to climb, we have organized the project into key areas:
 
-* **[Technical Manuals](./Documentation):** The library for Maya 5.0 export procedures and G5 engine specifications.
-* **[Mission Templates](./Templates):** Master Atmosphere and Terrain headers designed to eliminate "Duplicate Class" errors.
-* **[Consolidated Scripts](./concatenate%20scripts):** Missions processed through 'cat' to allow for full-text logic scanning and debugging.
-* **[Stable Builds](./Fixed%20Pre001):** Verified "Fixed" versions of scripts (Pre001) that are included in 0.001 
-* **[Tools & Executables](./Executables):** The 4GB LAA patch (Zip format) and essential engine startup fixes.
-* **[Legacy Archives](./):** Reference original logic in **[TvT](./TvT)**, **[TvTZW](./TvTZW)**, and **[ZW Mission scripts](./ZW%20Mission%20scripts)**.
+* **[Technical Manuals](./Documentation):** Maya 5.0 export manuals, engine specifications, and project analysis.
+* **[Development Tools](./Tools):** Scripts and utilities created for the Redux project.
+* **[Executables](./Executables):** The 4GB LAA patch (Zip) and essential engine fixes.
+* **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.
+* **[Stable Build (Pre001)](./Fixed%20Pre001):** The first verified "Fixed" script library for testing.
+* **[Consolidated Scripts](./concatenate%20scripts):** Mission scripts processed through 'cat' for easy debugging.
+* **[Original Logic](./TvT):** The base stock scripts for T-34 vs. Tiger.
+* **[ZeeWolf Legacy](./TvTZW):** Preservation of ZeeWolf (ZW) mod scripts and logic.
+* **[ZW Missions](./ZW%20Mission%20scripts):** Specific mission scripts from the ZeeWolf collection.
 
 💡 Quick Start Troubleshooting
 
