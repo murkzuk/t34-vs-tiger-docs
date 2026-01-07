@@ -1,0 +1,55 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC1M1Atmosphere extends CCommonAtmosphere
+{
+  boolean IsLightEnabled   = true;
+  boolean IsAntiSunEnabled = true;
+
+  Vector  SunDirection   = new Vector(-0.005952, -0.155542, -0.305348);
+  Color   AmbientLight   = new Color(0.200000, 0.200000, 0.200000, 0.100000 );
+  Color   SunColor       = new Color(1.000000, 1.000000, 1.000000, 1.000000);
+  Color   AntiSunColor   = new Color(0.811765, 0.819608, 0.854902, 1.000000);
+  float   DistanceToSun  = 2000.0;
+
+  Array   HorizontPos    = [100.0f, 1000.0f];
+
+  String  DefaultFogMode = "Exp";
+
+  float   FogDensity     = 0.000500;
+  float   FogNear        = 10.0;
+  float   FogFar         = 800.0;
+  float   FogFarMax      = 3500.0;
+
+  Color   FogColorXPos   = new Color(0.901961, 0.960784, 1.000000, 1.000000); // S
+  Color   FogColorXNeg   = new Color(0.901961, 0.960784, 1.000000, 1.000000); // N
+  Color   FogColorYPos   = new Color(0.901961, 0.960784, 1.000000, 1.000000); // E
+  Color   FogColorYNeg   = new Color(0.901961, 0.960784, 1.000000, 1.000000); // W
+
+  Color   ShadowColor    = new Color(0.400000, 0.400000, 0.400000, 0.700000);
+  float   ShadowFar      = FogFar * 0.7;
+
+  Vector  WindVector     = new Vector(0.5, 0.5, 0.0);
+
+  boolean IsIllumination = false;
+  boolean IsSunVisible   = true;
+  boolean IsLightEnabled = true;
+
+  float   AntiSunIntensity         = 0.200000;
+  float   SunIntensity             = 1.0;
+  float   AntiSunAngle             = 10.0;
+
+  float   SunSpecularIntensity     = 1.0;
+  float   AntiSunSpecularIntensity = 0.0;
+
+  boolean EnableHorizontAdjustment = true;
+
+  float   TreeLightKoef      = 0.4; //tree lighting smooth koef: 0 - min range; 0.3 - middle; 0.8 - high range
+  float   TerrainShadowPower = 1.0; //terrain shadow contrast 1 - min; 6 - middle;
+}

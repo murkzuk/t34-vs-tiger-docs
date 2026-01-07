@@ -1,0 +1,611 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+                                   //------------------------------------------------
+                                   //----------------   USSR UNITS   ----------------
+                                   //------------------------------------------------
+//----------------------------
+//------   BASE RADAR   ------
+//----------------------------
+class CC1M1Tsk_USSR_Radar
+{
+  event void SetRadarUnit(Array _Mask)
+  {
+    Component Object = GetMission().GetObject(getIdentificator(user));
+
+    Component Behavior = GetBehavior();
+    if (Behavior == null)
+      return;
+
+    Component Content = GetMission().GetMission().GetContent();
+    if (Content == null)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(user));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+    PropertiesMap.Set("BehRadarMask", _Mask);
+    Object.SetBehRadarMask(Behavior, PropertiesMap);
+  }
+}
+
+//---------------------------
+//--------   TANKS   --------
+//---------------------------
+class CC1M1Gr_PlayerTanks extends CBaseUnitGroup
+{
+  Array m_Phase3AttackPoints = ["NP_PlayerTanks_Attack_1", "NP_PlayerTanks_Attack_2"];
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateRadar(false);
+  }
+
+  event void InitPhase2_AP()
+  {
+    sendEvent(5.0, getIdentificator(user), "ActivateRadar", [true]);
+  }
+
+  event void InitPhase3()
+  {
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    CancelAllOrders();
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      int StopTime = GetUnitTask(m_Units[i]).GetBehavior().GetNoMoveTime();
+      if (StopTime == 0)
+        RemoveUnit(m_Units[i]);
+    }
+
+    Array AttackArray;
+    for (int i = 0; i < m_Phase3AttackPoints.size(); i++)
+      AttackArray.add(GetNavPointPos(m_Phase3AttackPoints[i]));
+    SetOrder_MoveToEx(AttackArray, 5.5);
+  }
+}
+
+class CC1M1Gr_76Tanks extends CBaseUnitGroup
+{
+  Vector m_Phase3RetreatVector;
+  String m_ScoutPoint = "NP_76Tanks_ScoutPoint";
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateRadar(false);
+
+    m_Phase3RetreatVector = GetNavPointPos("NP_76Tanks_PP_1");
+  }
+
+  event void InitPhase2()
+  {
+    RefreshUnitsList();
+    Component UnitTask = GetUnitTask(m_Units[0]);
+    if (UnitTask != null)
+      UnitTask.setOrder_MoveTo(GetNavPointPos(m_ScoutPoint), 9.7);
+
+    GetMission().ScoutTank = m_Units[0];
+
+    RemoveUnit(m_Units[0]);
+    RefreshUnitsList();
+    SetFormation("CFrontFormation", 50.0, false, false);
+    RepeatOrder();
+  }
+
+  event void InitPhase2_AP()
+  {
+    sendEvent(2.0, getIdentificator(user), "ActivateRadar", [true]);
+  }
+
+  event void InitPhase3()
+  {
+    SetEnemyReactionType(ERT_FRIGID);
+    CancelAllOrders();
+    SetOrder_MoveTo(m_Phase3RetreatVector, 8.8, false);
+  }
+}
+
+class CC1M1Gr_ReinforcementTanks extends CBaseUnitGroup
+{
+  //boolean Reactivate = false;
+  float RaidSpeedFl = 5.0f;
+  boolean ReCombat  = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    SetEnemyReactionType(ERT_FRIGID);
+  }
+
+  event void StartFlankImmediateAttack()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("StartImmediate_russianT_34_76_Reinf");
+
+    SetFormation("Column", 50, true, true);
+    ActivateRadar(false);
+    m_EnemyReactionType == ERT_PASSIVE;
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NP_ReinforcementTanks_PP_1"),
+                    GetNavPointBehPos("NP_ReinforcementTanks_PP_2")
+                    //GetNavPointBehPos("NavPointScout3CC2M5Group05T_34_76"),
+                    //GetNavPointBehPos("NavPointScout4CC2M5Group05T_34_76"),
+                    //GetNavPointBehPos("NavPointScout5CC2M5Group05T_34_76"),
+                    //GetNavPointBehPos("NavPointScout6CC2M5Group05T_34_76")
+                           ];
+
+    SetFirstQueueOrders([
+      ["CC1M1Gr_ReinforcementTanks", "SetOrder_MoveToEx", [ApproachPoints, RaidSpeedFl], ""],
+      ["CC1M1Gr_ReinforcementTanks", "FlankAssault", [], ""]
+                        ]);
+  }
+
+  void FlankAssault()
+  {
+ //   if(GetMission().isDebug)
+ //     logWarning("End_russian_Reinf_Start_assault");
+
+    SetFormation("CFrontFormation", 50, true, true);
+    ActivateRadar(true);
+    ActivateFire(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetOrder_MoveTo(GetNavPointBehPos("NavPointReinfAssault"), RaidSpeedFl, true);
+//    logWarning("Reinf_Start_assault");
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _OwnerID)
+  {
+    CBaseUnitGroup::OnUnitHitByEnemy(_UnitID, _OwnerID);
+
+//    if(GetMission().isDebug)
+//      logWarning("Reinforcement_Tank_UnitID = " + _UnitID + " has damaged from_OwnerID = " + _OwnerID);
+
+    if (((_OwnerID == "GermanTank_1") || (_OwnerID == "GermanTank_2") || (_OwnerID == "RightAntiTank_1") || (_OwnerID == "RightAntiTank_2")) && (!ReCombat))
+    {
+ //     logWarning("Reinforcementnt_aggressive");
+      fireEvent(0.0, [], "InitPhase2", []);
+      ActivateRadar(true);
+      ActivateFire(true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      ReCombat = true;
+//      logWarning("Reinforcementnt_in_Combat");
+    }
+  }
+
+  //}
+  /*void OnStopped(Component _UnitTask)
+  {
+    CBaseUnitGroup::OnStopped(_UnitTask);
+
+    if (!Reactivate)
+    {
+      Array CurrentPath = m_CurrentOrder.m_PatrolPath;
+      int CurrentPoint = m_CurrentOrder.m_NextPatrolPoint;
+
+      if (CurrentPoint < CurrentPath.size())
+        if (CurrentPath[CurrentPoint] == "NP_ReinforcementTanks_PP_2")
+        {
+          SetEnemyReactionType(ERT_AGGRESSIVE);
+
+          Reactivate = true;
+        }
+    }
+  }*/
+}
+
+class CC1M1Tsk_ReinforcementTank extends CC1M1Tsk_USSR_TanksRadar
+{
+  /*event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанЄс повреждени
+    category  _DamageType,           // - тип повреждени€ - тип снар€да который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждени€ переданный снар€дом
+    Component _DamageJoint
+    )
+  {
+    CC1M1Tsk_USSR_TanksRadar::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+    if (m_Group.Reactivate == false)
+    {
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      m_Group.Reactivate = true;
+    }
+  }*/
+}
+
+class CC1M1Tsk_USSR_TanksRadar extends CBaseAITankTask, CC1M1Tsk_USSR_Radar
+{
+}
+
+//----------------------------
+//-------   INFANTRY   -------
+//----------------------------
+class CC1M1Gr_BaseInfantry extends CBaseUnitGroup
+{
+  Array m_SoldiersID    = []; // М†бб®Ґ ID бЃЂ§†в £агѓѓл
+  Array m_StartPosition = []; // М†бб®Ґ ђ†ва®ж ѓЃІ®ж®© аЃ¶§•≠®п о≠®вЃҐ
+
+  Vector m_AttackVector;
+
+  String m_PointAttack = "";
+
+  float m_InfantrySpeed;
+
+  boolean StopBright = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ActivateRadar(false);
+
+    CreatePositions();
+
+    m_AttackVector = GetNavPointPos(m_PointAttack);
+  }
+
+  void InitBrighten()
+  {
+    CBaseUnitGroup::Init();
+    ActivateRadar(false);
+
+    CancelAllOrders();
+    StartInfantryAttack();
+  }
+
+  event void StartInfantryAttack()
+  {
+    SetOrder_MoveTo(m_AttackVector, m_InfantrySpeed, false);
+  }
+
+  // СЃІ§†≠®• ђ†бб®ҐЃҐ §Ђп ѓЃІ®ж®® ≠†з†Ђ† †в†™®
+  void CreatePositions()
+  {
+    RefreshUnitsList();
+    if (m_Units.size() == 0)
+      return;
+
+    Component CurrentSoldier;
+    Matrix    CurrentPosition;
+
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      m_SoldiersID.add(m_Units[i]);
+
+      CurrentSoldier  = GetMission().GetObject(m_Units[i]);
+      CurrentPosition = getPosition(CurrentSoldier);
+      m_StartPosition.add(CurrentPosition);
+    }
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+    RefreshUnitsList();
+    CBaseUnitGroup::OnUnitDestroyed(_UnitID);
+
+    if (m_Units.size() == 0)
+    {
+      Brighten(m_StartPosition);
+    }
+  }
+
+  void Brighten(Array _SoldierPosition)
+  {
+    if (!StopBright)
+    {
+      for (int i = 0; i < m_SoldiersID.size(); i++)
+      {
+        Component Behavior = GetUnitBehavior(m_SoldiersID[i]);
+        if (Behavior != null)
+          Behavior.SetPosition(_SoldierPosition[i]);
+      }
+
+      RestoreGroup();
+      RefreshUnitsList();
+      InitBrighten();
+    }
+  }
+
+  event void OnOffBright(boolean _Trigger)
+  {
+    if (_Trigger)
+    {
+      StopBright = false;
+      RefreshUnitsList();
+
+      if (m_Units.size() == 0)
+      {
+        Brighten(m_StartPosition);
+      }
+    }
+    else
+      StopBright = true;
+  }
+
+  void OnPathEndReached()
+  {
+    CBaseUnitGroup::OnPathEndReached();
+    ActivateRadar(true);
+  }
+}
+
+class CC1M1Tsk_USSR_InfantryRadar extends CBaseAITask, CC1M1Tsk_USSR_Radar
+{
+}
+
+//----------------------------
+//-----   INFANTRY ONE   -----
+//----------------------------
+class CC1M1Gr_InfantryOne extends CC1M1Gr_BaseInfantry
+{
+  float m_InfantrySpeed = 2.00;
+
+  void OnPathEndReached()
+  {
+    ShowGroup(false);
+ //   logWarning("[CC1M1Gr_BaseInfantry]End_Infantry_Attack");
+  }
+}
+
+// Left Infantry One Group
+class CC1M1Gr_LeftInfantryOne extends CC1M1Gr_InfantryOne
+{
+  String m_PointAttack = "NP_LeftInfantryOne_Attack";
+}
+// Right Infantry One Group
+class CC1M1Gr_RightInfantryOne extends CC1M1Gr_InfantryOne
+{
+  String m_PointAttack = "NP_RightInfantryOne_Attack";
+}
+
+//----------------------------
+//-----   INFANTRY TWO   -----
+//----------------------------
+class CC1M1Gr_InfantryTwo extends CC1M1Gr_BaseInfantry
+{
+  String m_Phase3Point;
+
+  float m_InfantrySpeed = 1.7;
+
+  event void InitPhase2_AP()
+  {
+    StartInfantryAttack();
+  }
+
+  event void InitPhase3()
+  {
+    m_AttackVector = GetNavPointPos(m_Phase3Point);
+
+    ActivateRadar(false);
+    CancelAllOrders();
+    StartInfantryAttack();
+  }
+
+  void OnPathEndReached()
+  {
+    if (GetMission().isPhase3)
+    {
+      ShowGroup(false);
+ //     logWarning("[CC1M1Gr_BaseInfantry]End_Infantry_Attack");
+    }
+    else
+      CC1M1Gr_BaseInfantry::OnPathEndReached();
+  }
+}
+
+// Left Infantry Two Group
+class CC1M1Gr_LeftInfantryTwo extends CC1M1Gr_InfantryTwo
+{
+  String m_PointAttack = "NP_LeftInfantryTwo_Attack";
+  String m_Phase3Point = "NP_LeftInfantryTwo_Phase3";
+}
+// Right Infantry Two Group
+class CC1M1Gr_RightInfantryTwo extends CC1M1Gr_InfantryTwo
+{
+  String m_PointAttack = "NP_RightInfantryTwo_Attack";
+  String m_Phase3Point = "NP_RightInfantryTwo_Phase3";
+}
+
+//----------------------------
+//----   INFANTRY THREE   ----
+//----------------------------
+class CC1M1Gr_InfantryThree extends CC1M1Gr_BaseInfantry
+{
+  float m_InfantrySpeed = 1.7;
+
+  void Init()
+  {
+    CC1M1Gr_BaseInfantry::Init();
+    ShowGroup(false);
+  }
+
+  event void InitPhase3()
+  {
+    ShowGroup(true);
+    StartInfantryAttack();
+  }
+
+  void OnPathEndReached()
+  {
+    if (GetMission().isPhase3)
+    {
+      ShowGroup(false);
+//      logWarning("[CC1M1Gr_BaseInfantry]End_Infantry_Attack");
+    }
+    else
+      CC1M1Gr_BaseInfantry::OnPathEndReached();
+  }
+}
+
+class CC1M1Gr_LeftInfantryThree extends CC1M1Gr_InfantryThree
+{
+  String m_PointAttack = "NP_LeftInfantryThree_Attack";
+}
+
+class CC1M1Gr_RightInfantryThree extends CC1M1Gr_InfantryThree
+{
+  String m_PointAttack = "NP_RightInfantryThree_Attack";
+}
+
+                                   //------------------------------------------------
+                                   //---------------   GERMAN UNITS   ---------------
+                                   //------------------------------------------------
+class CC1M1Gr_GermanTanks extends CBaseUnitGroup
+{
+  boolean m_StartGerman = false;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+
+    SetEnemyReactionType(ERT_FRIGID);
+
+    RefreshUnitsList();
+    for (int i = 0; i < m_Units.size(); i++)
+    {
+      Component Unit = GetMission().GetObject(m_Units[i]);
+      addClassificator(Unit, GetMission().RadarHide);
+    }
+
+    fireEvent(0.0, [], "SetRadarUnit", [GetMission().m_Mask]);
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _OwnerID)
+  {
+    CBaseUnitGroup::OnUnitHitByEnemy(_UnitID, _OwnerID);
+
+//    if(GetMission().isDebug)
+//      logWarning("CC1M2Gr_EGerman_Tanks2_UnitID = " + _UnitID + " has damaged from_OwnerID = " + _OwnerID);
+
+    if ((_OwnerID == "MainPlayerUnit") || (_OwnerID == "PlayerTank_1") || (_OwnerID == "PlayerTank_2"))
+    {
+//      logWarning("German_tanks_aggressive");
+      sendEvent(0.0, getIdentificator(this), "StartAttack", []);
+//      logWarning("German_tanks_in_Combat");
+    }
+  }
+
+
+  event void StartAttack()
+  {
+    if (!m_StartGerman)
+    {
+  //    logWarning("Start german attack");
+
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+      // PopDelayedOrder if exist
+
+      RefreshUnitsList();
+      for (int i = 0; i < m_Units.size(); i++)
+      {
+        Component Unit = GetMission().GetObject(m_Units[i]);
+        removeClassificator(Unit, GetMission().RadarHide);
+      }
+
+      fireEvent(0.0, [], "SetRadarUnit", [GetMission().m_Mask]);
+      m_StartGerman = true;
+    }
+  }
+}
+
+class CC1M1Tsk_GermanTank extends CBaseAITankTask
+{
+  /*event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанЄс повреждени
+    category  _DamageType,           // - тип повреждени€ - тип снар€да который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждени€ переданный снар€дом
+    Component _DamageJoint
+    )
+  {
+    CBaseAITankTask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+    if (m_Group.m_StartGerman == false)
+      m_Group.StartAttack();
+  }*/
+}
+
+//-------------------------------
+//----   ANTITANKS & DZOTs   ----
+//-------------------------------
+class CC1M1Gr_LeftAntiTanks extends BaseZisGroup
+{
+  Array TargetList = ["PlayerTank_1", "PlayerTank_2"];
+
+  void Init()
+  {
+    BaseZisGroup::Init();
+    ActivateFire(false);
+  }
+
+  event void InitPhase2_AP()
+  {
+    sendEvent(3.0, getIdentificator(user), "ActivateFire", [true]);
+    SetOrder_Attack(TargetList, m_EnemyReactionType);
+  }
+}
+
+class CC1M1Gr_RightAntiTanks extends BaseZisGroup
+{
+  Array TargetList = ["76Tank_1", "76Tank_2", "76Tank_3"];
+
+  void Init()
+  {
+    BaseZisGroup::Init();
+    ActivateFire(false);
+  }
+
+  event void InitPhase2_AP()
+  {
+    ActivateFire(true);
+    SetOrder_Attack(TargetList, m_EnemyReactionType);
+  }
+}
+
+class CC1M1Tsk_AntiTanksAndDzots extends CBaseAITask
+{
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанЄс повреждени
+    category  _DamageType,           // - тип повреждени€ - тип снар€да который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждени€ переданный снар€дом
+    Component _DamageJoint
+    )
+  {
+ //   logWarning("OnExplosion called for class _AntiTanksAndDzots");
+//    logWarning("OnExplosion called for class _AntiTanksAndDzots. isPhase2 is " + new String(GetMission().isPhase2));
+//    logWarning("OnExplosion called for class _AntiTanksAndDzots. isPhase2_AP " + new String(GetMission().isPhase2_AP));
+
+    if (GetMission().isPhase2)
+    {
+      fireEvent(0.0, [], "InitPhase2_AP", []);
+      GetMission().isPhase2    = false;
+      GetMission().isPhase2_AP = true;
+  //    logError("OnExplosion called for class _AntiTanksAndDzots. Enter in isPhase2. Changing isPhase2_AP to true.");
+    }
+  }
+}
