@@ -17,15 +17,12 @@ You don't need to be a coder to help! We want this project to be as open as poss
 
 📂 Repository Roadmap
 
-To make this "mountain" easier to climb, we are going to organise the project into key areas:
+To make this "mountain" easier to climb, we have organized the project into key areas:
 
-    Technical Manuals: Documentation for Maya 5.0 and the G5 Engine export pipeline.
-
-    Mission Scripting: Detailed guides on how missions are structured.
-
-    Legacy Assets: A collection of original and modded scripts from ZeeWolf (ZW) and Whirlwinds over Vietnam (WoV) for cross-referencing.
-
-    Engine Fixes: Tools like the 4GB patch (LAA) and 3D driver fixes.
+* **[Technical Manuals](./Documentation):** Comprehensive guides for Maya 5.0 and the G5 Engine export pipeline.
+* **[Mission Scripting & Templates](./Templates):** Standardized Atmosphere and Terrain headers to fix "Duplicate Class" errors.
+* **[Legacy Assets (Scripts)](./):** Access folders for **ALL_TvT_SCRIPTS**, **ALL_WoV_SCRIPTS**, and **ALL_ZW_SCRIPTS** for cross-referencing logic.
+* **[Tools & Fixes](./):** Find the 4GB patch, LAA instructions, and driver fixes here.
 
 💡 Quick Start Troubleshooting
 
