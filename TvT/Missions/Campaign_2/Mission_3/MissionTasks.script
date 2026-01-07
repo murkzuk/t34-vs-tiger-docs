@@ -1,0 +1,1165 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+/*class CC2M3TankClassProcessingTask extends CBaseAITankTask, CC1M3Split
+
+{
+  void OnUnreacheable(Vector _Destination)
+  {
+    if (m_Group != null)
+      m_Group.PushOrder();
+
+    Component me = GetMission().GetObject(getIdentificator(user));
+     if (me == null)
+      logError("Component 'me' == null!!!");
+
+      Array ApproachPoints = SplitPath(getPosition(me).origin, _Destination);
+
+      SetFirstQueueOrders([
+       ["OnUnreacheable", "SetOrder_MoveToEx", [ApproachPoints, m_Group.m_CurrentOrder.m_MovingSpeed], ""],
+       ["OnUnreacheable", "EndOnUnreacheable", [], ""]
+                        ]);
+
+  }
+
+  void EndOnUnreacheable()
+  {
+    if (GetMission().isDebug)
+      logWarning("EndOnUnreacheable");
+
+    if (m_Group != null)
+      m_Group.PopOrder();
+  }
+}
+*/
+class CC2M3Broken
+{
+  Array BrokenPath(float _stepX, float _stepY, Vector _begin , Vector _end)
+  {
+    Array _ResultArray;
+    int  _counter = 0;
+
+    if (_stepX == 0)
+      _stepX = (_begin - _end).Magnitude()/10;
+
+    if (_stepY == 0)
+      _stepY = (_begin - _end).Magnitude()/10;
+
+    if (_begin == _end)
+    {
+      //logError("Vectors _begin == _end");
+      return null;
+    }
+
+    float y = _stepY;
+    for (float x = _stepX/2 ; x<(_begin - _end).Magnitude(); x+=_stepX)
+    {
+      _counter++;
+      if (_counter > 11)
+        break;
+
+      Vector dir = (_end - _begin);
+      dir.Normalize();
+      Vector Res = _begin + dir*rand(x-10.0, x+10.0) + new Vector(dir.y, dir.x, 0.0f)*rand(0.0, y);
+      y = -y;
+
+      _ResultArray.add(Res);
+    }
+
+    _ResultArray.add(_end);
+
+    return  _ResultArray;
+  }
+}
+
+class CBaseRussianTask extends CC2M3Broken, CBaseUtilities
+{ /*
+  float RetreeaSpeed = 0.0f;
+  //TMP RETREAT
+  //fireEvent(0.0, [], "RussianRetreat", []);
+  event void RussianRetreat()
+  {
+    if(GetMission().isDebug)
+      logError("[Ironweed]  RUSSIAN REATREAT  for unit with ID = "+ getIdentificator(user));
+
+    ActivateBehavior(true);
+    ActivateRadar(false);
+    ActivateFire(false);
+
+    Component unit = (new #GameController()).GetObject(getIdentificator(user));
+    Vector m_Pos_1 = getPosition(unit).origin;
+
+    Array ApproachPoints =  BrokenPath(30, 30, m_Pos_1, GetRandomAroundPos("NavPoint_RussianRetreat"));
+    //logError("ApproachPoints = " + new String(ApproachPoints));
+
+    SetFirstQueueOrders([
+      ["RussianRetreat", "SetOrder_MoveToEx", [ApproachPoints, RetreeaSpeed], ""],
+      ["RussianRetreat", "EndRetreat", [], ""]
+                        ]);
+  }
+  */
+  Vector GetRandomAroundPos(String _NavPointID)
+  {
+    float raduis = 100.0f;
+    Vector PosCenter = GetNavPointBehPos(_NavPointID);
+    if(PosCenter == new Vector(0,0,0))
+    {
+      //logError("[Ironweed]   GetRandomAroundPos ERROR");
+      return;
+    }
+
+    return PosCenter + new Vector(rand(raduis), rand(raduis), rand(raduis));
+  }
+  /*
+  void EndRetreat()
+  {
+    if(GetMission().isDebug)
+      logWarning("[Ironweed]  Russian end Retreat.");
+
+  /*
+    if(m_CurrentOrder.m_Order == "RussianRetreat")
+    {
+      CancelAllOrders();
+      clearEventsForObject(getIdentificator(user));
+    }
+
+    ActivateBehavior(false);
+  }  */
+
+
+  event void SetRadarUnit(Array _Mask)
+  {
+    Component Object = GetMission().GetObject(getIdentificator(user));
+
+    Component Behavior = GetBehavior();
+    if (null == Behavior)
+      return;
+
+    Component Content = GetMission().GetContent();
+    if (null == Content)
+      return;
+
+    Array ObjRec = Content.FindObjectRecord(getIdentificator(user));
+    if (ObjRec.isEmpty())
+      return;
+
+    Component PropertiesMap = new CPropertiesMap(ObjRec[CBaseContent::INDEX_Properties]);
+
+//    if (GetMission().isDebug)
+//    {
+//      logError(getIdentificator(user));
+//      logWarning("       New Mask=" + new String(_Mask));
+//      logWarning("    CurrentMask=" + new String(ObjRec[CBaseContent::INDEX_Properties]));
+//      logWarning("    CurrentMask=" + new String(PropertiesMap.Get("BehRadarMask", _Mask)));
+//    }
+
+    PropertiesMap.Set("BehRadarMask", _Mask);
+    Object.SetBehRadarMask(Behavior, PropertiesMap);
+
+//    if (GetMission().isDebug)
+//      logWarning( "   CurrentMask=" + new String(PropertiesMap.Get("BehRadarMask", _Mask)));
+  }
+}
+//-----------------------------------------------------------------
+class CC2M3RussianTankTask extends CBaseAITankTask, CBaseRussianTask
+{
+}
+//-----------------------------------------------------------------
+class CC2M3RussianTankKTask extends CC2M3RussianTankTask
+{
+  float TankAttackSpeed = 10.0f;
+
+  void Init()
+  {
+    CBaseAITankTask::Init();
+    m_EnemyReactionType == ERT_PASSIVE;
+  }
+
+  //sendEvent(0.0, "C2M3_RussianTank76GroupK_1", "RussianAttackTankK", []);
+  event void RussianAttackTankK()
+  {
+    ActivateBehavior(true);
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start russian tank K attack.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_1_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_3"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_4"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_4_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_5")
+                           ];
+
+    SetFirstQueueOrders([
+      ["RussianAttackTankK", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackTankK", "EndAttack", [], ""]
+                        ]);
+  }
+
+  void EndAttack()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  Russian_tank_K_begin_attack.");
+
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    sendEvent(0.0, "C2M3GermanT4Wacht", "DamageItemPercent", ["HullEngine", 1.0]);
+  }
+}
+//-----------------------------------------------------------------
+class CC2M3RussianBTRTask extends CBaseAIBtrTask//, CBaseRussianTask
+{
+}
+
+//-----------------------------------------------------------------
+class CC2M3RussianSUTask extends CC1M5SAUClassProcessingTask//, CBaseRussianTask
+{
+}
+
+//-----------------------------------------------------------------
+// RUSSIAN GROUP
+//-----------------------------------------------------------------
+class C2M3RussianSUGroup extends CBaseUnitGroup
+{
+  float SuAttackSpeed  = 3.0;
+  float SuAttackSpeed2 = 5.0;
+  boolean SuCont = false;
+
+  void Init()
+  {
+    CBaseAISAUTask::Init();
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+
+  event void StartSu()
+  {
+    //ForEachUnitTask("ActivateBehavior", [true]);
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  Start_russian_SU_attack.");
+
+    SetFormation("CFrontFormation", 50.0, true, true);
+    //ActivateBehavior(true);
+    ActivateMovement(true);
+    ActivateRadar(true);
+    ActivateFire(true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianSu_Attack")
+                    //GetNavPointBehPos("NavPoint_RussianSu_Attack1_1")
+                    //GetNavPointBehPos("NavPoint_RussianSu_Attack1_2")
+                           ];
+    SetFirstQueueOrders([
+                          ["CC1M6RusGroupSuStartAttack", "SetOrder_MoveToEx", [ApproachPoints, SuAttackSpeed], ""],
+                          ["CC1M6RusGroupSuStartAttack", "EndFrontAttack", [], ""]
+                        ]);
+  }
+
+  void EndFrontAttack()
+  {
+    m_EnemyReactionType = ERT_AGGRESSIVE;
+    ActivateBehavior(true);
+    ActivateMovement(true);
+    ActivateFire(true);
+
+//    if(GetMission().isDebug)
+//      logWarning("Russian_SAU_begin_fire_attack.");
+    //sendEvent(0.0, "C2M3GermanT4Wacht", "DamageItemPercent", ["HullEngine", 1.0]);
+  }
+
+  event void Start2Su()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+    if (!SuCont)
+    {
+//      if(GetMission().isDebug)
+//        logWarning("[Start2Su]  Start_russian_SU_second_attack.");
+
+      //CancelAllOrders();
+
+      SetFormation("CFrontFormation", 50.0, true, true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+
+      Array ApproachPoints = [
+                      GetNavPointBehPos("NavPoint_RussianSu_Attack1_1"),
+                      GetNavPointBehPos("NavPoint_RussianSu_Attack1_2")
+                             ];
+      SetFirstQueueOrders([
+                            ["CC1M6RusGroupSuStartAttack", "SetOrder_MoveToEx", [ApproachPoints, SuAttackSpeed2], ""],
+                            ["CC1M6RusGroupSuStartAttack", "EndFrontAttack2", [], ""]
+                          ]);
+      //logWarning("[Start2Su]  Start_russian_SU_second_support_tour.");
+
+      SuCont = true;
+    }
+  }
+
+  void EndFrontAttack2()
+  {
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    //ActivateBehavior(true);
+    ActivateMovement(true);
+    ActivateFire(true);
+
+//    if(GetMission().isDebug)
+//      logWarning("Russian_SAU_begin_second_support_tour");
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+    CBaseUnitGroup::OnUnitDestroyed(_UnitID);
+
+//    if(GetMission().isDebug)
+//      logWarning("{Ironweed} Destroy russian SU ID = "+ _UnitID);
+
+    RefreshUnitsList();
+    if(m_Units.size() == 0)
+    {
+//      if(GetMission().isDebug)
+//        logWarning("[Ironweed]  All_russian_SU_destroy.Phase 3!");
+
+      GetMission().StartPhase3();
+    }
+  }
+}
+
+//-----------------------------------------------------------------
+class C2M3RussianTankFlangGroup extends CBaseUnitGroup
+{
+  float TankAttackSpeed = 10.0f;
+  //sendEvent(0.0, "C2M3RussianTankFlangGroup", "RussianAttackFlangTank", []);
+  event void RussianAttackFlangTank()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("Column", 50, true, true);
+    m_EnemyReactionType == ERT_PASSIVE;
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start russian flang attack tank.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_1_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_1_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2_3")
+                    //GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3")
+                           ];
+
+    SetFirstQueueOrders([
+      ["RussianAttackFlangTank", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackFlangTank", "RussianAttackFlangTank2", [], ""]
+                        ]);
+
+  }
+
+  void RussianAttackFlangTank2()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 70, true, true);
+    m_EnemyReactionType == ERT_PASSIVE;
+//    if(GetMission().isDebug)
+//      logWarning("[RussianAttackFlangTank2] continue russian flang attack tank.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3_1")
+                           ];
+
+    SetFirstQueueOrders([
+      ["RussianAttackFlangTank2", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackFlangTank2", "EndAttackF", [], ""]
+                        ]);
+
+  }
+
+  event void RussianAnotherAttackFlangTank2()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 50, true, true);
+    m_EnemyReactionType == ERT_PASSIVE;
+//    if(GetMission().isDebug)
+//      logWarning("[RussianAttackFlangTank2] continue russian flang attack tank.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_4")
+                           ];
+
+    SetFirstQueueOrders([
+      ["RussianAttackFlangTank2", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackFlangTank2", "", [], ""]
+                        ]);
+
+  }
+
+  void EndAttackF()
+  {
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetFormation("CFrontFormation", 50, true, true);
+    SetOrder_MoveTo(GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_4"), TankAttackSpeed, true);
+//    if(GetMission().isDebug)
+//      logWarning("RussianEndFlangAttack");
+  }
+
+  /*event void ABattleNonStop()
+  {
+    RepeatOrder();
+    logWarning("RusFlankForcesRepeatOrderByKillingUnit");
+  } */
+
+  event void Continue_Fl_battle()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 50, true, true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start russian flang attack tank.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_2_3")
+                    //GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3")
+                           ];
+
+    SetFirstQueueOrders([
+      ["RussianAttackFlangTank", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackFlangTank", "EndAttackF", [], ""]
+                        ]);
+
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3RussianTankFlangGroup] OnUnitHitByEnemy  unit ID = " + _UnitID + " enemy ID = " + _EnemyID );
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["FRIEND"], []))
+    {
+      ForEachUnitTask("ActivateBehavior", [true]);
+      sendEvent(0.0, getIdentificator(this), "GroupCombatBegin", []);
+    }
+  }
+
+}
+
+//-----------------------------------------------------------------
+class C2M3RussianTank76Group1 extends CBaseUnitGroup
+{
+  float TankAttackSpeed = 10.0f;
+  //sendEvent(0.0, "C2M3RussianTank76Group1", "Start76Group1", []);
+  event void Start76Group1()
+  {
+    //TMP
+    ActivateGroup(true);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+
+    //TMP
+//    if(GetMission().isDebug)
+//      logWarning("Start_russian_76_group_1_attack");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_Russian76_1_Attack001"),
+                    GetNavPointBehPos("NavPoint_Russian76_1_Attack01"),
+                    GetNavPointBehPos("NavPoint_Russian76_1_Attack")
+                           ];
+
+    SetFirstQueueOrders([
+      ["C2M3RussianTank76Group1", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["C2M3RussianTank76Group1", "EndAttack001", [], ""]
+                        ]);
+
+    //setOrder_MoveTo(GetNavPointBehPos("NavPoint_Russian76_1_Attack"), TankAttackSpeed, true);
+  }
+
+  event void Start276Group1()
+  {
+    //TMP
+    ActivateGroup(true);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+
+    //TMP
+//    if(GetMission().isDebug)
+//      logWarning("Start_russian_76_group_1_attack");
+
+    Array ApproachPoints = [
+                    //GetNavPointBehPos("NavPoint_Russian76_1_Attack001"),
+                    GetNavPointBehPos("NavPoint_Russian76_1_Attack01"),
+                    GetNavPointBehPos("NavPoint_Russian76_1_Attack")
+                           ];
+
+    SetFirstQueueOrders([
+      ["C2M3RussianTank76Group1", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["C2M3RussianTank76Group1", "EndAttack001", [], ""]
+                        ]);
+
+    //setOrder_MoveTo(GetNavPointBehPos("NavPoint_Russian76_1_Attack"), TankAttackSpeed, true);
+  }
+
+  void EndAttack001()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("End russian 76 group 1 MoveTo. Start attack.");
+
+    SetFormation("CFrontFormation", 40, true, true);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetOrder_MoveTo(GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack_3"), TankAttackSpeed, true);
+    //sendEvent(0.0, "C2M3GermanTankT4Group1", "ActivateGroupT4_1", []);
+    //logWarning("End_russian_76_group_1_MoveTo_Real_start_attack.");
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3RussianTank76Group1] OnUnitHitByEnemy  unit ID = " + _UnitID + " enemy ID = " + _EnemyID );
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["FRIEND"], []))
+    {
+      ForEachUnitTask("ActivateBehavior", [true]);
+      m_EnemyReactionType == ERT_AGGRESSIVE;
+      //logWarning("[C2M3RussianTank76Group1] OnUnitHitByEnemy_called_Battle");
+    }
+  }
+}
+
+//-----------------------------------------------------------------
+class C2M3RussianTank76Group2 extends CBaseUnitGroup
+{
+  float TankAttackSpeed = 5.0f;
+
+  //sendEvent(0.0, "C2M3RussianTank76Group2", "Start76Group2", []);
+
+  event void Start76Group2()
+  {
+    //ActivateGroup(true);
+    //ForEachUnitTask("ActivateBehavior", [true]);
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  Start russian 76 group 2 MoveTo attack.");
+
+    SetFormation("Column", 50, true, true);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_1_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_3"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_4"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_4_1")
+                    //GetNavPointBehPos("NavPoint_RussianTankGroupK_Attack_5")
+                           ];
+
+    SetFirstQueueOrders([
+      ["RussianAttack76Group2", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttack76Group2", "EndAttack2", [], ""]
+                        ]);
+  }
+
+  void EndAttack2()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  End russian 76 group 2 MoveTo. Start attack.");
+
+    SetFormation("CFrontFormation", 40, true, true);
+    ActivateFire(true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_MoveTo(GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3"), TankAttackSpeed, true);
+    sendEvent(0.0, "C2M3GermanTankT4Group1", "ActivateGroupT4_1", []);
+    //logWarning("End_russian_76_group_2_MoveTo_Real_start_attack.");
+  }
+
+  event void ContFlankAttack2()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  End russian 76 group 2 MoveTo. Start attack.");
+
+    SetFormation("CFrontFormation", 40, true, true);
+    ActivateFire(true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_MoveTo(GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3"), TankAttackSpeed, true);
+    sendEvent(0.0, "C2M3GermanTankT4Group1", "ActivateGroupT4_1", []);
+    //logWarning("End_russian_76_group_2_MoveTo_Real_start_attack.");
+  }
+
+
+  event void GroupCombatBegin()
+  {
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    ActivateFire(true);
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3RussianTank76Group2] OnUnitHitByEnemy  unit ID = " + _UnitID + " enemy ID = " + _EnemyID );
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["FRIEND"], []))
+    {
+      ForEachUnitTask("ActivateBehavior", [true]);
+      sendEvent(0.0, getIdentificator(this), "GroupCombatBegin", []);
+    }
+  }
+
+}
+
+//-----------------------------------------------------------------
+class C2M3RussianTank76GroupB extends CBaseUnitGroup, CC2M3Broken
+{
+  float TankAttackSpeed = 10.0f;
+  //Vector direction;
+  boolean MoveToSplitAttack = false;
+  //sendEvent(0.0, "C2M3RussianTank76GroupB", "RussianTankB_Attack", []);
+  event void RussianTankB_Attack()
+  {
+    if (MoveToSplitAttack)
+        return;
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start_russian_front_attack_tank.");
+
+    MoveToSplitAttack = true;
+    ForEachUnitTask("ActivateBehavior", [true]);
+
+    //Array ApproachPoints =  BrokenPath(50, 50, getPosition(user).origin, GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack"));
+    //direction = (getPosition(user).origin - GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack"));
+    //direction.Normalize();
+
+      Array ApproachPoints = [                                                        //new
+                    GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack_1"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack_2"),
+                    GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack_3")
+                             ];                                                       //end new
+
+    SetOrderName("RussianAttackTankB");
+    SetFormation("CFrontFormation", 70.0, true, true);
+    SetFirstQueueOrders([
+      ["RussianAttackTankB", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackTankB", "EndAttack", [], ""]
+                        ]);
+
+  }
+
+  void OnStopped(Component _UnitTask)
+  {
+    if(MoveToSplitAttack)
+    {
+      if(m_CurrentOrder.m_Order == "RussianAttackTankB" || m_CurrentOrder.m_Order == "Maneuver")
+      {
+        CancelAllOrders();
+        clearEventsForObject(getIdentificator(user));
+        if (m_GroupTargets.isEmpty())
+          sendEvent(rand(0.0, 3.0), getIdentificator(user), "ContinueMove", []);
+        else
+          sendEvent(rand(5.0, 7.0), getIdentificator(user), "ContinueMove", []);
+      }
+      else
+        CBaseUnitGroup::OnStopped(_UnitTask);
+    }
+    else
+      CBaseUnitGroup::OnStopped(_UnitTask);
+  }
+
+  event void ContinueMove()
+  {
+    Vector m_Pos_1 = getPosition(user).origin;
+    Vector m_Pos_2 = GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack");
+    float m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+    //logError(new String(m_Pos_1));
+    //logError(new String(m_Pos_2));
+    //logError(new String(m_CurrentDistance));
+    //logError(new String(direction * m_CurrentDistance));
+    //logError(new String(m_Pos_2 + direction * m_CurrentDistance));
+
+    Array ApproachPoints =  BrokenPath(50, 50, m_Pos_2 + direction * m_CurrentDistance, GetNavPointBehPos("NavPoint_RussianTankGroupB_Attack"));
+    //logError("ApproachPoints = " + new String(ApproachPoints));
+
+    if (m_CurrentOrder.m_Formation != "")
+       m_CurrentOrder.m_FormationDistance = rand(10.0, m_CurrentOrder.m_FormationDistance);
+
+    SetOrderName("RussianAttackTankB");
+   // SetFormation("CFrontFormation", 50.0, true, true);
+    SetFirstQueueOrders([
+      ["RussianAttackTankB", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["RussianAttackTankB", "EndAttack", [], ""]
+                        ]);
+    if(ApproachPoints.size() == 1)
+    {
+      clearEventsForObject(getIdentificator(user));
+      MoveToSplitAttack = false;
+      EndAttack();
+    }
+  }
+
+  void EndAttack()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  Russian Group B Attack Tank.");
+
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    //SetOrder_MoveTo(GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3"), TankAttackSpeed, true);
+  }
+}
+
+//-----------------------------------------------------------------
+class C2M3RussianBTRGroup extends CBaseUnitGroup, CC2M3Broken
+{
+  float BTRAttackSpeed = 10.0f;
+  Vector direction;
+  boolean MoveToSplitAttack = false;
+  //sendEvent(0.0, "C2M3RussianBTRGroup", "RussianBTR_Attack", []);
+  event void RussianBTR_Attack()
+  {
+    if (MoveToSplitAttack)
+        return;
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start russian BTR attack.");
+
+    MoveToSplitAttack = true;
+    ForEachUnitTask("ActivateBehavior", [true]);
+    sendEvent(0.0, "C2M3GermanPak40_C", "ActivatePak40_C", []);
+
+    Array ApproachPoints =  BrokenPath(70, 70, getPosition(user).origin, GetNavPointBehPos("NavPoint_RussianBTR_Attack"));
+    direction = (getPosition(user).origin - GetNavPointBehPos("NavPoint_RussianBTR_Attack"));
+    direction.Normalize();
+    SetOrderName("RussianBTRAttack");
+    SetFirstQueueOrders([
+      ["RussianBTRAttack", "SetOrder_MoveToEx", [ApproachPoints, BTRAttackSpeed], ""],
+      ["RussianBTRAttack", "EndAttack", [], ""]
+                        ]);
+  }
+
+  void OnStopped(Component _UnitTask)
+  {
+    if(MoveToSplitAttack)
+    {
+      if(m_CurrentOrder.m_Order == "RussianBTRAttack" || m_CurrentOrder.m_Order == "Maneuver")
+      {
+        CancelAllOrders();
+        clearEventsForObject(getIdentificator(user));
+        if (m_GroupTargets.isEmpty())
+          sendEvent(rand(0.0, 3.0), getIdentificator(user), "ContinueMove", []);
+        else
+          sendEvent(rand(5.0, 7.0), getIdentificator(user), "ContinueMove", []);
+      }
+      else
+        CBaseUnitGroup::OnStopped(_UnitTask);
+    }
+    else
+      CBaseUnitGroup::OnStopped(_UnitTask);
+  }
+
+  event void ContinueMove()
+  {
+    Vector m_Pos_1 = getPosition(user).origin;
+    Vector m_Pos_2 = GetNavPointBehPos("NavPoint_RussianBTR_Attack");
+    float m_CurrentDistance = (m_Pos_1 - m_Pos_2).Magnitude();
+    //logError(new String(m_Pos_1));
+    //logError(new String(m_Pos_2));
+    //logError(new String(m_CurrentDistance));
+    //logError(new String(direction * m_CurrentDistance));
+    //logError(new String(m_Pos_2 + direction * m_CurrentDistance));
+
+    Array ApproachPoints =  BrokenPath(60, 60, m_Pos_2 + direction * m_CurrentDistance, GetNavPointBehPos("NavPoint_RussianBTR_Attack"));
+    //logError("ApproachPoints = " + new String(ApproachPoints));
+
+    if (m_CurrentOrder.m_Formation != "")
+       m_CurrentOrder.m_FormationDistance = rand(10.0, m_CurrentOrder.m_FormationDistance);
+
+    SetOrderName("RussianBTRAttack");
+    SetFirstQueueOrders([
+      ["RussianBTRAttack", "SetOrder_MoveToEx", [ApproachPoints, BTRAttackSpeed], ""],
+      ["RussianBTRAttack", "EndAttack", [], ""]
+                        ]);
+    if(ApproachPoints.size() == 1)
+    {
+      clearEventsForObject(getIdentificator(user));
+      MoveToSplitAttack = false;
+      EndAttack();
+    }
+  }
+
+  event void OnUnitDestroyed(String _UnitID)
+  {
+    CBaseUnitGroup::OnUnitDestroyed(_UnitID);
+
+//    if(GetMission().isDebug)
+//      logWarning("{Ironweed} Destroy russian SU ID = "+ _UnitID);
+
+    RefreshUnitsList();
+    if(m_Units.size() == 0)
+    {
+//      if(GetMission().isDebug)
+//        logWarning("[Ironweed]  All russian BTR destroy.");
+
+      sendEvent(0.0, "C2M3GermanSoldierGroup", "KillGroup", []);
+    }
+  }
+
+  void EndAttack()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  Russian BTR Attack.");
+
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    //SetOrder_MoveTo(GetNavPointBehPos("NavPoint_RussianTankGroupFlang_Attack_3"), TankAttackSpeed, true);
+  }
+}
+
+//-----------------------------------------------------------------
+// GERMAN SP_Tank
+//-----------------------------------------------------------------
+class C2M3GermanT4WachtTask extends CBaseAITankTask
+{
+  void Init()
+  {
+    CBaseAITankTask::Init();
+
+    ActivateRadar(false);
+    ActivateFire(false);
+
+//    if(GetMission().isDebug)
+//     logWarning("German_Tank_Prepared_for_Dead");
+  }
+  event void DamageItemPercent()
+  {
+//    if(GetMission().isDebug)
+//     logWarning("German_Tank_Dead");
+  }
+}
+//-----------------------------------------------------------------
+// GERMAN GROUPS
+//-----------------------------------------------------------------
+class C2M3GermanTankT4Group1 extends CBaseUnitGroup
+{
+  boolean activateGroup = false;
+  float TankAttackSpeed = 10.0f;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+  }
+
+  //sendEvent(0.0, "C2M3GermanTankT4Group1", "GermanAttackT4Group1Tank", []);
+  event void GermanAttackT4Group1Tank()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start GermanAttackT4Group2Tank.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_German_T4Group1_1"),
+                    GetNavPointBehPos("NavPoint_German_T4Group1_2"),
+                    GetNavPointBehPos("NavPoint_German_T4Group1_3")
+                           ];
+    SetFormation("CFrontFormation", 40.0, true, true);
+
+    SetFirstQueueOrders([
+      ["GermanAttackTankGroup1", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["GermanAttackTankGroup1", "EndAttack", [], ""]
+                        ]);
+  }
+
+  void EndAttack()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3GermanTankT4Group1]  GermanAttackT4Group1Tank end.");
+
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetOrder_Attack(GetMission().AllSovietKilllist, m_EnemyReactionType);
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3GermanTankT4Group1] OnUnitExplosion  unit ID = " + _UnitID + " owner ID = " + _OwnerID );
+
+    Component Owner = GetMission().GetObject(_OwnerID);
+    if (checkMask(Owner, ["ENEMY"], []))
+    {
+      ForEachUnitTask("ActivateBehavior", [true]);
+      sendEvent(0.0, getIdentificator(this), "ActivateGroupT4_1", []);
+      sendEvent(0.0, "C2M3GermanTankT4Group2", "ActivateGroupT4_2", []);
+    }
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3GermanTankT4Group1] OnUnitHitByEnemy  unit ID = " + _UnitID + " enemy ID = " + _EnemyID );
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["ENEMY"], []))
+    {
+      //ForEachUnitTask("ActivateBehavior", [true]);
+      sendEvent(0.0, getIdentificator(this), "ActivateGroupT4_1", []);
+      sendEvent(0.0, "C2M3GermanTankT4Group2", "ActivateGroupT4_2", []);
+
+    }
+  }
+
+  event void ActivateGroupT4_1()
+  {
+    if(!activateGroup)
+    {
+      GermanAttackT4Group1Tank();
+      //ActivateBehavior(true);
+      ActivateRadar(true);
+      ActivateFire(true);
+      ActivateMove(true);
+
+//     if(GetMission().isDebug)
+//      logWarning("[ActivateGroupT4_1] Activate_C2M3GermanTankT4Group1");
+    }
+  }
+}
+
+//-----------------------------------------------------------------
+class C2M3GermanTankT4Group2 extends CBaseUnitGroup
+{
+  boolean activateGroup = false;
+  float TankAttackSpeed = 10.0f;
+
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+  }
+
+  //sendEvent(0.0, "C2M3GermanTankT4Group2", "GermanAttackT4Group2Tank", []);
+  event void GermanAttackT4Group2Tank()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  start GermanAttackT4Group2Tank.");
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPoint_German_T4Group2_1"),
+                    GetNavPointBehPos("NavPoint_German_T4Group2_2"),
+                    GetNavPointBehPos("NavPoint_German_T4Group2_3")
+                           ];
+    SetFormation("CFrontFormation", 40.0, true, true);
+
+    SetFirstQueueOrders([
+      ["GermanAttackTankGroup2", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["GermanAttackTankGroup2", "EndAttack", [], ""]
+                        ]);
+  }
+
+  void EndAttack()
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed]  GermanAttackT4Group2Tank end.");
+
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetOrder_Attack(GetMission().AllSovietKilllist, m_EnemyReactionType);
+  }
+
+  void OnUnitExplosion(String _UnitID, String _OwnerID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3GermanTankT4Group2] OnUnitExplosion  unit ID = " + _UnitID + " owner ID = " + _OwnerID );
+
+    Component Owner = GetMission().GetObject(_OwnerID);
+
+    if (checkMask(Owner, ["ENEMY"], []))
+    {
+      ForEachUnitTask("ActivateBehavior", [true]);
+      sendEvent(0.0, getIdentificator(this), "ActivateGroupT4_2", []);
+      sendEvent(0.0, "C2M3GermanTankT4Group1", "ActivateGroupT4_1", []);
+
+    }
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+//    if(GetMission().isDebug)
+//      logWarning("[C2M3GermanTankT4Group2] OnUnitHitByEnemy  unit ID = " + _UnitID + " enemy ID = " + _EnemyID );
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+
+    if (checkMask(Owner, ["ENEMY"], []))
+    {
+      //ForEachUnitTask("ActivateBehavior", [true]);
+      sendEvent(0.0, getIdentificator(this), "ActivateGroupT4_2", []);
+      sendEvent(0.0, "C2M3GermanTankT4Group1", "ActivateGroupT4_1", []);
+    }
+  }
+
+  event void ActivateGroupT4_2()
+  {
+    if(activateGroup)
+      return;
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed] Activate C2M3GermanTankT4Group2");
+
+    ActivateBehavior(true);
+  }
+}
+
+//-----------------------------------------------------------------
+class C2M3GermanTigerGroup extends CBaseUnitGroup
+{
+  event void OnUnitDestroyed(String _UnitID)
+  {
+    CBaseUnitGroup::OnUnitDestroyed(_UnitID);
+
+//    if(GetMission().isDebug)
+//      logWarning("{Ironweed} Destroy german Tiger tank ID = "+ _UnitID);
+
+    RefreshUnitsList();
+    if(m_Units.size() == 0)
+    {
+//      if(GetMission().isDebug)
+//        logWarning("[Ironweed]  All German Tiger destroy. Start Pak40_C.");
+
+      sendEvent(0.0, "C2M3GermanPak40_C", "ActivatePak40_C", []);
+    }
+  }
+}
+
+//-----------------------------------------------------------------
+class CC2M3Pak40CTask extends CBaseAITask
+{
+  boolean activateUnit = false;
+  void Init()
+  {
+    CBaseAITask::Init();
+    ActivateBehavior(false);
+    addClassificatorObject(m_Units[i], "INVISIBLE_ON_RADAR");
+  }
+
+  event void OnExplosion(
+    float     _Damage,               // - сила ударной волны (not used)
+    Matrix    _Position,             // - источник волны
+    float     _Radius,               // - радиус взрыва (not used)
+    String    _OwnerID,              // - ID юнита, который по сути нанёс повреждени
+    category  _DamageType,           // - тип повреждения - тип снаряда который попал
+    int       _SubstanceId,          // - материал в который попали
+    Array     _ExtraAttribs,         // - дополнительные параметры
+    float     _BulletDamageModifier, // - коэффициент повреждения переданный снарядом
+    Component _DamageJoint
+                        )
+  {
+    CBaseAITask::OnExplosion(_Damage, _Position, _Radius, _OwnerID, _DamageType, _SubstanceId, _ExtraAttribs, _BulletDamageModifier, _DamageJoint);
+
+//    if(GetMission().isDebug)
+//    {
+//      logWarning("[CC2M3Pak40CTask] OnExplosion  owner ID = " + _OwnerID );
+//      (new #GameController().GetObject(SOID_Console)).logClassificatorsList(_OwnerID);
+//    }
+
+    Component Owner = GetMission().GetObject(_OwnerID);
+    if (checkMask(Owner, ["FRIEND"], []))
+      ActivatePak40_C();
+  }
+
+  void OnHitByEnemy(String _EnemyID)
+  {
+    CBaseAITask::OnHitByEnemy(_EnemyID);
+
+//    if(GetMission().isDebug)
+//    {
+//       logWarning("[CBaseZisTask] OnHitByEnemy  enemy ID = " + _EnemyID );
+//       (new #GameController().GetObject(SOID_Console)).logClassificatorsList(_EnemyID);
+//    }
+
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["FRIEND"], []))
+      ActivatePak40_C();
+  }
+
+  event void ActivatePak40_C()
+  {
+    if(activateUnit)
+      return;
+
+//    if(GetMission().isDebug)
+//      logWarning("[Ironweed] Activate Pak40_C");
+
+    ActivateBehavior(true);
+    fireEvent(0.0, [], "SetRadarUnit", [GetMission().DefaultMask]);
+    SetOrder_Attack(GetMission().SuKilllist, m_EnemyReactionType);
+    GetMission().StatrPhase2();
+  }
+}
+
+
+//GermanInfantry-----------------------------------------------------------------
+class C2M3GermanSoldierGroup extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    SetImmortalMode(true);
+  }
+
+  //sendEvent(0.0, "C2M3GermanSoldierGroup", "KillGroup", []);
+  //sendEvent(0.0, "C2M3GermanSoldierGroup", "enableGroup", []);
+  event void enableGroup()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+  }
+
+  event void KillGroup()
+  {
+    for(int i = 0; i < m_Units.size(); i++)
+    {
+      Component unit = GetMission().GetObject(m_Units[i]);
+      if (unit != null)
+       if(unit.GetObject("Behavior") != null)
+          unit.SetImmortalMode(false);;
+    }
+  }
+}
+//class C2M3RussianSoldierGroup extends CBaseUnitGroup
+//{
+//}
+// Russian Soldiers----------------------------------------------------------------------
+class C2M3RussianSoldierGroup extends CBaseUnitGroup
+{
+  float m_SpeedAttack = 1.5f;
+
+  event void C2M3RusSoldiersAttack()
+  {
+
+     Array ApproachPoints = [
+                   GetNavPointBehPos("NavPoint_C2M3RusSoldierAttack_3"),
+                   GetNavPointBehPos("NavPoint_C2M3RusSoldierAttack_2"),
+                   GetNavPointBehPos("NavPoint_C2M3RusSoldierAttack_1"),
+                   GetNavPointBehPos("NavPoint_C2M3RusSoldierAttack")
+                           ];
+    SetFormation("CFrontFormation", 10.0, true, true);
+    SetFirstQueueOrders([
+      ["C2M3RussianSoldierGroup", "SetOrder_MoveToEx", [ApproachPoints, m_SpeedAttack], ""],
+      ["C2M3RussianSoldierGroup", "", [], ""]
+                        ]);
+  }
+}
+
+
