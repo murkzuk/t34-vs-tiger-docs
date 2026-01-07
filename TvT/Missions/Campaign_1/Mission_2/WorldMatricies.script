@@ -1,0 +1,52 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC1M2WorldMatrices extends CWorldMatrices
+{
+  final static float MatrixWidth  = 9000.0;
+  final static float MatrixHeight = 9000.0;
+}
+
+class CC1M2LandscapeLayer extends CLandscapeLayer
+{
+  final static int    ImageWidth       = 2049;
+  final static int    ImageHeight      = 2049;
+
+  final static String ImageFileName    = "Missions/Campaign_1/Mission_2/hmap.raw";
+
+  final static float  FloatValueFactor = 0.070000 * 257.0;
+}
+
+class CC1M2WaterHeights extends CBaseWaterHeightsLayer
+{
+  final static String ImageFileName    = "Missions/Campaign_1/Mission_2/hwater.raw";
+
+  final static float  FloatValueFactor = 0.070000 * 257.0;
+}
+
+class CC1M2TerrainZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+{
+  final static int    ImageWidth    = 1024;
+  final static int    ImageHeight   = 1024;
+
+  final static String ImageFileName = "Missions/Campaign_1/Mission_2/TerrainZone_c1m2.bmp";
+}
+
+class CC1M2RouterZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+{
+  final static int    ImageWidth    = 1024;
+  final static int    ImageHeight   = 1024;
+
+  final static String ImageFileName = "Missions/Campaign_1/Mission_2/RouterZone_c1m2.bmp";
+}
+
+class CC1M2MicroTextures1 extends CMicroTexLayer
+{
+  final static String ImageFileName = "Missions/Campaign_1/Mission_2/micro_C1M2.bmp";
+}

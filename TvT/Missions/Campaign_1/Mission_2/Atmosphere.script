@@ -1,0 +1,53 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+class CC1M2Atmosphere extends CCommonAtmosphere
+{
+  boolean IsLightEnabled   = true;
+  boolean IsAntiSunEnabled = true;
+
+  Vector  SunDirection   = new Vector(-0.690000, 0.870000, -0.450000);
+  Color   AmbientLight   = new Color(0.156863, 0.203922, 0.243137, 1.000000);
+  Color   SunColor       = new Color(0.988235, 0.937255, 0.780392, 1.000000);
+  Color   AntiSunColor   = new Color(0.584314, 0.584314, 0.784314, 1.000000);
+  float   DistanceToSun  = 2000.0;
+
+  Array   HorizontPos    = [100.0f, 1000.0f];
+
+  String  DefaultFogMode = "Exp";
+
+  float   FogNear        = 1.0;
+  float   FogFar         = 500.0;
+  float   FogFarMax      = 3000.0;
+
+  Color   FogColorXPos   = new Color( 0.952941, 0.952941, 0.870588, 1.000000); // S
+  Color   FogColorXNeg   = new Color( 0.549020, 0.623529, 0.572549, 1.000000); // N
+  Color   FogColorYPos   = new Color( 0.407843, 0.411765, 0.533333, 1.000000); // E
+  Color   FogColorYNeg   = new Color( 0.356863, 0.525490, 0.556863, 1.000000); // W
+
+  Color   ShadowColor    = new Color(0.403922, 0.494118, 0.545098, 1.000000);
+  float   ShadowFar      = FogFar * 0.7;
+
+  Vector  WindVector     = new Vector(0.4, 0.6, 0.0);
+
+  boolean IsIllumination = false;
+  boolean IsSunVisible   = true;
+  boolean IsLightEnabled = true;
+
+  float   AntiSunIntensity         = 0.300000;
+  float   SunIntensity             = 0.7;
+
+  float   SunSpecularIntensity     = 1.0;
+  float   AntiSunSpecularIntensity = 0.0;
+
+  boolean EnableHorizontAdjustment = true;
+
+  float   TreeLightKoef      = 0.6; //tree lighting smooth koef: 0 - min range; 0.3 - middle; 0.8 - high range
+  float   TerrainShadowPower = 5.0; //terrain shadow contrast 1 - min; 6 - middle;
+}
