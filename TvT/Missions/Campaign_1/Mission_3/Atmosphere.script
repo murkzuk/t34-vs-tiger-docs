@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//	PZU Alignment & Structure Check
+//	REDUX Alignment & Structure Check
 //-----------------------------------------------------------------
 
 class CM3Atmosphere extends CCommonAtmosphere
@@ -54,4 +54,5 @@ class CM3Atmosphere extends CCommonAtmosphere
 
   float   TreeLightKoef      = 0.0; //tree lighting smooth koef: 0 - min range; 0.3 - middle; 0.8 - high range
   float   TerrainShadowPower = 3.0; //terrain shadow contrast 1 - min; 6 - middle;
+
 }
