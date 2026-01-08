@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//   PZU Strucutre & Alignment Check                                                                
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -30,7 +30,7 @@ class CC1M1Content
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["AmbientLight", new Color(0.152941, 0.145098, 0.078431, 1.000000)],
+        ["AmbientLight", new Color(0.090000, 0.090000, 0.095000, 1.000000)], // Reduced from 0.117647 for better lighting balance
         ["AntiSunAngle", 10.000000],
         ["AntiSunColor", new Color(0.811765, 0.819608, 0.854902, 0.000000)],
         ["AntiSunIntensity", 0.400000],
@@ -45,15 +45,13 @@ class CC1M1Content
         ["FogFarMax", 3500.000000],
         ["FogMode", "Exp"],
         ["ShadowColor", new Color(0.325490, 0.325490, 0.325490, 1.000000)],
-        ["SunColor", new Color(1.000000, 1.000000, 1.000000, 0.000000)],
-        ["SunDirection", new Vector(-0.005952, -0.155542, -0.305348)],
-        ["SunIntensity", 1.000000],
+        ["SunColor", new Color(0.950000, 0.950000, 0.950000, 1.000000)], // Reduced from pure white
+        ["SunDirection", new Vector(0.005952, -0.155542, -0.305348)],
+        ["SunIntensity", 0.600000], // Reduced from 1.0 to prevent overexposure
         ["TreeLightKoef", 0.700000],
         ["TreeNormalRelax", 0.000000],
         ["TreeShadowLodDistance", 25.000000],
-        ["AntiSunHorAngle", 105.000000],
-        ["BlindColor", new Color(1.000000, 1.000000, 1.000000, 1.000000)],
-        ["DistanceToSun", 2000.000000]
+        ["AntiSunHorAngle", 105.000000]     
       ]
     ],
 
@@ -69,21 +67,18 @@ class CC1M1Content
         ),
       [
         ["ForestTextureScale", 0.500000],
-        ["ForestShadowBorderScale", 0.400000],
-        ["ForestShadowAlphaScale", 0.500000],
-        ["ForestBeginFadeDist", [250.000000, 480.000000]],
-        ["IsAntiLighting", true],
-        ["TerrainShadowPower", 1.000000],
+        ["ForestShadowBorderScale", 0.150000],//to 0.150000 (from 0.400000)jm
+        ["ForestShadowAlphaScale", 0.300000],//to 0.300000 (from 0.500000)jm
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],         
         ["VertForestDistMin", 800.000000],
         ["VertForestDistMax", 8000.000000],
         ["VertForestAngleMin", 0.000000],
         ["VertForestAngleMax", 45.000000],
         ["VertForestBeginFadeDist", [250.000000, 410.000000]],
-        ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)],
-        ["WaterFresnelPower", 2.000000],
+        ["TerrainShadowPower", 1.000000],·        
+		["IsAntiLighting", true],       
         ["NormalNoise", 0.300000],
-        ["ReflectDistortion", 0.050000],
-        ["ReflectTextureShift", 0.000000]
+	    ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)]
       ]
     ],
 
