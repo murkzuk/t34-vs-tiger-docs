@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	PZU Alignment & Structure Check
 //-----------------------------------------------------------------
 
 class CM3Atmosphere extends CCommonAtmosphere
@@ -23,6 +23,7 @@ class CM3Atmosphere extends CCommonAtmosphere
 
   String  DefaultFogMode = "Exp";
 
+  float   FogDensity     = 0.000600; // PZU added to align with M3 Keep the fog density you liked
   float   FogNear        = 10.0;
   float   FogFar         = 800.0;
   float   FogFarMax      = 3500.0;
@@ -43,7 +44,8 @@ class CM3Atmosphere extends CCommonAtmosphere
   boolean IsLightEnabled = true;
 
   float   AntiSunIntensity         = 0.300000;
-  float   SunIntensity             = 0.400000;
+  float   SunIntensity             = 0.400000; 
+  float   AntiSunAngle             = 10.0;
 
   float   SunSpecularIntensity     = 1.0;
   float   AntiSunSpecularIntensity = 0.0;

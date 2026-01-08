@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  PZU Alignment & Structure Check                                                                 
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -30,8 +30,7 @@ class CC1M3Content
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["AmbientLight", new Color(0.25, 0.20, 0.35, 1.0)],  // Purple-warm shadows jm 0.372549, 0.372549, 0.372549, 1.000000
-		["SunDirection", new Vector(0.99, -0.05, -0.50)],  // jm ADDED THIS!
+        ["AmbientLight", new Color(0.25, 0.20, 0.35, 1.0)],  // Purple-warm shadows jm 0.372549, 0.372549, 0.372549, 1.000000		
         ["AntiSunAngle", 60.000000], //jm 60.00000
         ["AntiSunColor", new Color(0.611765, 0.541176, 0.439216, 1.0)], //jm 0.376471, 0.376471, 0.376471, 1.000000
         ["AntiSunIntensity", 0.60000], //jm 0.200000
@@ -47,6 +46,7 @@ class CC1M3Content
         ["FogMode", "Exp"], //jm Exp2
         ["ShadowColor", new Color(0.356863, 0.305882, 0.250980, 1.0)], //jm 0.607843, 0.607843, 0.607843, 1.000000
         ["SunColor", new Color(1.0, 0.85, 0.65, 1.0)], // (0.752941, 0.752941, 0.752941, 1.000000) jm
+        ["SunDirection", new Vector(0.99, -0.05, -0.50)],  // jm ADDED THIS!
         ["SunIntensity", 0.4], //jm 0.900000
         ["TreeLightKoef", 0.700000], //jm 2.6
         ["TreeNormalRelax", 0.000000],
@@ -73,16 +73,16 @@ class CC1M3Content
         ["ForestTextureScale", 0.500000],
         ["ForestShadowBorderScale", 0.400000],
         ["ForestShadowAlphaScale", 0.500000],
-        ["ForestBeginFadeDist", [250.000000, 480.000000]],
-        ["IsAntiLighting", true],
-        ["TerrainShadowPower", 3.000000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],       
         ["VertForestDistMin", 800.000000],
         ["VertForestDistMax", 8000.000000],
         ["VertForestAngleMin", 0.000000],
         ["VertForestAngleMax", 45.000000],
         ["VertForestBeginFadeDist", [250.000000, 410.000000]],
-        ["WaterBorderColor", new Color(0.568627, 0.537255, 0.435294, 1.000000)],
-        ["NormalNoise", 0.100000]
+        ["TerrainShadowPower", 3.000000], 
+        ["IsAntiLighting", true],   
+        ["NormalNoise", 0.100000],
+        ["WaterBorderColor", new Color(0.568627, 0.537255, 0.435294, 1.000000)]
       ]
     ],
 
