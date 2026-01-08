@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//   PZU Strucutre & Alignment Check                                                                
+//  REDUX Strucutre & Alignment Check                                                                
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -75,7 +75,7 @@ class CC1M1Content
         ["VertForestAngleMin", 0.000000],
         ["VertForestAngleMax", 45.000000],
         ["VertForestBeginFadeDist", [250.000000, 410.000000]],
-        ["TerrainShadowPower", 1.000000],·        
+        ["TerrainShadowPower", 1.000000],Â·        
 		["IsAntiLighting", true],       
         ["NormalNoise", 0.300000],
 	    ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)]
@@ -4217,3 +4217,4 @@ class CC1M1Content
     return m_ObjectListClassName;
   }
 }
+
