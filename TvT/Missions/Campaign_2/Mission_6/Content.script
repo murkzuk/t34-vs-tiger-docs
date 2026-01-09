@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//   Redux A&S Check                                                                
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -69,15 +69,15 @@ class CC2M6Content
         ["ForestTextureScale", 0.500000],
         ["ForestShadowBorderScale", 0.400000],
         ["ForestShadowAlphaScale", 0.500000],
-        ["ForestBeginFadeDist", [250.000000, 480.000000]],
-        ["IsAntiLighting", true],
-        ["TerrainShadowPower", 1.000000],
-        ["NormalNoise", 0.300000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],       
         ["VertForestDistMin", 800.000000],
         ["VertForestDistMax", 8000.000000],
         ["VertForestAngleMin", 0.000000],
         ["VertForestAngleMax", 45.000000],
         ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+		["TerrainShadowPower", 1.000000],
+        ["IsAntiLighting", true],        
+        ["NormalNoise", 0.300000],
         ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)],
         ["WaterFresnelPower", 2.000000]
       ]
