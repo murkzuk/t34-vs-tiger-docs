@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  Redux A&S Check                                                               
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -30,26 +30,27 @@ class CC2M5Content
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
+      	["AmbientLight", new Color(0.152941, 0.152941, 0.180392, 1.000000)],
+	    ["AntiSunAngle", 30.000000],
+	   	["AntiSunColor", new Color(0.576471, 0.592157, 0.666667, 1.000000)],
+	    ["AntiSunIntensity", 0.500000], 
+	    ["EnableHorizontAdjustment", true],  
         ["FogColorXPos", new Color(0.627451, 0.627451, 0.627451, 1.000000)],
         ["FogColorXNeg", new Color(0.627451, 0.627451, 0.627451, 1.000000)],
         ["FogColorYPos", new Color(0.627451, 0.627451, 0.627451, 1.000000)],
         ["FogColorYNeg", new Color(0.627451, 0.627451, 0.627451, 1.000000)],
+        ["FogDensity", 0.001000],
         ["FogNear", 10.000000],
         ["FogFar", 500.000000],
         ["FogFarMax", 4000.000000],
-        ["EnableHorizontAdjustment", true],
+       	["FogMode", "Exp"],
+       	["ShadowColor", new Color(0.847059, 0.847059, 0.847059, 1.000000)],
         ["SunColor", new Color(0.682353, 0.682353, 0.682353, 1.000000)],
-        ["SunIntensity", 0.500000],
-        ["AntiSunColor", new Color(0.576471, 0.592157, 0.666667, 1.000000)],
-        ["AntiSunIntensity", 0.500000],
-        ["AntiSunAngle", 30.000000],
         ["SunDirection", new Vector(-0.105195, -0.105554, -0.355535)],
-        ["AmbientLight", new Color(0.152941, 0.152941, 0.180392, 1.000000)],
-        ["ShadowColor", new Color(0.847059, 0.847059, 0.847059, 1.000000)],
-        ["FogMode", "Exp"],
-        ["FogDensity", 0.001000],
+        ["SunIntensity", 0.500000],       
         ["TreeLightKoef", 0.000000],
         ["TreeNormalRelax", 0.000000],
+     	["TreeShadowLodDistance", 25.000000], //Redux Line Missing
         ["StencilShadowColor", new Color(0.874510, 0.874510, 0.874510, 1.000000)],
         ["AntiSunHorAngle", 105.000000]
       ]
