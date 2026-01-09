@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//    Redux A&S Check                                                               
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -50,10 +50,11 @@ class CC2M2Content
         ["ShadowFar", 1100.000000],
         ["SunDirection", new Vector(0.990000, -0.670000, -0.400000)],
         ["SunIntensity", 0.800000],
+        ["TreeLightKoef", 0.600000],
+        ["TreeNormalRelax", 0.000000], // Redux Line Missing
         ["TreeShadowLodDistance", 35.000000],
         ["AntiSunHorAngle", 105.000000],
-        ["StencilShadowColor", new Color(0.619608, 0.643137, 0.670588, 1.000000)],
-        ["TreeLightKoef", 0.600000],
+        ["StencilShadowColor", new Color(0.619608, 0.643137, 0.670588, 1.000000)],      
         ["SunShines", 0.100000]
       ]
     ],
@@ -72,14 +73,15 @@ class CC2M2Content
         ["ForestTextureScale", 0.500000],
         ["ForestShadowBorderScale", 0.400000],
         ["ForestShadowAlphaScale", 0.500000],
-        ["ForestBeginFadeDist", [250.000000, 480.000000]],
-        ["IsAntiLighting", true],
-        ["TerrainShadowPower", 3.000000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],     
         ["VertForestDistMin", 800.000000],
         ["VertForestDistMax", 8000.000000],
         ["VertForestAngleMin", 0.000000],
         ["VertForestAngleMax", 45.000000],
         ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+		["TerrainShadowPower", 3.000000],
+        ["IsAntiLighting", true],      
+		["NormalNoise", 0.300000], //Redux Line Missing
         ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)]
       ]
     ],

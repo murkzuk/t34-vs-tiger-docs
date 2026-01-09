@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	Redux A&S Check
 //-----------------------------------------------------------------
 
 class CC2M2Atmosphere extends CCommonAtmosphere
@@ -22,6 +22,7 @@ class CC2M2Atmosphere extends CCommonAtmosphere
 
   String  DefaultFogMode = "Exp";
 
+  float   FogDensity     = 0.000600; // Keep the fog density you liked Redux line missing
   float   FogNear        = 1.0;
   float   FogFar         = 1500; // Reduced from 5000 for realistic dawn visibility
   float   FogFarMax      = 3000.0;
@@ -42,6 +43,7 @@ class CC2M2Atmosphere extends CCommonAtmosphere
 
   float   AntiSunIntensity         = 0.25; // Reduced for dawn
   float   SunIntensity             = 0.35; // Significantly reduced for early dawn (was 0.7)
+  float   AntiSunAngle             = 10.0; //Redux Line Missing
   
   float   SunSpecularIntensity     = 0.8; // Reduced specular for dawn light
   float   AntiSunSpecularIntensity = 0.0;
