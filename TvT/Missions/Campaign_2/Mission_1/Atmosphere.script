@@ -4,13 +4,11 @@
 //  Any unauthorized usage, either in part or whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	 Redux A&S Check
 //-------------------------------------------------------------------
 
-class CC2M1Atmosphere
-  extends CCommonAtmosphere
+class CC2M1Atmosphere  extends CCommonAtmosphere
 {
-
   boolean IsLightEnabled        = true;
   boolean IsAntiSunEnabled      = true;
 
