@@ -34,7 +34,7 @@ class CC1M3LensFlare extends CLensFlare
                              new Color(0.9, 1.0, 0.2, 0.5),
                              new Color(1.0, 0.2, 0.1, 0.5)
 			                     ];
-
+  float SunAlpha = 1.0; //jm
   float FlareRelativeSize = 0.015;
   float SunRadius         = 5.0;
   float BlindingSpeed     = 4.0;
