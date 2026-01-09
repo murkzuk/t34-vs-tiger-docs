@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  Redux A&S Check                                                                 
 //-------------------------------------------------------------------
 //                                                                   
 //  Automatically-generated mission script file                      
@@ -48,8 +48,11 @@ class CC2M4Content
         ["ShadowColor", new Color(0.313726, 0.274510, 0.235294, 0.300000)],
         ["SunColor", new Color(0.890196, 0.807843, 0.584314, 1.000000)],
         ["SunDirection", new Vector(0.990000, -0.080000, -0.350000)],
-        ["SunIntensity", 0.900000],
-        ["TreeShadowLodDistance", 20.000000]
+        ["SunIntensity", 0.900000],	
+		["TreeLightKoef", 0.700000],   //Redux line Missing
+        ["TreeNormalRelax", 0.000000], //Redux Line Missing
+        ["TreeShadowLodDistance", 20.000000],
+		["AntiSunHorAngle", 105.000000]
       ]
     ],
 
@@ -67,14 +70,15 @@ class CC2M4Content
         ["ForestTextureScale", 0.500000],
         ["ForestShadowBorderScale", 0.400000],
         ["ForestShadowAlphaScale", 0.500000],
-        ["ForestBeginFadeDist", [250.000000, 480.000000]],
-        ["IsAntiLighting", true],
-        ["TerrainShadowPower", 3.000000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],            
         ["VertForestDistMin", 800.000000],
         ["VertForestDistMax", 8000.000000],
         ["VertForestAngleMin", 0.000000],
         ["VertForestAngleMax", 45.000000],
-        ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+        ["VertForestBeginFadeDist", [250.000000, 410.000000]], 
+	  	["TerrainShadowPower", 3.000000],
+        ["IsAntiLighting", true],
+		["NormalNoise", 0.300000], // Redux Line Missing
         ["WaterBorderColor", new Color(0.568627, 0.537255, 0.435294, 1.000000)]
       ]
     ],

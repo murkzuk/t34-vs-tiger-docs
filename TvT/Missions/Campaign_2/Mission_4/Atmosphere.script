@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	Redux A&S Check
 //-----------------------------------------------------------------
 
 class CC2M4Atmosphere extends CCommonAtmosphere
@@ -22,6 +22,7 @@ class CC2M4Atmosphere extends CCommonAtmosphere
 
   String  DefaultFogMode = "Exp";
 
+  float   FogDensity     = 0.000600; // Keep the fog density you liked Redux Line Missing
   float   FogNear        = 10.0;
   float   FogFar         = 800.0;
   float   FogFarMax      = 3500.0;
@@ -41,7 +42,8 @@ class CC2M4Atmosphere extends CCommonAtmosphere
   boolean IsLightEnabled = true;
 
   float   AntiSunIntensity         = 0.3;
-  float   SunIntensity             = 0.9;
+  float   SunIntensity             = 0.9; 
+  float   AntiSunAngle             = 10.0;	 //Redux Line Missing
 
   float   SunSpecularIntensity     = 1.0;
   float   AntiSunSpecularIntensity = 0.0;
