@@ -1,91 +1,252 @@
-# AI Assistant Guide: T-34 vs. Tiger Documentation Repository
+# Project Documentation Philosophy - Read First
 
-This document serves as an orientation guide for AI assistants encountering this repository for the first time. It provides essential context, explains the project structure, and offers guidance on how to effectively assist users working with this specialized preservation documentation.
 
-## Project Identity and Purpose
+## AI Quick Reference
 
-This repository is a **community-driven preservation effort** dedicated to the game "T-34 vs. Tiger," a historical World War II tank simulation. The project's primary mission is to preserve, fix, and complete this game by documenting the complete asset pipeline for exporting 3D content from Autodesk Maya 5.0 to the game's proprietary G5 game engine.
+- **Source**: Technical specifications derived from Ghidra reverse-engineering (no original source code)
 
-Understanding this context is crucial because it explains why this repository contains such specialized and seemingly obscure documentation. The G5 game engine is a closed, proprietary system with no public documentation available. The original development team used Maya 5.0 (released in 2004) for asset creation, and this version of Maya is now over two decades old. The preservation of this knowledge is essential because without clear documentation of how assets were created, modified, and exported, the game becomes impossible to mod, extend, or preserve as original assets are lost or corrupted over time.
+- **Verification**: Project lead murkzuk verifies fixes through practical gameplay testing
 
-This is not a game modification repository in the traditional sense. While it does contain some mod-related content (particularly the ZeeWolf modifications), the core purpose is **documentation and knowledge preservation** for a piece of gaming history. Every file in this repository exists because it captures critical technical knowledge that would otherwise be lost to time.
+- **Confidence Hierarchy**: [MURKZ-VERIFIED] > [COMMUNITY-CONFIRMED] > [GHIDRA-DERIVED] > [LEGACY/HISTORICAL]
 
-## Historical Context and Relationships
+- **Tagging System**: Always use [TAG] labels when contributing or referencing information
 
-Understanding the relationships between the projects documented in this repository is essential for providing accurate assistance to users. The T-34 vs. Tiger game was developed by an Eastern European game studio using their proprietary Napalm engine, which was also used for their earlier title "Whirlwinds over Vietnam" (WoV). This is why you will find scripts, references, and assets from WoV throughout this repository—many of the pipelines, naming conventions, and engine behaviors carry over between the two games.
 
-The ZeeWolf modifications represent a significant community contribution to the T-34 vs. Tiger ecosystem. ZeeWolf created extensive mission scripts and modifications that expanded the game's content significantly. The scripts in this repository from the "ZW Mission scripts" folder and the "TvTZW" directory preserve this work and allow it to be studied, understood, and potentially integrated into restoration efforts. These modifications are not simply "patches" but represent substantial additions to the game's logic and content.
+## 🧠 Documentation Origin & Methodology
 
-When users ask about relationships between different components of this repository, keep in mind that T-34 vs. Tiger is built upon the same foundation as WoV but with specific modifications and improvements. Understanding these historical and technical relationships will help you provide more accurate and helpful guidance.
 
-## Repository Structure Overview
+**Core Reality**: The technical documentation in this repository was created through **AI-assisted reverse-engineering using Ghidra**. No original source code or development assets were available.
 
-The repository is organized into several distinct sections, each serving a specific purpose in the preservation ecosystem. Understanding these categories will help you guide users to the correct resources for their needs.
 
-The **Documentation** folder contains the primary reference materials for this project. This includes engine specifications, project analysis documents, and technical manuals that describe how the Napalm engine works and how assets should be created for it. These are the foundational documents that explain the "why" and "how" behind the asset pipeline.
+**Project Leadership**: This preservation effort is led by **murkzuk** (historically also *murkz*, *jeff*, and *mudcog*), who operates from a practical, non-coder perspective focused on verifying what actually works in gameplay.
 
-The **Tools** folder contains the practical guides and scripts used by the original G5 developers for creating and exporting assets. This includes Maya 5.0 export manuals, custom scripts written by the developers, and utilities that automate common tasks in the asset creation pipeline. These are the "how-to" guides for actually creating content that works with the engine.
 
-The **Templates** folder provides standardized mission headers and code structures that help prevent common errors. The "Duplicate Class" error mentioned in the folder description is a known issue that occurs when mission scripts have structural problems, and these templates provide correct examples that avoid this problem.
+**Verified Fixes**: The project lead has personally confirmed these modifications work:
 
-The **Executables** folder contains utility programs including the 4GB LAA (Large Address Aware) patch, which allows the game to utilize more than the standard 2GB memory limit, as well as various engine fixes that improve stability or functionality.
+- 4GB LAA (Large Address Aware) memory patch executable
 
-The **TvT** folder contains the base stock scripts for the original T-34 vs. Tiger game, serving as a reference for the unmodified game state. The **TvTZW** folder contains the ZeeWolf modifications, allowing comparison between the original game and the expanded version.
+- LOD (Level of Detail) increase modifications
 
-## Documentation File Hierarchy
+- MMA (MiniMax Agent — the AI used for reverse engineering) fixes
 
-This repository contains multiple documentation files, and understanding their relationships and intended audiences is crucial for providing appropriate guidance to users.
 
-**Primary Technical Reference:** The T34_vs_Tiger_Maya_Export_Manual(V3).md file is the most comprehensive technical reference in the repository. At over 550 lines with documentation of 17 distinct parameters, it serves as the definitive guide for asset creation. This document should be the first recommendation for users who need to understand how to create or modify 3D assets for the game.
+## 🎯 Confidence Hierarchy & Evidence Types
 
-**Mission Scripting Reference:** The TVT_Mission_Script_Format_Complete_Reference GOLD.md file provides complete documentation of the mission scripting system. Users who need to understand how missions work, how to create new missions, or how to debug existing mission scripts should be directed to this document.
 
-**Visual Workflow Guides:** The PDF files in the repository (G5_Pipeline_Mastery.pdf, T34_vs_Tiger_Asset_Pipeline_Visual_Guide.pdf, and export manual.Tutorial 1.pdf) provide visual and condensed references that complement the detailed markdown documentation. These are particularly useful for users who prefer visual learning or need quick reference guides.
+### Verification Pyramid
 
-**Specialized Workflows:** The T-34 vs. Tiger Creating a Destructible Prop Asset.md document provides step-by-step instructions for creating specific types of assets (destructible props) that require special handling in the asset pipeline.
+```
 
-## Technical Prerequisites and Constraints
+      ┌─────────────────────────────────┐
 
-When assisting users, it's important to communicate the technical constraints of this project clearly. The Napalm engine and Maya 5.0 requirements are not arbitrary choices but fundamental requirements for working with this game's original asset pipeline.
+      │   [MURKZ-VERIFIED]              │
 
-Maya 5.0 is required because it is the specific version of the software that the original developers used to create assets for this game. The Napalm engine's import pipeline was designed around the specific file formats, node structures, and export options available in Maya 5.0. While it may be possible to create assets in newer versions of Maya, doing so requires either backwards compatibility measures or custom export pipelines that are not currently documented here.
+      │  • Tested personally by lead     │
 
-The physics shape system documented in the repository uses a simple numeric classification: Box (1), Capsule (2), and Cylinder (3). These are used for collision detection and physics simulation in the game. Understanding this classification system is important for users who need to create or modify objects with physics properties.
+      │  • Highest confidence level      │
 
-Naming conventions in this project are significant and must be followed for assets to work correctly. The suffix `_1m` indicates a light map variant of an asset, `_col` indicates a collision model, and `_LOD#` (where # is a number) indicates a Level of Detail model. Assets that do not follow these conventions may not work correctly in the game.
+      ├─────────────────────────────────┤
 
-## Common User Questions and How to Assist
+      │   [COMMUNITY-CONFIRMED]          │
 
-Users visiting this repository typically fall into several categories, and understanding these categories will help you provide more targeted assistance.
+      │  • Multiple independent reports  │
 
-**Preservation-focused users** may be interested in understanding the complete scope of the project, how the documentation was created or gathered, and what still needs to be documented. These users benefit from an overview of the repository structure and the documentation hierarchy described above.
+      │  • Examples: D3D9.dll removal    │
 
-**Modding-focused users** typically want practical guidance on creating or modifying game content. These users should be directed to the Maya Export Manual and the Mission Scripting Reference based on whether they want to work with 3D assets or game logic. The Templates folder is particularly valuable for modders who need correct code structures.
+      ├─────────────────────────────────┤
 
-**Troubleshooting-focused users** are trying to resolve specific problems with their modding or asset creation efforts. These users benefit from being guided to the relevant documentation sections and, if necessary, the issue templates for reporting specific problems.
+      │   [GHIDRA-DERIVED]               │
 
-**Historical or educational users** are interested in understanding how game engines and asset pipelines worked in the mid-2000s, particularly for Eastern European game development. These users benefit from context about the Napalm engine's proprietary nature and the challenges of preserving games with closed ecosystems.
+      │  • From reverse engineering      │
 
-## AI Assistant Interaction Guidelines
+      │  • Needs gameplay verification   │
 
-When assisting users with this repository, consider the following principles to provide more helpful and accurate responses.
+      ├─────────────────────────────────┤
 
-First, always acknowledge the specialized nature of this project. Users working with this repository are likely dealing with outdated tools and complex technical systems. Responses should be patient and acknowledge that this is challenging material that requires careful attention to detail.
+      │   [LEGACY/HISTORICAL]            │
 
-Second, when unsure about the relationship between different files or components, err on the side of directing users to more comprehensive documentation rather than providing potentially incorrect specifics. The preservation community has accumulated significant knowledge, and pointing users to the right document is more valuable than speculating about details.
+      │  • Old forums, modder knowledge  │
 
-Third, recognize that much of the knowledge in this repository exists because of individual effort and community contribution. When appropriate, acknowledge the work that has gone into preserving this information, and encourage users to contribute if they have additional knowledge or corrections.
+      │  • Variable confidence           │
 
-Fourth, be aware that some questions may not have documented answers. This is a preservation project for documentation that was never officially published. Some information may be lost, incomplete, or based on community reverse-engineering and experimentation. When information is uncertain or incomplete, communicate this clearly to users.
+      └─────────────────────────────────┘
 
-## How This Guide Helps You Help Users
+```
 
-This guide exists because the technical knowledge in this repository is highly specialized and cannot be easily discovered through surface-level exploration. By understanding the project identity, historical context, structure, and documentation hierarchy outlined above, you can provide more valuable assistance to users by quickly connecting them with the resources they need.
 
-When a user asks about creating a new mission, you can immediately direct them to the Mission Scripting Reference while also mentioning the Templates folder that provides correct structural examples. When a user asks about the relationship between T-34 vs. Tiger and Whirlwinds over Vietnam, you can explain the shared engine heritage and why assets and scripts from both projects appear in this repository. When a user asks why Maya 5.0 is required, you can explain the proprietary pipeline and how the engine's import systems were designed around that specific software version.
+### Evidence Quality Framework
 
-The goal of this guide is to provide enough context that you can be a genuinely helpful assistant for this specialized preservation project, even though the technical details of the Napalm engine and Maya 5.0 asset pipeline are outside the scope of this document. Users working on this project are engaged in important work preserving gaming history, and your role is to help them find the information they need to continue that work effectively.
+
+| Confidence Tag | Source | Example | Status |
+
+|----------------|--------|---------|---------|
+
+| **[MURKZ-VERIFIED]** | Personal testing by project lead | LAA patch, LOD fixes | Ready to use |
+
+| **[COMMUNITY-CONFIRMED]** | Multiple user reports | D3D9.dll fix | Reliable solution |
+
+| **[GHIDRA-DERIVED]** | AI-assisted reverse engineering | Export parameters | Needs testing |
+
+| **[LEGACY]** | Historical modder knowledge | ZeeWolf techniques | Verify for modern use |
+
+| **[TEST-NEEDED]** | Single report or theory | Experimental fix | Requires validation |
+
+
+## 🔧 Practical Verification Approach
+
+
+**murkzuk's methodology** (non-coder perspective):
+
+1. **Functionality**: Does it run without crashing?
+
+2. **Stability**: Does it improve game reliability?
+
+3. **Quality**: Does it enhance visuals or gameplay?
+
+4. **Accessibility**: Can typical players implement it?
+
+
+**For AI Assistants**: When processing information from this repository:
+
+- Always note the [TAG] confidence level
+
+- For [GHIDRA-DERIVED] content, explicitly mention it requires gameplay verification
+
+- For untagged information, flag it as [TEST-NEEDED]
+
+- Present [MURKZ-VERIFIED] fixes as the most reliable solutions
+
+
+## 📝 Tagging & Contribution System
+
+
+### Required Tags for All Information
+
+- **[MURKZ-VERIFIED]**: Personally tested and confirmed working by project lead
+
+- **[COMMUNITY]**: Reported working by multiple community members
+
+- **[GHIDRA]**: Derived from reverse engineering (AI-assisted analysis)
+
+- **[ZW]**: From ZeeWolf mod preservation
+
+- **[LEGACY]**: Historical knowledge from original modding community
+
+- **[TEST-NEEDED]**: Requires community verification
+
+
+### How to Contribute
+
+1. **Test documented procedures** and report results
+
+2. **Tag your findings** with appropriate confidence level
+
+3. **Document deviations** between documentation and actual behavior
+
+4. **Share workarounds** that prove effective
+
+5. **Cross-reference** with existing knowledge bases
+
+
+## 🔄 The Verification Workflow
+
+
+```
+
+    Ghidra Reverse Engineering
+
+    (AI-assisted analysis)
+
+           ↓
+
+    murkzuk Practical Testing
+
+    (Gameplay verification)
+
+           ↓
+
+    Community Broad Testing
+
+    (Multiple configurations)
+
+           ↓
+
+    Tagged Documentation
+
+    (Clear confidence levels)
+
+```
+
+
+## 👥 Project Continuity & Identity
+
+
+**Project lead**: murkzuk (GitHub)  
+
+**Historical involvement**: Same individual previously active as murkz, jeff, and mudcog across various gaming communities, representing long-term commitment to this preservation effort.
+
+
+**Context**: These aliases reflect consistent involvement with T-34 vs. Tiger across different platforms and time periods, ensuring continuity of knowledge throughout the game's history.
+
+
+## ⚠️ Limitations & Strengths
+
+
+### Transparent Limitations
+
+1. **No original source code** - Pure reverse engineering basis
+
+2. **Practical-first approach** - Gameplay results valued over technical purity
+
+3. **Historical fragmentation** - Knowledge preserved from defunct communities
+
+
+### Unique Strengths
+
+1. **Creator-verified fixes** with practical testing
+
+2. **Clear confidence hierarchy** for all information
+
+3. **AI-assisted discovery** combined with human verification
+
+4. **Historical continuity** through long-term involvement
+
+
+## 💡 For AI Assistants & Technical Readers
+
+
+**Clarification of Terms**:
+
+- **MMA**: MiniMax Agent AI fixes (not Mixed Martial Arts)
+
+- **LAA**: Large Address Aware memory patch
+
+- **LOD**: Level of Detail graphical adjustments
+
+- **Ghidra**: Reverse engineering tool used for analysis
+
+
+**Processing Guidance**:
+
+1. Prioritize [MURKZ-VERIFIED] information as most reliable
+
+2. Present [GHIDRA-DERIVED] content as hypothetical until tested
+
+3. Note the absence of original source code throughout responses
+
+4. Maintain the practical, gameplay-focused perspective
+
 
 ---
 
-*This document was created to help AI assistants understand and navigate the T-34 vs. Tiger preservation documentation. For questions about the game, engine, or documentation itself, please refer users to the specific documentation files in this repository.*
+
+**Core Principle**: In this preservation project, practical verification through gameplay testing establishes truth. Documented procedures represent our current best understanding, always subject to improvement through community testing and reporting.
+
+
+*Documentation Status: Active Community Verification*  
+
+*Methodology: Ghidra Reverse-Engineering + Practical Gameplay Testing*  
+
+*Lead Verification: LAA, LOD, MMA patches [MURKZ-VERIFIED]*  
+
+*Last Updated: [Current Date]*
