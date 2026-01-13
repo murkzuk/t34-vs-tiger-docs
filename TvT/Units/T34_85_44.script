@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+// REDUX Script Fix and Structure Alignment
 //-------------------------------------------------------------------
 // Unit Explosion
 class CTankT34_85_44Explosion
@@ -25,8 +25,8 @@ class CTankT34_85_44MachineGunBulletControl
   extends CMachineGunBulletControl
 {
   String ExplosionId  = "TankT34_85_44MachineGunBulletExplosion";
-  float  BulletSpeed  = 650.0;
   Vector GravityAccel = CPiercing::BulletGravityVector;
+  float  BulletSpeed  = 650.0;
   float  Mass         = 0.009;
 }
 
@@ -34,7 +34,7 @@ class CTankT34_85_44CoaxialMachineGun
   extends CMachineGun, CPlayerWeapon
 {
   final static String    FireEffectId  = "MachineGunDTFireEffect";
-  final static String BulletPatternId  = "TankT34_85_44MachineGunBullet";
+  final static String BulletPatternId  = "TankT34_85_44MachineGunBullet"; 
 
   final static float FireDeviation     = 0.15;
 
@@ -43,20 +43,23 @@ class CTankT34_85_44CoaxialMachineGun
   final static Vector  GravityVector   = CPiercing::BulletGravityVector;
   final static boolean HighTrajectory  = false;
 
-  Component BurstFireSound  = new #Emitter<CDTMachineGunFireSound>();
+  final static float DirectionSpeedH  = 14.0; // deg / sec horizontal
+  final static float DirectionSpeedV  = 5.0; // deg / sec vertical
+
+  Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>();
 
   final static float    LockAngleHMin     = -5.0;
   final static float    LockAngleHMax     =  5.0;
   final static float    LockAngleVMin     = -5.0;
   final static float    LockAngleVMax     =  5.0;
-  final static float    BlockedLockAngle  =  1.0;
+  final static float    BlockedLockAngle  =  1.0;  
 
   final static int Slot = 1;
 
   // *** Gun parameters for behavior
   final static int  FirePeriod        = 150; // ms
   final static int  FirePeriodRandAdd = 10; // ms
-
+  
   final static boolean BurstFire      = true;
   final static int  BurstTime         = 2000; // ms
   final static int  BurstTimeRandAdd  = 0; // ms
@@ -65,10 +68,10 @@ class CTankT34_85_44CoaxialMachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],[]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
                               ];
 }
-class CTankT34_85_44PlayerCoaxialMachineGun
+  class CTankT34_85_44PlayerCoaxialMachineGun
   extends CTankT34_85_44CoaxialMachineGun
 {
   final static float FireDeviation     = 0.005;
@@ -103,7 +106,7 @@ class CTankT34_85_44MachineGun
   final static int Slot = 2;
 
   // *** Gun parameters for behavior
-  final static int  FirePeriod        = 150; // ms
+  final static int  FirePeriod        = 100; // ms
   final static int  FirePeriodRandAdd = 10; // ms
 
   final static boolean BurstFire      = true;
@@ -114,7 +117,7 @@ class CTankT34_85_44MachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],[]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
                               ];
 }
 class CTankT34_85_44PlayerMachineGun
@@ -128,7 +131,8 @@ class CTankT34_85_44PlayerMachineGun
   }
 
 }
-
+// Machinegun section
+// Machinegun animator
 class CTankT34_85_44GunTargetingAnimatorB
   extends CTargetingAnimator
 {
@@ -142,7 +146,6 @@ class CTankT34_85_44GunTargetingAnimatorB
   float  TopEndAngle    = -7.0;
   float  BottomEndAngle =  7.0;
 }
-
 // Main cannon section
 // Main cannon animator
 class CTankT34_85_44GunTargetingAnimatorA
@@ -183,6 +186,7 @@ class CTankT34_85_44GunCalibreBulletDebrisControl
   boolean   IsMotionBlur  = true;
   float     MaxDistance   = CPiercing::TankT34_85_44CalibreDebrisMaxDistance;
   String    ExplosionId   = "TankT34_85_44GunCalibreBulletDebrisExplosion";
+  float     Mass          = 0.02;
 }
 
 class CTankT34_85_44GunCalibreBulletDebrisExplosion
@@ -283,7 +287,6 @@ class CTankT34_85_44CalibreAmmo
   final static int    Ammunition      = 2000;
   final static Array  TargetMask      = [[],["HUMAN", "VEHICLE"]];
   final static float  LoadingTime     = 0.0f;
-
   // Cockpit UI parms
   final static Array   VoiceID        = ["WeaponShellAP1","WeaponShellAP2","ShellAP3","WeaponShellAP4"];
   final static WString AmmoName       = CWeaponNames::str_T34_44CalibreAP_ShortName;
@@ -304,7 +307,6 @@ class CTankT34_85_44SubCalibreAmmo
   final static int    Ammunition      = 2000;
   final static Array  TargetMask      = [[],["HUMAN", "VEHICLE", "BLD_WAR", "BLD_CIV"]];
   final static float  LoadingTime     = 0.0f;
-
   // Cockpit UI parms
   final static Array   VoiceID        = ["WeaponShellSubAP1","WeaponShellSubAP2","WeaponShellSubAP3","WeaponShellSubAP4"];
   final static WString AmmoName       = CWeaponNames::str_T34_44SubCalibreAP_ShortName;
@@ -323,9 +325,8 @@ class CTankT34_85_44HEAmmo
 {
   final static String BulletPatternId = "TankT34_85_44GunHEBullet";
   final static int    Ammunition      = 2000;
-  final static Array  TargetMask      = [[],["HEAVYTANK", "TANK"]];
+  final static Array  TargetMask      = [[],["HEAVYTANK", "TANK","AIR"]];
   final static float  LoadingTime     = 0.0f;
-
   // Cockpit UI parms
   final static Array   VoiceID        = ["WeaponShellHE1","WeaponShellHE2","WeaponShellHE3","WeaponShellHE4"];
   final static WString AmmoName       = CWeaponNames::str_T34_44CalibreHE_ShortName;
@@ -368,14 +369,14 @@ class CTankT34_85_44AmmoContainer
 class CTankT34_85_44Gun
   extends CHeavyGun, CPlayerWeapon, CWeaponFireRecoil
 {
+  final static String FireEffectId    = "HeavyGunFireNoMuzzleEffect";
   float InitBulletSpeed = 0.0f;
   final static float   FireDeviation   = 1.25;
   final static Vector  GravityVector   = CPiercing::ShellGravityVector;
   final static boolean HighTrajectory  = false;
 
   final static String BulletPatternId = "";
-  final static String FireSoundId     = "T34_85MainGunFireSound";
-  final static String FireEffectId    = "HeavyGunFireNoMuzzleEffect";
+  final static String FireSoundId     = "T34_85MainGunFireSound"; 
   final static String AmmoLoadSoundId = "T34_85_TankGunLoadSound";
   final static String AmmoLoadVoiceId = "";
   final static String AmmoLoadedVoiceId = "";
@@ -459,6 +460,7 @@ class CTankT34_85_44Gun
                                 [["NAVAL"],[]],  // low priority mask
                                 [["STRUCTURE"],[]]  // very-very low priority target with a pulley in the middle
                               ];
+
 //  Component FireAnimator = new #LineAnimator<CTankT34_85_44FireAnimation>();
 }
 
@@ -468,7 +470,8 @@ class CTankT34_85_44PlayerGun
   final static String FireSoundId     = "T34_85_TankGunShootSound";
   final static String AmmoLoadSoundId = "T34_85_TankGunLoadSound";
 //  final static String AmmoLoadVoiceId = "T34_85_TankGunLoadVoice";
-//  final static String AmmoLoadedVoiceId = "T34_85_TankGunLoadedVoice";
+//  final static String AmmoLoadedVoiceId = "T34_85_TankGunLoadedVoice";  
+
   final static float  FireDeviation   = 0.005;
 
   final static Array Ammo = [
@@ -476,6 +479,15 @@ class CTankT34_85_44PlayerGun
                               new CTankT34_85_44SubCalibreAmmoPlayer(),
                               new CTankT34_85_44HEAmmoPlayer()
                             ];
+
+  final static float DirectionSpeedH  = 6.0; // deg / sec  • horizontal
+  final static float DirectionSpeedV  = 3.5; // deg / sec  • vertical
+  // for damaged state
+  final static float DirectionDamagedSpeedH = 3.5;
+  final static float DirectionDamagedSpeedV = 3.5;
+
+  final static float DirectionLowSpeedH  = 1.0; // deg / sec   horizontal
+  final static float DirectionLowSpeedV  =  1.0; // deg / sec   vertical
 
   int m_CurrentAmmoLoaded = 0;
 
@@ -486,9 +498,7 @@ class CTankT34_85_44PlayerGun
 //    logWarning("CTankT34_85_44PlayerGun::OnWeaponFire()");
   }
 
-  event void OnAmmoLoad(
-      int _AmmoID
-    )
+  event void OnAmmoLoad(int _AmmoID)
   {
     if (m_CurrentAmmoLoaded != _AmmoID)
     {
@@ -503,6 +513,7 @@ class CTankT34_85_44PlayerGun
       int _AmmoID
     )
   {
+    logWarning("OnAmmoLoaded");
     Component Mission = new #GameController().GetMission();
     if (null != Mission)
       Mission.GetObject(Mission.GetMainPlayerObjectID()).ReportAmmoLoaded(Ammo[_AmmoID]);
@@ -531,6 +542,9 @@ class CTankT34_85_44EngineSystem
 
   static Component EventHandler;
 
+  boolean  TwoTracksRotation = true; // возможность поворачивать враздрай
+  boolean  PlayReverseGearAnimation = false; //проигрывать анимацию возврата ручки передач в начальное значение
+
   Array    GearNames     = [ L"R", L"N", L"I", L"II", L"III", L"IV", L"V", L"VI", L"VII", L"VIII", L"IX", L"X"];
 
   // Коробка передач          коэффициент  мощность    мощность    коэфф.    коэфф.             звук двигател
@@ -546,20 +560,16 @@ class CTankT34_85_44EngineSystem
                              [   1.00,       3000.0,     5000.0,     10.5,      0.5,     new #Emitter<CT34_85_Gear05Sound>(), new #LineAnimator<CTankT34_85_44Gear5Animator>() ]  //
                            ];
 
+  // power of engine by speed if brake is enable for single track or both tracks
+  //                          Speed  Power
   Array     BrakePower   = [
                              [ 0.0,  18000.0, 10.0, 7000.0 ],
                              [
-//                               [ 0.5, 17000.0 ],
-//                               [ 2.0, 14000.0 ],
-//                               [ 4.0, 11000.0 ],
-//                               [ 6.0, 8000.0 ],
-//                               [ 8.0, 7000.0 ]
                                [ 0.5, 45000.0 ],
                                [ 2.0, 33000.0 ],
                                [ 4.0, 15000.0 ],
                                [ 6.0, 10000.0 ],
                                [ 8.0, 10000.0 ]
-
                              ]
                            ];
 
@@ -579,6 +589,13 @@ class CTankT34_85_44EngineSystem
   Component LeftClutchAnimator   = new #LineAnimator<CTankT34_85_44LeftClutchAnimator>();
   Component RightClutchAnimator  = new #LineAnimator<CTankT34_85_44RightClutchAnimator>();
   Component BreakAnimator        = new #LineAnimator<CTankT34_85_44BreakAnimator>();
+   
+// Redux Added missing Animator components for gagues  
+  Component OilPressureAnimator  = new #LineAnimator<CTankT34_85_44OilPressAnimator>();
+  Component OilTemperatureAnimator = new #LineAnimator<CTankT34_85_44OilTempAnimator>();
+  Component WaterTempAnimator    = new #LineAnimator<CTankT34_85_44WaterTempAnimator>();
+  Component TachometerAnimator   = new #LineAnimator<CTankT34_85_44TachometerAnimator>();
+  Component SpeedAnimator        = new #LineAnimator< CTankT34_85_44SpeedometerAnimator>();
 
   float     BeginEngineSoundFreq   = 0.25;//0.364;
   float     EngineSpeedScaleCoeff  = 1.0 / 2000.0;//1.0 / 2700.0;
@@ -596,8 +613,7 @@ class CTankT34_85_44MainWheel
   float  Elasticity  = 0.2;
   float  Friction    = FLT_MAX;
   float  Friction1   = 2.0;
-};
-
+}
 class CTankT34_85_44ManualControl
   extends CBaseManualControl
 {
@@ -607,15 +623,11 @@ class CTankT34_85_44ManualControl
 
   float  Mass                 = 40000.0;
   Vector IT                   = new Vector(0.874482, 3.152529, 3.804275);
-//  float  Elasticity           = 0.0;  // Must be zero else tank will bouncing like ball
-//  float  Friction             = 0.0;
-
   float  Elasticity           = 0.01;  // Must be zero else tank will bouncing like ball
   float  Friction             = 0.1;
 
   float  SuspensionHeight = 0.4;    // cm
   float  SuspensionPower  = 30000;  // kg
-
 
   // =========================================
   // Tank body drop coefficients
@@ -696,7 +708,6 @@ class CTankT34_85_44LeftTrack
   String  WheelAnimName       = "wheels_left";
   boolean IsLeftTrack         = true;
 
-
   Array   WhellsAnimation =
   [
     // joint name,            animation name,            down    up
@@ -728,12 +739,23 @@ class CTankT34_85_44RightTrack
   ];
 }
 
-class CTankT34_85_44AccelerationAnimator
-{
-  String AnimationName = "acceleration";
-  float  AnimationTime = 1.0;
-}
 
+//Turret out animator
+class CTankT34_85_44TurretOutAnimator1
+{
+  String AnimationName = "turret_out1";
+  float  AnimationTime = 1.5;
+};
+
+class CTankT34_85_44TurretOutAnimator2
+{
+  String AnimationName = "turret_out2";
+  float  AnimationTime = 1.5;
+};
+
+
+
+// Inside Animations
 class CTankT34_85_44OilPressAnimator
 {
   String AnimationName = "oil_pressure";
@@ -751,16 +773,19 @@ class CTankT34_85_44WaterTempAnimator
   String AnimationName = "water_temperature";
   float  AnimationTime = 1.0;
 }
-
 class CTankT34_85_44TachometerAnimator
 {
   String AnimationName = "tacho";
   float  AnimationTime = 1.0;
 }
-
 class CTankT34_85_44SpeedometerAnimator
 {
   String AnimationName = "speed";
+  float  AnimationTime = 1.0;
+}
+class CTankT34_85_44AccelerationAnimator
+{
+  String AnimationName = "acceleration";
   float  AnimationTime = 1.0;
 }
 
@@ -769,47 +794,40 @@ class CTankT34_85_44LeftClutchAnimator
   String AnimationName = "left_side_clutch";
   float  AnimationTime = 1.5;
 }
-
 class CTankT34_85_44RightClutchAnimator
 {
   String AnimationName = "right_side_clutch";
   float  AnimationTime = 1.5;
 }
-
 //Gears animators
 class CTankT34_85_44Gear1Animator
 {
   String AnimationName = "gear_1";
   float  AnimationTime = 1.0;
 }
-
+class CTankT34_85_44GearReverseAnimator
+{
+  String AnimationName = "gear_reverse";
+  float  AnimationTime = 1.0;
+}
 class CTankT34_85_44Gear2Animator
 {
   String AnimationName = "gear_2";
   float  AnimationTime = 1.0;
 }
-
 class CTankT34_85_44Gear3Animator
 {
   String AnimationName = "gear_3";
   float  AnimationTime = 1.0;
 }
-
 class CTankT34_85_44Gear4Animator
 {
   String AnimationName = "gear_4";
   float  AnimationTime = 1.0;
 }
-
 class CTankT34_85_44Gear5Animator
 {
   String AnimationName = "gear_5";
-  float  AnimationTime = 1.0;
-}
-
-class CTankT34_85_44GearReverseAnimator
-{
-  String AnimationName = "gear_reverse";
   float  AnimationTime = 1.0;
 }
 
@@ -817,6 +835,15 @@ class CTankT34_85_44BreakAnimator
 {
   String AnimationName = "mountain_brake";
   float  AnimationTime = 0.5;
+}
+
+
+
+ // Fire Animator
+class CTankT34_85_44FireAnimation
+{
+  final static String  AnimationName     = "gun_a_recoil";
+  final static float   AnimationTime     = 0.8;
 }
 
 //luk body animator
@@ -839,36 +866,28 @@ class CTankT34_85_44CommanderOutAnimator
   float  AnimationTime = 2.0;
 }
 
-//Turret out animator
-class CTankT34_85_44TurretOutAnimator1
-{
-  String AnimationName = "turret_out1";
-  float  AnimationTime = 1.5;
-};
-
-class CTankT34_85_44TurretOutAnimator2
-{
-  String AnimationName = "turret_out2";
-  float  AnimationTime = 1.5;
-};
-
-
-// Fire Animator
-class CTankT34_85_44FireAnimation
-{
-  final static String  AnimationName     = "gun_a_recoil";
-  final static float   AnimationTime     = 0.8;
-}
 
 // Behavior
 class CTankT34_85_44BehaviorParams extends CBaseBehaviorParams
 {
   float MaxAttackSpeed    = 4.0;
+  float   CollisionAddRadius = 2.0;
 }
 
 class CTankT34_85_44Behavior extends CBaseTankBehavior
 {
   final static Component SpecParams = new CTankT34_85_44BehaviorParams();
+
+  Array EnemyRankDangerByDistance =  [
+									   [[ ["HEAVYTANK"],["AIR"] ], [ [ 0.0, 200.0, 1500.0, 60.0 ], [ [400.0, 150.0] ] ] ],
+                                       [[ ["TANK"],["AIR"] ],      [ [ 0.0, 150.0, 1500.0, 50.0 ], [ [400.0, 140.0] ] ] ], // [ Mask, PiercLinFunctionByDist]
+                                       [[ ["ANTITANK"],["AIR"] ],  [ [ 0.0, 150.0, 1500.0, 45.0 ], [ [400.0, 130.0] ] ] ],
+                                       [[ ["BTR"],["AIR"] ],       [ [ 0.0, 130.0, 1500.0, 30.0 ], [ [400.0, 125.0] ] ] ],
+                                       [[ ["BLD_WAR"],["AIR"] ],   [ [ 0.0, 100.0, 1500.0, 35.0 ], [ [400.0,  80.0] ] ] ],
+                                       [[ ["VEHICLE"],["AIR"] ],   [ [ 0.0,  10.0, 1500.0, 5.0 ],  [ [400.0,  10.0] ] ] ],
+                                       [[ ["HUMAN"],["AIR"] ],     [ [ 0.0,  35.0, 1500.0, 2.0 ],  [ [400.0,   5.0] ] ] ],
+                                       [[ ["AIR"],[] ],            [ [ 0.0,   0.0, 1500.0, 0.0 ],  [ [400.0,   0.0] ] ] ]
+                                     ]; // default Rank = distance if object not fit any mask
 
   int      AttackStyle        = AttackStyle_LightTank;
   boolean  CanMove            = true;
@@ -903,6 +922,9 @@ class CTankT34_85_44Behavior extends CBaseTankBehavior
   Vector  MaxAngleSpeed                 = new Vector(   0, 0, 1.0);    // [rad/s]
   Vector  MaxAngleAccelleration         = new Vector(   0, 0, 0.5);  // [rad/(s*s)]
   Vector  MaxAngleBrakingAccelleration  = new Vector(   0, 0, 2.0); //1);  // [rad/(s*s)]
+
+  // Router parameters
+
 }
 
 // ================================================
@@ -967,11 +989,9 @@ class CTankT34_85_44HullGunlayerDevice
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
-      //Behavior.ActivateMovement(false);
-      //Behavior.ActivateFire(false);
-      Behavior.SetAimAbility(false,0);
       Behavior.SetMoveAbility(false,0);
       Behavior.SetFireAbility(false,0);
+	  Behavior.SetAimAbility(false,0);
     }
 
     boolean TurretOut = (rand(0.0f, 1.0f) >= 0.4);
@@ -979,10 +999,10 @@ class CTankT34_85_44HullGunlayerDevice
     Component StateControl = _HostObject.GetObject("StateControl");
     if (StateControl != null)
     {
-      if (1 == randnum(2))
+      if ((1 == randnum(2)) || CPiercing::TankT34_85_44AlwaysDestroyTrack)
         StateControl.SetDelayItemHP(_HostObject.GetItem("TrackLeft").Index, 0.0, 0);
 
-      if (1 == randnum(2))
+      if ((1 == randnum(2)) || CPiercing::TankT34_85_44AlwaysDestroyTrack)
         StateControl.SetDelayItemHP(_HostObject.GetItem("TrackRight").Index, 0.0, 0);
 
       StateControl.SetDelayItemHP(_HostObject.GetItem("HullDriver").Index, 0.0, 0);
@@ -996,6 +1016,7 @@ class CTankT34_85_44HullGunlayerDevice
     //$TMP
     if (TurretOut)
     {
+      logWarning("[TurretOut] Is there section for Turret OUT animation!");
       //StateControl.SetCustomState(CUnitStateControl::USID_TurretOut, CUnitStateControl::US_TurretOut);
       Component Mesh = _HostObject.GetObject("Mesh");
       Component Game = new #GameController();
@@ -1078,9 +1099,9 @@ class CTankT34_85_44TrackLeftDevice
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
-//      Behavior.ActivateMovement(false);
       Behavior.SetBrakeAngle(1.5f);
       Behavior.SetMoveAbility(false,0);
+      //Behavior.ActivateMovement(false);
     }
   }
 }
@@ -1108,9 +1129,9 @@ class CTankT34_85_44TrackRightDevice
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
-//      Behavior.ActivateMovement(false);
       Behavior.SetBrakeAngle(-1.5f);
       Behavior.SetMoveAbility(false,0);
+     //Behavior.ActivateMovement(false);
     }
   }
 }
@@ -1128,7 +1149,7 @@ class CTankT34_85_44TurretDevice
     if (Behavior != null)
     {
       Behavior.SetMoveAbility(false, 60);
-      Behavior.SetAimAbility(false, 300);
+      Behavior.SetAimAbility(false, 30);
     }
     sendEvent(0.0, getIdentificator(_HostObject), "DamageItem", ["Turret_A"]);
   }
@@ -1142,8 +1163,8 @@ class CTankT34_85_44TurretDevice
       Behavior.SetFireAbility(false, 0);
       Behavior.SetAimAbility(false, 0);
       Behavior.SetMoveAbility(false, 0);
+   }
 
-    }
         Component IdleSound = _HostObject.GetObject("IdleSound");
     if (IdleSound != null)
     {
@@ -1176,7 +1197,6 @@ class CT34_85_44TurretSubstance
   float  Friction1        = 0.9;
   float  Elasticity       = 0.2;
 }
-
 class CT34_85_44Substance
   extends CMetalSubstance
 {
@@ -1238,7 +1258,13 @@ class CTankT34_85_44Unit
                                          [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::TankT34_85_44UnitArmourHullBOTTOM ],
                                          [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::TankT34_85_44UnitArmourHullRIGHT  ],
                                          [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::TankT34_85_44UnitArmourHullLEFT   ]
-                                      ];
+                                      ]; 
+ Array m_DamageTransfer = [ // From Item , To Item, Item HitPoints Percent
+                             ["HullDriver", "HullEngine", 0.8f],
+                             ["HullDriver", "HullGunlayer", 0.2f]
+                                                   ];
+
+
   // Camera parameters
   float MinHorAngle  = -1.57; // was -0.43
   float MaxHorAngle  =  1.57; // was 0.43
@@ -1256,22 +1282,10 @@ class CTankT34_85_44Unit
   float m_CriticalWaterTemp = 105.0f;
   float m_CriticalOilTemp   = 100.0f;
 
-  Array m_DamageTransfer = [ // From Item , To Item, Item HitPoints Percent
-                             ["HullDriver", "HullEngine", 0.8f],
-                             ["HullDriver", "HullGunlayer", 0.2f]
-                                                   ];
-
   boolean m_AITankCollisionShape = true;
 
   float   m_RepairTime = 20.0f;
   boolean m_ReadyToRepair = true;
-  
-  String meshObject = "Cu_veh_t34_85_44Model";
-  
-  String getMeshObjectName()
-  {
-    return "Cu_veh_t34_85_44Model";
-  }
 
   // =======================================
   // Contruction and initialization
@@ -1281,10 +1295,7 @@ class CTankT34_85_44Unit
   {
 //    SetupMesh(new #AnimatedObject<Cu_veh_t34_85_44Model>(), );
     if(GetMeshComponent() == null)
-    {
-      logWarning("base SetupExtendMesh: " + getMeshObjectName());
-      SetupExtendMesh(getMeshObjectName(), "Cu_veh_t34_85_44_InsideModel");
-    }
+    SetupExtendMesh("Cu_veh_t34_85_44Model", "Cu_veh_t34_85_44_InsideModel");
     GetMeshComponent().SetLods([300, 100, 50, 5]);
 
 //$TMP sonar
@@ -1298,24 +1309,9 @@ class CTankT34_85_44Unit
 
     SetGunRecoilEffects(new #LineAnimator<CTankT34_85_44FireAnimation>());
     //GetObject("Weapon_A").SetFireAnimator(GetObject("GunRecoilAnimator"));
+	
 
-    // GearUpAnimator
-    SetHatchBodyEffects(new #LineAnimator<CTankT34_85_44HatchBodyAnimator>());
-    SetHatchCommanderEffects(new #LineAnimator<CTankT34_85_44HatchCommanderAnimator>(),
-                             new #LineAnimator<CTankT34_85_44CommanderOutAnimator>());
-
-    SetHideInCockpitJoints(["Body_commander", "Luk_C", "Luk_D"]);
-
-    // Setup turret out animator
-    SetTurretOutEffectsArray( TurretOutAnimations );
-
-    SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankT34_85_44TachometerAnimator>(), 3300.0f, -0.06f);
-    SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankT34_85_44SpeedometerAnimator>(), 150.0f, +0.17f);
-    SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankT34_85_44OilPressAnimator>(), 18.0f, 0.0f);
-    SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankT34_85_44OilTempAnimator>(), 125.0f, 0.0f);
-    SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankT34_85_44WaterTempAnimator>(), 125.0f, 0.0f);
-
-    // Engine effects setup
+	 // Engine effects setup
     SetEngineComponents(
         [
           [ "Smoke_L", "DiselAccelSmokeEffect", "EngineStart"],
@@ -1324,6 +1320,23 @@ class CTankT34_85_44Unit
           [ "Smoke_L", "T34EngineSmokeEffect",      "Engine"     ]
         ]
       );
+
+    // GearUpAnimator
+    SetHatchBodyEffects(new #LineAnimator<CTankT34_85_44HatchBodyAnimator>());
+    SetHatchCommanderEffects(new #LineAnimator<CTankT34_85_44HatchCommanderAnimator>(),
+                             new #LineAnimator<CTankT34_85_44CommanderOutAnimator>());
+
+    SetHideInCockpitJoints(["Body_commander", "Luk_C", "Luk_D"]);
+
+    SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankT34_85_44TachometerAnimator>(), 3300.0f, -0.06f);
+    SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankT34_85_44SpeedometerAnimator>(), 150.0f, +0.17f);
+    SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankT34_85_44OilPressAnimator>(), 18.0f, 0.0f);
+    SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankT34_85_44OilTempAnimator>(), 125.0f, 0.0f);
+    SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankT34_85_44WaterTempAnimator>(), 125.0f, 0.0f);
+
+    // Setup turret out animator
+    SetTurretOutEffectsArray( TurretOutAnimations );
+
   }
 
   void Construct(
@@ -1331,8 +1344,6 @@ class CTankT34_85_44Unit
       Component   _PropMap
     )
   {
-
-
     if (_PropMap.Get("IsManual", false))
     {
       EnableSurfaceControl(false);
@@ -1356,7 +1367,6 @@ class CTankT34_85_44Unit
 
       SetupWeapon( "Weapon_A", new #Weapon<CTankT34_85_44PlayerGun>(),
                   ["Fire_A1"], new #TargetingAnimator<CTankT34_85_44GunTargetingAnimatorA>());
-
       SetupWeapon("Weapon_B", CoaxialMachineGun, "Fire_A1", ["Fire_B1"], null);
 
       SetupWeapon("Weapon_C", MachineGun,
@@ -1369,8 +1379,7 @@ class CTankT34_85_44Unit
 
       boolean isAutoShooter = true;
       if(isFunctionExist(_Mission, "IsExpertMode", 0))
-          isAutoShooter = !_Mission.IsExpertMode();
-          
+          isAutoShooter = !_Mission.IsExpertMode();          
       if(isAutoShooter && !IsMirror)
       {
         Component AutoShooter = new #AutoShooter<CAutoShooter>();
@@ -1384,6 +1393,7 @@ class CTankT34_85_44Unit
       }
       
 
+
     }
     else
     {
@@ -1396,7 +1406,6 @@ class CTankT34_85_44Unit
 
       SetupWeapon( "Weapon_A", new #Weapon<CTankT34_85_44Gun>(),
                   ["Fire_A1"], new #TargetingAnimator<CTankT34_85_44GunTargetingAnimatorA>());
-
       SetupWeapon("Weapon_B", CoaxialMachineGun, "Fire_A1", ["Fire_B1"], null);
 
       SetupWeapon("Weapon_C", MachineGun,
@@ -1432,12 +1441,12 @@ class CTankT34_85_44Unit
             ["Smoke_L", "DiselAccelSmokeEffect", new Vector (0.0, 0.0, 0.0)]
           ]
         );
+
+      GetLeftTrack().EnableAutoCalcPath(true);
+      GetRightTrack().EnableAutoCalcPath(true);
     }
-    
-    
 
     CPlayerUnit::Construct(_Mission, _PropMap);
-
 
     GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792, 0.0f);
     GetDamageHandler().SetDamageTypeModifier(CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET127, 0.0f);
@@ -1517,7 +1526,8 @@ class CTankT34_85_44Unit
         ]
       );
 
-    CreateUnitItem("HullDriver",
+    CreateUnitItem(
+        "HullDriver",
         CJointPoints::TankT34_85_44UnitHULL_DRIVERPoints,
         ["GenericDamageItemEffect", "GenericDamageItemEffect"],
         "HullDriver"
@@ -1581,7 +1591,7 @@ class CTankT34_85_44Unit
     {
       Component PhysicsController = GetPhysicsController();
       if(PhysicsController != null)
-        PhysicsController.SetExcludeSet([]);
+        PhysicsController.SetExcludeSet([]);		
 
       Component PointDetector = new #PointCollisionDetector();
       PointDetector.EnableDetector(true);
@@ -1597,7 +1607,6 @@ class CTankT34_85_44Unit
     if (_PropMap.Get("IsManual", false))
     {
       GetObject("VoiceMessenger").AddSoundTable(CCockpit::T34Voices);
-      GetObject("VoiceMessenger").SetVolume(2.0f);
     }
 
   }
@@ -1645,6 +1654,26 @@ class CTankT34_85_44Unit
     return new #ManualTankControl();
   }
 
+  // ======================================
+  // Armour descriptor
+  // ======================================
+  Array GetArmourDescriptor()
+  {
+    return new Array ([
+                        [CMaterialStructure::MSID_ArmourTurretFWD,   CArmourPoints::TankT34_85_44UnitArmourTurretFWD  ],
+                        [CMaterialStructure::MSID_ArmourTurretREAR,  CArmourPoints::TankT34_85_44UnitArmourTurretREAR ],
+                        [CMaterialStructure::MSID_ArmourTurretTOP,   CArmourPoints::TankT34_85_44UnitArmourTurretTOP  ],
+                        [CMaterialStructure::MSID_ArmourTurretLEFT,  CArmourPoints::TankT34_85_44UnitArmourTurretLEFT ],
+                        [CMaterialStructure::MSID_ArmourTurretRIGHT, CArmourPoints::TankT34_85_44UnitArmourTurretRIGHT],
+                        [CMaterialStructure::MSID_ArmourHullFWD,     CArmourPoints::TankT34_85_44UnitArmourHullFWD    ],
+                        [CMaterialStructure::MSID_ArmourHullREAR,    CArmourPoints::TankT34_85_44UnitArmourHullREAR   ],
+                        [CMaterialStructure::MSID_ArmourHullTOP,     CArmourPoints::TankT34_85_44UnitArmourHullTOP    ],
+                        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::TankT34_85_44UnitArmourHullBOTTOM ],
+                        [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::TankT34_85_44UnitArmourHullRIGHT  ],
+                        [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::TankT34_85_44UnitArmourHullLEFT   ]
+                      ]);
+  }
+
   event void ReadyToRepair()
   {
     m_ReadyToRepair = true;
@@ -1685,32 +1714,7 @@ class CTankT34_85_44Unit
     }
   }
 
-  // ======================================
-  // Armour descriptor
-  // ======================================
-  Array GetArmourDescriptor()
-  {
-    return new Array ([
-                        [CMaterialStructure::MSID_ArmourTurretFWD,   CArmourPoints::TankT34_85_44UnitArmourTurretFWD  ],
-                        [CMaterialStructure::MSID_ArmourTurretREAR,  CArmourPoints::TankT34_85_44UnitArmourTurretREAR ],
-                        [CMaterialStructure::MSID_ArmourTurretTOP,   CArmourPoints::TankT34_85_44UnitArmourTurretTOP  ],
-                        [CMaterialStructure::MSID_ArmourTurretLEFT,  CArmourPoints::TankT34_85_44UnitArmourTurretLEFT ],
-                        [CMaterialStructure::MSID_ArmourTurretRIGHT, CArmourPoints::TankT34_85_44UnitArmourTurretRIGHT],
-                        [CMaterialStructure::MSID_ArmourHullFWD,     CArmourPoints::TankT34_85_44UnitArmourHullFWD    ],
-                        [CMaterialStructure::MSID_ArmourHullREAR,    CArmourPoints::TankT34_85_44UnitArmourHullREAR   ],
-                        [CMaterialStructure::MSID_ArmourHullTOP,     CArmourPoints::TankT34_85_44UnitArmourHullTOP    ],
-                        [CMaterialStructure::MSID_ArmourHullBOTTOM,  CArmourPoints::TankT34_85_44UnitArmourHullBOTTOM ],
-                        [CMaterialStructure::MSID_ArmourHullRIGHT,   CArmourPoints::TankT34_85_44UnitArmourHullRIGHT  ],
-                        [CMaterialStructure::MSID_ArmourHullLEFT,    CArmourPoints::TankT34_85_44UnitArmourHullLEFT   ]
-                      ]);
-  }
 
-  event void SetModelViewState(
-      boolean _State
-    )
-  {
-    // TMP
-  }
 
   event void OnUpdateHatchAnimation(
       float _Phase
@@ -1743,12 +1747,19 @@ class CTankT34_85_44Unit
   // Point collision detector
   // ======================================
 
+  // Call when tank deep in the water (Вызывается, когда танк глубоко заехал в воду)
   event void OnPointCollisionDetect(String _ObjectID)
   {
+    // Destroy HullEngine may be changed (убиваем движок, можно заменить на что-то другое)
     SetUnitItemHPPercent("HullEngine", 0.0);
     GetObject("PointDetector").EnableDetector(false);
   }
-
+  event void SetModelViewState(
+      boolean _State
+    )
+  {					  
+    // TMP
+  }
 
   // ======================================
   // Destroy object

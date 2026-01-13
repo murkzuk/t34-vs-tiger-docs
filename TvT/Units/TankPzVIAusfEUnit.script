@@ -4,9 +4,8 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	 REDUX Script Fix and Structure Alignemnt 
 //-------------------------------------------------------------------
-
 // Unit Explosion
 class CTankPzVIAusfEExplosion
   extends CHeavyTankExplosion
@@ -28,13 +27,13 @@ class CTankPzVIAusfEMachineGunBulletControl
   String ExplosionId  = "TankPzVIAusfEMachineGunBulletExplosion";
   Vector GravityAccel = CPiercing::BulletGravityVector;
   float  BulletSpeed  = 650.0;
-  Vector GravityAccel = CPiercing::BulletGravityVector;
   float  Mass         = 0.009;
 }
 
 class CTankPzVIAusfECoaxialMachineGun
-    extends CMachineGun, CPlayerWeapon
+  extends CMachineGun, CPlayerWeapon
 {
+  final static String    FireEffectId  = "MachineGunMG34FireEffect";
   final static String BulletPatternId  = "TankPzVIAusfEMachineGunBullet";
 
   final static float  FireDeviation    = 0.15;
@@ -43,6 +42,9 @@ class CTankPzVIAusfECoaxialMachineGun
 
   final static Vector  GravityVector   = CPiercing::BulletGravityVector;
   final static boolean HighTrajectory  = false;
+
+  final static float DirectionSpeedH  = 14.0; // deg / sec horizontal
+  final static float DirectionSpeedV  = 5.0; // deg / sec vertical
 
   Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>();
 
@@ -69,12 +71,12 @@ class CTankPzVIAusfECoaxialMachineGun
                                 [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
                               ];
 }
-class CTankPzVIAusfEPlayerCoaxialMachineGun
-    extends CTankPzVIAusfECoaxialMachineGun
+  class CTankPzVIAusfEPlayerCoaxialMachineGun
+  extends CTankPzVIAusfECoaxialMachineGun
 {
   final static float     FireDeviation  = 0.05;
 
-  void OnWeaponFire()
+  event void OnWeaponFire()
   {
     sendEvent(0.0f, SOID_MissionController, "IncreaseShoots", []);
   }
@@ -83,6 +85,7 @@ class CTankPzVIAusfEPlayerCoaxialMachineGun
 class CTankPzVIAusfEMachineGun
     extends CMachineGun, CPlayerWeapon
 {
+  final static String    FireEffectId  = "MachineGunMG34FireEffect";
   final static String BulletPatternId = "TankPzVIAusfEMachineGunBullet";
 
   final static float     FireDeviation   = 0.15;
@@ -92,13 +95,13 @@ class CTankPzVIAusfEMachineGun
   final static Vector  GravityVector   = CPiercing::BulletGravityVector;
   final static boolean HighTrajectory  = false;
 
-  final static float    LockAngleHMin     = -15.0;
+  Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>(); //inal static float    LockAngleHMin     = -15.0;
+  
+  final static float  LockAngleHMin       = -7.0;
   final static float    LockAngleHMax     =  15.0;
   final static float    LockAngleVMin     =  -7.0;
   final static float    LockAngleVMax     =  20.0;
-  final static float    BlockedLockAngle  =   1.0;
-
-  Component BurstFireSound  = new #Emitter<CMG34MachineGunFireSound>();
+  final static float    BlockedLockAngle  =   1.0; 
 
   final static int Slot = 2;
 
@@ -122,13 +125,27 @@ class CTankPzVIAusfEPlayerMachineGun
 {
   final static float     FireDeviation  = 0.05;
 
-  void OnWeaponFire()
+  event void OnWeaponFire()
   {
     sendEvent(0.0f, SOID_MissionController, "IncreaseShoots", []);
   }
 
 }
+// Machinegun section
+// Machinegun animator
+class CTankPzVIAusfETargetingAnimatorB
+  extends CTargetingAnimator
+{
+  String LeftUpAnimName    = "gun_c_leftup";
+  String LeftDownAnimName  = "gun_c_leftdn";
+  String RightUpAnimName   = "gun_c_rightup";
+  String RightDownAnimName = "gun_c_rightdn";
 
+  float  LeftEndAngle   = -15.0;
+  float  RightEndAngle  =  15.0;
+  float  TopEndAngle    =  -7.0;
+  float  BottomEndAngle =  20.0;
+}
 // Main cannon section
 // Main cannon animator
 class CTankPzVIAusfEGunTargetingAnimatorA
@@ -352,14 +369,14 @@ class CTankPzVIAusfEAmmoContainer
 class CTankPzVIAusfEGun
     extends CHeavyGun, CPlayerWeapon, CWeaponFireRecoil
 {
+  final static String FireEffectId    = "HeavyGunFireMuzzleEffect";
   float InitBulletSpeed = 0.0f;
   final static float   FireDeviation   = 1.2;
   final static Vector  GravityVector   = CPiercing::ShellGravityVector;
   final static boolean HighTrajectory  = false;
 
   final static String BulletPatternId = "";
-  final static String FireSoundId     = "Pz6MainGunFireSound";
-  final static String FireEffectId    = "HeavyGunFireMuzzleEffect";
+  final static String FireSoundId     = "Pz6MainGunFireSound";  
   final static String AmmoLoadSoundId = "TankPzVIAusfE_GunLoadSound";
   final static String AmmoLoadVoiceId = "";
   final static String AmmoLoadedVoiceId = "";
@@ -408,7 +425,8 @@ class CTankPzVIAusfEGun
 
   final static float DirectionSpeedH  = 4.5; // deg / sec  Х horizontal
   final static float DirectionSpeedV  = 3.5; // deg / sec  Х vertical
-  // for damaged state
+    
+// for damaged state
   final static float DirectionDamagedSpeedH = 3.5;
   final static float DirectionDamagedSpeedV = 3.5;
 
@@ -439,8 +457,8 @@ class CTankPzVIAusfEGun
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
                                 [["GROUND"],[]],    // high priority mask: RestrictTo, Exclude
-                                [["STRUCTURE"],[]], // low priority target with a pulley in the middle
-                                [[],[]]             //
+                                [["NAVAL"],[]],  // low priority mask
+                                [["STRUCTURE"],[]] // low priority target with a pulley in the middle
                               ];
 
   //Component FireAnimator = new #LineAnimator<CTankPzVIAusfEFireAnimation>();
@@ -449,10 +467,13 @@ class CTankPzVIAusfEGun
 class CTankPzVIAusfEPlayerGun
     extends CTankPzVIAusfEGun
 {
-  final static float     FireDeviation   = 0.005;
-  final static String FireSoundId     = "PzVI_E_TankGunShootSound";
+    final static String FireSoundId     = "PzVI_E_TankGunShootSound";
+	final static String AmmoLoadSoundId = "PzVI_E_TankGunLoadSound";
 //  final static String AmmoLoadVoiceId = "TankPzVIAusfE_GunLoadVoice";
 //  final static String AmmoLoadedVoiceId = "TankPzVIAusfE_GunLoadedVoice";
+
+final static float     FireDeviation   = 0.005;
+
   final static Array Ammo = [
                               new CTankPzVIAusfECalibreAmmoPlayer(),
                               new CTankPzVIAusfESubCalibreAmmoPlayer(),
@@ -477,7 +498,7 @@ class CTankPzVIAusfEPlayerGun
 //    logWarning("CTankT34_85_44PlayerGun::OnWeaponFire()");
   }
 
-void OnAmmoLoad(int _AmmoID)
+  event void OnAmmoLoad(int _AmmoID)
   {
 //    logWarning("OnAmmoLoad");
     if (m_CurrentAmmoLoaded != _AmmoID)
@@ -489,7 +510,7 @@ void OnAmmoLoad(int _AmmoID)
     }
   }
 
-  void OnAmmoLoaded(
+ event void OnAmmoLoaded(
       int _AmmoID
     )
   {
@@ -498,24 +519,7 @@ void OnAmmoLoad(int _AmmoID)
     if (null != Mission)
       Mission.GetObject(Mission.GetMainPlayerObjectID()).ReportAmmoLoaded(Ammo[_AmmoID]);
   }
-
 }
-// Machinegun section
-// Machinegun animator
-class CTankPzVIAusfETargetingAnimatorB
-  extends CTargetingAnimator
-{
-  String LeftUpAnimName    = "gun_c_leftup";
-  String LeftDownAnimName  = "gun_c_leftdn";
-  String RightUpAnimName   = "gun_c_rightup";
-  String RightDownAnimName = "gun_c_rightdn";
-
-  float  LeftEndAngle   = -15.0;
-  float  RightEndAngle  =  15.0;
-  float  TopEndAngle    =  -7.0;
-  float  BottomEndAngle =  20.0;
-}
-
 class CTankPzVIAusfEEngineSystem
 {
   float    MaxPower      = 1500.0;  // maximum horse power was 1600, jeff this should be 750 but there is something else at play here, hence the high figure
@@ -534,6 +538,8 @@ class CTankPzVIAusfEEngineSystem
 
                                /*R4    R3    R2    R1    N     I     II    III   IV    V     VI    VII   VIII   IX     X*/
   Array   GearsSwitchMinSpeed = [3.0f, 3.0f, 1.0f, 0.0f, 0.0f, 0.0f, 3.0f, 5.0f, 10.0f, 14.0f, 16.0f, 23.0f, 25.0f, 30.0f, 35.0f];
+
+  float    EngineFriction = 1;
 
   static Component EventHandler;
 
@@ -590,6 +596,12 @@ class CTankPzVIAusfEEngineSystem
   Component LeftClutchAnimator   = new #LineAnimator<CTankPzVIAusfELeftClutchAnimator>();
   Component RightClutchAnimator  = new #LineAnimator<CTankPzVIAusfERightClutchAnimator>();
   Component BreakAnimator        = new #LineAnimator<CTankPzVIAusfEBreakAnimator>();
+
+// Redux Added missing Animator components for gagues  
+  Component OilPressureAnimator  = new #LineAnimator<CTankPzVIAusfEOilPressAnimator>();
+  Component WaterTempAnimator    = new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>();
+  Component TachometerAnimator   = new #LineAnimator<CTankPzVIAusfETachometerAnimator>();
+  Component SpeedAnimator        = new #LineAnimator< CTankPzVIAusfESpeedometerAnimator>();
 
   float     BeginEngineSoundFreq   = 0.35;//0.364;
   float     EngineSpeedScaleCoeff  = 1.0 / 2000.0;//1.0 / 2700.0;
@@ -672,8 +684,6 @@ class CTankPzVIAusfEManualControl
   // Sounds
   // =========================================
 
-//  Component LeftTrackSound    = new #Emitter<CTankPzVIAusfEMovementSound>();
-//  Component RightTrackSound   = new #Emitter<CTankPzVIAusfEMovementSound>();
   Component LeftTrackSound    = new #Emitter<CTankPzVIAusfEMovementSound>();
   Component RightTrackSound   = new #Emitter<CTankPzVIAusfE_TrackSound>();
 
@@ -751,62 +761,22 @@ class CTankPzVIAusfERightTrack
  //Turret out animator
    class CTankPzVIAusfETurretOutAnimator1
 {
-  String AnimationName = "turret_out1";
+  String AnimationName = "turret_out1";	
   float  AnimationTime = 0.5;
 };
 
-
-// Fire Animator
-class CTankPzVIAusfEFireAnimation
-{
-  final static String  AnimationName     = "gun_a_recoil";
-  final static float   AnimationTime     = 0.8;
-}
-
-class CTankPzVIAusfEHatchBodyAnimator
-{
-  String AnimationName = "luk_body_open";
-  float  AnimationTime = 1.1;
-}
-
-//luk commander animator
-class CTankPzVIAusfEHatchCommanderAnimator
-{
-  String AnimationName = "luk_main_open";
-  float  AnimationTime = 2.0;
-}
-
-class CTankPzVIAusfECommanderOutAnimator
-{
-  String AnimationName = "luk_main_commander";
-  float  AnimationTime = 2.0;
-}
-
-// Inside animations
+ // Inside animations
 class CTankPzVIAusfEOilPressAnimator
 {
   String AnimationName = "oil_pressure";
   float  AnimationTime = 1.0;
 }
-
-/*class CTankT34_85_44OilTempAnimator
-{
-  String AnimationName = "oil_temperature";
-  float  AnimationTime = 1.0;
-}
-  */
 class CTankPzVIAusfEWaterTempAnimator
 {
   String AnimationName = "water_temperature";
   float  AnimationTime = 1.0;
 }
-
-class CTankPzVIAusfEAccelerationAnimator
-{
-  String AnimationName = "acceleration";
-  float  AnimationTime = 1.0;
-}
-class CTankPzVIAusfETachometerAnimator
+  class CTankPzVIAusfETachometerAnimator
 {
   String AnimationName = "tacho";
   float  AnimationTime = 1.0;
@@ -816,6 +786,12 @@ class CTankPzVIAusfESpeedometerAnimator
   String AnimationName = "speed";
   float  AnimationTime = 1.0;
 }
+class CTankPzVIAusfEAccelerationAnimator
+{
+  String AnimationName = "acceleration";
+  float  AnimationTime = 1.0;
+}
+
 class CTankPzVIAusfELeftClutchAnimator
 {
   String AnimationName = "left_side_clutch";
@@ -873,6 +849,36 @@ class CTankPzVIAusfEBreakAnimator
   float  AnimationTime = 0.5;
 }
 
+
+
+// Fire Animator
+class CTankPzVIAusfEFireAnimation
+{
+  final static String  AnimationName     = "gun_a_recoil";
+  final static float   AnimationTime     = 0.8;
+}
+
+// Body Animator
+class CTankPzVIAusfEHatchBodyAnimator
+{
+  String AnimationName = "luk_body_open";
+  float  AnimationTime = 1.1;
+}
+
+//luk commander animator
+class CTankPzVIAusfEHatchCommanderAnimator
+{
+  String AnimationName = "luk_main_open";
+  float  AnimationTime = 2.0;
+}
+
+class CTankPzVIAusfECommanderOutAnimator
+{
+  String AnimationName = "luk_main_commander";
+  float  AnimationTime = 2.0;
+}
+
+
 // Behavior
 class CTankPzVIAusfEBehaviorParams extends CBaseBehaviorParams
 {
@@ -913,9 +919,12 @@ class CTankPzVIAusfEBehavior extends CBaseTankBehavior
   int    UpdateRadarPeriod        = 3000; // ms
   int    UpdateRadarPeriodRandAdd = 1000; // ms
 
+  boolean PermanentMaskChecks = true;
+
   // *** movement physical parameters
 
   // physical limitations
+  float   MaxAttackSpeed    = 2.5;
   float   MaxRotateSpeed                = 1.5f;
   Vector  MaxSpeed                      = new Vector( 6.7, 0, 0);   // m/s
   Vector  MaxNegativeSpeed              = new Vector( 1.5, 0, 0);   // m/s
@@ -942,6 +951,7 @@ class CTankPzVIAusfEHullDriverDevice
 
   void HullDriverDeviceDamaged(Component _HostObject)
   {
+    logWarning("Device Damaged - HullDriver PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -951,6 +961,7 @@ class CTankPzVIAusfEHullDriverDevice
 
   void HullDriverDeviceDestroyed(Component _HostObject)
   {
+    logWarning("Device Destroyed - HullDriver PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -966,8 +977,16 @@ class CTankPzVIAusfEHullGunlayerDevice
   String m_NormalSetId  = "Body_NormalSet";
   String m_CrashedSetId = "Body_CrashedSet";
 
+  Vector TurretOutForceMin  = new Vector(0.0, 0.0, 6.0);
+  Vector TurretOutForceMax  = new Vector(0.0, 0.0, 8.0);
+  float  TurretOutForceThetaMin  = 15;
+  float  TurretOutForceThetaMax  = 30;
+  Vector TurretOutRadiusMin = new Vector(0.5, 0.5, 0.5);
+  Vector TurretOutRadiusMax = new Vector(1.0, 1.0, 1.0);
+
   void HullGunlayerDeviceDamaged(Component _HostObject)
   {
+    logWarning("Device Damaged - HullGunLayer PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -977,6 +996,8 @@ class CTankPzVIAusfEHullGunlayerDevice
 
   void HullGunlayerDeviceDestroyed(Component _HostObject)
   {
+    logWarning("Device Destroyed - HullGunLayer PzVIAusfE");
+
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -1009,8 +1030,16 @@ class CTankPzVIAusfEHullGunlayerDevice
     {
       logWarning("[TurretOut] Is there section for Turret OUT animation!");
      //  StateControl.SetCustomState(CUnitStateControl::USID_TurretOut, CUnitStateControl::US_TurretOut);
+      Component Mesh = _HostObject.GetObject("Mesh");
+      Component Game = new #GameController();
+      if(Mesh != null && Game.GetGameMode() == "Single")
+      {
+        logWarning("UnlinkJoint Turret_A_Crashed");
+        Component PhysicsController = _HostObject.SetupPhysicaleItem("CPzVIAusfETurretSubstance", 1000.0, "Turret_A_Crashed");
+        //PhysicsController.AppendExternalForce(GetForce(), GetRadius());
+        PhysicsController.AppendExternalForceTheta(GetForce(), GetThetaForce(), GetRadius());
+      }
     }
-
   }
 }
 
@@ -1022,6 +1051,7 @@ class CTankPzVIAusfEHullEngineDevice
 
   void HullEngineDeviceDamaged(Component _HostObject)
   {
+   logWarning("Device Damaged - HullEngine PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -1031,6 +1061,8 @@ class CTankPzVIAusfEHullEngineDevice
 
   void HullEngineDeviceDestroyed(Component _HostObject)
   {
+    logWarning("Device Destroyed - HullEngine PzVIAusfE");
+
     clearEventsForObject(getIdentificator(_HostObject));
 
     Component IdleSound = _HostObject.GetObject("IdleSound");
@@ -1047,6 +1079,12 @@ class CTankPzVIAusfEHullEngineDevice
       StateControl.SetHitPoints(0.0);
     }
 
+   Component Behavior = _HostObject.GetObject("Behavior");
+    if (Behavior != null)
+    {
+      Behavior.SetMoveAbility(false, 0);
+    }
+
   }
 }
 
@@ -1058,16 +1096,18 @@ class CTankPzVIAusfETrackLeftDevice
 
   void TrackLeftDeviceDamaged(Component _HostObject)
   {
+    logWarning("Device Damaged - TrackLeft PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
       Behavior.SetBrakeAngle(1.5f);
       Behavior.SetMoveAbility(false, 300);
     }
+    sendEvent(0.0, getIdentificator(_HostObject), "DamageItem", ["TrackLeft"]);
   }
 
   void TrackLeftDeviceDestroyed(Component _HostObject)
-  {
+  { logWarning("Device Destroyed - TrackLeft PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -1086,16 +1126,18 @@ class CTankPzVIAusfETrackRightDevice
 
   void TrackRightDeviceDamaged(Component _HostObject)
   {
+    logWarning("Device Damaged - TrackRight PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
       Behavior.SetBrakeAngle(-1.5f);
       Behavior.SetMoveAbility(false, 300);
     }
+    sendEvent(0.0, getIdentificator(_HostObject), "DamageItem", ["TrackRight"]);
   }
 
   void TrackRightDeviceDestroyed(Component _HostObject)
-  {
+  { logWarning("Device Destroyed - TrackRight PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -1114,16 +1156,19 @@ class CTankPzVIAusfETurretDevice
 
   void TurretDeviceDamaged(Component _HostObject)
   {
+    logWarning("Device Damaged - Turret PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
       Behavior.SetMoveAbility(false, 60);
       Behavior.SetAimAbility(false, 30);
     }
+    sendEvent(0.0, getIdentificator(_HostObject), "DamageItem", ["Turret_A"]);
   }
 
   void TurretDeviceDestroyed(Component _HostObject)
   {
+    logWarning("Device Destroyed - Turret PzVIAusfE");
     Component Behavior = _HostObject.GetObject("Behavior");
     if (Behavior != null)
     {
@@ -1137,7 +1182,6 @@ class CTankPzVIAusfETurretDevice
     {
       IdleSound.StopSoundPlaying(true);
     }
-
 
     Component StateControl = _HostObject.GetObject("StateControl");
     if (StateControl != null)
@@ -1154,13 +1198,26 @@ class CTankPzVIAusfERecoilController
   String BToFAnim   = "body_recoil_bf";
   String RToLAnim   = "body_recoil_rl";
   String LToRAnim   = "body_recoil_lr";
-  //String FToBAnim   = "body_recoil_bf";
-  //String BToFAnim   = "body_recoil_fb";
-  //String RToLAnim   = "body_recoil_rr";
-  //String LToRAnim   = "body_recoil_ll";
-
   float  RecoilTime = 0.5;
 };
+
+class CTPzVIAusfETurretSubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 0.7;
+  float  Friction1        = 0.9;
+  float  Elasticity       = 0.2;
+}
+
+class CTPzVIAusfESubstance
+  extends CMetalSubstance
+{
+  Vector MainFrictionAxis = new Vector(1.0, 0.0, 0.0);
+  float  Friction         = 0.7;
+  float  Friction1        = 1.2;;
+  float  Elasticity       = 0.0;
+}
 
 // ================================================
 // Unit class
@@ -1262,7 +1319,7 @@ boolean LightOff = false; //jm
     //SetupMesh(new #AnimatedObject<Cu_veh_PzVI_MAINModel>(), [400, 270, 170, 50, 5]);
     if(GetMeshComponent() == null)
       SetupExtendMesh(getMeshObjectName(), "Cu_veh_PzVI_MAIN_InsideModel");
-    GetMeshComponent().SetLods([300, 170, 50, 5]);
+      GetMeshComponent().SetLods([300, 170, 50, 5]);
 
     // Setup trucks
     SetupTracks(
@@ -1282,17 +1339,18 @@ boolean LightOff = false; //jm
         ]
       );
 
+    //GearUpAnimator
     SetHatchBodyEffects(new #LineAnimator<CTankPzVIAusfEHatchBodyAnimator>());
     SetHatchCommanderEffects(new #LineAnimator<CTankPzVIAusfEHatchCommanderAnimator>(),
                              new #LineAnimator<CTankPzVIAusfECommanderOutAnimator>());
 
     SetHideInCockpitJoints(["Body_commander", "root_com", "Headphones"]);
 
-   // SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankPzVIAusfETachometerAnimator>(), 3600.0f, 0.0f); jm
-   // SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankPzVIAusfESpeedometerAnimator>(), 88.0f, 0.0f); jm 
-   // SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankPzVIAusfEOilPressAnimator>(), 18.0f, 0.0f); jm
-    //SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEOilTempAnimator>(), 125.0f, 0.0f); jm
-    SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>(), 125.0f, 0.0f);
+    SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankPzVIAusfETachometerAnimator>(), 3600.0f, 0.0f); //jm
+    SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankPzVIAusfESpeedometerAnimator>(), 88.0f, 0.0f); //jm 
+    SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankPzVIAusfEOilPressAnimator>(), 18.0f, 0.0f); //jm
+ // SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEOilTempAnimator>(), 125.0f, 0.0f); //jm Tiger does not have an oil temp 
+    SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>(),  67.0f, 00.0f);
 
   // Setup turret out animator
     SetTurretOutEffectsArray( TurretOutAnimations );
@@ -1307,9 +1365,6 @@ boolean LightOff = false; //jm
     if (_PropMap.Get("IsManual", false))
     {
       EnableSurfaceControl(false);
-
-      //GetLeftTrack().EnableAutoCalcPath(false);
-      //GetRightTrack().EnableAutoCalcPath(false);
 
       // Engine effects setup
       SetEngineComponents(
@@ -1370,7 +1425,7 @@ boolean LightOff = false; //jm
       SetupWeapon( "Weapon_A", new #Weapon<CTankPzVIAusfEGun>(),
                   ["Fire_A1"], new #TargetingAnimator<CTankPzVIAusfEGunTargetingAnimatorA>());
       SetupWeapon("Weapon_B", CoaxialMachineGun, "Fire_A1",
-        ["Fire_B1"], null);
+                  ["Fire_B1"], null);
       SetupWeapon("Weapon_C", MachineGun,
         ["Fire_C1"], new #TargetingAnimator2<CTankPzVIAusfETargetingAnimatorB>());
 
@@ -1549,12 +1604,11 @@ boolean LightOff = false; //jm
 
     if (!_PropMap.Get("IsManual", false))
       SetupPhysicaleObject("CTankPzIVGSubstance", 70000.0, 0.0);
-
     if (_PropMap.Get("IsManual", false))
     {
-      GetObject("VoiceMessenger").AddSoundTable(CCockpit::TigerVoices);
-      SetAngleMessages(CCockpit::GermanAngleMessages);
-      m_TargetDirection = [[L"", ""],[L"", ""]];
+      Component PhysicsController = GetPhysicsController();
+      if(PhysicsController != null)
+        PhysicsController.SetExcludeSet([]);		
 
       Component PointDetector = new #PointCollisionDetector();
       PointDetector.EnableDetector(true);
@@ -1562,6 +1616,16 @@ boolean LightOff = false; //jm
       PointDetector.SetEventHandler(this);
       setPositionable(PointDetector, GetMeshComponent());
       RegisterObject("PointDetector", PointDetector);
+    }
+    else
+    if ((new #GameController()).GetGameMode() != "Single")
+      GetPhysicsController().SetFixedBody("Mesh", true);
+
+    if (_PropMap.Get("IsManual", false))
+    {
+      GetObject("VoiceMessenger").AddSoundTable(CCockpit::TigerVoices);
+	  SetAngleMessages(CCockpit::GermanAngleMessages);
+      m_TargetDirection = [[L"", ""],[L"", ""]];
     }
 
   }
@@ -1636,7 +1700,6 @@ boolean LightOff = false; //jm
 
   event void ReloadAmmo()
   {
-
     if (!checkMask(this, [], [CLASSIFICATOR_DEAD_OBJECT]) || !m_ReadyToRepair)
       return;
 
@@ -1662,6 +1725,41 @@ boolean LightOff = false; //jm
         Item.CurrentHitPoints = Item.HitPoints;
       }
     }
+    else
+    {
+      Component MessageInfoBar = GetObject("MessageInfoBar");
+      if (MessageInfoBar != null && m_ShowTextMessages)
+        MessageInfoBar.SetMessage(CCockpitInfoMsgBar::MSG_DRIVER, CGameMessages::msg_ActiveHandbrake, m_InfoMessage, 2.0f);
+    }
+  }
+
+
+
+  event void OnUpdateHatchAnimation(
+      float _Phase
+    )
+  {
+    Color AmbientMax = new Color(0.3, 0.3, 0.3);
+
+    float fPhase = _Phase - 0.2;
+    if (fPhase < 0.0f)
+      fPhase = 0.0f;
+
+    m_CockpitDriverAmbient = AmbientMax * fPhase;
+
+    if (UPS_Driver == m_PlayerSit)
+    {
+      Component Mesh = GetInsideMesh();
+      Component MatManager = Mesh.GetMaterials();
+
+      for (int iMaterial = 0; iMaterial < MatManager.Materials.size(); iMaterial++)
+      {
+        MatManager.SetAmbientColor(
+            MatManager.Materials[iMaterial].MaterialID,
+            m_CockpitDriverAmbient
+          );
+      }
+    }
   }
 
   // ======================================
@@ -1673,11 +1771,8 @@ boolean LightOff = false; //jm
   {
     // Destroy HullEngine may be changed (убиваем движок, можно заменить на что-то другое)
     SetUnitItemHPPercent("HullEngine", 0.0);
-    
     GetObject("PointDetector").EnableDetector(false);
   }
-
-
   event void SetModelViewState(
       boolean _State
     )
@@ -1685,21 +1780,44 @@ boolean LightOff = false; //jm
     // TMP
   }
 
-  event void UpdateEngineLights(
-      boolean _Enable
-    )
+  // ======================================
+  // Destroy object
+  // ======================================
+
+  event void KillUnit()
   {
-    Component Mesh = GetInsideMesh();
-    Component LightOn = Mesh.GetJoint("Ignition_ON");
-    Component LightOff = Mesh.GetJoint("Ignition_OFF");
+    Component Behavior = GetObject("Behavior");
+    if (Behavior != null)
+    {
+      //Behavior.ActivateMovement(false);
+      //Behavior.ActivateFire(false);
+      Behavior.SetAimAbility(false,0);
+      Behavior.SetMoveAbility(false,0);
+      Behavior.SetFireAbility(false,0);
+    }
+    Component StateControl = GetObject("StateControl");
+    if (StateControl != null)
+    {
+      StateControl.SetDelayItemHP(GetItem("TrackLeft").Index, 0.0, 0);
 
-    if (null != LightOn) //jm
-      setVisibleState(LightOn, _Enable); //jm
+      StateControl.SetDelayItemHP(GetItem("TrackRight").Index, 0.0, 0);
 
-    if (null != LightOff) //jm
-      setVisibleState(LightOff, !_Enable); //jm
+      StateControl.SetDelayItemHP(GetItem("HullDriver").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("HullEngine").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("HullGunlayer").Index, 0.0, 0);
+
+      StateControl.SetDelayItemHP(GetItem("Turret_A").Index, 0.0, 0);
+    }
+    Component Mission = new #GameController().GetObject(SOID_MissionController);
+    if (Mission != null)
+    {
+       Component Object = Mission.GetObject(getIdentificator(this));
+       if(Object != null)
+       {
+         Object.OnLifeStateChanged(false);
+       }
+    }
   }
-void AddWingman(Component unit) { } //jm
 }
-
-
