@@ -5,6 +5,7 @@
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
 //	 REDUX Script Fix and Structure Alignemnt 
+//   REDUX GunLoad Sound fix 
 //-------------------------------------------------------------------
 // Unit Explosion
 class CTankPzVIAusfEExplosion
@@ -468,7 +469,7 @@ class CTankPzVIAusfEPlayerGun
     extends CTankPzVIAusfEGun
 {
     final static String FireSoundId     = "PzVI_E_TankGunShootSound";
-	final static String AmmoLoadSoundId = "PzVI_E_TankGunLoadSound";
+	final static String AmmoLoadSoundId = "TankPzVIAusfE_GunLoadSound";
 //  final static String AmmoLoadVoiceId = "TankPzVIAusfE_GunLoadVoice";
 //  final static String AmmoLoadedVoiceId = "TankPzVIAusfE_GunLoadedVoice";
 
