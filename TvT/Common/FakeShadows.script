@@ -4,52 +4,137 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//  Redux Add Missing Models 
 //-------------------------------------------------------------------
 
 class CFakeShadows
 {
   static void InitializeFakeShadows()
   {
-    // APC M3A1 (US)
-    Cu_veh_M3A1HalfTrackModel::FakeShadow                     = true;
-    Cu_veh_M3A1HalfTrackModel::FakeShadowScale                = 0.9;
+  
+//Buildings
+   //Cbld_BarrackModel::FakeShadow           = true;
+   //Cbld_BarrackModel::FakeShadowScale      = 0.9;
+    Cbld_BarricadeModel::FakeShadow          = true;
+	Cbld_BarricadeModel::FakeShadowScale     = 0.9;
+    Cbld_Barricade_PakModel::FakeShadow      = true;
+	Cbld_Barricade_PakModel::FakeShadowScale = 0.9;
+	Cbld_BridgeWoodModel::FakeShadow         = true;
+	Cbld_BridgeWoodModel::FakeShadowScale    = 0.9;
+    Cbld_DotConcreteModel::FakeShadow        = true;
+	Cbld_DotConcreteModel::FakeShadowScale   = 0.9;
+    Cbld_DzotWoodModel::FakeShadow           = true;
+	Cbld_DzotWoodModel::FakeShadowScale      = 0.9;
+    Cbld_HaystackModel::FakeShadow           = true;
+	Cbld_HaystackModel::FakeShadowScale      = 0.9;
+    Cbld_PileLogsModel::FakeShadow           = true;
+	Cbld_PileLogsModel::FakeShadowScale      = 0.9;
+    Cbld_PostElectricModel::FakeShadow       = true;
+	Cbld_PostElectricModel::FakeShadowScale  = 0.9;
+    Cbld_PostSpeakerModel::FakeShadow        = true;
+	Cbld_PostSpeakerModel::FakeShadowScale   = 0.9;
+	Cbld_ReloadGerModel::FakeShadow          = true;
+	Cbld_ReloadGerModel::FakeShadowScale     = 0.9;
+	Cbld_ReloadUSSRModel::FakeShadow         = true;
+	Cbld_ReloadUSSRModel::FakeShadowScale    = 0.9;
+    Cbld_SandBagWallModel::FakeShadow        = true;
+	Cbld_SandBagWallModel::FakeShadowScale   = 0.9;
+	Cbld_USRCorralWoodModel::FakeShadow      = true;
+	Cbld_USRCorralWoodModel::FakeShadowScale = 0.9;
+    Cbld_USRHouseWoodModel::FakeShadow       = true;
+	Cbld_USRHouseWoodModel::FakeShadowScale  = 0.9;
+    Cbld_USRShedWoodModel::FakeShadow        = true;
+	Cbld_USRShedWoodModel::FakeShadowScale   = 0.9;
+    Cbld_USRShedWood02Model::FakeShadow      = true;
+	Cbld_USRShedWood02Model::FakeShadowScale = 0.9;
+    Cbld_WaterWell_2Model::FakeShadow        = true;
+	Cbld_WaterWell_2Model::FakeShadowScale   = 0.9;
+    Cbld_WaterWell_1Model::FakeShadow        = true;
+	Cbld_WaterWell_1Model::FakeShadowScale   = 0.9;
 
-    // APC Hanomag mod.C
-    Cu_veh_Hanomag_251CModel::FakeShadow                      = true;
-    Cu_veh_Hanomag_251CModel::FakeShadowScale                 = 0.9;
+//Fences
+    Cfence_WickerModel::FakeShadow            = true;
+	Cfence_WickerModel::FakeShadowScale       = 0.9;
+    Cfence_PoleModel::FakeShadow              = true;
+	Cfence_PoleModel::FakeShadowScale         = 0.9;
+    Cfence_PalisadeModel::FakeShadow          = true;
+	Cfence_PalisadeModel::FakeShadowScale     = 0.9;
+	
+//Environment
+    Cenv_Antitank_singleModel::FakeShadow      = true;
+	Cenv_Antitank_singleModel::FakeShadowScale = 0.9;
+    Cenv_BarrelModel::FakeShadow               = true;
+	Cenv_BarrelModel::FakeShadowScale          = 0.9;
+    Cenv_BarrelPackAModel::FakeShadow          = true;
+	Cenv_BarrelPackAModel::FakeShadowScale     = 0.9;
+	Cenv_BarrelPackBModel::FakeShadow          = true;
+	Cenv_BarrelPackBModel::FakeShadowScale     = 0.9;
+    Cenv_WeaponBoxSmallModel::FakeShadow       = true;
+	Cenv_WeaponBoxSmallModel::FakeShadowScale  = 0.9;
 
-    // Truck Opel Blitz
+
+
+//Human Units
+    Chum_GermanSoldierRifleModel::FakeShadow       = true;
+	Chum_GermanSoldierRifleModel::FakeShadowScale  = 0.9;
+    Chum_GermanTankmanModel::FakeShadow            = true;
+	Chum_GermanTankmanModel::FakeShadowScale       = 0.9;
+    Chum_SovietSoldierRifleModel::FakeShadow       = true;
+	Chum_SovietSoldierRifleModel::FakeShadowScale  = 0.9;
+    Chum_SovietTankmanModel::FakeShadow            = true;
+	Chum_SovietTankmanModel::FakeShadowScale       = 0.9;
+  
+
+//Air
+	Cu_air_FW_190Model::FakeShadow            = true;
+    Cu_air_FW_190Model::FakeShadowScale       = 0.9;
+    Cu_air_IL2Model::FakeShadow               = true;
+    Cu_air_IL2Model::FakeShadowScale          = 0.9;
+    Cu_air_IL2MModel::FakeShadow              = true;
+	Cu_air_IL2MModel::FakeShadowScale         = 0.9;  
+
+// Static Guns
+	Cu_stat_NebelwerferModel::FakeShadow      = true;
+	Cu_stat_NebelwerferModel::FakeShadowScale = 0.9;
+    Cu_stat_pak40Model::FakeShadow            = true;
+	Cu_stat_pak40Model::FakeShadowScale       = 0.9;
+    Cu_stat_zis3Model::FakeShadow             = true;
+	Cu_stat_zis3Model::FakeShadowScale        = 0.9;
+
+//Haltracks 
+     Cu_veh_M3A1HalfTrackModel::FakeShadow                     = true;
+     Cu_veh_M3A1HalfTrackModel::FakeShadowScale                = 0.9;
+     Cu_veh_Hanomag_251CModel::FakeShadow                      = true;
+     Cu_veh_Hanomag_251CModel::FakeShadowScale                 = 0.9;
+
+//Trucks
     Cu_veh_OpelBlitzModel::FakeShadow                         = false;
     Cu_veh_OpelBlitzModel::FakeShadowScale                    = 0.9;
-
-    // Truck ZIS-5
     Cu_veh_zis5Model::FakeShadow                              = false;
     Cu_veh_zis5Model::FakeShadowScale                         = 0.9;
-
-    // Pz.4 mod.G
+	
+//Tanks
     Cu_veh_PzIVGModel::FakeShadow                             = true;
     Cu_veh_PzIVGModel::FakeShadowScale                        = 0.9;
-
-    // Pz.6 mod.E
     Cu_veh_PzVI_MAINModel::FakeShadow                         = true;
     Cu_veh_PzVI_MAINModel::FakeShadowScale                    = 0.9;
-
-    // T34-85 mod.44
-    Cu_veh_t34_85_44Model::FakeShadow                         = true;
+    Cu_veh_PzVI_LATEModel::FakeShadow                         = true;
+    Cu_veh_PzVI_LATEModel::FakeShadowScale                    = 0.9;	
+	Cu_veh_t34_85_44Model::FakeShadow                         = true;
     Cu_veh_t34_85_44Model::FakeShadowScale                    = 0.9;
-
-    // T34-76 mod.42
     Cu_veh_t34_76_42Model::FakeShadow                         = true;
     Cu_veh_t34_76_42Model::FakeShadowScale                    = 0.9;
-
-    // SAU StuG-40 mod.G
     Cu_veh_SAU_Stug40Model::FakeShadow                        = true;
     Cu_veh_SAU_Stug40Model::FakeShadowScale                   = 0.9;
-
-    // SAU SU-85 mod.Classic
     Cu_veh_SU85Model::FakeShadow                              = true;
     Cu_veh_SU85Model::FakeShadowScale                         = 0.9;
+	
+//Weapons
+     Cwpn_BombModel::FakeShadow                              = true;
+	 Cwpn_BombModel::FakeShadowScale                         = 0.9;
+     Cwpn_FFARModel::FakeShadow                              = true;
+	 Cwpn_FFARModel::FakeShadowScale                         = 0.9;
+
 
   }
 }

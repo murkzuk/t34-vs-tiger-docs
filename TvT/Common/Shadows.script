@@ -4,14 +4,84 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//  Redux Added Missing Models 
 //-------------------------------------------------------------------
 
 class CShadows
 {
   static void InitializeShadows()
-  {
-    Cu_air_FW_190Model::ShadowCheckMode        = SVCM_LightRange;
+  {  
+//Buildings
+   //Cbld_BarrackModel::ShadowCheckMode          = SVCM_LightRange;     	
+	Cbld_BarricadeModel::ShadowCheckMode         = SVCM_LightRange;
+	Cbld_Barricade_PakModel::ShadowCheckMode     = SVCM_LightRange;
+	Cbld_BridgeWoodModel::ShadowCheckMode        = SVCM_LightRange;
+	Cbld_DotConcreteModel::ShadowCheckMode       = SVCM_LightRange;
+    Cbld_DzotWoodModel::ShadowCheckMode          = SVCM_LightRange;
+	Cbld_HaystackModel::ShadowCheckMode          = SVCM_LightRange;
+    Cbld_PileLogsModel::ShadowCheckMode          = SVCM_LightRange;	
+    Cbld_PostElectricModel::ShadowCheckMode      = SVCM_LightRange;
+    Cbld_PostSpeakerModel::ShadowCheckMode       = SVCM_LightRange; 
+    Cbld_ReloadGerModel::ShadowCheckMode         = SVCM_LightRange;
+	Cbld_ReloadUSSRModel::ShadowCheckMode        = SVCM_LightRange;
+	Cbld_SandBagWallModel::ShadowCheckMode       = SVCM_LightRange; 
+    Cbld_USRCorralWoodModel::ShadowCheckMode     = SVCM_LightRange;
+    Cbld_USRHouseWoodModel::ShadowCheckMode      = SVCM_LightRange;
+    Cbld_USRShedWoodModel::ShadowCheckMode       = SVCM_LightRange;
+    Cbld_USRShedWood02Model::ShadowCheckMode     = SVCM_LightRange;
+    Cbld_WaterWell_2Model::ShadowCheckMode       = SVCM_LightRange;
+    Cbld_WaterWell_1Model::ShadowCheckMode       = SVCM_LightRange;  
+
+// Fences 	
+	Cfence_WickerModel::ShadowCheckMode          = SVCM_LightRange;
+    Cfence_PoleModel::ShadowCheckMode            = SVCM_LightRange;
+    Cfence_PalisadeModel::ShadowCheckMode        = SVCM_LightRange;
+	
+//Environment 	
+    Cenv_Antitank_singleModel::ShadowCheckMode   = SVCM_LightRange;
+    Cenv_BarrelModel::ShadowCheckMode            = SVCM_LightRange;
+	Cenv_BarrelPackAModel::ShadowCheckMode       = SVCM_LightRange;
+	Cenv_BarrelPackBModel::ShadowCheckMode       = SVCM_LightRange;
+    Cenv_WeaponBoxSmallModel::ShadowCheckMode    = SVCM_LightRange;
+	
+//Human Units	
+    Chum_GermanSoldierRifleModel::ShadowCheckMode = SVCM_LightRange;
+    Chum_GermanTankmanModel::ShadowCheckMode      = SVCM_LightRange;
+    Chum_SovietSoldierRifleModel::ShadowCheckMode = SVCM_LightRange;
+    Chum_SovietTankmanModel::ShadowCheckMode      = SVCM_LightRange;	
+
+//Air	
+	Cu_air_FW_190Model::ShadowCheckMode        = SVCM_LightRange;
+	Cu_air_IL2Model::ShadowCheckMode           = SVCM_LightRange;
     Cu_air_IL2MModel::ShadowCheckMode          = SVCM_LightRange;
+
+//Static Guns	
+	Cu_stat_NebelwerferModel::ShadowCheckMode  = SVCM_LightRange;
+	Cu_stat_pak40Model::ShadowCheckMode        = SVCM_LightRange;
+    Cu_stat_zis3Model::ShadowCheckMode         = SVCM_LightRange;
+
+//Halftracks	
+    Cu_veh_Hanomag_251CModel::ShadowCheckMode  = SVCM_LightRange;
+    Cu_veh_M3A1HalfTrackModel::ShadowCheckMode = SVCM_LightRange;
+
+//Trucks	
+    Cu_veh_OpelBlitzModel::ShadowCheckMode     = SVCM_LightRange;
+    Cu_veh_zis5Model::ShadowCheckMode          = SVCM_LightRange;
+	
+//Tanks	
+    Cu_veh_PzIVGModel::ShadowCheckMode         = SVCM_LightRange;
+    Cu_veh_PzVI_MAINModel::ShadowCheckMode     = SVCM_LightRange;
+	Cu_veh_PzVI_LATEModel::ShadowCheckMode     = SVCM_LightRange;
+    Cu_veh_t34_76_42Model::ShadowCheckMode     = SVCM_LightRange;
+    Cu_veh_t34_85_44Model::ShadowCheckMode     = SVCM_LightRange;
+    Cu_veh_SAU_Stug40Model::ShadowCheckMode    = SVCM_LightRange;
+    Cu_veh_SU85Model::ShadowCheckMode          = SVCM_LightRange;	
+
+//Weapons
+    Cwpn_BombModel::ShadowCheckMode            = SVCM_LightRange;	
+    Cwpn_FFARModel::ShadowCheckMode            = SVCM_LightRange;
+
+
+	
   }
 }

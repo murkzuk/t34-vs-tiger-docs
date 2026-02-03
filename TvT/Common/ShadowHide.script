@@ -4,48 +4,85 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	Redux Add Missing Models
 //-------------------------------------------------------------------
 
 class CShadowsHide
 {
   static void InitializeShadowsHide()
   {
-      Cbld_BridgeWoodModel::LodForShadowHide         = 1.8;
-      Cbld_DotConcreteModel::LodForShadowHide        = 1.8;
-      Cbld_DzotWoodModel::LodForShadowHide           = 1.8;
-      Cbld_USRCorralWoodModel::LodForShadowHide      = 1.8;
-      Cbld_USRHouseWoodModel::LodForShadowHide       = 1.8;
-      Cbld_USRShedWoodModel::LodForShadowHide        = 1.8;
-      Cbld_WaterWell_1Model::LodForShadowHide        = 1.8;
-      Cbld_WaterWell_2Model::LodForShadowHide        = 1.8;
+     
+//Buildings
+   //Cbld_BarrackModel::LodForShadowHide            = 2.0;
+    Cbld_BarricadeModel::LodForShadowHide           = 2.0;	
+    Cbld_Barricade_PakModel::LodForShadowHide       = 2.0;
+	Cbld_BridgeWoodModel::LodForShadowHide          = 2.0;
+    Cbld_DotConcreteModel::LodForShadowHide         = 2.0;
+    Cbld_DzotWoodModel::LodForShadowHide            = 2.0; 
+    Cbld_HaystackModel::LodForShadowHide            = 2.0;
+    Cbld_PileLogsModel::LodForShadowHide            = 2.0;
+    Cbld_PostElectricModel::LodForShadowHide        = 2.0;
+    Cbld_PostSpeakerModel::LodForShadowHide         = 2.0;	
+	Cbld_ReloadGerModel::LodForShadowHide           = 2.0;
+	Cbld_ReloadUSSRModel::LodForShadowHide          = 2.0;
+    Cbld_SandBagWallModel::LodForShadowHide         = 2.0;	
+	Cbld_USRCorralWoodModel::LodForShadowHide       = 2.0;
+    Cbld_USRHouseWoodModel::LodForShadowHide        = 2.0;
+    Cbld_USRShedWoodModel::LodForShadowHide         = 2.0;
+    Cbld_USRShedWood02Model::LodForShadowHide       = 2.0;
+    Cbld_WaterWell_2Model::LodForShadowHide         = 2.0;
+    Cbld_WaterWell_1Model::LodForShadowHide         = 2.0;
 
+// Fences
+   Cfence_WickerModel::LodForShadowHide           = 2.0;
+   Cfence_PoleModel::LodForShadowHide             = 2.0; 
+   Cfence_PalisadeModel::LodForShadowHide         = 2.0;    
 
-      Cfence_PalisadeModel::LodForShadowHide         = 1.0;
-      Cfence_WickerModel::LodForShadowHide           = 1.0;
+//Environment 
+    Cenv_Antitank_singleModel::LodForShadowHide   = 2.0;
+    Cenv_BarrelModel::LodForShadowHide            = 2.0;
+    Cenv_BarrelPackAModel::LodForShadowHide       = 2.0;
+	Cenv_BarrelPackBModel::LodForShadowHide       = 2.0;
+    Cenv_WeaponBoxSmallModel::LodForShadowHide    = 2.0;
 
-      Chum_GermanSoldierRifleModel::LodForShadowHide = 1.0;
-      Chum_GermanTankmanModel::LodForShadowHide      = 1.0;
-      Chum_SovietSoldierRifleModel::LodForShadowHide = 1.0;
-      Chum_SovietTankmanModel::LodForShadowHide      = 1.0;
+ //Human Units
+      Chum_GermanSoldierRifleModel::LodForShadowHide = 2.0;
+      Chum_GermanTankmanModel::LodForShadowHide      = 2.0;
+      Chum_SovietSoldierRifleModel::LodForShadowHide = 2.0;
+      Chum_SovietTankmanModel::LodForShadowHide      = 2.0;
 
-      
+//Air     
+	Cu_air_FW_190Model::LodForShadowHide             = 2.5;
+	Cu_air_IL2Model::LodForShadowHide                = 2.5;
+    Cu_air_IL2MModel::LodForShadowHide               = 2.5;
 
-      Cu_stat_pak40Model::LodForShadowHide           = 2.0;
-      Cu_stat_zis3Model::LodForShadowHide            = 2.0;
+//Static Guns
+      Cu_stat_NebelwerferModel::LodForShadowChange   = 2.5; 
+      Cu_stat_pak40Model::LodForShadowHide           = 2.5;
+      Cu_stat_zis3Model::LodForShadowHide            = 2.5;
 
+// Halftracks
       Cu_veh_Hanomag_251CModel::LodForShadowHide     = 2.8;
       Cu_veh_M3A1HalfTrackModel::LodForShadowHide    = 2.8;
 
+//Trucks
       Cu_veh_OpelBlitzModel::LodForShadowHide        = 2.8;
       Cu_veh_zis5Model::LodForShadowHide             = 2.8;
 
+//Tanks
       Cu_veh_PzIVGModel::LodForShadowHide            = 2.6;
       Cu_veh_PzVI_MAINModel::LodForShadowHide        = 2.6;
-      Cu_veh_PzVI_LATEModel::LodForShadowHide        = 2.6;
+	  Cu_veh_PzVI_LATEModel::LodForShadowHide        = 2.6;
       Cu_veh_t34_76_42Model::LodForShadowHide        = 2.0;
       Cu_veh_t34_85_44Model::LodForShadowHide        = 2.0;
       Cu_veh_SAU_Stug40Model::LodForShadowHide       = 2.6;
       Cu_veh_SU85Model::LodForShadowHide             = 3.0;
+
+//Weapons 
+//    Cwpn_BombModel::LodForShadowHide               = 2.0;	
+//    Cwpn_FFARModel::LodForShadowHide               = 2.0;
+ 
+
+     
   }
 }

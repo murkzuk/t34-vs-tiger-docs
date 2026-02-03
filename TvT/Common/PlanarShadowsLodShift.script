@@ -4,47 +4,85 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//	Redux added missing models
 //-------------------------------------------------------------------
 
 class CPlanarShadowsLodShift
 {
   static void InitializePlanarShadowsLodShift()
-  {
-      Cbld_BridgeWoodModel::PlanarShadowLodShift         = 2.0;
-      Cbld_DotConcreteModel::PlanarShadowLodShift        = 2.0;
-      Cbld_DzotWoodModel::PlanarShadowLodShift           = 2.0;
-      Cbld_USRCorralWoodModel::PlanarShadowLodShift      = 2.0;
-      Cbld_USRHouseWoodModel::PlanarShadowLodShift       = 2.0;
-      Cbld_USRShedWoodModel::PlanarShadowLodShift        = 2.0;
-      Cbld_WaterWell_1Model::PlanarShadowLodShift        = 2.0;
-      Cbld_WaterWell_2Model::PlanarShadowLodShift        = 2.0;
+  {	
 
+//Buildings
+   //Cbld_BarrackModel::PlanarShadowLodShift           = 2.0;
+    Cbld_BarricadeModel::PlanarShadowLodShift          = 2.0;	
+    Cbld_Barricade_PakModel::PlanarShadowLodShift      = 2.0;
+	Cbld_BridgeWoodModel::PlanarShadowLodShift         = 2.0;
+    Cbld_DotConcreteModel::PlanarShadowLodShift        = 2.0;
+    Cbld_DzotWoodModel::PlanarShadowLodShift           = 2.0; 
+    Cbld_HaystackModel::PlanarShadowLodShift           = 2.0;
+    Cbld_PileLogsModel::PlanarShadowLodShift           = 2.0;
+    Cbld_PostElectricModel::PlanarShadowLodShift       = 2.0;
+    Cbld_PostSpeakerModel::PlanarShadowLodShift        = 2.0;	
+	Cbld_ReloadGerModel::PlanarShadowLodShift          = 2.0;
+	Cbld_ReloadUSSRModel::PlanarShadowLodShift         = 2.0;
+    Cbld_SandBagWallModel::PlanarShadowLodShift        = 2.0;	
+	Cbld_USRCorralWoodModel::PlanarShadowLodShift      = 2.0;
+    Cbld_USRHouseWoodModel::PlanarShadowLodShift       = 2.0;
+    Cbld_USRShedWoodModel::PlanarShadowLodShift        = 2.0;
+    Cbld_USRShedWood02Model::PlanarShadowLodShift      = 2.0;
+    Cbld_WaterWell_2Model::PlanarShadowLodShift        = 2.0;
+    Cbld_WaterWell_1Model::PlanarShadowLodShift        = 2.0;
+
+//Fences
+      Cfence_WickerModel::PlanarShadowLodShift           = 0.0;      
+      Cfence_PoleModel::PlanarShadowLodShift             = 0.0;    
       Cfence_PalisadeModel::PlanarShadowLodShift         = 0.0;
-      Cfence_WickerModel::PlanarShadowLodShift           = 0.0;
 
+//Environment 
+    Cenv_Antitank_singleModel::PlanarShadowLodShift     = 1.0;
+    Cenv_BarrelModel::PlanarShadowLodShift              = 1.0;
+    Cenv_BarrelPackAModel::PlanarShadowLodShift         = 1.0;
+	Cenv_BarrelPackBModel::PlanarShadowLodShift         = 1.0;
+    Cenv_WeaponBoxSmallModel::PlanarShadowLodShift      = 1.0;
+   
+//Human Units
       Chum_GermanSoldierRifleModel::PlanarShadowLodShift = 1.0;
       Chum_GermanTankmanModel::PlanarShadowLodShift      = 1.0;
       Chum_SovietSoldierRifleModel::PlanarShadowLodShift = 1.0;
       Chum_SovietTankmanModel::PlanarShadowLodShift      = 1.0;
 
+ //Air
       Cu_air_FW_190Model::PlanarShadowLodShift           = 1.0;
+	 // Cu_air_IL2Model::PlanarShadowLodShif               = 1.0; Model Errors possible with model file
       Cu_air_IL2MModel::PlanarShadowLodShift             = 1.0;
 
+// Static Guns
+      Cu_stat_NebelwerferModel::PlanarShadowLodShift     = 2.0;
       Cu_stat_pak40Model::PlanarShadowLodShift           = 2.0;
       Cu_stat_zis3Model::PlanarShadowLodShift            = 2.0;
 
+//Halftracks
       Cu_veh_Hanomag_251CModel::PlanarShadowLodShift     = 3.0;
       Cu_veh_M3A1HalfTrackModel::PlanarShadowLodShift    = 3.0;
 
+//Trucks
       Cu_veh_OpelBlitzModel::PlanarShadowLodShift        = 3.0;
       Cu_veh_zis5Model::PlanarShadowLodShift             = 3.0;
 
+//Tanks 
       Cu_veh_PzIVGModel::PlanarShadowLodShift            = 3.0;
       Cu_veh_PzVI_MAINModel::PlanarShadowLodShift        = 3.0;
+	  Cu_veh_PzVI_LATEModel::PlanarShadowLodShift        = 3.0;
       Cu_veh_t34_76_42Model::PlanarShadowLodShift        = 3.0;
       Cu_veh_t34_85_44Model::PlanarShadowLodShift        = 3.0;
       Cu_veh_SAU_Stug40Model::PlanarShadowLodShift       = 3.0;
-      Cu_veh_SU85Model::PlanarShadowLodShift             = 3.0;
+      Cu_veh_SU85Model::PlanarShadowLodShift             = 3.0;	
+
+//Weapons	
+       Cwpn_BombModel::PlanarShadowLodShift              = 1.0;	
+       Cwpn_FFARModel::PlanarShadowLodShift              = 1.0; 
+
+
+
   }
 }

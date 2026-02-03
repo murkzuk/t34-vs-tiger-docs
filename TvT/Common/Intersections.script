@@ -4,44 +4,134 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//  Redux Added Missing Models
 //-------------------------------------------------------------------
 
 class CIntersections
 {
   static void InitializeIntersections()
   {
-//    Cbld_BarrackModel::UseBoxForIsection                          = false;
-    Cfence_WickerModel::UseBoxForIsection                         = false;
-    Cfence_PalisadeModel::UseBoxForIsection                       = false;
-    Cbld_BridgeWoodModel::UseBoxForIsection                       = false;
 
-    Cbld_USRCorralWoodModel::UseBoxForIsection                    = false;
-    Cbld_USRHouseWoodModel::UseBoxForIsection                     = false;
-    Cbld_USRShedWoodModel::UseBoxForIsection                      = false;
+// Buildings  
+  //    Cbld_BarrackModel::UseBoxForIsection                      = true;
+  //    Cbld_BarrackModel::UseShapesAsWalkedMesh                  = false;
+	Cbld_BarricadeModel::UseBoxForIsection                        = true;	
+	Cbld_BarricadeModel::UseShapesAsWalkedMesh                    = false;
+    Cbld_Barricade_PakModel::UseBoxForIsection                    = true;	
+	Cbld_Barricade_PakModel::UseShapesAsWalkedMesh                = false;	
+	Cbld_BridgeWoodModel::UseBoxForIsection                       = true;
+	Cbld_BridgeWoodModel::UseShapesAsWalkedMesh                   = false;
+	Cbld_DotConcreteModel::UseBoxForIsection                      = true;
+    Cbld_DotConcreteModel::UseShapesAsWalkedMesh                  = false;
+	Cbld_DzotWoodModel::UseBoxForIsection                         = true;
+    Cbld_DzotWoodModel::UseShapesAsWalkedMesh                     = false;
+	Cbld_HaystackModel::UseBoxForIsection                         = true;
+    Cbld_HaystackModel::UseShapesAsWalkedMesh                     = false;
+    Cbld_PileLogsModel::UseBoxForIsection                         = true;
+	Cbld_PileLogsModel::UseShapesAsWalkedMesh                     = false;
+	Cbld_PostElectricModel::UseBoxForIsection                     = true;
+    Cbld_PostElectricModel::UseShapesAsWalkedMesh                 = false;
+    Cbld_PostSpeakerModel::UseBoxForIsection                      = true;
+	Cbld_PostSpeakerModel::UseShapesAsWalkedMesh                  = false;
+	Cbld_ReloadGerModel::UseBoxForIsection                        = true;
+	Cbld_ReloadGerModel::UseShapesAsWalkedMesh                    = false;
+	Cbld_ReloadUSSRModel::UseBoxForIsection                       = true;
+	Cbld_ReloadUSSRModel::UseShapesAsWalkedMesh                   = false;	
+	Cbld_SandBagWallModel::UseBoxForIsection                      = true;	
+	Cbld_SandBagWallModel::UseShapesAsWalkedMesh                  = false;	
+	Cbld_USRCorralWoodModel::UseBoxForIsection                    = true;
+	Cbld_USRCorralWoodModel::UseShapesAsWalkedMesh                = false;
+    Cbld_USRHouseWoodModel::UseBoxForIsection                     = true;
+	Cbld_USRHouseWoodModel::UseShapesAsWalkedMesh                 = false;
+    Cbld_USRShedWoodModel::UseBoxForIsection                      = true;
+	Cbld_USRShedWoodModel::UseShapesAsWalkedMesh                  = false;
+	Cbld_USRShedWood02Model::UseBoxForIsection                    = true;
+    Cbld_USRShedWood02Model::UseShapesAsWalkedMesh                = false;	
+    Cbld_WaterWell_1Model::UseBoxForIsection                      = true;
+    Cbld_WaterWell_1Model::UseShapesAsWalkedMesh                  = false;	
+    Cbld_WaterWell_2Model::UseBoxForIsection                      = true;
+    Cbld_WaterWell_2Model::UseShapesAsWalkedMesh                  = false;
 
-// Human units
+// Environment
+	Cenv_Antitank_singleModel::UseBoxForIsection                  = true;
+	Cenv_Antitank_singleModel::UseShapesAsWalkedMesh              = false;
+	Cenv_BarrelModel::UseBoxForIsection                           = true;
+	Cenv_BarrelModel::UseShapesAsWalkedMesh                       = false;
+	Cenv_BarrelPackAModel::UseBoxForIsection                      = true;
+	Cenv_BarrelPackAModel::UseShapesAsWalkedMesh                  = false;
+	Cenv_BarrelPackBModel::UseBoxForIsection                      = true;
+	Cenv_BarrelPackBModel::UseShapesAsWalkedMesh                  = false;
+	Cenv_WeaponBoxSmallModel::UseBoxForIsection                   = true;
+	Cenv_WeaponBoxSmallModel::UseShapesAsWalkedMesh               = false;
+	
+// Fences	
+    Cfence_WickerModel::UseBoxForIsection                         = true;
+	Cfence_WickerModel::UseShapesAsWalkedMesh                     = false;
+	Cfence_PalisadeModel::UseBoxForIsection                       = true;
+    Cfence_PalisadeModel::UseShapesAsWalkedMesh                   = false;
+    
+// Human Units
     Chum_GermanSoldierRifleModel::UseBoxForIsection               = false;
+	Chum_GermanSoldierRifleModel::UseShapesAsWalkedMesh           = true;
     Chum_GermanTankmanModel::UseBoxForIsection                    = true;
+    Chum_GermanTankmanModel::UseShapesAsWalkedMesh                = false;	
     Chum_SovietSoldierRifleModel::UseBoxForIsection               = false;
+	Chum_SovietSoldierRifleModel::UseShapesAsWalkedMesh           = true;
     Chum_SovietTankmanModel::UseBoxForIsection                    = true;
+	Chum_SovietTankmanModel::UseShapesAsWalkedMesh                = false;
 
+//Air	
+    Cu_air_FW_190Model::UseBoxForIsection                         = true;
+    Cu_air_FW_190Model::UseShapesAsWalkedMesh                     = false;
+    Cu_air_IL2Model::UseBoxForIsection                            = true;
+    Cu_air_IL2Model::UseShapesAsWalkedMesh                        = false;
+    Cu_air_IL2MModel::UseBoxForIsection                           = true;
+    Cu_air_IL2MModel::UseShapesAsWalkedMesh                       = false;
+    
+// static Guns	
+	Cu_stat_NebelwerferModel::UseBoxForIsection                   = false;
+	Cu_stat_NebelwerferModel::UseShapesAsWalkedMesh               = true;
+	Cu_stat_pak40Model::UseBoxForIsection                         = false;
+	Cu_stat_pak40Model::UseShapesAsWalkedMesh                     = true;
+    Cu_stat_zis3Model::UseBoxForIsection                          = false;
+	Cu_stat_zis3Model::UseShapesAsWalkedMesh                      = true;
+	
+//Halftracks 	
+    Cu_veh_Hanomag_251CModel::UseBoxForIsection                   = false;
+	Cu_veh_Hanomag_251CModel::UseShapesAsWalkedMesh               = true;
+    Cu_veh_M3A1HalfTrackModel::UseBoxForIsection                  = false;
+	Cu_veh_M3A1HalfTrackModel::UseShapesAsWalkedMesh              = true;
+	
+// Trucks
+    Cu_veh_OpelBlitzModel::UseBoxForIsection                      = false;
+	Cu_veh_OpelBlitzModel::UseShapesAsWalkedMesh                  = true;
+	Cu_veh_zis5Model::UseBoxForIsection                           = false;
+    Cu_veh_zis5Model::UseShapesAsWalkedMesh                       = true;
+	
+//Tanks
+    //Cu_veh_PzIVGModel::UseBoxForIsection                        = fasle; creates  error in execution log 
+	Cu_veh_PzIVGModel::UseShapesAsWalkedMesh                      = true;
+    Cu_veh_PzVI_MAINModel::UseBoxForIsection                      = false;
+	Cu_veh_PzVI_MAINModel::UseShapesAsWalkedMesh                  = true;
+    Cu_veh_PzVI_LATEModel::UseBoxForIsection                      = false;
+	Cu_veh_PzVI_LATEModel::UseShapesAsWalkedMesh                  = true; 	
+    Cu_veh_SAU_Stug40Model::UseBoxForIsection                     = false;
+	Cu_veh_SAU_Stug40Model::UseShapesAsWalkedMesh                 = true;
+    Cu_veh_SU85Model::UseBoxForIsection                           = false;
+	Cu_veh_SU85Model::UseShapesAsWalkedMesh                       = true;	
+	Cu_veh_t34_76_41Model::UseBoxForIsection                      = false;
+	Cu_veh_t34_76_41Model::UseShapesAsWalkedMesh                  = true;
+	//Cu_veh_t34_76_42Model::UseBoxForIsection                    = fasle; creates error in Exectuion log 
+	Cu_veh_t34_76_42Model::UseShapesAsWalkedMesh                  = true;
+    Cu_veh_t34_85_44Model::UseBoxForIsection                      = false;
+	Cu_veh_t34_85_44Model::UseShapesAsWalkedMesh                  = true;
 
-    //shapes as walked mesh
-    Cbld_SandBagWallModel::UseShapesAsWalkedMesh                  = true;
-    Cbld_BridgeWoodModel::UseShapesAsWalkedMesh                   = true;
-    Cbld_DzotWoodModel::UseShapesAsWalkedMesh                     = true;
-    Cbld_PostElectricModel::UseShapesAsWalkedMesh                 = true;
-    Cbld_PostElectricModel::UseShapesAsWalkedMesh                 = true;
-    Cbld_PostSpeakerModel::UseShapesAsWalkedMesh                  = true;
-    Cbld_USRCorralWoodModel::UseShapesAsWalkedMesh                = true;
-    Cbld_USRHouseWoodModel::UseShapesAsWalkedMesh                 = true;
-    Cbld_USRShedWoodModel::UseShapesAsWalkedMesh                  = true;
-    Cbld_USRShedWood02Model::UseShapesAsWalkedMesh                = true;
-    Cbld_WaterWell_1Model::UseShapesAsWalkedMesh                  = true;
-    Cbld_WaterWell_2Model::UseShapesAsWalkedMesh                  = true;
-    Cenv_Antitank_singleModel::UseShapesAsWalkedMesh              = true;
-    Cu_stat_pak40Model::UseShapesAsWalkedMesh                     = true;
-    Cu_stat_zis3Model::UseShapesAsWalkedMesh                      = true;
+//Weapons
+    Cwpn_BombModel::UseBoxForIsection                             = true;
+    Cwpn_BombModel::UseShapesAsWalkedMesh                         = false;	
+    Cwpn_FFARModel::UseBoxForIsection                             = true;
+    Cwpn_FFARModel::UseShapesAsWalkedMesh                         = false;
+
+	
   }
 }

@@ -4,31 +4,85 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//  Redux Added Missing Models 
 //-------------------------------------------------------------------
 
 class CShadowsChange
 {
   static void InitializeShadowsChange()
-  {
-    Cu_air_FW_190Model::LodForShadowChange          = 2.5f;
+  {	
+ 
+//Buildings
+   //Cbld_BarrackModel::LodForShadowChange           = 2.0f;
+    Cbld_BarricadeModel::LodForShadowChange          = 2.0f;	
+    Cbld_Barricade_PakModel::LodForShadowChange      = 2.0f;
+	Cbld_BridgeWoodModel::LodForShadowChange         = 2.0f;
+    Cbld_DotConcreteModel::LodForShadowChange        = 2.0f;
+    Cbld_DzotWoodModel::LodForShadowChange           = 2.0f; 
+    Cbld_HaystackModel::LodForShadowChange           = 2.0f;
+    Cbld_PileLogsModel::LodForShadowChange           = 2.0f;
+    Cbld_PostElectricModel::LodForShadowChange       = 2.0f;
+    Cbld_PostSpeakerModel::LodForShadowChange        = 2.0f;	
+	Cbld_ReloadGerModel::LodForShadowChange          = 2.0f;
+	Cbld_ReloadUSSRModel::LodForShadowChange         = 2.0f;
+    Cbld_SandBagWallModel::LodForShadowChange        = 2.0f;	
+	Cbld_USRCorralWoodModel::LodForShadowChange      = 2.0f;
+    Cbld_USRHouseWoodModel::LodForShadowChange       = 2.0f;
+    Cbld_USRShedWoodModel::LodForShadowChange        = 2.0f;
+    Cbld_USRShedWood02Model::LodForShadowChange      = 2.0f;
+    Cbld_WaterWell_2Model::LodForShadowChange        = 2.0f;
+    Cbld_WaterWell_1Model::LodForShadowChange        = 2.0f;
+	
+//Fences	
+    Cfence_WickerModel::LodForShadowChange           = 2.0f;
+    Cfence_PoleModel::LodForShadowChange             = 2.0f;
+    Cfence_PalisadeModel::LodForShadowChange         = 2.0f;   
+	
+//Environment
+    Cenv_Antitank_singleModel::LodForShadowChange    = 2.0f;
+    Cenv_BarrelModel::LodForShadowChange             = 2.0f;
+    Cenv_BarrelPackAModel::LodForShadowChange        = 2.0f;
+	Cenv_BarrelPackBModel::LodForShadowChange        = 2.0f;
+    Cenv_WeaponBoxSmallModel::LodForShadowChange     = 2.0f;
+	
+//Human Units
+    Chum_GermanSoldierRifleModel::LodForShadowChange = 2.0f;
+    Chum_GermanTankmanModel::LodForShadowChange      = 2.0f;
+    Chum_SovietSoldierRifleModel::LodForShadowChange = 2.0f;
+	Chum_SovietTankmanModel::LodForShadowChange      = 2.0f;
+    
+//Air	
+	Cu_air_FW_190Model::LodForShadowChange          = 2.5f;
+	Cu_air_IL2Model::LodForShadowChange             = 2.5f;
     Cu_air_IL2MModel::LodForShadowChange            = 2.5f;
 
+//Static Guns	
+    Cu_stat_NebelwerferModel::LodForShadowChange    = 2.5f; 
     Cu_stat_pak40Model::LodForShadowChange          = 2.5f;
-    Cu_stat_zis3Model::LodForShadowChange           = 2.5f;
-    Cu_stat_NebelwerferModel::LodForShadowChange    = 2.5f;
+    Cu_stat_zis3Model::LodForShadowChange           = 2.5f;    
 
+//Halftracks	
     Cu_veh_Hanomag_251CModel::LodForShadowChange    = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_M3A1HalfTrackModel::LodForShadowChange   = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
 
+//Trucks
     Cu_veh_OpelBlitzModel::LodForShadowChange       = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_zis5Model::LodForShadowChange            = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
 
+// Tanks
     Cu_veh_PzIVGModel::LodForShadowChange           = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_PzVI_MAINModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_PzVI_LATEModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_t34_76_42Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
     Cu_veh_t34_85_44Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
     Cu_veh_SAU_Stug40Model::LodForShadowChange      = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_SU85Model::LodForShadowChange            = 3.0f;
+
+//Weapons	
+   Cwpn_BombModel::LodForShadowChange              = 2.0f;	
+   Cwpn_FFARModel::LodForShadowChange              = 2.0f;  
+
+	
+	
   }
 }
