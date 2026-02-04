@@ -1,0 +1,112 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cu_stat_NebelwerferModel extends CBaseModel
+{
+
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/u_stat_Nebelwerfer.ms2";
+  String     SkinClass       = "Cu_stat_NebelwerferModelSkin";
+
+  String     RouterMapFile   = "Models/u_stat_Nebelwerfer.rmap";
+
+  Array  Animation = [
+      ["gun_a", ["Gun", 0, 1], ["Mine", 0, 1]],
+      ["turret_a", ["MineHOR", 0, 1], ["Turret", 0, 1]]
+    ];
+
+  Map    ConfigSets = new Map([
+      [ "Body_NormalSet", [ "Body", "Gun", "Mine", "Mine1", "Mine2", "Mine3", "Mine4", "Mine5", "Mine6", "MineHOR", "Turret" ] ]
+    ]);
+
+  Map    MaterialsNameId = new Map([
+      [ "NormalMaterial", "0"],
+      [ "Crashed_Material", "1"]
+    ]);
+}
+
+class Cu_stat_NebelwerferModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/u_stat_Nebelwerfer.tex", // texture name
+        "Textures/u_stat_Nebelwerfer_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_stat_Nebelwerfer_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "1", // material id
+        "Textures/u_stat_Nebelwerfer_Crashed.tex", // texture name
+        "Textures/u_stat_Nebelwerfer_Crashed_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_stat_Nebelwerfer_Crashed_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        20.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      )
+    ];
+}

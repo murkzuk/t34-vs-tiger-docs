@@ -1,0 +1,638 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cu_veh_t34_85_44_InsideModel extends CBaseModel
+{
+
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  String     MeshFile        = "Models/u_veh_t34_85_44_Inside.ms2";
+  String     SkinClass       = "Cu_veh_t34_85_44_InsideModelSkin";
+
+  String     RouterMapFile   = "Models/u_veh_t34_85_44_Inside.rmap";
+
+  Array  Animation = [
+      ["acceleration", ["AcceleratorPedal", 0, 1]],
+      ["gear_1", ["ClutchHandler", 0, 4], ["GearShiftLever", 0, 4], ["MainClutchPedal", 0, 4], ["MainClutchPedalJoint", 0, 4]],
+      ["gear_2", ["ClutchHandler", 5, 9], ["GearShiftLever", 5, 9], ["MainClutchPedal", 5, 9], ["MainClutchPedalJoint", 5, 9]],
+      ["gear_3", ["ClutchHandler", 10, 14], ["GearShiftLever", 10, 14], ["MainClutchPedal", 10, 14], ["MainClutchPedalJoint", 10, 14]],
+      ["gear_4", ["ClutchHandler", 15, 19], ["GearShiftLever", 15, 19], ["MainClutchPedal", 15, 19], ["MainClutchPedalJoint", 15, 19]],
+      ["gear_5", ["ClutchHandler", 20, 24], ["GearShiftLever", 20, 24], ["MainClutchPedal", 20, 24], ["MainClutchPedalJoint", 20, 24]],
+      ["gear_reverse", ["ClutchHandler", 25, 29], ["GearShiftLever", 25, 29], ["MainClutchPedal", 25, 29], ["MainClutchPedalJoint", 25, 29]],
+      ["gun_a", ["Gun_A", 0, 36], ["VerAim_handler", 0, 36]],
+      ["gun_a_recoil", ["Breechblock", 0, 30], ["CockpitGun", 0, 30]],
+      ["gun_c_leftdown", ["MachineGun", 4, 5]],
+      ["gun_c_leftup", ["MachineGun", 2, 3]],
+      ["gun_c_rightdown", ["MachineGun", 6, 7]],
+      ["gun_c_rightup", ["MachineGun", 0, 1]],
+      ["left_side_clutch", ["LeftSideClutch", 0, 1]],
+      ["luk_body_open", ["Cockpit_Cover", 0, 10], ["LeftCoverLever", 0, 10], ["Plunger", 0, 10], ["PlungerMain", 0, 10], ["RightCoverLever", 0, 10]],
+      ["luk_main_open", ["Luk_Turret_A", 0, 1], ["Luk_Turret_B", 0, 1]],
+      ["main_brake", ["MBHandler", 0, 1], ["MainBrakePedal", 0, 1], ["MainBrakePedalJoint", 0, 1], ["MountainBrake", 0, 1]],
+      ["mountain_brake", ["MBHandler", 8, 13], ["MainBrakePedal", 8, 13], ["MainBrakePedalJoint", 8, 13], ["MountainBrake", 8, 13]],
+      ["oil_pressure", ["Control_3", 0, 2]],
+      ["oil_temperature", ["Control_2", 0, 2]],
+      ["right_side_clutch", ["RightSideClutch", 0, 1]],
+      ["speed", ["Speedmeter", 0, 2]],
+      ["tacho", ["Tachometer", 0, 2]],
+      ["turret_a", ["HorAim_Handler", 0, 720], ["Turret", 0, 720]],
+      ["water_temperature", ["Control_1", 0, 2]]
+    ];
+
+  Map    ConfigSets = new Map([
+      [ "set1", [ "HorAim_Handler", "Turret" ] ]
+    ]);
+
+  Map    MaterialsNameId = new Map([
+      [ "G5EngineShader14", "0"],
+      [ "G5EngineShader16", "1"],
+      [ "G5EngineShader18", "2"],
+      [ "G5EngineShader20", "3"],
+      [ "G5EngineShader12", "4"],
+      [ "G5EngineShader15", "5"],
+      [ "G5EngineShader19", "6"],
+      [ "G5EngineShader17", "7"],
+      [ "G5EngineShader10", "8"],
+      [ "G5EngineShader7", "9"],
+      [ "G5EngineShader8", "10"],
+      [ "G5EngineShader4", "11"],
+      [ "u_veh_t34_85_cockpit_3", "12"],
+      [ "G5EngineShader5", "13"],
+      [ "u_veh_t34_85_cockpit_1", "14"],
+      [ "G5EngineShader9", "15"],
+      [ "G5EngineShader13", "16"],
+      [ "u_veh_t34_85_cockpit_2", "17"],
+      [ "G5EngineShader11", "18"],
+      [ "G5EngineShader6", "19"]
+    ]);
+}
+
+class Cu_veh_t34_85_44_InsideModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/u_veh_t34_85_cockpit_14.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "1", // material id
+        "Textures/u_veh_t34_85_cockpit_16.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "2", // material id
+        "Textures/u_veh_t34_85_cockpit_18.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.100000, 0.100000, 0.100000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "3", // material id
+        "Textures/u_veh_t34_85_cockpit_20.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "4", // material id
+        "Textures/u_veh_t34_85_cockpit_12.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "5", // material id
+        "Textures/u_veh_t34_85_cockpit_15.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "6", // material id
+        "Textures/u_veh_t34_85_cockpit_19.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "7", // material id
+        "Textures/u_veh_t34_85_cockpit_17.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "8", // material id
+        "Textures/u_veh_t34_85_cockpit_10.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "9", // material id
+        "Textures/u_veh_t34_85_cockpit_7.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "10", // material id
+        "Textures/u_veh_t34_85_cockpit_8.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "11", // material id
+        "Textures/u_veh_t34_85_cockpit_4.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "12", // material id
+        "Textures/u_veh_t34_85_cockpit_3.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "13", // material id
+        "Textures/u_veh_t34_85_cockpit_5.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "14", // material id
+        "Textures/u_veh_t34_85_cockpit_1.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "15", // material id
+        "Textures/u_veh_t34_85_cockpit_9.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "16", // material id
+        "Textures/u_veh_t34_85_cockpit_13.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "17", // material id
+        "Textures/u_veh_t34_85_cockpit_2.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "18", // material id
+        "Textures/u_veh_t34_85_cockpit_11.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "19", // material id
+        "Textures/u_veh_t34_85_cockpit_6.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      )
+    ];
+}

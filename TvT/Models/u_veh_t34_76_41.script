@@ -1,0 +1,89 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class Cu_veh_t34_76_41Model extends CBaseModel
+{
+
+  static int     InstancesQty         = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode      = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  String     MeshFile        = "Models/u_veh_t34_76_41.ms2";
+  String     SkinClass       = "Cu_veh_t34_76_41ModelSkin";
+
+  String     RouterMapFile   = "Models/u_veh_t34_76_41.rmap";
+
+  Array  Animation = [];
+}
+
+class Cu_veh_t34_76_41ModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/u_veh_t34_76_41.tex", // texture name
+        "Textures/u_veh_t34_76_41_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_t34_76_41_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "KEYCOLOR", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(1.000000, 1.000000, 1.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "1", // material id
+        "Textures/u_veh_t34_track550.tex", // texture name
+        "Textures/u_veh_t34_track550_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_t34_track550_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(1.000000, 1.000000, 1.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      )
+    ];
+}

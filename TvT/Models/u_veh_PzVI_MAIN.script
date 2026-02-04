@@ -1,0 +1,768 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cu_veh_PzVI_MAINModel extends CBaseModel
+{
+
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/u_veh_PzVI_MAIN.ms2";
+  String     SkinClass       = "Cu_veh_PzVI_MAINModelSkin";
+
+  String     RouterMapFile   = "Models/u_veh_PzVI_MAIN.rmap";
+
+  Array  Animation = [
+      ["L_Wheel01_lift", ["joint_WheelLeftMain1_UP", 0, 2]],
+      ["L_Wheel02_lift", ["joint_WheelLeftMain2_UP", 0, 2]],
+      ["L_Wheel03_lift", ["joint_WheelLeftMain3_UP", 0, 2]],
+      ["L_Wheel04_lift", ["joint_WheelLeftMain4_UP", 0, 2]],
+      ["L_Wheel05_lift", ["joint_WheelLeftMain5_UP", 0, 2]],
+      ["L_Wheel06_lift", ["joint_WheelLeftMain6_UP", 0, 2]],
+      ["L_Wheel07_lift", ["joint_WheelLeftMain7_UP", 0, 2]],
+      ["L_Wheel08_lift", ["joint_WheelLeftMain8_UP", 0, 2]],
+      ["R_Wheel01_lift", ["joint_WheelRightMain1_UP", 0, 2]],
+      ["R_Wheel02_lift", ["joint_WheelRightMain2_UP", 0, 2]],
+      ["R_Wheel03_lift", ["joint_WheelRightMain3_UP", 0, 2]],
+      ["R_Wheel04_lift", ["joint_WheelRightMain4_UP", 0, 2]],
+      ["R_Wheel05_lift", ["joint_WheelRightMain5_UP", 0, 2]],
+      ["R_Wheel06_lift", ["joint_WheelRightMain6_UP", 0, 2]],
+      ["R_Wheel07_lift", ["joint_WheelRightMain7_UP", 0, 2]],
+      ["R_Wheel08_lift", ["joint_WheelRightMain8_UP", 0, 2]],
+      ["body_recoil_bf", ["Body", 0, 10]],
+      ["body_recoil_fb", ["Body", 30, 40]],
+      ["body_recoil_lr", ["Body", 20, 30]],
+      ["body_recoil_rl", ["Body", 10, 20]],
+      ["gun_a", ["Weapon_B", 0, 1]],
+      ["gun_a_recoil", ["Weapon_A", 0, 30]],
+      ["gun_c_leftdn", ["Weapon_C", 6, 7]],
+      ["gun_c_leftup", ["Weapon_C", 2, 3]],
+      ["gun_c_rightdn", ["Weapon_C", 4, 5]],
+      ["gun_c_rightup", ["Weapon_C", 0, 1]],
+      ["luk1_open", ["Luk_A", 0, 1]],
+      ["luk4_open", ["Luk_D", 0, 2], ["PetlyaRight", 0, 2]],
+      ["luk_body_open", ["CockpitCameraDriver", 0, 2], ["Driver", 0, 2], ["Luk_C", 0, 2], ["PetlyaLeft", 0, 2]],
+      ["luk_main_commander", ["L_Elbow", 0, 96], ["L_hand", 0, 96], ["R_Elbow", 0, 96], ["R_hand", 0, 96], ["l_Arm_Left", 0, 96], ["l_Arm_Right", 0, 96], ["l_Elbow_Left", 0, 96], ["l_Elbow_Right", 0, 96], ["l_Hand_Left", 0, 96], ["l_Hand_Right", 0, 96], ["l_Head", 0, 96], ["l_Hips", 0, 96], ["l_Shoulder_Left", 0, 96], ["l_Shoulder_Right", 0, 96], ["l_Spine", 0, 96], ["l_Spine1", 0, 96]],
+      ["luk_main_open", ["Luk_B", 0, 4]],
+      ["turret_a", ["Turret_A", 0, 4]],
+      ["turret_out1", ["Turret_A_explode", 0, 14]],
+      ["wheels_left", ["WheelLeftFront", 0, 27], ["WheelLeftMain1", 0, 27], ["WheelLeftMain2", 0, 27], ["WheelLeftMain3", 0, 27], ["WheelLeftMain4", 0, 27], ["WheelLeftMain5", 0, 27], ["WheelLeftMain6", 0, 27], ["WheelLeftMain7", 0, 27], ["WheelLeftMain8", 0, 27], ["WheelLeftRear", 0, 27]],
+      ["wheels_right", ["WheelRightFront", 0, 27], ["WheelRightMain1", 0, 27], ["WheelRightMain2", 0, 27], ["WheelRightMain3", 0, 27], ["WheelRightMain4", 0, 27], ["WheelRightMain5", 0, 27], ["WheelRightMain6", 0, 27], ["WheelRightMain7", 0, 27], ["WheelRightMain8", 0, 27], ["WheelRightRear", 0, 27]]
+    ];
+
+  Map    ConfigSets = new Map([
+      [ "Body_CrashedSet", [ "Body_Crashed" ] ],
+      [ "Body_NormalSet", [ "Body", "Body_2", "Driver", "HullDriver", "HullEngine", "HullGunlayer", "Luk_C", "Luk_D", "PetlyaLeft", "PetlyaRight", "Weapon_C" ] ],
+      [ "TrackLeft_CrashedSet", [ "TrackLeft_Crashed" ] ],
+      [ "TrackLeft_NormalSet", [ "GearLeftMain", "MainL", "TrackLeft", "TrackLeft_FakeShadow", "TrackRight_FakeShadow" ] ],
+      [ "TrackRight_CrashedSet", [ "TrackRight_Crashed" ] ],
+      [ "TrackRight_NormalSet", [ "GearRightMain", "MainR", "TrackRight" ] ],
+      [ "Turret_A_CrashedSet", [ "Numbers_Crashed", "Turret_A_Crashed" ] ],
+      [ "Turret_A_NormalSet", [ "Body3", "Body_commander", "Commander_CM", "Head", "Headphones", "LHand1", "LHand2", "LHand3", "Luk_A", "Luk_B", "Numbers", "Rhand1", "Rhand2", "Rhand3", "Turret_A", "Weapon_A", "Weapon_B" ] ],
+      [ "set1", [ "Body3", "Head", "LHand1", "LHand2", "LHand3", "Rhand1", "Rhand2", "Rhand3" ] ]
+    ]);
+
+  Map    MaterialsNameId = new Map([
+      [ "HULL_REAR", "0"],
+      [ "Hull_BOTTOM", "1"],
+      [ "Hull_LEFT", "2"],
+      [ "Hull_RIGHT", "3"],
+      [ "Hull_TOP", "4"],
+      [ "Hull_FWD", "5"],
+      [ "CommanderMaterial", "6"],
+      [ "TrackLeftMaterial", "7"],
+      [ "CrashedTracksCM", "8"],
+      [ "TrackCrashed", "9"],
+      [ "TurretCrashed", "10"],
+      [ "TrackRightMaterial", "11"],
+      [ "TurretMaterial", "12"],
+      [ "BodyMaterial", "13"],
+      [ "BodyCrashed", "14"],
+      [ "commanderTest_CommanderCMMaterial", "15"],
+      [ "additions_from_LATE_CommanderMaterial", "16"],
+      [ "Turret_FWD", "17"],
+      [ "Turret_REAR", "18"],
+      [ "Turret_TOP", "19"],
+      [ "Turret_RIGHT", "20"],
+      [ "Turret_LEFT", "21"],
+      [ "NumberMaterial", "22"]
+    ]);
+}
+
+class Cu_veh_PzVI_MAINModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourHullREAR, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "1", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourHullBOTTOM, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "2", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourHullLEFT, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "3", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourHullRIGHT, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "4", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourHullTOP, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "5", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourHullFWD, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "6", // material id
+        "Textures/hum_German_Tankman.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "7", // material id
+        "Textures/u_veh_PzVI_MAIN_track.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN_track_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN_track_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "8", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "9", // material id
+        "Textures/u_veh_PzVI_MAIN_track_Crashed.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN_track_Crashed_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN_track_Crashed_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        20.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "10", // material id
+        "Textures/u_veh_PzVI_MAIN2_Crashed.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN2_Crashed_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN2_Crashed_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "KEYCOLOR", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        20.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "11", // material id
+        "Textures/u_veh_PzVI_MAIN_track.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN_track_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN_track_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "12", // material id
+        "Textures/u_veh_PzVI_MAIN2.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN2_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN2_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "KEYCOLOR", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "13", // material id
+        "Textures/u_veh_PzVI_MAIN1.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN1_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN1_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        30.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "14", // material id
+        "Textures/u_veh_PzVI_MAIN1_Crashed.tex", // texture name
+        "Textures/u_veh_PzVI_MAIN1_Crashed_h.tex", // bump tex name
+        "", // micro tex name
+        "Textures/u_veh_PzVI_MAIN1_Crashed_h.tex", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.300000, 0.300000, 0.300000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        20.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Metal, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "15", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Body, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "16", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "17", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourTurretFWD, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "18", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourTurretREAR, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "19", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourTurretTOP, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "20", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourTurretRIGHT, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "21", // material id
+        "", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_ArmourTurretLEFT, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "22", // material id
+        "Textures/Number_00.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "KEYCOLOR", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+  ),
+      new CModelMaterial(
+        "FakeShadow", // material id
+        "Textures/BottomShadow.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "NORMAL", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      )
+    ];
+}
