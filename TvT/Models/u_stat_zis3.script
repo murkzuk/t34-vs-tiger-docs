@@ -4,32 +4,32 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  Redux MOdel Header Update                                                                 
 //-------------------------------------------------------------------
 
 
 class Cu_stat_zis3Model extends CBaseModel
 {
 
-  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+  static int     InstancesQty         = CBaseModel::DefaultInstancesQty;
 
-  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+  static int     ShadowCheckMode      = CBaseModel::DefaultShadowCheckMode;
 
-  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+  static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
 
-  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift; 
 
-  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+  static boolean FakeShadow           = CBaseModel::DefaultFakeShadow;
 
-  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+  static float   FakeShadowScale      = CBaseModel::DefaultFakeShadowScale;
 
-  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
-
-  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
-
-  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+  static float   LodForShadowChange   = CBaseModel::DefaultLodForShadowChange;
 
   static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  
+  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh; //redux missin
 
   String     MeshFile        = "Models/u_stat_zis3.ms2";
   String     SkinClass       = "Cu_stat_zis3ModelSkin";

@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  Redux Model header Update                                                               
 //-------------------------------------------------------------------
 
 
@@ -17,9 +17,7 @@ class Cbld_HaystackModel extends CBaseModel
 
   static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
 
-  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
-
-  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift; 
 
   static boolean FakeShadow           = CBaseModel::DefaultFakeShadow;
 
@@ -28,6 +26,10 @@ class Cbld_HaystackModel extends CBaseModel
   static float   LodForShadowChange   = CBaseModel::DefaultLodForShadowChange;
 
   static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  
+  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh; //Redux missing line
 
   String     MeshFile        = "Models/bld_Haystack.ms2";
   String     SkinClass       = "Cbld_HaystackModelSkin";

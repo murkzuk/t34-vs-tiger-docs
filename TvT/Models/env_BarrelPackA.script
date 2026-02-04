@@ -4,26 +4,39 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+// Redux MOdel Header Update
 //-------------------------------------------------------------------
 
 
 class Cenv_BarrelPackAModel extends CBaseModel
 {
+  
+  static int     InstancesQty         = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode      = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift; 
+
+  static boolean FakeShadow           = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale      = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange   = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  
+  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh; //redux missin
+ 
+  
   String     MeshFile        = "Models/env_BarrelPackA.ms2";
   String     SkinClass       = "Cenv_BarrelPackAModelSkin";
 
   String     RouterMapFile   = "Models/env_BarrelPackA.rmap";
-
-  static int InstancesQty    = CBaseModel::DefaultInstancesQty;
-
-  static int ShadowCheckMode = CBaseModel::DefaultShadowCheckMode;
-
-  static boolean PlanarShadow = CBaseModel::DefaultPlanarShadow;
-
-  static boolean UseBoxForIsection = CBaseModel::DefaultUseBoxForIsection;
-
-  static float PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
+  
 
   Array  Animation = [];
 }

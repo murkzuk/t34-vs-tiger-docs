@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  Redux Model Header Update                                                             
 //-------------------------------------------------------------------
 
 
@@ -17,9 +17,7 @@ class Cenv_BarrelModel extends CBaseModel
 
   static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
 
-  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
-
-  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift; 
 
   static boolean FakeShadow           = CBaseModel::DefaultFakeShadow;
 
@@ -28,6 +26,11 @@ class Cenv_BarrelModel extends CBaseModel
   static float   LodForShadowChange   = CBaseModel::DefaultLodForShadowChange;
 
   static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  
+   static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+  
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh; //redux missing line  
+  
 
   String     MeshFile        = "Models/env_Barrel.ms2";
   String     SkinClass       = "Cenv_BarrelModelSkin";

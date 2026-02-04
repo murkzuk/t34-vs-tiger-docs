@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//  Redux Header Alignment                                                                 
 //-------------------------------------------------------------------
 
 
@@ -12,24 +12,25 @@ class Cu_veh_PzVI_MAIN_InsideModel extends CBaseModel
 {
 
   static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+  
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+  
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;  
 
   static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
 
   static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
 
-  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
-
-  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
-
-  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
-
-  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
-
-  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift; 
 
   static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
 
   static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+   
   String     MeshFile        = "Models/u_veh_PzVI_MAIN_Inside.ms2";
   String     SkinClass       = "Cu_veh_PzVI_MAIN_InsideModelSkin";
 

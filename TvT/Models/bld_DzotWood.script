@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code  
 //  is strictly prohibited. Violators WILL be prosecuted to the      
 //  maximum extent allowed by law.                                   
-//                                                                   
+//    Redux Model Header Update                                                               
 //-------------------------------------------------------------------
 
 
@@ -19,10 +19,6 @@ class Cbld_DzotWoodModel extends CBaseModel
 
   static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
 
-  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
-
-  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
-
   static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
 
   static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
@@ -30,6 +26,10 @@ class Cbld_DzotWoodModel extends CBaseModel
   static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
 
   static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
 
   String     MeshFile        = "Models/bld_DzotWood.ms2";
   String     SkinClass       = "Cbld_DzotWoodModelSkin";
