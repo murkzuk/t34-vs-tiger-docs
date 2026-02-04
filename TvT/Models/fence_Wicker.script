@@ -1,0 +1,77 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cfence_WickerModel extends CBaseModel
+{
+
+  static int     InstancesQty         = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode      = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean FakeShadow           = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale      = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange   = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/fence_Wicker.ms2";
+  String     SkinClass       = "Cfence_WickerModelSkin";
+
+  String     RouterMapFile   = "Models/fence_Wicker.rmap";
+
+  Array  Animation = [];
+
+  Map    ConfigSets = new Map([]);
+
+  Map    MaterialsNameId = new Map([
+      [ "G5EngineShader1", "0"]
+    ]);
+}
+
+class Cfence_WickerModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/fence_wicker.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "KEYCOLOR", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Wood, // substance type
+        "" // envmap name
+      )
+    ];
+}

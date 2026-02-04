@@ -1,0 +1,81 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cbld_PileLogsModel extends CBaseModel
+{
+
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/bld_PileLogs.ms2";
+  String     SkinClass       = "Cbld_PileLogsModelSkin";
+
+  String     RouterMapFile   = "Models/bld_PileLogs.rmap";
+
+  Array  Animation = [
+      ["do_crash", ["Logs_018", 0, 30], ["Logs_019", 0, 30], ["Logs_020", 0, 30], ["Logs_025", 0, 30], ["Logs_029", 0, 30], ["Logs_033", 0, 30], ["Logs_034", 0, 30], ["Logs_035", 0, 30], ["Logs_036", 0, 30], ["Logs_037", 0, 30], ["Logs_041", 0, 30], ["Logs_042", 0, 30], ["Logs_043", 0, 30], ["Logs_044", 0, 30], ["Logs_045", 0, 30], ["Logs_046", 0, 30], ["Logs_050", 0, 30], ["Logs_051", 0, 30], ["Logs_052", 0, 30], ["Logs_054", 0, 30], ["Logs_055", 0, 30], ["Logs_056", 0, 30], ["Logs_058", 0, 30], ["Logs_059", 0, 30], ["Logs_060", 0, 30], ["Logs_061", 0, 30], ["Logs_062", 0, 30], ["Logs_063", 0, 30], ["Logs_064", 0, 30]]
+    ];
+
+  Map    ConfigSets = new Map([]);
+
+  Map    MaterialsNameId = new Map([
+      [ "G5EngineShader1", "0"]
+    ]);
+}
+
+class Cbld_PileLogsModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/bld_PileLogs.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Wood, // substance type
+        "" // envmap name
+      )
+    ];
+}

@@ -1,0 +1,81 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cbld_USRShedWood02Model extends CBaseModel
+{
+
+  static int     InstancesQty         = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode      = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow         = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection    = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow           = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale      = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange   = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/bld_USRShedWood.ms2";
+  String     SkinClass       = "Cbld_USRShedWood02ModelSkin";
+
+  String     RouterMapFile   = "Models/bld_USRShedWood.rmap";
+
+  Array  Animation = [
+      ["do_crash", ["Crash_Roof_01", 0, 22], ["Crash_Roof_02", 0, 22], ["Crash_Roof_03", 0, 22], ["Crash_Roof_04", 0, 22], ["Crash_Roof_05", 0, 22], ["Crash_Roof_06", 0, 22], ["Crash_Roof_07", 0, 22], ["Crash_Roof_08", 0, 22], ["Crash_Roof_09", 0, 22], ["Front_01", 0, 22], ["Front_010", 0, 22], ["Front_011", 0, 22], ["Front_012", 0, 22], ["Front_013", 0, 22], ["Front_014", 0, 22], ["Front_015", 0, 22], ["Front_016", 0, 22], ["Front_017", 0, 22], ["Front_02", 0, 22], ["Front_03", 0, 22], ["Front_04", 0, 22], ["Front_05", 0, 22], ["Front_06", 0, 22], ["Front_07", 0, 22], ["Front_08", 0, 22], ["Front_09", 0, 22], ["Left_01", 0, 22], ["Left_010", 0, 22], ["Left_011", 0, 22], ["Left_012", 0, 22], ["Left_02", 0, 22], ["Left_03", 0, 22], ["Left_04", 0, 22], ["Left_05", 0, 22], ["Left_06", 0, 22], ["Left_07", 0, 22], ["Left_08", 0, 22], ["Left_09", 0, 22], ["Rear_01", 0, 22], ["Rear_010", 0, 22], ["Rear_011", 0, 22], ["Rear_02", 0, 22], ["Rear_03", 0, 22], ["Rear_04", 0, 22], ["Rear_05", 0, 22], ["Rear_06", 0, 22], ["Rear_07", 0, 22], ["Rear_08", 0, 22], ["Rear_09", 0, 22], ["Right_01", 0, 22], ["Right_02", 0, 22], ["Right_03", 0, 22], ["Right_04", 0, 22], ["Right_05", 0, 22], ["Right_06", 0, 22], ["Right_07", 0, 22], ["Right_08", 0, 22], ["Roof_10", 0, 22]]
+    ];
+
+  Map    ConfigSets = new Map([]);
+
+  Map    MaterialsNameId = new Map([
+      [ "bld_USRShedWood_G5EngineShader1", "0"]
+    ]);
+}
+
+class Cbld_USRShedWood02ModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/bld_USRShedWood_02.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Wood, // substance type
+        "" // envmap name
+      )
+    ];
+}

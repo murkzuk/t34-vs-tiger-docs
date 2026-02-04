@@ -1,0 +1,81 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cbld_USRHouseWoodModel extends CBaseModel
+{
+
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/bld_USRHouseWood.ms2";
+  String     SkinClass       = "Cbld_USRHouseWoodModelSkin";
+
+  String     RouterMapFile   = "Models/bld_USRHouseWood.rmap";
+
+  Array  Animation = [
+      ["do_crash", ["BWall_1", 0, 20], ["BWall_10", 0, 20], ["BWall_11", 0, 20], ["BWall_12", 0, 20], ["BWall_2", 0, 20], ["BWall_3", 0, 20], ["BWall_4", 0, 20], ["BWall_5", 0, 20], ["BWall_6", 0, 20], ["BWall_7", 0, 20], ["BWall_8", 0, 20], ["BWall_9", 0, 20], ["CrashRoof_01", 0, 20], ["CrashRoof_010", 0, 20], ["CrashRoof_011", 0, 20], ["CrashRoof_012", 0, 20], ["CrashRoof_013", 0, 20], ["CrashRoof_014", 0, 20], ["CrashRoof_015", 0, 20], ["CrashRoof_016", 0, 20], ["CrashRoof_017", 0, 20], ["CrashRoof_018", 0, 20], ["CrashRoof_019", 0, 20], ["CrashRoof_02", 0, 20], ["CrashRoof_020", 0, 20], ["CrashRoof_03", 0, 20], ["CrashRoof_04", 0, 20], ["CrashRoof_05", 0, 20], ["CrashRoof_06", 0, 20], ["CrashRoof_07", 0, 20], ["CrashRoof_08", 0, 20], ["CrashRoof_09", 0, 20], ["Crash_Base", 0, 20], ["FWall_1", 0, 20], ["FWall_10", 0, 20], ["FWall_11", 0, 20], ["FWall_12", 0, 20], ["FWall_13", 0, 20], ["FWall_14", 0, 20], ["FWall_2", 0, 20], ["FWall_3", 0, 20], ["FWall_4", 0, 20], ["FWall_5", 0, 20], ["FWall_6", 0, 20], ["FWall_7", 0, 20], ["FWall_8", 0, 20], ["FWall_9", 0, 20], ["LWall_1", 0, 20], ["LWall_10", 0, 20], ["LWall_11", 0, 20], ["LWall_2", 0, 20], ["LWall_3", 0, 20], ["LWall_4", 0, 20], ["LWall_5", 0, 20], ["LWall_6", 0, 20], ["LWall_7", 0, 20], ["LWall_8", 0, 20], ["LWall_9", 0, 20], ["PedimentLeft_1", 0, 20], ["PedimentLeft_2", 0, 20], ["PedimentLeft_3", 0, 20], ["PedimentRight_1", 0, 20], ["PedimentRight_2", 0, 20], ["PedimentRight_3", 0, 20], ["RWall_1", 0, 20], ["RWall_10", 0, 20], ["RWall_11", 0, 20], ["RWall_12", 0, 20], ["RWall_2", 0, 20], ["RWall_3", 0, 20], ["RWall_4", 0, 20], ["RWall_5", 0, 20], ["RWall_6", 0, 20], ["RWall_7", 0, 20], ["RWall_8", 0, 20], ["RWall_9", 0, 20]]
+    ];
+
+  Map    ConfigSets = new Map([]);
+
+  Map    MaterialsNameId = new Map([
+      [ "G5EngineShader1", "0"]
+    ]);
+}
+
+class Cbld_USRHouseWoodModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/bld_USRHouseWood.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Wood, // substance type
+        "" // envmap name
+      )
+    ];
+}

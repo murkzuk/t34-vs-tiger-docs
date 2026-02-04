@@ -1,0 +1,109 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class Cbld_USRCorralWoodModel extends CBaseModel
+{
+
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+
+  String     MeshFile        = "Models/bld_USRCorralWood.ms2";
+  String     SkinClass       = "Cbld_USRCorralWoodModelSkin";
+
+  String     RouterMapFile   = "Models/bld_USRCorralWood.rmap";
+
+  Array  Animation = [
+      ["do_crash", ["Crash_01", 0, 10], ["Crash_010", 0, 10], ["Crash_011", 0, 10], ["Crash_012", 0, 10], ["Crash_013", 0, 10], ["Crash_014", 0, 10], ["Crash_015", 0, 10], ["Crash_016", 0, 10], ["Crash_017", 0, 10], ["Crash_018", 0, 10], ["Crash_019", 0, 10], ["Crash_02", 0, 10], ["Crash_020", 0, 10], ["Crash_021", 0, 10], ["Crash_022", 0, 10], ["Crash_023", 0, 10], ["Crash_024", 0, 10], ["Crash_025", 0, 10], ["Crash_026", 0, 10], ["Crash_027", 0, 10], ["Crash_028", 0, 10], ["Crash_029", 0, 10], ["Crash_03", 0, 10], ["Crash_030", 0, 10], ["Crash_031", 0, 10], ["Crash_032", 0, 10], ["Crash_033", 0, 10], ["Crash_034", 0, 10], ["Crash_035", 0, 10], ["Crash_036", 0, 10], ["Crash_037", 0, 10], ["Crash_038", 0, 10], ["Crash_039", 0, 10], ["Crash_04", 0, 10], ["Crash_05", 0, 10], ["Crash_06", 0, 10], ["Crash_07", 0, 10], ["Crash_08", 0, 10], ["Crash_09", 0, 10], ["Crash_Base", 0, 10], ["Pediment_01", 0, 10], ["Pediment_010", 0, 10], ["Pediment_011", 0, 10], ["Pediment_012", 0, 10], ["Pediment_013", 0, 10], ["Pediment_014", 0, 10], ["Pediment_015", 0, 10], ["Pediment_016", 0, 10], ["Pediment_02", 0, 10], ["Pediment_03", 0, 10], ["Pediment_04", 0, 10], ["Pediment_05", 0, 10], ["Pediment_06", 0, 10], ["Pediment_07", 0, 10], ["Pediment_08", 0, 10], ["Pediment_09", 0, 10], ["Roof_01", 0, 10], ["Roof_010", 0, 10], ["Roof_011", 0, 10], ["Roof_012", 0, 10], ["Roof_013", 0, 10], ["Roof_014", 0, 10], ["Roof_015", 0, 10], ["Roof_016", 0, 10], ["Roof_017", 0, 10], ["Roof_018", 0, 10], ["Roof_019", 0, 10], ["Roof_02", 0, 10], ["Roof_020", 0, 10], ["Roof_03", 0, 10], ["Roof_04", 0, 10], ["Roof_05", 0, 10], ["Roof_06", 0, 10], ["Roof_07", 0, 10], ["Roof_08", 0, 10], ["Roof_09", 0, 10]]
+    ];
+
+  Map    ConfigSets = new Map([]);
+
+  Map    MaterialsNameId = new Map([
+      [ "NormalMaterial", "0"],
+      [ "CrashedMaterial", "1"]
+    ]);
+}
+
+class Cbld_USRCorralWoodModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/bld_USRCorralWood.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Wood, // substance type
+        "" // envmap name
+      ),
+      new CModelMaterial(
+        "1", // material id
+        "Textures/bld_USRCorralWood_crashed.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(0.000000, 0.000000, 0.000000), // ambient
+        new Color(1.000000, 1.000000, 1.000000, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Wood, // substance type
+        "" // envmap name
+      )
+    ];
+}
