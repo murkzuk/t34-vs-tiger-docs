@@ -1,0 +1,60 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+
+class CSky01Model extends CBaseModel
+{
+  String     MeshFile        = "Models/Sky.ms2";
+  String     SkinClass       = "CSky01ModelSkin";
+
+  String     RouterMapFile   = "Models/Sky.rmap";
+
+  static int InstancesQty    = CBaseModel::DefaultInstancesQty;
+
+  static int ShadowCheckMode = CBaseModel::DefaultShadowCheckMode;
+
+  static boolean PlanarShadow = CBaseModel::DefaultPlanarShadow;
+
+  static float PlanarShadowLodShift = CBaseModel::DefaultPlanarShadowLodShift;
+
+  Array  Animation = [];
+}
+
+class CSky01ModelSkin
+{
+  Array Materials = [
+      new CModelMaterial(
+        "0", // material id
+        "Textures/Sky_01.tex", // texture name
+        "", // bump tex name
+        "", // micro tex name
+        "", // specular tex name
+        "", // emissive tex name
+        "", // light tex name
+        "", // height tex name
+        "DISABLE", // alpha mode
+        LMDL_Default, // lighting model
+        1.000000, // micro tex tiling U
+        1.000000, // micro tex tiling V
+        1.000000, // bump tex tiling U
+        1.000000, // bump tex tiling V
+        new Color(1.000000, 1.000000, 1.000000), // ambient
+        new Color(0.801660, 0.801660, 0.801660, 1.000000), // diffuse
+        new Color(0.000000, 0.000000, 0.000000), // specular
+        new Color(0.000000, 0.000000, 0.000000), // emissive
+        0.000000, // power
+        false, // double sided
+        0.000000, // glossiness
+        1.000000, // fresnel
+        1.000000, // parallax
+        CMaterialStructure::MSID_Default, // substance type
+        "" // envmap name
+      )
+    ];
+}
