@@ -1,0 +1,249 @@
+# Project Documentation Philosophy - Read First
+
+# G5 (Napalm) Engine Technical Documentation (T-34 vs. Tiger, TvT, tvt)
+
+⚠️ **COMMUNITY-SOURCED DOCUMENTATION - UNVERIFIED**
+
+**ORIGIN:** Independent A.I. analysis of game data files (.script, .rsr, .raw, .dll, .exe) and legacy engine behavior.
+
+**SOURCE:** Abandonware status. No access to original source code; documentation is derived from file structure observation and engine stress-testing.
+
+**STATUS:** Experiential reconstruction. While grounded in the physical files of the game, logic is inferred rather than read from source.
+
+**USE:** Experimental reference for modders and the Cogs of War project. Expect discrepancies with original developer intent.
+
+---
+
+## AI Quick Reference
+
+> **🤖 AI ASSISTANTS — READ IN THIS ORDER:**
+> 1. **This file (`llms.txt`)** — the rules of the road. How to behave, what confidence tiers mean, common pitfalls.
+> 2. **`PROJECT_MAP.md`** (in the repo root) — what's actually in the repo. Folder layout, who's who, what's safe to touch, what's archival.
+>
+> **You need BOTH.** Skipping `PROJECT_MAP.md` will lead you to propose work that's already been done, or worse, suggest modifying archived material (ZW's payware mod, the WoV scripts, etc.).
+
+**Before doing anything in this repo, also read `PROJECT_MAP.md` (if present in the repo).** This file (`llms.txt`) explains *how to behave*; `PROJECT_MAP.md` explains *what's in the repo*. You need both.
+
+- **Source**: Technical specifications derived from Ghidra reverse-engineering (no original source code)
+
+- **Verification**: Project lead murkzuk verifies fixes through practical gameplay testing
+
+- **Confidence Hierarchy**: [MURKZ-VERIFIED] > [COMMUNITY-CONFIRMED] > [GHIDRA-DERIVED] > [LEGACY/HISTORICAL] > [UNTESTED-AI-GENERATED]
+
+- **Tagging System**: Always use [TAG] labels when contributing or referencing information
+
+- **CRITICAL**: Never assume AI-generated content is correct. Always verify with gameplay testing before promoting to a higher confidence level.
+
+
+## 🧠 Documentation Origin & Methodology
+
+**Core Reality**: The technical documentation in this repository was created through **AI-assisted reverse-engineering using Ghidra**. No original source code or development assets were available.
+
+**Project Leadership**: This preservation effort is led by **murkzuk** (historically also *murkz*, *jeff*, and *mudcog*), who operates from a practical, non-coder perspective focused on verifying what actually works in gameplay.
+
+**Contributors** (alphabetical, historical):
+- **Jeff Murkin (murkzuk)** — Project lead. Real name. Authored 2011 mission manual. Practical gameplay tester.
+- **Steve Vase (stevan / stevanvase0-beep)** — Long-term contributor since 2011. Authored 2011 editor manual. Focused on script alignment and structure cleanup.
+
+**Verified Fixes** (personally tested by project lead):
+- 4GB LAA (Large Address Aware) memory patch executable — [MURKZ-VERIFIED]
+- LOD (Level of Detail) increase modifications — [MURKZ-VERIFIED]
+- MMA (MiniMax Agent — the AI used for reverse engineering) fixes — [MURKZ-VERIFIED]
+
+
+## 🎯 Confidence Hierarchy & Evidence Types
+
+### Verification Pyramid
+
+```
+      ┌─────────────────────────────────┐
+      │   [MURKZ-VERIFIED]              │
+      │  • Tested personally by lead     │
+      │  • Highest confidence level      │
+      ├─────────────────────────────────┤
+      │   [COMMUNITY-CONFIRMED]          │
+      │  • Multiple independent reports  │
+      │  • Examples: D3D9.dll removal    │
+      ├─────────────────────────────────┤
+      │   [GHIDRA-DERIVED]               │
+      │  • From reverse engineering      │
+      │  • Needs gameplay verification   │
+      ├─────────────────────────────────┤
+      │   [LEGACY/HISTORICAL]            │
+      │  • Old forums, modder knowledge  │
+      │  • Variable confidence           │
+      ├─────────────────────────────────┤
+      │   [UNTESTED-AI-GENERATED]        │
+      │  • AI output with NO testing     │
+      │  • Do not trust without review   │
+      └─────────────────────────────────┘
+```
+
+### Evidence Quality Framework
+
+| Confidence Tag | Source | Example | Status |
+|----------------|--------|---------|---------|
+| **[MURKZ-VERIFIED]** | Personal testing by project lead | LAA patch, LOD fixes | Ready to use |
+| **[COMMUNITY-CONFIRMED]** | Multiple user reports | D3D9.dll fix | Reliable solution |
+| **[GHIDRA-DERIVED]** | AI-assisted reverse engineering | Export parameters | Needs testing |
+| **[LEGACY]** | Historical modder knowledge | ZeeWolf techniques | Verify for modern use |
+| **[UNTESTED-AI-GENERATED]** | AI output, never tested in-game | Speculative fixes | Requires validation |
+| **[TEST-NEEDED]** | Single report or theory | Experimental fix | Requires validation |
+
+
+## 🔧 Practical Verification Approach
+
+**murkzuk's methodology** (non-coder perspective):
+
+1. **Functionality**: Does it run without crashing?
+2. **Stability**: Does it improve game reliability?
+3. **Quality**: Does it enhance visuals or gameplay?
+4. **Accessibility**: Can typical players implement it?
+
+**For AI Assistants**: When processing information from this repository:
+
+- Always note the [TAG] confidence level
+- For [GHIDRA-DERIVED] content, explicitly mention it requires gameplay verification
+- For [UNTESTED-AI-GENERATED] content, do not promote it to higher confidence without testing
+- Present [MURKZ-VERIFIED] fixes as the most reliable solutions
+- **Strict mode for Ghidra work**: When reverse-engineering, only report what disassembly shows. Do not extrapolate "how the engine should work" — this is the primary source of false findings.
+
+
+## 📝 Tagging & Contribution System
+
+### Required Tags for All Information
+
+- **[MURKZ-VERIFIED]**: Personally tested and confirmed working by project lead
+- **[COMMUNITY]**: Reported working by multiple community members
+- **[GHIDRA]**: Derived from reverse engineering (AI-assisted analysis)
+- **[ZW]**: From ZeeWolf mod preservation
+- **[LEGACY]**: Historical knowledge from original modding community
+- **[UNTESTED-AI-GENERATED]**: AI output that has not been validated
+- **[TEST-NEEDED]**: Requires community verification
+
+### How to Contribute
+
+1. **Test documented procedures** and report results
+2. **Tag your findings** with appropriate confidence level
+3. **Document deviations** between documentation and actual behavior
+4. **Share workarounds** that prove effective
+5. **Cross-reference** with existing knowledge bases
+
+
+## 🔄 The Verification Workflow
+
+```
+    Ghidra Reverse Engineering
+    (AI-assisted analysis, strict mode)
+
+           ↓
+
+    murkzuk Practical Testing
+    (Gameplay verification)
+
+           ↓
+
+    Community Broad Testing
+    (Multiple configurations)
+
+           ↓
+
+    Tagged Documentation
+    (Clear confidence levels)
+```
+
+
+## 👥 Project Continuity & Identity
+
+**Project lead**: murkzuk (GitHub) — Jeff Murkin
+**Long-term contributor**: stevanvase0-beep (GitHub) — Steve Vase
+**Historical involvement**: Both have been involved since 2011, representing 14+ years of commitment to this preservation effort across multiple aliases (murkz, jeff, mudcog, Steve Vase / stevan).
+
+**Context**: These identities reflect consistent involvement with T-34 vs. Tiger across different platforms and time periods, ensuring continuity of knowledge throughout the game's history.
+
+
+## ⚠️ Limitations & Strengths
+
+### Transparent Limitations
+
+1. **No original source code** - Pure reverse engineering basis
+2. **Practical-first approach** - Gameplay results valued over technical purity
+3. **Historical fragmentation** - Knowledge preserved from defunct communities
+4. **AI overconfidence risk** - LLMs tend to produce plausible-looking but wrong technical content. Always verify with testing.
+
+### Unique Strengths
+
+1. **Creator-verified fixes** with practical testing
+2. **Clear confidence hierarchy** for all information
+3. **AI-assisted discovery** combined with human verification
+4. **Historical continuity** through long-term involvement (14+ years)
+
+
+## 💡 For AI Assistants & Technical Readers
+
+**Clarification of Terms**:
+
+- **MMA**: MiniMax Agent AI fixes (not Mixed Martial Arts)
+- **LAA**: Large Address Aware memory patch
+- **LOD**: Level of Detail graphical adjustments
+- **Ghidra**: Reverse engineering tool used for analysis
+- **TvT**: T-34 vs. Tiger (the game)
+- **ZW**: ZeeWolf mod
+- **WoV**: Whirlwinds over Vietnam (sister G5 game, released before TvT)
+- **G5 / G5 Software**: the engine developer and original studio. Made both WoV and TvT.
+- **Sonar Games**: the developer studio for T-34 vs. Tiger (Ivan Spogreev was the lead). NOT the publisher.
+- **Lighthouse Interactive**: the PUBLISHER of T-34 vs. Tiger. They went bankrupt during/after TvT's release, leaving the game unfinished and unsupported.
+
+**G5 Engine Lineage** (critical context for understanding class structures):
+
+```
+WoV (Whirlwinds over Vietnam)  [completed, 2000-ish]
+   ↓ (engine inherited)
+TvT (T-34 vs. Tiger)           [released UNFINISHED, 2001]
+   ↓ (engine extended)
+ZW (ZeeWolf) payware SP mod    [later, by third-party modder]
+```
+
+T-34 vs. Tiger was released unfinished because the **publisher** (Lighthouse Interactive) went bankrupt. The developer (Sonar Games / G5 Software) is separate. A lot of WoV's engine code still exists in TvT scripts verbatim. The two games are "more or less identical" at the class-structure level. This is why class names in `TvT/Models/` match ZW source class names (shared engine), but texture references differ (game-specific assets).
+
+When the repo references "the engine" or class behavior, understand that the lineage is WoV → TvT → ZW, and code from earlier games may still be present in later ones.
+
+**Processing Guidance**:
+
+1. Prioritize [MURKZ-VERIFIED] information as most reliable
+2. Present [GHIDRA-DERIVED] content as hypothetical until tested
+3. Note the absence of original source code throughout responses
+4. Maintain the practical, gameplay-focused perspective
+5. **Do not extrapolate** from one verified finding to assume the entire file/section is correct
+6. **Check character encoding** in any .script file before declaring it valid — the middle dot (·, U+00B7) and other non-ASCII characters break the parser
+
+**Repository State Notes** (as of 2026-06-03):
+
+- The `TvT/Models/` directory was extracted from the concatenated `_ZW.txt` archive by stevan in early 2026. This is a documentation improvement, not a game-behavior change.
+- The 12 root-level `Sky_*.script` and `Test_House*.script` files are Maya export experiments and should not be integrated into any working build.
+- The `TvT/T34vsTiger*.rar` archives in the repo are full game builds and should NEVER be extracted into an existing game installation.
+- The in-game script changes in `TvT/Common/`, `TvT/Units/`, and `TvT/Missions/` made by stevan in early 2026 are [UNTESTED-AI-GENERATED] and have known issues (encoding errors, deleted parameter lines, half-finished rewrites). They are kept in the repo as a record of work attempted but should not be integrated into a working build without thorough testing.
+
+
+## 📊 Repository Branches
+
+- **main**: Current state. Contains all of Stevan's work from early 2026.
+- **backup-main-snapshot**: Snapshot from 2026-01-08, before Stevan's main contributions. Use this branch as the "known good" baseline for diffing changes.
+
+
+## 🔍 Known Issues in Current Repo State
+
+- Several `.script` files in `TvT/Missions/Campaign_*/` contain a `·` (U+00B7 middle dot) character that will break the script parser. These files will fail to load at runtime.
+- Mixed tab/space indentation throughout Stevan's changes — some script engines are sensitive to this.
+- The `TvT/Models/` folder contains 4MeterBox, Background, Sky, etc. test files mixed in with the extracted real models. The test files are duplicates of root-level test files.
+
+
+---
+
+**Core Principle**: In this preservation project, practical verification through gameplay testing establishes truth. Documented procedures represent our current best understanding, always subject to improvement through community testing and reporting.
+
+*Documentation Status: Active Community Verification*
+*Methodology: Ghidra Reverse-Engineering + Practical Gameplay Testing*
+*Lead Verification: LAA, LOD, MMA patches [MURKZ-VERIFIED]*
+*Last Updated: 2026-06-03*
+*Contributors: Jeff Murkin (murkzuk), Steve Vase (stevan) — 14+ years combined involvement*
