@@ -22,7 +22,7 @@ User proposed a steppe map (few trees) as a way around the tree-LOS AI limitatio
 - Consequence: controlling tree density for the steppe look is a matter of (a) how much of the `TerrainZone` bitmap gets painted with the forest zone-code, and (b) the density/distance parameters passed to `RegisterForestRegion`/`RegisterVerticalForest` — not hand-placing thousands of tree objects. Very tractable.
 - ZW's Kursk missions still register `ZMC_Forest01` with their own `forest_Kursk.tex` skin, so the "sparse steppe" look there also comes from how little of their zone bitmap was painted, not from omitting the forest system entirely.
 
-## Historical framing — open decision
+## Historical framing — DECIDED 2026-07-02
 
 Checked REDUX's 20-unit roster against the real July 1943 Battle of Kursk order of battle:
 
@@ -30,9 +30,7 @@ Checked REDUX's 20-unit roster against the real July 1943 Battle of Kursk order 
 - **SU-85 is anachronistic** — entered service autumn 1943, just after Kursk.
 - REDUX has **no Panther** (famously debuted at Kursk) and no KV-1/SU-152 — building a Panther would mean an entirely new 3D model, not scriptable (ZW does have a Panther, 3 variants, but importing it raises the same IP question as the terrain — hold off unless explicitly decided otherwise).
 
-Two ways to handle this, not yet decided:
-- (a) Call it Kursk anyway, accept the anachronisms (a "what if" or "later stage of the battle" framing).
-- (b) Frame it as a **Ukraine steppe battle, late 1943 into 1944** rather than the specific named battle — same terrain, same core T-34-vs-Tiger matchup, but every current REDUX unit becomes period-correct with zero new unit development needed. Leaning toward this, but not settled.
+**Decided: option (b)** — framed as a **Ukraine steppe battle, late 1943 into 1944**, not the specific named Battle of Kursk. Every current REDUX unit (including T-34/85 and SU-85) is period-correct under this framing, no new unit development needed, no anachronisms to explain away.
 
 ## Terrain source recommendation
 
@@ -53,19 +51,21 @@ Sampled elevation range/std across every REDUX campaign mission's heightmap (all
 
 ## Performance budget reference
 
-Campaign_2 Mission_5 — confirmed running at 60 FPS after today's AI-targeting and MG-mask fixes — carries roughly: 7 Tiger, 8 T-34/85, 6 T-34/76, 4 SU-85, 2 StuG 40, 2 Hanomag halftracks, 5 Opel Blitz trucks, 2 IL-2, 9 Soviet riflemen (~45 units total, ~29 of them combat vehicles). Treat this as the known-safe baseline; a bigger, more open map might tolerate more (less scene/forest rendering overhead per the whole point of going open steppe) but that's untested — don't assume a large unit count is free just because the map is bigger.
+Campaign_2 Mission_5 — confirmed running at 60 FPS after today's AI-targeting and MG-mask fixes — carries roughly: 7 Tiger, 8 T-34/85, 6 T-34/76, 4 SU-85, 2 StuG 40, 2 Hanomag halftracks, 5 Opel Blitz trucks, 2 IL-2, 9 Soviet riflemen (~45 units total, ~29 of them combat vehicles).
 
-## Mission-logic design choice — open decision
+**Confirmed as the working budget**: treat ~45 units / ~29 combat vehicles as the known-safe starting point for the new mission. A bigger, more open map might tolerate more (less scene/forest rendering overhead per the whole point of going open steppe) but that's untested — a bigger map doesn't automatically mean unlimited unit count is free. Start at or under this baseline and only scale up once proven in-game.
+
+## Mission-logic design choice — still open
 
 Not yet decided: a lightly-scripted, randomizable skirmish (safe, low-risk, similar in spirit to the Quick Mission Generator's approach — see `Mission_File_Schema_Verified_2026-07-02.md`) vs. a fully hand-scripted historical battle with real objectives/waves (bigger undertaking, closer to how the real campaign missions are built, more failure-prone given how trigger-coupled those tend to be).
 
 ## Recommended path (not yet started)
 
-1. Settle the two open decisions above (historical framing, mission-logic style).
+1. Settle the remaining open decision above (scripted-vs-randomized mission-logic style). Historical framing and performance budget are now locked in (see above).
 2. In the Level Editor, look at Campaign_2 Mission_6's terrain visually to confirm it's a good steppe candidate before committing.
 3. Build a new mission using `Mission1`'s proven-safe, trigger-light `Content.script` structure as the mission-logic base (same precedent as the Quick Mission Generator work), but with Mission_6's terrain files stretched to a larger `MatrixWidth`/`MatrixHeight` via the confirmed technique above.
 4. Paint/adapt the `TerrainZone` bitmap for minimal forest coverage, keep `RegisterForestRegion` wired but sparse.
-5. Populate with a roster-accurate unit set, starting near or under the ~45-unit/~29-vehicle performance baseline.
+5. Populate with a roster-accurate unit set (late 1943-44 Ukraine steppe framing — full REDUX roster is period-correct), starting at or under the ~45-unit/~29-vehicle performance baseline.
 6. Test in-Editor before anything else — this is genuinely new territory (nothing this large has been proven to work in REDUX itself yet, only in the separate ZW install).
 
-Nothing has been built yet — this is scoping only, per explicit instruction.
+Nothing has been built yet — this is scoping only, per explicit instruction. Picks up here next session.
