@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (final) — Steppe mission scoping pass
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Pure investigation/scoping, nothing built. User proposed a large open-steppe mission to sidestep the unfixable tree-LOS AI gap. Investigated the separate ZW mod install's 4 "Kursk" custom missions (36000x36000m and 18000x18000m, vs REDUX's typical 9000x9000) and found the technique behind them: stretch REDUX's own standard-resolution terrain images (2049 heightmap etc.) over a much bigger `MatrixWidth`/`MatrixHeight`, confirmed directly from commented-out code in ZW's `WorldMatricies.script` files. No new terrain content or ZW assets needed - REDUX's own `Mission1` already uses the same standard resolution. Also confirmed tree density is controlled by `TerrainZone` bitmap painting via `RegisterForestRegion`, not individually placed objects. Checked REDUX's roster against the real Kursk order of battle (T-34/85 and SU-85 are anachronistic for July 1943) and sampled every REDUX mission's heightmap for flatness (`Campaign_2\Mission_6` is the flattest). Full write-up in `Documentation/Steppe_Map_Scoping_2026-07-02.md`, cross-linked from `TODO.md`.
+
+### Why
+
+Direct follow-up to the user's mission-creation question, explicitly asked to be scoped before any building starts.
+
+---
+
 ## 2026-07-02 (very latest) — Remove MG catch-all mask tier, stop MGs engaging tanks
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
