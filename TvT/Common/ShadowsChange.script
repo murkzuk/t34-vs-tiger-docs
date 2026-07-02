@@ -70,15 +70,15 @@ class CShadowsChange
     Cu_veh_zis5Model::LodForShadowChange            = 1.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
 
 // Tanks
-    Cu_veh_PzIVGModel::LodForShadowChange           = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
-    Cu_veh_PzVI_MAINModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
-    Cu_veh_PzVI_LATEModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
-    Cu_veh_t34_76_41Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
-	Cu_veh_t34_76_42Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
-    Cu_veh_t34_85_44Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
-    Cu_veh_t34_85_44_2Model::LodForShadowChange     = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
-	Cu_veh_SAU_Stug40Model::LodForShadowChange      = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
-    Cu_veh_SU85Model::LodForShadowChange            = 3.0f;
+    Cu_veh_PzIVGModel::LodForShadowChange           = 1.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue. Tightened from 2.6 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+    Cu_veh_PzVI_MAINModel::LodForShadowChange       = 1.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue. Tightened from 2.6 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+    Cu_veh_PzVI_LATEModel::LodForShadowChange       = 1.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue. Tightened from 2.6 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+    Cu_veh_t34_76_41Model::LodForShadowChange       = 1.2f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue. Tightened from 2.0 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+	Cu_veh_t34_76_42Model::LodForShadowChange       = 1.2f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue. Tightened from 2.0 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+    Cu_veh_t34_85_44Model::LodForShadowChange       = 1.2f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue. Tightened from 2.0 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+    Cu_veh_t34_85_44_2Model::LodForShadowChange     = 1.2f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue. Tightened from 2.0 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+	Cu_veh_SAU_Stug40Model::LodForShadowChange      = 1.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue. Tightened from 2.6 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
+    Cu_veh_SU85Model::LodForShadowChange            = 1.8f;  // Tightened from 3.0 - planar shadow was visible through ridges at the old ShadowDistance=800 setting
 
 //Weapons	
    Cwpn_BombModel::LodForShadowChange              = 2.0f;	
