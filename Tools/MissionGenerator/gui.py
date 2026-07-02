@@ -8,7 +8,6 @@ any generation logic; the CLI script remains the single source of truth.
 """
 
 import json
-import os
 import random
 import subprocess
 import sys
@@ -120,7 +119,7 @@ class App(tk.Tk):
 
     def open_roster(self):
         try:
-            os.startfile(str(ROSTER))
+            subprocess.Popen(["notepad.exe", str(ROSTER)])
         except Exception as e:
             messagebox.showerror("Could not open roster.json", str(e))
 
