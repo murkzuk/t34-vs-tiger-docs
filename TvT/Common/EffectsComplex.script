@@ -38,6 +38,16 @@ class CMachineGunDTFireEffect
     CreateEffect("GunFireLightSplash", 0.0);
   }
 }
+// MachineGun MG34
+class CMachineGunMG34FireEffect
+  extends CBaseEffect
+{
+  void CMachineGunMG34FireEffect()
+  {
+    CreateEffect("MachineGunFirePlanes", 0.0);
+    CreateEffect("GunFireLightSplash", 0.0);
+  }
+}
 //-------------------------
 // Bullet explosion effects
 //-------------------------

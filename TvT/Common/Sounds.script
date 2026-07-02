@@ -881,6 +881,22 @@ class CTankExplosionSound
   float   MaxDistance = 100.0;
 }
 
+// Towed gun explosion sound (ZiS-3/Pak-40 - a lighter destruction sound than a full tank)
+class CGunZis3ExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/ArmouredItem_Destroy.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 100.0;
+}
+class CGunPak40ExplosionSound
+  extends CExplosionSound
+{
+  String  SoundFile   = "Sounds/ArmouredItem_Destroy.wav";
+  float   MinDistance = 20.0;
+  float   MaxDistance = 100.0;
+}
+
 // House explosion sound
 class CUSRCorralWoodExplosionSound
   extends CExplosionSound
@@ -1344,6 +1360,8 @@ class CSoundsArray
         ["USRHouseWoodExplosionSound",         new CUSRHouseWoodExplosionSound()],
         ["USRShedWoodExplosionSound",          new CUSRShedWoodExplosionSound()],
         ["TankExplosionSound",                 new CTankExplosionSound()],
+        ["GunZis3ExplosionSound",              new CGunZis3ExplosionSound()],
+        ["GunPak40ExplosionSound",              new CGunPak40ExplosionSound()],
         ["ForestBulletHitSound",               new CForestBulletHitSound()],
         // Objects explosions
 
