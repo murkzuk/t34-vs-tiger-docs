@@ -108,9 +108,9 @@ class CFakeShadows
      Cu_veh_Hanomag_251CModel::FakeShadowScale                 = 0.9;
 
 //Trucks
-    Cu_veh_OpelBlitzModel::FakeShadow                         = true;  // Was false - only vehicle category missing this; likely cause of the ridge-occlusion shadow bug
+    Cu_veh_OpelBlitzModel::FakeShadow                         = false;
     Cu_veh_OpelBlitzModel::FakeShadowScale                    = 0.9;
-    Cu_veh_zis5Model::FakeShadow                              = true;  // Was false - only vehicle category missing this; likely cause of the ridge-occlusion shadow bug
+    Cu_veh_zis5Model::FakeShadow                              = false;
     Cu_veh_zis5Model::FakeShadowScale                         = 0.9;
 	
 //Tanks
