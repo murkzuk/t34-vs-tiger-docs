@@ -63,8 +63,7 @@ class CBtrHanomag251AusfCMachineGun
                                 [["HUMAN"],  []], // high priority mask: RestrictTo, Exclude
                                 //[["AIR"],[]]
                                 [["VEHICLE"],[]],  // low priority mask
-                                [["BTR"],    []],  // low priority mask
-                                [[],         []]   // very low priority: fire at anything if nothing else fits
+                                [["BTR"],    []]   // low priority mask
                               ];
 }
 

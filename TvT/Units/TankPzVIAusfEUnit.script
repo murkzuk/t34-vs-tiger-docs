@@ -72,8 +72,7 @@ class CTankPzVIAusfECoaxialMachineGun
   final static Array GunSpecificFireMask = [
                                 [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
                                 [["VEHICLE"],[]],      // low priority mask
-                                [["BTR"],    []],      // low priority mask
-                                [[],         []]       // very low priority: fire at anything if nothing else fits
+                                [["BTR"],    []]       // low priority mask
                               ];
 }
   class CTankPzVIAusfEPlayerCoaxialMachineGun
@@ -126,8 +125,7 @@ class CTankPzVIAusfEMachineGun
   final static Array GunSpecificFireMask = [
                                 [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
                                 [["VEHICLE"],[]],      // low priority mask
-                                [["BTR"],    []],      // low priority mask
-                                [[],         []]       // very low priority: fire at anything if nothing else fits
+                                [["BTR"],    []]       // low priority mask
                               ];
 }
 class CTankPzVIAusfEPlayerMachineGun

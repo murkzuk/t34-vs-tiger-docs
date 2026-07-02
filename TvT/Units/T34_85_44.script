@@ -72,8 +72,7 @@ class CTankT34_85_44CoaxialMachineGun
   final static Array GunSpecificFireMask = [
                                 [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
                                 [["VEHICLE"],[]],      // low priority mask
-                                [["BTR"],    []],      // low priority mask
-                                [[],         []]       // very low priority: fire at anything if nothing else fits
+                                [["BTR"],    []]       // low priority mask
                               ];
 }
   class CTankT34_85_44PlayerCoaxialMachineGun
@@ -126,8 +125,7 @@ class CTankT34_85_44MachineGun
   final static Array GunSpecificFireMask = [
                                 [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
                                 [["VEHICLE"],[]],      // low priority mask
-                                [["BTR"],    []],      // low priority mask
-                                [[],         []]       // very low priority: fire at anything if nothing else fits
+                                [["BTR"],    []]       // low priority mask
                               ];
 }
 class CTankT34_85_44PlayerMachineGun

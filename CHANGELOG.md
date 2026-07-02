@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (very latest) — Remove MG catch-all mask tier, stop MGs engaging tanks
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+The two hit-triggered bugs below were confirmed fixed (both gone from the log), but FPS was still poor and the user spotted the actual cause from gameplay: MGs were now firing at tanks, wasting ammo and CPU on rounds that can't hurt armor. Traced to the catch-all `[[],[]]` tier added in the earlier MG mask fix - fine for a pillbox with no other weapon, but pointless and costly for a tank that already has a main gun for armor. Removed the catch-all tier from all 10 mask blocks across the same 6 unit files, keeping the HUMAN/VEHICLE/BTR tiers intact. Not yet re-tested.
+
+### Why
+
+Direct user observation during FPS re-testing - MGs shooting at tanks rather than the soft targets the fix was meant to enable.
+
+---
+
 ## 2026-07-02 (newest) — Fix two hit-triggered bugs exposed by the MG mask fix
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
