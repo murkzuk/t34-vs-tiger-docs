@@ -8,8 +8,15 @@ randomized number of enemy tanks/AT guns and a relocated objective, so you
 can play-test variety without hand-editing mission files each time. You can
 play as either side.
 
-How to use it
---------------
+How to use it (GUI - easiest)
+-------------------------------
+Double-click "Quick Mission Generator.bat" in this folder. Pick Soviet or
+Axis, optionally type/roll a seed, click "Generate Mission", and read the
+result box. No command prompt needed. There's also an "Edit Roster" button
+that opens roster.json directly in Notepad.
+
+How to use it (command line)
+-------------------------------
 1. Open a command prompt in this folder (Tools\MissionGenerator).
 2. Run:
        python generate_mission.py
@@ -29,8 +36,9 @@ How to use it
 3. Open the game's Level Editor, find "Quick Mission (Generated)" in the
    mission list, load it, and play-test it (game camera mode).
 
-4. Repeat step 2 whenever you want a new random layout. Each run completely
-   replaces the previous one - it does not stack on top of earlier runs.
+4. Repeat step 2 (or click "Generate Mission" again in the GUI) whenever you
+   want a new random layout. Each run completely replaces the previous one -
+   it does not stack on top of earlier runs.
 
 Playing as AXIS uses the Tiger tank (CTankPzVIAusfEUnit), which has a few
 known cosmetic-only quirks from earlier work this session (some interior

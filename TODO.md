@@ -17,6 +17,8 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ## Quick Mission Generator (`Tools\MissionGenerator\`)
 
+- [x] **Added a GUI** — 2026-07-02. `gui.py` (tkinter, stdlib only, no extra install) wraps `generate_mission.py` as a subprocess rather than duplicating its logic - faction radio buttons, an optional seed field with a "Random" roller, a "Generate Mission" button, and a result box showing the script's own output. "Edit Roster" button opens `roster.json` directly in Notepad. `Quick Mission Generator.bat` launches it via `pythonw` (falls back to `python`) so there's no command prompt at all for normal use - just double-click. Roster editing intentionally stays a plain-text `roster.json` edit for now, not exposed in the GUI - a bigger job for later if wanted. Smoke-tested (launches, stays running, no immediate crash) but not visually reviewed - can't see a GUI window myself.
+
 - [x] Expand `roster.json` with a few more grep-verified unit types — done 2026-07-02. Added SU-85/StuG 40 (self-propelled guns, correct task is `CBaseAISAUTask` not `CBaseAITankTask` - confirmed live in Campaign_2\Mission_4) and German/Soviet riflemen (`CBaseAITask`, confirmed live in Campaign_1\Mission_1/2). Each side now has tank/AT-gun/SAU/infantry. Verified with 40-seed sweeps per faction that every class actually appears.
 - [ ] Confirm the `RouterZone_Test.bmp` color-to-passability mapping in-game (currently an unproven empirical soft filter — see `Mission_File_Schema_Verified_2026-07-02.md` §2b/Unresolved).
 - [ ] Unit facing/yaw randomization (v1 uses fixed identity rotation, all units face the same compass direction).
