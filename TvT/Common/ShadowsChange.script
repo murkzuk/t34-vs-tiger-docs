@@ -66,16 +66,18 @@ class CShadowsChange
     Cu_veh_M3A1HalfTrackModel::LodForShadowChange   = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
 
 //Trucks
-    Cu_veh_OpelBlitzModel::LodForShadowChange       = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
-    Cu_veh_zis5Model::LodForShadowChange            = 2.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_OpelBlitzModel::LodForShadowChange       = 1.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_zis5Model::LodForShadowChange            = 1.8f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
 
 // Tanks
     Cu_veh_PzIVGModel::LodForShadowChange           = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_PzVI_MAINModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_PzVI_LATEModel::LodForShadowChange       = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
-    Cu_veh_t34_76_42Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
+    Cu_veh_t34_76_41Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
+	Cu_veh_t34_76_42Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
     Cu_veh_t34_85_44Model::LodForShadowChange       = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
-    Cu_veh_SAU_Stug40Model::LodForShadowChange      = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
+    Cu_veh_t34_85_44_2Model::LodForShadowChange     = 2.0f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost tank issue
+	Cu_veh_SAU_Stug40Model::LodForShadowChange      = 2.6f;  // Fixed: Synchronized with LodForShadowHide to eliminate FPS ghost vehicle issue
     Cu_veh_SU85Model::LodForShadowChange            = 3.0f;
 
 //Weapons	

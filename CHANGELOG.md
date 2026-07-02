@@ -6,6 +6,32 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (later) — Audited Stevan Vase's git history, fixed a real regression, re-synced the mirror
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Went through all 30 of stevanvase0-beep's commits from Jan-Mar 2026 one by one, diffing every file he touched against the current live game to see what actually made it in versus what's still sitting unapplied.
+
+- **His Feb 3-4 Model/LOD/shadow completeness pass (49 files) is good, already-integrated work.** Confirmed byte-for-byte match with the live game.
+- **His Jan 8-9 mission-lighting sweep across ~14 Campaign_1/Campaign_2 missions has been superseded** by the user's own later hand-tuning (values tagged `//jm`) done directly on the live install — nothing to apply, but it meant the docs-repo mirror for those files was stale.
+- **Found and fixed a real regression**: his Jan 13 "structure alignment" pass on `TankPzVIAusfEUnit.script` accidentally deleted `void AddWingman(Component unit) { }` — a stub that exists purely to stop `Common\BaseTasks.script`'s wingman-task code from throwing a "function not found" error on the player's tank. Restored it, and added the same stub to `T34_85_44.script` and `T34_76_42.script` too, since neither of them had ever had it despite being equally exposed to the same call path (Pz IV was left alone — it's AI-only, never player-controlled, so it can never be the target of that call). Hasn't caused a visible problem in any log yet since the wingman feature itself is dormant, but it's a real latent bug, not a hypothetical one.
+- **Applied his Jan 24 Cockpit.script fix** that had never made it to the live game — an empty `["Distance", ""]` sound file mapping (both Soviet and German sound tables) was commented out, matching what looked like an attempt to stop a "can't load" error.
+- **Re-synced 27 stale files** in the `TvT\` mirror (7 shadow scripts, ~14 mission files, plus the 3 tank scripts and Cockpit.script touched above) from the live game.
+
+### Why this matters
+
+This wasn't just a courtesy check — it turned up a genuine bug (the missing wingman stub) that's been live since January and would have surfaced eventually. It also confirmed the bulk of Vase's work is solid and already paying off (the shadow/LOD pass), while making clear the docs-repo mirror had drifted out of sync with the live game in both directions - some contributions never got applied, some live-game improvements never got synced back.
+
+### Contributors
+
+- **stevanvase0-beep (Stevan Vase)** — original author of the Model/LOD/shadow work, the mission-lighting pass, and the Cockpit.script Distance-wav fix, and the unintentional source of the AddWingman regression.
+- **Jeff Murkin (murkzuk)** — flagged that Vase's contributions had never been reviewed, made the call to fix and sync.
+- **Claude Code (Anthropic)** — audited every commit, diffed against the live game, traced the AddWingman call chain to confirm it was a real (if dormant) risk before fixing it.
+
+---
+
 ## 2026-07-02 — execution.log error-hunt session (Claude Code)
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

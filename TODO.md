@@ -4,6 +4,13 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## Stevan Vase contribution audit (2026-07-02)
+
+- [x] **Full audit of stevanvase0-beep's 30 git commits (Jan 8 - Mar 5 2026)** — done 2026-07-02. Systematically diffed every file he touched against the live game install. Findings: (1) his Model/LOD/shadow completeness pass (Feb 3-4, 49 files) is fully integrated and good work; (2) his mission-lighting sweep (Jan 8-9, ~14 missions) was superseded by the user's own later hand-tuning; (3) his Jan 24 Cockpit.script "Distance wav" fix was never applied — fixed now; (4) **his Jan 13 "structure alignment" edit to `TankPzVIAusfEUnit.script` accidentally deleted the `void AddWingman(Component unit) { }` stub** that exists specifically to silence a "function not found" error from `Common\BaseTasks.script`'s wingman-task code path — restored, and also added to `T34_85_44.script`/`T34_76_42.script` (the other 2 player-drivable tanks), since neither of them had ever had the stub either despite being equally exposed. Not yet triggered in any tested mission (wingman feature is dormant), but a real latent bug, not hypothetical.
+- [x] **Docs-repo `TvT\` mirror re-synced** — done 2026-07-02. 27 files were stale relative to the live game (7 shadow `Common\` scripts, ~14 Campaign_1/Campaign_2 mission Content/Atmosphere files, plus the 3 tank unit scripts and Cockpit.script from the fixes above). Re-copied from the live install. Note: this sync covered only the files implicated in the Vase audit — there may be more drift elsewhere in the mirror that a full whole-repo diff would catch; not attempted here.
+
+---
+
 ## Quick Mission Generator (`Tools\MissionGenerator\`)
 
 - [x] Expand `roster.json` with a few more grep-verified unit types — done 2026-07-02. Added SU-85/StuG 40 (self-propelled guns, correct task is `CBaseAISAUTask` not `CBaseAITankTask` - confirmed live in Campaign_2\Mission_4) and German/Soviet riflemen (`CBaseAITask`, confirmed live in Campaign_1\Mission_1/2). Each side now has tank/AT-gun/SAU/infantry. Verified with 40-seed sweeps per faction that every class actually appears.
