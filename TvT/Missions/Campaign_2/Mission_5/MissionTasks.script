@@ -121,7 +121,7 @@ class CC2M5Group03T_34_76 extends CBaseUnitGroup
     Component Owner = GetMission().GetObject(_EnemyID);
     if (checkMask(Owner, ["FRIEND"], []))
     {
-      ActivateGroupRadar(true);
+      ActivateRadar(true);
       SetEnemyReactionType(ERT_AGGRESSIVE);
       //logWarning("[CC2M5Group03T_34_76]Aggressive_Mode By On_UnitHitByEnemy");
     }
@@ -239,7 +239,7 @@ class CC2M5Group02T_34_85 extends CBaseUnitGroup
     Component Owner = GetMission().GetObject(_EnemyID);
     if (checkMask(Owner, ["FRIEND"], []))
     {
-      ActivateGroupRadar(true);
+      ActivateRadar(true);
       SetEnemyReactionType(ERT_AGGRESSIVE);
       //logWarning("[CC2M5Group02T_34_85]Aggressive_Mode By On_UnitHitByEnemy");
     }
@@ -537,7 +537,7 @@ class CC2M5GroupRusSoldiers extends CBaseUnitGroup
     Component Owner = GetMission().GetObject(_EnemyID);
     if (checkMask(Owner, ["FRIEND"], []))
     {
-      ActivateGroupRadar(true);
+      ActivateRadar(true);
       SetEnemyReactionType(ERT_AGGRESSIVE);
     }
   }

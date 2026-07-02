@@ -1516,7 +1516,10 @@ class CPlayerUnit
 
     )
   {
-    HitPointsdel = _HitPointsDelta/_HitPoints;
+    if (_HitPoints != 0)
+      HitPointsdel = _HitPointsDelta/_HitPoints;
+    else
+      HitPointsdel = 0.0f;
 
 
   if ( ("HullEngine" == _ItemName) && (_HitPoints <= 0) && m_Engine_Flag )

@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (newest) — Fix two hit-triggered bugs exposed by the MG mask fix
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Testing the MG mask fix below showed a real FPS dip. Log check found no errors from the mask fix itself, but two unrelated pre-existing bugs firing much more often now that MG fire actually lands on tanks: `MissionTasks.script` (Campaign 2 Mission 5) called a nonexistent function `ActivateGroupRadar` on every hit-received event (151 failed calls this session) - fixed as a typo for `ActivateRadar`, which the same file already calls correctly elsewhere, in all 3 spots. `PlayerUnit.script:1519` divided by zero whenever an already-destroyed component took another hit (138+ times this session) - added a zero-guard; the computed value turned out to be dead, write-only state anyway. Neither bug was caused by the mask fix - it just made both fire far more often by making MGs actually hit things.
+
+### Why
+
+Direct follow-up to a user-reported FPS regression after testing the coax/hull MG fix in-game.
+
+---
+
 ## 2026-07-02 (latest) — Coax/hull MG target mask fix
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
