@@ -1347,11 +1347,11 @@ boolean LightOff = false; //jm
 
     SetHideInCockpitJoints(["Body_commander", "root_com", "Headphones"]);
 
-    SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankPzVIAusfETachometerAnimator>(), 3600.0f, 0.0f); //jm
-    SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankPzVIAusfESpeedometerAnimator>(), 88.0f, 0.0f); //jm 
-    SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankPzVIAusfEOilPressAnimator>(), 18.0f, 0.0f); //jm
- // SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEOilTempAnimator>(), 125.0f, 0.0f); //jm Tiger does not have an oil temp 
-    SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>(),  67.0f, 00.0f);
+ // SetCockpitDevice("TachometerAnimator", new #LineAnimator<CTankPzVIAusfETachometerAnimator>(), 3600.0f, 0.0f); //jm WIP - model has no "tacho" animation channel yet
+ // SetCockpitDevice("SpeedAnimator", new #LineAnimator<CTankPzVIAusfESpeedometerAnimator>(), 88.0f, 0.0f); //jm WIP - model has no "speed" animation channel yet
+ // SetCockpitDevice("OilPressureAnimator", new #LineAnimator<CTankPzVIAusfEOilPressAnimator>(), 18.0f, 0.0f); //jm WIP - model has no "oil_pressure" animation channel yet
+ // SetCockpitDevice("OilTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEOilTempAnimator>(), 125.0f, 0.0f); //jm Tiger does not have an oil temp
+ // SetCockpitDevice("WaterTemperatureAnimator", new #LineAnimator<CTankPzVIAusfEWaterTempAnimator>(),  67.0f, 00.0f); //jm WIP - model has no "water_temperature" animation channel yet
 
   // Setup turret out animator
     SetTurretOutEffectsArray( TurretOutAnimations );

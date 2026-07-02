@@ -79,7 +79,7 @@ class CBtrHanomag251AusfCAnimatorA
 
 class CBtrHanomag251AusfCMovementLeftDrivingWheelAnimator
 {
-  String LineSpeedAnim = "";//"wheels_left";
+  String LineSpeedAnim = "wheels_left";
   String TurnSpeedAnim = "wheels_turn";
 
   boolean RotateAnim = true;
@@ -90,7 +90,7 @@ class CBtrHanomag251AusfCMovementLeftDrivingWheelAnimator
 
 class CBtrHanomag251AusfCMovementRightDrivingWheelAnimator
 {
-  String LineSpeedAnim = "";//"wheels_right";
+  String LineSpeedAnim = "wheels_right";
   String TurnSpeedAnim = "wheels_turn";
 
   boolean RotateAnim = true;

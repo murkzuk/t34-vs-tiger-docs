@@ -59,19 +59,19 @@ class CCommonStatusScreen
       ],
 */
       [ "TrackLeft",
-        [ 0.0775, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "track left", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        [ 0.0775, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "track left", 0, new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
         0,
         true
       ],
 
       [ "TrackRight",
-        [ 0.1235, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "track right", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        [ 0.1235, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "track right", 0, new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
         0,
         true
       ],
 
       [ "HullEngine",
-        [ 0.1005, 0.058, "N", "N", "N", "N", ScaleX, ScaleY, "tank body", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        [ 0.1005, 0.058, "N", "N", "N", "N", ScaleX, ScaleY, "tank body", 0, new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
         0,
         true
       ],
@@ -189,19 +189,19 @@ class CTigerCommonStatusScreen extends CCommonStatusScreen
   Array Devices =
     [
       [ "TrackLeft",
-        [ 0.076, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "tiger track left", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        [ 0.076, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "tiger track left", 0, new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
         0,
         true
       ],
 
       [ "TrackRight",
-        [ 0.1255, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "tiger track right", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        [ 0.1255, 0.0535, "N", "N", "N", "N", ScaleX, ScaleY, "tiger track right", 0, new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
         0,
         true
       ],
 
       [ "HullEngine",
-        [ 0.1005, 0.058, "N", "N", "N", "N", ScaleX, ScaleY, "tiger tank body", new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
+        [ 0.1005, 0.058, "N", "N", "N", "N", ScaleX, ScaleY, "tiger tank body", 0, new Color(1.0, 1.0, 1.0), 38.0 / 126.0, 0.5],
         0,
         true
       ],

@@ -12,7 +12,7 @@ class CC2M4Atmosphere extends CCommonAtmosphere
   boolean IsLightEnabled   = true;
   boolean IsAntiSunEnabled = true;
 
-  Vector  SunDirection   = new Vector(0.990000, -0.080000, -0.350000);
+  Vector  SunDirection   = new Vector(0.933706, -0.075451, -0.350000);
   Color   AmbientLight   = new Color(0.196078, 0.156863, 0.117647, 1.000000);
   Color   SunColor       = new Color(0.890196, 0.807843, 0.584314, 1.000000);
   Color   AntiSunColor   = new Color(0.509804, 0.474510, 0.431373, 1.000000);

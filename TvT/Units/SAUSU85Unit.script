@@ -102,7 +102,7 @@ class CSAUSU85HEAmmo
 class CSAUSU85Gun
     extends CHeavyGun, CWeaponFireRecoil
 {
-  String CloudEffectId   = "HeavyGunWoMuzzleCloudEffect";
+  String CloudEffectId   = "HeavyGunMuzzleCloudEffect";
   float  InitBulletSpeed = 0.0f;
   float  FireDeviation   = 1.2;
   Vector GravityVector   = CPiercing::ShellGravityVector;

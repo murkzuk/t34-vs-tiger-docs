@@ -100,6 +100,7 @@ class CLensFlare
   float   SunRadius          = 3.0; //jm 5.0
   float   BlindingSpeed      = 4.0;
   float   MaxBlindness       = 1.0;// jm 40
+  float   SunAlpha           = 1.0;
   final   float   FlareDepth = 0.0;
   boolean SunPosBlindness    = true;
   float   PercentSunForBlind = 0.4;

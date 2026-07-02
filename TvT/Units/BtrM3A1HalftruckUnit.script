@@ -84,7 +84,7 @@ class CBtrM3A1HalftruckAnimatorA
 
 class CBtrM3A1HalftruckMovementLeftDrivingWheelAnimator
 {
-  String LineSpeedAnim = "";//"wheels_left";
+  String LineSpeedAnim = "wheels_left";
   String TurnSpeedAnim = "wheels_turn";
 
   boolean RotateAnim = true;
@@ -95,7 +95,7 @@ class CBtrM3A1HalftruckMovementLeftDrivingWheelAnimator
 
 class CBtrM3A1HalftruckMovementRightDrivingWheelAnimator
 {
-  String LineSpeedAnim = "";//"wheels_right";
+  String LineSpeedAnim = "wheels_right";
   String TurnSpeedAnim = "wheels_turn";
 
   boolean RotateAnim = true;
