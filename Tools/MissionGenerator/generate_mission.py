@@ -92,10 +92,21 @@ VERIFIED_UNIT_CLASSES = {
     "CSAUStuG40Unit",       # Scripts\Units\SAUSTUG40Unit.script:547 - live in Campaign_2\Mission_5
     "CTankPzVIAusfEUnit",   # Scripts\Units\TankPzVIAusfEUnit.script:1227 (the actual Tiger tank)
     "CGunZis3Unit",         # Scripts\Units\GunZis3Unit.script:286
+    "CSAUSU85Unit",             # Scripts\Units\SAUSU85Unit.script:536
+    "CGunNebelUnit",            # Scripts\Units\GunNebelUnit.script:105
+    "CGermanSoldierRifleUnit",  # Scripts\Units\GermanSoldierRifleUnit.script:103 - live in Campaign_1\Mission_1
+    "CSovietSoldierRifleUnit",  # Scripts\Units\SovietSoldierRifleUnit.script:104 - live in Campaign_1\Mission_2
 }
 VERIFIED_TASK_CLASSES = {
-    "CBaseAITask",       # live in Mission1 template (enemy_pak40_1/2)
+    "CBaseAITask",       # live in Mission1 template (enemy_pak40_1/2); also confirmed on both
+                          # infantry rifle classes (Campaign_1\Mission_1/2) and, by structural
+                          # analogy (identical "extends CUnit, CPushObject" base), CGunNebelUnit -
+                          # Nebelwerfer's own Task usage was not directly observed in a live mission
     "CBaseAITankTask",   # live in Mission1 template ("tiger")
+    "CBaseAISAUTask",    # Scripts\Common\BaseTasks.script:3352 - confirmed live on CSAUStuG40Unit
+                          # in Campaign_2\Mission_4\Content.script:260/277 (bare GameObject + Task,
+                          # same pattern this generator uses) - the correct task for self-propelled
+                          # guns (SAU = self-propelled artillery mount), not CBaseAITankTask
 }
 
 

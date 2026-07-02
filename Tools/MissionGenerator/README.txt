@@ -39,6 +39,12 @@ play due to a 3D model gap). Doesn't affect driving, aiming, or firing. See
 roster.json's "_axis_player_note" if you'd rather switch to the Pz IV
 instead.
 
+Roster variety (as of the latest update): each side has a tank, an AT gun,
+a self-propelled gun, and infantry - German Pz IV / Pak 40 / StuG 40 /
+riflemen, Soviet T-34/76 / Zis-3 / SU-85 / riflemen. All grep-verified
+against the actual Scripts\Units\*.script files, same as everything else
+in this roster.
+
 Changing what gets randomized
 -------------------------------
 Edit roster.json in this folder in any plain text editor (Notepad is fine).

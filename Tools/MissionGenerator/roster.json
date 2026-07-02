@@ -25,6 +25,30 @@
       "max": 4
     },
     {
+      "id": "german_sau",
+      "faction": "AXIS",
+      "class": "CSAUStuG40Unit",
+      "task": "CBaseAISAUTask",
+      "min": 0,
+      "max": 2
+    },
+    {
+      "id": "german_nebelwerfer",
+      "faction": "AXIS",
+      "class": "CGunNebelUnit",
+      "task": "CBaseAITask",
+      "min": 0,
+      "max": 2
+    },
+    {
+      "id": "german_infantry",
+      "faction": "AXIS",
+      "class": "CGermanSoldierRifleUnit",
+      "task": "CBaseAITask",
+      "min": 0,
+      "max": 4
+    },
+    {
       "id": "soviet_tank",
       "faction": "SOVIET",
       "class": "CTankT34_76_42Unit",
@@ -36,6 +60,22 @@
       "id": "soviet_atgun",
       "faction": "SOVIET",
       "class": "CGunZis3Unit",
+      "task": "CBaseAITask",
+      "min": 0,
+      "max": 4
+    },
+    {
+      "id": "soviet_sau",
+      "faction": "SOVIET",
+      "class": "CSAUSU85Unit",
+      "task": "CBaseAISAUTask",
+      "min": 0,
+      "max": 2
+    },
+    {
+      "id": "soviet_infantry",
+      "faction": "SOVIET",
+      "class": "CSovietSoldierRifleUnit",
       "task": "CBaseAITask",
       "min": 0,
       "max": 4
