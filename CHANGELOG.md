@@ -6,6 +6,22 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (even later) — AI target prioritization fix
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User reported AI units shoot at whatever's on radar instead of the closest/most dangerous threat, including engaging unarmed trucks over real threats. Scoped first: found `Common\BaseTasks.script` had 5 near-duplicate code paths (covering guns/infantry, wingman aircraft, SPGs, tanks, halftracks) that all took the engine's raw `GetTargetedEnemy()` radar callback and locked onto it with no distance or threat comparison at all. Added one shared `SelectAttackTarget()` method to the common AI task base class that enumerates all currently radar-visible enemies, filters to armed units only (checking `m_WeaponNames` — empty for trucks, since they never register weapons), and picks the nearest, with a 15% hysteresis margin to avoid target-flicker. All 5 call sites now route through it. Left the group-level "first spotter picks for the whole squad" behavior (`UnitGroup.script`) untouched — separate mechanism, not what was reported. Not yet play-tested.
+
+Also hit and repaired the usual recurring CP1251 corruption in `BaseTasks.script` (pre-existing Cyrillic comments elsewhere in the file, re-corrupted by each edit — same pattern as prior sessions, restored via byte-level splice from the docs mirror each time).
+
+### Why
+
+Direct user report from actual gameplay ("ai do not prioritise target either, they shot at any target and ignore the closest threats"), with an explicit follow-up requirement that "nearest" must also mean "armed" — a truck sitting closer than a tank shouldn't win target selection.
+
+---
+
 ## 2026-07-02 (later still) — Full whole-repo diff against the live game
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

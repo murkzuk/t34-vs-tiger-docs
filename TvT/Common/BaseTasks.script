@@ -409,7 +409,7 @@ class CBaseAITask extends CBaseTankAttackStyle
       Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
     }
 
-    String TargetedEnemy = GetTargetedEnemy();
+    String TargetedEnemy = SelectAttackTarget(GetTargetedEnemy());
 
     if (m_Group != null)
     {
@@ -1594,6 +1594,70 @@ class CBaseAITask extends CBaseTankAttackStyle
   // helper functions
   //
 
+  float m_TargetSwitchMargin = 0.85f; // only switch away from current target if the new one is at least 15% closer
+
+  // Scans every enemy currently on radar (starting from _FirstCandidate, walking
+  // GetNextEnemyUnitOnRadar) and picks the nearest ARMED one (m_WeaponNames not empty),
+  // so units stop locking onto whatever the radar handed them first (eg. an unarmed
+  // truck) while a closer real threat goes unengaged. Keeps the current target unless
+  // a different armed enemy is meaningfully closer, to avoid target-flicker. Falls back
+  // to _FirstCandidate unchanged if no armed enemy is visible at all.
+  String SelectAttackTarget(
+      String _FirstCandidate
+    )
+  {
+    if (_FirstCandidate == "")
+      return _FirstCandidate;
+
+    Component Self = (new #GameController()).GetObject(getIdentificator(user));
+    if (Self == null)
+      return _FirstCandidate;
+
+    Vector SelfPos = getPosition(Self).origin;
+
+    String  NearestThreat  = "";
+    float   NearestDist    = 0.0;
+    boolean CurrentIsArmed = false;
+    float   CurrentDist    = 0.0;
+
+    String Candidate = _FirstCandidate;
+    int Count = 0;
+    while (Candidate != "" && Count < 20)
+    {
+      Component EnemyObj = GetMission().GetObject(Candidate);
+      if (EnemyObj != null && EnemyObj.m_WeaponNames.size() > 0)
+      {
+        float Dist = (SelfPos - getPosition(EnemyObj).origin).Magnitude();
+
+        if (NearestThreat == "" || Dist < NearestDist)
+        {
+          NearestThreat = Candidate;
+          NearestDist   = Dist;
+        }
+
+        if (Candidate == m_CurrentEnemy)
+        {
+          CurrentIsArmed = true;
+          CurrentDist    = Dist;
+        }
+      }
+
+      Candidate = GetNextEnemyUnitOnRadar(Candidate);
+      Count++;
+    }
+
+    if (NearestThreat == "")
+      return _FirstCandidate; // nothing armed visible, keep native behaviour
+
+    if (NearestThreat == m_CurrentEnemy)
+      return m_CurrentEnemy;
+
+    if (CurrentIsArmed && NearestDist > CurrentDist * m_TargetSwitchMargin)
+      return m_CurrentEnemy; // current target still valid and not meaningfully worse
+
+    return NearestThreat;
+  }
+
   // attacks 'm_CurrentEnemy'
   void AttackEnemy(
     String _EnemyId
@@ -2663,7 +2727,7 @@ class CWingmanTask extends CBaseAITask
     if (m_Attack)
         return; // players orders are uber alles
 
-    String EnemyID = GetTargetedEnemy();
+    String EnemyID = SelectAttackTarget(GetTargetedEnemy());
 
     if (IsEnemyEngaged(EnemyID))
       return;
@@ -3380,7 +3444,7 @@ class CBaseAISAUTask extends CBaseManeuveringUnit
       Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
     }
 
-    String TargetedEnemy = GetTargetedEnemy();
+    String TargetedEnemy = SelectAttackTarget(GetTargetedEnemy());
     if (TargetedEnemy == "")
     {
       if (m_Group != null)
@@ -3483,7 +3547,7 @@ class CBaseAITankTask extends CBaseManeuveringUnit
       Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
     }
 
-    String TargetedEnemy = GetTargetedEnemy();
+    String TargetedEnemy = SelectAttackTarget(GetTargetedEnemy());
     if (TargetedEnemy == "")
     {
       if (m_Group != null)
@@ -3574,8 +3638,8 @@ class CBaseAIBtrTask extends CBaseAITask
       Self.OnAttackStateChanged(CHumanAttackStates::STATE_Ready);
     }
 
-    String TargetedEnemy = GetTargetedEnemy();
-    if( GetTargetedEnemy() == "" )
+    String TargetedEnemy = SelectAttackTarget(GetTargetedEnemy());
+    if( TargetedEnemy == "" )
       return;
 
     if (m_Group != null)
