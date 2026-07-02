@@ -44,6 +44,7 @@ class CPiercing
   final static float TankPzIVAusfGHEMaxDistance       = 2500.0;
 
   final static float TankPzIVAusfGMachineGunDamage    = 95.0;
+  final static float TankPzIVAusfGMachineGunBulletSpeed = 755.0*0.8; // MG34, 7.92x57mm
 
   // PZ6
   final static float TankPzVIAusfECalibreBulletSpeed      = 770.0*0.8;
@@ -80,8 +81,48 @@ class CPiercing
   final static float TankPzVIAusfEHEMaxDistance      = 2500.0;
 
   final static float TankPzVIAusfEMachineGunDamage   = 95.0;
+  final static float TankPzVIAusfEMachineGunBulletSpeed = 755.0*0.8; // MG34, 7.92x57mm
 
   final static boolean TankPzVIAusfEAlwaysDestroyTrack   = false;
+  
+  // PZ6 LATE
+  final static float TankPzVI_LATECalibreBulletSpeed      = 770.0*0.8;
+  final static float TankPzVI_LATECalibrePenetrationPower = 120.0 / 100.0;
+  final static Array TankPzVI_LATECalibrePenetrationByDistance = [[100.0, 120.0 / 120.0, 2000.0, 84.0 / 120.0], [[500.0, 110.0 / 120.0], [1000.0, 100.0 / 120.0], [1500.0, 93.0 / 120.0]]];
+  final static Array TankPzVI_LATECalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankPzVI_LATECalibreDamage           = 100.0;
+  final static float TankPzVI_LATECalibreFireDamage       = 100.0;
+  final static float TankPzVI_LATECalibreDebrisDamage     = 100.0;
+  final static Array TankPzVI_LATECalibreDamageModifier   = [1.2, 1.55];
+  final static int   TankPzVI_LATECalibreDebrisQuantity    = 20;
+  final static float TankPzVI_LATECalibreDebrisMaxDistance = 15.0;
+  final static float TankPzVI_LATECalibreRadius           = 2.0;
+  final static float TankPzVI_LATECalibreMaxDistance      = 2500.0;
+
+  final static float TankPzVI_LATESubcalibreBulletSpeed      = 930.0*0.8;
+  final static float TankPzVI_LATESubcalibrePenetrationPower = 170.0 / 100.0;
+  final static Array TankPzVI_LATESubcalibrePenetrationByDistance = [[100.0, 170.0 / 170.0, 2000.0, 94.3 / 170.0], [[500.0, 146.0 / 170.0], [1000.0, 127.3 / 170.0], [1500.0, 109.2 / 170.0]]];
+  final static Array TankPzVI_LATESubcalibrePenetrationModifier   = [0.8, 1.0];
+  final static float TankPzVI_LATESubcalibreDamage           = 100.0;
+  final static float TankPzVI_LATESubcalibreFireDamage       = 100.0;
+  final static Array TankPzVI_LATESubcalibreDamageModifier   = [0.9, 1.35];
+  final static float TankPzVI_LATESubcalibreMaxDistance      = 2500.0;
+
+  final static float TankPzVI_LATEHEBulletSpeed      = 770.0*0.8;
+  final static float TankPzVI_LATEHEPenetrationPower = 25.0 / 100.0;
+  final static Array TankPzVI_LATEHEPenetrationByDistance = [[100.0, 25.0 / 25.0, 2000.0, 20.0 / 25.0], [[500.0, 25.0 / 25.0], [1000.0, 22.0 / 25.0], [1500.0, 22.0 / 25.0]]];
+  final static float TankPzVI_LATEHEDamage           = 100.0;
+  final static float TankPzVI_LATEHEDebrisDamage     = 100.0;
+  final static int   TankPzVI_LATEHEDebrisQuantity    = 50;
+  final static float TankPzVI_LATEHEDebrisMaxDistance = 15.0;
+  final static float TankPzVI_LATEHERadius           = 2.5;
+  final static float TankPzVI_LATEHEFireDamage       = 100.0;
+  final static float TankPzVI_LATEHEMaxDistance      = 2500.0;
+
+  final static float TankPzVI_LATEMachineGunDamage   = 95.0;
+
+  final static boolean TankPzVI_LATEAlwaysDestroyTrack   = false;  
+  
 
   // T34_76_42
   final static float TankT34_76_42CalibreBulletSpeed      = 655.0*0.8;
@@ -118,6 +159,7 @@ class CPiercing
   final static float TankT34_76_42HEMaxDistance      = 2500.0;
 
   final static float TankT34_76_42MachineGunDamage   = 95.0;
+  final static float TankT34_76_42MachineGunBulletSpeed = 840.0*0.8; // DT-29, 7.62x54mmR
 
   final static boolean TankT34_76_42AlwaysDestroyTrack   = false;
 
@@ -156,6 +198,7 @@ class CPiercing
   final static float TankT34_85_44HEMaxDistance      = 2500.0;
 
   final static float TankT34_85_44MachineGunDamage   = 95.0;
+  final static float TankT34_85_44MachineGunBulletSpeed = 840.0*0.8; // DT-29, 7.62x54mmR
 
   final static boolean TankT34_85_44AlwaysDestroyTrack   = false;
 
@@ -258,6 +301,7 @@ class CPiercing
 
   // Hanomag
   final static float BtrHanomag251AusfCMachineGunDamage = 95.0;
+  final static float BtrHanomag251AusfCMachineGunBulletSpeed = 755.0*0.8; // MG34, 7.92x57mm
 
   // Dzot
   final static float DzotMachineGunDamage         = 95.0;

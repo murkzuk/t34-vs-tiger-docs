@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//    Redux unable to load distance Wav fix 
+//
 //-------------------------------------------------------------------
 
 //
@@ -561,18 +561,21 @@ class CCockpit
 
     Component CommanderCameraLink = GetObject("CommanderCameraLink");
 
-    CommanderPointerRealView.SetRenderMode(false, false);
-    CommanderRealView.SetRenderMode(false, false);
-    GunnerPointerRealView.SetRenderMode(false, false);
-    GunnerRealView.SetRenderMode(false, false);
+    if (CommanderPointerRealView != null) CommanderPointerRealView.SetRenderMode(false, false);
+    if (CommanderRealView != null) CommanderRealView.SetRenderMode(false, false);
+    if (GunnerPointerRealView != null) GunnerPointerRealView.SetRenderMode(false, false);
+    if (GunnerRealView != null) GunnerRealView.SetRenderMode(false, false);
 
     Component WeaponSelector = GetObject("WeaponSelector");
-    WeaponSelector.EnableAdvancedControl(false);
-    WeaponSelector.InputEnable( (UPS_Gunner == m_PlayerSit) );
-    WeaponSelector.EnableCommanderControl( (UPS_Commander == m_PlayerSit) );
+    if (WeaponSelector != null)
+    {
+      WeaponSelector.EnableAdvancedControl(false);
+      WeaponSelector.InputEnable( (UPS_Gunner == m_PlayerSit) );
+      WeaponSelector.EnableCommanderControl( (UPS_Commander == m_PlayerSit) );
+    }
 
-    TargetPointer.SetRenderMode(false,false);
-    CommanderPointer.SetRenderMode(false,false);
+    if (TargetPointer != null) TargetPointer.SetRenderMode(false,false);
+    if (CommanderPointer != null) CommanderPointer.SetRenderMode(false,false);
     m_MFD.Enable(false);
     m_MFD.DisableScreens();
     UpdateCursorAndMouse();
@@ -587,20 +590,20 @@ class CCockpit
     
     if (CM_Person1rd == m_ViewMode)
     {
-      WeaponSelector.EnableAdvancedControl((UPS_Gunner == m_PlayerSit));
+      if (WeaponSelector != null) WeaponSelector.EnableAdvancedControl((UPS_Gunner == m_PlayerSit));
 
       m_MFD.Enable(true);
       m_MFD.RestoreScreens(m_PlayerSit + Shift1stPerson, 0);
       UpdateCursorAndMouse();
 
-      TargetPointer.SetRenderMode((UPS_Gunner == m_PlayerSit), false);
+      if (TargetPointer != null) TargetPointer.SetRenderMode((UPS_Gunner == m_PlayerSit), false);
 
       if (CommanderCameraLink != null)
       {
         CommanderCameraLink.EnableMouseControl((UPS_Commander == m_PlayerSit));
         CommanderCameraLink.EnableJoystickControl((UPS_Commander == m_PlayerSit));
       }
-      CommanderPointer.SetRenderMode((UPS_Commander == m_PlayerSit), false);
+      if (CommanderPointer != null) CommanderPointer.SetRenderMode((UPS_Commander == m_PlayerSit), false);
     }
     else
     if (CM_Person3rd == m_ViewMode)
@@ -673,14 +676,14 @@ class CCockpit
         }
         else
         {
-          GunnerRealView.SetRenderMode(true, false);
+          if (GunnerRealView != null) GunnerRealView.SetRenderMode(true, false);
           setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitGunnerCamera));
         }
       }
       else
       if (UPS_Commander == m_PlayerSit)
       {
-        CommanderRealView.SetRenderMode(true, false);
+        if (CommanderRealView != null) CommanderRealView.SetRenderMode(true, false);
 
         CommanderCameraLink.EnableMouseControl(true);
         CommanderCameraLink.EnableJoystickControl(true);
@@ -690,7 +693,7 @@ class CCockpit
       {
         if (m_CockpitStyle == CS_Tiger)
         {
-          CommanderRealView.SetRenderMode(true, false);
+          if (CommanderRealView != null) CommanderRealView.SetRenderMode(true, false);
           setPositionable(m_CockpitCameraLink, Mesh.GetJoint("NearDriverCamera"));
         }
         else
@@ -710,14 +713,14 @@ class CCockpit
 
       if (UPS_Gunner == m_PlayerSit)
       {
-        GunnerPointerRealView.SetRenderMode(true, false);
+        if (GunnerPointerRealView != null) GunnerPointerRealView.SetRenderMode(true, false);
         setPositionable(m_CockpitCameraLink, Mesh.GetJoint(CockpitGunnerCamera));
-        WeaponSelector.EnableAdvancedControl(true);
+        if (WeaponSelector != null) WeaponSelector.EnableAdvancedControl(true);
       }
       else
       if (UPS_Commander == m_PlayerSit)
       {
-        CommanderPointerRealView.SetRenderMode(true, false);
+        if (CommanderPointerRealView != null) CommanderPointerRealView.SetRenderMode(true, false);
 
         CommanderCameraLink.EnableMouseControl(true);
         CommanderCameraLink.EnableJoystickControl(true);
@@ -818,6 +821,9 @@ class CCockpit
       int  _PlayerSit
     )
   {
+    if (!m_CockpitExists)
+      return;
+
     m_PlayerSit = _PlayerSit;
 
     m_MFD.DisableScreens();
@@ -945,6 +951,8 @@ class CCockpit
     )
   {
     Component Cursor = GetObject("Cursor");
+    if (Cursor == null)
+      return;
 
     if (_Show)
     {
@@ -975,10 +983,18 @@ class CCockpit
     }
   */
     ShowCursor(true, true); // show on button
-    GetObject("CameraLink").EnableMouseControl(true);
-    GetObject("CameraLink").EnableKeyboardControl(!GetObject("C_TerrainMap").IsEnabled());
+
+    Component CameraLink = GetObject("CameraLink");
+    Component TerrainMap = GetObject("C_TerrainMap");
+    if (CameraLink != null)
+    {
+      CameraLink.EnableMouseControl(true);
+      CameraLink.EnableKeyboardControl(TerrainMap == null || !TerrainMap.IsEnabled());
+    }
 //    GetObject("WeaponSelector").SetMouseEnable(false);
-    GetObject("WeaponSelector").EnableExButton(0, true);
+    Component WeaponSelector = GetObject("WeaponSelector");
+    if (WeaponSelector != null)
+      WeaponSelector.EnableExButton(0, true);
   }
 
   void OnVoiceSoundStopped(
@@ -1736,7 +1752,7 @@ class CCockpit
 //       ["WeaponShellMachinegun", "Resources/SWeaponShellMachinegun.wav"],
 
 //      ["Distance",              "Resources/Sdistance.wav"],
-//      ["Distance",              ""],
+      ["Distance",              ""],
       ["Order1",                 "Resources/SOrder1.wav"],
       ["Order2",                 "Resources/SOrder2.wav"],
       ["Order3",                 "Resources/SOrder3.wav"],
@@ -1922,7 +1938,7 @@ class CCockpit
       ["WeaponShellMachinegun4", "Resources/GWeaponShellMachinegun04.wav"],
 
 //      ["Distance",              "Resources/GDistance.wav"],
-//      ["Distance",              ""],
+      ["Distance",              ""],
       ["Order1",                "Resources/GOrder1.wav"],
       ["Order2",                "Resources/GOrder2.wav"],
       ["Order3",                "Resources/GOrder3.wav"],

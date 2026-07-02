@@ -33,6 +33,8 @@ class CTankT34_85_44MachineGunBulletControl
 class CTankT34_85_44CoaxialMachineGun
   extends CMachineGun, CPlayerWeapon
 {
+  float  InitBulletSpeed = CPiercing::TankT34_85_44MachineGunBulletSpeed;
+
   final static String    FireEffectId  = "MachineGunDTFireEffect";
   final static String BulletPatternId  = "TankT34_85_44MachineGunBullet"; 
 
@@ -85,6 +87,8 @@ class CTankT34_85_44CoaxialMachineGun
 class CTankT34_85_44MachineGun
   extends CMachineGun, CPlayerWeapon
 {
+  float  InitBulletSpeed = CPiercing::TankT34_85_44MachineGunBulletSpeed;
+
   final static String    FireEffectId  = "MachineGunDTFireEffect";
   final static String BulletPatternId  = "TankT34_85_44MachineGunBullet";
 

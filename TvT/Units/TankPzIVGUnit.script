@@ -31,6 +31,8 @@ class CTankPzIVGMachineGunBulletControl
 class CTankPzIVGCoaxialMachineGun
     extends CMachineGun
 {
+  float  InitBulletSpeed = CPiercing::TankPzIVAusfGMachineGunBulletSpeed;
+
   //final static int CoAxialMaster = 0;
 
   //final static float MinDistance      = 1;
@@ -74,6 +76,8 @@ class CTankPzIVGCoaxialMachineGun
 class CTankPzIVGMachineGun
     extends CMachineGun
 {
+  float  InitBulletSpeed = CPiercing::TankPzIVAusfGMachineGunBulletSpeed;
+
   final static String BulletPatternId = "TankPzIVGMachineGunBullet";
 
   final static Vector  GravityVector   = CPiercing::BulletGravityVector;

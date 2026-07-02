@@ -378,6 +378,7 @@ class CC2M5Mission extends CSPMission
 
     sendEvent(0.0, "CC2M5Group01T_34_85", "StartFirstAdvance", []);
     sendEvent(0.0, "CC2M5Group03T_34_76", "StartFirstAdvance03", []);
+    sendEvent(1.0, "CC2M5GroupRusSoldiers", "StartFirstAdvance", []);
     sendEvent(3.0, "CC2M5GroupRusIl_2", "AirAttack", []);
     sendEvent(4.0, "CC2M5Group04T_34_76", "StartFirstAdvance04", []);
   }

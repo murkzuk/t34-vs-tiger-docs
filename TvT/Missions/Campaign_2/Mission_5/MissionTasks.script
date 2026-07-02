@@ -481,12 +481,64 @@ class CC2M5GroupRusIl_2 extends CBaseUnitGroup
 
 class CC2M5GroupSU85 extends CBaseUnitGroup
 {
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
 }
 
 class CC2M5GroupStug_40 extends CBaseUnitGroup
 {
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
 }
 
 class CC2M5GroupRusSoldiers extends CBaseUnitGroup
 {
+  float InfantrySpeed = 2.0f;
+
+  event void StartFirstAdvance()
+  {
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(false);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("NavPointFirstAdvance001CC2M5GroupRusSoldiers"),
+                    GetNavPointBehPos("NavPointFirstAdvance002CC2M5GroupRusSoldiers"),
+                    GetNavPointBehPos("NavPointFirstAdvance003CC2M5GroupRusSoldiers"),
+                    GetNavPointBehPos("NavPointFirstAdvance004CC2M5GroupRusSoldiers"),
+                    GetNavPointBehPos("NavPointFirstAdvance005CC2M5GroupRusSoldiers"),
+                    GetNavPointBehPos("NavPointFirstAdvance006CC2M5GroupRusSoldiers")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, InfantrySpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    ActivateRadar(true);
+  }
+
+  void OnUnitHitByEnemy(String _UnitID, String _EnemyID)
+  {
+    Component Owner = GetMission().GetObject(_EnemyID);
+    if (checkMask(Owner, ["FRIEND"], []))
+    {
+      ActivateGroupRadar(true);
+      SetEnemyReactionType(ERT_AGGRESSIVE);
+    }
+  }
 }

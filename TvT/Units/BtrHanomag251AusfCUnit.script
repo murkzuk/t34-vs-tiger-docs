@@ -33,6 +33,8 @@ class CBtrHanomag251AusfCMachineGunBulletControl
 class CBtrHanomag251AusfCMachineGun
     extends CMachineGun
 {
+  float  InitBulletSpeed = CPiercing::BtrHanomag251AusfCMachineGunBulletSpeed;
+
   final static String BulletPatternId = "BtrHanomag251AusfCMachineGunBullet";
 
 //final static Vector GravityVector   = CWorldPhysics::GravityVector;

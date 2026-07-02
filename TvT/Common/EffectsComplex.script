@@ -89,6 +89,7 @@ class CCalibre7576_85_88BulletMetalHitEffect
   {
     CreateEffect("LightExplosionSplash", 0.0);
     CreateEffect("Calibre7576_85_88BulletMetalHitSplashEffect", 0.0);
+    CreateEffect("Calibre7576_85_88BulletMetalHitDebrisEffect", 0.0);
     CreateEffect("Calibre7576_85_88BulletMetalHitSmokeEffect", 0.0);
     CreateAndForgetEffect("CalibreMetalSignEffect", 0.0);
   }
@@ -101,6 +102,7 @@ class CSubcalibre7576_85_88BulletMetalHitEffect
   CSubcalibre7576_85_88BulletMetalHitEffect()
   {
     CreateEffect("LightExplosionSplash", 0.0);
+    CreateEffect("Calibre7576_85_88BulletMetalHitDebrisEffect", 0.0);
     CreateEffect("Subcalibre7576_85_88BulletMetalHitSmokeEffect", 0.0);
     CreateAndForgetEffect("SubcalibreMetalSignEffect", 0.0);
   }

@@ -2154,6 +2154,9 @@ class CPlayerUnit
 
   event void ChangeCommanderState()
   {
+    if (!m_CockpitExists)
+      return;
+
     InitializeCockpitMode();
 //    Component Mesh = GetMeshComponent();
 //    setVisibleState(Mesh.GetJoint("l_Spine1"), !m_HatchCommanderOpened);
@@ -2199,7 +2202,8 @@ class CPlayerUnit
       {
         sendEvent(1.5, getIdentificator(this), "ReturnToBinocular", [m_ViewMode, m_PlayerSit]);
         m_ViewMode = CM_Cockpit;
-        InitializeCockpitMode();
+        if (m_CockpitExists)
+          InitializeCockpitMode();
       }
     }
   }
@@ -2223,7 +2227,8 @@ class CPlayerUnit
     if ((CM_Cockpit == m_ViewMode) && (m_PlayerSit == _PlayerSit))
     {
       m_ViewMode = _ViewMode;
-      InitializeCockpitMode();
+      if (m_CockpitExists)
+        InitializeCockpitMode();
     }
   }
 

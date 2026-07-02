@@ -222,6 +222,7 @@ class CEffectsArray
 
           //Metal
           ["Calibre7576_85_88BulletMetalHitSplashEffect", new #DynamicEffect<CCalibre7576_85_88BulletMetalHitSplashEffect>()],
+          ["Calibre7576_85_88BulletMetalHitDebrisEffect",  new #SprayEffect<CCalibre7576_85_88BulletMetalHitDebrisEffect>()],
           ["Calibre7576_85_88BulletMetalHitSmokeEffect",  new #DynamicEffect<CCalibre7576_85_88BulletMetalHitSmokeEffect>()],
           ["Calibre7576_85_88BulletMetalHitEffect",       new #ComplexEffect<CCalibre7576_85_88BulletMetalHitEffect>()],
 
@@ -354,7 +355,7 @@ class CEffectsArray
         ]
       ];
 
-    // m_EffectsExplosionMap = [ Тип Материала , Тип повреждения -> Идентификатор Эфекта ]
+    // m_EffectsExplosionMap = [ material type, damage classificator -> resulting effect name ]
     m_EffectsExplosionMap = [
         [CMaterialStructure::MSID_ArmourTurretFWD,   CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],
         [CMaterialStructure::MSID_ArmourTurretREAR,  CBaseExplosion::CLASSIFICATOR_DAMAGE_BULLET762792,         "ArmourBulletHitEffect"],

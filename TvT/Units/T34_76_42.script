@@ -32,6 +32,8 @@ class CTankT34_76_42MachineGunBulletControl
 class CTankT34_76_42CoaxialMachineGun
    extends CMachineGun, CPlayerWeapon
 {
+  float  InitBulletSpeed = CPiercing::TankT34_76_42MachineGunBulletSpeed;
+
   final static String    FireEffectId  = "MachineGunDTFireEffect";
   final static String BulletPatternId  = "TankT34_76_42MachineGunBullet";
   final static float  FireDeviation    = 0.15;
@@ -73,6 +75,8 @@ class CTankT34_76_42PlayerCoaxialMachineGun
 class CTankT34_76_42MachineGun
    extends CMachineGun, CPlayerWeapon
 {
+  float  InitBulletSpeed = CPiercing::TankT34_76_42MachineGunBulletSpeed;
+
   final static String FireEffectId     = "MachineGunDTFireEffect";
   final static String BulletPatternId  = "TankT34_76_42MachineGunBullet";
 
@@ -265,9 +269,9 @@ class CTankT34_76_42CalibreAmmo
   final static float  LoadingTime     = 0.0f;
 
   // Cockpit UI parms
-  final static WString UIName         = CWeaponNames::str_T34_42CalibreAP_ShortName;
-  final static String  Material       = "TankShell";
-  final static String  StatusMaterial = "TankShellFill";
+  //final static WString UIName         = CWeaponNames::str_T34_42CalibreAP_ShortName;
+  //final static String  Material       = "TankShell";
+  //final static String  StatusMaterial = "TankShellFill";
 }
 
 class CTankT34_76_42SubCalibreAmmo
@@ -278,9 +282,9 @@ class CTankT34_76_42SubCalibreAmmo
   final static float  LoadingTime     = 0.0f;
 
   // Cockpit UI parms
-  final static WString UIName         = CWeaponNames::str_T34_42SubCalibreAP_ShortName;
-  final static String  Material       = "TankShell";
-  final static String  StatusMaterial = "TankShellFill";
+ // final static WString UIName         = CWeaponNames::str_T34_42SubCalibreAP_ShortName;
+ // final static String  Material       = "TankShell";
+ // final static String  StatusMaterial = "TankShellFill";
 }
 
 class CTankT34_76_42HEAmmo
@@ -291,9 +295,9 @@ class CTankT34_76_42HEAmmo
   final static float  LoadingTime     = 0.0f;
 
   // Cockpit UI parms
-  final static WString UIName         = CWeaponNames::str_T34_42CalibreHE_ShortName;
-  final static String  Material       = "TankShell";
-  final static String  StatusMaterial = "TankShellFill";
+  //final static WString UIName         = CWeaponNames::str_T34_42CalibreHE_ShortName;
+  //final static String  Material       = "TankShell";
+  //final static String  StatusMaterial = "TankShellFill";
 }
 
 // Main cannon properties
@@ -952,15 +956,15 @@ class CTankT34_76_42Unit
 
     SetupWeapon("Weapon_C", new #Weapon<CTankT34_76_42MachineGun>(),
       ["Fire_C1"], new #TargetingAnimator2<CTankT34_76_42GunTargetingAnimatorC>());
-
-    SetMovementEffects(
+    
+	SetMovementEffects(
           new #Emitter<CT34MovementSound>(),
       [
         ["Vapor_L", "GroundUnitTraceEffect"],
         ["Vapor_R", "GroundUnitTraceEffect"],
         ["Smoke_R", "DiselSmokeEffect"],
         ["Smoke_L", "DiselSmokeEffect"]
-      ]
+      ]	
     );
     SetIdleEffects(
         new #Emitter<CT34IdleSound>()
