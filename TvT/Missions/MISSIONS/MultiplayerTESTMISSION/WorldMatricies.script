@@ -1,0 +1,56 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class MultTestWorldMatrices extends CWorldMatrices
+{
+  final static float MatrixWidth  = 9000.0;
+  final static float MatrixHeight = 9000.0;
+}
+
+
+class MultTestLandscapeLayer extends CLandscapeLayer
+{
+  final static int     ImageWidth              = 2049;
+  final static int     ImageHeight             = 2049;
+
+  final static String ImageFileName           = "Missions/MISSIONS/MultiplayerTestMission/hmap.raw";
+
+  final static float  FloatValueFactor        = 0.060000*257.0;
+
+}
+
+class MultTestWaterHeights extends CBaseWaterHeightsLayer
+{
+  final static String ImageFileName           = "Missions/MISSIONS/MultiplayerTestMission/hwater.raw";
+
+  final static float  FloatValueFactor        = 0.060000*257.0;
+}
+
+class MultTestTerrainZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+{
+  final static int     ImageWidth              = 1024;
+  final static int     ImageHeight             = 1024;
+
+  final static String ImageFileName           = "Missions/MISSIONS/MultiplayerTestMission/TerrainZone_Test.bmp";
+}
+
+class MultTestRouterZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+{
+  final static int     ImageWidth              = 2048;
+  final static int     ImageHeight             = 2048;
+
+  final static String ImageFileName           = "Missions/MISSIONS/MultiplayerTestMission/RouterZone_Test.bmp";
+}
+
+
+class MultTestMicroTextures1 extends CMicroTexLayer
+{
+  final static String ImageFileName           = "Missions/MISSIONS/MultiplayerTestMission/micro_Test.bmp";
+}
+

@@ -1,0 +1,2655 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated mission script file                      
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class DM2Content
+{
+  static String m_ObjectListClassFile = "Missions/MISSIONS/DM2Mission/Content.script";
+  static String m_ObjectListClassName = "DM2Content";
+
+  static Array  m_MissionObjectList   = [
+    [
+      "Atmosphere",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["AmbientLight", new Color(0.196078, 0.156863, 0.117647, 1.000000)],
+        ["AntiSunAngle", 10.000000],
+        ["AntiSunColor", new Color(0.509804, 0.474510, 0.431373, 1.000000)],
+        ["AntiSunEnabled", true],
+        ["AntiSunIntensity", 0.300000],
+        ["EnableHorizontAdjustment", true],
+        ["FogColorXPos", new Color(0.466667, 0.517647, 0.552941, 1.000000)],
+        ["FogColorXNeg", new Color(0.105882, 0.117647, 0.082353, 1.000000)],
+        ["FogColorYPos", new Color(0.486275, 0.486275, 0.486275, 1.000000)],
+        ["FogColorYNeg", new Color(0.486275, 0.486275, 0.486275, 1.000000)],
+        ["FogDensity", 0.001500],
+        ["FogNear", 10.000000],
+        ["FogFar", 800.000000],
+        ["FogFarMax", 3500.000000],
+        ["FogMode", "Exp"],
+        ["ShadowColor", new Color(0.313726, 0.274510, 0.235294, 0.300000)],
+        ["SunColor", new Color(0.890196, 0.807843, 0.584314, 1.000000)],
+        ["SunDirection", new Vector(0.990000, -0.080000, -0.350000)],
+        ["SunIntensity", 0.900000],
+        ["TreeShadowLodDistance", 20.000000]
+      ]
+    ],
+
+    [
+      "Terrain",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["ForestTextureScale", 0.500000],
+        ["ForestShadowBorderScale", 0.400000],
+        ["ForestShadowAlphaScale", 0.500000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],
+        ["IsAntiLighting", true],
+        ["TerrainShadowPower", 3.000000],
+        ["VertForestDistMin", 800.000000],
+        ["VertForestDistMax", 8000.000000],
+        ["VertForestAngleMin", 0.000000],
+        ["VertForestAngleMax", 45.000000],
+        ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+        ["WaterBorderColor", new Color(0.568627, 0.537255, 0.435294, 1.000000)]
+      ]
+    ],
+
+    [
+      "Spawn1",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.766470, 0.642280, 0.000000, 4541.449707,
+          -0.642280, 0.766470, 0.000000, 4095.839844,
+          0.000000, 0.000000, 1.000000, 559.577393,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn2",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.499761, 0.866163, 0.000000, 5194.146973,
+          -0.866163, 0.499761, 0.000000, 3769.983398,
+          0.000000, 0.000000, 1.000000, 562.951660,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn3",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5168.519531,
+          -0.933833, 0.357710, 0.000000, 2866.620850,
+          0.000000, 0.000000, 1.000000, 506.063782,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn4",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.615727, 0.787960, 0.000000, 4434.658203,
+          -0.787960, 0.615727, 0.000000, 2705.755371,
+          0.000000, 0.000000, 1.000000, 485.487213,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Village_Kurtenki1",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.494761, -0.869029, 0.000000, 0.000000,
+          0.869029, 0.494761, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House1Group", "Kurtenki1House2Group", "Kurtenki1House3Group", "Kurtenki1House4Group", "Kurtenki1House5Group", "Kurtenki1House6Group", "Kurtenki1House7Group", "Kurtenki1House8Group"]]
+      ]
+    ],
+
+    [
+      "Village_Kurtenki1_micro",
+      "Locator",
+      "CTerrainPatch",
+      new Matrix(
+          0.011889, -0.999929, 0.000000, 4879.965820,
+          0.999929, 0.011889, 0.000000, 3277.748291,
+          0.000000, 0.000000, 1.000000, 575.740845,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Dimensions", new Vector(125.000000, 125.000000, 5.289520)],
+        ["TextureName", "Textures/V_Kurtenki1_micro.tex"],
+        ["ZoneName", "Textures/V_Kurtenki1_zone.bmp"],
+        ["BorderSize", 20.000000]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.025591, -0.999672, -0.000009, 4829.892090,
+          0.999672, -0.025591, 0.000000, 3267.315918,
+          0.000000, -0.000009, 1.000000, 577.345703,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.034969, 0.999388, -0.000003, 4791.361328,
+          -0.999388, -0.034969, 0.000000, 3266.765381,
+          0.000000, 0.000003, 1.000000, 494.890442,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.999960, 0.008904, -0.000008, 4874.985840,
+          -0.008904, -0.999960, 0.000000, 3190.914063,
+          -0.000008, 0.000000, 1.000000, 577.345825,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.026885, -0.999638, -0.000005, 4786.136230,
+          0.999638, 0.026885, 0.000000, 3245.704590,
+          0.000000, -0.000005, 1.000000, 577.348572,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.999657, -0.026195, -0.000008, 4854.087891,
+          0.026195, 0.999657, 0.000000, 3196.041016,
+          0.000008, 0.000000, 1.000000, 494.889618,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.024019, -0.999711, -0.000010, 4835.909180,
+          0.999711, -0.024019, 0.000000, 3245.454834,
+          0.000000, -0.000010, 1.000000, 577.354431,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1Well",
+      "InteriorObject",
+      "CWaterWell_1Unit",
+      new Matrix(
+          -0.045095, -0.998646, -0.025942, 4936.261719,
+          0.998965, -0.045232, 0.004730, 3249.487793,
+          -0.005897, -0.025702, 0.999652, 578.418945,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_fence_03",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.028546, -0.999592, -0.000587, 4856.512695,
+          0.999592, 0.028546, 0.000000, 3263.733398,
+          0.000017, -0.000587, 1.000000, 577.407166,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 6],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_fence_06",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999664, -0.025901, -0.000032, 4857.481934,
+          0.025901, -0.999664, 0.000000, 3303.429199,
+          -0.000032, -0.000001, 1.000000, 577.409302,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 8],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_fence_02",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999782, 0.020866, -0.000018, 4842.559570,
+          -0.020866, 0.999782, 0.000000, 3264.084717,
+          0.000018, 0.000000, 1.000000, 577.412292,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 7],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_fence_08",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.001337, 0.999999, -0.000420, 4823.926270,
+          -0.999999, 0.001337, 0.000000, 3301.414307,
+          0.000001, 0.000420, 1.000000, 577.404907,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 9],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.028505, 0.999594, 0.000000, 4833.953125,
+          -0.999594, -0.028507, 0.000000, 3283.025635,
+          0.000000, 0.000000, 1.000000, 577.752258,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_fence_10",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.005244, -0.999986, -0.000773, 4857.098145,
+          0.999986, 0.005244, 0.000000, 3199.199219,
+          0.000004, -0.000772, 1.000000, 577.408203,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 8],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_fence_03",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.006256, 0.999980, -0.000169, 4815.520020,
+          -0.999980, -0.006256, 0.000000, 3248.141357,
+          -0.000001, 0.000169, 1.000000, 577.407227,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 9],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_fence_13",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999653, -0.026340, -0.000007, 4857.399414,
+          0.026340, -0.999653, 0.000000, 3247.057861,
+          -0.000007, 0.000000, 1.000000, 577.405579,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 5],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_fence_01",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999917, -0.012881, -0.000014, 4831.530273,
+          0.012881, -0.999917, 0.000000, 3247.876465,
+          -0.000014, 0.000000, 1.000000, 577.410522,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 9],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.007161, 0.999974, 0.000000, 4832.233398,
+          -0.999974, -0.007162, 0.000000, 3228.557373,
+          0.000000, 0.000000, 1.000000, 578.750366,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.030103, 0.999547, -0.000006, 4851.468262,
+          -0.999547, 0.030103, 0.000000, 3229.522949,
+          0.000000, 0.000006, 1.000000, 577.338623,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3_Corral",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.006169, 0.999981, -0.000010, 4878.187012,
+          -0.999981, 0.006169, 0.000000, 3210.137939,
+          0.000000, 0.000010, 1.000000, 577.365234,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3_fences_FenceWicker_11",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.013110, 0.999914, 0.000000, 4872.847168,
+          -0.999914, 0.013110, 0.000000, 3218.458496,
+          0.000000, 0.000000, 1.000000, 577.403992,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 8],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3_fences_FenceWicker_02",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999952, 0.009773, 0.000000, 4872.221680,
+          -0.009773, 0.999952, 0.000000, 3176.648193,
+          0.000000, 0.000000, 1.000000, 577.406982,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 7],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3_fences_FenceWicker_01",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.019511, 0.999809, -0.000906, 4872.090820,
+          -0.999810, 0.019511, 0.000000, 3186.603516,
+          0.000018, 0.000906, 1.000000, 577.408264,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 5],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.020045, -0.999799, 0.000000, 4896.346191,
+          0.999799, 0.020045, 0.000000, 3199.643555,
+          0.000000, 0.000000, 1.000000, 582.316345,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2_fence_03",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999932, -0.011690, -0.000012, 4823.903320,
+          0.011690, -0.999932, 0.000000, 3297.819336,
+          -0.000012, 0.000000, 1.000000, 577.412964,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 5],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2_fence_01",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999984, 0.005726, -0.000004, 4795.644531,
+          -0.005726, 0.999984, 0.000000, 3265.603760,
+          0.000004, 0.000000, 1.000000, 577.410034,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 8],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2_fence_06",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.012422, 0.999922, -0.001055, 4779.830078,
+          -0.999923, -0.012422, 0.000000, 3297.673340,
+          -0.000013, 0.001055, 0.999999, 577.405029,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 9],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2_fence_04",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999902, 0.013988, -0.000018, 4809.756836,
+          -0.013988, -0.999902, 0.000000, 3298.035400,
+          -0.000018, 0.000000, 1.000000, 577.406860,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 8],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.001038, 0.999999, 0.000000, 4804.701660,
+          -0.999999, -0.001039, 0.000000, 3274.329346,
+          0.000000, 0.000000, 1.000000, 576.709473,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fence_04",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.009294, -0.999957, -0.000687, 4858.817383,
+          0.999957, -0.009294, 0.000000, 3174.028564,
+          -0.000006, -0.000687, 1.000000, 577.403992,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 7],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fence_01",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999035, 0.043919, -0.000014, 4814.979004,
+          -0.043920, 0.999035, 0.000000, 3176.001465,
+          0.000014, 0.000001, 1.000000, 577.404785,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 8],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6_fence_07",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999656, 0.026206, -0.000009, 4815.187012,
+          -0.026206, 0.999656, 0.000000, 3204.340088,
+          0.000009, 0.000000, 1.000000, 577.406006,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 7],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.015453, 0.999881, 0.000000, 4840.184570,
+          -0.999881, 0.015453, 0.000000, 3191.373535,
+          0.000000, 0.000000, 1.000000, 580.525574,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.028643, 0.999590, -0.000007, 4852.362305,
+          -0.999590, -0.028643, 0.000000, 3269.202881,
+          0.000000, 0.000007, 1.000000, 494.880157,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fence_04",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999983, -0.005890, -0.000003, 4776.039063,
+          0.005890, 0.999983, 0.000000, 3212.698242,
+          0.000003, 0.000000, 1.000000, 577.405579,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 7],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fence_01",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999864, -0.016471, -0.000004, 4781.890137,
+          0.016471, -0.999864, 0.000000, 3248.459717,
+          -0.000004, 0.000000, 1.000000, 577.410645,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 3],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fence_02",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.004677, 0.999989, -0.000695, 4775.935059,
+          -0.999989, 0.004677, 0.000000, 3248.631348,
+          0.000003, 0.000695, 1.000000, 577.407471,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 9],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999070, -0.043117, 0.000000, 4797.416504,
+          0.043116, -0.999070, 0.000000, 3227.937500,
+          0.000000, 0.000000, 1.000000, 578.500549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.751192, 0.660084, -0.000011, 4974.802734,
+          -0.660084, -0.751192, 0.000000, 3222.542969,
+          -0.000008, 0.000007, 1.000000, 496.148254,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.675702, 0.737174, 0.000000, 4961.912109,
+          -0.737175, 0.675703, 0.000000, 3221.444824,
+          0.000000, 0.000000, 1.000000, 586.050354,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.021260, -0.999774, 0.000000, 0.000000,
+          0.999774, 0.021261, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House1_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999969, 0.007816, 0.000000, 0.000000,
+          -0.007817, 0.999969, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House2_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.011563, 0.999933, 0.000000, 0.000000,
+          -0.999933, 0.011563, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House3_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.994624, -0.103555, 0.000000, 0.000000,
+          0.103555, -0.994624, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House4_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999657, -0.026195, 0.000000, 0.000000,
+          0.026195, 0.999657, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House5_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999884, -0.015204, 0.000000, 0.000000,
+          0.015204, -0.999884, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House6_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.710108, -0.704093, 0.000000, 0.000000,
+          0.704093, -0.710108, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House7_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_Shed1",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.999782, 0.020862, -0.000006, 4853.350586,
+          -0.020862, -0.999782, 0.000000, 3179.534912,
+          -0.000006, 0.000000, 1.000000, 494.879425,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_Corral",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          -0.019992, 0.999800, -0.000008, 4806.617676,
+          -0.999800, -0.019992, 0.000000, 3243.412354,
+          0.000000, 0.000008, 1.000000, 577.365234,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences_FenceWicker_12",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.024906, -0.999690, -0.000250, 4944.472656,
+          0.999690, 0.024906, 0.000000, 3264.708984,
+          0.000006, -0.000250, 1.000000, 578.526245,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 3],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004657, 0.000000, 4946.471191,
+          -0.004657, 0.999989, 0.000000, 3283.570313,
+          0.000000, 0.000000, 1.000000, 580.891968,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          1.000000, -0.000532, -0.000005, 4941.233398,
+          0.000532, 1.000000, 0.000000, 3280.001709,
+          0.000005, 0.000000, 1.000000, 578.469116,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004656, 0.000000, 0.000000,
+          -0.004656, 0.999989, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House8_fences"]]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences_FenceWicker_09",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.002737, 0.999996, -0.000458, 4932.790527,
+          -0.999996, 0.002737, 0.000000, 3305.608398,
+          0.000001, 0.000458, 1.000000, 578.524963,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 7],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.999783, -0.020825, -0.000002, 4959.173340,
+          0.020825, -0.999783, 0.000000, 3268.877197,
+          -0.000002, 0.000000, 1.000000, 578.443481,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1_fence_01",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999909, -0.013520, -0.000034, 4833.131348,
+          0.013520, 0.999909, 0.000000, 3263.885010,
+          0.000034, 0.000000, 1.000000, 577.408508,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 3],
+        ["IsManual", false],
+        ["IsPlayer", false],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2_Corral",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          -0.998465, -0.055377, -0.000002, 4795.353027,
+          0.055377, -0.998465, 0.000000, 3291.319824,
+          -0.000002, 0.000000, 1.000000, 577.359497,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["IsManual", false],
+        ["IsPlayer", false]
+      ]
+    ],
+
+    [
+      "Spawn5",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.615727, 0.787960, 0.000000, 4367.147949,
+          -0.787960, 0.615727, 0.000000, 2508.350342,
+          0.000000, 0.000000, 1.000000, 485.161530,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn6",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.766470, 0.642280, 0.000000, 4723.671875,
+          -0.642280, 0.766470, 0.000000, 2757.485352,
+          0.000000, 0.000000, 1.000000, 494.564148,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn7",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.499761, 0.866163, 0.000000, 5092.826660,
+          -0.866163, 0.499761, 0.000000, 3720.749756,
+          0.000000, 0.000000, 1.000000, 494.482483,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn8",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5409.671387,
+          -0.933833, 0.357710, 0.000000, 3821.722412,
+          0.000000, 0.000000, 1.000000, 508.051575,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.015453, 0.999881, 0.000000, 4840.184570,
+          -0.999881, 0.015453, 0.000000, 3191.373535,
+          0.000000, 0.000000, 1.000000, 580.525574,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999070, -0.043117, 0.000000, 4797.416504,
+          0.043116, -0.999070, 0.000000, 3227.937500,
+          0.000000, 0.000000, 1.000000, 578.500549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.675702, 0.737174, 0.000000, 4961.912109,
+          -0.737175, 0.675703, 0.000000, 3221.444824,
+          0.000000, 0.000000, 1.000000, 586.050354,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.021260, -0.999774, 0.000000, 0.000000,
+          0.999774, 0.021261, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House1_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999969, 0.007816, 0.000000, 0.000000,
+          -0.007817, 0.999969, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House2_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.011563, 0.999933, 0.000000, 0.000000,
+          -0.999933, 0.011563, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House3_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.994624, -0.103555, 0.000000, 0.000000,
+          0.103555, -0.994624, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House4_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999657, -0.026195, 0.000000, 0.000000,
+          0.026195, 0.999657, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House5_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999884, -0.015204, 0.000000, 0.000000,
+          0.015204, -0.999884, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House6_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.710108, -0.704093, 0.000000, 0.000000,
+          0.704093, -0.710108, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House7_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004657, 0.000000, 4946.471191,
+          -0.004657, 0.999989, 0.000000, 3283.570313,
+          0.000000, 0.000000, 1.000000, 580.891968,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004656, 0.000000, 0.000000,
+          -0.004656, 0.999989, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House8_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "AllVillageNavPoints",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.015453, 0.999881, 0.000000, 4840.184570,
+          -0.999881, 0.015453, 0.000000, 3191.373535,
+          0.000000, 0.000000, 1.000000, 580.525574,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999070, -0.043117, 0.000000, 4797.416504,
+          0.043116, -0.999070, 0.000000, 3227.937500,
+          0.000000, 0.000000, 1.000000, 578.500549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.675702, 0.737174, 0.000000, 4961.912109,
+          -0.737175, 0.675703, 0.000000, 3221.444824,
+          0.000000, 0.000000, 1.000000, 586.050354,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.021260, -0.999774, 0.000000, 0.000000,
+          0.999774, 0.021261, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House1_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999969, 0.007816, 0.000000, 0.000000,
+          -0.007817, 0.999969, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House2_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.011563, 0.999933, 0.000000, 0.000000,
+          -0.999933, 0.011563, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House3_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.994624, -0.103555, 0.000000, 0.000000,
+          0.103555, -0.994624, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House4_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999657, -0.026195, 0.000000, 0.000000,
+          0.026195, 0.999657, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House5_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999884, -0.015204, 0.000000, 0.000000,
+          0.015204, -0.999884, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House6_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.710108, -0.704093, 0.000000, 0.000000,
+          0.704093, -0.710108, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House7_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004657, 0.000000, 4946.471191,
+          -0.004657, 0.999989, 0.000000, 3283.570313,
+          0.000000, 0.000000, 1.000000, 580.891968,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004656, 0.000000, 0.000000,
+          -0.004656, 0.999989, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House8_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "AllVillageNavPoints",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.015453, 0.999881, 0.000000, 4840.184570,
+          -0.999881, 0.015453, 0.000000, 3191.373535,
+          0.000000, 0.000000, 1.000000, 580.525574,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999070, -0.043117, 0.000000, 4797.416504,
+          0.043116, -0.999070, 0.000000, 3227.937500,
+          0.000000, 0.000000, 1.000000, 578.500549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.675702, 0.737174, 0.000000, 4961.912109,
+          -0.737175, 0.675703, 0.000000, 3221.444824,
+          0.000000, 0.000000, 1.000000, 586.050354,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.021260, -0.999774, 0.000000, 0.000000,
+          0.999774, 0.021261, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House1_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999969, 0.007816, 0.000000, 0.000000,
+          -0.007817, 0.999969, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House2_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.011563, 0.999933, 0.000000, 0.000000,
+          -0.999933, 0.011563, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House3_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.994624, -0.103555, 0.000000, 0.000000,
+          0.103555, -0.994624, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House4_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999657, -0.026195, 0.000000, 0.000000,
+          0.026195, 0.999657, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House5_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999884, -0.015204, 0.000000, 0.000000,
+          0.015204, -0.999884, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House6_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.710108, -0.704093, 0.000000, 0.000000,
+          0.704093, -0.710108, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House7_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004657, 0.000000, 4946.471191,
+          -0.004657, 0.999989, 0.000000, 3283.570313,
+          0.000000, 0.000000, 1.000000, 580.891968,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004656, 0.000000, 0.000000,
+          -0.004656, 0.999989, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House8_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "AllVillageNavPoints",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.015453, 0.999881, 0.000000, 4840.184570,
+          -0.999881, 0.015453, 0.000000, 3191.373535,
+          0.000000, 0.000000, 1.000000, 580.525574,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999070, -0.043117, 0.000000, 4797.416504,
+          0.043116, -0.999070, 0.000000, 3227.937500,
+          0.000000, 0.000000, 1.000000, 578.500549,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.675702, 0.737174, 0.000000, 4961.912109,
+          -0.737175, 0.675703, 0.000000, 3221.444824,
+          0.000000, 0.000000, 1.000000, 586.050354,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House1Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.021260, -0.999774, 0.000000, 0.000000,
+          0.999774, 0.021261, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House1_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House2Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999969, 0.007816, 0.000000, 0.000000,
+          -0.007817, 0.999969, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House2_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House3Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.011563, 0.999933, 0.000000, 0.000000,
+          -0.999933, 0.011563, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House3_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House4Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.994624, -0.103555, 0.000000, 0.000000,
+          0.103555, -0.994624, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House4_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House5Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999657, -0.026195, 0.000000, 0.000000,
+          0.026195, 0.999657, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House5_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House6Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999884, -0.015204, 0.000000, 0.000000,
+          0.015204, -0.999884, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House6_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House7Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.710108, -0.704093, 0.000000, 0.000000,
+          0.704093, -0.710108, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House7_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8_fences",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004657, 0.000000, 4946.471191,
+          -0.004657, 0.999989, 0.000000, 3283.570313,
+          0.000000, 0.000000, 1.000000, 580.891968,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Kurtenki1House8Group",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999989, 0.004656, 0.000000, 0.000000,
+          -0.004656, 0.999989, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Kurtenki1House8_fences"]],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "AllVillageNavPoints",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", []],
+        ["IsMirror", false],
+        ["Affiliation", "ENEMY"]
+      ]
+    ],
+
+    [
+      "Reload_1",
+      "InteriorObject",
+      "CReloadUSSRUnit",
+      new Matrix(
+          -0.329179, 0.944268, 0.000000, 5246.510742,
+          -0.944268, -0.329179, 0.000000, 3766.785156,
+          0.000000, 0.000000, 1.000000, 504.629395,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Reload_2",
+      "InteriorObject",
+      "CReloadUSSRUnit",
+      new Matrix(
+          0.766470, 0.642280, 0.000000, 4346.256348,
+          -0.642280, 0.766470, 0.000000, 4149.774414,
+          0.000000, 0.000000, 1.000000, 515.837341,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Reload_3",
+      "InteriorObject",
+      "CReloadUSSRUnit",
+      new Matrix(
+          -0.173606, -0.984659, 0.017534, 4448.365234,
+          0.984805, -0.173497, 0.007577, 2676.713623,
+          -0.004419, 0.018584, 0.999817, 488.736328,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Spawn9",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5354.269531,
+          -0.933833, 0.357710, 0.000000, 4017.427979,
+          0.000000, 0.000000, 1.000000, 513.201294,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn10",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5378.979980,
+          -0.933833, 0.357710, 0.000000, 2935.699707,
+          0.000000, 0.000000, 1.000000, 507.966034,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn11",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5241.810547,
+          -0.933833, 0.357710, 0.000000, 2740.340088,
+          0.000000, 0.000000, 1.000000, 490.408051,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn12",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4870.392090,
+          -0.933833, 0.357710, 0.000000, 4485.994629,
+          0.000000, 0.000000, 1.000000, 535.968689,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn13",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5555.265625,
+          -0.933833, 0.357710, 0.000000, 2829.435059,
+          0.000000, 0.000000, 1.000000, 520.769714,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn14",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4886.113281,
+          -0.933833, 0.357710, 0.000000, 3289.737305,
+          0.000000, 0.000000, 1.000000, 493.912323,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn15",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5650.135742,
+          -0.933833, 0.357710, 0.000000, 2843.223145,
+          0.000000, 0.000000, 1.000000, 527.374268,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn16",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4620.672363,
+          -0.933833, 0.357710, 0.000000, 2612.881348,
+          0.000000, 0.000000, 1.000000, 487.191071,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn17",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.766470, 0.642280, 0.000000, 4462.538574,
+          -0.642280, 0.766470, 0.000000, 3899.765381,
+          0.000000, 0.000000, 1.000000, 515.125427,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn18",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.499761, 0.866163, 0.000000, 5216.120117,
+          -0.866163, 0.499761, 0.000000, 4265.073242,
+          0.000000, 0.000000, 1.000000, 528.630371,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn19",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5454.760742,
+          -0.933833, 0.357710, 0.000000, 2793.240479,
+          0.000000, 0.000000, 1.000000, 511.797485,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn20",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5270.048340,
+          -0.933833, 0.357710, 0.000000, 2872.714355,
+          0.000000, 0.000000, 1.000000, 498.791809,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn21",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 5072.254395,
+          -0.933833, 0.357710, 0.000000, 3006.372070,
+          0.000000, 0.000000, 1.000000, 505.211273,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn22",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4338.904785,
+          -0.933833, 0.357710, 0.000000, 3010.661133,
+          0.000000, 0.000000, 1.000000, 496.840759,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn23",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4609.412109,
+          -0.933833, 0.357710, 0.000000, 3764.904053,
+          0.000000, 0.000000, 1.000000, 507.135559,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn24",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4297.809082,
+          -0.933833, 0.357710, 0.000000, 2694.312500,
+          0.000000, 0.000000, 1.000000, 489.565125,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn25",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4666.587891,
+          -0.933833, 0.357710, 0.000000, 3975.233398,
+          0.000000, 0.000000, 1.000000, 526.442688,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn26",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.357710, 0.933833, 0.000000, 4830.413574,
+          -0.933833, 0.357710, 0.000000, 3214.212891,
+          0.000000, 0.000000, 1.000000, 494.879944,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ]
+  ];
+
+  static Array  m_MissionCameraScriptList  = [
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "Default"],
+        []
+      ]
+    ]
+  ];
+
+  static Array  m_TriggersList = [
+  ];
+
+  Array GetMissionObjectList()
+  {
+    return m_MissionObjectList;
+  }
+
+  Array GetMissionCameraScriptList()
+  {
+    return m_MissionCameraScriptList;
+  }
+
+  Array GetTriggersList()
+  {
+    return m_TriggersList;
+  }
+
+  String GetObjectListClassFile()
+  {
+    return m_ObjectListClassFile;
+  }
+
+  String GetObjectListClassName()
+  {
+    return m_ObjectListClassName;
+  }
+}

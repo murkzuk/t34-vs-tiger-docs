@@ -1,0 +1,287 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCF5Mission extends CDMMission, CCF5Mission_Strings, CMissionStatus
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+
+  static int MaxPlayers          = 16;
+
+  String m_LocalTime             = "6:20:00";
+  String m_TerrainMapTextureName = "Textures/CF5_Map.tex"; //Textures/C1M3_Map.tex
+
+  static String m_MissionBriefingPicMaterial = "CF5BriefingPic"; //C1M3BriefingPic
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary,   CCF5Mission_Strings::Objective01, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF5Mission_Strings::Objective02, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF5Mission_Strings::Objective03, MOSID_InProgress, true,  1/*team (blue)*/ ],
+      [MOTID_Primary,   CCF5Mission_Strings::Objective04, MOSID_InProgress, true,  1/*team (blue)*/]
+                               ];
+  boolean isDebug = true;
+  boolean isRadarUpdateDebug = false;
+
+  int BlueTeamHuntingCount = 0;
+  int RedTeamHuntingCount  = 0;
+  int RedDotCount = 0;
+  int BlueDotCount = 0;
+
+  Array m_NavpointsForPlayerMap = [
+      [
+        ["NavPointRed_01"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(255.0/255.0, 0.0/256.0, 0.0/256.0)   // NavColor
+      ],
+      [
+        ["NavPointRed_02"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(255.0/255.0, 0.0/256.0, 0.0/256.0)   // NavColor
+      ],
+      [
+        ["NavPointBlue_01"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(0.0/256.0, 0.0/256.0, 255.0/255.0)   // NavColor
+      ],
+      [
+        ["NavPointBlue_02"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(0.0/256.0, 0.0/256.0, 255.0/255.0)   // NavColor
+      ]
+                                   ];
+
+//  float  CockpitMapMinRange        = 300.0;
+//  float  CockpitMapMaxRange        = 1800.0;
+//  float  CockpitMapNavNameMaxRange = 1800.0;
+//  int    CockpitMapZoomSteps       = 10;
+
+  float  CockpitMapMinRange        = 600.0;
+  float  CockpitMapMaxRange        = 2100.0;
+  float  CockpitMapNavNameMaxRange = 1200.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+//  Vector MarksInitPoint            = new Vector(0.0, 0.0, 0.0);
+//  Array  CockpitMapAccessBox       = [new Vector(2502, 1582.0, 0.0), new Vector(7002.0, 6082.0, 0.0)];
+  Array  CockpitMapAccessBox       = [new Vector(3868, 2488.0, 0.0), new Vector(6120.0, 4740.0, 0.0)];
+
+
+  final static Array RouterWorkingZones = [
+    [1000.0 , 1000.0, 8000.0, 8000.0]
+                                          ];
+
+  void CCF5Mission()
+  {
+    // Construct mission
+    CDMMission("CCF5Mission", "CCF5Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CCF5Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CCF5Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky01Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare =  new #LensFlare<CLensFlare>();
+    SetMissionWorldMatrices(new #WorldMatrices<CCF5WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME,         "CCF5LandscapeLayer"],
+        [LAYER_TERRAIN_ZONE,         "CCF5TerrainZoneLayer"],
+        [LAYER_MICROTEXTURE_MAP1,    "CCF5MicroTextures1"],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CCF5WaterHeights"]
+      ]);
+
+//    SetRouterPrecalculatedGraph(
+//      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+//    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CDMMission::StartMission();
+//    Component console = new #GameController().GetObject(SOID_Console);
+//    console.disablebeh();
+//    console.showbehinf(true);
+    fireEvent(0.0, [], "MissionStarted", []);
+//    fireEvent(1200.0, [], "TimeOfMissionEnd", []);
+  }
+
+  event void OnObjectDestroyed (String _ObjectID)
+  {
+    CDMMission::OnObjectDestroyed(_ObjectID);
+    Component DeadThing = GetObject(_ObjectID);
+
+     if (_ObjectID.IsStartsWith("BlueDot"))
+    {
+       BlueDotCount=BlueDotCount+1;
+       logWarning("BlueDotCount = " + new String(BlueDotCount));
+
+       if (BlueDotCount == 4)
+       {
+          CompleteObjective(0);
+          FailObjective(1);
+          FailObjective(2);
+          FailObjective(3);
+          logWarning("CloseCFMission by Dots");
+          sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+        }
+     }
+     if (_ObjectID.IsStartsWith("RedDot"))
+    {
+       RedDotCount=RedDotCount+1;
+       logWarning("RedDotCount = " + new String(RedDotCount));
+
+       if (RedDotCount == 4)
+       {
+          CompleteObjective(2);
+          FailObjective(1);
+          FailObjective(0);
+          FailObjective(3);
+          logWarning("CloseCFMission by Dots");
+          sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+       }
+    }
+
+
+
+
+
+    if(isDebug)
+      logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String(DeadThing.GetLastDamager()));
+
+    if ((new #GameController()).GetGameMode() != "Server")
+      return;
+
+    else
+    {
+//      Component Session = (new #GameController()).GetGameSession();
+
+//      int Team = GetPlayerTeamByUnitID(_ObjectID);
+//      logWarning("[OnObjectDestroyed]CountNumber_Of_Kills_Continue_For_Team TEAM = " + new String (Team));
+      if (_ObjectID.IsStartsWith("BlueDot_"))
+//      if (Team == 1)
+      {
+        if(isDebug)
+          logWarning("RedTeamHuntingCountRise");
+
+        RedTeamHuntingCount = RedTeamHuntingCount + 1;
+        logWarning("RedTeamHuntingCount:" + new String (RedTeamHuntingCount));
+        if (RedTeamHuntingCount >= 4)
+          sendEvent(0.0, SOID_MissionController, "RedTeamVictory", []);
+      }
+      if (_ObjectID.IsStartsWith("RedDot_"))
+//      if (Team == 0)
+      {
+        if(isDebug)
+          logWarning("BlueTeamHuntingCountRise");
+
+        BlueTeamHuntingCount = BlueTeamHuntingCount + 1;
+        logWarning("BlueTeamHuntingCount:" + new String (BlueTeamHuntingCount));
+        if (BlueTeamHuntingCount >= 4)
+          sendEvent(0.0, SOID_MissionController, "BlueTeamVictory", []);
+      }
+
+    }
+  }
+
+  void Shutdown()
+  {
+    CDMMission::Shutdown();
+  }
+
+  event void RedTeamVictory()
+  {
+    logWarning("RedTeamVictorious");
+    CompleteObjective(0);
+    CompleteObjective(1);
+    FailObjective(2);
+    FailObjective(3);
+    logWarning("CloseCFMission");
+    sendEvent(0.0, getIdentificator(this), "CloseCFMission", []);
+   // Session.FireNetEvent("CloseCFMission", []);
+  }
+
+  event void BlueTeamVictory()
+  {
+    logWarning("BlueTeamVictorious");
+    CompleteObjective(2);
+    CompleteObjective(3);
+    FailObjective(0);
+    FailObjective(1);
+    logWarning("CloseCFMission");
+    sendEvent(0.0, getIdentificator(this), "CloseCFMission", []);
+   // Session.FireNetEvent("CloseCFMission", []);
+  }
+
+  event void CheckCFMissionStatus()
+  {
+    Component Session = new #GameController().GetGameSession();
+    Array PlayersInfo = Session.GetPlayersInfo();
+    int RedTeamCount = 0;
+    int BlueTeamCount = 0;
+    for (int i = 0; i < PlayersInfo.size(); i++)
+    {
+      if ((0 == PlayersInfo[i].SessionTeam) && (PlayersInfo[i].SessionDeaths == 0))
+        RedTeamCount++;
+
+      if ((1 == PlayersInfo[i].SessionTeam) && (PlayersInfo[i].SessionDeaths == 0))
+        BlueTeamCount++;
+    }
+
+    if (0 == BlueTeamCount)
+    {
+      CompleteObjective(0);
+      CompleteObjective(1);
+      FailObjective(2);
+      FailObjective(3);
+    }
+
+    if (0 == RedTeamCount)
+    {
+      CompleteObjective(2);
+      CompleteObjective(3);
+      FailObjective(0);
+      FailObjective(1);
+    }
+
+    if ((0 == BlueTeamCount) || (0 == RedTeamCount))
+    {
+     logWarning("CloseCFMission");
+      sendEvent(0.0, getIdentificator(this), "CloseCFMission", []);
+    }
+  }
+
+
+  static void SetDefaultMultiplayerSettings()
+  {
+    FragLimit   = 0;
+    TimeLimit   = 0;
+    ControlMode = MCM_Both;
+    AvailablePlayerUnits = [ true, true ];
+  }
+
+/*  event void TimeOfMissionEnd()
+  {
+    FailObjective(0);
+    FailObjective(1);
+    CompleteObjective(2);
+    FailObjective(3);
+    logWarning("CloseCFMission");
+    sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+  } */
+}

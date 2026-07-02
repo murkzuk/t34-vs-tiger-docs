@@ -1,0 +1,2305 @@
+//-------------------------------------------------------------------
+//                                                                   
+//  This code is copyright 2001 by G5 Software.                      
+//  Any unauthorized usage, either in part or in whole of this code  
+//  is strictly prohibited. Violators WILL be prosecuted to the      
+//  maximum extent allowed by law.                                   
+//                                                                   
+//-------------------------------------------------------------------
+//                                                                   
+//  Automatically-generated mission script file                      
+//  DO NOT EDIT!                                                     
+//                                                                   
+//-------------------------------------------------------------------
+
+
+class DM6Content
+{
+  static String m_ObjectListClassFile = "Missions/Missions/DM6Mission/Content.script";
+  static String m_ObjectListClassName = "DM6Content";
+
+  static Array  m_MissionObjectList   = [
+    [
+      "Atmosphere",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["AmbientLight", new Color(0.156863, 0.203922, 0.243137, 1.000000)],
+        ["AntiSunAngle", 10.000000],
+        ["AntiSunColor", new Color(0.584314, 0.584314, 0.784314, 1.000000)],
+        ["AntiSunEnabled", true],
+        ["AntiSunIntensity", 0.300000],
+        ["EnableHorizontAdjustment", true],
+        ["FogColorXPos", new Color(0.917647, 0.905882, 0.858824, 1.000000)],
+        ["FogColorXNeg", new Color(0.549020, 0.619608, 0.568627, 1.000000)],
+        ["FogColorYPos", new Color(0.658824, 0.701961, 0.701961, 1.000000)],
+        ["FogColorYNeg", new Color(0.721569, 0.772549, 0.772549, 1.000000)],
+        ["FogDensity", 0.001300],
+        ["FogNear", 1.000000],
+        ["FogFar", 3000.000000],
+        ["FogFarMax", 3000.000000],
+        ["FogMode", "Exp"],
+        ["ShadowFar", 1100.000000],
+        ["ShadowColor", new Color(0.619608, 0.643137, 0.670588, 1.000000)],
+        ["SunColor", new Color(0.988235, 0.937255, 0.780392, 1.000000)],
+        ["SunDirection", new Vector(-0.990000, 0.670000, -0.350000)],
+        ["SunIntensity", 0.700000],
+        ["TreeShadowLodDistance", 35.000000],
+        ["AntiSunHorAngle", 105.000000],
+        ["StencilShadowColor", new Color(0.403922, 0.494118, 0.545098, 1.000000)],
+        ["TreeLightKoef", 0.600000],
+        ["SunShines", 0.100000]
+      ]
+    ],
+
+    [
+      "Terrain",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["ForestTextureScale", 0.500000],
+        ["ForestShadowBorderScale", 0.400000],
+        ["ForestShadowAlphaScale", 0.500000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],
+        ["IsAntiLighting", true],
+        ["TerrainShadowPower", 5.000000],
+        ["VertForestDistMin", 800.000000],
+        ["VertForestDistMax", 8000.000000],
+        ["VertForestAngleMin", 0.000000],
+        ["VertForestAngleMax", 45.000000],
+        ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+        ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)]
+      ]
+    ],
+
+    [
+      "Village_Kurtenki_2",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.460278, -0.887775, 0.000000, 4845.228027,
+          0.887775, 0.460278, 0.000000, 3052.308838,
+          0.000000, 0.000000, 1.000000, 581.455505,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["House1", "House1_Shed", "House2", "House2_Corral", "House3", "House3_Shed1", "House4", "House4_Corral", "House5", "House6", "House6_Shed", "House7", "House7_Shed1", "House8", "House8_Shed", "Village_Kurtenki_2_micro", "Well", "fencegr1", "fencegr2", "fencegr3", "fencegr4", "fencegr5", "fencegr6", "fencegr7"]]
+      ]
+    ],
+
+    [
+      "Village_Kurtenki_2_micro",
+      "Locator",
+      "CTerrainPatch",
+      new Matrix(
+          -0.009267, -0.999957, 0.000000, 4837.162598,
+          0.999957, -0.009267, 0.000000, 3080.101807,
+          0.000000, 0.000000, 1.000000, 579.867859,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Dimensions", new Vector(125.000000, 125.000000, 3.172180)],
+        ["TextureName", "Textures/V_Kurtenki2_micro.tex"],
+        ["ZoneName", "Textures/V_Kurtenki2_zone.bmp"],
+        ["BorderSize", 20.000000]
+      ]
+    ],
+
+    [
+      "House1",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.016340, 0.999332, -0.032695, 4903.074219,
+          -0.998654, 0.017921, 0.048662, 3115.888916,
+          0.049215, 0.031855, 0.998280, 579.916199,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House2",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.022755, 0.999734, 0.003838, 4841.432129,
+          -0.999051, -0.022882, 0.037072, 3113.845947,
+          0.037150, -0.002990, 0.999305, 578.981079,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House3",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.999296, 0.037247, -0.004477, 4810.735352,
+          -0.037228, 0.999297, 0.004342, 3058.519287,
+          0.004636, -0.004173, 0.999981, 579.909912,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House4",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.999974, -0.002779, -0.006669, 4832.650879,
+          0.002779, -0.999996, -0.000026, 3002.307129,
+          -0.006669, -0.000044, 0.999978, 580.114075,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House5",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.999930, 0.011687, -0.001966, 4811.183105,
+          -0.011700, 0.999908, -0.006829, 3020.284668,
+          0.001886, 0.006851, 0.999975, 579.985657,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House6",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.011933, -0.999639, -0.024068, 4895.704102,
+          0.999634, 0.011341, 0.024569, 3089.415039,
+          -0.024288, -0.024352, 0.999408, 580.528198,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Well",
+      "InteriorObject",
+      "CWaterWell_1Unit",
+      new Matrix(
+          -0.999862, 0.016222, -0.003584, 4856.538574,
+          -0.016315, -0.999487, 0.027575, 3092.607666,
+          -0.003135, 0.027630, 0.999613, 579.637573,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "House6_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.031451, 0.999178, -0.025578, 4911.296875,
+          -0.999476, 0.031636, 0.006875, 3075.581787,
+          0.007678, 0.025348, 0.999649, 581.112244,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.030007, -0.999548, 0.001864, 4439.233887,
+          0.999549, 0.030009, 0.001123, 3003.908691,
+          -0.001179, 0.001830, 0.999998, 574.693726,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "House1_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.999644, 0.006326, -0.025919, 4880.094238,
+          -0.007410, -0.999093, 0.041932, 3115.115967,
+          -0.025630, 0.042109, 0.998784, 579.262329,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House7",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.999964, 0.008153, -0.002388, 4806.315918,
+          -0.008155, -0.999967, 0.000654, 2976.851318,
+          -0.002383, 0.000673, 0.999997, 579.920410,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House7_Shed1",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.003492, -0.999988, -0.003305, 4805.646973,
+          0.999994, 0.003491, 0.000159, 3003.731201,
+          -0.000148, -0.003305, 0.999994, 579.915466,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House4_Corral",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.999562, -0.028532, -0.007870, 4833.902344,
+          0.028534, 0.999593, 0.000090, 3022.850586,
+          0.007864, -0.000314, 0.999969, 580.137878,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House3_Shed1",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.016626, -0.999819, 0.009218, 4793.270996,
+          0.999853, 0.016664, 0.004088, 3038.705078,
+          -0.004240, 0.009149, 0.999949, 579.973694,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House8",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.018114, 0.999764, -0.011970, 4845.544922,
+          -0.999831, -0.018076, 0.003263, 2983.838867,
+          0.003046, 0.012027, 0.999923, 580.270020,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House8_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.000890, 0.999900, -0.014081, 4832.674805,
+          -0.999999, 0.000898, 0.000556, 2966.085938,
+          0.000568, 0.014081, 0.999901, 580.139465,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "House2_Corral",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.001749, 0.999998, 0.001118, 4845.338867,
+          -0.998915, 0.001695, 0.046533, 3139.105469,
+          0.046531, -0.001198, 0.998916, 577.942749,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "b_fence_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.074171, -0.997245, 0.000000, 4913.687012,
+          0.997245, -0.074171, 0.000000, 3072.566650,
+          0.000000, 0.000000, 1.000000, 581.171692,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "b_fence_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          1.000000, 0.000815, 0.000000, 4891.953125,
+          -0.000815, 1.000000, 0.000000, 3071.293213,
+          0.000000, 0.000000, 1.000000, 580.746704,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "b_fence_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.002246, -0.999997, 0.000000, 4891.975098,
+          0.999997, -0.002246, 0.000000, 3071.235840,
+          0.000000, 0.000000, 1.000000, 580.747314,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "b_fence_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999987, -0.005100, 0.000000, 4911.866211,
+          0.005100, -0.999987, 0.000000, 3092.503662,
+          0.000000, 0.000000, 1.000000, 580.860352,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "fencegr1",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.999999, -0.001647, 0.000000, 4902.824219,
+          0.001647, -0.999999, 0.000000, 3081.916504,
+          0.000000, 0.000000, 1.000000, 581.569824,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["b_fence_1", "b_fence_2", "b_fence_3", "b_fence_4"]]
+      ]
+    ],
+
+    [
+      "fencegr2_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999760, -0.021897, 0.000000, 4906.294922,
+          0.021897, -0.999760, 0.000000, 3125.881348,
+          0.000000, 0.000000, 1.000000, 579.581787,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 14]
+      ]
+    ],
+
+    [
+      "fencegr2_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.015919, -0.999873, 0.000000, 4906.125977,
+          0.999873, 0.015919, 0.000000, 3113.965332,
+          0.000000, 0.000000, 1.000000, 580.121338,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "fencegr2_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999999, 0.001271, 0.000000, 4904.150879,
+          -0.001271, -0.999999, 0.000000, 3113.019287,
+          0.000000, 0.000000, 1.000000, 580.074463,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "fencegr2_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.017227, 0.999852, 0.000000, 4876.011230,
+          -0.999852, -0.017227, 0.000000, 3126.083496,
+          0.000000, 0.000000, 1.000000, 578.679321,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 4],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr2",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.023888, 0.999715, 0.000000, 4891.058105,
+          -0.999715, -0.023887, 0.000000, 3119.617676,
+          0.000000, 0.000000, 1.000000, 580.010986,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr2_FenceWicker_1", "fencegr2_FenceWicker_2", "fencegr2_FenceWicker_3", "fencegr2_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "fencegr3_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.020865, 0.999782, 0.000000, 4835.981445,
+          -0.999782, -0.020865, 0.000000, 3142.493164,
+          0.000000, 0.000000, 1.000000, 577.798889,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "fencegr3_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999858, -0.016845, 0.000000, 4857.784180,
+          0.016845, -0.999858, 0.000000, 3142.191650,
+          0.000000, 0.000000, 1.000000, 577.802551,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "fencegr3_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.000901, 1.000000, 0.000000, 4858.189453,
+          -1.000000, -0.000901, 0.000000, 3142.332031,
+          0.000000, 0.000000, 1.000000, 577.800110,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "fencegr3_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999708, 0.024165, 0.000000, 4838.258789,
+          -0.024165, 0.999708, 0.000000, 3110.851807,
+          0.000000, 0.000000, 1.000000, 579.123291,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 10],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr3",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999748, 0.022461, 0.000000, 4847.018066,
+          -0.022461, 0.999748, 0.000000, 3126.409912,
+          0.000000, 0.000000, 1.000000, 579.071716,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr3_FenceWicker_1", "fencegr3_FenceWicker_2", "fencegr3_FenceWicker_3", "fencegr3_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "fencegr4_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.035527, 0.999369, 0.000000, 4790.846191,
+          -0.999369, 0.035527, 0.000000, 3062.823242,
+          0.000000, 0.000000, 1.000000, 579.742554,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 14]
+      ]
+    ],
+
+    [
+      "fencegr4_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999810, -0.019493, 0.000000, 4812.648926,
+          0.019493, -0.999810, 0.000000, 3062.521729,
+          0.000000, 0.000000, 1.000000, 579.887390,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "fencegr4_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.003900, 0.999992, 0.000000, 4813.054199,
+          -0.999992, -0.003900, 0.000000, 3062.662109,
+          0.000000, 0.000000, 1.000000, 579.885193,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 13]
+      ]
+    ],
+
+    [
+      "fencegr4_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999558, 0.029720, 0.000000, 4793.196777,
+          -0.029720, 0.999558, 0.000000, 3034.500732,
+          0.000000, 0.000000, 1.000000, 579.933350,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 10],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr4",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999748, 0.022461, 0.000000, 4801.921875,
+          -0.022461, 0.999748, 0.000000, 3048.507813,
+          0.000000, 0.000000, 1.000000, 580.448608,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr4_FenceWicker_1", "fencegr4_FenceWicker_2", "fencegr4_FenceWicker_3", "fencegr4_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "fencegr5_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.006446, 0.999979, 0.000000, 4792.980957,
+          -0.999979, 0.006446, 0.000000, 3026.903076,
+          0.000000, 0.000000, 1.000000, 579.923584,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 14]
+      ]
+    ],
+
+    [
+      "fencegr5_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.998792, -0.049136, 0.000000, 4814.764160,
+          0.049136, -0.998792, 0.000000, 3025.947998,
+          0.000000, 0.000000, 1.000000, 580.033752,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "fencegr5_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.032607, 0.999468, 0.000000, 4814.757813,
+          -0.999468, -0.032607, 0.000000, 3026.087402,
+          0.000000, 0.000000, 1.000000, 580.035889,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 13]
+      ]
+    ],
+
+    [
+      "fencegr5_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.998500, 0.054747, 0.000000, 4793.116699,
+          -0.054747, 0.998500, 0.000000, 2999.136719,
+          0.000000, 0.000000, 1.000000, 580.015747,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 9],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr5",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.998623, 0.052458, 0.000000, 4803.306641,
+          -0.052458, 0.998623, 0.000000, 3012.528076,
+          0.000000, 0.000000, 1.000000, 580.590393,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr5_FenceWicker_1", "fencegr5_FenceWicker_2", "fencegr5_FenceWicker_3", "fencegr5_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "fencegr6_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.050583, -0.998720, 0.000000, 4848.246582,
+          0.998720, -0.050583, 0.000000, 2997.617432,
+          0.000000, 0.000000, 1.000000, 580.247192,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 15]
+      ]
+    ],
+
+    [
+      "fencegr6_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999841, 0.017837, 0.000000, 4828.286621,
+          -0.017837, 0.999841, 0.000000, 2998.014893,
+          0.000000, 0.000000, 1.000000, 580.069275,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 10]
+      ]
+    ],
+
+    [
+      "fencegr6_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.016726, -0.999860, 0.000000, 4828.222656,
+          0.999860, -0.016726, 0.000000, 2997.772949,
+          0.000000, 0.000000, 1.000000, 580.068115,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 13]
+      ]
+    ],
+
+    [
+      "fencegr6_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.997782, 0.066564, 0.000000, 4846.640137,
+          -0.066564, -0.997782, 0.000000, 3027.517090,
+          0.000000, 0.000000, 1.000000, 580.229980,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 6],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr6",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.997638, 0.068686, 0.000000, 4837.543945,
+          -0.068686, -0.997638, 0.000000, 3011.917480,
+          0.000000, 0.000000, 1.000000, 580.768311,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr6_FenceWicker_1", "fencegr6_FenceWicker_2", "fencegr6_FenceWicker_3", "fencegr6_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "fencegr7_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.018472, 0.999829, 0.000000, 4828.529785,
+          -0.999829, -0.018472, 0.000000, 2988.027100,
+          0.000000, 0.000000, 1.000000, 580.073059,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "fencegr7_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.999883, -0.015265, 0.000000, 4850.332520,
+          0.015265, -0.999883, 0.000000, 2987.725586,
+          0.000000, 0.000000, 1.000000, 580.289246,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "fencegr7_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.001659, 0.999999, 0.000000, 4850.737793,
+          -0.999999, -0.001659, 0.000000, 2987.865967,
+          0.000000, 0.000000, 1.000000, 580.293518,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "fencegr7_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999793, 0.020320, 0.000000, 4830.807129,
+          -0.020320, 0.999793, 0.000000, 2956.385742,
+          0.000000, 0.000000, 1.000000, 580.127319,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 10],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr7",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.999748, 0.022461, 0.000000, 4839.566895,
+          -0.022461, 0.999748, 0.000000, 2971.943848,
+          0.000000, 0.000000, 1.000000, 580.793945,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr7_FenceWicker_1", "fencegr7_FenceWicker_2", "fencegr7_FenceWicker_3", "fencegr7_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "Deco_home1",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.075857, 0.990492, -0.114763, 4327.293457,
+          -0.997083, 0.076326, -0.000309, 5398.458496,
+          0.008453, 0.114451, 0.993393, 646.105530,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr7deco_FenceWicker_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.999548, -0.030049, 0.000000, 4323.894043,
+          0.030049, 0.999548, 0.000000, 5379.935059,
+          0.000000, 0.000000, 1.000000, 645.718872,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "fencegr7deco_FenceWicker_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.037966, 0.999279, 0.000000, 4322.931641,
+          -0.999279, 0.037966, 0.000000, 5401.719238,
+          0.000000, 0.000000, 1.000000, 645.585815,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "fencegr7deco_FenceWicker_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.998503, -0.054693, 0.000000, 4322.768066,
+          0.054693, 0.998503, 0.000000, 5402.112793,
+          0.000000, 0.000000, 1.000000, 645.565063,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "fencegr7deco_FenceWicker_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.027793, -0.999614, 0.000000, 4355.350098,
+          0.999614, -0.027793, 0.000000, 5384.041016,
+          0.000000, 0.000000, 1.000000, 649.295715,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 10],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "fencegr7deco",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.035461, -0.999371, 0.000000, 4339.310059,
+          0.999371, -0.035461, 0.000000, 5391.868164,
+          0.000000, 0.000000, 1.000000, 648.041016,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["fencegr7deco_FenceWicker_1", "fencegr7deco_FenceWicker_2", "fencegr7deco_FenceWicker_3", "fencegr7deco_FenceWicker_4"]]
+      ]
+    ],
+
+    [
+      "Deco_well",
+      "InteriorObject",
+      "CWaterWell_1Unit",
+      new Matrix(
+          -0.995241, 0.097440, 0.000000, 4344.841797,
+          -0.097440, -0.995241, 0.000000, 5398.450684,
+          0.000000, 0.000000, 1.000000, 647.592957,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "Deco_well2",
+      "InteriorObject",
+      "CWaterWell_2Unit",
+      new Matrix(
+          -0.995241, 0.097440, 0.000000, 4345.633301,
+          -0.097440, -0.995241, 0.000000, 5398.366211,
+          0.000000, 0.000000, 1.000000, 647.024109,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "Spawn1",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3899.715576,
+          -0.987563, -0.157222, 0.000000, 4056.127197,
+          0.000000, 0.000000, 1.000000, 565.314575,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn2",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4222.716797,
+          -0.987563, -0.157222, 0.000000, 5073.187988,
+          0.000000, 0.000000, 1.000000, 623.373657,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn3",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3569.538330,
+          -0.987563, -0.157222, 0.000000, 4863.266113,
+          0.000000, 0.000000, 1.000000, 590.291138,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn4",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3305.787842,
+          -0.987563, -0.157222, 0.000000, 5028.622559,
+          0.000000, 0.000000, 1.000000, 595.137390,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn5",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3492.098389,
+          -0.987563, -0.157222, 0.000000, 5279.967285,
+          0.000000, 0.000000, 1.000000, 606.061523,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn6",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3796.222412,
+          -0.987563, -0.157222, 0.000000, 5426.396973,
+          0.000000, 0.000000, 1.000000, 603.619263,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn7",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4493.015137,
+          -0.987563, -0.157222, 0.000000, 5380.550781,
+          0.000000, 0.000000, 1.000000, 649.780457,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn8",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5426.521484,
+          -0.987563, -0.157222, 0.000000, 5331.387695,
+          0.000000, 0.000000, 1.000000, 668.289856,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn9",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5955.791992,
+          -0.987563, -0.157222, 0.000000, 3983.064453,
+          0.000000, 0.000000, 1.000000, 626.585327,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn10",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 6071.622559,
+          -0.987563, -0.157222, 0.000000, 3291.274658,
+          0.000000, 0.000000, 1.000000, 611.295044,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn11",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 6429.877930,
+          -0.987563, -0.157222, 0.000000, 2612.002930,
+          0.000000, 0.000000, 1.000000, 613.875916,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn12",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5506.311035,
+          -0.987563, -0.157222, 0.000000, 2785.384521,
+          0.000000, 0.000000, 1.000000, 608.107910,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn13",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5436.205566,
+          -0.987563, -0.157222, 0.000000, 3653.371094,
+          0.000000, 0.000000, 1.000000, 591.020691,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn14",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4708.057129,
+          -0.987563, -0.157222, 0.000000, 4212.476074,
+          0.000000, 0.000000, 1.000000, 624.410034,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn15",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4431.218750,
+          -0.987563, -0.157222, 0.000000, 4624.122070,
+          0.000000, 0.000000, 1.000000, 605.228882,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn16",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3471.038330,
+          -0.987563, -0.157222, 0.000000, 3793.453857,
+          0.000000, 0.000000, 1.000000, 596.475159,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn17",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3598.466064,
+          -0.987563, -0.157222, 0.000000, 3854.214844,
+          0.000000, 0.000000, 1.000000, 603.909302,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn18",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3644.210693,
+          -0.987563, -0.157222, 0.000000, 3722.282471,
+          0.000000, 0.000000, 1.000000, 599.586365,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn19",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4675.920898,
+          -0.987563, -0.157222, 0.000000, 4456.729004,
+          0.000000, 0.000000, 1.000000, 618.957275,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn20",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4884.598633,
+          -0.987563, -0.157222, 0.000000, 4773.055664,
+          0.000000, 0.000000, 1.000000, 640.294434,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Reload_1_Ru",
+      "InteriorObject",
+      "CReloadUSSRUnit",
+      new Matrix(
+          -0.045023, 0.998859, -0.015932, 4888.665527,
+          -0.998986, -0.045029, -0.000001, 3010.373047,
+          -0.000719, 0.015916, 0.999873, 580.855408,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Reload_2_Ru",
+      "InteriorObject",
+      "CReloadUSSRUnit",
+      new Matrix(
+          -0.045024, 0.998986, 0.000000, 4320.671387,
+          -0.998986, -0.045024, 0.000000, 5355.335938,
+          0.000000, 0.000000, 1.000000, 645.297791,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Reload_1_Ger",
+      "InteriorObject",
+      "CReloadGerUnit",
+      new Matrix(
+          -0.044270, 0.999020, 0.000000, 5156.275391,
+          -0.999020, -0.044270, 0.000000, 5129.181641,
+          0.000000, 0.000000, 1.000000, 653.247742,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "Reload_2_Ger",
+      "InteriorObject",
+      "CReloadGerUnit",
+      new Matrix(
+          -0.044270, 0.999020, 0.000000, 3679.954102,
+          -0.999020, -0.044270, 0.000000, 4584.406738,
+          0.000000, 0.000000, 1.000000, 586.559265,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Spawn21",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5038.648438,
+          -0.987563, -0.157222, 0.000000, 4508.682617,
+          0.000000, 0.000000, 1.000000, 625.461670,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn22",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5241.183594,
+          -0.987563, -0.157222, 0.000000, 4721.323242,
+          0.000000, 0.000000, 1.000000, 613.975220,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn23",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4897.015625,
+          -0.987563, -0.157222, 0.000000, 4251.770508,
+          0.000000, 0.000000, 1.000000, 619.731628,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn24",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4469.467773,
+          -0.987563, -0.157222, 0.000000, 4278.112305,
+          0.000000, 0.000000, 1.000000, 609.429749,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn25",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3830.760010,
+          -0.987563, -0.157222, 0.000000, 4410.440918,
+          0.000000, 0.000000, 1.000000, 580.794006,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn26",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3614.119873,
+          -0.987563, -0.157222, 0.000000, 4240.290527,
+          0.000000, 0.000000, 1.000000, 574.030396,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn27",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3432.405762,
+          -0.987563, -0.157222, 0.000000, 3630.388672,
+          0.000000, 0.000000, 1.000000, 591.919067,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn28",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3245.218994,
+          -0.987563, -0.157222, 0.000000, 4253.940430,
+          0.000000, 0.000000, 1.000000, 589.030090,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn29",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3268.344482,
+          -0.987563, -0.157222, 0.000000, 4600.414063,
+          0.000000, 0.000000, 1.000000, 598.627991,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn30",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4970.440918,
+          -0.987563, -0.157222, 0.000000, 3860.715576,
+          0.000000, 0.000000, 1.000000, 595.478455,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn31",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4705.758789,
+          -0.987563, -0.157222, 0.000000, 3998.892578,
+          0.000000, 0.000000, 1.000000, 620.549866,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn32",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4134.639160,
+          -0.987563, -0.157222, 0.000000, 4597.976074,
+          0.000000, 0.000000, 1.000000, 589.691833,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn33",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5264.441406,
+          -0.987563, -0.157222, 0.000000, 3751.062744,
+          0.000000, 0.000000, 1.000000, 589.820557,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn34",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4882.410645,
+          -0.987563, -0.157222, 0.000000, 4557.578613,
+          0.000000, 0.000000, 1.000000, 629.839783,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn35",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4961.977539,
+          -0.987563, -0.157222, 0.000000, 4944.721191,
+          0.000000, 0.000000, 1.000000, 658.334778,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn36",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4343.249023,
+          -0.987563, -0.157222, 0.000000, 5423.231934,
+          0.000000, 0.000000, 1.000000, 644.721252,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn37",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4501.889160,
+          -0.987563, -0.157222, 0.000000, 5099.163574,
+          0.000000, 0.000000, 1.000000, 647.677368,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn38",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3854.611572,
+          -0.987563, -0.157222, 0.000000, 4728.677734,
+          0.000000, 0.000000, 1.000000, 594.655090,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn39",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3994.910889,
+          -0.987563, -0.157222, 0.000000, 4474.342773,
+          0.000000, 0.000000, 1.000000, 581.232483,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn40",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3932.076172,
+          -0.987563, -0.157222, 0.000000, 3739.158447,
+          0.000000, 0.000000, 1.000000, 593.856689,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn41",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3345.068359,
+          -0.987563, -0.157222, 0.000000, 4059.039307,
+          0.000000, 0.000000, 1.000000, 593.763855,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn42",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4870.293945,
+          -0.987563, -0.157222, 0.000000, 5253.922852,
+          0.000000, 0.000000, 1.000000, 653.470642,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn43",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5593.465332,
+          -0.987563, -0.157222, 0.000000, 4131.230469,
+          0.000000, 0.000000, 1.000000, 618.950195,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn44",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5394.263184,
+          -0.987563, -0.157222, 0.000000, 3952.191895,
+          0.000000, 0.000000, 1.000000, 615.361877,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn45",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 5436.727539,
+          -0.987563, -0.157222, 0.000000, 4477.279297,
+          0.000000, 0.000000, 1.000000, 616.676025,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn46",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4561.662109,
+          -0.987563, -0.157222, 0.000000, 5199.040527,
+          0.000000, 0.000000, 1.000000, 643.511963,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn47",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 3984.103760,
+          -0.987563, -0.157222, 0.000000, 4982.661133,
+          0.000000, 0.000000, 1.000000, 606.879333,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ],
+
+    [
+      "Spawn48",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.157222, 0.987563, 0.000000, 4493.898926,
+          -0.987563, -0.157222, 0.000000, 4949.585938,
+          0.000000, 0.000000, 1.000000, 638.812439,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true]
+      ]
+    ]
+  ];
+
+  static Array  m_MissionCameraScriptList  = [
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "Default"],
+        []
+      ]
+    ]
+  ];
+
+  static Array  m_TriggersList = [
+  ];
+
+  Array GetMissionObjectList()
+  {
+    return m_MissionObjectList;
+  }
+
+  Array GetMissionCameraScriptList()
+  {
+    return m_MissionCameraScriptList;
+  }
+
+  Array GetTriggersList()
+  {
+    return m_TriggersList;
+  }
+
+  String GetObjectListClassFile()
+  {
+    return m_ObjectListClassFile;
+  }
+
+  String GetObjectListClassName()
+  {
+    return m_ObjectListClassName;
+  }
+}

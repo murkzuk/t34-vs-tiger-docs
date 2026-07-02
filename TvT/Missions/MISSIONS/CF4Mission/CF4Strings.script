@@ -1,0 +1,21 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+//-----------------
+//  Mission strings
+//-----------------
+class CCF4Mission_Strings extends CCommonStrings
+{
+  final static WString MissionName     = getLocalized("CF4", "MissionName");
+  final static WString BriefingText    = getLocalized("CF4", "BriefingText");
+  final static WString ObjectivesText  = getLocalized("CF4", "ObjectivesText");
+  final static WString Objective01     = getLocalized("CF4", "Objectiver1");
+  final static WString Objective02     = getLocalized("CF4", "Objectiver2");
+  final static WString str_NavPoint_VP = getLocalized("CF4", "VP");
+}

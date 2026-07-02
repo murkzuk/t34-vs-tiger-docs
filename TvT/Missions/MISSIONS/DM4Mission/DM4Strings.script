@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-----------------------------------------------------------------
+
+//-----------------
+//  Mission strings
+//-----------------
+class CDM4Mission_Strings extends CCommonStrings
+{
+  final static Array m_MissionObjectives =
+    [
+      getLocalized("DM4", "Objective01")
+    ];
+
+  Array m_MissionObjectivesStatuses = new Array
+    ([
+    ]);
+
+  final static Array m_BonusMissionObjectives =
+    [
+    ];
+
+  Array m_BonusMissionObjectivesStatuses = new Array
+    ([
+    ]);
+
+  //
+  //  Briefing
+  //
+
+  final static Array m_BriefingTexts =
+    [
+    ];
+
+  final static Array m_BriefingMaterials =
+    [
+    ];
+
+  final static WString MissionName  = getLocalized("DM4", "MissionName");
+  final static WString BriefingText = getLocalized("DM4", "BriefingText");
+  final static WString Objective01  = getLocalized("DM4", "Objective01");
+}

@@ -1,0 +1,484 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCF6Mission extends CDMMission, CCF6Mission_Strings, CMissionStatus
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+
+  static int MaxPlayers          = 16;
+
+  String m_LocalTime             = "6:20:00";
+  String m_TerrainMapTextureName = "Textures/CF6_Map.tex"; //Textures/C1M3_Map.tex
+
+  static String m_MissionBriefingPicMaterial = "CF6BriefingPic"; //C1M3BriefingPic
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary,   CCF6Mission_Strings::Objective01, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF6Mission_Strings::Objective02, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF6Mission_Strings::Objective03, MOSID_InProgress, true,  1/*team (blue)*/],
+      [MOTID_Primary,   CCF6Mission_Strings::Objective04, MOSID_InProgress, true,  1/*team (blue)*/]
+                               ];
+  boolean isDebug            = true;
+  boolean isRadarUpdateDebug = false;
+
+/*  boolean isCapturedRed      = false;
+  boolean isCapturedBlue     = false;
+  boolean isCapturedNewt1    = false;
+  boolean isCapturedNewt2    = false;
+  boolean isCapturedNewt3    = false;
+  boolean isCapturedNewt4    = false;
+
+  int RedControlledNPR   = 0;
+  int RedControlledNPB   = 1;
+  int RedControlledNPN1  = 2;
+  int RedControlledNPN2  = 2;
+  int RedControlledNPN3  = 2;
+  int RedControlledNPN4  = 2;
+
+  int VictoryCountRed   = 1;
+  int VictoryCountBlue  = 1;
+
+ *
+ *
+ */
+
+  // Status - 0 - Clear 1 - Red 2- Blue
+  int StatusControlNPRed   = 0;
+  int StatusControlNPBlue   = 0;
+  int StatusControlNPNewt1  = 0;
+  int StatusControlNPNewt2  = 0;
+  int StatusControlNPNewt3  = 0;
+  int StatusControlNPNewt4  = 0;
+
+  int PointOldStatus = 0;
+  int PointCurrentStatus =0;
+  int VicCountRed = 0;
+  int VicCountBlue = 0;
+
+  Array ConqNavPoints = [ "NavPointRed","NavPointBlue", "NavPointNewt1","NavPointNewt2","NavPointNewt3","NavPointNewt4"];
+
+
+
+
+
+
+  Array m_NavpointsForPlayerMap = [
+      [
+        ["NavPointRed"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColorNewtral
+      ],
+      [
+        ["NavPointNewt1"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColorNewtral
+      ],
+      [
+        ["NavPointNewt2"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColorNewtral
+      ],
+      [
+        ["NavPointNewt3"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColorNewtral
+      ],
+      [
+        ["NavPointNewt4"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColorNewtral
+      ],
+      [
+        ["NavPointBlue"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(244.0/256.0, 255.0/256.0, 215.0/256.0)   // NavColorNewtral
+      ]
+                                   ];
+
+//  float  CockpitMapMinRange        = 300.0;
+//  float  CockpitMapMaxRange        = 1800.0;
+//  float  CockpitMapNavNameMaxRange = 1800.0;
+//  int    CockpitMapZoomSteps       = 10;
+
+  float  CockpitMapMinRange        = 600.0;
+  float  CockpitMapMaxRange        = 2100.0;
+  float  CockpitMapNavNameMaxRange = 1200.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+//  Vector MarksInitPoint            = new Vector(0.0, 0.0, 0.0);
+//  Array  CockpitMapAccessBox       = [new Vector(2502, 1582.0, 0.0), new Vector(7002.0, 6082.0, 0.0)];
+  Array  CockpitMapAccessBox       = [new Vector(3868, 2488.0, 0.0), new Vector(6120.0, 4740.0, 0.0)];
+
+
+  final static Array RouterWorkingZones = [
+    [1000.0 , 1000.0, 8000.0, 8000.0]
+                                          ];
+
+  void CCF6Mission()
+  {
+    // Construct mission
+    CDMMission("CCF6Mission", "CCF6Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CCF6Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CCF6Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky01Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare =  new #LensFlare<CLensFlare>();
+    SetMissionWorldMatrices(new #WorldMatrices<CCF6WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME,         "CCF6LandscapeLayer"],
+        [LAYER_TERRAIN_ZONE,         "CCF6TerrainZoneLayer"],
+        [LAYER_MICROTEXTURE_MAP1,    "CCF6MicroTextures1"],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CCF6WaterHeights"]
+      ]);
+
+//    SetRouterPrecalculatedGraph(
+//      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+//    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CDMMission::StartMission();
+//    Component console = new #GameController().GetObject(SOID_Console);
+//    console.disablebeh();
+//    console.showbehinf(true);
+    fireEvent(0.0, [], "MissionStarted", []);
+//    fireEvent(1200.0, [], "TimeOfMissionEnd", []);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CDMMission::OnObjectDestroyed(_ObjectID);
+    Component DeadThing = GetObject(_ObjectID);
+
+    if(isDebug)
+      logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String(DeadThing.GetLastDamager()));
+
+//    if ((new #GameController()).GetGameMode() != "Server")
+//      return;
+  int Team = GetPlayerTeamByUnitID(_ObjectID);
+  if ((Team == 1) || (Team == 0))
+  {
+    logWarning("Object has TEAM =" + new String (Team));
+
+    int q = ConqNavPoints.size();
+    logWarning(" ConqNavPoints.size q = " + new String (q));
+    for (int i=0;i<q;i++)
+     {
+       logWarning("Check Navponit ON Object destroyed: " + _ObjectID + ", NavPoint: " + new String(ConqNavPoints[i]));
+       CheckPoints(ConqNavPoints[i]);
+     }
+   }
+  }
+
+  void OnObjectLeaveNavPoint(String _NavPointID, String _ObjectID)
+  {
+   if (isDebug)
+   logWarning("Object: " + _ObjectID + " Leave NavPoint: " +  _NavPointID);
+   // if ((new #GameController()).GetGameMode() != "Server")
+   //   return;
+
+    int   NP=ConqNavPoints.find(_NavPointID);
+    logWarning(" LEAVE NP= " + new String (NP));
+    if (NP!=-1)
+       {
+       CheckPoints(_NavPointID);
+       }
+
+
+  }
+
+  void OnObjectEnterNavPoint (String _NavPointID, String _ObjectID)
+  {
+    if (isDebug)
+      logWarning("Object: " + _ObjectID + " enter NavPoint: " +  _NavPointID);
+
+ //   if ((new #GameController()).GetGameMode() != "Server")
+ //      return;
+
+    int   NP=ConqNavPoints.find(_NavPointID);
+    logWarning("ENTER NP= " + new String (NP));
+    if (NP!=-1)
+       {
+       CheckPoints(_NavPointID);
+       }
+
+  }
+  ///////////////////////////////////////////////////////////////////////////
+  /////////Check Capture points//////////////////////////////////////////////
+  void CheckPoints(String _NavPointID)
+  {
+     if ((new #GameController()).GetGameMode() != "Server")
+     {  logWarning("CALL IS DROPPED - Client call  function");
+        return;
+     }
+
+    logWarning("Check_enter_NavPoint: " +  _NavPointID);
+    Array UnitsInNavPoint = GetObject(_NavPointID).GetDetectedList();
+    int PointBlueUnits = 0;
+    int PointRedUnits  = 0;
+ //   int PointOldStatus = 0;     // move to global values
+ //   int PointCurrentStatus =0;  // move to global values
+    int j;
+
+    Component Session = (new #GameController()).GetGameSession();
+
+
+    if (_NavPointID == "NavPointRed")   {PointOldStatus = StatusControlNPRed;}
+    if (_NavPointID == "NavPointBlue")  {PointOldStatus = StatusControlNPBlue;}
+    if (_NavPointID == "NavPointNewt1") {PointOldStatus = StatusControlNPNewt1;}
+    if (_NavPointID == "NavPointNewt2") {PointOldStatus = StatusControlNPNewt2;}
+    if (_NavPointID == "NavPointNewt3") {PointOldStatus = StatusControlNPNewt3;}
+    if (_NavPointID == "NavPointNewt4") {PointOldStatus = StatusControlNPNewt4;}
+
+
+    j=UnitsInNavPoint.size();
+    logWarning("UnitsInNavPoint.size() =" + new String (j));
+
+        for (int i = 0; i < UnitsInNavPoint.size(); i++)
+     {
+      logMessage(" check unit " + UnitsInNavPoint[i]);
+      int Team = GetPlayerTeamByUnitID(UnitsInNavPoint[i]);
+      logWarning("Continue_For_Team TEAM =" + new String (Team));
+
+      if ((Team != 1) && (Team != 0))
+      {
+        logError("Object has no team RETURN from CheckPoints(), Team =" + new String (Team));
+        return;
+      }
+
+        if (Team == 1)
+            PointBlueUnits = PointBlueUnits + 1;
+        if (Team == 0)
+           PointRedUnits  = PointRedUnits + 1;
+     }
+
+         logWarning("PointBlueUnits =" + new String (PointBlueUnits));
+         logWarning("PointRedUnits =" + new String (PointRedUnits));
+
+     if (PointRedUnits > PointBlueUnits) {PointCurrentStatus =1;}
+
+
+     if (PointRedUnits < PointBlueUnits) {PointCurrentStatus =2;}
+
+
+     if  (PointCurrentStatus != PointOldStatus)
+      {
+        if (_NavPointID == "NavPointRed")   {StatusControlNPRed = PointCurrentStatus;}
+        if (_NavPointID == "NavPointBlue")  {StatusControlNPBlue  = PointCurrentStatus;}
+        if (_NavPointID == "NavPointNewt1") {StatusControlNPNewt1 = PointCurrentStatus;}
+        if (_NavPointID == "NavPointNewt2") {StatusControlNPNewt2 = PointCurrentStatus;}
+        if (_NavPointID == "NavPointNewt3") {StatusControlNPNewt3 = PointCurrentStatus;}
+        if (_NavPointID == "NavPointNewt4") {StatusControlNPNewt4 = PointCurrentStatus;}
+      }
+
+     if  (PointCurrentStatus == PointOldStatus)
+      {
+        logWarning("PointCurrentStatus =" + new String (PointCurrentStatus));
+        logWarning("PointOldStatus =" + new String (PointOldStatus));
+        logError("PointOldStatus = PointCurrentStatus RETURN from CheckPoints()");
+        return;
+      }
+
+
+
+       logWarning("PointCurrentStatus" + new String (PointCurrentStatus));
+       logWarning("PointOldStatus" + new String (PointOldStatus));
+
+
+
+     if  ((PointCurrentStatus == 1) && (PointOldStatus == 0))
+        {
+          VicCountRed ++;
+          SetNavpointColor (_NavPointID, new Color  (255.0/255.0, 0.0/256.0, 0.0/256.0)); //change for red color
+          Session.FireNetEvent("SetNavpointColor", [_NavPointID, new Color  (255.0/255.0, 0.0/256.0, 0.0/256.0)]);
+          logWarning("[CheckUnitInNavPointRed]Change_for_Red_Color");
+
+        }
+
+     if  ((PointCurrentStatus == 2) && (PointOldStatus == 0))
+        {
+          VicCountBlue ++;
+          SetNavpointColor (_NavPointID, new Color  (0.0/256.0, 0.0/256.0, 255.0/255.0)); //change for blue color
+          Session.FireNetEvent("SetNavpointColor", [_NavPointID, new Color  (0.0/256.0, 0.0/256.0, 255.0/255.0)]);
+          logWarning("[CheckUnitInNavPointBlue]Change_for_Blue_Color");
+
+        }
+     if  ((PointCurrentStatus == 1) && (PointOldStatus == 2))
+        {
+          VicCountRed ++;
+          VicCountBlue --;
+          SetNavpointColor (_NavPointID, new Color  (255.0/255.0, 0.0/256.0, 0.0/256.0)); //change for red color
+          Session.FireNetEvent("SetNavpointColor", [_NavPointID, new Color  (255.0/255.0, 0.0/256.0, 0.0/256.0)]);
+          logWarning("[CheckUnitInNavPointRed]Change_for_Red_Color");
+
+        }
+     if  ((PointCurrentStatus == 2) && (PointOldStatus == 1))
+        {
+          VicCountBlue ++;
+          VicCountRed --;
+          SetNavpointColor (_NavPointID, new Color  (0.0/256.0, 0.0/256.0, 255.0/255.0)); //change for blue color
+          Session.FireNetEvent("SetNavpointColor", [_NavPointID, new Color  (0.0/256.0, 0.0/256.0, 255.0/255.0)]);
+          logWarning("[CheckUnitInNavPointBlue]Change_for_Blue_Color");
+         }
+
+
+     if (VicCountBlue==6)
+        {
+          sendEvent(5.0, SOID_MissionController, "BlueTeamVictory", []);
+       //  Session.FireNetEvent(5.0, SOID_MissionController, "BlueTeamVictory", []);
+         logError("BlueTeamVictory SEND");
+         logWarning("VicCountBlue =" + new String (VicCountBlue));
+        }
+
+
+     if (VicCountRed ==6)
+        {
+          sendEvent(5.0, SOID_MissionController, "RedTeamVictory", []);
+       //  Session.FireNetEvent(5.0, SOID_MissionController, "RedTeamVictory", []);
+         logError("RedTeamVictory SEND");
+         logWarning("VicCountRed =" + new String (VicCountRed));
+
+        }
+
+       logWarning("VicCountRed =" + new String (VicCountRed));
+       logWarning("VicCountBlue =" + new String (VicCountBlue));
+
+
+ }
+
+
+
+  void Shutdown()
+  {
+    CDMMission::Shutdown();
+  }
+
+  event void RedTeamVictory()
+  {
+    logWarning("RedTeamVictorious");
+    Component Session = (new #GameController()).GetGameSession();
+    Session.FireNetEvent("CompleteObjective", [0]);
+    Session.FireNetEvent("CompleteObjective", [1]);
+    Session.FireNetEvent("FailObjective", [2]);
+    Session.FireNetEvent("FailObjective", [3]);
+    CompleteObjective(0);
+    CompleteObjective(1);
+    FailObjective(2);
+    FailObjective(3);
+
+    logWarning("CloseCFMission");
+
+    logWarning("CloseCFMission by points Blue");
+//    sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+
+
+    sendEvent(0.0, getIdentificator(this), "CloseCFMission", []);
+    Component Session = (new #GameController()).GetGameSession();
+    Session.FireNetEvent("CloseCFMission", []);
+  }
+
+  event void BlueTeamVictory()
+  {
+    logWarning("BlueTeamVictorious");
+      Component Session = (new #GameController()).GetGameSession();
+      Session.FireNetEvent("CompleteObjective", [2]);
+      Session.FireNetEvent("CompleteObjective", [3]);
+      CompleteObjective(2);
+      CompleteObjective(3);
+      FailObjective(0);
+      FailObjective(1);
+      Session.FireNetEvent("FailObjective", [0]);
+      Session.FireNetEvent("FailObjective", [1]);
+    logWarning("CloseCFMission");
+
+    logWarning("CloseCFMission by points Blue");
+//    sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+
+
+    sendEvent(0.0, getIdentificator(this), "CloseCFMission", []);
+
+//    Session.FireNetEvent("CloseCFMission", []);
+    logWarning("CloseCFMission by points Blue");
+  }
+
+/*  event void CheckCFMissionStatus()
+  {
+    Component Session = new #GameController().GetGameSession();
+    Array PlayersInfo = Session.GetPlayersInfo();
+
+    int RedTeamCount = 0;
+    int BlueTeamCount = 0;
+
+    for (int i = 0; i < PlayersInfo.size(); i++)
+    {
+      if ((0 == PlayersInfo[i].SessionTeam) && (PlayersInfo[i].SessionDeaths == 0))
+        RedTeamCount++;
+
+      if ((1 == PlayersInfo[i].SessionTeam) && (PlayersInfo[i].SessionDeaths == 0))
+        BlueTeamCount++;
+    }
+
+    if (0 == BlueTeamCount)
+    {
+      CompleteObjective(0);
+      CompleteObjective(1);
+      FailObjective(2);
+      FailObjective(3);
+    }
+
+    if (0 == RedTeamCount)
+    {
+      CompleteObjective(2);
+      CompleteObjective(3);
+      FailObjective(0);
+      FailObjective(1);
+    }
+
+    if ((0 == BlueTeamCount) || (0 == RedTeamCount))
+    {
+     logWarning("CloseCFMission");
+      sendEvent(0.0, getIdentificator(this), "CloseCFMission", []);
+    }
+  }
+ */
+
+  static void SetDefaultMultiplayerSettings()
+  {
+    FragLimit   = 0;
+    TimeLimit   = 0;
+    ControlMode = MCM_Both;
+    AvailablePlayerUnits = [ true, true ];
+  }
+
+/*  event void TimeOfMissionEnd()
+  {
+    FailObjective(0);
+    FailObjective(1);
+    CompleteObjective(2);
+    FailObjective(3);
+    logWarning("CloseCFMission");
+    sendEvent(5.0, getIdentificator(this), "CloseCFMission", []);
+  } */
+}

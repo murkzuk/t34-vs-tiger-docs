@@ -1,0 +1,3032 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//  Automatically-generated mission script file
+//  DO NOT EDIT!
+//
+//-------------------------------------------------------------------
+
+
+class CCF3Content
+{
+  static String m_ObjectListClassFile = "Missions/MISSIONS/CF3Mission/Content.script";
+  static String m_ObjectListClassName = "CCF3Content";
+
+  static Array  m_MissionObjectList   = [
+    [
+      "Atmosphere",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["AmbientLight", new Color(0.117647, 0.117647, 0.125490, 1.000000)],
+        ["AntiSunAngle", 10.000000],
+        ["AntiSunColor", new Color(0.811765, 0.819608, 0.854902, 1.000000)],
+        ["AntiSunIntensity", 0.400000],
+        ["EnableHorizontAdjustment", true],
+        ["FogColorXPos", new Color(0.976471, 0.988235, 1.000000, 1.000000)],
+        ["FogColorXNeg", new Color(0.976471, 0.988235, 1.000000, 1.000000)],
+        ["FogColorYPos", new Color(0.976471, 0.988235, 1.000000, 1.000000)],
+        ["FogColorYNeg", new Color(0.976471, 0.988235, 1.000000, 1.000000)],
+        ["FogDensity", 0.000500],
+        ["FogNear", 10.000000],
+        ["FogFar", 800.000000],
+        ["FogFarMax", 3500.000000],
+        ["FogMode", "Exp"],
+        ["ShadowColor", new Color(0.325490, 0.325490, 0.325490, 1.000000)],
+        ["SunColor", new Color(1.000000, 1.000000, 1.000000, 1.000000)],
+        ["SunDirection", new Vector(-0.005952, -0.155542, -0.305348)],
+        ["SunIntensity", 1.000000],
+        ["TreeLightKoef", 0.400000],
+        ["TreeNormalRelax", 0.000000],
+        ["TreeShadowLodDistance", 25.000000],
+        ["AntiSunHorAngle", 105.000000]
+      ]
+    ],
+
+    [
+      "Terrain",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["ForestTextureScale", 0.500000],
+        ["ForestShadowBorderScale", 0.400000],
+        ["ForestShadowAlphaScale", 0.500000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],
+        ["IsAntiLighting", true],
+        ["TerrainShadowPower", 1.000000],
+        ["VertForestDistMin", 800.000000],
+        ["VertForestDistMax", 8000.000000],
+        ["VertForestAngleMin", 0.000000],
+        ["VertForestAngleMax", 45.000000],
+        ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+        ["WaterBorderColor", new Color(0.556863, 0.521569, 0.443137, 1.000000)],
+        ["WaterFresnelPower", 2.000000],
+        ["NormalNoise", 0.300000]
+      ]
+    ],
+
+    [
+      "Village",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.841173, 0.540767, 0.000000, 4690.302734,
+          -0.540767, 0.841173, 0.000000, 3129.348389,
+          0.000000, 0.000000, 1.000000, 590.644104,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["AdministrativeBuilding", "Village_Group1", "Village_Group2", "Village_Group3", "Village_Group4", "Village_Group5", "Village_Group6", "Village_Group7", "Village_Group8", "Village_Group9", "Village_Micro", "Village_Shed", "Village_Well1"]]
+      ]
+    ],
+
+    [
+      "Village_Micro",
+      "Locator",
+      "CTerrainPatch",
+      new Matrix(
+          -0.531176, 0.847262, 0.000000, 4690.286621,
+          -0.847262, -0.531176, 0.000000, 3154.692139,
+          0.000000, 0.000000, 1.000000, 586.889160,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Dimensions", new Vector(160.000000, 160.000000, 5.940674)],
+        ["TextureName", "Textures/C1M1_Populated01_micro.tex"],
+        ["ZoneName", "Textures/C1M1_Populated01_zone.bmp"],
+        ["BorderSize", 80.000000],
+        ["MaterialID", "Village"]
+      ]
+    ],
+
+    [
+      "AdministrativeBuilding",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.842173, 0.539161, 0.007107, 4703.979004,
+          -0.539107, 0.841689, 0.030390, 3163.054932,
+          0.010403, -0.029425, 0.999513, 586.579529,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Shed",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.529213, -0.848489, 0.000000, 4776.969238,
+          0.848489, 0.529213, 0.000000, 3124.872314,
+          0.000000, 0.000000, 1.000000, 589.464661,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGroundUpright"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Well1",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.841173, 0.540767, 0.000000, 4705.765137,
+          -0.540767, 0.841173, 0.000000, 3176.484863,
+          0.000000, 0.000000, 1.000000, 589.830017,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_Well1_1", "Village_Well1_2"]]
+      ]
+    ],
+
+    [
+      "Village_Well1_1",
+      "InteriorObject",
+      "CWaterWell_1Unit",
+      new Matrix(
+          -0.983374, 0.181589, 0.000000, 4703.536621,
+          -0.181589, -0.983374, 0.000000, 3176.077637,
+          0.000000, 0.000000, 1.000000, 586.273132,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["HitPoints", 100.000000],
+        ["SurfaceControl", "PutonGroundUpright"],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "Village_Well1_2",
+      "InteriorObject",
+      "CWaterWell_2Unit",
+      new Matrix(
+          0.987035, -0.160265, 0.008805, 4703.796875,
+          0.160065, 0.986904, 0.020006, 3176.202881,
+          -0.011896, -0.018338, 0.999761, 586.271240,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Village_Group1",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.841173, 0.540767, 0.000000, 4616.325195,
+          -0.540767, 0.841173, 0.000000, 3131.118408,
+          0.000000, 0.000000, 1.000000, 591.861084,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_FensesGroup1", "Village_House_1"]]
+      ]
+    ],
+
+    [
+      "Village_House_1",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.503420, 0.863765, 0.021863, 4615.024902,
+          -0.863496, -0.503840, 0.022801, 3119.728271,
+          0.030710, -0.007400, 0.999501, 590.483582,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup1",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.841173, 0.540767, 0.000000, 4616.586914,
+          -0.540767, 0.841173, 0.000000, 3131.524658,
+          0.000000, 0.000000, 1.000000, 590.190308,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup1_1", "FensesGroup1_2", "FensesGroup1_3", "FensesGroup1_4", "FensesGroup1_5", "FensesGroup1_6"]]
+      ]
+    ],
+
+    [
+      "FensesGroup1_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.843199, 0.537370, 0.015783, 4617.975098,
+          -0.537587, 0.842602, 0.031956, 3116.272705,
+          0.003873, -0.035431, 0.999365, 590.512817,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "FensesGroup1_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.834208, -0.551222, 0.015836, 4610.829102,
+          0.551431, -0.833602, 0.032102, 3118.919189,
+          -0.004494, 0.035512, 0.999359, 590.543518,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 3],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "FensesGroup1_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.557044, -0.829995, 0.028473, 4622.934082,
+          0.828485, 0.557754, 0.050228, 3113.045898,
+          -0.057570, -0.004390, 0.998332, 590.531494,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "FensesGroup1_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.516716, -0.855688, 0.028335, 4596.924316,
+          0.853302, 0.517411, 0.064512, 3128.279785,
+          -0.069863, -0.009156, 0.997514, 590.320068,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 13]
+      ]
+    ],
+
+    [
+      "FensesGroup1_5",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.840246, -0.542206, -0.000728, 4603.632324,
+          0.541916, -0.839839, 0.031590, 3123.903320,
+          -0.017740, 0.026149, 0.999501, 590.471313,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 4]
+      ]
+    ],
+
+    [
+      "FensesGroup1_6",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.867434, -0.495786, 0.041897, 4635.976563,
+          0.497545, -0.863872, 0.078580, 3135.329102,
+          -0.002765, 0.089009, 0.996027, 588.617188,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 15]
+      ]
+    ],
+
+    [
+      "Village_Group2",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.526331, 0.850280, 0.000000, 4642.119629,
+          -0.850280, -0.526331, 0.000000, 3119.858398,
+          0.000000, 0.000000, 1.000000, 591.360657,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_Corral_2", "Village_FensesGroup2"]]
+      ]
+    ],
+
+    [
+      "Village_Corral_2",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.829712, 0.557929, 0.017115, 4629.240234,
+          -0.558093, 0.828601, 0.044179, 3113.861572,
+          0.010467, -0.046207, 0.998877, 590.411499,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["HitPoints", 200.000000],
+        ["SurfaceControl", "PutonGround"],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup2",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.526331, 0.850280, 0.000000, 4642.250000,
+          -0.850280, -0.526331, 0.000000, 3120.032715,
+          0.000000, 0.000000, 1.000000, 589.989197,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup2_1", "FensesGroup2_2", "FensesGroup2_3", "FensesGroup2_4"]]
+      ]
+    ],
+
+    [
+      "FensesGroup2_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.843392, 0.537068, 0.015725, 4630.335449,
+          -0.537284, 0.842796, 0.031954, 3108.298340,
+          0.003909, -0.035399, 0.999366, 590.639893,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "FensesGroup2_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.558934, -0.828550, 0.033127, 4643.339844,
+          0.825972, 0.559834, 0.066005, 3101.020996,
+          -0.073234, -0.009530, 0.997269, 590.652893,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 16]
+      ]
+    ],
+
+    [
+      "FensesGroup2_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.861804, -0.507241, 0.000000, 4661.211914,
+          0.507241, -0.861804, 0.000000, 3127.421143,
+          0.000000, 0.000000, 1.000000, 588.324341,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "None"],
+        ["Length", 12]
+      ]
+    ],
+
+    [
+      "FensesGroup2_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.552739, 0.832336, 0.041190, 4640.599609,
+          -0.828016, -0.554112, 0.085727, 3139.560303,
+          0.094178, 0.013279, 0.995467, 588.100403,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "Village_Group3",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.655267, -0.755397, 0.000000, 4644.442871,
+          0.755397, 0.655267, 0.000000, 3170.693604,
+          0.000000, 0.000000, 1.000000, 588.887634,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_FensesGroup3", "Village_House_3", "Village_Shed_3"]]
+      ]
+    ],
+
+    [
+      "Village_House_3",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.624986, -0.780476, 0.015786, 4643.399902,
+          0.780261, 0.625185, 0.018357, 3180.790527,
+          -0.024197, 0.000844, 0.999707, 586.657410,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Shed_3",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.720676, -0.693194, 0.010417, 4640.565430,
+          0.693110, -0.720102, 0.032434, 3159.395996,
+          -0.014982, 0.030594, 0.999420, 587.215942,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup3",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.655267, -0.755397, 0.000000, 4644.820313,
+          0.755397, 0.655267, 0.000000, 3170.366699,
+          0.000000, 0.000000, 1.000000, 587.596741,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup3_1", "FensesGroup3_2", "FensesGroup3_3", "FensesGroup3_4", "FensesGroup3_5", "FensesGroup3_6"]]
+      ]
+    ],
+
+    [
+      "FensesGroup3_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.656331, -0.754406, 0.010069, 4626.302734,
+          0.754216, 0.656398, 0.017344, 3166.901611,
+          -0.019694, -0.003789, 0.999799, 587.085388,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "FensesGroup3_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.782406, -0.622576, 0.015496, 4652.537598,
+          0.622765, -0.782248, 0.015869, 3177.678711,
+          0.002242, 0.022066, 0.999754, 586.544373,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 3],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "FensesGroup3_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.695134, -0.718780, 0.012008, 4653.727539,
+          0.718317, 0.695154, 0.027941, 3163.959229,
+          -0.028431, -0.010797, 0.999537, 586.949402,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 7]
+      ]
+    ],
+
+    [
+      "FensesGroup3_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.790726, -0.612128, 0.007239, 4660.669434,
+          0.612013, -0.790200, 0.032003, 3171.136719,
+          -0.013870, 0.029736, 0.999462, 586.655884,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 3],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "FensesGroup3_5",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.694852, -0.718974, 0.016003, 4642.698242,
+          0.718547, 0.695008, 0.025559, 3152.386475,
+          -0.029498, -0.006261, 0.999545, 587.426819,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "FensesGroup3_6",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.750284, 0.661033, 0.010477, 4626.484375,
+          -0.660923, 0.749588, 0.036030, 3167.030518,
+          0.015963, -0.033957, 0.999296, 587.075562,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "Village_Group4",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.775474, -0.631380, 0.000000, 4663.758301,
+          0.631380, -0.775474, 0.000000, 3158.306152,
+          0.000000, 0.000000, 1.000000, 589.062866,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_FensesGroup4", "Village_House_4"]]
+      ]
+    ],
+
+    [
+      "Village_House_4",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.648619, 0.761101, 0.004325, 4672.929688,
+          -0.760870, -0.648545, 0.021585, 3159.856445,
+          0.019234, 0.010710, 0.999758, 586.871033,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup4",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.775474, -0.631380, 0.000000, 4663.758789,
+          0.631380, -0.775474, 0.000000, 3158.306396,
+          0.000000, 0.000000, 1.000000, 587.734375,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup4_1", "FensesGroup4_2", "FensesGroup4_3", "FensesGroup4_4"]]
+      ]
+    ],
+
+    [
+      "FensesGroup4_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.782428, -0.622685, 0.008406, 4669.591797,
+          0.622606, -0.781905, 0.031399, 3169.020264,
+          -0.012979, 0.029801, 0.999472, 586.653870,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 4],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "FensesGroup4_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.760795, 0.648967, 0.005751, 4647.345215,
+          -0.648771, 0.760275, 0.032842, 3157.254883,
+          0.016941, -0.028717, 0.999444, 587.193359,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 12]
+      ]
+    ],
+
+    [
+      "FensesGroup4_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.643919, -0.765079, 0.004732, 4665.153320,
+          0.764399, 0.643586, 0.038621, 3141.605713,
+          -0.032594, -0.021252, 0.999243, 587.589111,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 12]
+      ]
+    ],
+
+    [
+      "FensesGroup4_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.769470, -0.638575, 0.011746, 4680.419922,
+          0.638622, -0.769013, 0.027924, 3160.112549,
+          -0.008799, 0.028988, 0.999541, 586.797546,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Length", 5],
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Village_Group5",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.548871, -0.835907, 0.000000, 4733.239258,
+          0.835907, 0.548871, 0.000000, 3148.538330,
+          0.000000, 0.000000, 1.000000, 589.450439,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_Corral_5", "Village_FensesGroup5", "Village_House_5"]]
+      ]
+    ],
+
+    [
+      "Village_House_5",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.598641, 0.800822, -0.017704, 4736.521484,
+          -0.800950, -0.598158, 0.026188, 3135.406738,
+          0.010383, 0.029857, 0.999500, 587.700867,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Corral_5",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.826766, 0.562227, -0.018929, 4725.317383,
+          -0.561514, 0.826820, 0.032730, 3153.980469,
+          0.034053, -0.016431, 0.999285, 586.918152,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 200.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup5",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.548871, -0.835907, 0.000000, 4730.881348,
+          0.835907, 0.548871, 0.000000, 3151.437988,
+          0.000000, 0.000000, 1.000000, 587.664978,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup5_1", "FensesGroup5_2", "FensesGroup5_3", "FensesGroup5_4"]]
+      ]
+    ],
+
+    [
+      "FensesGroup5_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.555309, -0.831644, -0.000084, 4714.923340,
+          0.831388, 0.555135, 0.024863, 3147.674805,
+          -0.020631, -0.013876, 0.999691, 587.045227,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 12]
+      ]
+    ],
+
+    [
+      "FensesGroup5_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.825833, 0.563913, -0.001028, 4714.954590,
+          -0.563539, 0.825349, 0.034961, 3147.744385,
+          0.020564, -0.028293, 0.999388, 587.049194,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "FensesGroup5_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.540736, -0.840883, -0.022808, 4736.894043,
+          0.841014, 0.539865, 0.035214, 3140.113281,
+          -0.017298, -0.038223, 0.999119, 587.562561,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "FensesGroup5_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.830990, 0.555771, -0.023950, 4728.149414,
+          -0.555381, 0.831324, 0.021276, 3167.688232,
+          0.031735, -0.004379, 0.999487, 586.541138,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "Village_Group6",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.816739, 0.577008, 0.000000, 4748.984863,
+          -0.577008, 0.816739, 0.000000, 3137.484375,
+          0.000000, 0.000000, 1.000000, 589.299561,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_FensesGroup6", "Village_Shed_6"]]
+      ]
+    ],
+
+    [
+      "Village_Shed_6",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          0.821417, 0.569267, -0.034758, 4759.464844,
+          -0.568551, 0.822143, 0.028811, 3140.759033,
+          0.044977, -0.003904, 0.998980, 588.162109,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup6",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.816739, 0.577008, 0.000000, 4748.813965,
+          -0.577008, 0.816739, 0.000000, 3137.241943,
+          0.000000, 0.000000, 1.000000, 588.687256,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup6_1", "FensesGroup6_2", "FensesGroup6_3", "FensesGroup6_4"]]
+      ]
+    ],
+
+    [
+      "FensesGroup6_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.825946, 0.563516, -0.016179, 4736.923340,
+          -0.562882, 0.825928, 0.031735, 3139.963135,
+          0.031246, -0.017104, 0.999365, 587.571472,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "FensesGroup6_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.816345, 0.577134, -0.022299, 4747.220215,
+          -0.575814, 0.816267, 0.046332, 3124.213379,
+          0.044942, -0.024983, 0.998677, 588.312134,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "FensesGroup6_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.562629, -0.825564, -0.043499, 4751.916016,
+          0.826636, 0.561101, 0.042872, 3120.615479,
+          -0.010986, -0.060079, 0.998133, 588.578003,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "FensesGroup6_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.838267, -0.544474, -0.029278, 4757.036133,
+          0.543290, -0.838593, 0.039957, 3145.802490,
+          -0.046307, 0.017588, 0.998772, 587.920349,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 7]
+      ]
+    ],
+
+    [
+      "Village_Group7",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.582300, -0.812974, 0.000000, 4706.544434,
+          0.812974, 0.582300, 0.000000, 3125.132080,
+          0.000000, 0.000000, 1.000000, 589.529114,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_FensesGroup7", "Village_House_7", "Village_Shed_7"]]
+      ]
+    ],
+
+    [
+      "Village_House_7",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.581448, -0.813541, 0.008347, 4697.907227,
+          0.812651, 0.581242, 0.041896, 3141.602051,
+          -0.038936, -0.017577, 0.999087, 587.304932,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Shed_7",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.579277, 0.815052, 0.011364, 4699.469238,
+          -0.814640, -0.579355, 0.026635, 3121.778076,
+          0.028293, 0.006172, 0.999581, 587.962830,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup7",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          0.582300, -0.812974, 0.000000, 4706.544434,
+          0.812974, 0.582300, 0.000000, 3125.132324,
+          0.000000, 0.000000, 1.000000, 588.272827,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup7_1", "FensesGroup7_2", "FensesGroup7_3", "FensesGroup7_4", "FensesGroup7_5", "FensesGroup7_6"]]
+      ]
+    ],
+
+    [
+      "FensesGroup7_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.591108, -0.806541, 0.009119, 4681.064453,
+          0.805924, 0.591040, 0.034027, 3127.371338,
+          -0.032834, -0.012765, 0.999379, 587.889771,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 13]
+      ]
+    ],
+
+    [
+      "FensesGroup7_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.822782, -0.568357, -0.000597, 4704.364258,
+          0.568054, -0.822376, 0.031812, 3142.656494,
+          -0.018572, 0.025835, 0.999494, 587.214355,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 5]
+      ]
+    ],
+
+    [
+      "FensesGroup7_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.824805, -0.565405, 0.003830, 4720.538086,
+          0.565138, -0.824165, 0.037025, 3131.051514,
+          -0.017778, 0.032703, 0.999307, 587.595764,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "FensesGroup7_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.820771, -0.571254, 0.002064, 4692.712891,
+          0.571088, -0.820434, 0.027327, 3119.267334,
+          -0.013917, 0.023608, 0.999624, 588.087036,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 7]
+      ]
+    ],
+
+    [
+      "FensesGroup7_5",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.595063, 0.803648, 0.007078, 4712.164551,
+          -0.803155, -0.594970, 0.030873, 3137.065674,
+          0.029022, 0.012687, 0.999498, 587.393921,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "FensesGroup7_6",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.816001, 0.578040, 0.003445, 4698.629395,
+          -0.577743, 0.815358, 0.037486, 3117.444336,
+          0.018859, -0.032579, 0.999291, 588.112427,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 12]
+      ]
+    ],
+
+    [
+      "Village_Group8",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.823523, -0.567282, 0.000000, 4717.593750,
+          0.567282, -0.823523, 0.000000, 3113.811035,
+          0.000000, 0.000000, 1.000000, 590.084290,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_Corral_8", "Village_FensesGroup8", "Village_House_8"]]
+      ]
+    ],
+
+    [
+      "Village_House_8",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          -0.571658, 0.820434, -0.009742, 4724.362793,
+          -0.820223, -0.571127, 0.032361, 3123.032959,
+          0.020987, 0.026490, 0.999429, 587.873718,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Corral_8",
+      "InteriorObject",
+      "CUSRCorralWoodUnit",
+      new Matrix(
+          0.824187, 0.566318, 0.000000, 4712.645996,
+          -0.566318, 0.824187, 0.000000, 3130.060303,
+          0.000000, 0.000000, 1.000000, 587.627991,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGroundUpright"],
+        ["HitPoints", 200.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup8",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.823523, -0.567282, 0.000000, 4723.015625,
+          0.567282, -0.823523, 0.000000, 3110.076416,
+          0.000000, 0.000000, 1.000000, 589.265930,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup8_1", "FensesGroup8_2", "FensesGroup8_3"]]
+      ]
+    ],
+
+    [
+      "FensesGroup8_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.835443, -0.549118, -0.022448, 4741.129395,
+          0.548118, -0.835504, 0.038716, 3116.984863,
+          -0.040015, 0.020041, 0.998998, 588.525146,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 11]
+      ]
+    ],
+
+    [
+      "FensesGroup8_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.576169, -0.816819, -0.028913, 4722.873047,
+          0.817147, 0.574929, 0.041561, 3110.141113,
+          -0.017325, -0.047572, 0.998718, 588.244751,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "FensesGroup8_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.611554, -0.791147, -0.009422, 4713.376953,
+          0.789645, 0.609559, 0.069988, 3097.267090,
+          -0.049627, -0.050241, 0.997503, 589.059326,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "Village_Group9",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.874027, -0.485877, 0.000000, 4732.599609,
+          0.485877, -0.874027, 0.000000, 3104.476807,
+          0.000000, 0.000000, 1.000000, 590.490662,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["Village_FensesGroup9", "Village_House_9", "Village_Shed_9"]]
+      ]
+    ],
+
+    [
+      "Village_House_9",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          0.526771, -0.849508, -0.029123, 4734.208008,
+          0.849817, 0.525618, 0.039204, 3116.988037,
+          -0.017997, -0.045401, 0.998807, 588.280762,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_Shed_9",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          -0.525899, 0.849707, -0.037790, 4744.795410,
+          -0.850178, -0.523842, 0.052796, 3107.783691,
+          0.025065, 0.059893, 0.997890, 589.045166,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Village_FensesGroup9",
+      "ObjectsGroup",
+      "CObjectsGroup",
+      new Matrix(
+          -0.874027, -0.485877, 0.000000, 4732.324219,
+          0.485877, -0.874027, 0.000000, 3103.980713,
+          0.000000, 0.000000, 1.000000, 590.357361,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Contents", ["FensesGroup9_1", "FensesGroup9_2", "FensesGroup9_3", "FensesGroup9_4"]]
+      ]
+    ],
+
+    [
+      "FensesGroup9_1",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.894555, -0.446865, -0.009142, 4734.527832,
+          0.443621, -0.890184, 0.103796, 3086.507080,
+          -0.054521, 0.088795, 0.994557, 590.372681,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 12]
+      ]
+    ],
+
+    [
+      "FensesGroup9_2",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.599500, -0.799795, -0.030465, 4734.440430,
+          0.798582, 0.595178, 0.089607, 3086.530518,
+          -0.053536, -0.078048, 0.995511, 590.363892,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 8]
+      ]
+    ],
+
+    [
+      "FensesGroup9_3",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          0.567927, -0.822217, -0.037657, 4743.396973,
+          0.822631, 0.565516, 0.058903, 3098.829590,
+          -0.027136, -0.064430, 0.997553, 589.505188,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 7]
+      ]
+    ],
+
+    [
+      "FensesGroup9_4",
+      "InteriorObject",
+      "CFenceWickerUnit",
+      new Matrix(
+          -0.842600, -0.537572, -0.032275, 4751.175293,
+          0.536072, -0.842962, 0.045177, 3110.318115,
+          -0.051493, 0.020764, 0.998457, 589.120422,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 4]
+      ]
+    ],
+
+    [
+      "Palisade_1",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.692034, -0.721855, 0.003799, 4507.026367,
+          0.721331, 0.691714, 0.034826, 3188.705322,
+          -0.027768, -0.021360, 0.999386, 586.082947,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_2",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.454276, -0.889982, -0.039569, 4541.994629,
+          0.890848, 0.454059, 0.014830, 3200.564941,
+          0.004768, -0.041987, 0.999107, 586.169434,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_3",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.955487, -0.293567, -0.029371, 4553.177246,
+          0.294050, 0.955693, 0.013629, 3223.908936,
+          0.024069, -0.021658, 0.999476, 586.370178,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_4",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.885683, -0.463412, -0.028555, 4546.860352,
+          0.461775, -0.885610, 0.049586, 3196.052246,
+          -0.048267, 0.030732, 0.998361, 586.486938,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_5",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.483896, -0.874887, -0.020425, 4576.214844,
+          0.875105, 0.483593, 0.018147, 3223.593506,
+          -0.006000, -0.026655, 0.999627, 587.180115,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_6",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.651341, -0.758159, -0.030799, 4589.303711,
+          0.758059, -0.651957, 0.017275, 3244.700928,
+          -0.033177, -0.012095, 0.999376, 587.068909,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_7",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.973379, -0.226291, -0.036400, 4616.231934,
+          0.226337, -0.974045, 0.002897, 3288.343018,
+          -0.036111, -0.005419, 0.999333, 587.671448,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_8",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.456954, 0.888398, -0.044067, 4592.444336,
+          -0.889456, -0.456812, 0.013811, 3291.760742,
+          -0.007861, 0.045507, 0.998933, 586.821045,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_9",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.598345, -0.801222, 0.005185, 4620.952148,
+          0.800523, -0.597525, 0.046116, 3303.520752,
+          -0.033851, 0.031744, 0.998923, 587.895447,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_10",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.595053, -0.801549, -0.058568, 4632.307617,
+          0.801315, -0.597314, 0.033317, 3351.525879,
+          -0.061688, -0.027106, 0.997727, 588.536133,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_11",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.813502, 0.578444, -0.060145, 4632.801758,
+          -0.579315, -0.815096, -0.003555, 3349.423584,
+          -0.051080, 0.031951, 0.998183, 588.597107,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_12",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.814552, 0.580068, 0.005063, 4693.105957,
+          -0.579988, -0.814541, 0.011682, 3193.706787,
+          0.010900, 0.006579, 0.999919, 586.161255,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_13",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.118896, 0.992778, 0.015968, 4695.175781,
+          -0.992906, 0.118903, 0.000554, 3211.128662,
+          -0.001348, -0.015921, 0.999872, 586.094360,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "Palisade_111",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.129211, -0.989659, -0.062287, 4619.917969,
+          0.991611, 0.128740, 0.011543, 3370.534912,
+          -0.003405, -0.063256, 0.997992, 587.173035,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "Palisade_112",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.003299, -0.999937, -0.010694, 4636.129883,
+          0.999734, 0.003054, 0.022869, 3395.343262,
+          -0.022835, -0.010767, 0.999681, 587.635742,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_131",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.923495, -0.381729, -0.037947, 4624.530273,
+          0.382536, 0.923789, 0.016703, 3389.268066,
+          0.028679, -0.029942, 0.999140, 587.327637,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "Palisade_113",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.145238, -0.989395, -0.001754, 4623.136230,
+          0.989325, 0.145249, -0.011807, 3444.902832,
+          0.011936, -0.000021, 0.999929, 586.688477,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_114",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.560557, -0.828074, -0.008326, 4636.589355,
+          0.828006, -0.560618, 0.010654, 3423.939453,
+          -0.013490, -0.000922, 0.999908, 587.029053,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_115",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.102903, -0.994691, -0.000583, 4626.650391,
+          0.994641, -0.102892, -0.010128, 3469.468750,
+          0.010014, -0.001622, 0.999948, 586.987610,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_116",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.342866, -0.939384, -0.000029, 4623.798340,
+          0.939384, -0.342866, 0.000000, 3494.574463,
+          -0.000010, -0.000027, 1.000000, 587.233032,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_117",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.782231, -0.622883, 0.011427, 4694.672852,
+          0.622299, 0.782097, 0.032696, 3213.792969,
+          -0.029302, -0.018465, 0.999400, 586.091064,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 3]
+      ]
+    ],
+
+    [
+      "Palisade_118",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.519695, -0.854343, -0.003756, 4614.704102,
+          0.854212, 0.519685, -0.015815, 3518.401367,
+          0.015463, 0.005010, 0.999868, 587.233154,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_119",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          0.876780, 0.480244, 0.024947, 4704.901855,
+          -0.480881, 0.875926, 0.038829, 3221.103516,
+          -0.003204, -0.046041, 0.998934, 585.707947,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_1111",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.131320, -0.991218, -0.015556, 4519.147949,
+          0.991227, -0.131526, 0.013029, 3120.872803,
+          -0.014961, -0.013709, 0.999794, 588.295715,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 6]
+      ]
+    ],
+
+    [
+      "Palisade_11121",
+      "InteriorObject",
+      "CFencePalisadeUnit",
+      new Matrix(
+          -0.075456, -0.997137, -0.004889, 4524.858398,
+          0.996978, -0.075534, 0.018174, 3077.835205,
+          -0.018491, -0.003503, 0.999823, 589.083984,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["Length", 9]
+      ]
+    ],
+
+    [
+      "Hedge_1",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.296591, 0.954075, -0.042130, 4613.914063,
+          -0.954932, 0.296824, -0.000750, 3305.539307,
+          0.011790, 0.040454, 0.999112, 587.665222,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_2",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.296620, 0.954995, -0.001250, 4608.415527,
+          -0.954909, 0.296610, 0.013052, 3304.662842,
+          0.012835, -0.002678, 0.999914, 587.062927,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_3",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.296008, 0.955185, -0.001270, 4609.058105,
+          -0.955099, 0.295999, 0.013019, 3299.152100,
+          0.012812, -0.002640, 0.999914, 587.135315,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_4",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.294392, 0.955684, -0.001247, 4603.108887,
+          -0.955599, 0.294383, 0.012996, 3297.307861,
+          0.012787, -0.002634, 0.999915, 587.151428,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_5",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.293648, 0.955759, -0.017191, 4590.365723,
+          -0.955911, 0.293642, -0.002921, 3239.328125,
+          0.002256, 0.017291, 0.999848, 587.023560,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_6",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.293530, 0.955797, 0.017118, 4594.343750,
+          -0.955788, 0.293762, -0.013127, 3238.266113,
+          -0.017576, -0.012508, 0.999767, 587.013306,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_7",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.294188, 0.955738, 0.004309, 4501.511719,
+          -0.954560, 0.293595, 0.051156, 3181.279785,
+          0.047626, -0.019163, 0.998681, 586.589600,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_8",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.295060, 0.955469, 0.004284, 4501.369629,
+          -0.954293, 0.294468, 0.051126, 3177.473877,
+          0.047588, -0.019173, 0.998683, 586.785706,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "Hedge_9",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.295935, 0.955198, 0.004295, 4498.958496,
+          -0.954021, 0.295340, 0.051164, 3175.000488,
+          0.047603, -0.019238, 0.998681, 586.922058,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "sandbags_1",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.095505, -0.985331, 0.141423, 4655.781738,
+          0.984156, -0.072145, 0.161964, 3475.010498,
+          -0.149386, 0.154651, 0.976610, 586.724487,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_2",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.865715, -0.495109, 0.073515, 4658.255859,
+          0.485111, -0.866118, -0.120448, 3471.330078,
+          0.123307, -0.068610, 0.989994, 586.961182,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_3",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.906697, -0.421782, 0.000000, 4657.675781,
+          0.421782, 0.906697, 0.000000, 3478.533936,
+          0.000000, 0.000000, 1.000000, 587.300781,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_4",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.098966, -0.988651, 0.113029, 4660.552734,
+          0.983978, -0.114156, -0.136950, 3467.920410,
+          0.148299, 0.097664, 0.984108, 586.651733,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_5",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.050890, -0.998704, 0.000000, 4660.878418,
+          0.998704, -0.050890, 0.000000, 3463.351318,
+          0.000000, 0.000000, 1.000000, 587.202942,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_6",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.708990, -0.705218, 0.000000, 4658.553223,
+          0.705218, 0.708990, 0.000000, 3457.246582,
+          0.000000, 0.000000, 1.000000, 586.992310,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_7",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.034198, -0.997797, 0.056854, 4656.943848,
+          0.993239, -0.040246, -0.108885, 3453.067139,
+          0.110934, 0.052746, 0.992427, 586.852234,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_8",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.794087, -0.606794, 0.035034, 4658.894043,
+          0.606176, -0.794859, -0.027371, 3449.251953,
+          0.044456, -0.000498, 0.999011, 586.828857,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_9",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.437959, -0.898896, 0.013371, 4591.709961,
+          0.889300, 0.431009, -0.152893, 3228.193848,
+          0.131672, 0.078852, 0.988152, 587.896240,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_10",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.945843, -0.324624, 0.000000, 4594.951172,
+          0.324624, 0.945843, 0.000000, 3231.067383,
+          0.000000, 0.000000, 1.000000, 586.921509,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_11",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.438087, -0.898933, 0.000000, 4591.687988,
+          0.898933, -0.438087, 0.000000, 3223.625000,
+          0.000000, 0.000000, 1.000000, 587.005432,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_12",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.905375, -0.422146, -0.045703, 4565.750000,
+          0.423488, 0.905561, 0.024855, 3212.989258,
+          0.030894, -0.041858, 0.998646, 587.012512,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_13",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.294303, -0.955276, -0.028847, 4562.672852,
+          0.955702, 0.294026, 0.013533, 3209.602295,
+          -0.004446, -0.031552, 0.999492, 586.986633,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_14",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          -0.510239, -0.859587, -0.027701, 4562.932129,
+          0.859096, -0.510921, 0.030221, 3204.929932,
+          -0.040131, -0.008378, 0.999159, 587.148804,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_15",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.379374, -0.923590, -0.055292, 4563.067383,
+          0.925241, 0.378572, 0.024731, 3200.465332,
+          -0.001909, -0.060541, 0.998164, 587.227844,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_16",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.219165, -0.975357, -0.025402, 4549.268555,
+          0.974065, 0.217225, 0.063330, 3187.276123,
+          -0.056252, -0.038623, 0.997669, 587.146729,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_17",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.885109, -0.463780, -0.038596, 4552.069336,
+          0.464197, 0.885729, 0.002104, 3190.632080,
+          0.033210, -0.019779, 0.999253, 587.004944,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_18",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.650359, 0.752570, -0.103302, 4550.404785,
+          -0.759484, 0.646832, -0.069227, 3182.902100,
+          0.014721, 0.123478, 0.992238, 587.474915,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "sandbags_19",
+      "GameObject",
+      "CSandBagsUnit",
+      new Matrix(
+          0.650064, 0.759880, 0.000000, 4553.510742,
+          -0.759880, 0.650064, 0.000000, 3179.386963,
+          0.000000, 0.000000, 1.000000, 587.684448,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", 100.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000]
+      ]
+    ],
+
+    [
+      "NavPointRed",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          0.064410, -0.997923, 0.000000, 3617.255127,
+          0.997923, 0.064410, 0.000000, 3671.105713,
+          0.000000, 0.000000, 1.000000, 575.693115,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 7.000000],
+        ["IsVisible", true],
+        ["IsMain", true],
+        ["Name", "CCF3Mission_Strings::str_RedTarget"]
+      ]
+    ],
+
+    [
+      "NavPointBlue",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          -0.665480, -0.746416, 0.000000, 4688.602539,
+          0.746416, -0.665480, 0.000000, 3159.224609,
+          0.000000, 0.000000, 1.000000, 586.774658,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 7.000000],
+        ["IsVisible", true],
+        ["IsMain", true],
+        ["Name", "CCF3Mission_Strings::str_BlueTarget"]
+      ]
+    ],
+
+    [
+      "Spawn1",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.945702, 0.325034, 0.000000, 3595.955322,
+          -0.325034, 0.945702, 0.000000, 3601.019775,
+          0.000000, 0.000000, 1.000000, 581.808899,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn2",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.966227, 0.257693, 0.000000, 3603.389648,
+          -0.257693, 0.966227, 0.000000, 3611.587646,
+          0.000000, 0.000000, 1.000000, 582.145142,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn3",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.982915, 0.184060, 0.000000, 3608.863770,
+          -0.184060, 0.982915, 0.000000, 3623.681396,
+          0.000000, 0.000000, 1.000000, 581.162354,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn4",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.703007, 0.711183, 0.000000, 3653.852783,
+          -0.711183, 0.703007, 0.000000, 3699.211182,
+          0.000000, 0.000000, 1.000000, 572.781860,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn5",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.803225, 0.595675, 0.000000, 3660.091309,
+          -0.595675, 0.803225, 0.000000, 3709.401367,
+          0.000000, 0.000000, 1.000000, 572.540771,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn6",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.767199, 0.641409, 0.000000, 3646.644287,
+          -0.641409, 0.767199, 0.000000, 3689.840088,
+          0.000000, 0.000000, 1.000000, 573.240845,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn7",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.824400, 0.566007, 0.000000, 3666.505127,
+          -0.566007, 0.824400, 0.000000, 3719.037598,
+          0.000000, 0.000000, 1.000000, 574.872131,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn8",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.711334, 0.702854, 0.000000, 3601.656982,
+          -0.702854, 0.711334, 0.000000, 3670.429688,
+          0.000000, 0.000000, 1.000000, 580.144714,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "RedReload_01",
+      "InteriorObject",
+      "CReloadUSSRUnit",
+      new Matrix(
+          0.744912, 0.667151, 0.003933, 3617.210938,
+          -0.667161, 0.744886, 0.006453, 3671.047119,
+          0.001375, -0.007431, 0.999971, 575.735901,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", -1.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Spawn11",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.992537, 0.121943, 0.000000, 3596.873535,
+          -0.121943, 0.992537, 0.000000, 3587.279541,
+          0.000000, 0.000000, 1.000000, 582.565369,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn12",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.997086, -0.076285, 0.000000, 4661.627441,
+          0.076285, -0.997086, 0.000000, 3474.834473,
+          0.000000, 0.000000, 1.000000, 587.680664,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn13",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.998955, -0.045709, 0.000000, 4662.909668,
+          0.045709, -0.998955, 0.000000, 3453.125732,
+          0.000000, 0.000000, 1.000000, 586.966125,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn14",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.802626, -0.596482, 0.000000, 4596.847168,
+          0.596482, -0.802626, 0.000000, 3225.294434,
+          0.000000, 0.000000, 1.000000, 587.010010,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn15",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.963242, -0.268634, 0.000000, 4568.211426,
+          0.268634, -0.963242, 0.000000, 3207.609375,
+          0.000000, 0.000000, 1.000000, 587.146118,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn16",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.934395, -0.356238, 0.000000, 4556.381836,
+          0.356238, -0.934395, 0.000000, 3184.790039,
+          0.000000, 0.000000, 1.000000, 587.745544,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn17",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.994858, 0.101278, 0.000000, 4716.789551,
+          -0.101278, -0.994858, 0.000000, 3201.919678,
+          0.000000, 0.000000, 1.000000, 586.006592,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn18",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.935705, 0.352784, 0.000000, 4784.249512,
+          -0.352784, -0.935705, 0.000000, 3110.153809,
+          0.000000, 0.000000, 1.000000, 590.491516,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn9",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.667168, 0.744907, 0.000000, 3607.825928,
+          -0.744907, 0.667168, 0.000000, 3679.799316,
+          0.000000, 0.000000, 1.000000, 579.971252,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn10",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          0.826226, 0.563339, 0.000000, 3624.833008,
+          -0.563339, 0.826226, 0.000000, 3679.085449,
+          0.000000, 0.000000, 1.000000, 577.520447,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 0]
+      ]
+    ],
+
+    [
+      "Spawn19",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.891995, 0.452045, 0.000000, 4795.631348,
+          -0.452045, -0.891995, 0.000000, 3123.417969,
+          0.000000, 0.000000, 1.000000, 593.649414,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn20",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.976689, 0.214658, 0.000000, 4773.266602,
+          -0.214658, -0.976689, 0.000000, 3111.704590,
+          0.000000, 0.000000, 1.000000, 589.819458,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn21",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.692418, -0.721496, 0.000000, 4696.861328,
+          0.721496, -0.692418, 0.000000, 3189.217041,
+          0.000000, 0.000000, 1.000000, 586.148804,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "Spawn22",
+      "NavPoint",
+      "CPlayerSpawnPoint",
+      new Matrix(
+          -0.658501, -0.752580, 0.000000, 4685.308105,
+          0.752580, -0.658501, 0.000000, 3177.485107,
+          0.000000, 0.000000, 1.000000, 588.110107,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Range", 5.000000],
+        ["Detect", true],
+        ["Name", ""],
+        ["Mask", [[], []]],
+        ["IsVisible", true],
+        ["PositionType", ""],
+        ["BehaviorHeight", 0.000000],
+        ["MapCompass", false],
+        ["IsMain", false],
+        ["IsLoadOnClient", true],
+        ["Team", 1]
+      ]
+    ],
+
+    [
+      "BlueReload_01",
+      "InteriorObject",
+      "CReloadGerUnit",
+      new Matrix(
+          -0.905172, -0.425045, 0.000000, 4793.246582,
+          0.425045, -0.905172, 0.000000, 3076.745605,
+          0.000000, 0.000000, 1.000000, 589.548645,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"],
+        ["HitPoints", -1.000000],
+        ["Affiliation", "NEUTRAL"],
+        ["Route", []],
+        ["ShadowPlaneOffset", 0.050000],
+        ["FakeShadowOffset", 0.090000]
+      ]
+    ],
+
+    [
+      "Der_dot1",
+      "GameObject",
+      "CDotConcreteUnit",
+      new Matrix(
+          -0.836610, -0.547799, 0.000000, 4714.287109,
+          0.547799, -0.836610, 0.000000, 3090.871826,
+          0.000000, 0.000000, 1.000000, 589.720764,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "Der_dot2",
+      "GameObject",
+      "CDotConcreteUnit",
+      new Matrix(
+          0.554145, -0.831308, -0.043009, 4769.520508,
+          0.832415, 0.553219, 0.032147, 3130.114014,
+          -0.002930, -0.053615, 0.998557, 589.414063,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "Der_dot3",
+      "GameObject",
+      "CDotConcreteUnit",
+      new Matrix(
+          -0.815345, -0.578974, -0.000893, 4722.529785,
+          0.578750, -0.815071, 0.026580, 3179.157227,
+          -0.016117, 0.021155, 0.999646, 586.677856,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "Der_dot4",
+      "GameObject",
+      "CDotConcreteUnit",
+      new Matrix(
+          -0.815791, -0.577813, 0.024845, 4626.362793,
+          0.578234, -0.814025, 0.054850, 3159.850586,
+          -0.011469, 0.059112, 0.998185, 587.875244,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ]
+  ];
+
+  static Array  m_MissionCameraScriptList  = [
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "Default"],
+        []
+      ]
+    ]
+  ];
+
+  static Array  m_TriggersList = [
+  ];
+
+  Array GetMissionObjectList()
+  {
+    return m_MissionObjectList;
+  }
+
+  Array GetMissionCameraScriptList()
+  {
+    return m_MissionCameraScriptList;
+  }
+
+  Array GetTriggersList()
+  {
+    return m_TriggersList;
+  }
+
+  String GetObjectListClassFile()
+  {
+    return m_ObjectListClassFile;
+  }
+
+  String GetObjectListClassName()
+  {
+    return m_ObjectListClassName;
+  }
+}

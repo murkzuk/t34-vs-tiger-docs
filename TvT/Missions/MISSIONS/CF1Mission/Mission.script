@@ -1,0 +1,154 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CCF1Mission extends CDMMission, CCF1Mission_Strings, CMissionStatus
+{
+  //-------------------------------
+  // Contruction and initialization
+  //-------------------------------
+
+  static int   MaxPlayers           = 8;
+
+  String m_LocalTime             = "6:20:00";
+  String m_TerrainMapTextureName = "Textures/CF1_Map.tex"; //Textures/C1M3_Map.tex
+
+  static String m_MissionBriefingPicMaterial = "CF1BriefingPic"; //C1M3BriefingPic
+
+  static Array  m_MissionObjectives = [
+      [MOTID_Primary,   CCF1Mission_Strings::Objective01, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF1Mission_Strings::Objective02, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF1Mission_Strings::Objective03, MOSID_InProgress, true,  0/*team (red)*/ ],
+      [MOTID_Primary,   CCF1Mission_Strings::Objective04, MOSID_InProgress, true,  1/*team (blue)*/],
+      [MOTID_Primary,   CCF1Mission_Strings::Objective05, MOSID_InProgress, true,  1/*team (blue)*/],
+      [MOTID_Primary,   CCF1Mission_Strings::Objective06, MOSID_InProgress, true,  1/*team (blue)*/]
+                               ];
+  boolean isDebug = true;
+  boolean isRadarUpdateDebug = false;
+
+  Array m_NavpointsForPlayerMap = [
+      [
+        ["NavPointRed"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(255.0/255.0, 0.0/256.0, 0.0/256.0)   // NavColor
+      ],
+      [
+        ["NavPointBlue"],
+        CBaseCockpitTerrainMap::NAV_RENDER_Default,  // flags
+        new Color(0.0/256.0, 0.0/256.0, 255.0/255.0)   // NavColor
+      ]
+                                   ];
+
+  float  CockpitMapMinRange        = 1000.0;
+  float  CockpitMapMaxRange        = 4500.0;
+  float  CockpitMapNavNameMaxRange = 2000.0;
+  int    CockpitMapZoomSteps       = 10;
+  Vector MarksInitPoint            = new Vector(1000.0, 1000.0, 0.0);
+  Array  CockpitMapAccessBox       = [new Vector(2402, 1502.0, 0.0), new Vector(6902.0, 6002.0, 0.0)];
+
+
+  final static Array RouterWorkingZones = [
+    [40000.0 , 40000.0, 60000.0, 60000.0]
+                                          ];
+
+  void CCF1Mission()
+  {
+    // Construct mission
+    CDMMission("CCF1Mission", "CCF1Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CCF1Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<CCF1Atmosphere>());
+    SetMissionSky(new #SkyObject<CSky02Model>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+    m_MissionLensFlare =  new #LensFlare<CLensFlare>();
+    SetMissionWorldMatrices(new #WorldMatrices<CCF1WorldMatrices>(),
+      [
+        [LAYER_TERRAIN_NAME,         "CCF1LandscapeLayer"],
+        [LAYER_TERRAIN_ZONE,         "CCF1TerrainZoneLayer"],
+        [LAYER_MICROTEXTURE_MAP1,    "CCF1MicroTextures1"],
+        [LAYER_TERRAIN_WATERHEIGHTS, "CCF1WaterHeights"]
+      ]);
+
+//    SetRouterPrecalculatedGraph(
+//      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+//    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CDMMission::StartMission();
+//    Component console = new #GameController().GetObject(SOID_Console);
+//    console.disablebeh();
+//    console.showbehinf(true);
+    fireEvent(0.0, [], "MissionStarted", []);
+  }
+
+  event void OnObjectDestroyed(String _ObjectID)
+  {
+    CDMMission::OnObjectDestroyed(_ObjectID);
+
+    if(isDebug)
+      logWarning("Object destroyed: " + _ObjectID + ", last damaged by unit: " + new String(DeadThing.GetLastDamager()));
+
+    if (_ObjectID.IsStartsWith("RedPoint1_Target01"))
+    {
+       CompleteObjective(3);
+    }
+
+    if (_ObjectID.IsStartsWith("RedPoint2_Target01"))
+    {
+       CompleteObjective(4);
+    }
+
+    if (_ObjectID.IsStartsWith("RedPoint3_Target01"))
+    {
+       CompleteObjective(5);
+    }
+
+    if (_ObjectID.IsStartsWith("BluePoint1_Target01"))
+    {
+       CompleteObjective(0);
+    }
+
+    if (_ObjectID.IsStartsWith("BluePoint2_Target01"))
+    {
+       CompleteObjective(1);
+    }
+
+    if (_ObjectID.IsStartsWith("BluePoint3_Target01"))
+    {
+       CompleteObjective(2);
+    }
+//    CompleteObjective(0); //$TMP
+  }
+
+  void Shutdown()
+  {
+    CDMMission::Shutdown();
+  }
+
+  static void SetDefaultMultiplayerSettings()
+  {
+    FragLimit   = 0;
+    TimeLimit   = 0;
+    ControlMode = MCM_Both;
+    AvailablePlayerUnits = [ true, true ];
+  }
+}
