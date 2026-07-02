@@ -1,18 +1,41 @@
 {
-  "_comment": "Edit min/max to change how many of each unit type get randomly placed. class and task must be real, verified class names from Scripts\\Units\\*.script and Scripts\\Common\\*.script - do not invent new ones here, the generator will refuse to run with an unknown class/task.",
+  "_comment": "Set player_faction to SOVIET or AXIS to choose which side you play. The roster's units are tagged with which faction they belong to - the generator automatically spawns whichever faction is NOT player_faction as the enemy. class/task values must be real, verified class names - do not invent new ones here, the generator will refuse to run with an unknown class/task/player unit.",
+  "player_faction": "SOVIET",
+  "_player_faction_options": ["SOVIET", "AXIS"],
+  "player_unit_class": {
+    "SOVIET": "CTankT34_85_44Unit",
+    "AXIS": "CTankPzVIAusfEUnit"
+  },
+  "_axis_player_note": "CTankPzVIAusfEUnit (the Tiger) has known cosmetic-only issues from earlier this session - a few interior animations (gun-laying needles, commander hatch, some gauges) don't play due to a 3D model gap, documented in the docs repo CHANGELOG. Doesn't affect driving, aiming, or firing. Set AXIS player_unit_class to CTankPzIVGUnit instead if you'd rather avoid that entirely.",
   "roster": [
     {
-      "id": "enemy_tank",
+      "id": "german_tank",
+      "faction": "AXIS",
       "class": "CTankPzIVGUnit",
-      "affiliation": "ENEMY",
       "task": "CBaseAITankTask",
       "min": 1,
       "max": 3
     },
     {
-      "id": "enemy_atgun",
+      "id": "german_atgun",
+      "faction": "AXIS",
       "class": "CGunPak40Unit",
-      "affiliation": "ENEMY",
+      "task": "CBaseAITask",
+      "min": 0,
+      "max": 4
+    },
+    {
+      "id": "soviet_tank",
+      "faction": "SOVIET",
+      "class": "CTankT34_76_42Unit",
+      "task": "CBaseAITankTask",
+      "min": 1,
+      "max": 3
+    },
+    {
+      "id": "soviet_atgun",
+      "faction": "SOVIET",
+      "class": "CGunZis3Unit",
       "task": "CBaseAITask",
       "min": 0,
       "max": 4

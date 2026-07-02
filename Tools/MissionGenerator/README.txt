@@ -5,25 +5,39 @@ What this is
 -------------
 Regenerates a test mission called "Quick Mission (Generated)" with a
 randomized number of enemy tanks/AT guns and a relocated objective, so you
-can play-test variety without hand-editing mission files each time.
+can play-test variety without hand-editing mission files each time. You can
+play as either side.
 
 How to use it
 --------------
 1. Open a command prompt in this folder (Tools\MissionGenerator).
 2. Run:
        python generate_mission.py
-   This picks a fresh random layout every time you run it.
+   This picks a fresh random layout every time you run it, playing as
+   SOVIET by default.
+
+   To play as the Germans instead:
+       python generate_mission.py --faction AXIS
+   (or set "player_faction": "AXIS" in roster.json so it's the default
+   without typing the flag every time)
 
    To get the SAME layout again later (useful if you find a good one and
    want to replay it), add a seed number:
        python generate_mission.py --seed 42
-   Same seed = same layout, every time.
+   Same seed = same layout, every time (combine with --faction as needed).
 
 3. Open the game's Level Editor, find "Quick Mission (Generated)" in the
    mission list, load it, and play-test it (game camera mode).
 
 4. Repeat step 2 whenever you want a new random layout. Each run completely
    replaces the previous one - it does not stack on top of earlier runs.
+
+Playing as AXIS uses the Tiger tank (CTankPzVIAusfEUnit), which has a few
+known cosmetic-only quirks from earlier work this session (some interior
+animations - gun-laying needles, commander hatch, a couple of gauges - don't
+play due to a 3D model gap). Doesn't affect driving, aiming, or firing. See
+roster.json's "_axis_player_note" if you'd rather switch to the Pz IV
+instead.
 
 Changing what gets randomized
 -------------------------------

@@ -7,8 +7,12 @@ pristine Missions\\MyMission\\Mission1\\Content.script template, adding
 randomized enemy units (per roster.json) and relocating the victory
 NavPoint, while leaving every other file in QuickMission\\ untouched.
 
+Choose which side you play with --faction SOVIET or --faction AXIS (or set
+player_faction in roster.json) - the player's own tank and the enemy roster
+both switch to match.
+
 Usage:
-    python generate_mission.py [--seed N] [--roster path\\to\\roster.json]
+    python generate_mission.py [--seed N] [--roster path\\to\\roster.json] [--faction SOVIET|AXIS]
 """
 
 import argparse
@@ -55,6 +59,19 @@ RENAMES = {
 OBJECTIVE_OBJECT_ID = "end_navpoint"
 PLAYER_OBJECT_ID = "MainPlayerUnit"
 
+# The pristine template hardcodes 3 pre-existing combat units as ENEMY:
+# "tiger" (CTankPzIVGUnit) and "enemy_pak40_1"/"enemy_pak40_2" (CGunPak40Unit) -
+# all German/AXIS. That's correct when playing SOVIET (the template's original
+# intent), but backwards when playing AXIS - a German player would still see
+# these German units marked hostile. Rather than risk an untested affiliation
+# flip to FRIEND, they're simply excluded from the output when their faction
+# matches the chosen player_faction.
+TEMPLATE_HOSTILE_UNIT_FACTIONS = {
+    "tiger": "AXIS",
+    "enemy_pak40_1": "AXIS",
+    "enemy_pak40_2": "AXIS",
+}
+
 # Object types that represent real placeable positions - excludes the
 # pseudo-objects "Atmosphere"/"Terrain" which sit at the coordinate origin
 # and are not meaningful anchor points.
@@ -82,11 +99,30 @@ VERIFIED_TASK_CLASSES = {
 }
 
 
-def validate_roster_config(config):
-    """Reject roster.json outright if it names any class/task not on the
-    hardcoded verified allowlist above - before any generation is attempted."""
+VALID_FACTIONS = {"SOVIET", "AXIS"}
+
+
+def validate_roster_config(config, player_faction):
+    """Reject roster.json (and the resolved player faction/unit) outright if
+    anything names a class/task not on the hardcoded verified allowlists
+    above - before any generation is attempted."""
     errors = []
+
+    if player_faction not in VALID_FACTIONS:
+        errors.append(f'player_faction "{player_faction}" must be one of {sorted(VALID_FACTIONS)}')
+
+    player_unit_class = config.get("player_unit_class", {}).get(player_faction)
+    if not player_unit_class:
+        errors.append(f'No player_unit_class configured for faction "{player_faction}" in roster.json')
+    elif player_unit_class not in VERIFIED_UNIT_CLASSES:
+        errors.append(
+            f'player_unit_class for "{player_faction}" is unverified class "{player_unit_class}" - '
+            f"not in VERIFIED_UNIT_CLASSES in generate_mission.py."
+        )
+
     for item in config.get("roster", []):
+        if item.get("faction") not in VALID_FACTIONS:
+            errors.append(f'roster.json entry "{item["id"]}" has missing/invalid "faction" (must be SOVIET or AXIS)')
         if item["class"] not in VERIFIED_UNIT_CLASSES:
             errors.append(
                 f'roster.json entry "{item["id"]}" uses unverified class "{item["class"]}" - '
@@ -211,6 +247,16 @@ def parse_matrix_translation(entry_text: str):
     values = [float(v) for v in m.groups()]
     x, y, z = values[3], values[7], values[11]
     return x, y, z
+
+
+def replace_entry_class(entry_text: str, new_class: str) -> str:
+    """Swap only the ClassName (3rd quoted field) of an entry block, leaving
+    the ObjectID, ObjectType, Matrix, and properties untouched."""
+    m = HEADER_RE.match(entry_text)
+    old_class = m.group(3)
+    class_start = m.start(3)
+    class_end = m.end(3)
+    return entry_text[:class_start] + new_class + entry_text[class_end:]
 
 
 def build_identity_matrix_text(x: float, y: float, z: float) -> str:
@@ -352,6 +398,8 @@ def main():
     parser = argparse.ArgumentParser(description="Regenerate the QuickMission slot with randomized units.")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducible output.")
     parser.add_argument("--roster", type=Path, default=Path(__file__).parent / "roster.json")
+    parser.add_argument("--faction", choices=sorted(VALID_FACTIONS), default=None,
+                         help="Play as SOVIET or AXIS. Overrides roster.json's player_faction if given.")
     args = parser.parse_args()
 
     if not TEMPLATE_CONTENT.exists():
@@ -364,13 +412,16 @@ def main():
     with open(args.roster, "r", encoding="utf-8") as f:
         config = json.load(f)
 
-    roster_errors = validate_roster_config(config)
+    player_faction = args.faction or config.get("player_faction", "SOVIET")
+
+    roster_errors = validate_roster_config(config, player_faction)
     if roster_errors:
         print("roster.json FAILED validation - nothing was written. Problems found:", file=sys.stderr)
         for e in roster_errors:
             print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
 
+    player_unit_class = config["player_unit_class"][player_faction]
     rng = random.Random(args.seed)
 
     # --- Load pristine template, always starting fresh (never QuickMission's
@@ -424,18 +475,40 @@ def main():
     new_matrix_text = build_identity_matrix_text(obj_x, obj_y, obj_z)
     new_navpoint_entry = old_navpoint_entry.replace(old_matrix_text, new_matrix_text)
 
+    # --- Swap the player's own tank to match the chosen faction (position/
+    #     properties like IsPlayer/IsManual/Affiliation/SurfaceControl untouched -
+    #     only the ClassName field changes) ---
+    new_player_entry = replace_entry_class(entry_by_id[PLAYER_OBJECT_ID], player_unit_class)
+
     updated_entries = []
+    excluded_ids = []
     for entry in entries:
         oid, _, _ = parse_entry_header(entry)
-        updated_entries.append(new_navpoint_entry if oid == OBJECTIVE_OBJECT_ID else entry)
+        if TEMPLATE_HOSTILE_UNIT_FACTIONS.get(oid) == player_faction:
+            excluded_ids.append(oid)
+            continue
+        if oid == OBJECTIVE_OBJECT_ID:
+            updated_entries.append(new_navpoint_entry)
+        elif oid == PLAYER_OBJECT_ID:
+            updated_entries.append(new_player_entry)
+        else:
+            updated_entries.append(entry)
 
-    # --- Generate randomized units from the roster ---
+    # --- Generate randomized units from the roster. Only spawn entries whose
+    #     faction is NOT the player's - those become the enemy. ---
     used_ids = set(entry_by_id.keys())
-    roster_classes = set()
+    roster_classes = {player_unit_class}
     roster_tasks = set()
     new_entries_text = []
 
-    for item in config["roster"]:
+    enemy_roster = [item for item in config["roster"] if item["faction"] != player_faction]
+    if not enemy_roster:
+        raise GeneratorError(
+            f'No roster entries have a faction other than player_faction "{player_faction}" - '
+            f"there would be no enemies to fight."
+        )
+
+    for item in enemy_roster:
         roster_classes.add(item["class"])
         roster_tasks.add(item["task"])
         count = rng.randint(item["min"], item["max"])
@@ -449,7 +522,7 @@ def main():
 
             x, y, z = pick_position(rng, anchors, config["jitter_radius"], router_img, config)
             new_entries_text.append(
-                build_gameobject_entry(object_id, item["class"], x, y, z, item["affiliation"], item["task"])
+                build_gameobject_entry(object_id, item["class"], x, y, z, "ENEMY", item["task"])
             )
 
     all_entries_text = updated_entries + new_entries_text
@@ -461,10 +534,13 @@ def main():
         full_text = full_text.replace(old, new)
 
     # --- Validate before writing anything. Trust classes/tasks already
-    #     legitimately present in the pristine template, plus the roster. ---
+    #     legitimately present in the pristine template, plus the roster.
+    #     Deliberately-excluded template units (see excluded_ids above) are
+    #     not expected to appear in the output. ---
     known_good_classes = template_classes | roster_classes
     known_good_tasks = template_tasks | roster_tasks
-    errors = validate_generated_text(full_text, used_ids, known_good_classes, known_good_tasks)
+    expected_ids = used_ids - set(excluded_ids)
+    errors = validate_generated_text(full_text, expected_ids, known_good_classes, known_good_tasks)
     if errors:
         print("Generation FAILED validation - nothing was written. Problems found:", file=sys.stderr)
         for e in errors:
@@ -488,8 +564,11 @@ def main():
         sys.exit(1)
 
     print(f"OK: wrote {OUTPUT_CONTENT}")
-    print(f"    {len(new_entries_text)} randomized unit(s) added, "
+    print(f"    Playing as {player_faction} ({player_unit_class})")
+    print(f"    {len(new_entries_text)} randomized enemy unit(s) added, "
           f"objective relocated to ({obj_x:.1f}, {obj_y:.1f}, {obj_z:.1f})")
+    if excluded_ids:
+        print(f"    Excluded {excluded_ids} (same faction as player, would have been backwards)")
     print(f"    seed={args.seed if args.seed is not None else '(none - not reproducible, pass --seed to fix)'}")
     print('    Load "Quick Mission (Generated)" in the Level Editor to test.')
 
