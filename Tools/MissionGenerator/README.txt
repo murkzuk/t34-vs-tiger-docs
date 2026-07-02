@@ -1,0 +1,61 @@
+Quick Mission Generator
+========================
+
+What this is
+-------------
+Regenerates a test mission called "Quick Mission (Generated)" with a
+randomized number of enemy tanks/AT guns and a relocated objective, so you
+can play-test variety without hand-editing mission files each time.
+
+How to use it
+--------------
+1. Open a command prompt in this folder (Tools\MissionGenerator).
+2. Run:
+       python generate_mission.py
+   This picks a fresh random layout every time you run it.
+
+   To get the SAME layout again later (useful if you find a good one and
+   want to replay it), add a seed number:
+       python generate_mission.py --seed 42
+   Same seed = same layout, every time.
+
+3. Open the game's Level Editor, find "Quick Mission (Generated)" in the
+   mission list, load it, and play-test it (game camera mode).
+
+4. Repeat step 2 whenever you want a new random layout. Each run completely
+   replaces the previous one - it does not stack on top of earlier runs.
+
+Changing what gets randomized
+-------------------------------
+Edit roster.json in this folder in any plain text editor (Notepad is fine).
+Each entry has a "min" and "max" - the generator picks a random count in
+that range each run. For example:
+
+    { "id": "enemy_tank", "class": "CTankPzIVGUnit", ..., "min": 1, "max": 3 }
+
+means 1 to 3 Pz IV tanks will spawn, chosen randomly each run.
+
+Do NOT type in a new unit class name that isn't already in the roster -
+the generator will refuse to run if it sees a class name it hasn't been
+told is real and verified (see VERIFIED_UNIT_CLASSES near the top of
+generate_mission.py). If you want to add a new unit type, that needs the
+class name confirmed against the actual Scripts\Units\*.script files first
+- ask for help with that rather than guessing, a wrong class name would
+only fail when you try to load the mission in-game, which this tool can't
+predict.
+
+What it will never touch
+--------------------------
+Every file in this mission's folder except Content.script (Mission.script,
+Atmosphere.script, Terrain.script, the terrain/texture files, etc.) is
+guaranteed untouched by every run - the script checks this itself and
+refuses to report success if anything else changed.
+
+The original Missions\MyMission\Mission1\ template is never touched either
+- it's always the starting point for every regeneration, never overwritten.
+
+If something goes wrong
+-------------------------
+The script will print exactly what's wrong and will NOT write a broken file
+- if you see "FAILED validation", nothing was changed, the previous
+Content.script is still there untouched. Safe to just try again.
