@@ -182,7 +182,7 @@ Verified: `Campaign_1\Mission_3\Mission.script:21-23`. Each entry is a 4-tuple: 
 
 **Objectives are addressed by array index, not by name**, in every call site: `SetObjectiveStatus(0, MOSID_Completed)`, `SetObjectiveVisible(2, true)`, etc. — the index is positional within `m_MissionObjectives`. This is fragile if the array order ever changes without updating call sites, though I found no instance of that bug in this session.
 
-**The `MissionTest` locale-orphan case** (from the 2026-07-02 session) is the degenerate version of this pattern: `Missions\MyMission\Mission1\MissionTestStrings.script` declares a `CMission1_Strings` class with `Objective02`/`Objective03` fields pointing at `getLocalized("MissionTest", ...)`, but `Missions\MyMission\Mission1\Mission.script`'s own `m_MissionObjectives` array is empty (`Array m_MissionObjectives = [ ];`) — the strings class exists but the mission never actually wires it into an objectives array. Confirms `MyMission\Mission1` is unfinished prototype content, not a live objective chain.
+**The `MissionTest` locale-orphan case** (from the 2026-07-02 session) is the degenerate version of this pattern: `Missions\MyMission\Mission1\MissionTestStrings.script` declares a `CMission1_Strings` class with `Objective02`/`Objective03` fields pointing at `getLocalized("MissionTest", ...)`, but `Missions\MyMission\Mission1\Mission.script`'s own `m_MissionObjectives` array is empty (`Array m_MissionObjectives = [ ];`) — the strings class exists but the mission never actually wires it into an objectives array. Confirms `MyMission\Mission1` is unfinished prototype content, not a live objective chain. **Update (2026-07-02, live-test follow-up): `CMission1_Strings` is also the wrong class name outright** — see §7, item 1. It was never caught because this class is unreferenced dead code in the original, so the naming bug is invisible until something actually tries to load it by the correct convention.
 
 ---
 
@@ -223,3 +223,29 @@ No mission script calls `CloseMission` directly. Instead:
 - `IsMissionFullCompleted()` (`Common\Mission.script:1043-1053`) exists alongside `IsMissionCompleted()` and checks *all* objectives regardless of type, using `MOSID_FullCompleted` — I did not find a call site that distinguishes when this variant is used vs. the primary-only check. Worth investigating before relying on it.
 - The `RedTeamObj`/`BlueTeamObj` counting logic at `Common\Mission.script:1028-1036` (keyed by `m_MissionObjectives[i][4]`, a 5th tuple element not seen in any single-player example above) looks multiplayer-specific — none of the single-player missions examined this session use a 5-element objective tuple. Needs a multiplayer mission example to confirm.
 - `SOID_MissionController` (used as a `sendEvent` target throughout) — its full method surface wasn't mapped this session; only `"StartRetreat"`/`"CompleteMissionStatus"` were traced.
+
+---
+
+## 7. Confirmed Gotchas (via live in-game testing, 2026-07-02 follow-up)
+
+Everything in §1-§6 above was verified by reading source files. The two items below were only discovered by actually building a new mission from the `MyMission\Mission1` template (a "Quick Mission Generator" tool — see `CHANGELOG.md`) and loading it in the Level Editor — real engine behavior caught two bugs that static reading had missed, because both are invisible unless a mission is actually exercised through the normal menu/gameplay flow.
+
+### 7a. The Strings class name MUST be `<full Mission class name>_Strings`, not a shortened form
+
+`Scripts\Menus\StartMissionMenu.script:23` and `:45`, and `Scripts\Menus\EscapeMenu.script:27`/`:31`, all do `getStaticClassMember(MissionClassName + "_Strings", "MissionName"/"BriefingText")`, where `MissionClassName` is the mission's full class name string (e.g. `"CC1M3Mission"`, taken from wherever the mission was selected/registered). This means the strings class **must** be named `<MissionClassName>_Strings` in full — e.g. `CC1M3Mission_Strings` for `CC1M3Mission` (confirmed working, this is what every real campaign mission uses), not a shortened form like `CC1M3_Strings`.
+
+`Missions\MyMission\Mission1\MissionTestStrings.script` names its class `CMission1_Strings` — for mission class `CMission1Mission`, the correct name would be `CMission1Mission_Strings`. This is a genuine bug in the original tutorial-built template, not something introduced later. It was never caught because `Mission1` was never registered in `MenuConfig.script`'s `MissionLoadList` until this session, so `StartMissionMenu.script`'s lookup — the only code path that would ever exercise this — had never actually run against it before. First symptom: `"Static variable MissionName not found in class <WrongName>_Strings"` in `editor.log`/`execution.log`, followed by `SetText`/`ScriptManager` cascade errors from the menu trying to display text that resolved to nothing.
+
+**If building a new mission from this template:** name the strings class `<YourFullMissionClassName>_Strings`, matching the mission class name exactly, not a shortened variant.
+
+### 7b. Every mission needs an `OnEngineStateChanged(boolean)` handler
+
+`Scripts\Common\StateControl.script:1268-1288`, in `event void SwitchEngine(boolean _IsWorkEngine)`, calls `Mission.OnEngineStateChanged(_IsWorkEngine)` unconditionally whenever a unit's engine starts or stops (confirmed firing during normal driving, not just at mission start). All 12 real campaign missions (`Campaign_1\Mission_1` through `Mission_6`, `Campaign_2\Mission_1` through `Mission_6`) implement `event void OnEngineStateChanged(boolean _IsWorkEngine)` on their mission class — e.g. `Campaign_1\Mission_1\Mission.script:252` reacts to it by setting `MainPlayerStart = true`. `Missions\MyMission\Mission1\Mission.script` never implemented it at all, despite already declaring the `MainPlayerStart` flag it would presumably have used (dead/unwired state, consistent with this template being an unfinished prototype). Symptom: `[ScriptManager] Function OnEngineStateChanged with 1 parameter(s) of class <YourMissionClass> is not exist`, repeating every time the player's engine toggles.
+
+**If building a new mission from this template:** add at minimum a no-op stub —
+```
+event void OnEngineStateChanged(boolean _IsWorkEngine)
+{
+}
+```
+— even if the mission doesn't need to react to it. This mirrors a pattern already used elsewhere in this codebase for exactly this situation (an "interface silencer" stub for a method the engine unconditionally expects to exist).
