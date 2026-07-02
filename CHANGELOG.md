@@ -6,6 +6,31 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (later still) — Full whole-repo diff against the live game
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Follow-up to the Vase audit below — this time compared *every* text/script file in the `TvT\` mirror against the live game, not just the ones his commits touched (601 files checked).
+
+- **573 matched exactly.** Good baseline health for the mirror.
+- **21 differences were pure line-ending or whitespace noise** (CRLF vs LF, one missing trailing newline, one missing space in a `.rsr` file) — synced for consistency, no real content changed.
+- **4 had genuine content differences**, and all four went the same direction as the Vase audit — the live game had moved ahead and the mirror hadn't caught up: `Common\Instances.script` (a much more complete instance-count table for the full current roster), `Common\Mission.script` (see below), `Units\SAUSU85Unit.script` (3 cockpit UI-parm lines deliberately commented out across all its ammo types — reads as an intentional in-progress fix, not an accident), and `Models\bld_Barricade_Pak.script` (the same header/shadow-alignment cleanup pattern as Vase's Feb batch, just never synced back).
+- **Interesting side-find**: `Common\Mission.script` references three unit classes by name — `CTankT34_76_41Unit`, `CTankT34_85_44_2Unit`, `CTankPzVI_LATEUnit` — and has real initialization code touching `CPiercing::TankPzVI_LATE...` constants, even though none of those three `Units\*.script` files actually exist. Combined with the fact that their 3D model files already exist and work (from Vase's earlier Model pass), this makes the "LATE Tiger" and the two second T-34 variants the most complete of the cut-content roster found earlier today — model done, some integration done, just missing the actual unit class.
+- **Cleanup**: removed 7 stray duplicate Model-type scripts that had ended up sitting in `TvT\Units\` (should only hold gameplay unit scripts — correct copies already lived in `TvT\Models\`), plus one empty leftover `zztest.txt`.
+
+### Why this matters
+
+Confirms the pattern from the Vase audit generalizes: the mirror's staleness is overwhelmingly "live game moved on, git didn't get told," not "git has unapplied fixes." Only one real exception to that found across both passes (the Cockpit.script Distance-wav fix). Also turned up a genuinely actionable lead for anyone wanting to add real new content: the LATE Tiger variant is closer to done than it looked.
+
+### Contributors
+
+- **Jeff Murkin (murkzuk)** — asked for the follow-up pass after the Vase-specific audit.
+- **Claude Code (Anthropic)** — built the full-repo comparison, verified each real difference's direction and cause before syncing, distinguished genuine content changes from line-ending noise.
+
+---
+
 ## 2026-07-02 (later) — Audited Stevan Vase's git history, fixed a real regression, re-synced the mirror
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

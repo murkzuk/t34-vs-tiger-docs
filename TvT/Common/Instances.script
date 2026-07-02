@@ -4,33 +4,86 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+//  Redux Updated Missing AI Units
 //-------------------------------------------------------------------
 
 class CInstances
 {
   static void InitializeInstances()
-  {
+  {  
+//Buildings   
 //    Cbld_BarrackModel::InstancesQty                          = 1;
-    Cfence_WickerModel::InstancesQty                         = 9;
-    Cfence_PalisadeModel::InstancesQty                       = 9;
-    Cfence_PoleModel::InstancesQty                           = 9;
-    Cbld_PostElectricModel::InstancesQty                     = 8;
-    Cbld_USRCorralWoodModel::InstancesQty                    = 9;
-    Cbld_USRHouseWoodModel::InstancesQty                     = 9;
-    Cbld_USRShedWoodModel::InstancesQty                      = 9;
-    Cbld_USRShedWood02Model::InstancesQty                    = 9;
-    Cbld_BridgeWoodModel::InstancesQty                       = 9;
-    Cu_veh_t34_85_44Model::InstancesQty                      = 1;
-    Cu_veh_PzVI_MAINModel::InstancesQty                      = 1;
-    Cu_veh_PzIVGModel::InstancesQty                          = 1;
-    Cu_veh_t34_76_42Model::InstancesQty                      = 1;
-    Cenv_Antitank_singleModel::InstancesQty                  = 9;
-    Cbld_DzotWoodModel::InstancesQty                         = 4;
-    Cbld_SandBagWallModel::InstancesQty                      = 9;
-    Cbld_WaterWell_1Model::InstancesQty                      = 1;
-    Cbld_WaterWell_2Model::InstancesQty                      = 1;
-    Cbld_BarricadeModel::InstancesQty                        = 4;
-    Cbld_Barricade_PakModel::InstancesQty                    = 3;
+   	  Cbld_BarricadeModel::InstancesQty                        = 4;
+      Cbld_Barricade_PakModel::InstancesQty                    = 3;
+	  Cbld_BridgeWoodModel::InstancesQty                       = 9;
+	  Cbld_DotConcreteModel::InstancesQty                      = 4;
+      Cbld_DzotWoodModel::InstancesQty                         = 4;
+	  Cbld_HaystackModel::InstancesQty                         = 4;
+	  Cbld_PileLogsModel::InstancesQty                         = 4;
+      Cbld_PostElectricModel::InstancesQty                     = 8;	
+      Cbld_PostSpeakerModel::InstancesQty                      = 8; 
+      Cbld_ReloadGerModel::InstancesQty                        = 8;
+	  Cbld_ReloadUSSRModel::InstancesQty                       = 8;
+   	  Cbld_SandBagWallModel::InstancesQty                      = 9;
+      Cbld_USRCorralWoodModel::InstancesQty                    = 9;
+      Cbld_USRHouseWoodModel::InstancesQty                     = 9;
+      Cbld_USRShedWoodModel::InstancesQty                      = 9;
+      Cbld_USRShedWood02Model::InstancesQty                    = 9;  
+      Cbld_WaterWell_1Model::InstancesQty                      = 1;
+      Cbld_WaterWell_2Model::InstancesQty                      = 1;    
+
+//Fences
+    Cfence_WickerModel::InstancesQty                           = 9;
+    Cfence_PalisadeModel::InstancesQty                         = 9;
+    Cfence_PoleModel::InstancesQty                             = 9;
+
+//Environment
+    Cenv_Antitank_singleModel::InstancesQty                    = 9;  
+    Cenv_BarrelModel::InstancesQty                             = 9; 
+	Cenv_BarrelPackAModel::InstancesQty                        = 9; 
+	Cenv_BarrelPackBModel::InstancesQty                        = 9; 
+    Cenv_WeaponBoxSmallModel::InstancesQty                     = 9; 
+
+//Human Units
+    Chum_GermanSoldierRifleModel::InstancesQty                 = 20;
+    Chum_GermanTankmanModel::InstancesQty                      = 20;
+    Chum_SovietSoldierRifleModel::InstancesQty                 = 20;
+    Chum_SovietTankmanModel::InstancesQty                      = 20;
+
+//Air
+    Cu_air_FW_190Model::InstancesQty                           = 9; 
+	Cu_air_IL2Model::InstancesQty                              = 9; 
+    Cu_air_IL2MModel::InstancesQty                             = 9; 
+
+//Static Guns
+    Cu_stat_NebelwerferModel::InstancesQty                     = 9;
+	Cu_stat_pak40Model::InstancesQty                           = 9;
+    Cu_stat_zis3Model::InstancesQty                            = 9;
+
+//Halftracks
+    Cu_veh_Hanomag_251CModel::InstancesQty                     = 9;
+    Cu_veh_M3A1HalfTrackModel::InstancesQty                    = 9;
+
+//Trucks	
+    Cu_veh_OpelBlitzModel::InstancesQty                        = 9;
+    Cu_veh_zis5Model::InstancesQty                             = 9;
+
+//Tanks 	
+     Cu_veh_PzIVGModel::InstancesQty                          = 4;
+	 Cu_veh_PzVI_MAINModel::InstancesQty                      = 4;
+	 Cu_veh_PzVI_LATEModel::InstancesQty                      = 4;
+     Cu_veh_t34_76_41Model::InstancesQty                      = 4;
+	 Cu_veh_t34_76_42Model::InstancesQty                      = 4;	 
+   	 Cu_veh_t34_85_44Model::InstancesQty                      = 4;
+     Cu_veh_t34_85_44_2Model::InstancesQty                    = 4;
+	 Cu_veh_SAU_Stug40Model::InstancesQty                     = 4;
+     Cu_veh_SU85Model::InstancesQty                           = 4;	
+
+//Weapons
+    Cwpn_BombModel::InstancesQty                              = 4;	
+    Cwpn_FFARModel::InstancesQty                              = 4; 
+
+
+     	
   }
 }

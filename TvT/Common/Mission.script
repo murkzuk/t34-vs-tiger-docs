@@ -4,7 +4,7 @@
 //  Any unauthorized usage, either in part or in whole of this code
 //  is strictly prohibited. Violators WILL be prosecuted to the
 //  maximum extent allowed by law.
-//
+// Redux added missing tour objects 
 //-------------------------------------------------------------------
 
 //
@@ -109,10 +109,13 @@ class CMission
                                   "CGunZis3Unit",
                                   "CSAUStuG40Unit",
                                   "CSAUSU85Unit",
-                                  "CTankT34_76_42Unit",
+                                  "CTankT34_76_41Unit",
+								  "CTankT34_76_42Unit",
                                   "CTankT34_85_44Unit",
+								  "CTankT34_85_44_2Unit",
                                   "CTankPzIVGUnit",
                                   "CTankPzVIAusfEUnit",
+								  "CTankPzVI_LATEUnit",
                                   "CTruckOpelBlitzUnit",
                                   "CTruckZis5Unit"
                                 ];
@@ -473,13 +476,17 @@ class CMission
   {
     //no rand modefier for bullets
     CPiercing::TankPzVIAusfECalibrePenetrationModifier[0] = CPiercing::TankPzVIAusfESubcalibrePenetrationModifier[1];
+	 CPiercing::TankPzVI_LATECalibrePenetrationModifier[0] = CPiercing::TankPzVI_LATESubcalibrePenetrationModifier[1];
     CPiercing::TankT34_76_42CalibrePenetrationModifier[0] = CPiercing::TankT34_76_42CalibrePenetrationModifier[1];
     CPiercing::TankT34_85_44CalibrePenetrationModifier[0] = CPiercing::TankT34_85_44CalibrePenetrationModifier[1];
     CPiercing::TankPzVIAusfEAlwaysDestroyTrack            = true;
+	CPiercing::TankPzVI_LATEAlwaysDestroyTrack            = true;
     CPiercing::TankT34_76_42AlwaysDestroyTrack            = true;
     CPiercing::TankT34_85_44AlwaysDestroyTrack            = true;
     CPiercing::TankPzVIAusfECalibreDamageModifier[0]      = CPiercing::TankPzVIAusfECalibreDamageModifier[1];
+	CPiercing::TankPzVI_LATECalibreDamageModifier[0]      = CPiercing::TankPzVI_LATECalibreDamageModifier[1];
     CPiercing::TankPzVIAusfESubcalibreDamageModifier[0]   = CPiercing::TankPzVIAusfESubcalibreDamageModifier[1];
+	CPiercing::TankPzVI_LATESubcalibreDamageModifier[0]   = CPiercing::TankPzVI_LATESubcalibreDamageModifier[1];
     CPiercing::TankT34_85_44CalibreDamageModifier[0]      = CPiercing::TankT34_85_44CalibreDamageModifier[1];
     CPiercing::TankT34_85_44SubcalibreDamageModifier[0]   = CPiercing::TankT34_85_44SubcalibreDamageModifier[1];
   }
