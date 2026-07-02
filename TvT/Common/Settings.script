@@ -212,16 +212,16 @@ class CSpecialSettings
       if (ShadowDetail >= ShadowDetailValues.size())
         ShadowDetail = ShadowDetailValues.size() - 1;
       
-//      (new #ShadowMapArray()).InitRenderTargets(
-//          ShadowDetailValues[ShadowDetail][0],
-//          ShadowDetailValues[ShadowDetail][1]
-//        );
+      (new #ShadowMapArray()).InitRenderTargets(
+          ShadowDetailValues[ShadowDetail][0],
+          ShadowDetailValues[ShadowDetail][1]
+        );
 
-//      (new #ShadowMapArray()).InitContentMasks(
-//          [
-//            [[], []]
-//          ]
-//        );
+      (new #ShadowMapArray()).InitContentMasks(
+          [
+            [[], []]
+          ]
+        );
 
       (new #ShadowRender()).EnableShadowsRender(
           ShadowDetail > 0
