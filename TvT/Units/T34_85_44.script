@@ -70,7 +70,10 @@ class CTankT34_85_44CoaxialMachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
+                                [["VEHICLE"],[]],      // low priority mask
+                                [["BTR"],    []],      // low priority mask
+                                [[],         []]       // very low priority: fire at anything if nothing else fits
                               ];
 }
   class CTankT34_85_44PlayerCoaxialMachineGun
@@ -121,7 +124,10 @@ class CTankT34_85_44MachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
+                                [["VEHICLE"],[]],      // low priority mask
+                                [["BTR"],    []],      // low priority mask
+                                [[],         []]       // very low priority: fire at anything if nothing else fits
                               ];
 }
 class CTankT34_85_44PlayerMachineGun

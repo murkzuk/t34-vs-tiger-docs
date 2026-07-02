@@ -60,8 +60,11 @@ class CBtrHanomag251AusfCMachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],[]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],  []], // high priority mask: RestrictTo, Exclude
                                 //[["AIR"],[]]
+                                [["VEHICLE"],[]],  // low priority mask
+                                [["BTR"],    []],  // low priority mask
+                                [[],         []]   // very low priority: fire at anything if nothing else fits
                               ];
 }
 

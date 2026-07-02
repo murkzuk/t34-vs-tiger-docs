@@ -6,6 +6,22 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-02 (latest) — Coax/hull MG target mask fix
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User reported the Tiger's hull MG never seems to get used by the AI. Investigation found it wasn't Tiger-specific - every tank and halftrack in the game (Tiger, both T-34s, Pz IV, both halftracks) has its coax and hull machine guns masked to only ever engage `HUMAN`-classified targets (`GunSpecificFireMask = [["HUMAN"],[]]`), with no `VEHICLE` tier and no catch-all fallback. Compared against the pillbox/bunker MGs, which correctly implement a tiered mask (`HUMAN` → `VEHICLE` → `BTR` → catch-all) - confirmed this is a real omission on the vehicle MGs, not intentional. Added the same three missing tiers to all 6 affected unit files, preserving each file's existing HUMAN-tier settings exactly. Not yet play-tested.
+
+Repaired the usual recurring CP1251 corruption across 4 of the 6 files, byte-spliced from the docs mirror each time as before.
+
+### Why
+
+Direct user report from gameplay observation, following up on the AI target-prioritization fix below.
+
+---
+
 ## 2026-07-02 (even later) — AI target prioritization fix
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

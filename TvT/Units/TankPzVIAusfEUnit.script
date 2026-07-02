@@ -70,7 +70,10 @@ class CTankPzVIAusfECoaxialMachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
+                                [["VEHICLE"],[]],      // low priority mask
+                                [["BTR"],    []],      // low priority mask
+                                [[],         []]       // very low priority: fire at anything if nothing else fits
                               ];
 }
   class CTankPzVIAusfEPlayerCoaxialMachineGun
@@ -121,7 +124,10 @@ class CTankPzVIAusfEMachineGun
   final static int  BurstDelayRandAdd = 2000; // ms
   // gun specific fire mask with priorities
   final static Array GunSpecificFireMask = [
-                                [["HUMAN"],["AIR"]] // low priority mask: RestrictTo, Exclude
+                                [["HUMAN"],  ["AIR"]], // high priority mask: RestrictTo, Exclude
+                                [["VEHICLE"],[]],      // low priority mask
+                                [["BTR"],    []],      // low priority mask
+                                [[],         []]       // very low priority: fire at anything if nothing else fits
                               ];
 }
 class CTankPzVIAusfEPlayerMachineGun
