@@ -1,0 +1,118 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class CMission1Mission extends CSPMission
+{
+  //
+  // Contruction and initialization
+  //
+
+  String  m_LocalTime       = "14:20:00";
+  String m_TerrainMapTextureName = "Textures/C1M3_Map.tex";
+
+  static String m_MissionBriefingPicMaterial = "C1M3BriefingPic";
+
+  Array  m_MissionObjectives = [
+          ];
+
+  boolean isDebug = true;
+
+  Array m_NavpointsForPlayerMap = [
+
+  ];
+
+  float  CockpitMapMinRange  = 1000.0;
+  float  CockpitMapMaxRange  = 4500.0;
+  int    CockpitMapZoomSteps = 10;
+  Vector MarksInitPoint      = new Vector(1000.0, 1000.0, 0.0);
+  float  CockpitMapNavNameMaxRange  = 2000.0;
+  Array  CockpitMapAccessBox  = [ new Vector(2742, 1775.0, 0.0), new Vector(7242.0, 6275.0, 0.0)];
+
+  final static Array RouterWorkingZones = [
+    ];
+
+  final static Array   DefaultMask = [["ENEMY", "MainMesh"], ["NEUTRAL"]];
+  final static Array          Mask = [["ENEMY", "MainMesh"], ["NEUTRAL", "InvisibleOnRadar"]];
+
+
+
+  boolean OnTarg = false;
+  boolean TigerAggr = false;
+
+  boolean MainPlayerStart = false;
+
+  void CMission1Mission()
+  {
+    // Construct mission
+    CSPMission("CMission1Mission", "Mission1Content");
+
+    // Set mission properties
+    SetMissionTerrain(new #ChunkedTerrain<CMission1Terrain>());
+    SetMissionAtmosphere(new #Atmosphere<Mission1Atmosphere>());
+    SetMissionSky(new #SkyObject<CSkyModel>());
+
+    if (CDebugSettings::LoadForest)
+      SetMissionForest(new CSTBaseForestC1(GetMissionAtmosphere()));
+    if (CDebugSettings::LoadRoads)
+      SetMissionRoadsParms(new CBaseRoadC1());
+    if (CDebugSettings::LoadGrass)
+      RegisterObject("Grass", new #Grass<CBaseGrassC1>());
+
+
+    SetMissionWorldMatrices(new #WorldMatrices<Mission1WorldMatrices>(), [
+        [ LAYER_TERRAIN_NAME, "Mission1LandscapeLayer"   ],
+        [ LAYER_TERRAIN_ZONE, "Mission1TerrainZoneLayer" ],
+        [ LAYER_ROUTER_ZONE,  "Mission1RouterZoneLayer"     ],
+        [ LAYER_MICROTEXTURE_MAP1, "Mission1MicroTextures1" ],
+        [ LAYER_TERRAIN_WATERHEIGHTS, "Mission1WaterHeights"]
+      ]);
+
+    SetRouterPrecalculatedGraph(
+      new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
+
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CBaseRouterMap>(), 64, RouterWorkingZones);
+  }
+
+// TODO
+
+  String GetMainRadioHomePoint()
+  {
+    return "";
+  }
+
+  void StartMission()
+  {
+    // call inherited
+    CSPMission::StartMission();
+
+   Component console = new #GameController().GetObject(SOID_Console);
+//   console.disablebeh();
+   //console.showbehinf(true);
+
+  }
+  
+  void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
+  {
+    if (_ObjectID == "MainPlayerUnit")
+    {
+      sendEvent(1.0, getIdentificator(this), "CloseMission", [MOSID_Completed]);
+    }
+  }
+  
+  void OnObjectLeaveNavPoint(String _NavPointID, String _ObjectID)
+  {
+  }
+
+
+  void Shutdown()
+  {
+
+    CSPMission::Shutdown();
+  }
+ }
