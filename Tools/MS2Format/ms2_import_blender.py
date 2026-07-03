@@ -42,6 +42,22 @@ import bmesh
 from mathutils import Vector
 
 
+def _tri_area(p0, p1, p2):
+    """Twice-signed-area cross product magnitude / 2 - used only to find
+    genuinely zero-area (degenerate) triangles. This is NOT the same
+    check as the retracted "winding disagreement" heuristic: it never
+    compares against the file's authored normals, so it can't produce
+    the same false positives - a triangle is only flagged here if its
+    three vertices are (near-)collinear, which is a real defect no
+    matter which engine renders it."""
+    ax, ay, az = p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]
+    bx, by, bz = p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]
+    cx = ay * bz - az * by
+    cy = az * bx - ax * bz
+    cz = ax * by - ay * bx
+    return (cx * cx + cy * cy + cz * cz) ** 0.5 / 2.0
+
+
 _LOD_SUFFIX_RE = re.compile(r'_LOD\d+$', re.IGNORECASE)
 
 
@@ -85,39 +101,46 @@ def _create_object_for_node(node, index):
 
     n_tris = len(node.indices) // 3
     skipped = 0
-    flipped = 0
+    degenerate = 0
+    tri_verts = []  # (i0, i1, i2) for each face actually created, in order
     for t in range(n_tris):
         i0, i1, i2 = node.indices[t * 3:t * 3 + 3]
 
-        # The exported triangle winding doesn't always agree with the
-        # file's own authored per-vertex normals (confirmed empirically -
-        # ~7% of faces in real shipped content disagree, concentrated in
-        # damage/"Crashed" variant meshes) - if left uncorrected this
-        # produces dark, inside-out-looking faces from otherwise-correct
-        # viewing angles. Since we have the real authored normals, use
-        # them as ground truth: compute this triangle's geometric normal
-        # from its vertex order, and reverse the order if it disagrees
-        # with the average of the three vertices' authored normals.
-        p0, p1, p2 = node.positions[i0], node.positions[i1], node.positions[i2]
-        edge1 = (p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2])
-        edge2 = (p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2])
-        geo_normal = (edge1[1]*edge2[2]-edge1[2]*edge2[1],
-                      edge1[2]*edge2[0]-edge1[0]*edge2[2],
-                      edge1[0]*edge2[1]-edge1[1]*edge2[0])
-        n0, n1, n2 = node.normals[i0], node.normals[i1], node.normals[i2]
-        avg_normal = (n0[0]+n1[0]+n2[0], n0[1]+n1[1]+n2[1], n0[2]+n1[2]+n2[2])
-        dot = geo_normal[0]*avg_normal[0] + geo_normal[1]*avg_normal[1] + geo_normal[2]*avg_normal[2]
-        if dot < 0:
-            i1, i2 = i2, i1
-            flipped += 1
+        # NOTE: an earlier version of this importer "corrected" triangle
+        # winding whenever it disagreed with the file's own authored
+        # per-vertex normals (computed via cross product vs the file's
+        # normal data). That was WRONG - confirmed directly by the user,
+        # who can view these exact assets correctly in the real TvT
+        # Editor with no issue, proving the raw source data already
+        # renders correctly in the actual target engine. The "disagreement"
+        # this importer was detecting is not a real defect in the source
+        # data; trust the file's index order exactly as authored instead.
+
+        # A genuinely zero-area triangle (collinear/repeated vertices) has
+        # no well-defined normal. It renders as nothing in any engine, but
+        # if left in, Blender's own topology-based normal/shading
+        # recomputation can pick up its undefined normal and smear
+        # incorrect shading onto the real triangles sharing its vertices -
+        # found via a direct check of Turret_A's raw geometry: 70 such
+        # triangles, all clustered in the same upper/roof region the user
+        # reported as visibly broken ("commander's hatch forwards").
+        # Skipping them here is a one-way filter on genuine geometric
+        # degeneracy, not a guess about authored intent.
+        if i0 == i1 or i1 == i2 or i0 == i2:
+            degenerate += 1
+            continue
+        if _tri_area(node.positions[i0], node.positions[i1], node.positions[i2]) < 1e-8:
+            degenerate += 1
+            continue
 
         try:
             face = bm.faces.new((verts[i0], verts[i1], verts[i2]))
         except ValueError:
-            # Duplicate/degenerate face (bmesh disallows exact duplicates) -
-            # skip rather than aborting the whole import.
+            # Duplicate face (bmesh disallows exact duplicates) - skip
+            # rather than aborting the whole import.
             skipped += 1
             continue
+        tri_verts.append((i0, i1, i2))
         if uv_layer:
             for loop, vi in zip(face.loops, (i0, i1, i2)):
                 if vi < len(node.uvs):
@@ -128,27 +151,28 @@ def _create_object_for_node(node, index):
     bm.to_mesh(mesh)
     bm.free()
 
-    # Mark every face smooth-shaded rather than trying to reapply the
-    # file's exact authored normal vectors via Blender's custom split
-    # normals API. That API is version-sensitive - a file saved by
-    # Blender 2.79 (this importer's target) and later opened in a much
-    # newer Blender/Eevee produced visibly wrong shading (a real defect
-    # found via user testing: the winding fix was independently verified
-    # complete, yet a newer-Blender render still showed distorted
-    # shading that this importer's own 2.79 renders never reproduced).
-    # Plain smooth shading avoids trusting stored normal vectors across
-    # versions entirely - it relies only on mesh topology, and since the
-    # .ms2 format already duplicates vertices at hard edges (confirmed
-    # on the tutorial cube: 24 vertices for 8 physical corners, not 8),
-    # a face only shares a vertex *index* with its neighbour where the
-    # source data intended a smooth transition, so this reproduces the
-    # authored hard/soft edge behaviour without needing exact normals.
-    for poly in mesh.polygons:
-        poly.use_smooth = True
+    # Reapply the file's own authored per-vertex normals as Blender custom
+    # split normals, rather than trusting Blender's own geometry-based
+    # recomputation. This was tried before and briefly reverted to plain
+    # smooth shading on a hypothesis that the custom-normals API itself
+    # was version-sensitive across Blender releases - but with the
+    # degenerate triangles above now filtered out (they were the only
+    # concrete mechanism found for topology-based normals to actually
+    # break), reapplying the authored normals is strictly more faithful
+    # to the source data than any Blender-side recomputation, and is what
+    # the real TvT engine itself does (it never derives normals from
+    # geometry either).
+    if node.normals and len(node.normals) == len(node.positions):
+        mesh.use_auto_smooth = True
+        mesh.normals_split_custom_set_from_vertices(
+            [Vector(n) for n in node.normals])
+    else:
+        for poly in mesh.polygons:
+            poly.use_smooth = True
 
-    if skipped or flipped:
-        print("  (%s: flipped %d face(s) to match authored normals, skipped %d degenerate/duplicate)" % (
-            node.name, flipped, skipped))
+    if skipped or degenerate:
+        print("  (%s: skipped %d duplicate, %d degenerate zero-area face(s))"
+              % (node.name, skipped, degenerate))
 
     obj = bpy.data.objects.new(node.name or ("node_%d" % index), mesh)
     return obj

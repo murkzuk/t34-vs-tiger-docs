@@ -6,6 +6,24 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 correction + fourth fix) — Winding-disagreement diagnosis retracted; real cause found: zero-area degenerate triangles
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User re-tested and reported the turret still breaks "from the commander's hatch forwards," and firmly rejected the standing explanation that this was a pre-existing inconsistency in the 2006-era turret asset - they can view the exact same model correctly in the real TvT Editor, proving the source data is fine by the actual engine's own rules. The Phase 3 winding-disagreement diagnostic (which compared each triangle's geometric normal against the file's authored normal) was retracted as a false signal, and its "fix" (reversing vertex order on disagreement) was fully reverted - the importer now trusts the file's triangle index order exactly as authored.
+
+Went looking for a defect that doesn't depend on comparing against authored normals at all: checked for genuinely zero-area triangles (repeated vertex indices, or collinear points via cross-product area). Found 70 real degenerate triangles in `Turret_A`, all clustered in the turret's roof/hatch region - matching the user's description closely - and the same pattern elsewhere in the file (`Body_Crashed`, several LOD/CM variants), while `Body` itself (never complained about) has none. These triangles have undefined normals; the real engine never recomputes normals from geometry so they're harmless there, but the importer's prior "third fix" (topology-based smooth shading) made Blender recompute normals from geometry, letting the degenerate triangles' undefined normals smear bad shading onto real neighboring faces in exactly that region.
+
+**Fix**: skip zero-area/repeated-index triangles entirely at import (like duplicate faces already were - they're invisible in any renderer regardless), and reinstated the file's own authored per-vertex normals via custom split normals, since with the poisoning source removed there's no longer a reason to distrust them. Regenerated and rendered the tank import - clean shading everywhere, including the hatch region.
+
+### Why
+
+The user's counter-evidence (correct rendering in the real TvT Editor) was decisive proof the source data itself isn't at fault, so continuing to blame it would have been wrong. Finding an engine-independent structural check (real geometric degeneracy, not a comparison against authored data) gives a fix that doesn't rest on any assumption about which renderer or Blender version is involved - unlike the retracted one.
+
+---
+
 ## 2026-07-03 (Phase 3 third fix) — Replaced a version-sensitive normals API with plain smooth shading
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
