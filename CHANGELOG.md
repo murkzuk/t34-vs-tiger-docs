@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (latest) — Reposition steppe map spawn away from immediate detection
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+With the floating-object bug fixed, the player spawn worked but got spotted the instant they appeared - the inherited `Mission1` enemy cluster (Tiger + 2 Pak 40s) sat only 1300-1500m away with no forest left to screen it, unlike the original wooded map which silently protected this same layout. Per the user's suggestion, moved the spawn to 2000m from the enemy cluster along the same approach axis, and rotated it to face back toward the cluster. Confirmed the engine's rotation-matrix convention empirically (from the existing obstacle objects' clean 2D rotations) before trusting it for the new orientation. The new spawn's height needed a linear fit calibrated from the other 26 objects' known-good heights, since this is a genuinely new location rather than a rescaled existing one - flagged clearly as an estimate, not a guaranteed exact match like the earlier floating-gun fix.
+
+### Why
+
+Direct follow-up to the user getting spotted immediately on spawn and suggesting the fix themselves.
+
+---
+
 ## 2026-07-03 (later still) — Fix floating-object bug on the steppe map (root cause of the RouterZone issue too)
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

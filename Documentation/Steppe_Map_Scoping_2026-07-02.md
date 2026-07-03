@@ -64,7 +64,19 @@ Spotted visually: a Pak 40 gun floating in mid-air in the Editor when testing `S
 
 **Bonus**: this same fix resolved the RouterZone soft-filter issue from earlier too, for the same reason (same root cause, same coordinate-vs-scale mismatch) - re-verified empirically that the same coordinate now samples the same RouterZone pixel/color at both scales, and **re-enabled** the soft filter for the steppe target (had been disabled as a workaround before the real root cause was found). Re-ran the full 20-combination target/faction/seed sweep with the filter back on - all still pass, consistent results.
 
-Not yet retested visually in the Editor with this fix applied - that's the next step.
+Retested visually - confirmed fixed (see below for the follow-up spawn-exposure issue this uncovered).
+
+## Spawn repositioned and reoriented (2026-07-03)
+
+With the floating-object bug fixed, the player spawn was confirmed working but got spotted immediately - the nearest enemies (Tiger + 2 Pak 40s, inherited verbatim from `Mission1`) sat only 1300-1550m away with no forest cover to screen the approach (the map's sparse-forest design removed the concealment that silently protected this same layout on the original wooded map). User's fix: **move the spawn to 2000m from the enemy cluster and rotate to face it generally**.
+
+- Computed the enemy cluster centroid (Tiger + both Pak 40s), then placed the player 2000m out along the same axis it was already on relative to that centroid (preserves the mission's original approach direction, just further back).
+- Rotation: confirmed the engine's rotation convention empirically from the existing `envr_*` obstacle objects' clean 2D-rotation matrices (row2 = forward direction (dx,dy,0), row1 = perpendicular (dy,-dx,0), row3 = up (0,0,1) - verified this matches the player's pre-existing matrix too before trusting it). New rotation faces from the new spawn back toward the enemy centroid.
+- **Z height needed the same care as the floating-gun fix, but couldn't reuse that exact trick** (this is a genuinely new location, not a rescaled version of an existing correctly-authored one). Instead, calibrated a linear fit (`Z = 0.010522*raw_heightmap_value + 523.43`) from the other 26 real objects in the template (all already correctly matched to their terrain, per the earlier fix) - residuals were mostly single digits to low teens against a real Z range of ~40 units, one outlier at -29. Predicted Z at the new spawn (609.13) sits comfortably inside the same range as every other object nearby (586-627). **This is a statistical estimate, not a mathematically exact match like the floating-gun fix** - worth a visual check in-Editor, and a small manual nudge if it's slightly off.
+- Also widened `Mission.script`'s `CockpitMapAccessBox` slightly so it comfortably covers the new spawn position (the box's edge was ~30 units short of the new location).
+- Regenerated `SteppeQuickMission` from the corrected template, re-ran the full sweep (now 12 combinations, still all pass).
+
+Not yet visually confirmed in-Editor.
 
 ## Terrain source recommendation (superseded — kept for the record)
 

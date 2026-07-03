@@ -32,7 +32,7 @@ class CSteppeQuickMissionMission extends CSPMission
   int    CockpitMapZoomSteps = 10;
   Vector MarksInitPoint      = new Vector(2000.0, 2000.0, 0.0);
   float  CockpitMapNavNameMaxRange  = 4000.0;
-  Array  CockpitMapAccessBox  = [ new Vector(5484, 3550.0, 0.0), new Vector(14484.0, 12550.0, 0.0)];
+  Array  CockpitMapAccessBox  = [ new Vector(5484, 3550.0, 0.0), new Vector(14484.0, 13100.0, 0.0)];
 
   final static Array RouterWorkingZones = [
     ];
