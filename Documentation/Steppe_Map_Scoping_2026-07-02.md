@@ -32,7 +32,21 @@ Checked REDUX's 20-unit roster against the real July 1943 Battle of Kursk order 
 
 **Decided: option (b)** — framed as a **Ukraine steppe battle, late 1943 into 1944**, not the specific named Battle of Kursk. Every current REDUX unit (including T-34/85 and SU-85) is period-correct under this framing, no new unit development needed, no anachronisms to explain away.
 
-## Terrain source recommendation
+## Build progress (2026-07-03)
+
+**First template built**: `Missions\MyMission\SteppeTemplate\` — copied from `Mission1` (not from `Campaign_2\Mission_6`; see below for why), all class names/paths renamed (`Mission1` → `SteppeTemplate` throughout `Content.script`/`Mission.script`/`WorldMatricies.script`/`Terrain.script`/`Atmosphere.script`/`MissionTestStrings.script`; `MissionTasks.script` copied verbatim, it's empty boilerplate). Registered in `Scripts\Editor\MenuConfig.script` as "Steppe Template (18000x18000)" so it's selectable in the Level Editor. All balance-checked identical to the source file, cache cleared, synced to the docs repo mirror.
+
+**Terrain source decision reversed mid-build**: `Campaign_2\Mission_6` (the statistically-flattest candidate identified earlier) turned out to be a dead end on closer visual inspection — rendered its heightmap as a hillshade image and it showed no large-scale terrain features at all, even after heavy smoothing, unlike `Mission1`'s heightmap which clearly shows a real river valley and rolling hills under the same rendering. Went with **`Mission1`'s own terrain instead, kept exactly as-is** — known good, hand-authored, and it gets flattened "for free" by the stretch itself: keeping the same height values but mapping them over a 2x bigger `MatrixWidth` (9000→18000) halves the effective slope everywhere, confirmed with an actual elevation cross-section plot (same wiggle amplitude, spread over 2x the horizontal distance = 2x gentler rise-over-run). No separate value-scaling step needed.
+
+**Forest density was NOT free** — this took a real content-editing step, not just the stretch. Checked `Mission1`'s own `TerrainZone_Test.bmp` zone-code coverage: **55.7% forest-coded, 4.05% bush-coded** (it's a tutorial map with real scenic tree cover) — stretching that as-is would've made the forest *bigger*, not sparser, since zone coverage is a fixed percentage of the bitmap regardless of physical scale. Thinned it via 32-pixel block-clustered random removal (not per-pixel noise, which would look unnatural) down to **8.84% forest / 0.67% bush** — scattered copses across mostly open ground, confirmed visually. `Mission1`'s original `TerrainZone_Test.bmp` was untouched; only the `SteppeTemplate` copy was modified.
+
+**Chose 18000x18000 for this first build** (2x REDUX's normal 9000, half of ZW's largest Kursk variant at 36000) — a deliberately moderate first step to validate the whole pipeline before going bigger. `CockpitMapAccessBox`/`MinRange`/`MaxRange`/`MarksInitPoint` in `Mission.script` were scaled 2x to match, though these are an untested assumption — may need tuning once seen in-Editor.
+
+**Not yet done**: actually opening this in the Level Editor to confirm it loads and looks right (this is the next real checkpoint — nothing this large has been proven to work in REDUX itself yet). Extending `generate_mission.py`/`roster.json` to target this template instead of/alongside `Mission1` hasn't been started.
+
+## Terrain source recommendation (superseded — kept for the record)
+
+**This recommendation was overturned during the build — see "Build progress" above.** Elevation range/std (a numeric proxy checked before any visual inspection) turned out to be misleading: low std didn't mean "gently rolling," it meant "no real terrain shape at all" once actually rendered. `Mission1`'s own terrain was used instead. Leaving the original numeric comparison below since it's still a real, if incomplete, data point.
 
 Sampled elevation range/std across every REDUX campaign mission's heightmap (all share the same `FloatValueFactor`, so directly comparable in real meters):
 
@@ -66,12 +80,12 @@ Campaign_2 Mission_5 — confirmed running at 60 FPS after today's AI-targeting 
 
 ## Recommended path
 
-All three design decisions are now locked in (historical framing, performance budget, mission-logic style — all above). Build order:
+All three design decisions are locked in (historical framing, performance budget, mission-logic style — all above). Build order, with progress:
 
-1. Confirm Campaign_2 Mission_6's terrain is actually a good steppe candidate (statistically it's the flattest REDUX map, but hasn't been looked at visually yet).
-2. Build the new bigger template mission (working name TBD) — stretched terrain, bigger `MatrixWidth`/`MatrixHeight`, sparse forest zone, `Mission1`-style minimal-trigger `Content.script`.
-3. Extend `generate_mission.py`/`roster.json` to target the new template alongside the existing `Mission1` path.
-4. Populate/test with a roster-accurate unit set, starting at or under the ~45-unit/~29-vehicle performance baseline.
-5. Test in-Editor before calling it done — this is genuinely new territory (nothing this large has been proven to work in REDUX itself yet, only in the separate ZW install).
+1. ~~Confirm Campaign_2 Mission_6's terrain~~ — done, rejected (see "Build progress" above). Used `Mission1`'s own terrain instead.
+2. **Done**: built `Missions\MyMission\SteppeTemplate\` — stretched to 18000x18000, forest thinned from 55.7%/4.05% (forest/bush) down to 8.84%/0.67%, `Mission1`-style minimal-trigger `Content.script`, registered in `MenuConfig.script`.
+3. **Not started**: extend `generate_mission.py`/`roster.json` to target the new template alongside the existing `Mission1` path.
+4. **Not started**: populate/test with a roster-accurate unit set, starting at or under the ~45-unit/~29-vehicle performance baseline.
+5. **Next concrete step**: open `SteppeTemplate` in the Level Editor and confirm it actually loads and looks right — this is genuinely new territory (nothing this large has been proven to work in REDUX itself yet, only in the separate ZW install). Watch in particular whether `CockpitMapAccessBox` (scaled 2x, untested assumption) actually covers the right area.
 
 Picks up here next session.

@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 — First steppe mission template built
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Built `Missions\MyMission\SteppeTemplate\`, the first concrete step on the large open-steppe mission concept. Rejected `Campaign_2\Mission_6` as the terrain source after actually rendering its heightmap (a statistically-flat candidate identified in scoping) - it showed no real terrain features at all even after heavy smoothing, unlike `Mission1`'s terrain which clearly shows a real river valley and hills under the same rendering. Used `Mission1`'s own terrain instead, unmodified, relying on the confirmed stretch technique (same height values mapped over a bigger `MatrixWidth`) to flatten the effective slope for free - proved this with an actual elevation cross-section plot rather than just asserting it. Forest density needed a real fix though: `Mission1`'s zone bitmap was 55.7% forest-coded, and stretching doesn't reduce that percentage, so thinned it via 32-pixel block-clustered random removal down to 8.84%. Registered the new template in `MenuConfig.script` at 18000x18000 (a deliberately moderate first step, not the full 36000 ZW used). Not yet opened in the Level Editor to confirm it works.
+
+### Why
+
+Direct follow-up to the steppe mission scoping pass, per the user's decision to reuse the Quick Mission Generator's approach with a second, bigger template.
+
+---
+
 ## 2026-07-03 — Issue tracker audit, fix German distance-callout voice lines
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

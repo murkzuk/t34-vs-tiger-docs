@@ -1,0 +1,55 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+class SteppeTemplateWorldMatrices extends CWorldMatrices
+{
+  final static float MatrixWidth  = 18000.0;
+  final static float MatrixHeight = 18000.0;
+}
+
+
+class SteppeTemplateLandscapeLayer extends CLandscapeLayer
+{
+  final static int     ImageWidth              = 2049;
+  final static int     ImageHeight             = 2049;
+
+  final static String ImageFileName           = "Missions/MyMission/SteppeTemplate/hmap.raw";
+
+  final static float  FloatValueFactor        = 0.070000*257.0;
+
+}
+
+class SteppeTemplateWaterHeights extends CBaseWaterHeightsLayer
+{
+  final static String ImageFileName           = "Missions/MyMission/SteppeTemplate/hwater.raw";
+
+  final static float  FloatValueFactor        = 0.070000*257.0;
+}
+
+class SteppeTemplateTerrainZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+{
+  final static int     ImageWidth              = 1024;
+  final static int     ImageHeight             = 1024;
+
+  final static String ImageFileName           = "Missions/MyMission/SteppeTemplate/TerrainZone_Test.bmp";
+}
+
+class SteppeTemplateRouterZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+{
+  final static int     ImageWidth              = 2048;
+  final static int     ImageHeight             = 2048;
+
+  final static String ImageFileName           = "Missions/MyMission/SteppeTemplate/RouterZone_Test.bmp";
+}
+
+
+class SteppeTemplateMicroTextures1 extends CMicroTexLayer
+{
+  final static String ImageFileName           = "Missions/MyMission/SteppeTemplate/micro_Test.bmp";
+}
