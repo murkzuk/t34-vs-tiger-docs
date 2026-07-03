@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (later) — Fix Nebelwerfer shadow-LOD copy-paste typo
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+While looking into GitHub issue #4 (shadow settings missing from model headers), found that issue is largely already resolved - every real gameplay model has all 7 shadow-related header fields; only skyboxes and dev/test scaffolding lack them, which is correct (they don't cast shadows). But `Common\ShadowHide.script`'s `InitializeShadowsHide()` had a real copy-paste typo: the Nebelwerfer's line set `LodForShadowChange` (already correctly set to 2.5 elsewhere, in `ShadowsChange.script`) a second time, instead of `LodForShadowHide` as intended - meaning the Nebelwerfer's actual `LodForShadowHide` was silently falling back to `CBaseModel::DefaultLodForShadowHide` (9999.0f, i.e. never hide/reduce the shadow at distance), unlike its Pak 40/Zis-3 static-gun siblings which correctly drop to a cheaper shadow at LOD 2.5. Fixed the field name to match its siblings.
+
+### Why
+
+Small, low-risk fix spotted while triaging issue #4 - a genuine inconsistency worth closing out on its own even though the broader issue turned out to already be substantially addressed.
+
+---
+
 ## 2026-07-03 (final, corrected) — Fix "MissionName not found" briefing-menu crash
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
