@@ -55,17 +55,23 @@ Campaign_2 Mission_5 — confirmed running at 60 FPS after today's AI-targeting 
 
 **Confirmed as the working budget**: treat ~45 units / ~29 combat vehicles as the known-safe starting point for the new mission. A bigger, more open map might tolerate more (less scene/forest rendering overhead per the whole point of going open steppe) but that's untested — a bigger map doesn't automatically mean unlimited unit count is free. Start at or under this baseline and only scale up once proven in-game.
 
-## Mission-logic design choice — still open
+## Mission-logic design choice — DECIDED 2026-07-03
 
-Not yet decided: a lightly-scripted, randomizable skirmish (safe, low-risk, similar in spirit to the Quick Mission Generator's approach — see `Mission_File_Schema_Verified_2026-07-02.md`) vs. a fully hand-scripted historical battle with real objectives/waves (bigger undertaking, closer to how the real campaign missions are built, more failure-prone given how trigger-coupled those tend to be).
+**Decided: reuse and extend the Quick Mission Generator itself**, rather than hand-scripting a bespoke historical battle. Concretely:
 
-## Recommended path (not yet started)
+- Build a second template mission (working name TBD, e.g. `SteppeTemplate`) alongside the existing `Mission1` — bigger `MatrixWidth`/`MatrixHeight`, terrain stretched per the technique confirmed above, sparse forest zone. `Mission1` stays untouched as the small/safe default.
+- `generate_mission.py` gets pointed at whichever template is wanted (either a `--template` flag or a sibling script) — the randomize/jitter/validate logic underneath doesn't need to change, just the safe-zone bounds it jitters within.
+- `roster.json` needs little to no change — the "late 1943–44 Ukraine steppe" framing already made every current REDUX unit period-correct, so it's the same roster spread over more ground, not a new one.
+- This directly resolves the Quick Mission Generator's own existing backlog item ("consider a second/bigger template mission for more spawn variety") at the same time — one build, two backlog items closed.
 
-1. Settle the remaining open decision above (scripted-vs-randomized mission-logic style). Historical framing and performance budget are now locked in (see above).
-2. In the Level Editor, look at Campaign_2 Mission_6's terrain visually to confirm it's a good steppe candidate before committing.
-3. Build a new mission using `Mission1`'s proven-safe, trigger-light `Content.script` structure as the mission-logic base (same precedent as the Quick Mission Generator work), but with Mission_6's terrain files stretched to a larger `MatrixWidth`/`MatrixHeight` via the confirmed technique above.
-4. Paint/adapt the `TerrainZone` bitmap for minimal forest coverage, keep `RegisterForestRegion` wired but sparse.
-5. Populate with a roster-accurate unit set (late 1943-44 Ukraine steppe framing — full REDUX roster is period-correct), starting at or under the ~45-unit/~29-vehicle performance baseline.
-6. Test in-Editor before anything else — this is genuinely new territory (nothing this large has been proven to work in REDUX itself yet, only in the separate ZW install).
+## Recommended path
 
-Nothing has been built yet — this is scoping only, per explicit instruction. Picks up here next session.
+All three design decisions are now locked in (historical framing, performance budget, mission-logic style — all above). Build order:
+
+1. Confirm Campaign_2 Mission_6's terrain is actually a good steppe candidate (statistically it's the flattest REDUX map, but hasn't been looked at visually yet).
+2. Build the new bigger template mission (working name TBD) — stretched terrain, bigger `MatrixWidth`/`MatrixHeight`, sparse forest zone, `Mission1`-style minimal-trigger `Content.script`.
+3. Extend `generate_mission.py`/`roster.json` to target the new template alongside the existing `Mission1` path.
+4. Populate/test with a roster-accurate unit set, starting at or under the ~45-unit/~29-vehicle performance baseline.
+5. Test in-Editor before calling it done — this is genuinely new territory (nothing this large has been proven to work in REDUX itself yet, only in the separate ZW install).
+
+Picks up here next session.
