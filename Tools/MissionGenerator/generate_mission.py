@@ -81,15 +81,17 @@ TARGETS = {
         },
         "menu_name": "Steppe Quick Mission (Generated)",
         # RouterZone_Test.bmp was copied unmodified from Mission1/QuickMission's
-        # (9000x9000) file, then reinterpreted over an 18000x18000 MatrixWidth -
-        # the same real-world coordinate now samples a completely different
-        # pixel/color than it would at the original scale (confirmed empirically:
-        # the same anchor point maps to opposite passable-color entries depending
-        # on which MatrixWidth is used for the pixel conversion). The soft filter
-        # would be checking the wrong region of the bitmap for this target, so
-        # it's disabled here rather than silently giving unreliable verdicts -
-        # until a RouterZone bitmap painted for the 18000 scale exists.
-        "routerzone_soft_filter_supported": False,
+        # (9000x9000) file. This was disabled 2026-07-03 when the same-coordinate-
+        # different-pixel bug was first found (via a real desync between targets
+        # for the same seed), then re-enabled the same day once the actual root
+        # cause was found and fixed: SteppeTemplate's own Content.script object
+        # positions needed their X/Y (not Z) scaled 2x to land on the same
+        # heightmap/zone pixel they were originally authored for (see the visibly
+        # floating Pak gun this was first spotted from). Once that fix landed,
+        # re-verified empirically that the same coordinate now samples the same
+        # RouterZone pixel/color at both scales - the soft filter is meaningful
+        # again for this target.
+        "routerzone_soft_filter_supported": True,
     },
 }
 

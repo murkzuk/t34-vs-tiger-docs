@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (later still) — Fix floating-object bug on the steppe map (root cause of the RouterZone issue too)
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User spotted a Pak 40 gun floating in mid-air testing `SteppeQuickMission` in the Editor. Root cause: every object's position was copied verbatim from `Mission1`, but stretching `MatrixWidth` to 18000 changes which heightmap pixel a given X/Y coordinate samples - so authored Z values no longer matched the real terrain height there. Confirmed empirically (311 raw elevation units off). Fixed by scaling every object's X/Y (not Z) in `SteppeTemplate\Content.script` by 2.0, the same stretch factor - verified this puts every object back on its originally-authored heightmap pixel. This turned out to be the same root cause behind the earlier RouterZone soft-filter issue, so that filter was re-enabled for the steppe target now that the actual problem is fixed rather than worked around. Re-ran the full 20-combination target/faction/seed sweep - all pass.
+
+### Why
+
+Direct follow-up to the user spotting the floating gun while testing in the Level Editor.
+
+---
+
 ## 2026-07-03 (later) — Steppe map confirmed working, generator extended to target it
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
