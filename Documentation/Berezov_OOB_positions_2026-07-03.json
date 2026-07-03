@@ -1,0 +1,789 @@
+{
+  "source": "Berezov-ger.scn (user-provided Panzer Elite mission file)",
+  "anchor": {
+    "name": "Berezov village center",
+    "position": [
+      2164.0,
+      2798.5
+    ]
+  },
+  "village_centers": {
+    "Rakovo": [
+      1265.0,
+      3090.5
+    ],
+    "Berezov": [
+      2164.0,
+      2798.5
+    ],
+    "Gremuchi": [
+      3510.0,
+      2786.5
+    ],
+    "Gonki": [
+      5451.0,
+      3193.0
+    ]
+  },
+  "combat_groups": [
+    {
+      "name": "Zug Falke",
+      "nationality": "German",
+      "group_position": [
+        520.0,
+        3320.0
+      ],
+      "player_platoon": true,
+      "units": [
+        {
+          "name": "Pz4H2",
+          "position": [
+            510.0,
+            3320.0
+          ],
+          "experience": "2"
+        },
+        {
+          "name": "Pz4H2",
+          "position": [
+            460.0,
+            3305.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "Pz4H2",
+          "position": [
+            400.0,
+            3305.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "Pz4H2",
+          "position": [
+            340.0,
+            3305.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "Pz4H2",
+          "position": [
+            280.0,
+            3305.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 1724.7,
+      "bearing_from_berezov_deg": 252.4
+    },
+    {
+      "name": "HQ",
+      "nationality": "German",
+      "group_position": [
+        615.0,
+        3340.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "PakCrew",
+          "position": [
+            615.0,
+            3340.0
+          ],
+          "experience": "1"
+        },
+        {
+          "name": "SdKfz71",
+          "position": [
+            600.0,
+            3345.0
+          ],
+          "experience": "1"
+        }
+      ],
+      "dist_from_berezov": 1640.9,
+      "bearing_from_berezov_deg": 250.7
+    },
+    {
+      "name": "KG Kaiser",
+      "nationality": "German",
+      "group_position": [
+        540.0,
+        3380.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "Pz3M",
+          "position": [
+            540.0,
+            3380.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "Pz3L",
+          "position": [
+            510.0,
+            3400.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "Pz3J",
+          "position": [
+            475.0,
+            3400.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "Pz3J",
+          "position": [
+            435.0,
+            3410.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 1725.0,
+      "bearing_from_berezov_deg": 250.3
+    },
+    {
+      "name": "Zug Lex",
+      "nationality": "German",
+      "group_position": [
+        460.0,
+        3350.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "SPW2511",
+          "position": [
+            460.0,
+            3350.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SPW251MG",
+          "position": [
+            380.0,
+            3360.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 1791.0,
+      "bearing_from_berezov_deg": 252.1
+    },
+    {
+      "name": "Zug Weidinger",
+      "nationality": "German",
+      "group_position": [
+        900.0,
+        3140.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "GInf43",
+          "position": [
+            900.0,
+            3140.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SPW2509",
+          "position": [
+            850.0,
+            3130.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 1309.3,
+      "bearing_from_berezov_deg": 254.9
+    },
+    {
+      "name": "Plt.Stepichev",
+      "nationality": "Soviet",
+      "group_position": [
+        4450.0,
+        3000.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "SU152-0",
+          "position": [
+            4450.0,
+            3000.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            4500.0,
+            3000.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            4550.0,
+            3000.0
+          ],
+          "experience": "3"
+        }
+      ],
+      "dist_from_berezov": 2294.9,
+      "bearing_from_berezov_deg": 95.0
+    },
+    {
+      "name": "Plt.Kotin",
+      "nationality": "Soviet",
+      "group_position": [
+        3500.0,
+        2770.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "SU152-0",
+          "position": [
+            3470.0,
+            2750.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            3501.0,
+            2770.0
+          ],
+          "experience": "4"
+        }
+      ],
+      "dist_from_berezov": 1336.3,
+      "bearing_from_berezov_deg": 88.8
+    },
+    {
+      "name": "Plt.Berzina",
+      "nationality": "Soviet",
+      "group_position": [
+        4750.0,
+        3040.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "ATRGun76",
+          "position": [
+            4750.0,
+            3040.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "GunCrew",
+          "position": [
+            4760.0,
+            3040.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SU152-0",
+          "position": [
+            4750.0,
+            2870.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 2597.3,
+      "bearing_from_berezov_deg": 95.3
+    },
+    {
+      "name": "Plt.Samsonov",
+      "nationality": "Soviet",
+      "group_position": [
+        3300.0,
+        2837.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "T3476-0",
+          "position": [
+            3300.0,
+            2837.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-1",
+          "position": [
+            3350.0,
+            2814.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            3400.0,
+            2790.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            3450.0,
+            2774.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 1136.7,
+      "bearing_from_berezov_deg": 91.9
+    },
+    {
+      "name": "Soviet HQ",
+      "nationality": "Soviet",
+      "group_position": [
+        5413.0,
+        3258.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "SU76M",
+          "position": [
+            5413.0,
+            3258.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "Truck4",
+          "position": [
+            5313.0,
+            3245.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            5300.0,
+            3100.0
+          ],
+          "experience": "0"
+        }
+      ],
+      "dist_from_berezov": 3281.3,
+      "bearing_from_berezov_deg": 98.0
+    },
+    {
+      "name": "Plt.Voronov",
+      "nationality": "Soviet",
+      "group_position": [
+        2560.0,
+        2750.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "KV176-0",
+          "position": [
+            2560.0,
+            2750.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "KV176-0",
+          "position": [
+            2620.0,
+            2750.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "KV176-0",
+          "position": [
+            2700.0,
+            2750.0
+          ],
+          "experience": "2"
+        }
+      ],
+      "dist_from_berezov": 399.0,
+      "bearing_from_berezov_deg": 83.0
+    },
+    {
+      "name": "Plt.Kutuzov",
+      "nationality": "Soviet",
+      "group_position": [
+        4250.0,
+        2380.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "T3476-0",
+          "position": [
+            4250.0,
+            2380.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-1",
+          "position": [
+            4300.0,
+            2380.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            4350.0,
+            2380.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "T3476-0",
+          "position": [
+            4400.0,
+            2383.0
+          ],
+          "experience": "2"
+        }
+      ],
+      "dist_from_berezov": 2127.6,
+      "bearing_from_berezov_deg": 78.7
+    },
+    {
+      "name": "Plt.Popov",
+      "nationality": "Soviet",
+      "group_position": [
+        2638.0,
+        625.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "T3476-0",
+          "position": [
+            2638.0,
+            625.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            2638.0,
+            575.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            2638.0,
+            525.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-0",
+          "position": [
+            2638.0,
+            475.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 2224.6,
+      "bearing_from_berezov_deg": 12.3
+    },
+    {
+      "name": "Plt.Rhyzov",
+      "nationality": "Soviet",
+      "group_position": [
+        1990.0,
+        2750.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "76Net",
+          "position": [
+            1990.0,
+            2750.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "ATRGun76",
+          "position": [
+            1551.0,
+            2977.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "GunCrew",
+          "position": [
+            1566.0,
+            2977.0
+          ],
+          "experience": "0"
+        },
+        {
+          "name": "GunCrew",
+          "position": [
+            1997.0,
+            2730.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            1325.0,
+            3040.0
+          ],
+          "experience": "3"
+        }
+      ],
+      "dist_from_berezov": 180.6,
+      "bearing_from_berezov_deg": 285.6
+    },
+    {
+      "name": "Plt.Zhilin",
+      "nationality": "Soviet",
+      "group_position": [
+        1600.0,
+        2590.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "BA20",
+          "position": [
+            1600.0,
+            2590.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "T70A-0",
+          "position": [
+            1500.0,
+            2500.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "T70A-0",
+          "position": [
+            1400.0,
+            2900.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 601.3,
+      "bearing_from_berezov_deg": 290.3
+    },
+    {
+      "name": "Plt.Zhadov",
+      "nationality": "Soviet",
+      "group_position": [
+        2150.0,
+        2890.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "76Net",
+          "position": [
+            2150.0,
+            2890.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            2155.0,
+            2900.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "ATRGun76",
+          "position": [
+            2000.0,
+            2860.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "SOVinf",
+          "position": [
+            2020.0,
+            2850.0
+          ],
+          "experience": "3"
+        }
+      ],
+      "dist_from_berezov": 92.6,
+      "bearing_from_berezov_deg": 188.7
+    },
+    {
+      "name": "Plt.Markov",
+      "nationality": "Soviet",
+      "group_position": [
+        5400.0,
+        3172.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "GunCrew",
+          "position": [
+            5410.0,
+            3172.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "76Net",
+          "position": [
+            5400.0,
+            3172.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 3257.5,
+      "bearing_from_berezov_deg": 96.6
+    },
+    {
+      "name": "Plt.Sytnik",
+      "nationality": "Soviet",
+      "group_position": [
+        3200.0,
+        2300.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "T3476-2",
+          "position": [
+            3200.0,
+            2300.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            3250.0,
+            2300.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            3300.0,
+            2300.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            3350.0,
+            2300.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            3400.0,
+            2300.0
+          ],
+          "experience": "5"
+        }
+      ],
+      "dist_from_berezov": 1149.7,
+      "bearing_from_berezov_deg": 64.3
+    },
+    {
+      "name": "Plt.Oleshev",
+      "nationality": "Soviet",
+      "group_position": [
+        6200.0,
+        2837.0
+      ],
+      "player_platoon": false,
+      "units": [
+        {
+          "name": "T3476-1",
+          "position": [
+            6200.0,
+            2837.0
+          ],
+          "experience": "5"
+        },
+        {
+          "name": "T3476-0",
+          "position": [
+            6250.0,
+            2814.0
+          ],
+          "experience": "4"
+        },
+        {
+          "name": "T3476-2",
+          "position": [
+            6300.0,
+            2790.0
+          ],
+          "experience": "3"
+        },
+        {
+          "name": "T3476-0",
+          "position": [
+            6350.0,
+            2750.0
+          ],
+          "experience": "4"
+        }
+      ],
+      "dist_from_berezov": 4036.2,
+      "bearing_from_berezov_deg": 90.5
+    }
+  ]
+}

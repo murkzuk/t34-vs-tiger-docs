@@ -55,12 +55,21 @@ A ~4.2km (Rakovo-to-Gonki) corridor fits comfortably inside `SteppeTemplate`'s 1
 **Still open / not yet done**:
 - The road isn't straight — the briefing map shows it jogging at each village. Needs tracing from the map image and either finding/extending `SteppeTemplate`'s existing road or adding one.
 - `SteppeTemplate` currently has zero buildings — the three village clusters are real new authoring work (though existing TvT missions with village prop clusters can be used as a pattern reference, not built from nothing).
-- Full unit-by-unit position extraction (every `PositionX`/`PositionY` in every `CombatGroup`/`Unit`) hasn't been done yet — only the five `Area` centers so far. This is mechanical (same technique as the distance extraction above) but not yet executed.
 - Anchor point/orientation for placing the whole corridor within `SteppeTemplate`'s existing safe zone/passability data not yet chosen.
+
+## Full order-of-battle position extraction — DONE 2026-07-03
+
+Extracted all 19 combat groups / 64 units with exact positions, saved to `Documentation/Berezov_OOB_positions_2026-07-03.json` (group + per-unit `PositionX`/`PositionY`, distance and compass bearing from the Berezov anchor). German groups: `Zug Falke` (player Tiger + 4 AI, dist 1725/bearing 252° from Berezov), `HQ` (Pak crew + halftrack, 1641/251°), `KG Kaiser` (4 tanks, 1725/250°, now Panzer IV per the roster decision above), `Zug Lex` (2 halftracks, 1791/252°), `Zug Weidinger` (infantry + halftrack, 1309/255°) — all clustered west of Berezov, consistent with staging just behind the front line before the push.
+
+Soviet groups span a genuine defense-in-depth, not a flat line — real tactical variety worth preserving in the build:
+- Close-in, right on top of Berezov: `Plt.Voronov` (3× KV-1, dist 399/bearing 83°), `Plt.Rhyzov` (AT guns + infantry, 181/286°), `Plt.Zhadov` (AT gun + infantry, 93/189°), `Plt.Zhilin` (armored car + 2 recon tanks, 601/290°).
+- Mid-depth, around/behind Gremuchi: `Plt.Samsonov` (4× T-34/76, 1137/92°), `Plt.Sytnik` (5× T-34/76, 1150/64°), `Plt.Kotin` (SU-152 + infantry, 1336/89°).
+- Deep reserve, toward/behind Gonki: `Plt.Kutuzov` (4× T-34/76, 2128/79°), `Plt.Stepichev` (SU-152 + infantry, 2295/95°), `Plt.Berzina` (AT gun + SU-152, 2597/95°), `Soviet HQ` (SU-76M + truck + infantry, 3281/98°, the primary "destroy HQ" objective), `Plt.Markov` (AT gun, 3257/97°), `Plt.Oleshev` (4× T-34/76, farthest at 4036/91°, near/past Gonki).
+- **Genuine flanking ambush, confirmed real (not a data glitch — checked every individual unit position)**: `Plt.Popov` (4× T-34/76, 2225 units out but at bearing 12° — almost due north of Berezov, off the main east-west corridor entirely) sits far off the line as a flank threat, exactly matching the briefing's own warning about "any tanks attempting an attack from this direction."
 
 ## Build order — DECIDED 2026-07-03
 
-1. **Build now**: German attack side only — player as Tiger, `Zug Falke` (4× Panzer IV AI wingmen), `KG Kaiser` (Panzer III × 4 AI support column) — pushing Berezov → Gremuchi → Gonki against the Soviet defense-in-depth (Soviet roster/positions as authored, pending stand-ins for KV-1/SU-152/etc.).
+1. **Build now**: German attack side only — player as Tiger, `Zug Falke` (4× Panzer IV AI wingmen), `KG Kaiser` (Panzer IV × 4 AI support column — changed from Panzer III, which doesn't exist in TvT at all, confirmed via `ls` on both `Models\` and `Scripts\Units\`) — pushing Berezov → Gremuchi → Gonki against the Soviet defense-in-depth (Soviet roster/positions as authored, pending stand-ins for KV-1/SU-152/etc.).
 2. **After testing**: the Soviet defense side, reusing the same underlying battle setup (per the user's own observation, PE's AI is genuinely bilateral — both sides fight for real regardless of which is player-controlled, which is already how TvT's own AI works, not a new feature to build).
 
 ## Next mechanical step (not started)
