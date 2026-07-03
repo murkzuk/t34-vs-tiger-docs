@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 update) — Real installable Blender add-on, replacing the .blend-file round-trip
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User tested the zero-area-triangle fix and reported no visible change at all, falsifying that theory. Realized the actual testing method had a gap: every demo `.blend` file was built and saved in this environment's Blender 2.79, then opened by the user in their own much newer Blender (5.1.2) - so the mesh the user actually sees has already passed through Blender's own opaque old-file version-upgrade process, entirely outside this importer's control. Replaced the script-that-saves-a-.blend-file approach with `Tools\MS2Format\blender_addon\ms2_importer\`, a real installable add-on targeting Blender 2.80+ that adds a File > Import > TvT Model (.ms2) menu entry, so the user's own Blender builds the mesh natively - no round-trip, no invisible version-upgrade step. Also exposed hide-variants, skip-degenerate-triangles, and a three-way shading mode (Authored/Smooth/Flat) as live Redo-panel options, so the user can now run diagnostic experiments themselves rather than waiting on a new file each time. Packaged as a one-click-installable zip.
+
+### Why
+
+Chasing the visual bug by generating new files each round was slow and, it turned out, testing something slightly different from what was actually asked (a file that survived Blender's own version upgrade, not this importer's direct output). Giving the user a real tool in their own Blender turns future diagnosis into something they can iterate on directly, and unblocks their stated goal of testing other models themselves.
+
+---
+
 ## 2026-07-03 (Phase 3 correction + fourth fix) — Winding-disagreement diagnosis retracted; real cause found: zero-area degenerate triangles
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
