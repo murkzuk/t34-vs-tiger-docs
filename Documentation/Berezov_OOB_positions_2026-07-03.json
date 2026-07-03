@@ -785,5 +785,105 @@
       "dist_from_berezov": 4036.2,
       "bearing_from_berezov_deg": 90.5
     }
-  ]
+  ],
+  "tvt_world_placement": {
+    "map": "SteppeTemplate (18000x18000)",
+    "note": "Villages placed on a real, verified-flat (elev std ~36 across 4.2km), zero-water-crossing east-west band at heightmap row 720 (world Y=6328), found by scanning hmap.raw for the flattest dry corridor of the required length. Combat groups placed at their real distance/bearing from the Berezov anchor - all checked individually for dry, in-bounds terrain.",
+    "villages": {
+      "Rakovo": [
+        1251.0,
+        6620.0
+      ],
+      "Berezov": [
+        2150.0,
+        6328.0
+      ],
+      "Gremuchi": [
+        3496.0,
+        6316.0
+      ],
+      "Gonki": [
+        5437.0,
+        6722.5
+      ]
+    },
+    "combat_group_world_positions": {
+      "Zug Falke": [
+        506.0,
+        6849.5
+      ],
+      "HQ": [
+        601.3,
+        6870.3
+      ],
+      "KG Kaiser": [
+        526.0,
+        6909.5
+      ],
+      "Zug Lex": [
+        445.7,
+        6878.5
+      ],
+      "Zug Weidinger": [
+        885.9,
+        6669.1
+      ],
+      "Plt.Stepichev": [
+        4436.2,
+        6528.0
+      ],
+      "Plt.Kotin": [
+        3486.0,
+        6300.0
+      ],
+      "Plt.Berzina": [
+        4736.2,
+        6567.9
+      ],
+      "Plt.Samsonov": [
+        3286.1,
+        6365.7
+      ],
+      "Soviet HQ": [
+        5399.4,
+        6784.7
+      ],
+      "Plt.Voronov": [
+        2546.0,
+        6279.4
+      ],
+      "Plt.Kutuzov": [
+        4236.4,
+        5911.1
+      ],
+      "Plt.Popov": [
+        2623.9,
+        4154.5
+      ],
+      "Plt.Rhyzov": [
+        1976.1,
+        6279.4
+      ],
+      "Plt.Zhilin": [
+        1586.0,
+        6119.4
+      ],
+      "Plt.Zhadov": [
+        2136.0,
+        6419.5
+      ],
+      "Plt.Markov": [
+        5385.9,
+        6702.4
+      ],
+      "Plt.Sytnik": [
+        3186.0,
+        5829.4
+      ],
+      "Plt.Oleshev": [
+        6186.0,
+        6363.2
+      ]
+    }
+  }
 }

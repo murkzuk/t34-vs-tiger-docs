@@ -55,7 +55,16 @@ A ~4.2km (Rakovo-to-Gonki) corridor fits comfortably inside `SteppeTemplate`'s 1
 **Still open / not yet done**:
 - The road isn't straight — the briefing map shows it jogging at each village. Needs tracing from the map image and either finding/extending `SteppeTemplate`'s existing road or adding one.
 - `SteppeTemplate` currently has zero buildings — the three village clusters are real new authoring work (though existing TvT missions with village prop clusters can be used as a pattern reference, not built from nothing).
-- Anchor point/orientation for placing the whole corridor within `SteppeTemplate`'s existing safe zone/passability data not yet chosen.
+
+## Anchor point selection — DONE 2026-07-03
+
+Loaded `SteppeTemplate`'s actual `hmap.raw` (2049×2049, 16-bit, confirmed matches `MatrixWidth=18000` at 8.789 m/pixel) and `hwater.raw` (a single constant water-level value, 7785 - water only appears where the heightmap itself dips below that, not a separate per-pixel bitmap). Scanned every horizontal band of the heightmap for the flattest, driest run of the required ~4.2km length, with a safety margin from the map edges. Found a genuinely excellent candidate at heightmap row 720 (world Y=6328): zero water crossings and only ~36 units of elevation variation (out of a ~3276-unit total map range) across the whole span - essentially dead flat.
+
+Cross-checked the pixel-to-world coordinate conversion against the existing `MainPlayerUnit` spawn already in `SteppeTemplate`'s `Content.script` (confirmed it lands on dry ground at the expected height) before trusting the mapping.
+
+**Final anchor**: Berezov at world (2150, 6328). Gremuchi and Gonki placed using the *real* Berezov→Gremuchi (1346m, bearing 89.5°) and Gremuchi→Gonki (1983m, bearing 101.8°) vectors from the original file - preserving the actual road jog (bends slightly south-of-east past Gremuchi) rather than flattening everything onto one artificial straight line. Every one of the 19 combat groups was then placed at its real distance/bearing from the Berezov anchor and individually checked against the heightmap - **all 19 land on dry, in-bounds terrain**, no exceptions needed. Full world coordinates (villages + every combat group) saved to `tvt_world_placement` in `Documentation/Berezov_OOB_positions_2026-07-03.json`.
+
+**Still open**: the road's exact traced shape (we have the right bend angles now, but not a pixel-traced path to lay an actual road mesh/texture along), and building the three village prop clusters.
 
 ## Full order-of-battle position extraction — DONE 2026-07-03
 
