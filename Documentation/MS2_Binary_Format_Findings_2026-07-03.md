@@ -98,6 +98,53 @@ This means the entire vertex/normal/UV/index pipeline for a simple static mesh i
 - The portal/light/physics-shape export paths documented in Phase 0.
 - The unknown 4-float block at bytes 59-74 (pivot? local transform origin? needs a non-origin sample).
 
+## Confirmed: the multi-node record boundary, and an empty-container node's sentinel values
+
+Extended the same generic technique used to find the file header (scan for `int32 length + printable ASCII + null`) across whole files, not just the start. This immediately found each additional node's name embedded later in the file:
+
+| File | Node 1 name (offset) | Node 2 name (offset) |
+|---|---|---|
+| `Sky.ms2` | `Root` (8) | `SkyDome` (113) |
+| `sphere_test.ms2` | `Root` (8) | `pSphere1` (117) |
+| `test.ms2` | `root` (8) | `pSphere1` (113) |
+
+This confirms the overall file layout is simply **a flat sequence of `[node name][node data]` blocks, one per node**, with no separate index/table of contents — the same length-prefixed-name scan that finds the file header also finds every subsequent node.
+
+**`Root`'s own data block (`Sky.ms2`, bytes 17-112, 96 bytes) turned out to be an "empty container" case** — `Root` itself has no mesh, it's just a group holding `SkyDome` as a child. Its bounding box is `(+3.4028235e38, +3.4028235e38, +3.4028235e38)` to `(-3.4028235e38, -3.4028235e38, -3.4028235e38)` — **exactly `FLT_MAX` and `-FLT_MAX`**, the classic sentinel pair for "no bounding box computed" (a min/max accumulator that was initialized but never fed any real geometry). Its bounding sphere is center `(0,0,0)`, radius **`-1.0`** — also a classic "invalid/empty" sentinel. This is strong independent confirmation of the bbox/sphere field identification: the same two fields that held exact real values for the cube hold recognizable "nothing here" sentinel values for a node that genuinely has no geometry.
+
+Following the (sentinel) bbox+sphere+zero-pad, `Root`'s remaining 40 bytes decode cleanly as integers rather than floats:
+
+| Offset | int32 value | Likely meaning |
+|---|---|---|
+| 73 | `-1` | Parent node index — `-1` = "no parent", consistent with `Root` being the top of the hierarchy |
+| 77 | `1` | Possibly a child count (`Root` does have exactly 1 child, `SkyDome` — consistent, not yet cross-checked against a node with 0 or 2+ children) |
+| 81 | `1` | Unclear — another count, or an unrelated flag |
+| 85-109 | `(-0, -0, -0, ~0.99999994, -0, -0, -0)` as floats | Shape resembles a quaternion close to identity `(0,0,0,1)` — plausible "no rotation" for a root transform, but the near-miss `w` value (`0x3F7FFFFF`, the float just below 1.0, not exact 1.0) and negative-zero components make this tentative, not confirmed |
+
+## Confirmed on a second, non-trivial mesh: `SkyDome`'s bounding box/sphere
+
+`SkyDome`'s own data starts right after its name (offset 125). Its bounding box and sphere are **real, non-symmetric, sensible values for an actual dome-shaped mesh** — a much stronger test than the perfectly symmetric cube:
+
+- Bounding box: X/Y both ≈ `±7874` (a dome is roughly circular seen from above — matches), Z from `-11481` to `+7874` (asymmetric, consistent with a mesh that extends further below the horizon than above it).
+- Bounding sphere: center `(0.0005, -0.0, -1803.5)` (offset in Z, not simply the bbox midpoint — correct behavior for a real minimal-bounding-sphere calculation on an asymmetric shape), radius `≈14753` (right order of magnitude for this bbox).
+- The 4-float pad field is zero again — the **third** sample in a row (cube, empty `Root`, `SkyDome`) with this field hard zero, which now looks more like a genuinely unused/reserved field than a per-object pivot as first guessed.
+
+## What's confirmed vs. still open (updated)
+
+**Newly confirmed this pass:**
+- The multi-node file layout is a flat `[name][data]` sequence, discoverable via the same string-scan technique used for the header.
+- Bbox/sphere sentinel values for empty container nodes (`FLT_MAX`/`-FLT_MAX` bbox, `-1` radius).
+- Bbox/sphere confirmed correct on a second, asymmetric real mesh (not just the symmetric cube).
+- A likely parent-index field (`-1` for root nodes).
+- The 4-float pad field is very likely always zero/reserved, not a pivot (3/3 samples now).
+
+**Still open:**
+- The exact vertex/triangle **count** fields — for `SkyDome` (a real mesh with unknown vertex count, unlike the cube where the count was inferred from known geometry), the vertex/normal/UV/index block size can't yet be computed, since there's no confirmed explicit count field before the arrays begin. This is the next real blocker: either find where the count is stored, or find enough same-vertex-count reference points to solve it indirectly.
+- Full semantics of the "child count" and second unclear count field.
+- Whether the near-identity float quadruple is really a rotation quaternion.
+- The ~780 unidentified trailing bytes from the `MyFirstModel.ms2` pass.
+- Skin/joint/animation layout.
+
 ## Recommended next step
 
-Examine a small multi-node file (`Sky.ms2`, node count = 2, only 16957 bytes) to find where one node's data ends and the next begins — this is the natural next question, since every real asset in the game (buildings, vehicles) has many nodes, and nothing about the multi-node record boundary is understood yet.
+Find the vertex/face count encoding — try a file with two meshes of known, different, simple vertex counts (e.g. two primitive shapes) to solve for where a count field must sit between the sentinel/real bbox-sphere-pad block and the start of the vertex array.
