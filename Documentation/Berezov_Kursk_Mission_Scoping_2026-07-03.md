@@ -114,7 +114,17 @@ User re-tested. `editor.log` confirmed the fix worked completely: exactly one `C
 
 Verified `Mission.script`'s braces/brackets/parens are all balanced. Synced to the docs repo. Not yet tested - needs another Editor pass to confirm the compass/map now shows Gonki and the two kill-objectives actually complete on the real units dying.
 
-**Still open**: "Take Berezov" (a genuine area-clear objective) isn't implemented - would need a zone-tracking mechanism not built yet. Unit facing is still just a simple per-side default heading.
+**Still open**: "Take Berezov" (a genuine area-clear objective) isn't implemented - would need a zone-tracking mechanism not built yet.
+
+## Third in-Editor test — rotation matrix convention was wrong, fixed for every unit
+
+User tested again: objectives/map fix confirmed working, but reported Berezov sitting at "3 o'clock" relative to the direction the player spawns facing - i.e. off to the right, not ahead. That's a precise, diagnostic detail: exactly a 90-degree rotation error.
+
+**Root cause found and confirmed mathematically before touching anything**: the original rotation-matrix formula assumed the engine reads a placed object's **row1** as its forward-facing vector (with row0 as "right"). Checked this assumption directly: at heading 90° (intended to face east, roughly toward Berezov), the old formula's **row0** - not row1 - evaluates to `(0, -1)`, which is north, not east. If the engine actually reads row0 as forward (the opposite of what was assumed), a vehicle told to face "east" would actually face north - and the real target (east) would then appear 90° to its right. That's exactly "3 o'clock." The math confirmed the bug before any blind trial-and-error.
+
+**Fix**: rewrote the rotation matrix formula so row0 carries the forward vector and row1 carries the right vector (swapped from before), using the same bearing convention (0°=north, 90°=east) throughout. Regenerated the rotation for **all 94 objects** - not just the player - since every unit and village prop shared the same buggy formula and would have been similarly misoriented. Also had to make sure regenerating didn't quietly undo the earlier `MainPlayerUnit` rename fix (the source data still had the old `Berezov_ZugFalke_1` id) - fixed the id in the source data first, then verified after re-splicing that `MainPlayerUnit` appears exactly once and the old id doesn't appear at all.
+
+Verified bracket/paren balance again after the regeneration. Synced to the docs repo. Not yet re-tested.
 
 **Also seen in the log, judged benign/pre-existing, not touched**: `[Locale] There is no section [MissionBerezov]` warnings appear early in the log alongside identical warnings for `[QuickMissionGenerated]`/`[SteppeMissionGenerated]` (sections confirmed to genuinely exist in `eng.locale`) - looks like a harmless startup-ordering quirk (mission-list generation querying names before the locale file is fully loaded) affecting every custom mission equally, not something introduced by this work. Repeated `[AbstractJoint] Invalid rotation of collision mesh` warnings tie to loading a new instance of the human/infantry rig for the first time (identical quaternion values every occurrence, no longer appearing once that mesh is cached) - a pre-existing content quirk in the base infantry models, unrelated to Berezov specifically.
 
