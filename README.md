@@ -15,6 +15,16 @@ You don't need to be a coder to help! We want this project to be as open as poss
 
     🎨 Texture Work: Help us update the .dds textures for vehicles and environments.
 
+🔒 A Note on Contributing (please read before pushing)
+
+As of 2026-07-02, `main` is protected. Direct pushes to `main` will be rejected — this isn't personal, it's a safety net for everyone's work (including yours!). Here's the new workflow:
+
+1. Create a new branch for your change (e.g. `git checkout -b fix/some-bug`).
+2. Push your branch and open a Pull Request.
+3. It'll get reviewed and merged into `main` once it's good to go.
+
+This exists because a previous contribution accidentally deleted a working function during an unrelated cleanup, and it went straight into `main` unnoticed since there was no review step at the time. A branch + PR review would have caught it immediately. Nothing to do with any one person — just closing a gap that bit us once already.
+
 📂 Repository Roadmap
 
 To make this "mountain" easier to climb, we have organized the project into key areas:
