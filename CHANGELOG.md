@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Skirmish mission sweep) — Same non-unit sun-direction bug fixed in 10 more mission files
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Followed up on the earlier campaign-mission bug-hunt by sweeping the CF/DM skirmish missions and the multiplayer test mission the same way, adapted to work statically since I can't launch the game to get a fresh log for these specific files. Checked every mission's class hierarchy and object-group references - all clean, no undefined classes (these missions don't use custom AI task scripts at all, so that category of bug from the campaign missions doesn't apply here). Found the exact same non-unit-length `SunDirection` bug already fixed for Campaign_2/CF2/DM2 in 10 more files (`CF1/CF3/CF4/CF5/CF6/DM3/DM4/DM5/DM6Mission`, `MultiplayerTESTMISSION`) - fixed each to the same direction, normalized to length 1, so lighting is unchanged but the engine's repeated renormalization warning goes away. Also noticed `DM5`/`DM6Mission` have lens flare disabled (commented out) unlike every sibling mission - flagged rather than re-enabled, since it's unclear whether that was deliberate.
+
+### Why
+
+Closing out a known backlog item (`TODO.md`'s "nobody's swept these missions yet") with the same rigor as the campaign-mission pass, while being upfront that a static sweep without a live log can't catch everything a real play-test would.
+
+---
+
 ## 2026-07-03 (Phase 3 attempted fix, reverted) — Skin-weight split removed too much legitimate geometry
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
