@@ -2,17 +2,14 @@
 
 **Date:** 2026-07-03
 **Author:** Claude Code (Anthropic), with murkz
-**Status:** Early empirical probing. Everything below is derived from directly reading bytes out of real `.ms2` files and checking the numbers against known geometry — not guessed, not inferred from the Maya-side tooling docs. Confidence level is noted per finding.
+**Status:** Active empirical probing, real breakthrough this pass. Everything below is derived from directly reading bytes out of real `.ms2` files and checking the numbers against known geometry — not guessed. A significant correction was made partway through this document's own history (see "Correction" note below) — read that before trusting any offset math from an earlier draft.
+**Companion tool:** `Tools\MS2Format\ms2_probe.py` — a research script implementing everything confirmed below.
 
 This is Phase 1 of the plan in `Documentation/T34_vs_Tiger_Maya_Export_Manual(V3).md` Section 11 (GitHub issue #12 — eventual goal is a Blender import/export pipeline). Phase 0 covered the Maya-side authoring metadata; this covers the actual on-disk byte format those attributes get serialized into.
 
-## Method
+## Correction to an earlier version of this document
 
-Started with the two smallest/simplest real `.ms2` files in `Models\`:
-- `Landscape_test.ms2` (124 bytes) — a tiny test file, root object named `QuadPatch01`.
-- `MyFirstModel.ms2` (1695 bytes) — **the exact cube from the export tutorial's own screenshots** (Section 1 of the Phase 0 manual). We know in advance this is a single default Maya polygon cube, exported with the `bld_Haystack` texture, no animation, no skin, no lights, no portals — about as close to a known-plaintext test case as this kind of format probing ever gets.
-
-All numeric interpretations below were checked with Python's `struct` module, not eyeballed hex.
+An earlier pass of this same investigation concluded that 16 bytes immediately after the bounding-sphere block were "padding, always zero." **That was wrong, caused by a display bug, not a data problem**: those bytes were printed as `round(float_value, 6)`, and several of them are tiny IEEE-754 denormalized floats (e.g. the bit pattern for int32 `24` reinterpreted as a float is `3.36e-44`) that round to display as `0.0` even though the underlying integer is very much not zero. Reading the same bytes as `int32` instead of `float32` revealed real, meaningful data — the actual vertex and triangle-index counts. This is now corrected throughout. Lesson for anyone continuing this work: **always check candidate count/metadata fields as both int32 and float32 before concluding a region is "just zero" — a real integer can look like an all-zero float at low precision display.**
 
 ## Confirmed: universal file header (checked against all 62 sample `.ms2` files, 62/62 match)
 
@@ -21,130 +18,117 @@ Every `.ms2` file starts with:
 | Offset | Size | Type | Meaning |
 |---|---|---|---|
 | 0x00 | 4 bytes | int32 LE | Always `0` in every sample checked — likely a format version or flags field |
-| 0x04 | 4 bytes | int32 LE | Scales strongly with model complexity — see table below. Almost certainly a total node/object count for the file |
+| 0x04 | 4 bytes | int32 LE | Total node/object count in the file. Scales cleanly with model complexity (1 for a single mesh, up to 335 for the most complex vehicle) |
 | 0x08 | 4 bytes | int32 LE | Length (in bytes) of the following name string |
-| 0x0C | *namelen* bytes | ASCII | The root object's name, taken verbatim from the Maya scene — e.g. `pCube1`, `QuadPatch01`, `ROOT`, `Root`, `root`, `locator1`, `Bomb`, `Rocket2` |
+| 0x0C | *namelen* bytes | ASCII | The node's name, taken verbatim from the Maya scene — e.g. `pCube1`, `QuadPatch01`, `ROOT`, `Root`, `root`, `locator1`, `Bomb`, `Rocket2` |
 | 0x0C + namelen | 1 byte | — | A single `0x00` null terminator after the name (not counted in the length field) |
 
-**Evidence for the "node count" field**: checked across all 62 files —
+A genuinely interesting side finding from the node-count sweep: `u_veh_t34_76_41.ms2` — the model already flagged elsewhere in this project's backlog as a "cut content" tank variant with full ballistics stats but no `Units\*.script` gameplay class ever built for it — has a root node named `locator1` instead of the `ROOT`/`Root` convention every other shipped vehicle uses, and a node count of only 14 versus 216-335 for its finished siblings. This is an independent, purely binary-structure-based confirmation of something already suspected from a completely different investigation (auditing `.script` class references) — the model file itself looks structurally unfinished.
 
-| File | Root name | Node count field | Notes |
-|---|---|---|---|
-| `MyFirstModel.ms2` / `4MeterBox.ms2` | `pCube1` | 1 | Single default cube |
-| `wpn_Bomb.ms2` | `Bomb` | 1 | Single mesh |
-| `wpn_FFAR.ms2` | `Rocket2` | 1 | Single mesh |
-| `Landscape_test.ms2` | `QuadPatch01` | 1 | Single quad |
-| `Sky.ms2` / `sphere_test.ms2` / `test.ms2` | `Root`/`root` | 2 | Small test scenes |
-| `bld_Haystack.ms2` | `Root` | 3 | Simple prop |
-| `bld_ReloadUSSR.ms2` | `ROOT` | 4 | |
-| `u_veh_t34_76_41.ms2` | **`locator1`** (not `ROOT`!) | **14** | See note below — this is the orphaned/cut-content T-34/76 variant |
-| `u_veh_t34_76_42.ms2` (the shipped, playable-adjacent sibling) | `ROOT` | 216 | |
-| `bld_USRHouseWood.ms2` | `Root` | 320 | Most complex static building |
-| `u_veh_PzVI_LATE.ms2` | `ROOT` | 335 | Most complex file overall |
+## Confirmed: the real per-node header, including vertex/index counts
 
-A genuinely interesting side finding: `u_veh_t34_76_41.ms2` — the model already flagged elsewhere in this project's backlog as a "cut content" tank variant with full ballistics stats but no `Units\*.script` gameplay class ever built for it — has a root node named `locator1` instead of the `ROOT`/`Root` convention every other shipped vehicle uses, and a node count of only 14 versus 216-335 for its finished siblings. This is an independent, purely binary-structure-based confirmation of something already suspected from a completely different investigation (auditing `.script` class references) — the model file itself looks structurally unfinished, not just missing its gameplay wrapper.
+After a node's name + null terminator, the confirmed layout is:
 
-## Confirmed: bounding volume data immediately follows the name (high confidence — exact numeric match to known geometry)
-
-Using `MyFirstModel.ms2` (the known tutorial cube), the 40 floats immediately after the name+null terminator (starting at file offset 19):
-
-| Floats | Values | Interpretation |
+| Field | Size | Notes |
 |---|---|---|
-| 0-2 | (-0.005, -0.005, -0.005) | Bounding box **min** corner |
-| 3-5 | (0.005, 0.005, 0.005) | Bounding box **max** corner |
-| 6-8 | (-0.0, -0.0, -0.0) | Bounding sphere **center** (at origin — correct, the cube is centered) |
-| 9 | 0.008660... | Bounding sphere **radius** |
+| Bounding box min | 3 floats (12 bytes) | |
+| Bounding box max | 3 floats (12 bytes) | |
+| Bounding sphere center | 3 floats (12 bytes) | |
+| Bounding sphere radius | 1 float (4 bytes) | |
+| `flag` | int32 | Always `0` in every sample checked so far |
+| **`vertex_count`** | int32 | **The real, confirmed vertex count** |
+| **`index_count`** | int32 | **The real, confirmed face-index count** (number of `uint16` values, i.e. `3 × triangle_count`) |
+| `other` | int32 | `1` when the node has real geometry, `0` for an empty container node — meaning unconfirmed beyond that |
+| `parent_idx` | int32 | **Only present when the file has more than one node.** Index of the parent node, `-1` if none |
+| `child_count` | int32 | **Only present when the file has more than one node** |
 
-The radius value is not a coincidence: for a cube with half-extent 0.005, the circumscribed sphere radius is `0.005 × √3 = 0.0086602540...` — an exact match to 7 significant figures. This confirms floats 0-9 are a bounding box + bounding sphere pair, not a guess.
+Then, if `vertex_count > 0`:
 
-Floats 10-13 are all zero in this sample (likely a pivot/local-origin field, untested since this cube has no offset pivot — needs a second sample with a non-origin pivot to confirm).
+| Block | Size |
+|---|---|
+| Vertex positions | `vertex_count × 3` floats |
+| Vertex normals | `vertex_count × 3` floats |
+| Vertex UVs | `vertex_count × 2` floats |
+| Face indices | `index_count` × `uint16` |
 
-Floats 14 onward are combinations of exactly `±0.005` in various sign patterns — consistent with vertex position data for a cube whose corners are all at `(±0.005, ±0.005, ±0.005)`. A hard-edged cube typically needs 24 vertices (4 per face × 6 faces, since each face needs its own normal/UV even at shared corners) rather than 8 — the data seen so far (26 of an expected ~72 floats for 24 vertices × 3 components) is consistent with this but not yet fully walked to a confirmed vertex count or the start of face/index data.
+If `vertex_count == 0` (an empty container/transform node), there is no position/normal/UV/index data — some other, not-yet-decoded block follows instead (see below), and the next node has to be located by scanning for its name string rather than computed directly.
 
-## Confirmed: the full per-mesh geometry block, closed-loop verified end to end
+### Verification — checked against 7 files, all with sensible, physically-correct results
 
-Continuing the walk through `MyFirstModel.ms2` (1695 bytes total) after the bounding volume block, byte-exact:
+| File | Node | Vertices | Face indices (÷3 = triangles) | Bounding box | Sanity check |
+|---|---|---|---|---|---|
+| `MyFirstModel.ms2` / `4MeterBox.ms2` | `pCube1` | **24** | **36** (12 tri) | ±0.005 / ±0.5 respectively | Exact match to a known hard-edged cube (4 verts/face × 6 faces, 2 tri/face × 6 faces) |
+| `wpn_Bomb.ms2` | `Bomb` | 94 | 252 (84 tri) | X: ±0.791, Y/Z: ±0.205 | Long, thin bounding box — correct for a bomb shape |
+| `wpn_FFAR.ms2` | `Rocket2` | 273 | 972 (324 tri) | X: ±0.837, Y/Z: ±0.036 | Very long, very thin — correct for a rocket |
+| `Sky.ms2` | `SkyDome` | **395** | 2040 (680 tri) | X/Y ±7874, Z -11481..+7874 | Vertex count matches an earlier, independent magnitude-based estimate exactly |
+| `sphere_test.ms2` | `pSphere1` | 270 | 378 (126 tri) | roughly ±1 on all axes | Correct for a unit sphere |
+| `test.ms2` | `pSphere1` | 401 | 2280 (760 tri) | roughly ±0.01 on all axes | Correct for a small sphere |
 
-| Byte range | Size | Contents | Verification |
-|---|---|---|---|
-| 19-42 | 24 bytes (6 floats) | Bounding box min + max | Exact match: ±0.005 on all 3 axes |
-| 43-58 | 16 bytes (4 floats) | Bounding sphere center + radius | Exact match: center (0,0,0), radius `0.005×√3` to 7 sig figs |
-| 59-74 | 16 bytes (4 floats) | Unknown — all-zero in this sample | Likely a pivot/local-origin field; untested against an off-origin object |
-| 75-362 | 288 bytes (72 floats) | **24 vertex positions** (x,y,z each) | Every value is exactly `±0.005` — matches a hard-edged cube's 24 corner instances (4 per face × 6 faces, since each face needs its own normal) |
-| 363-650 | 288 bytes (72 floats) | **24 vertex normals** (x,y,z each) | Every value is exactly `0.0`, `1.0`, or `-1.0` — the 6 axis-aligned cube face normals, repeated 4× each |
-| 651-842 | 192 bytes (48 floats) | **24 vertex UV coordinates** (u,v each) | Small integer/half-integer values consistent with Maya's default "cross layout" auto-UV for a new polyCube |
-| 843-914 | 72 bytes (36 × uint16) | **Face/triangle indices** | All 36 values fall in range 0-22 (valid indices into the 24 vertices); 36 indices = exactly 12 triangles — matches a cube's 6 quad faces × 2 triangles each **exactly** |
-| 915-1694 | 780 bytes | Unidentified | Not text (searched for the known `bld_Haystack`/`.tga` texture name from the tutorial — not found anywhere in the file). Not a clean multiple of 24 (rules out a simple second per-vertex channel at the same vertex count). Left for a future pass. |
+`vertex_count`/`index_count` for the cube were cross-checked two independent ways: (1) directly reading the field, and (2) an earlier magnitude-scanning method (looking for where consecutive XYZ triples stop looking like large world-space positions and start looking like unit-length normals) that was developed *before* this field was found and gives the identical answer for `Sky.ms2`'s `SkyDome` (395 both ways). Two independently-derived numbers agreeing exactly is strong confirmation this isn't a coincidental pattern match.
 
-This means the entire vertex/normal/UV/index pipeline for a simple static mesh is now understood well enough to write a working decoder, and by symmetry, a large fraction of what a Blender exporter's write path would need to produce.
-
-**A clarifying architectural finding**: the texture/material reference is **not** embedded in the `.ms2` file at all — confirmed by searching the whole file for the known texture name (`bld_Haystack`, referenced in the export tutorial) and finding nothing. This matches what's already independently known from this project's `.script` reverse-engineering: every `Models\*.script` file (e.g. `u_veh_t34_85_44.script`) has its own plain-text `ModelSkin` class listing texture paths per submesh. The `.ms2` file is very likely pure geometry; material/texture binding happens entirely in the companion hand-written `.script` file, which is already fully human-readable and doesn't need any reverse-engineering at all.
-
-## What's confirmed vs. still open
-
-**Confirmed (verified against known values, not just plausible-looking):**
-- Universal 12-byte-plus-name header, present in 100% of samples.
-- Field semantics: version/flag constant, node count, name length + name.
-- Bounding box + bounding sphere block immediately follows the name.
-- The complete vertex position / normal / UV / triangle-index block for a simple single-node mesh, closed-loop verified against a cube's known geometry (24 vertices, 12 triangles).
-- IEEE-754 float32, little-endian, throughout; face indices are 16-bit.
-- String encoding: int32 length prefix + ASCII bytes + one extra null terminator not counted in the length.
-- Materials/textures are not stored in `.ms2` at all — they live in the already-understood companion `.script` files.
-
-**Still completely open:**
-- The unidentified 780 trailing bytes in this sample file (roughly half the file's total size).
-- The per-node repeated record structure for files with `node count > 1` (everything above only covers the single node in a `node count = 1` file — need to check whether/how this block repeats for multi-node files).
-- Skin/joint/animation data layout.
-- The portal/light/physics-shape export paths documented in Phase 0.
-- The unknown 4-float block at bytes 59-74 (pivot? local transform origin? needs a non-origin sample).
+**A recurring small anomaly, not yet explained**: in every multi-node file checked, exactly one face-index value is out of range, and its value is always identical to `index_count` itself (e.g. for `SkyDome`, one index reads `2040` when only 395 vertices exist and `index_count` is also `2040`). Consistent and small enough to not undermine the core structure, but not yet understood — possibly a trailing footer/terminator value, possibly an off-by-one in exactly where the index array starts or ends.
 
 ## Confirmed: the multi-node record boundary, and an empty-container node's sentinel values
 
-Extended the same generic technique used to find the file header (scan for `int32 length + printable ASCII + null`) across whole files, not just the start. This immediately found each additional node's name embedded later in the file:
+The overall file layout is a flat sequence of `[name][node header][node data]` blocks, one per node, discoverable via a simple scan for `int32 length + printable ASCII + null` (the same technique that finds the file header also finds every subsequent node's name).
 
-| File | Node 1 name (offset) | Node 2 name (offset) |
-|---|---|---|
-| `Sky.ms2` | `Root` (8) | `SkyDome` (113) |
-| `sphere_test.ms2` | `Root` (8) | `pSphere1` (117) |
-| `test.ms2` | `root` (8) | `pSphere1` (113) |
+An empty container node (a pure Maya group/transform with no mesh of its own — e.g. `Root` in `Sky.ms2`, which just holds `SkyDome` as a child) has recognizable **sentinel** values instead of real geometry data:
+- Bounding box min/max: exactly `FLT_MAX` / `-FLT_MAX` (`3.4028235e38` / `-3.4028235e38`) — the classic "no bounding box computed" sentinel pair (a min/max accumulator that was initialized but never fed any real geometry).
+- Bounding sphere radius: exactly `-1.0` — also a classic "invalid/empty" sentinel.
+- `vertex_count = 0`, `index_count = 0`, `other = 0`.
+- `parent_idx = -1` (no parent, `Root` is the top of the hierarchy), `child_count = 1` (matches reality — `Root` really does have exactly one child, `SkyDome`).
 
-This confirms the overall file layout is simply **a flat sequence of `[node name][node data]` blocks, one per node**, with no separate index/table of contents — the same length-prefixed-name scan that finds the file header also finds every subsequent node.
+This is strong independent confirmation of the bbox/sphere/count field identification: the same fields hold exact real values for real geometry, and recognizable "nothing here" sentinels for a node that genuinely has none.
 
-**`Root`'s own data block (`Sky.ms2`, bytes 17-112, 96 bytes) turned out to be an "empty container" case** — `Root` itself has no mesh, it's just a group holding `SkyDome` as a child. Its bounding box is `(+3.4028235e38, +3.4028235e38, +3.4028235e38)` to `(-3.4028235e38, -3.4028235e38, -3.4028235e38)` — **exactly `FLT_MAX` and `-FLT_MAX`**, the classic sentinel pair for "no bounding box computed" (a min/max accumulator that was initialized but never fed any real geometry). Its bounding sphere is center `(0,0,0)`, radius **`-1.0`** — also a classic "invalid/empty" sentinel. This is strong independent confirmation of the bbox/sphere field identification: the same two fields that held exact real values for the cube hold recognizable "nothing here" sentinel values for a node that genuinely has no geometry.
+**What follows an empty container node is not yet decoded.** For `Sky.ms2`'s `Root`, there are 32 bytes between the end of its header (`parent_idx`/`child_count`) and the next node's name — likely some kind of local-transform data (a prior pass speculated a quaternion-like float quadruple `(-0,-0,-0,~0.99999994)` was visible in that span, which is plausible but unconfirmed) — but this block's size isn't confirmed to be fixed; it needs checking against a container node with a different child count.
 
-Following the (sentinel) bbox+sphere+zero-pad, `Root`'s remaining 40 bytes decode cleanly as integers rather than floats:
+## Confirmed: bounding box/sphere pattern holds on real, asymmetric, non-trivial geometry
 
-| Offset | int32 value | Likely meaning |
-|---|---|---|
-| 73 | `-1` | Parent node index — `-1` = "no parent", consistent with `Root` being the top of the hierarchy |
-| 77 | `1` | Possibly a child count (`Root` does have exactly 1 child, `SkyDome` — consistent, not yet cross-checked against a node with 0 or 2+ children) |
-| 81 | `1` | Unclear — another count, or an unrelated flag |
-| 85-109 | `(-0, -0, -0, ~0.99999994, -0, -0, -0)` as floats | Shape resembles a quaternion close to identity `(0,0,0,1)` — plausible "no rotation" for a root transform, but the near-miss `w` value (`0x3F7FFFFF`, the float just below 1.0, not exact 1.0) and negative-zero components make this tentative, not confirmed |
+`SkyDome` (a real dome-shaped mesh, not a symmetric primitive) gives bounding box/sphere values that are exactly what a dome mesh should produce: X/Y both ≈`±7874` (circular footprint seen from above), Z from `-11481` to `+7874` (asymmetric — the mesh extends further below the horizon than above it, consistent with a dome that has a skirt/base). Bounding sphere center is offset in Z (not simply the bbox midpoint — correct behavior for a real minimal-bounding-sphere calculation on an asymmetric shape). This is a much stronger test than the perfectly symmetric cube and it holds up.
 
-## Confirmed on a second, non-trivial mesh: `SkyDome`'s bounding box/sphere
+## New problem found: 3+-node files break the current understanding
 
-`SkyDome`'s own data starts right after its name (offset 125). Its bounding box and sphere are **real, non-symmetric, sensible values for an actual dome-shaped mesh** — a much stronger test than the perfectly symmetric cube:
+Testing `bld_Haystack.ms2` (3 nodes: `Root` → `bld_Haystack` → *unknown third node*) exposed a real gap: `bld_Haystack`'s own `parent_idx`/`child_count` fields read as garbage (`1038959876`/`1057034162`, clearly not valid indices), and the subsequent attempt to locate the third node's name failed (decoded garbage that isn't valid ASCII). This means the per-node layout confirmed above for 1- and 2-node files **does not fully generalize** to files where a node itself has both geometry *and* children, or to deeper hierarchies generally. Not yet understood: whether a node with geometry AND children needs an extra field (e.g. a list of child indices) not accounted for above, or whether something else about `bld_Haystack`'s specific structure differs.
 
-- Bounding box: X/Y both ≈ `±7874` (a dome is roughly circular seen from above — matches), Z from `-11481` to `+7874` (asymmetric, consistent with a mesh that extends further below the horizon than above it).
-- Bounding sphere: center `(0.0005, -0.0, -1803.5)` (offset in Z, not simply the bbox midpoint — correct behavior for a real minimal-bounding-sphere calculation on an asymmetric shape), radius `≈14753` (right order of magnitude for this bbox).
-- The 4-float pad field is zero again — the **third** sample in a row (cube, empty `Root`, `SkyDome`) with this field hard zero, which now looks more like a genuinely unused/reserved field than a per-object pivot as first guessed.
+## New problem found: substantial unidentified trailing data in some files
 
-## What's confirmed vs. still open (updated)
+Computing where each file's confirmed data should end and comparing to the actual file size:
 
-**Newly confirmed this pass:**
-- The multi-node file layout is a flat `[name][data]` sequence, discoverable via the same string-scan technique used for the header.
-- Bbox/sphere sentinel values for empty container nodes (`FLT_MAX`/`-FLT_MAX` bbox, `-1` radius).
-- Bbox/sphere confirmed correct on a second, asymmetric real mesh (not just the symmetric cube).
-- A likely parent-index field (`-1` for root nodes).
-- The 4-float pad field is very likely always zero/reserved, not a pivot (3/3 samples now).
+| File | Computed end | Actual size | Leftover |
+|---|---|---|---|
+| `Sky.ms2` | 16909 | 16957 | 48 bytes |
+| `sphere_test.ms2` | 9590 | 25534 | **15944 bytes** |
+| `test.ms2` | 17582 | 77394 | **59812 bytes** |
+
+`Sky.ms2`'s small 48-byte leftover could plausibly be a footer/alignment padding. But `sphere_test.ms2` and `test.ms2` (both containing a node named `pSphere1`) have enormous unaccounted trailing data — far more than a single extra per-vertex channel (e.g. a tangent-space vector, mentioned as a real export option in the Phase 0 manual) would explain at these vertex counts. Given both are old files with "test" in the name, this could be leftover scratch/debug content specific to those files rather than a general format feature — or it could be a real, substantial block (a second UV set for lightmaps, skin/animation data, or additional child nodes not yet detected) that just happens to be small-to-absent in the other samples. Not resolved.
+
+## What's confirmed vs. still open
+
+**Confirmed, verified against real/known values:**
+- Universal 12-byte-plus-name file header, 62/62 samples.
+- Per-node bounding box + bounding sphere, confirmed on both a symmetric primitive (cube) and a real asymmetric mesh (dome).
+- **Real vertex_count and index_count fields**, confirmed via exact match to known cube geometry and cross-validated by an independent detection method on a second file.
+- The complete vertex position / normal / UV / triangle-index array layout for a leaf mesh node, verified on 7 diverse files (cube, bomb, rocket, dome, two spheres).
+- Sentinel values (`FLT_MAX`/`-FLT_MAX` bbox, `-1` sphere radius, zero counts) for empty container nodes.
+- The multi-node file layout as a flat, name-delimited sequence.
+- IEEE-754 float32 little-endian throughout; face indices are 16-bit.
+- String encoding: int32 length prefix + ASCII + one extra null terminator not counted in the length.
+- Materials/textures are not stored in `.ms2` at all — confirmed by searching for the known tutorial texture name and finding nothing; they live entirely in the already-understood companion `.script` files.
 
 **Still open:**
-- The exact vertex/triangle **count** fields — for `SkyDome` (a real mesh with unknown vertex count, unlike the cube where the count was inferred from known geometry), the vertex/normal/UV/index block size can't yet be computed, since there's no confirmed explicit count field before the arrays begin. This is the next real blocker: either find where the count is stored, or find enough same-vertex-count reference points to solve it indirectly.
-- Full semantics of the "child count" and second unclear count field.
-- Whether the near-identity float quadruple is really a rotation quaternion.
-- The ~780 unidentified trailing bytes from the `MyFirstModel.ms2` pass.
-- Skin/joint/animation layout.
+- What follows an empty container node (the "fallback block" — currently only located by scanning for the next name, size not understood).
+- Why 3+-node files (a node with both geometry and children) break the current header math.
+- The large, inconsistent unidentified trailing data in some files (tiny in `Sky.ms2`, enormous in `sphere_test.ms2`/`test.ms2`).
+- The recurring single out-of-range face index equal to `index_count` itself.
+- Skin/joint/animation data layout — completely untouched so far.
+- The portal/light/physics-shape export paths documented in Phase 0 — not yet looked for in the binary format at all.
+
+## Debugging session on `bld_Haystack.ms2` (3 nodes) — partial progress, not resolved
+
+Dumped `bld_Haystack`'s raw bytes at the position where `parent_idx`/`child_count` would be expected (per the `SkyDome` pattern) — they came out as clear garbage (`1038959876`/`1057034162`, with a repeating float-like byte pattern, not plausible small integers). Testing the alternative hypothesis — that `bld_Haystack` has **no** `parent_idx`/`child_count` fields at all, and its vertex data starts immediately after the count block (same as the single-node cube case) — gave plausible-looking vertex positions, all correctly within the node's own bounding box. **So unlike `SkyDome`, `bld_Haystack` appears to skip the `parent_idx`/`child_count` fields entirely**, meaning presence of those fields is not simply "always present when the file has more than one node" as first assumed — something else determines it, not yet identified (candidates: whether this specific node has children of its own vs. being a pure leaf; something related to being the 2nd vs. 3rd node in the file; or something about the node's own `other` field, which was `1` in both cases so doesn't obviously explain the difference).
+
+Even with vertex data assumed to start immediately, the computed end of `bld_Haystack`'s geometry block doesn't land cleanly on the third node's name — the bytes there include what looks like a stray duplicate of the vertex count (`114` appearing again as a raw int32) in the gap, unexplained. This is consistent with the general pattern already seen (`Sky.ms2`'s 48 leftover bytes, the recurring single out-of-range face index equal to `index_count`) that there is some kind of small trailing/footer data after each mesh's index array that isn't yet understood, on top of the now-confirmed uncertainty about whether `parent_idx`/`child_count` are present at all for a given node.
 
 ## Recommended next step
 
-Find the vertex/face count encoding — try a file with two meshes of known, different, simple vertex counts (e.g. two primitive shapes) to solve for where a count field must sit between the sentinel/real bbox-sphere-pad block and the start of the vertex array.
+This specific puzzle (why some nodes have `parent_idx`/`child_count` and others don't, plus the small unexplained trailing bytes after every geometry block) is a real, harder blocker that black-box probing alone is now hitting diminishing returns on. The most efficient next move is likely to compare several more 2-and-3-node files side by side to find a pattern in which nodes get the extra fields, rather than continuing to guess against a single 3-node example — or to move to Phase 2 (decompiling the actual export/import code) for a ground-truth answer instead of continuing to infer it from bytes alone.

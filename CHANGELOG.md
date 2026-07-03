@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (latest of all, corrected) — Real breakthrough: found the actual vertex/index count fields
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Direct continuation of the same-day Phase 1 work below. Caught and corrected a real mistake in that earlier pass: 16 bytes that were reported as "always-zero padding" were actually being misread - printing them as `round(float_value, 6)` made tiny denormalized floats (the bit pattern for int32 `24` reinterpreted as float32 is `3.36e-44`) display as `0.0`, hiding real data. Re-reading the same bytes as int32 revealed the actual `vertex_count` and `index_count` fields - confirmed exact against the known cube (24 vertices, 36 indices) and cross-validated against an independent magnitude-based estimate for `Sky.ms2`'s `SkyDome` (395 vertices both ways). Verified the complete per-vertex geometry layout end to end on 7 diverse sample files, all producing physically sensible bounding boxes for their actual shapes. Built `Tools\MS2Format\ms2_probe.py`, a real (if still limited) parser implementing this. Found two new, still-open problems while stress-testing further: a 3-node file breaks the `parent_idx`/`child_count` pattern that held for the 2-node case, and some files have large unexplained trailing data that doesn't scale simply with vertex count.
+
+### Why
+
+Continuing Phase 1 of the issue #12 effort at the user's request - a genuine correction of an earlier mistake, caught by cross-checking int32 vs float32 interpretations rather than trusting a rounded display value.
+
+---
+
 ## 2026-07-03 (latest of all) — Phase 1: first real decoded structure in the .ms2 binary format
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
