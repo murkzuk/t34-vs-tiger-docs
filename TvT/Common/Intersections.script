@@ -69,7 +69,9 @@ class CIntersections
 	Cfence_WickerModel::UseShapesAsWalkedMesh                     = false;
 	Cfence_PalisadeModel::UseBoxForIsection                       = true;
     Cfence_PalisadeModel::UseShapesAsWalkedMesh                   = false;
-    
+    Cfence_PoleModel::UseBoxForIsection                           = true;
+    Cfence_PoleModel::UseShapesAsWalkedMesh                       = false;
+
 // Human Units
     Chum_GermanSoldierRifleModel::UseBoxForIsection               = false;
 	Chum_GermanSoldierRifleModel::UseShapesAsWalkedMesh           = true;
@@ -109,7 +111,7 @@ class CIntersections
     Cu_veh_zis5Model::UseShapesAsWalkedMesh                       = true;
 	
 //Tanks
-    //Cu_veh_PzIVGModel::UseBoxForIsection                        = fasle; creates  error in execution log 
+    Cu_veh_PzIVGModel::UseBoxForIsection                          = false;
 	Cu_veh_PzIVGModel::UseShapesAsWalkedMesh                      = true;
     Cu_veh_PzVI_MAINModel::UseBoxForIsection                      = false;
 	Cu_veh_PzVI_MAINModel::UseShapesAsWalkedMesh                  = true;
@@ -121,7 +123,7 @@ class CIntersections
 	Cu_veh_SU85Model::UseShapesAsWalkedMesh                       = true;	
 	Cu_veh_t34_76_41Model::UseBoxForIsection                      = false;
 	Cu_veh_t34_76_41Model::UseShapesAsWalkedMesh                  = true;
-	//Cu_veh_t34_76_42Model::UseBoxForIsection                    = fasle; creates error in Exectuion log 
+	Cu_veh_t34_76_42Model::UseBoxForIsection                      = false;
 	Cu_veh_t34_76_42Model::UseShapesAsWalkedMesh                  = true;
     Cu_veh_t34_85_44Model::UseBoxForIsection                      = false;
 	Cu_veh_t34_85_44Model::UseShapesAsWalkedMesh                  = true;

@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (even later) — Fix missing/broken intersection entries (GitHub issue #8)
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Same pattern as issue #4: the model-header half of this issue was already resolved (every real gameplay model already declares both `UseBoxForIsection`/`UseShapesAsWalkedMesh`). The real gaps were in `Common\Intersections.script`'s per-model override list. Added a missing entry for `Cfence_PoleModel` (its fence siblings both had entries, this one had none). Found and fixed a genuine typo, not an engine limitation: two tanks (`Cu_veh_PzIVGModel`, `Cu_veh_t34_76_42Model`) had their `UseBoxForIsection` line commented out with a note claiming it "creates error in execution log" - the actual line read `= fasle;`, a misspelling of `false` that's an invalid identifier, which is almost certainly what actually threw the compile error. Confirmed `fasle` appears nowhere else in the codebase. Uncommented and corrected both to match every other tank's existing pattern. Left two genuinely ambiguous cases alone rather than guess (the cockpit-interior `_Inside` submeshes, and an odd static-vs-moving mismatch between tankman and soldier-rifle human models) - flagged in TODO.md for anyone who wants to test them properly in-game.
+
+### Why
+
+User asked to scope then fix the confident parts of issue #8, continuing today's run through the open issue backlog.
+
+---
+
 ## 2026-07-03 (later still) — Resolve duplicate T-34/85 model files (GitHub issue #7)
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
