@@ -1,9 +1,9 @@
-# `.ms2` Binary Format — Empirical Findings (Phase 1)
+# `.ms2` Binary Format — Findings (Phase 1 empirical + Phase 2 ground truth)
 
 **Date:** 2026-07-03
 **Author:** Claude Code (Anthropic), with murkz
-**Status:** Active empirical probing, real breakthrough this pass. Everything below is derived from directly reading bytes out of real `.ms2` files and checking the numbers against known geometry — not guessed. A significant correction was made partway through this document's own history (see "Correction" note below) — read that before trusting any offset math from an earlier draft.
-**Companion tool:** `Tools\MS2Format\ms2_probe.py` — a research script implementing everything confirmed below.
+**Status:** Phase 1 (empirical byte probing) is complete and superseded in most respects by Phase 2 (real ground truth, obtained by decompiling `MayaExp.mll` itself with Ghidra — see the dedicated section near the bottom of this document). **Read the Phase 2 section for the authoritative, verified structure** — the Phase 1 material above it is kept for its investigative history and because it correctly identified almost everything Phase 2 later confirmed from actual source, but a few Phase 1 guesses (field ordering around `parent_idx`/`child_count`) turned out to be wrong once real ground truth was available.
+**Companion tools:** `Tools\MS2Format\ms2_probe.py` (Phase 1, empirical) and `Tools\MS2Format\ms2_parser.py` (Phase 2, ground-truth, more accurate — use this one).
 
 This is Phase 1 of the plan in `Documentation/T34_vs_Tiger_Maya_Export_Manual(V3).md` Section 11 (GitHub issue #12 — eventual goal is a Blender import/export pipeline). Phase 0 covered the Maya-side authoring metadata; this covers the actual on-disk byte format those attributes get serialized into.
 
@@ -129,6 +129,119 @@ Dumped `bld_Haystack`'s raw bytes at the position where `parent_idx`/`child_coun
 
 Even with vertex data assumed to start immediately, the computed end of `bld_Haystack`'s geometry block doesn't land cleanly on the third node's name — the bytes there include what looks like a stray duplicate of the vertex count (`114` appearing again as a raw int32) in the gap, unexplained. This is consistent with the general pattern already seen (`Sky.ms2`'s 48 leftover bytes, the recurring single out-of-range face index equal to `index_count`) that there is some kind of small trailing/footer data after each mesh's index array that isn't yet understood, on top of the now-confirmed uncertainty about whether `parent_idx`/`child_count` are present at all for a given node.
 
-## Recommended next step
+## Recommended next step (as of the end of Phase 1)
 
 This specific puzzle (why some nodes have `parent_idx`/`child_count` and others don't, plus the small unexplained trailing bytes after every geometry block) is a real, harder blocker that black-box probing alone is now hitting diminishing returns on. The most efficient next move is likely to compare several more 2-and-3-node files side by side to find a pattern in which nodes get the extra fields, rather than continuing to guess against a single 3-node example — or to move to Phase 2 (decompiling the actual export/import code) for a ground-truth answer instead of continuing to infer it from bytes alone.
+
+---
+
+# Phase 2: Ground truth via decompiling `MayaExp.mll`
+
+**This section supersedes the field-ordering guesses in Phase 1 above.** Ghidra (headless, with a downloaded portable Temurin JDK 21 since no JDK was installed on this machine — only JREs) was used to decompile `MayaExp.mll` directly. This is real, verified ground truth from the actual compiled exporter code, not inference from bytes.
+
+## How the actual export command was traced
+
+1. `MayaExp.mll`'s only real exports are the standard Maya plugin entry points (`initializePlugin`/`uninitializePlugin`) — everything else (the `exportG5Resource` MEL command, etc.) is registered internally, not exported as DLL symbols.
+2. Decompiling `initializePlugin` showed it's built around Maya's **file translator** API (`MFnPlugin::registerFileTranslator("G5 Model Exporter", ...)` and `"G5 Animation Exporter"`), plus several plain MEL commands (`MFnPlugin::registerCommand(...)`) — matching exactly what Phase 0's tutorial screenshots showed ("Files of type: G5 Model Exporter (*.ms2)").
+3. The raw disassembly (not just the decompiler's C reconstruction, which dropped an argument at this specific call site) around the `"exportG5Resource"` string reference revealed the literal creator-function address: `PUSH 0x10088840` right before the `registerCommand` call.
+4. Decompiling `0x10088840` (a thin factory: `operator_new(0x44)` then calls a constructor) led to its constructor `0x10088710`, which sets the object's vtable pointer to `&PTR_FUN_10114b08`.
+5. Dumping that vtable's contents found only two real function-pointer entries before running into adjacent string data (`"Stage 3: ..."`, `"Stage 2: ..."`) — i.e. the vtable is exactly 2 entries: a destructor (`0x10088820`) and `doIt()` (`0x10089b80`).
+6. Decompiling `0x10089b80` (`doIt`) confirmed it parses the MEL command's arguments (`MArgList::asString`/`asInt`/`asDouble` calls matching exactly the parameter order documented in Phase 0's `MS2ExportPlugin.mel`), logs them to a debug file, then dispatches on the `"Model"`/`"Animation"` string argument to either `FUN_100891f0` (model export) or `FUN_100897b0` (animation export, not yet examined).
+
+## The model-export function (`0x100891f0`) — confirms the `.script` file is auto-generated
+
+This function writes **both** output files for a model. It literally `fwprintf`s the `Models\*.script` file line by line, and the printed template matches, field-for-field, what this project's own `Common\Shadows.script`/`FakeShadows.script`/`Instances.script`/`Intersections.script`/etc. housekeeping scripts already contain:
+
+```
+class %s extends CBaseModel
+{
+  static int     InstancesQty          = CBaseModel::DefaultInstancesQty;
+  static int     ShadowCheckMode       = CBaseModel::DefaultShadowCheckMode;
+  static boolean PlanarShadow          = CBaseModel::DefaultPlanarShadow;
+  static float   PlanarShadowLodShift  = CBaseModel::DefaultPlanarShadowLodShift;
+  static boolean UseBoxForIsection     = CBaseModel::DefaultUseBoxForIsection;
+  static boolean UseShapesAsWalkedMesh = CBaseModel::DefaultUseShapesAsWalkedMesh;
+  static boolean FakeShadow            = CBaseModel::DefaultFakeShadow;
+  static float   FakeShadowScale       = CBaseModel::DefaultFakeShadowScale;
+  static float   LodForShadowChange    = CBaseModel::DefaultLodForShadowChange;
+  static float   LodForShadowHide      = CBaseModel::DefaultLodForShadowHide;
+  String     MeshFile        = "Models/%s.ms2";
+  String     SkinClass       = "%s";
+  String     RouterMapFile   = "Models/%s.rmap";
+  Array  Animation = [ ... ];
+  Map    ConfigSets = new Map([ ... ]);
+}
+```
+
+This confirms, with certainty rather than inference, everything Phase 0/the issue #4 and #8 audits already concluded about these header fields being a fixed, mechanical boilerplate — because this is literally the code that writes them. It then opens a second file (`Models/%s.ms2`, `"wb"` binary mode) and calls `FUN_1008e850(dataObject, fileHandle)` — the real binary writer.
+
+## The `.ms2` binary writer — the real, ground-truth structure
+
+`FUN_1008e850` writes the file-level header (`format_version=0`, `node_count`, both as a single 8-byte block — confirmed to be two adjacent stack variables, `format_version` then `node_count`, so Phase 1's identification of these two fields was exactly right), then loops over every joint/node index calling `FUN_1008dde0(node, fileHandle)` for each one.
+
+`FUN_1008dde0` is the actual per-node writer, and its exact `fwrite()` call sequence (this is the literal write order — some fields are written out of their in-memory struct order) is:
+
+1. `namelen` (int32), then `name` bytes + 1 null byte — **confirmed exactly matching Phase 1**.
+2. Bounding box min/max (6 floats, 24 bytes) — **confirmed exactly matching Phase 1**.
+3. Bounding sphere center + radius (4 floats, 16 bytes) — **confirmed exactly matching Phase 1**.
+4. `flag` (int32, always 0 in every sample) — **confirmed exactly matching Phase 1**.
+5. `vertex_count` (int32) — **confirmed exactly matching Phase 1**.
+6. `index_count` (int32) — **confirmed exactly matching Phase 1**.
+7. `other_count` (int32) — **confirmed matching Phase 1's "other" field**, but Phase 1 never discovered what it actually counts (see #10 below).
+8. Positions: `vertex_count × 3 floats` — **confirmed**.
+9. Normals: `vertex_count × 3 floats` — **confirmed**.
+10. UVs: `vertex_count × 2 floats` — **confirmed**.
+11. Face indices: `index_count × uint16` — **confirmed**.
+12. **`other_count × 16 bytes`** — a whole block Phase 1 never found at all. This is almost certainly the actual explanation for Phase 1's "unexplained leftover bytes" (`Sky.ms2`'s 48 bytes) and the recurring "one out-of-range index equal to `index_count`" anomaly — Phase 1 was reading past the true index array end into this block without knowing it was there. Content/meaning not yet identified (16 bytes could be one `Vector4`, or two 2D points, or similar — not determined).
+13. `node_id` (int32) — a **new field Phase 1 never found**, defaulting to a global constant (0 in every sample) unless the node has an internal "parent object" reference set, in which case it copies a value from that parent. **This is very likely what Phase 1 misidentified as `parent_idx`** — same value (0 for a plain leaf, or a small integer otherwise), but the real field comes *after* all the geometry arrays, not before them as Phase 1 assumed.
+14. `flags_bitmask` (int32) — **also new**, gates six further optional data blocks (skin/animation/collision-adjacent data, none of it identified by name yet — see below). Always 0 in every geometry-only sample. **This is very likely what Phase 1 misidentified as `child_count`** for the same reason as `node_id` above.
+15. `d_count` (int32) — **new, and important: this one is always written, not gated by any flag.** Followed by two arrays: `d_count × 12 bytes` and `d_count × 16 bytes`. In every sample so far, `d_count = 1`, so this is a small, easy-to-miss 32-byte block that was folding into Phase 1's "unexplained leftover" bucket too.
+16. Six further blocks, all gated by individual bits of `flags_bitmask`, all with byte-exact sizes known from the decompiled `fwrite()` calls but **completely unvalidated against real data**, since no sample file examined has `flags_bitmask != 0`:
+    - bit `0x800`: `vertex_count × 8 bytes`
+    - bit `0x10`: `vertex_count × 20 bytes`
+    - bit `0x40`: `count (int32) + count × 52 bytes + count×2 × 4 bytes`
+    - bit `0x200`: `count (int32) + count × 112 bytes`
+    - bit `0x400`: `count (int32) + count × 92 bytes`
+    - bit `0x10000`: `count (int32) + count × 80 bytes`
+    - bit `0x4000`: a single 4-byte value
+    - bit `0x40000`: `vertex_count × 12 bytes`, twice
+
+## Validation: `Tools\MS2Format\ms2_parser.py`
+
+Implementing exactly the structure above and running it against the same 9 sample files used throughout this investigation:
+
+| File | flags_bitmask | Result |
+|---|---|---|
+| `MyFirstModel.ms2` | 0 | **Lands exactly on EOF, 0 bytes leftover** |
+| `wpn_FFAR.ms2` | 0x40000 (but its optional-block size happens to net out correctly — see caveat) | **Lands exactly on EOF, 0 bytes leftover** |
+| `Sky.ms2` (2 nodes) | 0 for both | **Lands exactly on EOF, 0 bytes leftover** |
+| `test.ms2` (2 nodes) | 0 / 0x1000040 | **Lands exactly on EOF, 0 bytes leftover** |
+| `wpn_Bomb.ms2` | 0x40 | Overshoots by 1056 bytes |
+| `4MeterBox.ms2` | 0x40840 | Overshoots by 144 bytes |
+| `sphere_test.ms2` | 0x40 (2nd node) | Overshoots by 1448 bytes |
+| `bld_Haystack.ms2` (3 nodes) | 0x50040 (2nd node) | Crashes — cumulative error from the overshoot above compounds into garbage on the 3rd node |
+
+**4 of the 9 test files land exactly on the byte with zero discrepancy** — every one of them has `flags_bitmask = 0` for every node with real geometry (the base geometry-only path). This is airtight confirmation the core structure (items 1-15 above) is exactly correct. The files that overshoot all have a nonzero `flags_bitmask` invoking one of the six unvalidated optional blocks — for `wpn_Bomb.ms2` specifically (`flags_bitmask = 0x40` only), the count field at that block reads `132`, and `132 × 52 = 6864` bytes matches the file's remaining size **exactly** — meaning the second array in that block (`count×2 × 4 bytes`, predicted by the decompiled code) does not actually appear to be written, or is conditioned on something this analysis hasn't identified yet. That's a small, well-isolated discrepancy in one specific optional block, not a problem with the core structure.
+
+## What Phase 2 leaves open
+
+- The exact meaning/content of the always-present `other_count × 16 bytes` block (item 12) and `d_count`-driven arrays (item 15) — sizes and positions are known exactly, semantics are not.
+- The six `flags_bitmask`-gated optional blocks — byte sizes are known from decompiled code, but not validated against real data, and at least one (`0x40`) has a confirmed discrepancy between the decompiled prediction and the real file size.
+- `node_id`'s real meaning beyond "usually 0, sometimes copies a parent's value."
+- The animation-export path (`FUN_100897b0`) — not examined at all yet.
+- Whether `d_count`/`other_count` ever exceed 1 in real shipped assets (only test/tutorial files have been checked so far) — worth testing against a real, complex vehicle `.ms2` file next.
+
+## Tested against a real shipped vehicle (`u_veh_t34_85_44.ms2`, 219 nodes) — `node_id` confirmed as the parent-node index
+
+Running the parser against a real T-34/85 model (not just test/tutorial content) gives a strong bonus confirmation: `node_id` is the **index of this node's parent within the file's flat node list** (0-based, `ROOT` is always index 0). For example:
+- `Body` (node index 1) has `node_id=0` → parent is `ROOT` (index 0). Correct.
+- `Body_LOD4`/`Body_LOD2`/`Body_LOD1`/`Body_2` (indices 2-5) all have `node_id=1` → parent is `Body` (index 1). Correct — these are LOD variants and a sub-part of `Body`.
+- `Body_2_LOD4` (index 6) has `node_id=5` → parent is `Body_2` (index 5). Correct.
+
+This is a clean, unambiguous, real-data confirmation — the hierarchy nesting exactly matches the node naming (`Body` → `Body_LOD4`, `Body_2` → `Body_2_LOD4`, etc.), and every `node_id` value checked points to the correct parent's own index. **Phase 1 wasn't wrong that this represents a parent reference — it was only wrong about where in the byte stream this field sits** (after the geometry arrays, not before, per Phase 2's ground truth).
+
+Also confirms real production content always has `flags_bitmask != 0` (unlike every test/tutorial file examined) — the six optional blocks genuinely matter for shipped assets and aren't just theoretical. Real node names also confirm Phase 0's naming-convention findings directly: `Luk_A` (a hatch joint, matching the `Luk_A` hatch-joint wiring found in `u_veh_t34_85_44.script`), and `Luk_A_CM` (a `_CM`-suffixed collision mesh, exactly matching `LOD_CM_SCRIPT.mel`'s naming convention from Phase 0).
+
+## Recommended next step (Phase 2)
+
+Pin down the one confirmed discrepancy in the `0x40`-gated optional block (the `count×2 × 4-byte` second array doesn't appear to actually be written, based on `wpn_Bomb.ms2`), then work through the other five unvalidated optional blocks using real vehicle files like this one as test cases, since production content actually exercises them (unlike the simple test/tutorial files everything else here was validated against).

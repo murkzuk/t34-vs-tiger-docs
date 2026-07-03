@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 2) — Ground truth for the .ms2 format via real decompilation
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Moved from empirical byte-probing to actual decompilation of `MayaExp.mll`, per the user's direction. Ghidra was already installed on the machine but had no working JDK (only JREs) - downloaded the official portable Eclipse Temurin JDK 21 (zip, no installer) and pointed Ghidra's config at it, now saved permanently at `M:\TvT 2024 working folder\jdk-21-portable` for future sessions. Traced the real code path from plugin registration through to the `exportG5Resource` command's actual implementation. Confirmed the model-export function writes the `Models\*.script` boilerplate directly (matching this project's own earlier `.script` housekeeping-file audits exactly) before calling the real `.ms2` binary writer, which was fully decompiled. This confirmed every Phase 1 empirical finding was correct as far as it went, and revealed several real fields Phase 1's byte-probing had completely missed - most importantly a `node_id` field, confirmed via a real 219-node vehicle file to be the parent node's index in the file (explaining what Phase 1 had misidentified, in the wrong byte position, as "parent_idx"), and a `flags_bitmask` gating six optional data blocks that real shipped assets always use but no test/tutorial file ever triggers. Built `Tools\MS2Format\ms2_parser.py` implementing the ground-truth structure - 4 of 9 test files parse to an exact, zero-leftover byte match.
+
+### Why
+
+User's direction: move to real decompilation as the logical next step once empirical byte-probing alone started hitting diminishing returns on the multi-node hierarchy puzzle.
+
+---
+
 ## 2026-07-03 (latest of all, corrected) — Real breakthrough: found the actual vertex/index count fields
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
