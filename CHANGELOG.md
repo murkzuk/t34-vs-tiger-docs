@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 attempted fix, reverted) — Skin-weight split removed too much legitimate geometry
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Decoded the file's per-vertex skin-weight block and confirmed (via the companion `.script` file) that the turret's gun barrel and hatches are weighted to animation joints whose bind-pose transform isn't stored anywhere in the file - confirmed by comparing directly against the real TvT Editor, which renders a normal barrel. Built a fix that split any node using this weighting into a safe part and a hidden `_UnresolvedSkin` part holding whatever couldn't be positioned correctly. Tested on the real tank file and it looked clean, but the user's own test found it hid a lot of legitimate geometry along with the actually-broken parts - the self/external split was too coarse. Reverted the whole fix (`git revert`) back to the prior importer. The turret/barrel spike corruption is confirmed still present and unfixed; the skin-weight decoding groundwork is documented in TODO.md for a future, more careful attempt.
+
+### Why
+
+The user's test is the only reliable signal here - a fix that looks clean in my own render but removes real content on their side is worse than no fix, so it's honest to revert immediately rather than try to defend or partially salvage it.
+
+---
+
 ## 2026-07-03 (Phase 3 update) — Real installable Blender add-on, replacing the .blend-file round-trip
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
