@@ -42,6 +42,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 GAME_ROOT = Path(__file__).resolve().parent.parent.parent  # Tools\MissionGenerator\..\.. = game root
+LOCALE_FILE = GAME_ROOT / "Locale" / "eng.locale"
 
 ENCODING = "cp1251"
 
@@ -68,7 +69,14 @@ TARGETS = {
         # mind - the soft filter's color samples are at least meaningful for
         # this target, even though the mapping itself is still unproven in-game.
         "routerzone_soft_filter_supported": True,
-        "strings_class": "CQuickMissionMission_Strings",
+        # Dedicated eng.locale section this target's static MissionTestStrings.script
+        # reads from via getLocalized() - never the shared [MissionTest] section
+        # Mission1 itself depends on. Rewritten by this script every run (see
+        # update_locale_section below). Literal WString static fields were tried
+        # first (2026-07-03) and confirmed unreliable with getStaticClassMember()'s
+        # reflection - every real mission's Strings class uses getLocalized(),
+        # so this does too.
+        "locale_section": "QuickMissionGenerated",
     },
     "steppe": {
         "template_dir": GAME_ROOT / "Missions" / "MyMission" / "SteppeTemplate",
@@ -94,7 +102,7 @@ TARGETS = {
         # RouterZone pixel/color at both scales - the soft filter is meaningful
         # again for this target.
         "routerzone_soft_filter_supported": True,
-        "strings_class": "CSteppeQuickMissionMission_Strings",
+        "locale_section": "SteppeMissionGenerated",
     },
 }
 
@@ -112,21 +120,19 @@ ROUTERZONE_IMG_WIDTH = None
 ROUTERZONE_IMG_HEIGHT = None
 RENAMES = None
 ROUTERZONE_SOFT_FILTER_SUPPORTED = None
-STRINGS_CLASS = None
-OUTPUT_STRINGS = None
+LOCALE_SECTION = None
 
 
 def select_target(name: str) -> None:
     """Populate the module-level path/dimension globals for the chosen target."""
     global TEMPLATE_DIR, OUTPUT_DIR, TEMPLATE_CONTENT, OUTPUT_CONTENT, ROUTERZONE_BMP
     global MATRIX_WIDTH, MATRIX_HEIGHT, ROUTERZONE_IMG_WIDTH, ROUTERZONE_IMG_HEIGHT, RENAMES
-    global ROUTERZONE_SOFT_FILTER_SUPPORTED, STRINGS_CLASS, OUTPUT_STRINGS
+    global ROUTERZONE_SOFT_FILTER_SUPPORTED, LOCALE_SECTION
     t = TARGETS[name]
     TEMPLATE_DIR = t["template_dir"]
     OUTPUT_DIR = t["output_dir"]
     TEMPLATE_CONTENT = TEMPLATE_DIR / "Content.script"
     OUTPUT_CONTENT = OUTPUT_DIR / "Content.script"
-    OUTPUT_STRINGS = OUTPUT_DIR / "MissionTestStrings.script"
     ROUTERZONE_BMP = OUTPUT_DIR / "RouterZone_Test.bmp"
     MATRIX_WIDTH = t["matrix_width"]
     MATRIX_HEIGHT = t["matrix_height"]
@@ -134,7 +140,7 @@ def select_target(name: str) -> None:
     ROUTERZONE_IMG_HEIGHT = t["routerzone_img_height"]
     ROUTERZONE_SOFT_FILTER_SUPPORTED = t["routerzone_soft_filter_supported"]
     RENAMES = t["renames"]
-    STRINGS_CLASS = t["strings_class"]
+    LOCALE_SECTION = t["locale_section"]
 
 OBJECTIVE_OBJECT_ID = "end_navpoint"
 PLAYER_OBJECT_ID = "MainPlayerUnit"
@@ -517,39 +523,54 @@ def build_scout_report(player_pos, enemy_positions_classes):
     return briefing, objective01
 
 
-def build_strings_file_text(mission_name: str, briefing: str, objective01: str) -> str:
-    """Regenerates MissionTestStrings.script with literal (not getLocalized())
-    WString values - confirmed valid syntax elsewhere in this codebase
-    (Common\\Mission.script:2706's "BAD ID" fallback). Deliberately does not
-    touch eng.locale's shared [MissionTest] section, which Mission1 itself
-    still legitimately depends on for its own unrelated tutorial text."""
-    def esc(s: str) -> str:
-        return s.replace("\\", "\\\\").replace('"', '\\"')
+def parse_locale_sections(text: str):
+    """Splits eng.locale's text into an ordered list of (header_line_or_None,
+    body_lines) blocks. The first block (before any [Section] header) has
+    header=None. Preserves everything byte-for-byte when reassembled via
+    render_locale_sections - this is what makes it safe to touch only one
+    target's own section in a file every other section also depends on."""
+    lines = text.splitlines(keepends=True)
+    blocks = []
+    current_header = None
+    current_body = []
+    for line in lines:
+        if line.startswith("["):
+            blocks.append((current_header, current_body))
+            current_header = line
+            current_body = []
+        else:
+            current_body.append(line)
+    blocks.append((current_header, current_body))
+    return blocks
 
-    return (
-        "//-----------------------------------------------------------------\n"
-        "//\n"
-        "//  This code is copyright 2001 by G5 Software.\n"
-        "//  Any unauthorized usage, either in part or in whole of this code\n"
-        "//  is strictly prohibited. Violators WILL be prosecuted to the\n"
-        "//  maximum extent allowed by law.\n"
-        "//\n"
-        "//-----------------------------------------------------------------\n"
-        "\n"
-        "//-----------------\n"
-        "//  Mission strings - regenerated each run by generate_mission.py,\n"
-        "//  computed from the actual randomized layout, not shared placeholder\n"
-        "//  locale text. DO NOT EDIT - will be overwritten on the next run.\n"
-        "//-----------------\n"
-        f"class {STRINGS_CLASS} extends CCommonStrings\n"
-        "{\n"
-        f'  final static WString MissionName  = "{esc(mission_name)}";\n'
-        f'  final static WString BriefingText = "{esc(briefing)}";\n'
-        f'  final static WString Objective01  = "{esc(objective01)}";\n'
-        '  final static WString Objective02  = "";\n'
-        '  final static WString Objective03  = "";\n'
-        "}\n"
-    )
+
+def render_locale_sections(blocks) -> str:
+    out = []
+    for header, body in blocks:
+        if header is not None:
+            out.append(header)
+        out.extend(body)
+    return "".join(out)
+
+
+def update_locale_section(locale_text: str, section_name: str, keys: dict) -> str:
+    """Returns locale_text with `section_name`'s body fully replaced by `keys`
+    (dict of key -> value, in insertion order) - or the section appended at
+    the end if it doesn't exist yet (first run for this target). Every other
+    section is preserved byte-for-byte."""
+    header_line = f"[{section_name}]\n"
+    new_body = [f"{k} = {v}\n" for k, v in keys.items()] + ["\n"]
+
+    blocks = parse_locale_sections(locale_text)
+    found = False
+    for i, (header, _body) in enumerate(blocks):
+        if header == header_line:
+            blocks[i] = (header, new_body)
+            found = True
+            break
+    if not found:
+        blocks.append((header_line, new_body))
+    return render_locale_sections(blocks)
 
 
 # ---------------------------------------------------------------------------
@@ -773,7 +794,13 @@ def main():
         (player_x, player_y), enemy_positions_classes
     )
     mission_name_text = f"{TARGETS[args.target]['menu_name']} - {player_faction}"
-    strings_file_text = build_strings_file_text(mission_name_text, briefing_text, objective01_text)
+    locale_keys = {
+        "MissionName": mission_name_text,
+        "BriefingText": briefing_text,
+        "Objective01": objective01_text,
+        "Objective02": "",
+        "Objective03": "",
+    }
 
     # --- Validate before writing anything. Trust classes/tasks already
     #     legitimately present in the pristine template, plus the roster.
@@ -790,28 +817,44 @@ def main():
         sys.exit(1)
 
     # --- Guarantee every other file in the output folder is untouched ---
-    # Content.script and MissionTestStrings.script are the only two files this
-    # tool ever regenerates - everything else (terrain, textures, Mission.script,
-    # WorldMatricies.script, etc.) must be byte-identical before and after.
-    generated_names = {"Content.script", "MissionTestStrings.script"}
-    other_files = [p for p in OUTPUT_DIR.iterdir() if p.is_file() and p.name not in generated_names]
+    # Content.script is the only file inside OUTPUT_DIR this tool regenerates -
+    # everything else (terrain, textures, Mission.script, WorldMatricies.script,
+    # MissionTestStrings.script, etc.) must be byte-identical before and after.
+    other_files = [p for p in OUTPUT_DIR.iterdir() if p.is_file() and p.name != "Content.script"]
     hashes_before = {p: hash_file(p) for p in other_files}
 
     write_text_verified(OUTPUT_CONTENT, full_text)
-    write_text_verified(OUTPUT_STRINGS, strings_file_text)
 
     hashes_after = {p: hash_file(p) for p in other_files}
     changed = [p for p in other_files if hashes_before[p] != hashes_after[p]]
     if changed:
         # Should be structurally impossible since this script never opens
         # these files, but check anyway per the plan's safety requirements.
-        print("WARNING: files outside Content.script/MissionTestStrings.script changed unexpectedly:", file=sys.stderr)
+        print("WARNING: files outside Content.script changed unexpectedly:", file=sys.stderr)
         for p in changed:
             print(f"  - {p}", file=sys.stderr)
         sys.exit(1)
 
+    # --- Update this target's own dedicated section in the shared eng.locale -
+    #     guarantee every OTHER section in that file is untouched, since many
+    #     unrelated things (weapon names, other missions' own briefing text,
+    #     control-scheme labels, etc.) live in the same file. ---
+    locale_text_before = read_text(LOCALE_FILE)
+    blocks_before = parse_locale_sections(locale_text_before)
+    other_sections_before = {h: "".join(b) for h, b in blocks_before if h != f"[{LOCALE_SECTION}]\n"}
+
+    locale_text_after = update_locale_section(locale_text_before, LOCALE_SECTION, locale_keys)
+    blocks_after = parse_locale_sections(locale_text_after)
+    other_sections_after = {h: "".join(b) for h, b in blocks_after if h != f"[{LOCALE_SECTION}]\n"}
+
+    if other_sections_before != other_sections_after:
+        print("WARNING: a section other than this target's own changed in eng.locale - refusing to write:", file=sys.stderr)
+        sys.exit(1)
+
+    write_text_verified(LOCALE_FILE, locale_text_after)
+
     print(f"OK: wrote {OUTPUT_CONTENT}")
-    print(f"    wrote {OUTPUT_STRINGS}")
+    print(f"    wrote [{LOCALE_SECTION}] section in {LOCALE_FILE}")
     print(f"    Playing as {player_faction} ({player_unit_class})")
     print(f"    {len(new_entries_text)} randomized enemy unit(s) added, "
           f"objective relocated to ({obj_x:.1f}, {obj_y:.1f}, {obj_z:.1f})")

@@ -100,9 +100,22 @@ predict.
 What it will never touch
 --------------------------
 Every file in this mission's folder except Content.script (Mission.script,
-Atmosphere.script, Terrain.script, the terrain/texture files, etc.) is
-guaranteed untouched by every run - the script checks this itself and
-refuses to report success if anything else changed.
+Atmosphere.script, Terrain.script, MissionTestStrings.script, the
+terrain/texture files, etc.) is guaranteed untouched by every run - the
+script checks this itself and refuses to report success if anything else
+changed.
+
+MissionTestStrings.script is a static file, not a per-run output - it just
+reads its briefing text from eng.locale via getLocalized() (this had to be
+fixed 2026-07-03; an earlier version wrote literal text straight into this
+file each run, which loaded fine in the Editor but broke the in-game
+briefing menu, since literal WString fields aren't reliably found by this
+engine's class-reflection lookup - see the CHANGELOG for the full story).
+The one file outside Content.script that DOES change each run is
+Locale\eng.locale, but only inside that mission's own dedicated section
+([QuickMissionGenerated] or [SteppeMissionGenerated]) - every other section
+in that shared file, including Mission1's own [MissionTest] section, is
+verified byte-identical before and after.
 
 The original template mission (Missions\MyMission\Mission1\ for the small
 map, Missions\MyMission\SteppeTemplate\ for the steppe map) is never touched

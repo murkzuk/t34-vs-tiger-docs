@@ -6,6 +6,22 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (final, corrected) — Fix "MissionName not found" briefing-menu crash
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+The previous entry below ("Dynamic scout-report briefing text") shipped a version of `MissionTestStrings.script` that wrote the computed scout-report text as literal `WString` values directly into each target's Strings class every run. That loaded fine in the Level Editor, but the real in-game briefing menu (`StartMissionMenu.script`) failed with `"Static variable MissionName not found in class CSteppeQuickMissionMission_Strings"`, cascading into a `SetText` failure - and this persisted even after a fully clean Editor/cache restart, which ruled out the initial stale-cache hypothesis and pointed at a real bug. Root cause, confirmed via cross-codebase evidence rather than guesswork: `getStaticClassMember()`'s reflection does not reliably find literal `WString` static fields, even though literal plain `String` fields work fine via the exact same mechanism (proven precedent in `Common\PassangerAnimator.script`). Every real, active `WString` field in every mission's Strings class in the entire codebase uses `getLocalized(...)` - there is no working precedent anywhere for a literal `WString`.
+
+Fix: `MissionTestStrings.script` is a static file again (not regenerated per run), using `getLocalized(LOCALE_SECTION, "Field")` against two new dedicated sections in `Locale\eng.locale` (`[QuickMissionGenerated]`, `[SteppeMissionGenerated]`) - never the shared `[MissionTest]` section `Mission1` itself depends on. `generate_mission.py` now rewrites only that one dedicated section each run and separately verifies every other section of the shared locale file stays byte-identical. Verified with a 40-combination sweep (2 targets x 2 factions x 10 seeds): single-section replacement (no duplication) on repeated runs, `[MissionTest]` untouched, 0 CP1251 corruption.
+
+### Why
+
+Direct fix for a real bug the user caught by testing in-game, not just in the Editor - a good reminder that Editor play-test success doesn't fully prove the real menu flow works.
+
+---
+
 ## 2026-07-03 (final) — Dynamic scout-report briefing text for the Quick Mission Generator
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
