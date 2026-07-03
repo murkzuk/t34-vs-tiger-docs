@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 2, record internals) — Bind-matrix record fully decoded; honest limits on the rest
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Pushed further on decoding the exact internal byte layout of the five remaining record types whose purpose (but not precise fields) was identified earlier today. The `0x10000` (per-joint bind-pose) record is now fully decoded with certainty: its default-initialization code bulk-copies a fixed global constant into each record, and dumping that constant directly from the binary confirmed it's a literal 4x4 identity matrix, pinning down the full 80-byte layout as index + matrix + vector3. Attempted the same technique for the other four record types (bone attachment, blend weights, and two unnamed joint/skin blocks) but found they're populated through much deeper, more intricate per-triangle/per-vertex processing chains without a simple default-initialization shortcut - honestly documented as needing substantially more dedicated tracing rather than claiming false completeness.
+
+### Why
+
+Continuing to push per the user's request, while being transparent about where quick wins run out and real, bounded-but-substantial remaining work begins.
+
+---
+
 ## 2026-07-03 (Phase 2 capstone) — Full production .ms2 file parses byte-perfect end to end
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

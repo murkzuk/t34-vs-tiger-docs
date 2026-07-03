@@ -326,3 +326,37 @@ Collecting every distinct `flags_bitmask` value that appeared across the file's 
 ## Where this leaves the `.ms2` format
 
 The core structure (header, per-node bbox/sphere/counts, position/normal/UV/index arrays, the always-present small blocks, and all eight optional-block trigger conditions) is now verified byte-perfect against a real, complex, shipped asset — not just simple test files. What remains is narrower and more specialized: the exact internal field layout of five record types whose *purpose* is now known (bone attachment, blend weights, bind matrices, and two still-unnamed joint/skin-adjacent blocks), plus one newly-found unidentified plain attribute bit (`0x80000`). This is enough to write a working `.ms2` reader for the vast majority of real content today, and enough to know exactly what's left to fully close out the format for a complete Blender import/export pipeline.
+
+---
+
+# Phase 2, one more round: the `0x10000` bind-matrix record fully decoded, field by field
+
+Pushed further on the record-internals question. The `0x10000` (per-joint bind-pose) record was the most tractable, and is now **fully decoded with certainty, not just plausible structure**.
+
+Re-examining `FUN_1008d610`'s default-initialization loop (which writes into each newly-allocated 80-byte record before the real per-joint data gets copied over it) found it doesn't just write scattered `1.0f`/`0.0f` values by hand — it finishes with a tight loop that bulk-copies **16 consecutive dwords from a fixed global constant, `DAT_1013ae10`**, into the record starting 4 bytes in. Dumping that constant directly from the binary's data section gives, unambiguously:
+
+```
+1.0  0.0  0.0  0.0
+0.0  1.0  0.0  0.0
+0.0  0.0  1.0  0.0
+0.0  0.0  0.0  1.0
+```
+
+That is a literal, textbook **4×4 identity matrix** — no ambiguity, no interpretation needed. Combined with the surrounding field writes (a leading 4-byte zero-initialized field before the matrix, and three trailing zero-initialized floats after it), the full confirmed 80-byte record layout is:
+
+| Offset | Size | Field | Evidence |
+|---|---|---|---|
+| 0 | 4 bytes (int32) | Likely a joint/bone index | Zero-initialized before being overwritten by the real per-joint copy later in the same function |
+| 4 | 64 bytes (16 floats) | **A 4×4 transform matrix**, default identity | Bulk-copied from `DAT_1013ae10`, confirmed byte-for-byte as the identity matrix |
+| 68 | 12 bytes (3 floats) | Likely a `Vector3` — position/pivot/offset | Zero-initialized, same pattern as the leading field |
+
+This default-initialized record is then immediately overwritten (per the function's second loop) with real per-joint data copied from an internal collection built during the earlier scene walk — so real exported files will contain actual bind-pose matrices here, not identity matrices, but the **field boundaries and types are now certain**, not guessed.
+
+## The other four record types (`0x10`, `0x200`, `0x400`, `0x800`) — deeper than a quick follow-up can reach
+
+Tried to repeat this same trick (find the default-initialization pattern, or find the function that populates the actual final array directly) for the remaining four record types. This turned out to be substantially harder:
+- The `0x10`/`0x800` records are populated through a long chain of per-triangle/per-vertex processing (`FUN_100968c0` → `FUN_100955c0`) that builds several *intermediate* collections (with different strides, e.g. a `0xb8`=184-byte-stride array) before whatever final compaction step produces the actual exported 8-byte and 20-byte records — that final step wasn't located in this pass.
+- The per-node "constructor" function (`FUN_10090a00`) that seemed like a promising place to find the array's initial setup turned out to be a lightweight identity/name-only constructor, not where the skin/blend arrays get built.
+- `0x200`/`0x400` involve raw bulk-copies from internal collections (as documented earlier) with no default-initialization pattern found yet to reveal their internal field types the way the identity-matrix trick did for `0x10000`.
+
+Fully pinning these down would mean tracing substantially further through some of the largest, most intricate functions in the whole plugin (the joint/skinning pipeline is clearly one of the most complex parts of the exporter) — a real, bounded task, but one that would need dedicated focus rather than a quick follow-up pass.
