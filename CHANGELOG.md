@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 2 continued) — Decoded most of flags_bitmask by tracing the attribute reader
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Direct continuation of the same-day Phase 2 decompilation work. Rather than continuing to guess at the six flag-gated optional data blocks found in the `.ms2` per-node structure, traced where the exporter actually reads each Maya mesh attribute (`IsWalkMesh`, `IsCollisionMesh`, `IsHidden`, etc.) and decompiled the function that packs them into `flags_bitmask` (`FUN_1008d120` in `MayaExp.mll`). This gives a definitive, named bit-to-attribute mapping for most of the field. Critically, traced one of the mystery block-gating bits (`0x40`) to `HasShadowVolume`, and decompiling the large function that runs when it's set confirmed it's a genuine shadow-volume silhouette-edge/BSP builder - real geometry processing, not a simple flag. Also found `IsDoorObject` belongs to an entirely separate joint/hinge subsystem, not this bitmask. Five of eight block-gating bits remain unmapped - likely tied to skin/animation export rather than any of Phase 0's known mesh attributes.
+
+### Why
+
+Continuing to push on the remaining unidentified optional blocks per the user's request, using the same decompilation approach that already worked for the core structure.
+
+---
+
 ## 2026-07-03 (Phase 2) — Ground truth for the .ms2 format via real decompilation
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

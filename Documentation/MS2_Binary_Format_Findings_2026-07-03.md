@@ -245,3 +245,40 @@ Also confirms real production content always has `flags_bitmask != 0` (unlike ev
 ## Recommended next step (Phase 2)
 
 Pin down the one confirmed discrepancy in the `0x40`-gated optional block (the `count×2 × 4-byte` second array doesn't appear to actually be written, based on `wpn_Bomb.ms2`), then work through the other five unvalidated optional blocks using real vehicle files like this one as test cases, since production content actually exercises them (unlike the simple test/tutorial files everything else here was validated against).
+
+---
+
+# Phase 2 continued: `flags_bitmask` decoded bit-by-bit, by tracing the Maya attribute reader itself
+
+Rather than continuing to guess, traced where the exporter actually **reads** each Maya mesh attribute (from Phase 0's `addMeshProperties.mel` list) and **writes** the corresponding bit into `flags_bitmask`. Found `FUN_1008d120` — the function referenced by nearly every mesh boolean attribute string — and decompiled it directly. This gives a definitive, named mapping for most of the field, not an inferred one:
+
+| Bit (hex) | Source attribute / condition |
+|---|---|
+| `0x1` | Complex condition: two internal fields equal AND (an object-type check fails OR `IsWalkMesh` OR `IsCollisionMesh`) — not fully pinned down, but clearly `IsWalkMesh`/`IsCollisionMesh`-adjacent |
+| `0x4` | `IsCollisionMesh` |
+| `0x8` | `IsBoneNode`, **or** the node is natively a Maya joint (`MObject::hasFn(obj, 0x78)`) |
+| `0x20` | `IsWalkMesh` |
+| `0x80` | `IsHidden` |
+| `0x100` | `IsNear` |
+| `0x20000` | `IsSelfLOD` |
+| `0x200000` | `DoNotUseInIsection` (forced to 0 if `IsCollisionMesh` is set — a real cross-attribute dependency) |
+| `0x400000` | `DoNotCastShadow` |
+| `0x800000` | `IsNearGeometry` |
+| `0x2000000` | `OnlyCastShadow` |
+| `0x40` **and** `0x1000000` (set together) | `HasShadowVolume` is true **and** none of bits `0x1`/`0x4`/`0x20` are set |
+| `0x100000` | `TransparentShadows` is **false** (inverted) |
+
+`IsRouterMesh` and `DoNotGenerateShadows`/`IsNotReciveLighting` were traced to *other* functions (`FUN_1000ab30`, `FUN_1004ea70`) that don't feed this same bitmask directly — they're consumed elsewhere in the export pipeline (in particular, `DoNotGenerateShadows`/`IsNotReciveLighting` gate whether the huge shadow-volume-building routine below runs at all, rather than setting a bit in this field). `IsDoorObject` was traced to a completely separate joint/hinge-hierarchy subsystem (`FUN_100ba570`, which prints `"Door joint \"%s\" added to geometry hierarchy, joint index %i\n"`) — **not** part of this mesh-level `flags_bitmask` at all.
+
+## What the `0x40` optional block actually is: shadow-volume silhouette/adjacency data
+
+`FUN_1004ea70` (reached only when shadow-volume generation is enabled and not suppressed) turned out to be one of the largest, most complex functions in the whole plugin — real geometry processing, not a simple attribute read:
+- Iterates every mesh edge (`MItMeshEdge`) checking `isSmooth()`, and for every **non-smooth (hard) edge**, records its two vertex indices via `FUN_10066e30(context, v0, v1)` — this is exactly silhouette-edge detection, the standard technique for real-time stencil shadow volumes (hard edges are exactly where a shadow volume needs to extrude).
+- Builds a BSP-mesh structure (`"Append polygons to BSP-mesh generator ..."`), triangulates polygons (`MItMeshPolygon::hasValidTriangulation`), and does area-based culling of degenerate/tiny triangles.
+- This conclusively confirms the `0x40`/`0x1000000`-gated 52-byte-per-record block in the `.ms2` file holds precomputed shadow-volume geometry (very likely per-edge or per-triangle adjacency data) — not a guess, but doesn't yet pin down the *exact* field-by-field meaning of each 52-byte record, which would need substantially more work given how large and intricate this specific function is.
+
+## What's still unmapped
+
+- The exact byte-level meaning of the 52-byte shadow-volume records themselves (only their *purpose* is now confirmed, not their internal layout).
+- The confirmed discrepancy in that same block (`wpn_Bomb.ms2`'s second sub-array not actually appearing) — still unresolved; possibly legitimate (a closed/watertight mesh may have zero "boundary edge" entries in whatever the second array represents) rather than a parsing bug.
+- Five of the eight block-gating bits (`0x10`, `0x200`, `0x400`, `0x10000`, `0x4000`, `0x40000`, `0x800`) have known byte sizes but no traced source attribute yet — none of Phase 0's known mesh attributes were found feeding them via `FUN_1008d120`, so they likely come from a different feature entirely (skin/joint weighting and animation export are the most likely candidates, given `ExportSkin`/`ExportAnimation` are real `exportG5Resource` parameters not yet traced this deeply).
