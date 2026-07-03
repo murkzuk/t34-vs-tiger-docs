@@ -53,8 +53,32 @@ def _create_object_for_node(node, index):
 
     n_tris = len(node.indices) // 3
     skipped = 0
+    flipped = 0
     for t in range(n_tris):
         i0, i1, i2 = node.indices[t * 3:t * 3 + 3]
+
+        # The exported triangle winding doesn't always agree with the
+        # file's own authored per-vertex normals (confirmed empirically -
+        # ~7% of faces in real shipped content disagree, concentrated in
+        # damage/"Crashed" variant meshes) - if left uncorrected this
+        # produces dark, inside-out-looking faces from otherwise-correct
+        # viewing angles. Since we have the real authored normals, use
+        # them as ground truth: compute this triangle's geometric normal
+        # from its vertex order, and reverse the order if it disagrees
+        # with the average of the three vertices' authored normals.
+        p0, p1, p2 = node.positions[i0], node.positions[i1], node.positions[i2]
+        edge1 = (p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2])
+        edge2 = (p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2])
+        geo_normal = (edge1[1]*edge2[2]-edge1[2]*edge2[1],
+                      edge1[2]*edge2[0]-edge1[0]*edge2[2],
+                      edge1[0]*edge2[1]-edge1[1]*edge2[0])
+        n0, n1, n2 = node.normals[i0], node.normals[i1], node.normals[i2]
+        avg_normal = (n0[0]+n1[0]+n2[0], n0[1]+n1[1]+n2[1], n0[2]+n1[2]+n2[2])
+        dot = geo_normal[0]*avg_normal[0] + geo_normal[1]*avg_normal[1] + geo_normal[2]*avg_normal[2]
+        if dot < 0:
+            i1, i2 = i2, i1
+            flipped += 1
+
         try:
             face = bm.faces.new((verts[i0], verts[i1], verts[i2]))
         except ValueError:
@@ -83,8 +107,9 @@ def _create_object_for_node(node, index):
         except Exception:
             pass  # older/newer API mismatch - not fatal, face normals still work
 
-    if skipped:
-        print("  (%s: skipped %d degenerate/duplicate face(s))" % (node.name, skipped))
+    if skipped or flipped:
+        print("  (%s: flipped %d face(s) to match authored normals, skipped %d degenerate/duplicate)" % (
+            node.name, flipped, skipped))
 
     obj = bpy.data.objects.new(node.name or ("node_%d" % index), mesh)
     return obj

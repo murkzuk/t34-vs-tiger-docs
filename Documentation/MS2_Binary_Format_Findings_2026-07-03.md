@@ -397,3 +397,15 @@ Two demo `.blend` files were generated and saved to `M:\TvT 2024 working folder\
 ## Recommended next step (Phase 3)
 
 Wire up material/texture assignment by parsing the companion `.script` file's `ModelSkin` texture list (plain text, already fully understood — no reverse-engineering needed, just text parsing) — this would make imported models actually look textured in Blender rather than plain grey, a meaningful visible improvement for relatively little additional work.
+
+---
+
+# Phase 3 fix: exported triangle winding doesn't always agree with the file's own authored normals
+
+The user opened the generated `t34_85_44_imported.blend` in their own (much newer) Blender install and reported visible artifacts — scattered dark, faceted-looking patches, concentrated on the damaged/"Crashed" variant meshes — while the simple haystack prop looked correct. Rather than guess, wrote a standalone diagnostic (`diagnose_normals.py`, not committed — a throwaway check) that computes each triangle's geometric normal (from its vertex positions and index order) and compares it against the average of its three vertices' authored normals from the file.
+
+**Confirmed with real data**: 7.17% of all faces in `u_veh_t34_85_44.ms2` (5,531 of 77,182) have geometric winding that disagrees with their own authored normal — i.e. the triangle indices, taken at face value, produce a face pointing the *opposite* direction from what the mesh's own normal data says it should. This is concentrated heavily in the `_Crashed` damage-state variants (`Body_Crashed`: 31% of its faces affected) — plausibly because shattered/broken geometry was authored or processed differently (mirrored fragments, boolean-cut pieces, etc.) than clean intact meshes, which only had a handful of affected faces each. This exactly explains the visual symptom: a face with inverted winding relative to its true normal renders dark from angles where correctly-wound neighboring faces render light, producing exactly the scattered faceted-dark-patch look in the screenshot.
+
+**Fix**: `ms2_import_blender.py` now computes each triangle's geometric normal *before* creating the bmesh face, compares it against the authored per-vertex normal average, and reverses the vertex order if they disagree — using the file's own authored normals as ground truth to correct for the winding inconsistency, rather than trusting the raw index order blindly.
+
+**Verified the fix directly** (not just "looks plausible"): re-imported and checked Blender's own computed face normals against the split-normal data afterward — disagreements dropped from 5,531 to **2** (out of 77,172 faces; the remaining 2 are almost certainly genuine near-degenerate sliver triangles where the geometric normal is barely defined, not a remaining bug). The haystack prop, which had zero disagreements before the fix, still shows zero after — confirming the fix doesn't disturb already-correct data. Regenerated both demo `.blend` files with the corrected importer.

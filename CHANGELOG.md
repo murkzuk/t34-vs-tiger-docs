@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 fix) — Fixed real visual artifacts found via user testing
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User opened the generated tank `.blend` in their own Blender install and reported scattered dark, faceted patches - the simple haystack prop looked correct, but the tank didn't. Diagnosed with a data-driven check rather than guessing: compared every triangle's geometric normal (from its vertex order) against its authored normal data from the file, and found 7.17% of all faces (5,531 of 77,182) have winding that disagrees with their own authored normal - heavily concentrated in the damaged "Crashed" variant meshes. Fixed the importer to use the file's authored normals as ground truth, reversing a triangle's vertex order whenever it disagrees, rather than trusting the raw index order. Verified directly: disagreements dropped from 5,531 to 2 (noise-level), and the already-correct haystack prop was unaffected. Regenerated both demo files.
+
+### Why
+
+Direct fix for a real defect the user found by actually opening the output - exactly the kind of empirical, in-application testing this project has relied on throughout, now applied to the new importer tool itself.
+
+---
+
 ## 2026-07-03 (Phase 3) — A real, working static-mesh Blender importer
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
