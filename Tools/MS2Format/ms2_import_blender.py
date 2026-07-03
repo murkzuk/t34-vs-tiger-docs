@@ -128,16 +128,23 @@ def _create_object_for_node(node, index):
     bm.to_mesh(mesh)
     bm.free()
 
-    # Apply the file's own per-vertex normals (custom split normals),
-    # rather than relying only on bmesh's recomputed face/vertex normals -
-    # the .ms2 format stores real authored normals we should preserve.
-    if node.normals and len(node.normals) == len(node.positions):
-        mesh.use_auto_smooth = True
-        try:
-            mesh.normals_split_custom_set_from_vertices(
-                [Vector(n) for n in node.normals])
-        except Exception:
-            pass  # older/newer API mismatch - not fatal, face normals still work
+    # Mark every face smooth-shaded rather than trying to reapply the
+    # file's exact authored normal vectors via Blender's custom split
+    # normals API. That API is version-sensitive - a file saved by
+    # Blender 2.79 (this importer's target) and later opened in a much
+    # newer Blender/Eevee produced visibly wrong shading (a real defect
+    # found via user testing: the winding fix was independently verified
+    # complete, yet a newer-Blender render still showed distorted
+    # shading that this importer's own 2.79 renders never reproduced).
+    # Plain smooth shading avoids trusting stored normal vectors across
+    # versions entirely - it relies only on mesh topology, and since the
+    # .ms2 format already duplicates vertices at hard edges (confirmed
+    # on the tutorial cube: 24 vertices for 8 physical corners, not 8),
+    # a face only shares a vertex *index* with its neighbour where the
+    # source data intended a smooth transition, so this reproduces the
+    # authored hard/soft edge behaviour without needing exact normals.
+    for poly in mesh.polygons:
+        poly.use_smooth = True
 
     if skipped or flipped:
         print("  (%s: flipped %d face(s) to match authored normals, skipped %d degenerate/duplicate)" % (

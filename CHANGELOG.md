@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 third fix) — Replaced a version-sensitive normals API with plain smooth shading
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User re-tested with another fresh file and reported the turret/barrel still looked wrong while hull/wheels were correct. Rendered the scene directly (both a full shot and a turret close-up) rather than guessing - nothing looked broken in those renders. Checked the turret mesh's own vertex data for a genuine outlier (none found) and re-verified the earlier winding fix has zero remaining disagreements, ruling out geometry and winding entirely. The key realization: this importer's own testing only ever used Blender 2.79's old internal renderer, matching the Blender version that authored the demo files, while the user was viewing the same files in a much newer Blender using Eevee - and the importer applied authored normals via a comparatively obscure, version-sensitive custom split normals API. Replaced it with plain `polygon.use_smooth = True`, a basic feature that shades from mesh topology alone rather than trusting stored normal vectors across Blender versions - correctly reproduces hard/soft edges since the format already duplicates vertices at hard edges. Flagged honestly that this specific fix couldn't be independently verified here, since only Blender 2.79 (pre-Eevee) is installed - needs the user's own test.
+
+### Why
+
+Continuing to chase a real defect the user found through careful, deliberate re-testing (a fresh file, a specific description of which part looked wrong) rather than declaring victory prematurely.
+
+---
+
 ## 2026-07-03 (Phase 3 second fix) — LOD/damage-state variants no longer all render at once
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
