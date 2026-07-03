@@ -136,6 +136,16 @@ User manually rotated `MainPlayerUnit` in the Editor to the actual correct direc
 
 Both fixes applied to the same `Content.script`, verified balanced, synced to the docs repo.
 
+## AI activation for all 19 combat groups — the "nothing else moves" gap
+
+User noted no unit other than the player moves - correctly anticipating this was already-known territory from earlier tonight's `Campaign_2\Mission_5` fixes: in this engine, placed AI units sit **completely inert** by default until their behavior is explicitly activated - simply having a `Task` property in `Content.script` isn't enough. Confirmed `MissionTasks.script` was still empty boilerplate (never touched since the `SteppeTemplate` copy).
+
+**Built the real activation wiring**, following the exact `UnitGroup`/`CBaseUnitGroup` pattern found in `Campaign_2\Mission_5` (checked the actual working code rather than guessing): each combat group needs (1) a `"UnitGroup"`-type entry in `Content.script` listing its member unit IDs via a `["Units", [...]]` property, and (2) a matching class in `MissionTasks.script` extending `CBaseUnitGroup` with an `Init()` that calls `ForEachUnitTask("ActivateBehavior", [true])`, `ActivateRadar(true)`, and sets `m_EnemyReactionType == ERT_AGGRESSIVE` (kept the `==` exactly as found in the real, confirmed-working source rather than "fixing" it to `=` - not worth the risk of guessing at this DSL's exact grammar when the working reference uses `==`).
+
+Generated all **19 group wrappers** programmatically from the same OOB data used throughout this build, correctly **excluding the player from `Zug Falke`'s AI group** (`MainPlayerUnit` stays out, the other 4 Panzer IVs get the AI wrapper) so activating AI behavior doesn't interfere with manual player control. Verified bracket balance in both files after the additions (19 `UnitGroup` entries in `Content.script`, 19 matching classes in `MissionTasks.script`, both structurally sound).
+
+**Honest scope note**: this activates *combat reactivity* (targeting, shooting, turning to face threats) for every group - a large, real improvement over total inertness - but it does **not** give German units autonomous movement orders to advance along the road toward Gremuchi/Gonki. That would need explicit `NavPoint`-following movement scripting (the same kind of pattern seen in `Campaign_2\Mission_5`'s `StartFirstAdvance`-style events), which is a further, separate piece of work not included in this pass.
+
 **Also seen in the log, judged benign/pre-existing, not touched**: `[Locale] There is no section [MissionBerezov]` warnings appear early in the log alongside identical warnings for `[QuickMissionGenerated]`/`[SteppeMissionGenerated]` (sections confirmed to genuinely exist in `eng.locale`) - looks like a harmless startup-ordering quirk (mission-list generation querying names before the locale file is fully loaded) affecting every custom mission equally, not something introduced by this work. Repeated `[AbstractJoint] Invalid rotation of collision mesh` warnings tie to loading a new instance of the human/infantry rig for the first time (identical quaternion values every occurrence, no longer appearing once that mesh is cached) - a pre-existing content quirk in the base infantry models, unrelated to Berezov specifically.
 
 ## Full order-of-battle position extraction — DONE 2026-07-03

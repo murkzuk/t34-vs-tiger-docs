@@ -12,3 +12,211 @@
 //--------------------------------------------------------------------------------
 
 
+class BerezovZugFalke extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovHQ extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovKGKaiser extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovZugLex extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovZugWeidinger extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltStepichev extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltKotin extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltBerzina extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltSamsonov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovSovietHQ extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltVoronov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltKutuzov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltPopov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltRhyzov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltZhilin extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltZhadov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltMarkov extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltSytnik extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
+
+class BerezovPltOleshev extends CBaseUnitGroup
+{
+  void Init()
+  {
+    CBaseUnitGroup::Init();
+    ForEachUnitTask("ActivateBehavior", [true]);
+    ActivateRadar(true);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+  }
+}
