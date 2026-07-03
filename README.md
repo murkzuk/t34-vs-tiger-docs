@@ -1,23 +1,21 @@
-Project Redux: T-34 vs. Tiger Preservation
+# Project Redux: T-34 vs. Tiger Preservation
 
 This repository is a community-driven effort to preserve, fix, and finally finish T-34 vs. Tiger. After the original developers and publishers ceased to exist, this game became "abandonware." We are here to ensure the "Cogs of War" keep turning.
 
-Our mission is to build an open community where anyone—from veteran modders to first-time players—can contribute to making this the definitive WW2 tank simulation.
-🤝 How You Can Participate
+Our mission is to build an open community where anyone — from veteran modders to first-time players — can contribute to making this the definitive WW2 tank simulation.
+
+## 🤝 How You Can Participate
 
 You don't need to be a coder to help! We want this project to be as open as possible.
 
-    🕹️ Play & Report: Download the latest patch and tell us what works (and what doesn't) in the Issues Tab.
+- 🕹️ **Play & Report**: Download the latest patch and tell us what works (and what doesn't) via the [Issues tab](../../issues).
+- 🔧 **Troubleshooting**: Found a fix for a crash or a driver error? Add it to `CHANGELOG.md` so others can find it.
+- 📜 **Script Tinkering**: If you've tweaked a `.script` file for better physics or terrain, share your findings!
+- 🎨 **Texture Work**: Help us update the textures for vehicles and environments.
 
-    🔧 Troubleshooting: Found a fix for a crash or a driver error? Add it to our Confirmed Fixes list to help others.
+## 🔒 A Note on Contributing (please read before pushing)
 
-    📜 Script Tinkering: If you’ve tweaked a .script file for better physics or terrain, share your findings!.
-
-    🎨 Texture Work: Help us update the .dds textures for vehicles and environments.
-
-🔒 A Note on Contributing (please read before pushing)
-
-As of 2026-07-02, `main` is protected. Direct pushes to `main` will be rejected — this isn't personal, it's a safety net for everyone's work (including yours!). Here's the new workflow:
+As of 2026-07-02, `main` is protected. Direct pushes to `main` will be rejected — this isn't personal, it's a safety net for everyone's work (including yours!). Here's the workflow now:
 
 1. Create a new branch for your change (e.g. `git checkout -b fix/some-bug`).
 2. Push your branch and open a Pull Request.
@@ -25,112 +23,68 @@ As of 2026-07-02, `main` is protected. Direct pushes to `main` will be rejected 
 
 This exists because a previous contribution accidentally deleted a working function during an unrelated cleanup, and it went straight into `main` unnoticed since there was no review step at the time. A branch + PR review would have caught it immediately. Nothing to do with any one person — just closing a gap that bit us once already.
 
-📂 Repository Roadmap
+## 📂 Repository Roadmap
 
 To make this "mountain" easier to climb, we have organized the project into key areas:
 
-* **[Technical Manuals](./Documentation):** Engine specifications, and project analysis.
-* **[Development Tools](./Tools):** Scripts, Maya 5.0 export manuals and utilities created for the TvT by G5 (the developers).
-* **[Executables](./Executables):** The 4GB LAA patch (Zip) and essential engine fixes.
-* **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.
-* **[Stable Build (Pre001)](./Fixed%20Pre001):** The first verified "Fixed" pre0.001 and included in patch.
-* **[Consolidated Scripts](./concatenate%20scripts):** Mission scripts processed through 'cat' for easy debugging.
-* **[Original Logic](./TvT):** The base stock scripts for T-34 vs. Tiger.
-* **[ZeeWolf Legacy](./TvTZW):** Preservation of ZeeWolf (ZW) mod scripts and logic.
-* **[ZW Missions](./ZW%20Mission%20scripts):** Specific mission scripts from the ZeeWolf collection.
+- **[Technical Manuals](./Documentation):** Engine specifications, mission-scripting reference, and project analysis. See below for the highlights.
+- **[Development Tools](./Tools):** Scripts, Maya export manuals, and utilities created for TvT by G5 (the original developers).
+- **[Executables](./Executables):** The 4GB LAA patch and essential engine fixes.
+- **[Patches](./Patches):** Ready-to-apply hotfix packages — grab the latest one if you just want fixes without touching the source.
+- **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.
+- **[Stable Build (Pre001)](./Fixed%20Pre001):** The first verified "fixed" pre-0.001 build, included in the patch.
+- **[Consolidated Scripts](./concatenate%20scripts):** Mission scripts processed through `cat` for easy debugging.
+- **[Original Logic](./TvT):** The base stock scripts for T-34 vs. Tiger — this is the mirror kept in sync with the live REDUX game install.
+- **[ZeeWolf Legacy](./TvTZW):** Preservation of ZeeWolf (ZW) mod scripts and logic — see the note below on what this is.
+- **[ZW Missions](./ZW%20Mission%20scripts):** Specific mission scripts from the ZeeWolf collection.
+- **`TODO.md`**: Running backlog of known issues, half-finished content, and investigation notes.
+- **`CHANGELOG.md`**: Full history of fixes and changes, newest first — this is the "Confirmed Fixes" list.
 
-💡 Quick Start Troubleshooting
+### Technical Manual Highlights
 
-Game won't start? If you get an "Unable to initialize 3D driver" error on older laptops or GPUs, try deleting D3D9.dll from your game folder. See our Confirmed Fix #1 for details.
-A Note on the Community
+The most-used documents in [`Documentation/`](./Documentation):
 
-We are building this for the love of the sims. Please be patient with one another, share what you know, and let's bring this game back to life together.
-# T-34 vs. Tiger - G5 Engine Export Documentation
+- **`T34_vs_Tiger_Maya_Export_Manual(V3).md`** — the complete Maya 5.0 → G5 engine asset export reference (mesh/light/physics/shader attributes, naming conventions, the full `doExportScene` signature).
+- **`T-34 vs. Tiger Creating a Destructible Prop Asset.md`** — a step-by-step tutorial building on the manual above.
+- **`TVT_Mission_Script_Format_Complete_Reference GOLD.md`** — mission scripting reference.
+- **`Mission_File_Schema_Verified_2026-07-02.md`** — verified mission file syntax, written while building the Quick Mission Generator tool.
+- **`ZeeWolf Mod REDUX Technical Fix Documentation.md`** — notes on fixes originally found via the ZeeWolf mod.
 
-Documentation for exporting 3D assets from Maya 5.0 to the proprietary G5 game engine.
+This list grows regularly — check the folder itself for anything newer than what's listed here.
 
-## Overview
+### A Note on the ZeeWolf (ZW) Mod and Whirlwind over Vietnam (WoV)
 
-This repository contains comprehensive documentation for the T-34 vs. Tiger asset export pipeline. All procedures have been verified through static analysis of the original MEL source code.
+This repository also preserves scripts from the ZeeWolf (ZW) mod, a paid mod for TvT made by a modder who has since disappeared without sharing his source — only the compiled game files survive, which is what's preserved here. Separately, this repo includes scripts from *Whirlwind over Vietnam* (WoV), G5's earlier title and the engine base TvT was built from. Unlike TvT, WoV was fully finished and released; TvT was pushed out unfinished in an attempt to save its publisher (it didn't work). Both companies no longer exist. These are kept here for the same preservation reasons as everything else in this repo.
 
-## Contents
+## 💡 Quick Start Troubleshooting
 
-### Reference Manual
-- **T34_vs_Tiger_Maya_Export_Manual(V3).md** - Complete technical reference (553 lines)
-  - Complete doExportScene function signature with all 17 parameters
-  - All mesh, light, physics, and shader attributes documented
-  - Naming conventions and UV requirements
-  - Troubleshooting guide
+**Game won't start?** If you get an "Unable to initialize 3D driver" error on older laptops or GPUs, try deleting `D3D9.dll` from your game folder. See `CHANGELOG.md` for this and other confirmed fixes.
 
-### Tutorials
-- **T-34 vs. Tiger Creating a Destructible Prop Asset.md** - Step-by-step workflow
-  - Practical use case for creating destructible props
-  - Step-by-step mesh, physics, and export workflow
+## Uploading Files to This Repository
 
-### Visual Guides (PDF)
-- **G5_Pipeline_Mastery.pdf** - Condensed reference guide
-- **T34_vs_Tiger_Asset_Pipeline_Visual_Guide.pdf** - Workflow overview
-- **export manual. Tutotial 1.pdf** - Beginner's getting started guide
-
-### Mission Scripting
-- **TVT_Mission_Script_Format_Complete_Reference GOLD.md** - Mission scripting reference
-
-## Key Technical Details
-
-### Physics Shape Types
-| Command | Shape Type |
-|---------|------------|
-| `createPhysicsShape(1)` | Box |
-| `createPhysicsShape(2)` | Capsule |
-| `createPhysicsShape(3)` | Cylinder |
-
-### Naming Conventions
-- `_1m` suffix for light map meshes
-- `_col` prefix for collision geometry
-- `_LOD#` suffix for level of detail meshes
-
-### Essential Commands
-```mel
-addMeshProperties;           // Register mesh attributes
-addLightProperties;          // Register light attributes
-createPhysicsShape(1);       // Create box collider
-doExportScene(...);          // Batch export function
-```
-
-## Documentation Structure
-
-```
-t34-vs-tiger-docs/
-├── README.md
-├── T34_vs_Tiger_Maya_Export_Manual(V3).md
-├── T-34 vs. Tiger Creating a Destructible Prop Asset.md
-├── TVT_Mission_Script_Format_Complete_Reference GOLD.md
-├── G5_Pipeline_Mastery.pdf
-├── T34_vs_Tiger_Asset_Pipeline_Visual_Guide.pdf
-├── export manual. Tutotial 1.pdf
-└── TVT_Mission_Script_Format_Complete_Reference GOLD.md
-```
-
-## Uploading to GitHub
-
-To upload files to this repository:
+If you're not comfortable with git/branches yet, you can still contribute docs or notes directly through GitHub's web UI:
 
 1. Go to https://github.com/murkzuk/t34-vs-tiger-docs
 2. Click "Add file" → "Upload files"
 3. Drag and drop your files
 4. Click "Commit changes"
 
+Note this still goes through the branch protection above — GitHub will prompt you to create a new branch and open a Pull Request rather than committing straight to `main`.
+
 ## Acknowledgments
 
-Documentation created with the assistance of multiple AI systems, analyzing MEL source code and cross-referencing visual guides to produce verified technical specifications.
+Documentation and fixes in this repository have been developed with the assistance of multiple AI systems, cross-referencing source code, MEL scripts, and visual guides to produce verified technical specifications.
 
 ## Notes
 
-- Maya 5.0 is required for this pipeline
-- The createG5Entity MEL command mentioned in some documentation was not found in the provided toolset
-- Some workflow steps may require verification from project leads
+- Maya 5.0 is required for the asset-export pipeline documented in `Documentation/`.
+- The `createG5Entity` MEL command mentioned in some documentation was not found in the available toolset.
+- Some workflow steps may still need verification from project leads.
 
 ## License
 
-Documentation preserved for educational and historical purposes.
-I also have included files from the ZeeWolf (zw) mod, this was a paywar mod made by the now gone ZeeWolf, his mod included, new maps, vehicles and physics. For completeness I have included the .scripts from Whirlwinds over Vietnam (WoV) because TvT is so very close to WoV, it was G5's title prior to TvT and was the main base for TvT. Unlike TvT, WoV was fully formed and released as sich, TvT was not. It was released unfininshed to save it's publisher (it did not). Both companies ceased to exist.
+Documentation and preserved scripts in this repository are shared for educational and historical preservation purposes.
+
+## A Note on the Community
+
+We are building this for the love of the sims. Please be patient with one another, share what you know, and let's bring this game back to life together.
