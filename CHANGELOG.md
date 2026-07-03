@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (latest of all) — Phase 1: first real decoded structure in the .ms2 binary format
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Direct follow-up to the Phase 0 scoping/documentation pass on issue #12. Started empirical byte-level probing of real `.ms2` files, beginning with the smallest samples - `Landscape_test.ms2` (124 bytes) and `MyFirstModel.ms2` (1695 bytes, which is literally the exact cube exported in the tutorial's own screenshots, giving a known-geometry test case). Confirmed a universal file header across all 62 sample files (version constant, a node count that scales cleanly with model complexity, a length-prefixed object name). Then, cross-checking every numeric guess against the known cube's actual dimensions rather than eyeballing hex, fully decoded and closed-loop verified the entire per-vertex geometry block for a simple mesh: bounding box, bounding sphere (radius matched to 7 significant figures), 24 vertex positions, 24 normals (all exact axis-aligned unit vectors), 24 UV coordinates, and 36 uint16 triangle indices (exactly matching a cube's 12 triangles, every index valid). Also found that `u_veh_t34_76_41.ms2` (the already-known orphaned cut-content T-34/76 variant) has a structurally anomalous root node compared to its finished siblings - independent confirmation, from pure binary analysis, of something only previously suspected from a separate script-level audit. Clarified that materials/textures aren't stored in `.ms2` at all - they live in the already-fully-understood companion `.script` files. Findings written up in a new `Documentation/MS2_Binary_Format_Findings_2026-07-03.md`, linked from the Phase 0 manual.
+
+### Why
+
+User asked to proceed with Phase 1 of the previously-scoped plan for issue #12 - real progress toward the eventual goal of Blender import/export support.
+
+---
+
 ## 2026-07-03 (yet later) — Scope GitHub issue #12 (Maya exporter / .ms2 format), correct existing Maya export manual
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
