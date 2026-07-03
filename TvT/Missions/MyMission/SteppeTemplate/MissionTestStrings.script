@@ -10,7 +10,7 @@
 //-----------------
 //  Mission strings
 //-----------------
-class CSteppeTemplate_Strings extends CCommonStrings
+class CSteppeTemplateMission_Strings extends CCommonStrings
 {
   final static WString MissionName  = getLocalized("MissionTest", "MissionName");
   final static WString BriefingText = getLocalized("MissionTest", "BriefingText");

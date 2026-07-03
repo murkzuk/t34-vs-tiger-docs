@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 — Fix SteppeTemplate Editor crash (BMP byte-size mismatch)
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+First Editor test of `SteppeTemplate` crashed at ~20% load. `editor.log` pointed at `TerrainZone_Test.bmp` failing a strict file-size check, which cascaded into "Can't find layer with id TerrainZone" and the crash. Root cause: the earlier forest-thinning pass re-saved the bitmap through PIL, which writes a slightly different BMP structure than the original file (2 bytes shorter - Mission1's original has 2 trailing null bytes PIL doesn't reproduce). Fixed by redoing the thinning directly on the raw file bytes - read the original, modify only the pixel-data byte range in place, keep everything else byte-for-byte identical. Result matches the original's exact 1049656-byte size. Also fixed a harmless, pre-existing naming mismatch (inherited from Mission1 itself) between the mission-strings class name and what the menu script actually looks up.
+
+### Why
+
+Direct follow-up to the user testing the newly-built SteppeTemplate mission in the Level Editor and hitting a crash.
+
+---
+
 ## 2026-07-03 — First steppe mission template built
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
