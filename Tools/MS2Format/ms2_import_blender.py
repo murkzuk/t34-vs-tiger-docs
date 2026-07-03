@@ -15,6 +15,12 @@ This importer does NOT yet parse that file (a separate, much simpler
 task, since it's plain text) - imported meshes have no material
 assigned.
 
+Every node in the file is imported (nothing is skipped), but nodes
+matching the game's own "_LODn" / "_Crashed" / "_CM" naming convention
+are hidden by default, since they occupy the same world-space position
+as their base node and would otherwise all render simultaneously
+stacked on top of each other - see _is_hidden_by_default() below.
+
 Usage (Blender 2.79, from the Scripting tab or headless):
     import sys
     sys.path.insert(0, r"C:\path\to\Tools\MS2Format")
@@ -26,6 +32,7 @@ Or from the command line:
 """
 import sys
 import os
+import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ms2_reader
@@ -33,6 +40,31 @@ import ms2_reader
 import bpy
 import bmesh
 from mathutils import Vector
+
+
+_LOD_SUFFIX_RE = re.compile(r'_LOD\d+$', re.IGNORECASE)
+
+
+def _is_hidden_by_default(name):
+    """Real .ms2 files use a naming convention (confirmed against shipped
+    content, e.g. u_veh_t34_85_44.ms2) where a base node like "Body" has
+    sibling variants: "_LOD1/2/4" (lower detail levels), "_Crashed"
+    (damage state), and "_CM" (collision mesh, not meant to be rendered).
+    These siblings all occupy the same world-space position as the base
+    node, so importing every one of them as visible geometry makes the
+    intact and wrecked/lower-detail versions all render simultaneously,
+    stacked on top of each other - this is what produced the "shattered"
+    look reported when first testing this importer, not a normals bug.
+    Everything is still imported (nothing is skipped or lost) - this
+    just decides what's visible by default so a straightforward import
+    looks like the intact, full-detail vehicle."""
+    if _LOD_SUFFIX_RE.search(name):
+        return True
+    if 'Crashed' in name:
+        return True
+    if name.endswith('_CM'):
+        return True
+    return False
 
 
 def _create_object_for_node(node, index):
@@ -123,11 +155,16 @@ def import_ms2(path, link_to_scene=True):
 
     scene = bpy.context.scene
     objects = []
+    hidden_count = 0
     for i, node in enumerate(nodes):
         obj = _create_object_for_node(node, i)
         objects.append(obj)
         if link_to_scene:
             scene.objects.link(obj)
+        if _is_hidden_by_default(node.name):
+            obj.hide = True
+            obj.hide_render = True
+            hidden_count += 1
 
     # Wire up parenting after all objects exist, using node_id as a
     # same-file node index (confirmed against real production data -
@@ -137,8 +174,10 @@ def import_ms2(path, link_to_scene=True):
         if 0 <= node.parent_index < len(objects) and node.parent_index != i:
             objects[i].parent = objects[node.parent_index]
 
-    print("Imported %s: %d nodes (%d with geometry)" % (
-        path, len(nodes), sum(1 for n in nodes if not n.is_empty and n.positions)))
+    print("Imported %s: %d nodes (%d with geometry, %d hidden by default "
+          "as LOD/Crashed/CM variants)" % (
+        path, len(nodes), sum(1 for n in nodes if not n.is_empty and n.positions),
+        hidden_count))
     return objects
 
 

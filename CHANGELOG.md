@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 second fix) — LOD/damage-state variants no longer all render at once
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+After the winding fix, the user re-tested with a brand-new, uniquely-named file (ruling out a stale re-test) and a deliberately-chosen mid-complexity model - the mid-complexity model looked correct, the tank still looked shattered. Checked the actual node hierarchy and found the intact hull and its shattered "Crashed" wreck variant (plus every `_LOD1/2/4` copy of both) are siblings with nearly identical bounding boxes - the importer was creating every single node as visible geometry, so intact and wrecked and every LOD copy were all rendering simultaneously, stacked in the same space. This was a real, separate bug from the winding issue, not a repeat of it. Fixed the importer to still import every node (nothing lost) but hide by default anything matching the game's own LOD/damage-state/collision-mesh naming convention, confirmed against real shipped content rather than assumed - a straightforward import now shows just the intact, full-detail vehicle.
+
+### Why
+
+Direct fix for a second real defect the user found through careful re-testing with a new mid-complexity sample specifically chosen to help isolate the problem.
+
+---
+
 ## 2026-07-03 (Phase 3 fix) — Fixed real visual artifacts found via user testing
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
