@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 — Issue tracker audit, fix German distance-callout voice lines
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Audited all 12 open GitHub issues against the current live game state. Four turned out to already be fixed (the "Distance" sound-id bug, the Cockpit.script "Invalid this reference" spam, the PzVI_E gun-load sound naming mismatch) and one had a stale "Confirmed Fix" label never closed. GitHub issue #11 diagnosed a narrower bug than what was actually there: it flagged the German 100m distance callout playing the 200m wav file, but checking `Resources/` showed neither `g_100.wav` nor `g_200.wav` exist at all - every one of the 16 entries in `Dialogs.script`'s German distance table pointed at a nonexistent filename format. The real files are `GDistance100.wav` through `GDistance1600.wav`, original G5 2008 assets. Fixed all 16 entries, not just the one pair the issue caught.
+
+### Why
+
+Direct follow-up to setting up branch protection and reviewing the issue tracker's overall health.
+
+---
+
 ## 2026-07-02 (final) — Steppe mission scoping pass
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

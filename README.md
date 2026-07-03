@@ -58,7 +58,11 @@ This repository also preserves scripts from the ZeeWolf (ZW) mod, a paid mod for
 
 ## 💡 Quick Start Troubleshooting
 
-**Game won't start?** If you get an "Unable to initialize 3D driver" error on older laptops or GPUs, try deleting `D3D9.dll` from your game folder. See `CHANGELOG.md` for this and other confirmed fixes.
+**Game won't start?** If you get an "Unable to initialize 3D driver" error on older laptops or GPUs, try deleting `D3D9.dll` from your game folder.
+
+**Loads to the menu but crashes when starting a mission on Windows 11?** Grab `msvcp71.dll` and `msvcr71.dll` from another old game install (or elsewhere) and copy them into the main game folder alongside the existing files. Confirmed working on a fresh Windows 11 install (thanks Glyn).
+
+See `CHANGELOG.md` for these and other confirmed fixes.
 
 ## Uploading Files to This Repository
 
