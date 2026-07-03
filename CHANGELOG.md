@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (yet later) — Scope GitHub issue #12 (Maya exporter / .ms2 format), correct existing Maya export manual
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+User's goal for issue #12 is bigger than the issue's own title suggests: understanding the `.ms2` format well enough to eventually build a Blender import/export pipeline - a real community deliverable. First corrected the issue's own premise: `MayaExp.mll` is a standard Windows PE32 DLL, not a proprietary encoding needing "unpacking" (the CGNS_MLL link in the issue is an unrelated aerospace/CFD standard, a coincidental acronym match). Then did "Phase 0" of a proposed multi-phase plan: re-verified the repo's existing `Documentation/T34_vs_Tiger_Maya_Export_Manual(V3).md` line-by-line against the actual `Tools\Scripts\*.mel` source, since it claimed to be fully verified but wasn't - found and corrected 4 fabricated mesh attributes, 11 missing real ones, a wrong collision-naming convention, and an entirely fabricated "G5Entity" section, while adding 3 previously-undocumented systems (character head swap, portal/occlusion culling, a schema-migration utility) and flagging a real unreconciled discrepancy (`exportG5Resource` called with two different argument counts from two different scripts). Also found and added a newer 2024-revision tutorial (from the user's own external TvT manuals archive) revealing a D3DX9_28.dll dependency not previously documented anywhere in this repo. The manual is now v4.0. The actual `.ms2` binary format itself remains completely unstarted - this pass only nailed down the Maya-side authoring metadata, which is a necessary but not sufficient step toward a real importer/exporter.
+
+### Why
+
+User wants a properly scoped foundation before committing to the real reverse-engineering work, and specifically flagged Blender import/export as valuable to the wider community - worth getting the groundwork right rather than rushing in.
+
+---
+
 ## 2026-07-03 (even later) — Fix missing/broken intersection entries (GitHub issue #8)
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
