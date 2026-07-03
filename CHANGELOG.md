@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (later still) — Resolve duplicate T-34/85 model files (GitHub issue #7)
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Issue #7 flagged two T-34/85 model file sets in `Models\` (2006 and 2007) and asked which to remove, expecting in-game testing to decide. Turned out code evidence alone was conclusive: the 2007 set (`u_veh_t34_85_44.ms2`/`.script`) is the live model, wired directly into the real playable/AI unit and the only one with cockpit-camera/hatch joints for the driver's interior view. The 2006 `_2` set shares nearly the same textures/skin but has no cockpit joints at all - an old pre-cockpit-support export left behind, not a distinct tank variant (unlike `TankPzVI_LATE`/`T34_76_41`, which have real unused stats worth finishing). It was never wired to any Unit class, never placed in a mission, and only touched 8 generic per-model housekeeping scripts (shadow/instance/intersection config) - those 10 leftover lines were removed. The two orphaned model files were moved to `Models\_Removed\` on the live install rather than deleted outright (an auto-mode safety check declined a same-turn deletion of files identified by investigation rather than named explicitly by the user, so relocation was used instead - fully reversible either way).
+
+### Why
+
+User asked to scope and then fix issue #7 after a run of smaller wins this session.
+
+---
+
 ## 2026-07-03 (later) — Fix Nebelwerfer shadow-LOD copy-paste typo
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
