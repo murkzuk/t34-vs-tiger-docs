@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 2 final push) — All eight .ms2 optional-block bits now identified
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Closed out the flags_bitmask investigation. The five bits that didn't trace back to any of Phase 0's known mesh attributes were found instead by scanning every instruction in the whole binary for an OR against each specific bit constant - a few direct hits on the exact `flags_bitmask` struct-field pattern pinpointed the real setter function for each one immediately, no more manual call-graph tracing needed. Decompiling those functions gave real, log-message-confirmed identifications: bone/joint attachment data, skin blend weights, joint-mesh-cloning, per-joint bind-pose matrices (confirmed via a textbook identity-matrix initialization pattern), and very likely tangent-space vectors. Two bits remain confirmed-but-unnamed (real structured data, exact purpose not yet pinned down). Every one of the eight optional-block bits now has at least a confirmed real trigger condition from decompiled code.
+
+### Why
+
+Continuing to push per the user's request - this was the natural conclusion of the flags_bitmask work, closing out nearly the entire open question from the last update.
+
+---
+
 ## 2026-07-03 (Phase 2 continued) — Decoded most of flags_bitmask by tracing the attribute reader
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

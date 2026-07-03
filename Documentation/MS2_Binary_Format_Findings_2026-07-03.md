@@ -281,4 +281,28 @@ Rather than continuing to guess, traced where the exporter actually **reads** ea
 
 - The exact byte-level meaning of the 52-byte shadow-volume records themselves (only their *purpose* is now confirmed, not their internal layout).
 - The confirmed discrepancy in that same block (`wpn_Bomb.ms2`'s second sub-array not actually appearing) — still unresolved; possibly legitimate (a closed/watertight mesh may have zero "boundary edge" entries in whatever the second array represents) rather than a parsing bug.
-- Five of the eight block-gating bits (`0x10`, `0x200`, `0x400`, `0x10000`, `0x4000`, `0x40000`, `0x800`) have known byte sizes but no traced source attribute yet — none of Phase 0's known mesh attributes were found feeding them via `FUN_1008d120`, so they likely come from a different feature entirely (skin/joint weighting and animation export are the most likely candidates, given `ExportSkin`/`ExportAnimation` are real `exportG5Resource` parameters not yet traced this deeply).
+
+---
+
+# Phase 2 continued further: the remaining seven block-gating bits, found by scanning the whole binary for the literal bit constants
+
+None of Phase 0's known mesh attributes (via `FUN_1008d120`) fed the remaining seven optional-block bits. Rather than keep tracing call graphs by hand, scanned **every instruction in the entire binary** for an `OR` against each specific bit constant — a handful of direct `OR dword ptr [reg+0x8], CONST` hits (exactly the `flags_bitmask` struct-field pattern) pinpointed the real setter function for each bit immediately.
+
+| Bit | Function | What it does (confirmed by decompiling it) |
+|---|---|---|
+| `0x10` | `FUN_100968c0` | Logs `"  Add bone for attach %i\n"` right where this bit gets set, inside a joint/skin-processing function that also logs `"Export mesh data from (%i) %s joint"` and `"This joint constist [sic] from %i attached joints"`. Set when an internal bone-attachment collection is non-empty. Matches the block's known size (`vertex_count × 20 bytes`) exactly for a bone-index + weight + offset-vector record. |
+| `0x800` | `FUN_100955c0` | Logs `"Error: incorrect numbers blending informtion (%i)\n"` [sic, real typo in the shipped binary] right in the same code path — this is skin/bone **blend-weight** data, set after validating a per-vertex blend-weight count. Matches the known block size (`vertex_count × 8 bytes`) for a compact bone-index+weight pair. |
+| `0x4000` | `FUN_100968c0` (same function as `0x10`) | Logs `"  This joint clone mesh from %i joint\n"` — set when a joint's geometry is a **clone/instance of another joint's mesh** rather than its own. The single 4-byte value this bit gates is almost certainly the source joint's index. |
+| `0x10000` | `FUN_1008d610` | Allocates and default-initializes an array of 80-byte records with the exact IEEE-754 bit pattern for `1.0f` at diagonal-like positions (offsets matching a matrix diagonal) — a textbook **identity matrix initialization**. Strongly suggests these are per-joint bind-pose/skinning transform matrices, though the full 80-byte layout (a 4×4 matrix is 64 bytes, leaving 16 bytes for something else per record) isn't pinned down. |
+| `0x40000` | `FUN_1008a4a0` | Trivial — the entire function is "if (param_1) set bit 0x40000, else clear it." A direct 1:1 passthrough of a single boolean. Given the gated block is `vertex_count × 12 bytes, twice`, and the only boolean mesh-level export toggle left unaccounted for is `ExportTangentSpace`, this is very likely tangent + bitangent vectors (each a 3-float vector) per vertex. |
+| `0x200` | `FUN_10097600` | Copies raw 112-byte records from an internal collection when non-empty, then extracts a 3-float vector from each and feeds it into what looks like a bounding accumulation function. Content not fully identified — larger and more complex than the bone/skin records above. |
+| `0x400` | `FUN_1008d550` | Copies raw 92-byte records from an internal collection when non-empty. Content not fully identified. |
+
+This means **all eight** of the mystery optional-block bits now have at least a confirmed real-code trigger condition, and five of them have a strong, evidence-based semantic identification (bone attachment, skin blend weights, mesh cloning, joint bind matrices, tangent space) rather than being unlabeled byte blobs. The two remaining (`0x200`/`0x400`) are confirmed to be real, structured per-record data tied to the joint/skinning pipeline, just not yet identified by name.
+
+## Updated "what's still unmapped"
+
+- Exact per-field byte layout within the `0x10`/`0x200`/`0x400`/`0x800`/`0x10000` records (sizes are exact, internal field meaning is not, beyond the partial matrix-diagonal evidence for `0x10000`).
+- Whether `0x40000` really is `ExportTangentSpace` specifically, versus some other single boolean — very likely given the process of elimination and the trivial passthrough function, but not cross-checked against an actual tangent-space-enabled sample file yet (no sample examined has this bit set).
+- The `wpn_Bomb.ms2` discrepancy in the `0x40` (shadow volume) block's second sub-array.
+- Whether `0x1` and `0x8`'s more complex trigger conditions (documented earlier, tied to `IsWalkMesh`/`IsCollisionMesh`/`IsBoneNode`/native-joint-type checks) fully explain every case, or have edge cases not yet tested.
