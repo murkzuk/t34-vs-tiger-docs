@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 2 capstone) — Full production .ms2 file parses byte-perfect end to end
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Resolved the last open discrepancy from earlier today (the `wpn_Bomb.ms2` shadow-volume block mismatch) by pulling raw x86 disassembly instead of relying on decompiler-reconstructed C, which can miscombine short-circuited expressions. Confirmed the actual machine code does three unconditional writes once the relevant flag bit is set, and confirmed via careful re-verification that the file's real count value is read correctly - the file's true end simply doesn't have room for the third write the code demands. Root cause: `MayaExp.mll` is dated June 2007, `wpn_Bomb.ms2` is dated January 2006 - a genuine historical version mismatch between an older asset and a newer build of the tool, not a parsing error. Then validated the whole approach against a full, real, shipped production asset for the first time: `ms2_parser.py` parsed `u_veh_t34_85_44.ms2` (219 nodes, 12.9MB) to the exact byte with zero leftover, using nearly every documented optional data block in real combination throughout the file. Found one more real bit not yet identified (doesn't affect byte layout). The core `.ms2` format is now considered verified against production content, not just simple test files.
+
+### Why
+
+Continuing to push per the user's request - this was the natural conclusion of the whole Phase 2 decompilation effort, closing the loop with the strongest possible evidence (a real, complete, shipped asset parsing perfectly).
+
+---
+
 ## 2026-07-03 (Phase 2 final push) — All eight .ms2 optional-block bits now identified
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
