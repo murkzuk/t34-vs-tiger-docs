@@ -24,6 +24,7 @@ Usage:
 
 import argparse
 import hashlib
+import math
 import json
 import random
 import re
@@ -67,6 +68,7 @@ TARGETS = {
         # mind - the soft filter's color samples are at least meaningful for
         # this target, even though the mapping itself is still unproven in-game.
         "routerzone_soft_filter_supported": True,
+        "strings_class": "CQuickMissionMission_Strings",
     },
     "steppe": {
         "template_dir": GAME_ROOT / "Missions" / "MyMission" / "SteppeTemplate",
@@ -92,6 +94,7 @@ TARGETS = {
         # RouterZone pixel/color at both scales - the soft filter is meaningful
         # again for this target.
         "routerzone_soft_filter_supported": True,
+        "strings_class": "CSteppeQuickMissionMission_Strings",
     },
 }
 
@@ -109,18 +112,21 @@ ROUTERZONE_IMG_WIDTH = None
 ROUTERZONE_IMG_HEIGHT = None
 RENAMES = None
 ROUTERZONE_SOFT_FILTER_SUPPORTED = None
+STRINGS_CLASS = None
+OUTPUT_STRINGS = None
 
 
 def select_target(name: str) -> None:
     """Populate the module-level path/dimension globals for the chosen target."""
     global TEMPLATE_DIR, OUTPUT_DIR, TEMPLATE_CONTENT, OUTPUT_CONTENT, ROUTERZONE_BMP
     global MATRIX_WIDTH, MATRIX_HEIGHT, ROUTERZONE_IMG_WIDTH, ROUTERZONE_IMG_HEIGHT, RENAMES
-    global ROUTERZONE_SOFT_FILTER_SUPPORTED
+    global ROUTERZONE_SOFT_FILTER_SUPPORTED, STRINGS_CLASS, OUTPUT_STRINGS
     t = TARGETS[name]
     TEMPLATE_DIR = t["template_dir"]
     OUTPUT_DIR = t["output_dir"]
     TEMPLATE_CONTENT = TEMPLATE_DIR / "Content.script"
     OUTPUT_CONTENT = OUTPUT_DIR / "Content.script"
+    OUTPUT_STRINGS = OUTPUT_DIR / "MissionTestStrings.script"
     ROUTERZONE_BMP = OUTPUT_DIR / "RouterZone_Test.bmp"
     MATRIX_WIDTH = t["matrix_width"]
     MATRIX_HEIGHT = t["matrix_height"]
@@ -128,6 +134,7 @@ def select_target(name: str) -> None:
     ROUTERZONE_IMG_HEIGHT = t["routerzone_img_height"]
     ROUTERZONE_SOFT_FILTER_SUPPORTED = t["routerzone_soft_filter_supported"]
     RENAMES = t["renames"]
+    STRINGS_CLASS = t["strings_class"]
 
 OBJECTIVE_OBJECT_ID = "end_navpoint"
 PLAYER_OBJECT_ID = "MainPlayerUnit"
@@ -170,6 +177,24 @@ VERIFIED_UNIT_CLASSES = {
     "CGermanSoldierRifleUnit",  # Scripts\Units\GermanSoldierRifleUnit.script:103 - live in Campaign_1\Mission_1
     "CSovietSoldierRifleUnit",  # Scripts\Units\SovietSoldierRifleUnit.script:104 - live in Campaign_1\Mission_2
 }
+# Human-readable labels for the scout-report briefing text (see build_scout_report
+# below). Every class here is also in VERIFIED_UNIT_CLASSES above - kept as a
+# separate dict rather than folded in so a missing label fails loudly (KeyError)
+# instead of silently printing a raw class name in the briefing text.
+FRIENDLY_UNIT_NAMES = {
+    "CTankPzIVGUnit": "tank",
+    "CGunPak40Unit": "anti-tank gun",
+    "CTankT34_76_42Unit": "tank",
+    "CTankT34_85_44Unit": "tank",
+    "CSAUStuG40Unit": "self-propelled gun",
+    "CTankPzVIAusfEUnit": "tank",
+    "CGunZis3Unit": "anti-tank gun",
+    "CSAUSU85Unit": "self-propelled gun",
+    "CGunNebelUnit": "rocket launcher",
+    "CGermanSoldierRifleUnit": "infantry",
+    "CSovietSoldierRifleUnit": "infantry",
+}
+
 VERIFIED_TASK_CLASSES = {
     "CBaseAITask",       # live in Mission1 template (enemy_pak40_1/2); also confirmed on both
                           # infantry rifle classes (Campaign_1\Mission_1/2) and, by structural
@@ -426,6 +451,108 @@ def build_gameobject_entry(object_id, class_name, x, y, z, affiliation, task):
 
 
 # ---------------------------------------------------------------------------
+# Dynamic briefing text (scout report) - see the docs repo CHANGELOG entry for
+# why this bypasses getLocalized()/eng.locale entirely and writes literal text
+# straight into MissionTestStrings.script instead.
+# ---------------------------------------------------------------------------
+
+COMPASS_POINTS = ["north", "north-east", "east", "south-east",
+                  "south", "south-west", "west", "north-west"]
+
+
+def compass_bearing(dx: float, dy: float) -> str:
+    """+Y is treated as north (matches this engine's minimap convention as far
+    as observed - a reasonable assumption for flavor text, not verified rigorously
+    since nothing gameplay-critical depends on it being exactly right)."""
+    angle = math.degrees(math.atan2(dx, dy)) % 360.0
+    index = int((angle + 22.5) // 45) % 8
+    return COMPASS_POINTS[index]
+
+
+def build_scout_report(player_pos, enemy_positions_classes):
+    """enemy_positions_classes: list of (class_name, x, y). Returns (briefing_text,
+    objective01_text). Falls back to a generic line if there are no enemies to
+    report (shouldn't normally happen - enemy_roster is required to be non-empty -
+    but stay honest rather than crash if it ever does)."""
+    if not enemy_positions_classes:
+        return "No enemy contact reported.", "Reach the marked position to complete the mission."
+
+    px, py = player_pos
+    counts = {}
+    cx_sum = cy_sum = 0.0
+    for cls, x, y in enemy_positions_classes:
+        label = FRIENDLY_UNIT_NAMES[cls]
+        counts[label] = counts.get(label, 0) + 1
+        cx_sum += x
+        cy_sum += y
+    n = len(enemy_positions_classes)
+    centroid_x, centroid_y = cx_sum / n, cy_sum / n
+
+    dx, dy = centroid_x - px, centroid_y - py
+    distance_km = math.hypot(dx, dy) / 1000.0
+    bearing = compass_bearing(dx, dy)
+
+    # "infantry" is already both singular and plural (military usage) - would
+    # read as ungrammatical "infantrys" under a naive "+s" rule.
+    INVARIANT_PLURALS = {"infantry"}
+
+    parts = []
+    for label in sorted(counts.keys()):
+        count = counts[label]
+        if count == 1 or label in INVARIANT_PLURALS:
+            plural = label
+        else:
+            plural = label + "s"
+        parts.append(f"{count} {plural}")
+    if len(parts) == 1:
+        composition = parts[0]
+    else:
+        composition = ", ".join(parts[:-1]) + " and " + parts[-1]
+
+    briefing = (
+        f"Scout team reports enemy strength of {composition}, "
+        f"concentrated approximately {distance_km:.1f}km to the {bearing} of your position."
+    )
+    objective01 = "Reach the marked position to complete the mission."
+    return briefing, objective01
+
+
+def build_strings_file_text(mission_name: str, briefing: str, objective01: str) -> str:
+    """Regenerates MissionTestStrings.script with literal (not getLocalized())
+    WString values - confirmed valid syntax elsewhere in this codebase
+    (Common\\Mission.script:2706's "BAD ID" fallback). Deliberately does not
+    touch eng.locale's shared [MissionTest] section, which Mission1 itself
+    still legitimately depends on for its own unrelated tutorial text."""
+    def esc(s: str) -> str:
+        return s.replace("\\", "\\\\").replace('"', '\\"')
+
+    return (
+        "//-----------------------------------------------------------------\n"
+        "//\n"
+        "//  This code is copyright 2001 by G5 Software.\n"
+        "//  Any unauthorized usage, either in part or in whole of this code\n"
+        "//  is strictly prohibited. Violators WILL be prosecuted to the\n"
+        "//  maximum extent allowed by law.\n"
+        "//\n"
+        "//-----------------------------------------------------------------\n"
+        "\n"
+        "//-----------------\n"
+        "//  Mission strings - regenerated each run by generate_mission.py,\n"
+        "//  computed from the actual randomized layout, not shared placeholder\n"
+        "//  locale text. DO NOT EDIT - will be overwritten on the next run.\n"
+        "//-----------------\n"
+        f"class {STRINGS_CLASS} extends CCommonStrings\n"
+        "{\n"
+        f'  final static WString MissionName  = "{esc(mission_name)}";\n'
+        f'  final static WString BriefingText = "{esc(briefing)}";\n'
+        f'  final static WString Objective01  = "{esc(objective01)}";\n'
+        '  final static WString Objective02  = "";\n'
+        '  final static WString Objective03  = "";\n'
+        "}\n"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Validation - static checks only, no game launch required
 # ---------------------------------------------------------------------------
 
@@ -576,10 +703,18 @@ def main():
     #     only the ClassName field changes) ---
     new_player_entry = replace_entry_class(entry_by_id[PLAYER_OBJECT_ID], player_unit_class)
 
+    # Collects (class_name, x, y) for every ENEMY-affiliated unit that ends up
+    # in the output - both surviving template hostiles (tiger/pak40s) and the
+    # freshly-randomized roster additions below - for the scout-report briefing
+    # text. Only entries whose class has a FRIENDLY_UNIT_NAMES label are
+    # included (defensive - a static obstacle prop with no such label would
+    # KeyError in build_scout_report otherwise).
+    enemy_positions_classes = []
+
     updated_entries = []
     excluded_ids = []
     for entry in entries:
-        oid, _, _ = parse_entry_header(entry)
+        oid, _, cls = parse_entry_header(entry)
         if TEMPLATE_HOSTILE_UNIT_FACTIONS.get(oid) == player_faction:
             excluded_ids.append(oid)
             continue
@@ -589,6 +724,9 @@ def main():
             updated_entries.append(new_player_entry)
         else:
             updated_entries.append(entry)
+            if '["Affiliation", "ENEMY"]' in entry and cls in FRIENDLY_UNIT_NAMES:
+                ex, ey, _ = parse_matrix_translation(entry)
+                enemy_positions_classes.append((cls, ex, ey))
 
     # --- Generate randomized units from the roster. Only spawn entries whose
     #     faction is NOT the player's - those become the enemy. ---
@@ -620,6 +758,7 @@ def main():
             new_entries_text.append(
                 build_gameobject_entry(object_id, item["class"], x, y, z, "ENEMY", item["task"])
             )
+            enemy_positions_classes.append((item["class"], x, y))
 
     all_entries_text = updated_entries + new_entries_text
     new_list_body = "\n" + ",\n\n".join(all_entries_text) + "\n  "
@@ -628,6 +767,13 @@ def main():
     # Apply this target's renames (self-referential class name + path strings)
     for old, new in RENAMES.items():
         full_text = full_text.replace(old, new)
+
+    # --- Build the dynamic briefing text from the actual generated layout ---
+    briefing_text, objective01_text = build_scout_report(
+        (player_x, player_y), enemy_positions_classes
+    )
+    mission_name_text = f"{TARGETS[args.target]['menu_name']} - {player_faction}"
+    strings_file_text = build_strings_file_text(mission_name_text, briefing_text, objective01_text)
 
     # --- Validate before writing anything. Trust classes/tasks already
     #     legitimately present in the pristine template, plus the roster.
@@ -644,25 +790,32 @@ def main():
         sys.exit(1)
 
     # --- Guarantee every other file in the output folder is untouched ---
-    other_files = [p for p in OUTPUT_DIR.iterdir() if p.is_file() and p.name != "Content.script"]
+    # Content.script and MissionTestStrings.script are the only two files this
+    # tool ever regenerates - everything else (terrain, textures, Mission.script,
+    # WorldMatricies.script, etc.) must be byte-identical before and after.
+    generated_names = {"Content.script", "MissionTestStrings.script"}
+    other_files = [p for p in OUTPUT_DIR.iterdir() if p.is_file() and p.name not in generated_names]
     hashes_before = {p: hash_file(p) for p in other_files}
 
     write_text_verified(OUTPUT_CONTENT, full_text)
+    write_text_verified(OUTPUT_STRINGS, strings_file_text)
 
     hashes_after = {p: hash_file(p) for p in other_files}
     changed = [p for p in other_files if hashes_before[p] != hashes_after[p]]
     if changed:
         # Should be structurally impossible since this script never opens
         # these files, but check anyway per the plan's safety requirements.
-        print("WARNING: files outside Content.script changed unexpectedly:", file=sys.stderr)
+        print("WARNING: files outside Content.script/MissionTestStrings.script changed unexpectedly:", file=sys.stderr)
         for p in changed:
             print(f"  - {p}", file=sys.stderr)
         sys.exit(1)
 
     print(f"OK: wrote {OUTPUT_CONTENT}")
+    print(f"    wrote {OUTPUT_STRINGS}")
     print(f"    Playing as {player_faction} ({player_unit_class})")
     print(f"    {len(new_entries_text)} randomized enemy unit(s) added, "
           f"objective relocated to ({obj_x:.1f}, {obj_y:.1f}, {obj_z:.1f})")
+    print(f'    Briefing: "{briefing_text}"')
     if excluded_ids:
         print(f"    Excluded {excluded_ids} (same faction as player, would have been backwards)")
     print(f"    seed={args.seed if args.seed is not None else '(none - not reproducible, pass --seed to fix)'}")

@@ -8,13 +8,15 @@
 //-----------------------------------------------------------------
 
 //-----------------
-//  Mission strings
+//  Mission strings - regenerated each run by generate_mission.py,
+//  computed from the actual randomized layout, not shared placeholder
+//  locale text. DO NOT EDIT - will be overwritten on the next run.
 //-----------------
 class CQuickMissionMission_Strings extends CCommonStrings
 {
-  final static WString MissionName  = getLocalized("MissionTest", "MissionName");
-  final static WString BriefingText = getLocalized("MissionTest", "BriefingText");
-  final static WString Objective01  = getLocalized("MissionTest", "Objective01");
-  final static WString Objective02  = getLocalized("MissionTest", "Objective02");
-  final static WString Objective03  = getLocalized("MissionTest", "Objective03");
+  final static WString MissionName  = "Quick Mission (Generated) - SOVIET";
+  final static WString BriefingText = "Scout team reports enemy strength of 5 anti-tank guns, 2 infantry, 2 rocket launchers, 1 self-propelled gun and 3 tanks, concentrated approximately 0.7km to the south-west of your position.";
+  final static WString Objective01  = "Reach the marked position to complete the mission.";
+  final static WString Objective02  = "";
+  final static WString Objective03  = "";
 }

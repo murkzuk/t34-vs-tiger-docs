@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (final) — Dynamic scout-report briefing text for the Quick Mission Generator
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Both generated mission slots showed generic, disconnected placeholder briefing text ("Destroy the ZIS-3 battery" regardless of whether that unit was even in the roster) pulled from a shared locale section - and it was actively misleading, since the real win condition is just reaching the marked NavPoint. `generate_mission.py` now computes a real scout report from the actual randomized layout (enemy composition, distance, compass bearing from the player's spawn) and writes it as literal text directly into each target's own `MissionTestStrings.script`, bypassing the shared locale file so `Mission1`'s own tutorial text is never touched. Confirmed literal `WString` assignment is valid syntax first (proven elsewhere in the codebase) before relying on it. `MissionTestStrings.script` became a second legitimate per-run output file, so the "nothing else changes" safety check was updated accordingly. Fixed a grammar bug caught during testing ("infantrys"). Verified with a 40-combination sweep.
+
+### Why
+
+User's idea, inspired by Whirlwind over Vietnam's text/radio mission briefings - wanted to add context to the Quick Mission Generator's output rather than leave it blank/generic.
+
+---
+
 ## 2026-07-03 (latest) — Reposition steppe map spawn away from immediate detection
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
