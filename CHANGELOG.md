@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (later) — Steppe map confirmed working, generator extended to target it
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+`SteppeTemplate` loaded successfully in the Level Editor after the earlier BMP byte-size fix - terrain and sparse forest look right, 125fps. Built `SteppeQuickMission` (same setup pattern as `QuickMission`/`Mission1`) and extended `generate_mission.py` with a `--target quickmission|steppe` option, `quickmission` staying the default so nothing about the existing tool changed for existing use. `gui.py` got a matching map-choice control. While testing, found the same seed produced different unit counts on the two targets - traced to the RouterZone bitmap being reused unmodified at a different MatrixWidth, so the same coordinate samples a different pixel/passability verdict on each target, desyncing the RNG stream. Fixed by disabling that (already-unproven) soft filter specifically for the steppe target rather than leaving it silently inconsistent. Verified both targets across a 20-combination seed/faction sweep.
+
+### Why
+
+Direct continuation of the steppe mission work, extending the existing Quick Mission Generator tool to the new map per the user's decision to reuse it rather than hand-script a new battle.
+
+---
+
 ## 2026-07-03 — Fix SteppeTemplate Editor crash (BMP byte-size mismatch)
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

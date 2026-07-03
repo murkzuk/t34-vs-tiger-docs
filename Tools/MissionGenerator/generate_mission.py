@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Quick Mission Generator for T34 vs Tiger (QuickMission slot).
+Quick Mission Generator for T34 vs Tiger.
 
-Regenerates Missions\\MyMission\\QuickMission\\Content.script from the
-pristine Missions\\MyMission\\Mission1\\Content.script template, adding
-randomized enemy units (per roster.json) and relocating the victory
-NavPoint, while leaving every other file in QuickMission\\ untouched.
+Regenerates a mission slot's Content.script from its pristine template,
+adding randomized enemy units (per roster.json) and relocating the victory
+NavPoint, while leaving every other file in the output folder untouched.
+Two targets are available (--target quickmission|steppe):
+
+  quickmission - Missions\\MyMission\\QuickMission\\, from the pristine
+                 Missions\\MyMission\\Mission1\\ template. 9000x9000, the
+                 original small map. This is the default.
+  steppe       - Missions\\MyMission\\SteppeQuickMission\\, from the pristine
+                 Missions\\MyMission\\SteppeTemplate\\ template. 18000x18000,
+                 open/low-forest.
 
 Choose which side you play with --faction SOVIET or --faction AXIS (or set
 player_faction in roster.json) - the player's own tank and the enemy roster
 both switch to match.
 
 Usage:
-    python generate_mission.py [--seed N] [--roster path\\to\\roster.json] [--faction SOVIET|AXIS]
+    python generate_mission.py [--seed N] [--roster path\\to\\roster.json] [--faction SOVIET|AXIS] [--target quickmission|steppe]
 """
 
 import argparse
@@ -34,27 +41,91 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 GAME_ROOT = Path(__file__).resolve().parent.parent.parent  # Tools\MissionGenerator\..\.. = game root
-TEMPLATE_DIR = GAME_ROOT / "Missions" / "MyMission" / "Mission1"
-OUTPUT_DIR = GAME_ROOT / "Missions" / "MyMission" / "QuickMission"
-TEMPLATE_CONTENT = TEMPLATE_DIR / "Content.script"
-OUTPUT_CONTENT = OUTPUT_DIR / "Content.script"
-ROUTERZONE_BMP = OUTPUT_DIR / "RouterZone_Test.bmp"
 
 ENCODING = "cp1251"
 
-# From WorldMatricies.script (verified against QuickMission\WorldMatricies.script
-# this session - MatrixWidth/Height and the RouterZoneLayer's ImageWidth/Height).
-MATRIX_WIDTH = 9000.0
-MATRIX_HEIGHT = 9000.0
-ROUTERZONE_IMG_WIDTH = 2048
-ROUTERZONE_IMG_HEIGHT = 2048
-
-# Renames applied when deriving QuickMission's Content.script from Mission1's
-# pristine template - must match the one-time setup renames exactly.
-RENAMES = {
-    "Mission1Content": "QuickMissionContent",
-    "Missions/MyMission/Mission1/Content.script": "Missions/MyMission/QuickMission/Content.script",
+# Two mission slots this generator can target. Both were set up the same way -
+# a pristine template mission copied once, class/path identifiers renamed, then
+# this script regenerates only that copy's Content.script on every run, always
+# starting fresh from the *pristine template's* Content.script (never the
+# previous run's output). Matrix/RouterZone dimensions come from each target's
+# own WorldMatricies.script, verified against the live files this session.
+TARGETS = {
+    "quickmission": {
+        "template_dir": GAME_ROOT / "Missions" / "MyMission" / "Mission1",
+        "output_dir": GAME_ROOT / "Missions" / "MyMission" / "QuickMission",
+        "matrix_width": 9000.0,
+        "matrix_height": 9000.0,
+        "routerzone_img_width": 2048,
+        "routerzone_img_height": 2048,
+        "renames": {
+            "Mission1Content": "QuickMissionContent",
+            "Missions/MyMission/Mission1/Content.script": "Missions/MyMission/QuickMission/Content.script",
+        },
+        "menu_name": "Quick Mission (Generated)",
+        # RouterZone_Test.bmp here was painted with a 9000x9000 MatrixWidth in
+        # mind - the soft filter's color samples are at least meaningful for
+        # this target, even though the mapping itself is still unproven in-game.
+        "routerzone_soft_filter_supported": True,
+    },
+    "steppe": {
+        "template_dir": GAME_ROOT / "Missions" / "MyMission" / "SteppeTemplate",
+        "output_dir": GAME_ROOT / "Missions" / "MyMission" / "SteppeQuickMission",
+        "matrix_width": 18000.0,
+        "matrix_height": 18000.0,
+        "routerzone_img_width": 2048,
+        "routerzone_img_height": 2048,
+        "renames": {
+            "SteppeTemplateContent": "SteppeQuickMissionContent",
+            "Missions/MyMission/SteppeTemplate/Content.script": "Missions/MyMission/SteppeQuickMission/Content.script",
+        },
+        "menu_name": "Steppe Quick Mission (Generated)",
+        # RouterZone_Test.bmp was copied unmodified from Mission1/QuickMission's
+        # (9000x9000) file, then reinterpreted over an 18000x18000 MatrixWidth -
+        # the same real-world coordinate now samples a completely different
+        # pixel/color than it would at the original scale (confirmed empirically:
+        # the same anchor point maps to opposite passable-color entries depending
+        # on which MatrixWidth is used for the pixel conversion). The soft filter
+        # would be checking the wrong region of the bitmap for this target, so
+        # it's disabled here rather than silently giving unreliable verdicts -
+        # until a RouterZone bitmap painted for the 18000 scale exists.
+        "routerzone_soft_filter_supported": False,
+    },
 }
+
+# Set by main() from TARGETS[args.target] before anything else runs - every
+# function below reads these as globals rather than taking them as parameters,
+# since this is a single-run CLI script, not a library.
+TEMPLATE_DIR = None
+OUTPUT_DIR = None
+TEMPLATE_CONTENT = None
+OUTPUT_CONTENT = None
+ROUTERZONE_BMP = None
+MATRIX_WIDTH = None
+MATRIX_HEIGHT = None
+ROUTERZONE_IMG_WIDTH = None
+ROUTERZONE_IMG_HEIGHT = None
+RENAMES = None
+ROUTERZONE_SOFT_FILTER_SUPPORTED = None
+
+
+def select_target(name: str) -> None:
+    """Populate the module-level path/dimension globals for the chosen target."""
+    global TEMPLATE_DIR, OUTPUT_DIR, TEMPLATE_CONTENT, OUTPUT_CONTENT, ROUTERZONE_BMP
+    global MATRIX_WIDTH, MATRIX_HEIGHT, ROUTERZONE_IMG_WIDTH, ROUTERZONE_IMG_HEIGHT, RENAMES
+    global ROUTERZONE_SOFT_FILTER_SUPPORTED
+    t = TARGETS[name]
+    TEMPLATE_DIR = t["template_dir"]
+    OUTPUT_DIR = t["output_dir"]
+    TEMPLATE_CONTENT = TEMPLATE_DIR / "Content.script"
+    OUTPUT_CONTENT = OUTPUT_DIR / "Content.script"
+    ROUTERZONE_BMP = OUTPUT_DIR / "RouterZone_Test.bmp"
+    MATRIX_WIDTH = t["matrix_width"]
+    MATRIX_HEIGHT = t["matrix_height"]
+    ROUTERZONE_IMG_WIDTH = t["routerzone_img_width"]
+    ROUTERZONE_IMG_HEIGHT = t["routerzone_img_height"]
+    ROUTERZONE_SOFT_FILTER_SUPPORTED = t["routerzone_soft_filter_supported"]
+    RENAMES = t["renames"]
 
 OBJECTIVE_OBJECT_ID = "end_navpoint"
 PLAYER_OBJECT_ID = "MainPlayerUnit"
@@ -406,18 +477,23 @@ def validate_generated_text(full_text: str, expected_ids: set, known_good_classe
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Regenerate the QuickMission slot with randomized units.")
+    parser = argparse.ArgumentParser(description="Regenerate a mission slot with randomized units.")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducible output.")
     parser.add_argument("--roster", type=Path, default=Path(__file__).parent / "roster.json")
     parser.add_argument("--faction", choices=sorted(VALID_FACTIONS), default=None,
                          help="Play as SOVIET or AXIS. Overrides roster.json's player_faction if given.")
+    parser.add_argument("--target", choices=sorted(TARGETS.keys()), default="quickmission",
+                         help="Which mission slot to regenerate: 'quickmission' (small, 9000x9000, "
+                              "the original) or 'steppe' (large, 18000x18000, open/low-forest).")
     args = parser.parse_args()
+
+    select_target(args.target)
 
     if not TEMPLATE_CONTENT.exists():
         print(f"ERROR: template not found at {TEMPLATE_CONTENT}", file=sys.stderr)
         sys.exit(1)
     if not OUTPUT_DIR.exists():
-        print(f"ERROR: QuickMission folder not found at {OUTPUT_DIR}. Run the one-time setup first.", file=sys.stderr)
+        print(f"ERROR: output folder not found at {OUTPUT_DIR}. Run the one-time setup first.", file=sys.stderr)
         sys.exit(1)
 
     with open(args.roster, "r", encoding="utf-8") as f:
@@ -435,8 +511,8 @@ def main():
     player_unit_class = config["player_unit_class"][player_faction]
     rng = random.Random(args.seed)
 
-    # --- Load pristine template, always starting fresh (never QuickMission's
-    #     own possibly-previously-randomized Content.script) ---
+    # --- Load pristine template, always starting fresh (never the output
+    #     folder's own possibly-previously-randomized Content.script) ---
     template_text = read_text(TEMPLATE_CONTENT)
 
     list_marker = "m_MissionObjectList   = ["
@@ -473,7 +549,14 @@ def main():
 
     player_x, player_y, player_z = parse_matrix_translation(entry_by_id[PLAYER_OBJECT_ID])
 
-    router_img = load_routerzone() if config.get("use_routerzone_soft_filter") else None
+    use_routerzone = config.get("use_routerzone_soft_filter") and ROUTERZONE_SOFT_FILTER_SUPPORTED
+    if config.get("use_routerzone_soft_filter") and not ROUTERZONE_SOFT_FILTER_SUPPORTED:
+        print(
+            f"NOTE: RouterZone soft filter disabled for target '{args.target}' - "
+            f"not verified meaningful at this target's MatrixWidth (see TARGETS in this file).",
+            file=sys.stderr,
+        )
+    router_img = load_routerzone() if use_routerzone else None
 
     # --- Relocate the objective NavPoint (ID/Range/ClassName untouched, only
     #     its Matrix moves - see schema doc section 3 for why this is safe) ---
@@ -540,7 +623,7 @@ def main():
     new_list_body = "\n" + ",\n\n".join(all_entries_text) + "\n  "
     full_text = prefix + new_list_body + suffix
 
-    # Apply the QuickMission renames (self-referential class name + path strings)
+    # Apply this target's renames (self-referential class name + path strings)
     for old, new in RENAMES.items():
         full_text = full_text.replace(old, new)
 
@@ -558,7 +641,7 @@ def main():
             print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
 
-    # --- Guarantee every other file in QuickMission is untouched ---
+    # --- Guarantee every other file in the output folder is untouched ---
     other_files = [p for p in OUTPUT_DIR.iterdir() if p.is_file() and p.name != "Content.script"]
     hashes_before = {p: hash_file(p) for p in other_files}
 
@@ -581,7 +664,7 @@ def main():
     if excluded_ids:
         print(f"    Excluded {excluded_ids} (same faction as player, would have been backwards)")
     print(f"    seed={args.seed if args.seed is not None else '(none - not reproducible, pass --seed to fix)'}")
-    print('    Load "Quick Mission (Generated)" in the Level Editor to test.')
+    print(f'    Load "{TARGETS[args.target]["menu_name"]}" in the Level Editor to test.')
 
 
 if __name__ == "__main__":

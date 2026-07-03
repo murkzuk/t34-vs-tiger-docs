@@ -47,9 +47,20 @@ class App(tk.Tk):
         tk.Radiobutton(faction_frame, text="Soviet", variable=self.faction_var, value="SOVIET").pack(side="left")
         tk.Radiobutton(faction_frame, text="Axis", variable=self.faction_var, value="AXIS").pack(side="left")
 
-        tk.Label(self, text="Seed (optional):").grid(row=1, column=0, sticky="w", **pad)
+        tk.Label(self, text="Map:", font=("Segoe UI", 10, "bold")).grid(
+            row=1, column=0, sticky="w", **pad
+        )
+        self.target_var = tk.StringVar(value="quickmission")
+        target_frame = tk.Frame(self)
+        target_frame.grid(row=1, column=1, sticky="w", **pad)
+        tk.Radiobutton(target_frame, text="Small (9000x9000)", variable=self.target_var,
+                       value="quickmission").pack(side="left")
+        tk.Radiobutton(target_frame, text="Large Steppe (18000x18000)", variable=self.target_var,
+                       value="steppe").pack(side="left")
+
+        tk.Label(self, text="Seed (optional):").grid(row=2, column=0, sticky="w", **pad)
         seed_frame = tk.Frame(self)
-        seed_frame.grid(row=1, column=1, sticky="w", **pad)
+        seed_frame.grid(row=2, column=1, sticky="w", **pad)
         self.seed_var = tk.StringVar(value="")
         tk.Entry(seed_frame, textvariable=self.seed_var, width=12).pack(side="left")
         tk.Button(seed_frame, text="Random", command=self.randomize_seed).pack(side="left", padx=5)
@@ -58,21 +69,21 @@ class App(tk.Tk):
             self,
             text="Leave blank for a fresh layout each time.\nSet a seed to replay the same layout later.",
             fg="gray", justify="left",
-        ).grid(row=2, column=1, sticky="w", padx=10)
+        ).grid(row=3, column=1, sticky="w", padx=10)
 
         self.generate_btn = tk.Button(
             self, text="Generate Mission", font=("Segoe UI", 11, "bold"),
             bg="#4a7a4a", fg="white", activebackground="#5b8f5b",
             command=self.generate,
         )
-        self.generate_btn.grid(row=3, column=0, columnspan=2, pady=15, ipadx=20, ipady=6)
+        self.generate_btn.grid(row=4, column=0, columnspan=2, pady=15, ipadx=20, ipady=6)
 
-        tk.Label(self, text="Result:").grid(row=4, column=0, sticky="nw", padx=10)
+        tk.Label(self, text="Result:").grid(row=5, column=0, sticky="nw", padx=10)
         self.output = tk.Text(self, height=12, width=64, state="disabled", bg="#f4f4f4", wrap="word")
-        self.output.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+        self.output.grid(row=6, column=0, columnspan=2, padx=10, pady=5)
 
         bottom = tk.Frame(self)
-        bottom.grid(row=6, column=0, columnspan=2, pady=10)
+        bottom.grid(row=7, column=0, columnspan=2, pady=10)
         tk.Button(bottom, text="Edit Roster (roster.json)", command=self.open_roster).pack(side="left", padx=5)
         tk.Button(bottom, text="Quit", command=self.destroy).pack(side="left", padx=5)
 
@@ -94,7 +105,8 @@ class App(tk.Tk):
         self.generate_btn.configure(state="disabled", text="Generating...")
         self.update_idletasks()
 
-        cmd = [sys.executable, str(GENERATOR), "--faction", self.faction_var.get()]
+        cmd = [sys.executable, str(GENERATOR), "--faction", self.faction_var.get(),
+               "--target", self.target_var.get()]
         if seed:
             cmd += ["--seed", seed]
 
@@ -110,9 +122,11 @@ class App(tk.Tk):
         self.generate_btn.configure(state="normal", text="Generate Mission")
 
         if result.returncode == 0:
+            menu_name = ("Steppe Quick Mission (Generated)" if self.target_var.get() == "steppe"
+                         else "Quick Mission (Generated)")
             messagebox.showinfo(
                 "Done",
-                'Mission generated.\n\nLoad "Quick Mission (Generated)" in the Level Editor to play it.',
+                f'Mission generated.\n\nLoad "{menu_name}" in the Level Editor to play it.',
             )
         else:
             messagebox.showerror("Generation failed", "See the Result box for details.")
