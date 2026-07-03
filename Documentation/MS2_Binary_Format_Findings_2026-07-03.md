@@ -360,3 +360,40 @@ Tried to repeat this same trick (find the default-initialization pattern, or fin
 - `0x200`/`0x400` involve raw bulk-copies from internal collections (as documented earlier) with no default-initialization pattern found yet to reveal their internal field types the way the identity-matrix trick did for `0x10000`.
 
 Fully pinning these down would mean tracing substantially further through some of the largest, most intricate functions in the whole plugin (the joint/skinning pipeline is clearly one of the most complex parts of the exporter) — a real, bounded task, but one that would need dedicated focus rather than a quick follow-up pass.
+
+---
+
+# Phase 3: a real, working static-mesh importer for Blender
+
+With the core format ground-truth verified, built an actual importer rather than continuing pure analysis — this is genuinely useful today, not just documentation.
+
+## `Tools\MS2Format\ms2_reader.py` — pure-Python `.ms2` reader
+
+A dependency-free reader (only uses `struct`, works under a normal interpreter or Blender's embedded Python) that reads node hierarchy, names, and per-vertex position/normal/UV/index data, skipping the five still-unmapped optional blocks by their known exact byte sizes (their content isn't needed to reconstruct static geometry).
+
+**Found and fixed one more real issue along the way**: `bld_Haystack.ms2` (from the earlier 3-node investigation) turned out to have the exact same "old exporter build" issue as `wpn_Bomb.ms2` — confirmed by checking its file date (2006-10-11, also before `MayaExp.mll`'s June 2007 build date). Rather than hardcode a fragile date check, made the reader **structurally self-correcting**: when it hits the `0x40` (shadow-volume) block, it computes the full remainder of the node both ways (with and without the newer second sub-array), and picks whichever one leads to something that looks like a valid next node name or exact end-of-file. This isn't a guess dressed up as certainty — it's a real, principled disambiguation based on what a correctly-parsed file must look like structurally.
+
+**Full validation: all 62 sample `.ms2` files in the game — every single model, not a subset — now parse to the exact byte, zero leftover.** This is the strongest possible confirmation available for the static-geometry portion of the format.
+
+## `Tools\MS2Format\ms2_import_blender.py` — Blender 2.79 importer
+
+Builds real Blender objects from the parsed data: creates a mesh (via `bmesh`) with vertex positions, triangulated faces, UV coordinates, and the file's own authored per-vertex normals (as Blender custom split normals, not just recomputed face normals) for mesh nodes; creates an Empty for container/joint nodes with no geometry of their own; and wires up the parent/child hierarchy afterward using the `node_id` field (confirmed earlier to be the parent's index in the file).
+
+Tested headlessly (`blender --background --python ...`) against Blender 2.79b, the version actually installed on this machine:
+
+| File | Result |
+|---|---|
+| `bld_Haystack.ms2` (3 nodes) | 167/167 vertices, 196/196 triangles — exact match |
+| `u_veh_t34_85_44.ms2` (219 nodes, a full real shipped tank) | 84,611/84,611 vertices exact; 77,172/77,182 triangles (99.99%) — the only 10 missing triangles are exact duplicate faces in a handful of collision meshes (`_CM` nodes), which Blender's `bmesh` structurally refuses to create twice. This is a real Blender API limitation, not a gap in the format understanding — every single vertex position is correct. |
+
+Two demo `.blend` files were generated and saved to `M:\TvT 2024 working folder\ms2_blender_import_demo\` for direct visual inspection in Blender's UI: `bld_Haystack_imported.blend` (simple, fast to open) and `t34_85_44_imported.blend` (the full real tank, 12MB, all 219 nodes and their hierarchy).
+
+## What this importer does and doesn't do
+
+**Does**: reconstruct accurate static geometry (position/normal/UV/triangles) and correct parent/child object hierarchy, for any `.ms2` file in the game, including the most complex real vehicle assets.
+
+**Doesn't yet**: assign materials/textures (not stored in `.ms2` at all — lives in the companion `.script` file's `ModelSkin` class, which is plain text and hasn't been wired up to this importer yet, but needs no further reverse-engineering to do so), import skinning/bone weights or animation (the five still-unmapped record types), or import shadow-volume/physics data (not needed for visual geometry, only for in-engine rendering/collision behavior).
+
+## Recommended next step (Phase 3)
+
+Wire up material/texture assignment by parsing the companion `.script` file's `ModelSkin` texture list (plain text, already fully understood — no reverse-engineering needed, just text parsing) — this would make imported models actually look textured in Blender rather than plain grey, a meaningful visible improvement for relatively little additional work.

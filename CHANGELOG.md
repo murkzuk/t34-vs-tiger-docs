@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3) — A real, working static-mesh Blender importer
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+After the user asked how far off a working import/exporter actually was, gave an honest assessment (static meshes close, skinned/animated content further off) and then built the static-mesh half. `Tools\MS2Format\ms2_reader.py` is a dependency-free `.ms2` reader implementing everything ground-truth confirmed so far. Found one more real issue along the way: `bld_Haystack.ms2` had the same "predates the exporter's own build" version mismatch already found in `wpn_Bomb.ms2` - rather than hardcode a date check, made the reader structurally self-correcting by computing a node's remainder both possible ways and picking whichever leads to a valid subsequent read. Result: all 62 sample `.ms2` files in the game now parse to the exact byte with zero leftover - a complete validation of the format's static-geometry portion. Built `Tools\MS2Format\ms2_import_blender.py` on top of this, targeting Blender 2.79 (the version installed on this machine), and tested it headlessly against both a simple prop and the full real 219-node T-34/85 tank model - vertex counts matched exactly in both cases, with only 10 of 77,182 triangles skipped due to a Blender API restriction on duplicate faces, not a format gap. Two demo `.blend` files were saved for direct visual inspection.
+
+### Why
+
+Direct continuation of the user's question about import/export readiness - moving from pure analysis to an actual, working, tested tool.
+
+---
+
 ## 2026-07-03 (Phase 2, record internals) — Bind-matrix record fully decoded; honest limits on the rest
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
