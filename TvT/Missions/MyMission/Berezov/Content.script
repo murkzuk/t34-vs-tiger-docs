@@ -1,0 +1,514 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+//
+//  Automatically-generated mission script file
+//  DO NOT EDIT!
+//
+//-------------------------------------------------------------------
+
+
+class BerezovContent
+{
+  static String m_ObjectListClassFile = "Missions/MyMission/Berezov/Content.script";
+  static String m_ObjectListClassName = "BerezovContent";
+
+  static Array  m_MissionObjectList   = [
+    [
+      "Atmosphere",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["FogColorXPos", new Color(0.815686, 0.850980, 0.882353, 1.000000)],
+        ["FogColorXNeg", new Color(0.815686, 0.850980, 0.882353, 1.000000)],
+        ["FogColorYPos", new Color(0.815686, 0.850980, 0.882353, 1.000000)],
+        ["FogColorYNeg", new Color(0.815686, 0.850980, 0.882353, 1.000000)],
+        ["FogNear", 10.000000],
+        ["FogFar", 800.000000],
+        ["FogFarMax", 3500.000000],
+        ["EnableHorizontAdjustment", true],
+        ["SunColor", new Color(0.937255, 0.925490, 0.905882, 1.000000)],
+        ["SunIntensity", 1.000000],
+        ["AntiSunColor", new Color(0.811765, 0.819608, 0.854902, 1.000000)],
+        ["AntiSunIntensity", 0.300000],
+        ["AntiSunAngle", 10.000000],
+        ["SunDirection", new Vector(-0.005952, -0.155542, -0.305348)],
+        ["AmbientLight", new Color(0.200000, 0.200000, 0.200000, 1.000000)],
+        ["ShadowColor", new Color(0.400000, 0.400000, 0.400000, 1.000000)],
+        ["FogMode", "Exp"],
+        ["FogDensity", 0.000300],
+        ["TreeLightKoef", 0.000000],
+        ["TreeNormalRelax", 0.000000]
+      ]
+    ],
+
+    [
+      "MainPlayerUnit",
+      "GameObject",
+      "CTankT34_85_44Unit",
+      new Matrix(
+          -0.856998, 0.515320, 0.000000, 8975.536239,
+          -0.515320, -0.856998, 0.000000, 12582.814512,
+          0.000000, 0.000000, 1.000000, 609.130000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["IsPlayer", true],
+        ["IsManual", true],
+        ["Affiliation", "FRIEND"],
+        ["SurfaceControl", "None"]
+      ]
+    ],
+
+    [
+      "Terrain",
+      "",
+      "",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 0.000000,
+          0.000000, 1.000000, 0.000000, 0.000000,
+          0.000000, 0.000000, 1.000000, 0.000000,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["ForestTextureScale", 0.500000],
+        ["ForestShadowBorderScale", 0.400000],
+        ["ForestShadowAlphaScale", 0.500000],
+        ["ForestBeginFadeDist", [250.000000, 480.000000]],
+        ["VertForestDistMin", 800.000000],
+        ["VertForestDistMax", 8000.000000],
+        ["VertForestAngleMin", 0.000000],
+        ["VertForestAngleMax", 45.000000],
+        ["VertForestBeginFadeDist", [250.000000, 410.000000]],
+        ["TerrainShadowPower", 1.000000],
+        ["IsAntiLighting", true],
+        ["WaterFresnelPower", 2.000000]
+      ]
+    ],
+
+    [
+      "CrossRoad2_micro",
+      "Locator",
+      "CTerrainPatch",
+      new Matrix(
+          0.011889, -0.999929, 0.000000, 10370.244140,
+          0.999929, 0.011889, 0.000000, 5898.232422,
+          0.000000, 0.000000, 1.000000, 586.236694,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Dimensions", new Vector(15.000000, 15.000000, 0.350586)],
+        ["TextureName", "Textures/CrossRoad_micro.tex"],
+        ["ZoneName", "Textures/CrossRoad_zone.bmp"],
+        ["BorderSize", 2.000000]
+      ]
+    ],
+
+    [
+      "building_1",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 7986.194336,
+          0.000000, 1.000000, 0.000000, 10506.312500,
+          0.000000, 0.000000, 1.000000, 620.637878,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_2",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 8062.785644,
+          0.000000, 1.000000, 0.000000, 10558.887696,
+          0.000000, 0.000000, 1.000000, 622.535461,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_3",
+      "InteriorObject",
+      "CUSRShedWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 8047.508300,
+          0.000000, 1.000000, 0.000000, 10477.250000,
+          0.000000, 0.000000, 1.000000, 622.334106,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_4",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 7993.901368,
+          0.000000, 1.000000, 0.000000, 10580.490234,
+          0.000000, 0.000000, 1.000000, 620.862488,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_5",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 7997.416992,
+          0.000000, 1.000000, 0.000000, 10463.333008,
+          0.000000, 0.000000, 1.000000, 620.979431,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_6",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 8060.819824,
+          0.000000, 1.000000, 0.000000, 10508.241210,
+          0.000000, 0.000000, 1.000000, 622.146790,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_7",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 8025.482910,
+          0.000000, 1.000000, 0.000000, 10575.995118,
+          0.000000, 0.000000, 1.000000, 621.970520,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "building_8",
+      "InteriorObject",
+      "CUSRHouseWoodUnit",
+      new Matrix(
+          1.000000, 0.000000, 0.000000, 7949.022950,
+          0.000000, 1.000000, 0.000000, 10529.578126,
+          0.000000, 0.000000, 1.000000, 619.408081,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+      ]
+    ],
+
+    [
+      "enemy_pak40_1",
+      "GameObject",
+      "CGunPak40Unit",
+      new Matrix(
+          0.201213, -0.978930, -0.034773, 7939.858886,
+          0.954517, 0.187975, 0.231435, 10989.020508,
+          -0.220022, -0.079759, 0.972229, 609.989807,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "enemy_pak40_2",
+      "GameObject",
+      "CGunPak40Unit",
+      new Matrix(
+          0.305317, -0.943839, -0.126294, 7801.274902,
+          0.951947, 0.305871, 0.015461, 10972.024414,
+          0.024037, -0.124945, 0.991872, 610.508911,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITask"]
+      ]
+    ],
+
+    [
+      "envr_1",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.370366, -0.926714, -0.063483, 7956.514160,
+          0.927524, 0.365259, 0.079273, 10997.625000,
+          -0.050276, -0.088242, 0.994829, 608.814209,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_2",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.370835, -0.928699, 0.000000, 7949.507324,
+          0.928699, 0.370835, 0.000000, 11000.832032,
+          0.000000, 0.000000, 1.000000, 608.415955,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_3",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.374947, -0.927046, 0.000000, 7941.765136,
+          0.927046, 0.374947, 0.000000, 11004.181640,
+          0.000000, 0.000000, 1.000000, 608.035889,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_4",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.379034, -0.925383, 0.000000, 7950.359864,
+          0.925383, 0.379034, 0.000000, 11006.921876,
+          0.000000, 0.000000, 1.000000, 608.200623,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_5",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.383085, -0.923713, 0.000000, 7828.292968,
+          0.923713, 0.383085, 0.000000, 11002.208008,
+          0.000000, 0.000000, 1.000000, 606.090942,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_6",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.422655, -0.906291, 0.000000, 7822.326172,
+          0.906291, 0.422655, 0.000000, 11003.833008,
+          0.000000, 0.000000, 1.000000, 605.793457,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_7",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.463265, -0.886220, 0.000000, 7815.399902,
+          0.886220, 0.463265, 0.000000, 11005.866210,
+          0.000000, 0.000000, 1.000000, 605.466858,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_8",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.508587, -0.861011, 0.000000, 7806.705566,
+          0.861011, 0.508587, 0.000000, 11007.957032,
+          0.000000, 0.000000, 1.000000, 605.059265,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_9",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.558455, -0.829535, 0.000000, 7797.924316,
+          0.829535, 0.558455, 0.000000, 11011.252930,
+          0.000000, 0.000000, 1.000000, 604.499207,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_10",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.594962, -0.803754, 0.000000, 7790.272950,
+          0.803754, 0.594962, 0.000000, 11015.334960,
+          0.000000, 0.000000, 1.000000, 604.008606,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_11",
+      "InteriorObject",
+      "CAntiTankSingleUnit",
+      new Matrix(
+          0.610210, -0.792240, 0.000000, 7779.539550,
+          0.792240, 0.610210, 0.000000, 11017.159180,
+          0.000000, 0.000000, 1.000000, 603.423401,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "PutonGround"]
+      ]
+    ],
+
+    [
+      "envr_12",
+      "GameObject",
+      "CBarricadePakUnit",
+      new Matrix(
+          0.335813, -0.938317, -0.082412, 7801.748046,
+          0.941917, 0.334076, 0.034442, 10971.810546,
+          -0.004785, -0.089192, 0.996003, 609.591797,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["SurfaceControl", "None"]
+      ]
+    ],
+
+    [
+      "tiger",
+      "GameObject",
+      "CTankPzIVGUnit",
+      new Matrix(
+          0.336810, -0.934140, -0.118071, 8093.555664,
+          0.941051, 0.338139, 0.009198, 10645.411132,
+          0.031332, -0.114209, 0.992962, 626.981934,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Affiliation", "ENEMY"],
+        ["Task", "CBaseAITankTask"]
+      ]
+    ],
+
+    [
+      "end_navpoint",
+      "NavPoint",
+      "CZAxisCylNavPoint",
+      new Matrix(
+          0.336969, -0.941516, 0.000000, 8021.289550,
+          0.941516, 0.336969, 0.000000, 10527.655274,
+          0.000000, 0.000000, 1.000000, 611.711487,
+          0.000000, 0.000000, 0.000000, 1.000000
+        ),
+      [
+        ["Detect", true],
+        ["BehaviorHeight", 0.000000],
+        ["Range", 10.000000]
+      ]
+    ]
+  ];
+
+  static Array  m_MissionCameraScriptList  = [
+    [
+      0.000000,
+      "KEY_START",
+      [
+        ["CinemaID", "Default"],
+        []
+      ]
+    ]
+  ];
+
+  static Array  m_TriggersList = [
+  ];
+
+  Array GetMissionObjectList()
+  {
+    return m_MissionObjectList;
+  }
+
+  Array GetMissionCameraScriptList()
+  {
+    return m_MissionCameraScriptList;
+  }
+
+  Array GetTriggersList()
+  {
+    return m_TriggersList;
+  }
+
+  String GetObjectListClassFile()
+  {
+    return m_ObjectListClassFile;
+  }
+
+  String GetObjectListClassName()
+  {
+    return m_ObjectListClassName;
+  }
+}

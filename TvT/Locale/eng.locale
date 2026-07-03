@@ -29,8 +29,8 @@ str_SPEED                = Speed hold
 str_COLLECTIVE_PITCH_UP   = Collective ++
 str_COLLECTIVE_PITCH_DOWN = Collective --
 [SteppeMissionGenerated]
-MissionName = Steppe Quick Mission (Generated) - SOVIET
-BriefingText = Scout team reports enemy strength of 2 anti-tank guns, 1 infantry, 2 rocket launchers and 2 tanks, concentrated approximately 2.1km to the south-west of your position.
+MissionName = Steppe Quick Mission (Generated) - AXIS
+BriefingText = Scout team reports enemy strength of 3 anti-tank guns, 4 infantry and 2 tanks, concentrated approximately 2.0km to the south-west of your position.
 Objective01 = Reach the marked position to complete the mission.
 Objective02 = 
 Objective03 = 
@@ -39,6 +39,15 @@ Objective03 =
 MissionName = Quick Mission (Generated) - SOVIET
 BriefingText = Scout team reports enemy strength of 2 anti-tank guns, 4 infantry, 1 rocket launcher, 2 self-propelled guns and 3 tanks, concentrated approximately 0.8km to the south of your position.
 Objective01 = Reach the marked position to complete the mission.
-Objective02 = 
-Objective03 = 
+Objective02 =
+Objective03 =
+
+[MissionBerezov]
+MissionName = Operation Citadel: Berezov
+BriefingText = Your Tiger is deployed here as the spearhead of our attack, with the Panzer IVs of your own Zug Falke alongside you. KG Kaiser will advance behind. Smash the AT-gun positions and armor defending Berezov, then push through Gremuchi - expect heavy concentrations of Soviet armor there and to the north. Reach Gonki as the day's final objective. Move quickly; the fate of the assault rests on breaking through before the Russian can reinforce.
+ObjectivesText = Clear Berezov and Gremuchi, destroy the Soviet HQ, and reach Gonki.
+Objective01 = Clear the AT-gun and armor positions around Berezov
+Objective02 = Push through Gremuchi and destroy the Soviet armor there
+Objective03 = Reach Gonki - the day's final objective
+Objective04 = Bonus: destroy the Soviet HQ
 
