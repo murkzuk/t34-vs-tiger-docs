@@ -12,9 +12,29 @@ version-upgrade step happening invisibly in between.
 
 Scope is unchanged from the earlier script: static geometry only
 (positions, authored normals, UVs, triangles, node hierarchy). No
-skinning/animation, no shadow-volume/physics data, no materials
-(materials/textures aren't stored in .ms2 at all - see the companion
-Models\\<name>.script file's ModelSkin class).
+materials (materials/textures aren't stored in .ms2 at all - see the
+companion Models\\<name>.script file's ModelSkin class).
+
+Per-vertex skin weights (flags_bitmask & 0x10): some nodes (confirmed:
+u_veh_t34_85_44.ms2's Turret_A and 27 others in the same file) have a
+per-vertex "dominant joint" index - always found rigidly weighted to
+exactly one joint (never blended) - where that joint is a plain node
+index into this same file's hierarchy. Cross-referencing the companion
+.script file confirmed these are real animation channels (e.g.
+"gun_a_recoil" -> Weapon_A, "luk_main_open" -> Luk_C/Luk_D) - moving
+parts like the gun barrel (recoil) and hatches (opening), whose
+vertices are baked into the SAME mesh as the fixed hull rather than
+being separate nodes. Confirmed directly against the real TvT Editor
+(screenshot comparison) that these vertices need a bind-pose transform
+that ISN'T present anywhere in the .ms2 file or the .script file -
+checked exhaustively. Without it, importing these vertices at face
+value produces genuinely wrong, visibly broken geometry (a real
+position defect, not a shading/normals issue). Until that transform is
+found, this importer splits each such node's faces into two separate
+objects: "<Name>" (vertices rigidly weighted to the node itself - safe,
+correctly positioned) and "<Name>_UnresolvedSkin" (vertices weighted to
+any other joint - hidden by default, parented to the main object,
+nothing lost).
 
 The Redo panel (bottom-left after importing, or F9) exposes several
 options as live diagnostics, not just preferences - in particular
@@ -45,7 +65,7 @@ from . import ms2_reader
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 1, 0),
+    "version": (1, 2, 0),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
     "description": "Imports static mesh geometry (positions/normals/UVs/triangles/hierarchy) from T34 vs Tiger's .ms2 model format",
@@ -88,15 +108,10 @@ def _is_hidden_by_default(name):
     return False
 
 
-def _create_object_for_node(node, index, skip_degenerate, normal_mode):
-    """Builds a Blender mesh object from one Ms2Node. Returns the
-    object, or an Empty for a no-geometry node."""
-    if node.is_empty or not node.positions:
-        obj = bpy.data.objects.new(node.name or ("node_%d" % index), None)
-        obj.empty_display_size = 0.1
-        return obj
-
-    mesh = bpy.data.meshes.new(node.name or ("node_%d" % index))
+def _build_mesh(mesh_name, node, tri_indices, skip_degenerate, normal_mode):
+    """Builds one Blender mesh from a subset of node's triangles (given
+    as a list of triangle indices into node.indices)."""
+    mesh = bpy.data.meshes.new(mesh_name)
     bm = bmesh.new()
 
     verts = [bm.verts.new(Vector(p)) for p in node.positions]
@@ -104,10 +119,10 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
 
     uv_layer = bm.loops.layers.uv.new("UVMap") if node.uvs else None
 
-    n_tris = len(node.indices) // 3
     dup_skipped = 0
     degenerate = 0
-    for t in range(n_tris):
+    created = 0
+    for t in tri_indices:
         i0, i1, i2 = node.indices[t * 3:t * 3 + 3]
 
         if skip_degenerate:
@@ -125,6 +140,7 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
             # rather than aborting the whole import.
             dup_skipped += 1
             continue
+        created += 1
         if uv_layer:
             for loop, vi in zip(face.loops, (i0, i1, i2)):
                 if vi < len(node.uvs):
@@ -144,51 +160,111 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
             used_authored_normals = True
         except Exception as e:
             print("  (%s: custom split normals unavailable on this Blender "
-                  "version (%s) - falling back to smooth shading)" % (node.name, e))
+                  "version (%s) - falling back to smooth shading)" % (mesh_name, e))
 
     for poly in mesh.polygons:
         poly.use_smooth = (normal_mode != 'FLAT')
 
     if dup_skipped or degenerate:
         print("  (%s: skipped %d duplicate, %d degenerate zero-area face(s))"
-              % (node.name, dup_skipped, degenerate))
+              % (mesh_name, dup_skipped, degenerate))
     if normal_mode == 'AUTHORED' and not used_authored_normals and node.normals:
-        print("  (%s: authored normals not applied - see above)" % node.name)
+        print("  (%s: authored normals not applied - see above)" % mesh_name)
 
-    obj = bpy.data.objects.new(node.name or ("node_%d" % index), mesh)
-    return obj
+    return mesh, created
 
 
-def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTHORED'):
+def _create_object_for_node(node, index, skip_degenerate, normal_mode):
+    """Builds Blender object(s) from one Ms2Node. Returns a list of
+    (obj, hide_by_default) tuples - normally just one entry, but a node
+    with per-vertex skin weights (see module docstring) that reference
+    a DIFFERENT joint than its own node index produces a second object
+    "<Name>_UnresolvedSkin", hidden by default."""
+    base_name = node.name or ("node_%d" % index)
+
+    if node.is_empty or not node.positions:
+        obj = bpy.data.objects.new(base_name, None)
+        obj.empty_display_size = 0.1
+        return [(obj, False)]
+
+    n_tris = len(node.indices) // 3
+
+    if node.vertex_joint:
+        self_tris = []
+        other_tris = []
+        for t in range(n_tris):
+            i0, i1, i2 = node.indices[t * 3:t * 3 + 3]
+            if (node.vertex_joint[i0] == index and node.vertex_joint[i1] == index
+                    and node.vertex_joint[i2] == index):
+                self_tris.append(t)
+            else:
+                other_tris.append(t)
+    else:
+        self_tris = list(range(n_tris))
+        other_tris = []
+
+    mesh, _ = _build_mesh(base_name, node, self_tris, skip_degenerate, normal_mode)
+    obj = bpy.data.objects.new(base_name, mesh)
+    results = [(obj, False)]
+
+    if other_tris:
+        ext_name = base_name + "_UnresolvedSkin"
+        ext_mesh, ext_created = _build_mesh(ext_name, node, other_tris, skip_degenerate, normal_mode)
+        if ext_created:
+            ext_obj = bpy.data.objects.new(ext_name, ext_mesh)
+            results.append((ext_obj, True))
+        else:
+            bpy.data.meshes.remove(ext_mesh)
+
+    return results
+
+
+def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTHORED',
+               hide_unresolved_skin=True):
     """Imports a .ms2 file into the current Blender scene. Returns the
-    list of created Blender objects, indexed the same way as the
-    source node list (so obj_list[node.parent_index] gives the
-    parent)."""
+    list of created Blender objects. The first len(nodes) entries are
+    indexed the same way as the source node list (so
+    obj_list[node.parent_index] gives the parent); any further entries
+    are "_UnresolvedSkin" sub-objects, each already parented to its own
+    node's main object."""
     nodes = ms2_reader.read_ms2(path)
 
     collection = bpy.context.collection
-    objects = []
+    primary_objects = []
+    extra_objects = []
     hidden_count = 0
+    unresolved_count = 0
     for i, node in enumerate(nodes):
-        obj = _create_object_for_node(node, i, skip_degenerate, normal_mode)
-        objects.append(obj)
-        collection.objects.link(obj)
+        results = _create_object_for_node(node, i, skip_degenerate, normal_mode)
+        primary_obj = results[0][0]
+        primary_objects.append(primary_obj)
+        collection.objects.link(primary_obj)
         if hide_variants and _is_hidden_by_default(node.name):
-            obj.hide_viewport = True
-            obj.hide_render = True
+            primary_obj.hide_viewport = True
+            primary_obj.hide_render = True
             hidden_count += 1
+
+        for obj, hide_default in results[1:]:
+            collection.objects.link(obj)
+            obj.parent = primary_obj
+            if hide_unresolved_skin and hide_default:
+                obj.hide_viewport = True
+                obj.hide_render = True
+                unresolved_count += 1
+            extra_objects.append(obj)
 
     # Wire up parenting after all objects exist, using node_id as a
     # same-file node index (confirmed against real production data).
     for i, node in enumerate(nodes):
-        if 0 <= node.parent_index < len(objects) and node.parent_index != i:
-            objects[i].parent = objects[node.parent_index]
+        if 0 <= node.parent_index < len(primary_objects) and node.parent_index != i:
+            primary_objects[i].parent = primary_objects[node.parent_index]
 
     print("Imported %s: %d nodes (%d with geometry, %d hidden by default "
-          "as LOD/Crashed/CM variants)" % (
+          "as LOD/Crashed/CM variants, %d _UnresolvedSkin sub-object(s) "
+          "hidden pending bind-transform decoding)" % (
         path, len(nodes), sum(1 for n in nodes if not n.is_empty and n.positions),
-        hidden_count))
-    return objects
+        hidden_count, unresolved_count))
+    return primary_objects + extra_objects
 
 
 class IMPORT_OT_tvt_ms2(Operator, ImportHelper):
@@ -214,6 +290,17 @@ class IMPORT_OT_tvt_ms2(Operator, ImportHelper):
                     "normal recomputation",
         default=True,
     )
+    hide_unresolved_skin: BoolProperty(
+        name="Hide unresolved skin-weighted parts",
+        description="Some nodes (e.g. gun barrels, hatches) have vertices "
+                    "rigidly weighted to a moving joint whose bind-pose "
+                    "transform isn't decoded yet. Importing them at face "
+                    "value produces genuinely wrong geometry (confirmed "
+                    "against the real TvT Editor), so they're split into "
+                    "a separate '_UnresolvedSkin' object and hidden by "
+                    "default. Nothing is lost - untick to inspect them.",
+        default=True,
+    )
     normal_mode: EnumProperty(
         name="Shading",
         description="How to shade the imported mesh - useful as a live "
@@ -236,6 +323,7 @@ class IMPORT_OT_tvt_ms2(Operator, ImportHelper):
             hide_variants=self.hide_variants,
             skip_degenerate=self.skip_degenerate,
             normal_mode=self.normal_mode,
+            hide_unresolved_skin=self.hide_unresolved_skin,
         )
         self.report({'INFO'}, "Imported %d object(s) from %s" % (len(objects), self.filepath))
         return {'FINISHED'}

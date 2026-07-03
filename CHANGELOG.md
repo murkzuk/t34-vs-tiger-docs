@@ -6,6 +6,20 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-07-03 (Phase 3 real root cause) — Per-vertex skin weights decoded; gun barrel/hatch geometry hidden pending a missing bind-transform
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+The degenerate-triangle fix turned out not to be the answer - the user reported no visible change at all. Two other models tested clean via the new add-on, narrowing the problem to the T-34/85 turret specifically. A wireframe screenshot from the user showed a real spike/fan artifact, which I reproduced directly from unmodified file data from a proper viewing angle - not a projection trick. Decoded the file's per-vertex skin-weight block (previously only skipped by byte size): each vertex can be rigidly weighted to a "joint" that's just another node's index in the same file. Cross-referencing the companion `.script` file confirmed these are real animation joints - `gun_a_recoil` for the barrel, hatch-open channels for the hatch lids - baked directly into the turret's own mesh. Checked exhaustively for a bind-pose transform for these joints and found genuinely nothing anywhere in the file or the script. Asked the user to compare against the real TvT Editor directly, zoomed on the same barrel - it renders a normal, correctly-shaped barrel, proving the real engine applies a transform this reader has no access to. Rather than keep showing broken geometry, both importers now split any node with this kind of weighting into a safe, correctly-positioned main object and a separate, hidden-by-default `_UnresolvedSkin` object holding the not-yet-fixable parts - confirmed clean on the real tank file (28 such sub-objects, no spike in the result).
+
+### Why
+
+Continuing to trust the user's direct, concrete counter-evidence over my own theories (as with the earlier winding-heuristic retraction) rather than declaring a fix complete before it's actually confirmed. This is a genuine reverse-engineering wall, not a bug in this importer - being upfront about that, and shipping a version that hides the specific unresolved parts rather than silently showing wrong geometry, is more honest than pretending it's fixed.
+
+---
+
 ## 2026-07-03 (Phase 3 update) — Real installable Blender add-on, replacing the .blend-file round-trip
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

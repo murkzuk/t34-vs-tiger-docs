@@ -42,6 +42,20 @@ class Ms2Node:
         self.uvs = []         # list of (u,v)
         self.indices = []     # flat list of vertex indices, 3 per triangle
         self.is_empty = False
+        self.vertex_joint = []  # per-vertex dominant joint node-index, or
+                                 # [] if this node has no skin-weight block
+                                 # (flags_bitmask & 0x10). See "Per-vertex
+                                 # skin weight block (0x10) decoded" in the
+                                 # findings doc: 4x float32 weight (only the
+                                 # first is ever seen non-zero in practice -
+                                 # always found rigid, one dominant joint
+                                 # per vertex, never blended) + int32 joint
+                                 # index, 20 bytes/vertex. The joint index
+                                 # is a plain index into this SAME file's
+                                 # node list (confirmed: values like 40, 69,
+                                 # 91, 98 exactly match real named nodes -
+                                 # Turret_A, Luk_B, Weapon_A, Luk_C - not a
+                                 # separate/global joint numbering).
 
 
 def _read_cstring(data, offset):
@@ -99,13 +113,27 @@ def _skip_remaining_after_0x40(data, offset, vertex_count, flags_bitmask):
     return offset
 
 
+def _read_vertex_joint_block(data, offset, vertex_count):
+    """Reads the 0x10 per-vertex skin-weight block: 20 bytes/vertex, laid
+    out as 4x float32 weight followed by an int32 joint index (a node
+    index within this same file). Every vertex sampled so far has weight
+    (1.0, 0.0, 0.0, 0.0) - rigidly attached to exactly one joint, never
+    blended - so only the joint index is extracted; the weight floats
+    aren't otherwise used. Returns (vertex_joint_list, new_offset)."""
+    vertex_joint = []
+    for v in range(vertex_count):
+        j = struct.unpack_from('<i', data, offset + v * 20 + 16)[0]
+        vertex_joint.append(j)
+    return vertex_joint, offset + vertex_count * 20
+
+
 def _skip_optional_blocks(data, offset, vertex_count, flags_bitmask):
-    """Skip the six flags_bitmask-gated optional blocks by their known
-    exact byte sizes. Content is not read (unmapped in most cases)."""
-    if flags_bitmask & 0x800:
-        offset += vertex_count * 8
-    if flags_bitmask & 0x10:
-        offset += vertex_count * 20
+    """Skip the remaining flags_bitmask-gated optional blocks (0x40
+    onward) by their known exact byte sizes. Content is not read
+    (unmapped in most cases). The two blocks that come before this point
+    (0x800, 0x10) are handled directly in _read_node instead, since 0x10
+    (per-vertex skin weight/joint index) is now actually parsed rather
+    than just skipped."""
     if flags_bitmask & 0x40:
         # Two exporter behaviours confirmed to exist for this block: files
         # older than MayaExp.mll's own June 2007 build date only write the
@@ -191,6 +219,11 @@ def _read_node(data, offset):
     d_count = struct.unpack_from('<i', data, offset)[0]
     offset += 4
     offset += d_count * 12 + d_count * 16
+
+    if flags_bitmask & 0x800:
+        offset += vcount * 8
+    if flags_bitmask & 0x10:
+        node.vertex_joint, offset = _read_vertex_joint_block(data, offset, vcount)
 
     offset = _skip_optional_blocks(data, offset, vcount, flags_bitmask)
 
