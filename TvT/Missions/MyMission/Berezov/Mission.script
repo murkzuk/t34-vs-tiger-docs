@@ -133,10 +133,14 @@ class CBerezovMission extends CSPMission
     // dispatched here (not self-scheduled from each group's own Init()),
     // matching the proven working pattern in Campaign_2\Mission_5's
     // Mission.script (StartCombat() sending delayed events to named groups).
-    sendEvent(60.0,  "BerezovKGKaiser",     "StartAdvance", []);
-    sendEvent(55.0,  "BerezovZugWeidinger", "StartAdvance", []);
-    sendEvent(180.0, "BerezovPltPopov",     "StartAdvance", []);
-    sendEvent(35.0,  "BerezovPltZhilin",    "StartAdvance", []);
+    sendEvent(60.0,  "BerezovKGKaiser",     "StartAdvance",  []);
+    // Second leg (Gonki) dispatched separately, not as a 2nd point in the
+    // same MoveToEx call - see BerezovKGKaiser::StartAdvance2 for why.
+    // 60s wait + ~172s transit time (1725 units at 10 m/s) + buffer.
+    sendEvent(260.0, "BerezovKGKaiser",     "StartAdvance2", []);
+    sendEvent(55.0,  "BerezovZugWeidinger", "StartAdvance",  []);
+    sendEvent(180.0, "BerezovPltPopov",     "StartAdvance",  []);
+    sendEvent(35.0,  "BerezovPltZhilin",    "StartAdvance",  []);
   }
 
   void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
