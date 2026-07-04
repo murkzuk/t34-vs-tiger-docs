@@ -53,6 +53,11 @@ class CBerezovMission extends CSPMission
   Array KillList_PltSamsonov = [
       "Berezov_PltSamsonov_1", "Berezov_PltSamsonov_2", "Berezov_PltSamsonov_3", "Berezov_PltSamsonov_4"
       ];
+  // Not an objective - triggers Plt.Oleshev's reinforcement move to Berezov,
+  // matching the real mission's "CG State: Plt.Kutuzov destroyed" event.
+  Array KillList_PltKutuzov = [
+      "Berezov_PltKutuzov_1", "Berezov_PltKutuzov_2", "Berezov_PltKutuzov_3", "Berezov_PltKutuzov_4"
+      ];
 
   final static Array RouterWorkingZones = [
     ];
@@ -148,7 +153,18 @@ class CBerezovMission extends CSPMission
     {
       KillList_PltSamsonov.remove(_indexSamsonov);
       if (KillList_PltSamsonov.size() == 0)
+      {
         SetObjectiveStatus(2, MOSID_Completed);
+        GetObject("BerezovZugLex").TriggerAdvance();
+      }
+    }
+
+    int _indexKutuzov = KillList_PltKutuzov.find(_ObjectID);
+    if (_indexKutuzov != -1)
+    {
+      KillList_PltKutuzov.remove(_indexKutuzov);
+      if (KillList_PltKutuzov.size() == 0)
+        GetObject("BerezovPltOleshev").TriggerAdvance();
     }
   }
 
