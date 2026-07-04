@@ -125,6 +125,14 @@ class CBerezovMission extends CSPMission
 //   console.disablebeh();
    //console.showbehinf(true);
 
+    // Scripted advances ported from the real mission's CombatScript timers -
+    // dispatched here (not self-scheduled from each group's own Init()),
+    // matching the proven working pattern in Campaign_2\Mission_5's
+    // Mission.script (StartCombat() sending delayed events to named groups).
+    sendEvent(60.0,  "BerezovKGKaiser",     "StartAdvance", []);
+    sendEvent(55.0,  "BerezovZugWeidinger", "StartAdvance", []);
+    sendEvent(180.0, "BerezovPltPopov",     "StartAdvance", []);
+    sendEvent(35.0,  "BerezovPltZhilin",    "StartAdvance", []);
   }
 
   void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
@@ -160,7 +168,7 @@ class CBerezovMission extends CSPMission
       if (KillList_PltSamsonov.size() == 0)
       {
         SetObjectiveStatus(2, MOSID_Completed);
-        GetObject("BerezovZugLex").TriggerAdvance();
+        sendEvent(90.0, "BerezovZugLex", "StartAdvance", []);
       }
     }
 
@@ -169,7 +177,7 @@ class CBerezovMission extends CSPMission
     {
       KillList_PltKutuzov.remove(_indexKutuzov);
       if (KillList_PltKutuzov.size() == 0)
-        GetObject("BerezovPltOleshev").TriggerAdvance();
+        sendEvent(570.0, "BerezovPltOleshev", "StartAdvance", []);
     }
   }
 

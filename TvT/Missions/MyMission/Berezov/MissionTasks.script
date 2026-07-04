@@ -42,12 +42,12 @@ class BerezovKGKaiser extends CBaseUnitGroup
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
-    sendEvent(60.0, getIdentificator(this), "StartAdvance", []);
   }
 
-  // Matches the real mission's CombatScript: wait 1:00, then move by
+  // Called from CBerezovMission::StartMission (delayed via sendEvent) -
+  // matches the real mission's CombatScript: wait 1:00, then move by
   // road through Berezov to Gonki (the German main advance column).
-  void StartAdvance()
+  event void StartAdvance()
   {
     SetOrder_MoveToEx([
         new Vector(2150.0, 6328.0, 610.0),
@@ -66,15 +66,10 @@ class BerezovZugLex extends CBaseUnitGroup
     m_EnemyReactionType == ERT_AGGRESSIVE;
   }
 
-  // Called from CBerezovMission::OnObjectDestroyed once Plt.Samsonov's
-  // KillList hits zero - matches the real mission's "CG State: Plt.Samsonov
-  // destroyed" trigger.
-  void TriggerAdvance()
-  {
-    sendEvent(90.0, getIdentificator(this), "StartAdvance", []);
-  }
-
-  void StartAdvance()
+  // Called from CBerezovMission::OnObjectDestroyed (delayed via sendEvent)
+  // once Plt.Samsonov's KillList hits zero - matches the real mission's
+  // "CG State: Plt.Samsonov destroyed" trigger.
+  event void StartAdvance()
   {
     SetOrder_MoveToEx([ new Vector(5437.0, 6722.5, 610.0) ], 10.0f);
   }
@@ -88,10 +83,9 @@ class BerezovZugWeidinger extends CBaseUnitGroup
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
-    sendEvent(55.0, getIdentificator(this), "StartAdvance", []);
   }
 
-  void StartAdvance()
+  event void StartAdvance()
   {
     SetOrder_MoveToEx([ new Vector(5437.0, 6722.5, 610.0) ], 10.0f);
   }
@@ -182,12 +176,11 @@ class BerezovPltPopov extends CBaseUnitGroup
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
-    sendEvent(180.0, getIdentificator(this), "StartAdvance", []);
   }
 
   // Matches the real mission's unconditional "move to Zug Falke" order -
   // converges on wherever the player is when the timer fires.
-  void StartAdvance()
+  event void StartAdvance()
   {
     Component Player = GetMission().GetObject("MainPlayerUnit");
     if (Player != null)
@@ -214,10 +207,9 @@ class BerezovPltZhilin extends CBaseUnitGroup
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
-    sendEvent(35.0, getIdentificator(this), "StartAdvance", []);
   }
 
-  void StartAdvance()
+  event void StartAdvance()
   {
     Component Player = GetMission().GetObject("MainPlayerUnit");
     if (Player != null)
@@ -268,15 +260,10 @@ class BerezovPltOleshev extends CBaseUnitGroup
     m_EnemyReactionType == ERT_AGGRESSIVE;
   }
 
-  // Called from CBerezovMission::OnObjectDestroyed once Plt.Kutuzov's
-  // KillList hits zero - matches the real mission's "CG State: Plt.Kutuzov
-  // destroyed" trigger (reinforcement moving up to Berezov).
-  void TriggerAdvance()
-  {
-    sendEvent(570.0, getIdentificator(this), "StartAdvance", []);
-  }
-
-  void StartAdvance()
+  // Called from CBerezovMission::OnObjectDestroyed (delayed via sendEvent)
+  // once Plt.Kutuzov's KillList hits zero - matches the real mission's
+  // "CG State: Plt.Kutuzov destroyed" trigger (reinforcement to Berezov).
+  event void StartAdvance()
   {
     SetOrder_MoveToEx([ new Vector(2150.0, 6328.0, 610.0) ], 10.0f);
   }
