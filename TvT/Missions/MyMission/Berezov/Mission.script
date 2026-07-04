@@ -59,7 +59,12 @@ class CBerezovMission extends CSPMission
       "Berezov_PltKutuzov_1", "Berezov_PltKutuzov_2", "Berezov_PltKutuzov_3", "Berezov_PltKutuzov_4"
       ];
 
+  // Bounding box the router is allowed to compute paths within - without
+  // this, no unit on the map can path-find at all (matches the real,
+  // working zone format found in Campaign_2\Mission_5's own Mission.script).
+  // Covers the whole Berezov battle area, same bounds as CockpitMapAccessBox.
   final static Array RouterWorkingZones = [
+      [0.0, 3000.0, 8000.0, 8000.0]
     ];
 
   final static Array   DefaultMask = [["ENEMY", "MainMesh"], ["NEUTRAL"]];
