@@ -9,8 +9,8 @@
 
 class BerezovWorldMatrices extends CWorldMatrices
 {
-  final static float MatrixWidth  = 18000.0;
-  final static float MatrixHeight = 18000.0;
+  final static float MatrixWidth  = 9000.0;
+  final static float MatrixHeight = 9000.0;
 }
 
 
@@ -42,8 +42,8 @@ class BerezovTerrainZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
 
 class BerezovRouterZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
 {
-  final static int     ImageWidth              = 2048;
-  final static int     ImageHeight             = 2048;
+  final static int     ImageWidth              = 1024;
+  final static int     ImageHeight             = 1024;
 
   final static String ImageFileName           = "Missions/MyMission/Berezov/RouterZone_Test.bmp";
 }

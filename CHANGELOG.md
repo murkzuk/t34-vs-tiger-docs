@@ -6,6 +6,23 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-08-16 (Berezov Phase 1) — German advance FIXED: the router treats the mission's own road as blocked
+
+**By:** murkzuk (Jeff), with opencode assistance
+
+### The breakthrough (user-verified in-game)
+- Root cause: the engine's router only routes through the zones in `RouterMap.script`'s `PassableZones` (`[11,12,13,32,1,122,123]`). **Road (ZMC_Road01, index 0) is not in the list, so every road cell is blocked for routing.**
+- Berezov's main road is a north-south strip at world X ≈ 448–457 (router column 51) sitting between the German spawn and all objectives — the long-standing "river" wall turned out to be the road itself. Groups marched to the road edge, A* couldn't start from a road cell → `OnUnreacheable`, 20000 steps, stuck.
+- Fix: repainted all router-map road cells index 0 → index 1 (OffRoad01, passable). Live 1024×1024 map: 13,050 cells; repo 2048×2048 map: 49,496 cells.
+- **User test result: groups now move — to the road, back, then off along the waypoint chain.**
+- Also deployed in this phase: world 18000 → 9000 (`WorldMatricies.script`), `RouterWorkingZones = [40000,40000,60000,60000]` (`Mission.script`) — matching stock C2M5.
+- Full write-up: `Documentation/Berezov_AI_Movement_Fix_2026-08-16.md`.
+
+### Still open
+- Units spawn/sink in river water and die: the river zone (217) is not painted in the router layer, and some spawns sit in water. Next step: move spawns out of water + paint the river blocked in the router layer (or rebuild the router layer to mirror the terrain layer).
+
+---
+
 ## 2026-08-16 (Berezov Phase 0: German advance) — Repo tidy-up + German advance scripting wired, movement still unresolved in-game
 
 **By:** murkzuk (Jeff), with opencode assistance
