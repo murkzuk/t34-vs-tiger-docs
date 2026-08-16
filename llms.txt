@@ -217,25 +217,25 @@ When the repo references "the engine" or class behavior, understand that the lin
 5. **Do not extrapolate** from one verified finding to assume the entire file/section is correct
 6. **Check character encoding** in any .script file before declaring it valid — the middle dot (·, U+00B7) and other non-ASCII characters break the parser
 
-**Repository State Notes** (as of 2026-06-03):
+**Repository State Notes** (as of 2026-08-16):
 
-- The `TvT/Models/` directory was extracted from the concatenated `_ZW.txt` archive by stevan in early 2026. This is a documentation improvement, not a game-behavior change.
-- The 12 root-level `Sky_*.script` and `Test_House*.script` files are Maya export experiments and should not be integrated into any working build.
-- The `TvT/T34vsTiger*.rar` archives in the repo are full game builds and should NEVER be extracted into an existing game installation.
+- The `TvT/Models/` directory holds model class definitions mixed with a few test/scaffold files (`4MeterBox`, `Background`, `Sky`, etc.). These test files are dev scaffolding and correctly lack shadow fields — they are not a gap.
+- The Maya export experiments (`Sky_*.script`, `Test_House*.script`, `MyFirstModel.script`, etc.) that used to sit at the repo root have been moved to `TvT/archive/` and should not be integrated into any working build.
 - The in-game script changes in `TvT/Common/`, `TvT/Units/`, and `TvT/Missions/` made by stevan in early 2026 are [UNTESTED-AI-GENERATED] and have known issues (encoding errors, deleted parameter lines, half-finished rewrites). They are kept in the repo as a record of work attempted but should not be integrated into a working build without thorough testing.
+- ZW (ZeeWolf) payware mod scripts live in `concatenate scripts/ALL_ZW_SCRIPTS/` and `ZW Mission scripts/` — these are archival, do not modify.
 
 
 ## 📊 Repository Branches
 
-- **main**: Current state. Contains all of Stevan's work from early 2026.
-- **backup-main-snapshot**: Snapshot from 2026-01-08, before Stevan's main contributions. Use this branch as the "known good" baseline for diffing changes.
+- **main**: The single source of truth. All recent work lands here via PR (see `README.md`).
+- *(No other branches exist. An older `backup-main-snapshot` branch was removed; git history on `main` is the record.)*
 
 
 ## 🔍 Known Issues in Current Repo State
 
 - Several `.script` files in `TvT/Missions/Campaign_*/` contain a `·` (U+00B7 middle dot) character that will break the script parser. These files will fail to load at runtime.
 - Mixed tab/space indentation throughout Stevan's changes — some script engines are sensitive to this.
-- The `TvT/Models/` folder contains 4MeterBox, Background, Sky, etc. test files mixed in with the extracted real models. The test files are duplicates of root-level test files.
+- The `TvT/Models/` folder contains 4MeterBox, Background, Sky, etc. test files mixed in with the real models. The test files are duplicates of files archived in `TvT/archive/`.
 
 
 ---
@@ -245,5 +245,5 @@ When the repo references "the engine" or class behavior, understand that the lin
 *Documentation Status: Active Community Verification*
 *Methodology: Ghidra Reverse-Engineering + Practical Gameplay Testing*
 *Lead Verification: LAA, LOD, MMA patches [MURKZ-VERIFIED]*
-*Last Updated: 2026-06-03*
+*Last Updated: 2026-08-16*
 *Contributors: Jeff Murkin (murkzuk), Steve Vase (stevan) — 14+ years combined involvement*
