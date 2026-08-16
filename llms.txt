@@ -24,6 +24,8 @@
 
 **Before doing anything in this repo, also read `PROJECT_MAP.md` (if present in the repo).** This file (`llms.txt`) explains *how to behave*; `PROJECT_MAP.md` explains *what's in the repo*. You need both.
 
+> **📍 LIVE INSTALLS (critical, easily forgotten):** the test target is `M:\T34vsTiger` (has `Editor.exe`, `editor.log`, `execution.log`). The ZW payware mod is `M:\T34vsTiger_ZW2015` (archival, do not touch). The scratch/RE workspace is `M:\TvT 2024 working folder` (not a game install). The git repo's `TvT/` mirror has **diverged** from `M:\T34vsTiger` — custom missions live only in the repo. Workflow: edit in the repo, then deploy changed files into `M:\T34vsTiger` (do not bulk-copy the mirror). Full details in `PROJECT_MAP.md` → "Live installs & where the work actually happens".
+
 - **Source**: Technical specifications derived from Ghidra reverse-engineering (no original source code)
 
 - **Verification**: Project lead murkzuk verifies fixes through practical gameplay testing

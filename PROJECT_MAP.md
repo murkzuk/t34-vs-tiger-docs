@@ -25,6 +25,27 @@ No active community. No active forum. No new releases planned. The goal is **pre
 
 ---
 
+## ⚠️ Live installs & where the work actually happens
+
+Jeff keeps several game copies and it is easy to lose track. **This is the record — trust it over memory.**
+
+| Path | What it is | Use it for |
+|---|---|---|
+| `M:\T34vsTiger` | The **live game install** — the one to test in. Has `Editor.exe` (Level Editor), `TvsT.exe` / `TvsT_fullLOD_HARD_4GB.exe`, `editor.log`, `execution.log`. | **Test target.** Load and play missions here. |
+| `M:\T34vsTiger_ZW2015` | ZeeWolf (ZW) payware mod install — separate, older engine build. | Archival reference only. Do not mod. |
+| `M:\TvT 2024 working folder` | Modding scratch space (Ghidra, HxD, `.ms2` Blender demos, texture/model experiments). | Reverse-engineering + asset work. Not a game install. |
+
+**Where the source of truth lives:** the git repo's `TvT/` folder (this repo). It is a mirror that has **diverged from `M:\T34vsTiger`** — the custom missions (`Missions\MyMission\Berezov`, `SteppeTemplate`, `QuickMission`, `Mission1`) exist **only in the repo**, not in `M:\T34vsTiger`.
+
+**The workflow (decided 2026-08-16):** edit in the repo (`TvT\...`), then **deploy** changed files into `M:\T34vsTiger` so the Editor can load them. Deployment surfaces for a mission:
+1. `TvT\Missions\MyMission\<name>\` → `M:\T34vsTiger\Missions\MyMission\<name>\` (whole folder)
+2. Register it in `Scripts\Editor\MenuConfig.script` (`MissionLoadList`)
+3. Add its `[Mission...]` section to `Locale\eng.locale` (if it uses `getLocalized(...)`)
+
+The repo mirror (`TvT/`) merges the live install's root folders (`Missions\`, `Models\`, `Locale\`, `Animations\`, `Resources\`) with `Scripts\` subfolders (`Units\`, `Common\`, `Editor\`, `Buildings\`, `Groups\`, `Menus\`). They have drifted (`TvT\Units\` = 28 files vs `Scripts\Units\` = 23), so **do not bulk-copy the mirror over the install** — deploy only the files a change actually touches.
+
+---
+
 ## The G5 Engine (Background)
 
 G5 (also called "Napalm") is the proprietary 3D engine developed by G5 Software in the early 2000s. It powered:
