@@ -1,6 +1,6 @@
 # t34-vs-tiger-docs — Project Map
 
-**Date:** 2026-06-03
+**Date:** 2026-08-16
 **Purpose:** Explain what is in this repo, who made it, and what each folder is for. This document is the **single source of truth** for new contributors and AI assistants.
 
 > **🤖 AI ASSISTANTS — READ IN THIS ORDER:**
@@ -48,20 +48,25 @@ Multiplayer campaign mission scripts, unit definitions, common systems.
 | Subfolder | What it is | Author |
 |---|---|---|
 | `TvT/Animations/` | Animation definitions | murkzuk |
+| `TvT/archive/` | Maya export experiments (Sky/Test_House/etc.) parked out of the way | murkzuk |
 | `TvT/Buildings/` | Building unit definitions (`*Unit.script`) | murkzuk |
-| `TvT/Campaigns/` | Campaign structure | murkzuk |
 | `TvT/Common/` | Cross-cutting systems (cockpit, shadows, weapons) | murkzuk + Stevan |
+| `TvT/Editor/` | Editor scripts | murkzuk |
+| `TvT/Groups/` | Object group definitions | murkzuk |
+| `TvT/Locale/` | Localization (`*.locale`) | murkzuk |
+| `TvT/Menus/` | Menu scripts | murkzuk |
 | `TvT/Missions/` | Per-mission scripts (Atmosphere, Content, Tasks) | murkzuk + Stevan |
-| `TvT/Models/` | **Model class documentation** (75 `.script` files) | murkzuk (Feb 2026) |
+| `TvT/Models/` | Model class definitions, mixed with a few test/scaffold files | murkzuk + Stevan |
 | `TvT/Resources/` | Resource references | murkzuk |
-| `TvT/Sounds/`, `TvT/Textures/`, etc. | Asset references | murkzuk |
 | `TvT/Units/` | Tank/vehicle unit definitions | murkzuk + Stevan |
+
+> `TvT/Campaigns/`, `TvT/Sounds/`, `TvT/Textures/` mentioned in older versions of this doc no longer exist as separate folders; their content is spread across `Missions/`, `Resources/`, and `Units/`.
 
 ⚠️ **The `TvT/Models/` folder is murkzuk's own analysis of the G5 model class structure, NOT extracted from the ZW mod.** See the verification report for details. The content diverges from the ZW concatenated archive because it's from a different source (likely direct observation of the G5 engine).
 
-### `TvTZW/` — ZeeWolf's payware single-player mod (PRESERVED, DO NOT MODIFY)
+### `TvTZW/` — ZeeWolf's payware single-player mod (EMPTY PLACEHOLDER)
 
-The ZW mod's script files. ZW was a Java coder who extended the G5 engine with single-player campaign features. He charged money for this mod. murkzuk owns a copy and has archived the scripts here for **archival and educational value only**.
+`TvTZW/` was intended as the home for ZW's mod scripts but never actually received them — it only ever held a `temp.md` placeholder (now parked in `_archive/`). The real ZW scripts live in **`concatenate scripts/ALL_ZW_SCRIPTS/`** (see below). Treat those the same way: ZW was a Java coder who extended the G5 engine with single-player campaign features and charged money for his mod. murkzuk owns a copy and has archived the scripts for **archival and educational value only**.
 
 **This is not open-source. This is not murkzuk's work. This is someone else's preserved code.**
 
@@ -69,11 +74,7 @@ If you want to use anything from here, you need to be aware it was payware. Trea
 
 ### `ZW Mission scripts/` — ZW's mission scripts (PRESERVED, DO NOT MODIFY)
 
-Same as above — additional ZW mod mission content. Separate from `TvTZW/` because ZW organized his work into different folders.
-
-### `mmp7.1/` — Unclear, possibly from an old "MMP" mod or project
-
-Empty folder with a `temp.txt` placeholder. May have been a workspace folder at some point. **No content of value. Safe to delete.**
+ZW's mission scripts, preserved as concatenated `ALL_*_SCRIPTS_zw.txt` files. These are duplicated inside `concatenate scripts/ZW Mission scripts/` — the two copies are kept in sync; see the note below.
 
 ### `concatenate scripts/` — Reference archives of multiple G5 games
 
@@ -81,7 +82,9 @@ Empty folder with a `temp.txt` placeholder. May have been a workspace folder at 
 |---|---|
 | `ALL_ZW_SCRIPTS/ALL_Models_SCRIPTS_ZW.txt` | ZW mod model scripts, concatenated into one 64K-line file (UTF-16LE) |
 | `ALL_ZW_SCRIPTS/...` (other files) | ZW mod's units, buildings, animations, etc., all concatenated |
+| `ALL_ZW_SCRIPTS/ALL_ZW_SCRIPTS.zip` | Zipped bundle of the ZW concatenated scripts |
 | `ALL_WoV_SCRIPTS/...` | Whirlwinds over Vietnam scripts, concatenated (for cross-game reference) |
+| `ZW Mission scripts/` | Duplicate of the top-level `ZW Mission scripts/` folder (kept for convenience) |
 
 These are **reference archives** — when you need to look up how a class is defined in the ZW mod or in WoV, you grep these files. They are not directly loadable by the game.
 
@@ -122,9 +125,12 @@ The `concatenate scripts/` archives (both WoV and ZW) are valuable for understan
 | `ZeeWolf Mod REDUX Technical Fix Documentation.md` | ? | ? | ZW mod technical reference |
 | `enabled Large Address Aware (LAA) for the game executable.txt` | murkzuk | ? | 4GB memory patch notes [MURKZ-VERIFIED] |
 | `Messages.rsr_File_Format_Documentation.md` | ? | ? | RSR file format reverse-engineered docs |
+| `Mission_File_Schema_Verified_2026-07-02.md` | murkzuk | Jul 2026 | Verified mission file syntax (built while writing the Quick Mission Generator) |
+| `MS2_Binary_Format_Findings_2026-07-03.md` | murkzuk | Jul 2026 | `.ms2` binary format reverse-engineering findings (Phases 0-3) |
 | `Complete Project Analysis - Final of all 12 campaign missions.md` | ? | ? | Mission analysis |
+| `Berezov_Kursk_Mission_Scoping_2026-07-03.md` + `.json` | murkzuk | Jul 2026 | Berezov (Kursk) mission recreation scoping + order-of-battle data |
+| `Steppe_Map_Scoping_2026-07-02.md` | murkzuk | Jul 2026 | Steppe map analysis for template/anchor-point work |
 | `MyFolderList.txt` | ? | ? | Folder listing (probably auto-generated) |
-| `AI/MiniMax Agent_ TvT_Full.txt` | ? | ? | AI session log (early MMA/MiniMax Agent work) |
 
 ### `Executables/` — Patched game executables
 
@@ -140,19 +146,20 @@ Pre-existing fixes for unit scripts and effects. **Do not modify without testing
 
 Template scripts for creating new missions, units, etc.
 
-### Root files — Mostly noise
+### Root files
+
+The repo root now holds only meta files (`.gitignore`, `README.md`, `CHANGELOG.md`, `TODO.md`, `PROJECT_MAP.md`, `llms.txt`) plus an `_archive/` folder for repo-level junk.
+
+The Maya export experiments (`Sky_*.script`, `Test_House*.script`, `MyFirstModel.script`, `sphere_test.script`, etc. and their `.ms2` meshes) used to sit at the root but have been moved to `TvT/archive/` (with their own `README.md`). They are **not** part of any working build.
 
 | File | What it is | Verdict |
 |---|---|---|
-| `Sky.script`, `Sky_01-12.script` | Maya export experiments | 🗑️ Junk |
-| `Test_House.script`, `Test_House01-02.script` | Maya test exports | 🗑️ Junk |
-| `MyFirstModel.script`, `Landscape_test.script`, `sphere_test.script`, `test.script` | More Maya experiments | 🗑️ Junk |
-| `Sky.ms2`, `Sky_02.ms2`, etc. | Matching mesh files for the test exports | 🗑️ Junk |
-| `u_air_FW_190.ms2`, `u_stat_pak40.ms2`, etc. | Model mesh files for the real units | Reference only |
-| `sphere_test.ms2`, `test.ms2` | Test mesh files | 🗑️ Junk |
-| `CHANGELOD.md` | LOD changelog | Keep |
-| `README.md` | Top-level readme | Keep, but needs update |
-| `llms.txt` | AI assistant guide | Keep, update to v2 |
+| `README.md` | Top-level readme | Keep |
+| `CHANGELOG.md` | Full fix history, newest first | Keep |
+| `TODO.md` | Running backlog | Keep |
+| `PROJECT_MAP.md` | This file | Keep |
+| `llms.txt` | AI assistant guide | Keep |
+| `_archive/` | Non-destructive parking for stray placeholder files | Keep |
 
 ---
 
@@ -171,9 +178,7 @@ Template scripts for creating new missions, units, etc.
 
 ## What NOT To Do
 
-❌ **Do not modify anything in `TvTZW/` or `ZW Mission scripts/`** — that's ZW's payware work, preserved for archival value.
-
-❌ **Do not extract `TvT/T34vsTiger*.rar` into your game folder** — those are full game builds from a different source.
+❌ **Do not modify anything in `concatenate scripts/ALL_ZW_SCRIPTS/` or `ZW Mission scripts/`** — that's ZW's payware work, preserved for archival value.
 
 ❌ **Do not assume anything in `TvT/Models/` matches the ZW mod** — they're different sources, both valuable, neither is a copy of the other.
 
@@ -190,7 +195,7 @@ Template scripts for creating new missions, units, etc.
 | `.script` in `TvTZW/` or `ZW Mission scripts/` | Do not modify. Archival. |
 | `.script` in `concatenate scripts/` | Reference only. Do not extract into game. |
 | `.pdf` or `.docx` in `Documentation/` | Read, but be aware some are 14 years old |
-| `.rar` or `.zip` archives | Do not extract into game. Keep as backups. |
+| `.zip` archives (in `Patches/`, `Executables/`, `concatenate scripts/`) | Do not extract into game. Keep as backups. |
 | `.ms2` files | Binary mesh data. Reference only. |
 | `.exe` patches in `Executables/` | Use the LAA-patched version. [MURKZ-VERIFIED] |
 
@@ -212,13 +217,15 @@ Template scripts for creating new missions, units, etc.
 | Feb 2026 | murkzuk creates `TvT/Models/` with 75 model class documentation files. |
 | Mar 2026 | Stevan makes last commits. Both go quiet. |
 | Jun 2026 | You (Jeff) come back. Trying to make sense of it all. |
+| Jul 2026 | Major work sprint: issue-tracker audit, Stevan contribution audit, MG/fire-mask and AI fixes, `.ms2` binary format reverse-engineering (Ghidra), Blender importer add-on, Quick Mission Generator. |
+| Aug 2026 | Repo tidy-up: non-destructive `.gitignore`, stray files parked in `_archive/`, docs brought in sync with the tree. |
 
 ---
 
 ## Branches
 
-- **`main`** — Current state, includes all of Stevan's and your work
-- **`backup-main-snapshot`** — Your snapshot from 2026-01-08, before most of the recent AI-assisted work. Use this as the "known clean" baseline.
+- **`main`** — The single source of truth. All recent work lands here via PR (see `README.md`).
+- *(No other branches currently exist. An older `backup-main-snapshot` branch was referenced in earlier versions of this doc but has since been removed — git history on `main` is the record of everything that happened.)*
 
 ---
 
