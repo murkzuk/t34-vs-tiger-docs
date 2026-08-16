@@ -66,6 +66,7 @@ class CBerezovMission extends CSPMission
   boolean TigerAggr = false;
 
   boolean MainPlayerStart = false;
+  boolean Combat = false;
 
   void CBerezovMission()
   {
@@ -115,6 +116,20 @@ class CBerezovMission extends CSPMission
 //   console.disablebeh();
    //console.showbehinf(true);
 
+    sendEvent(5.0, SOID_MissionController, "StartCombat", []);
+  }
+
+  event void StartCombat()
+  {
+    if (Combat)
+      return;
+
+    Combat = true;
+
+    sendEvent(0.0, "BerezovZugFalke", "StartFirstAdvance", []);
+    sendEvent(1.0, "BerezovKGKaiser", "StartFirstAdvance", []);
+    sendEvent(2.0, "BerezovZugLex", "StartFirstAdvance", []);
+    sendEvent(3.0, "BerezovZugWeidinger", "StartFirstAdvance", []);
   }
 
   void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)

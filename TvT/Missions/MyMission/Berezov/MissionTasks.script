@@ -14,12 +14,32 @@
 
 class BerezovZugFalke extends CBaseUnitGroup
 {
-  void Init()
+  float TankAttackSpeed = 10.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
     ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 50, true, true);
     ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
     m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetFormation("CFrontFormation", 50, true, true);
+    ActivateRadar(true);
   }
 }
 
@@ -36,34 +56,92 @@ class BerezovHQ extends CBaseUnitGroup
 
 class BerezovKGKaiser extends CBaseUnitGroup
 {
-  void Init()
+  float TankAttackSpeed = 10.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
     ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 50, true, true);
     ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
     m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetFormation("CFrontFormation", 50, true, true);
+    ActivateRadar(true);
   }
 }
 
 class BerezovZugLex extends CBaseUnitGroup
 {
-  void Init()
+  float AdvanceSpeed = 7.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
     ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("Column", 30, true, true);
     ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
     m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetFormation("Column", 30, true, true);
+    ActivateRadar(true);
   }
 }
 
 class BerezovZugWeidinger extends CBaseUnitGroup
 {
-  void Init()
+  float AdvanceSpeed = 5.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
     m_EnemyReactionType == ERT_AGGRESSIVE;
+    ActivateRadar(true);
   }
 }
 
