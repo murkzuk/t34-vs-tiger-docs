@@ -4,6 +4,15 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## Berezov Phase 0: German advance — movement still broken (2026-08-16)
+
+- [ ] **German AI groups move a few meters then stop — still unresolved.** Phase 0 wired advance orders for ZugFalke/KGKaiser/ZugLex/ZugWeidinger along the Berezov → Gremuchi → Gonki corridor (27 NavPoints, `StartFirstAdvance`/`EndFirstAdvance_Attack`, 5 s `StartCombat` trigger). Mission loads via editor auto-scan "custom → Berezov" (the old MenuConfig entry was broken and removed from the live `Scripts\Editor\MenuConfig.script`). **Symptom in `editor.log`**: `[Router] - From: [50,777]` → `- To: [-1,-1]`, `AStarSteps = 20000`, `OnUnreacheable` on all 4 groups. All work is on branch `feat/berezov-german-advance` (commits ea9fb5e, 1d08faf, 868a99b; NOT merged).
+  - **What's been tried**: (1) 3 far-apart waypoints → 27 dense waypoints (~180 units apart, matching stock density); (2) fixed a trailing-comma parse error in `ApproachPoints`; (3) `RouterWorkingZones` `[100,100,600000,600000]` → `[0,0,600000,600000]` (log shows the router works in grid coords = world÷8.789; units sit at grid X=50–95, so the `100` lower bound excluded them). The `[0,0,...]` fix is **deployed to `M:\T34vsTiger` but NOT re-tested** — testing was paused at the user's request.
+  - **Next suspects, in order**: (1) `RouterWorkingZones` coordinate space/value — verify against stock `Campaign_2\Mission_5` (`[40000,40000,60000,60000]`, `#RouterMap<CC1RouterMap>`) and the git history before claiming fixed; (2) formation-slot Z computed ~574, ~33 units **underground** vs ~608 terrain — source unknown (matches neither 18000-scale nor 9000-scale heightmap sampling).
+  - **Rule re-established this session**: never claim "fixed" without re-reading the git history + a stock mission, and verifying against a fresh `editor.log`/`execution.log` after testing.
+
+---
+
 ## Issue tracker audit (2026-07-03)
 
 - [x] **German distance-callout voice lines were entirely broken, not just the 100/200 mix-up GitHub issue #11 described — fixed 2026-07-03.** Issue #11 diagnosed `Dialogs.script`'s German distance table as calling `g_200.wav` for both the 100m and 200m callouts. Checked the actual `Resources/` folder: neither `g_100.wav` nor `g_200.wav` (nor any `g_XXX.wav`) exist at all — the real files are named `GDistance100.wav`, `GDistance200.wav`, etc. (original G5 2008-dated assets). So **every single entry** in the table (100 through 1600, 16 entries) pointed at a nonexistent file, not just the one pair the issue caught. Applying the issue's suggested fix verbatim would have just traded one missing file for another. Fixed all 16 entries to reference the real `GDistanceXXX.wav` filenames. No equivalent Soviet-side table exists in this file to check.

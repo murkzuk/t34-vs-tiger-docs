@@ -6,6 +6,29 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-08-16 (Berezov Phase 0: German advance) — Repo tidy-up + German advance scripting wired, movement still unresolved in-game
+
+**By:** murkzuk (Jeff), with opencode assistance
+
+### Repo tidy-up (merged, main @ f0c6c84, PR #14)
+- Added `.gitignore`, archived stray temp files under `_archive/`, synced docs with the file tree (PROJECT_MAP.md, llms.txt, README.md), added a release workflow + RELEASING.md.
+- Documented the three install locations in PROJECT_MAP.md ("Live installs") and llms.txt: `M:\T34vsTiger` (live/editor), `M:\T34vsTiger_ZW2015` (archival ZW mod), `M:\TvT 2024 working folder` (scratch).
+- Established the repo→install deploy workflow: edit in the repo mirror (`TvT\`), deploy per-file to `M:\T34vsTiger`; never bulk-copy (the repo mirror and live install have diverged).
+
+### Phase 0: German advance scripting (branch `feat/berezov-german-advance`, unmerged)
+- Wired advance orders for the 4 German groups (ZugFalke, KGKaiser, ZugLex, ZugWeidinger) along the Berezov → Gremuchi → Gonki corridor (HQ + Soviets left static).
+- 27 NavPoints `BerezovAdvance_01..27` spaced ~180 units (matching stock-mission density) with `StartFirstAdvance` / `EndFirstAdvance_Attack` tasks and a `StartCombat()` + 5 s trigger in `Mission.script`.
+- Fixed a trailing-comma parse error in the `ApproachPoints` arrays.
+- Router fix attempt: `RouterWorkingZones` `[100,100,600000,600000]` → `[0,0,600000,600000]` (the units sit at router-grid X=50–95, which the `100` lower bound excluded; the log showed `From: [50,777]` with the destination rejected as `To: [-1,-1]`).
+
+### Current status — NOT working in-game, issue carried forward
+- The mission loads via the editor's auto-scan ("custom → Berezov"); the old "Operation Citadel: Berezov" MenuConfig entry was broken and was removed from the live `Scripts\Editor\MenuConfig.script`.
+- The German groups still move a few meters then stop. Router logs `From: [grid]` → `To: [-1,-1]`. The `[0,0,600000,600000]` change is deployed to `M:\T34vsTiger` but **NOT yet re-tested** (testing paused at the user's request).
+- Open suspects, in order: (1) `RouterWorkingZones` coordinate space/value — not yet verified against the stock C2M5 setup (`[40000,40000,60000,60000]`, `#RouterMap<CC1RouterMap>`); (2) formation-slot Z computed ~574, ~33 units **underground** vs ~608 terrain — source unknown (does not match either 18000-scale or 9000-scale heightmap sampling).
+- Rule of thumb re-established this session: never claim "fixed" without re-reading the git history and a stock mission, and verifying against a fresh `editor.log`/`execution.log` after testing.
+
+---
+
 ## 2026-07-03 (Skirmish mission sweep) — Same non-unit sun-direction bug fixed in 10 more mission files
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
