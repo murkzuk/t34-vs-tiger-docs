@@ -6,6 +6,27 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-08-16 (Berezov Phase 2) — River island forded, chain rerouted, maneuver disabled; in-game verification STILL OPEN (testing paused by user)
+
+**By:** murkzuk (Jeff), with opencode assistance
+
+### What was found and fixed (all BFS-verified on the router, not yet verified in-game)
+- **Gonki sits on a river island.** The wet river network (terrain below water level 7785, `hwater.raw` is a flat constant) forms a complete ring around Gonki — flood analysis showed the Gonki pocket (5,701 cells) has zero dry-neighbor boundary cells. There is no bridge anywhere on the map. The waypoint chain could never reach GonkiObjective.
+- **Built a ford:** raised 560 cells of `hmap.raw` (rows 1523–1559, cols 985–1093) from below 7785 to 7820 at the river's narrowest tip (world x ≈ 4563–4640, y ≈ 6697–6838). Water recedes there — dry ground crossing.
+- **Rebuilt the router wet-block:** all wet cells painted index 217 (blocked) in the router layer, both live 1024 (9,463 cells, file 1,049,656 B) and repo 2048 (27,047 cells, file 4,195,384 B); stale 217s on the new ford repainted to passable (1).
+- **Rerouted the waypoint chain:** WP22–27 moved north of the river, through the ford, to the east bank:
+  - WP22 (3634,6473) → (3634,6411); WP23 (3722,6622) → (3900,6411); WP24 (3792,6781) → (4166,6411); WP25 (3933,6904) → (4433,6411); WP26 (4091,6939) → (4600,6411); WP27 (4258,6939) → (4600,6840).
+- **BFS verification:** all 34 chain legs (WP1→…→WP34→GonkiObjective) now pass with 0 fails, all 5 German spawns dry + passable. Long legs noted: WP4→WP5 (258 cells) and WP18→WP19 (241 cells) — big A* detours around obstacles, still reachable.
+- **Player unit moved forward 50 m:** MainPlayerUnit (Tiger) (496.0, 6849.5) → (530.4, 6885.7), both live + repo.
+- **Maneuver bug found (from the second test's log):** the groups DID get the full 34-point order queue, but `[STOPPED] Group BerezovKGKaiser end maneuvering` → `RepeatOrder() : popping order` → `[ALARM] No orders in group BerezovKGKaiser task script`. The group "Maneuver" response (triggered by the ERT_PASSIVE groups spotting enemies during the spawn-area battle) **eats the MoveToEx queue chain** — the order stack/queue can't restore it. Fix: `isManeuver = false;` added to `StartFirstAdvance` in all 4 German advance task classes (`MissionTasks.script`, live + repo) so the advance groups keep marching when engaged.
+
+### Current status — testing paused (user decision, no further iteration this session)
+- The last editor session **never loaded the mission**: `editor.log` ends at the startup class dump (no `Start game`, no mission objects). No test data from the maneuver fix or the ford.
+- Open: (1) verify the advance in-game (ford crossing, chain to Gonki); (2) confirm the editor session crash cause — `Can not assign value (error) to typed variable (String)` appears at the very top of the log; (3) the WP4→WP5 / WP18→WP19 detours.
+- All Phase 2 changes are deployed to `M:\T34vsTiger` and committed to `feat/berezov-german-advance`.
+
+---
+
 ## 2026-08-16 (Berezov Phase 1) — German advance FIXED: the router treats the mission's own road as blocked
 
 **By:** murkzuk (Jeff), with opencode assistance
