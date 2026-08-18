@@ -451,3 +451,53 @@ With the winding heuristic retracted, went looking for a defect that doesn't dep
 From there, decoded the file's per-vertex skin-weight block (`flags_bitmask & 0x10`) directly: 4× float32 weight (always rigid, `(1,0,0,0)`, never blended) + int32 joint index that's a plain index into the file's own node list (confirmed: values like 40/69/91/98 exactly match real nodes — `Turret_A` itself, `Luk_B`, `Weapon_A`, `Luk_C`). The companion `.script` file confirmed these are real animation joints — `["gun_a_recoil", ["Weapon_A", 0, 30]]`, plus hatch-open channels for `Luk_B/C/D` — moving parts (gun recoil, hatch lids) baked into `Turret_A`'s own mesh rather than separate node geometry, matching the user's own much-earlier recoil/nesting guess. Checked exhaustively for a bind-pose transform for these joints (bounding box/sphere fields, every optional block gated by their own flags, the always-present per-node array) and found genuinely nothing anywhere in the `.ms2` file or the `.script` file. A direct side-by-side against the real TvT Editor's Asset View (user-provided screenshot, zoomed on the same barrel) settled it: the real editor shows a completely normal, constant-width barrel with a muzzle brake — proving the real engine applies a transform this reader has no access to, a genuine reverse-engineering gap rather than something derivable from current understanding of the format.
 
 **Attempted fix, reverted**: built a version of both importers that split any node using this weighting into two objects — `<Name>` (triangles rigidly self-weighted, safe) and `<Name>_UnresolvedSkin` (anything touching an externally-weighted vertex, hidden by default). This looked clean in my own render (28 such sub-objects split out file-wide, no spike in the result) but **the user tested it and reported it removed a lot of legitimate geometry** — the self/external split at the triangle level was too coarse, catching real correctly-positioned geometry along with the genuinely broken barrel/hatch vertices (plausibly because ordinary seam triangles near a joint boundary get miscounted as "external" even when their positions are fine). **Reverted entirely via `git revert`** — `ms2_reader.py`, both importers, and the add-on are all back to the pre-split state. The turret/barrel spike corruption is confirmed still present, unresolved, and untouched by any fix currently in place. The skin-weight decoding work itself (per-vertex joint index, confirmed real and correctly understood) is preserved here in this document for whoever attempts the next fix, but is not currently wired into any importer.
+
+
+---
+
+# Phase 4 (2026-08-18): the `0x10` skin block fully decoded — it is four packed byte joint indices, not one int32
+
+## Correction to the July reading
+
+The July pass recorded the 20-byte per-vertex skin record as **"4x float32 weight + int32 joint index"**. That is wrong, and any importer built on it would mis-place every vertex influenced by more than one joint.
+
+The record is a textbook four-influence skinning layout:
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 16 bytes | `float32 weight[4]` |
+| 16 | 4 bytes | `uint8 joint_index[4]` — four **byte** indices into this file's own node list, packed into what looks like an int32 |
+
+Reading offset 16 as a single int32 happens to return the *first* joint's index for the overwhelmingly common single-influence case, which is why it passed a casual check in July and why the error survived.
+
+## Evidence (`u_veh_t34_85_44.ms2`, `Turret_A`, 5600 vertices)
+
+- **5600 / 5600** vertices: every non-zero weight's corresponding index byte is a valid node index.
+- **0** vertices where a weight of zero carries a non-zero index byte. This is the decisive one — under any wrong interpretation the unused lanes would contain arbitrary bytes.
+- **Every** weight tuple sums to exactly `1.0` (5600/5600).
+- The two multi-influence vertices in the mesh read as `w=(0.5, 0.5, 0, 0)`, `bytes=[75, 72, 0, 0]` → `Luk_Turret_B` and `Luk_D` — two adjacent hatch joints sharing a seam vertex 50/50. Physically exactly what it should be.
+
+The per-vertex joints resolve to real, meaningful names — `Turret_A` (self, 2071 verts), `Turret1` (2010), `Luk_Turret_A` (377), `Luk_Turret_B` (361), `Weapon_B` (302), `Weapon_A` (154), `Luk_C` (130), `Luk_B` (130) — matching the animation channels declared in the companion `.script` (`["gun_a_recoil", ["Weapon_A", 0, 30]]`, hatch-open channels).
+
+## Correction to "there is no bind transform anywhere"
+
+The July notes concluded, after the reverted skin-split attempt, that no bind-pose transform exists anywhere in the `.ms2` or `.script`. **That is also wrong.** `Turret_A` carries a `0x10000` bind block *and* a `0x10` skin block simultaneously; in `u_veh_t34_85_44.ms2`, 17 nodes carry bind blocks and 28 carry skin weights. The two facts sat in separate passes of this document and were never connected, and the production reader skips **both** blocks by size — which is exactly why every file still parses byte-perfect while the transform data goes unused.
+
+## A parsing trap worth recording
+
+Two bugs in the first probe of this session produced convincing garbage (bind blocks with 1099 joints and out-of-range indices), and both are easy to hit again:
+
+1. **There is no file-level name string.** The header is `int32 version` + `int32 node_count`, then node records immediately. Reading a length-prefixed name after the count desynchronises the whole file. (`read_ms2` starts its node loop at offset 8 — follow it exactly.)
+2. **`_skip_optional_blocks` trial-parses the `0x40` ambiguity both ways** before committing to one. Any hook that records block offsets from inside the skip functions will capture *both* candidates — giving more captured blocks than there are nodes, silently misaligned. Capture only from the committed branch.
+
+With both fixed, all 17 bind blocks in the real tank have small, sensible joint counts and 100% valid node indices.
+
+## Working reader
+
+`ms2_skin.py` (session scratch) reads both blocks correctly and is the basis for folding this into `Tools\MS2Format\ms2_reader.py`.
+
+## Where this leaves the turret spike
+
+The four earlier theories (winding flip, LOD overlap, degenerate triangles, self/external skin split) are all retracted or falsified. The standing situation is now much better posed: the vertices that visibly break are those weighted to joints **other than the node itself** — `Weapon_A`, `Luk_*`, `Turret1` — and those joints' transforms have never been applied, because the importer never read them. The open question is no longer "is there a transform?" but **"which node's `0x10000` record supplies each joint's transform, and in which space?"**
+
+Note that `Turret_A`'s own single bind record's leading int32 reads as `2` (`Body_LOD4`), which is not a plausible bind target for a turret — so the July label "likely a joint/bone index" for that field is itself still unconfirmed and should be treated as open.
