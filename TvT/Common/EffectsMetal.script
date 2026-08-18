@@ -37,56 +37,6 @@ class CCalibre7576_85_88BulletMetalHitSplashEffect
   }
 }
 
-// Spall/fragment debris on armor hit - uses MetalDebrisEffectSkin (already
-// registered in EffectsArray, previously unused by any effect). Same
-// gravity+rotation "spray" pattern as CCalibre7576_85_88BulletWoodHitDebrisEffect,
-// loop bound comes from Materials.size() so it can never outrun the texture's
-// actual frame count.
-class CCalibre7576_85_88BulletMetalHitDebrisEffect
-  extends CAnimatedParticleGenerator
-{
-  Vector  StartPlace = new Vector(0.0, 0.0, 0.0);
-  Vector  FinalPlace = new Vector(0.0, 0.0, 0.0);
-  Vector  StartSize  = new Vector(0.35, 0.35, 0.35);
-  Vector  FinalSize  = new Vector(0.35, 0.35, 0.35);
-
-  CCalibre7576_85_88BulletMetalHitDebrisEffect()
-  {
-    SetAnimationTime(0.8);
-    SetEffectTime(0.8);
-
-    SetSamplesQty(32);
-    SetSpeed(10.0, 16.0);
-    SetDirection(new Vector(0.0, 0.0, 1.0), 0.0, 35.0);
-    SetStartAndFinalFade(0.0, 0.7);
-    SetGravity(CWorldPhysics::GravityVector);
-    SetRotation(0.0, 720.0);
-    SetSizeParams(1.0, 1.0);
-
-    final int SamplesQty =
-      CEffectsArray::MetalDebrisEffectSkin.Materials.size();
-
-    m_AnimLength = 16;
-
-    for (int I = 0; I < SamplesQty; I++)
-    {
-      SetFixedMaterial(new String(I));
-      GenerateSamples(CEffectsArray::MetalDebrisEffectSkin);
-    }
-  }
-
-  GenerateSamples(
-      Component _SkinClass
-    )
-  {
-    GenerateAnimatedParticle(
-        _SkinClass, 0, 1.0,
-        StartPlace, FinalPlace,
-        StartSize, FinalSize
-      );
-  }
-}
-
 class CCalibre7576_85_88BulletMetalHitSmokeEffect
  extends CAnimatedParticleGenerator
 {
@@ -94,11 +44,11 @@ class CCalibre7576_85_88BulletMetalHitSmokeEffect
   {
     SetCoordSystemType(CRDSYS_Local);
 
-    SetAnimationTime(3.2);
-    SetEffectTime(3.2);
-    SetPlaceParams(0.1);
+    SetAnimationTime(6.0);     // Was 3.2 - 2x longer smoke duration
+    SetEffectTime(6.0);         // Was 3.2 - 2x longer effect
+    SetPlaceParams(0.3);        // Was 0.1 - 3x wider spawn area
 
-    for (int I = 0; I < 2; I++)
+    for (int I = 0; I < 20; I++)  // Was 8 - 2.5x more particles  // Was 2 - 4x more smoke particles
     {
       SetStartAndFinalFade(0.1, 0.5);
       SetSizeParams(1.0, 0.2);
@@ -116,7 +66,7 @@ class CCalibre7576_85_88BulletMetalHitSmokeEffect
     SetBaseColor(new Color(98.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 0.65000));
     SetSizeParams(1.0, 0.2);
     SetStartAndFinalFade(0.1, 0.7);
-    for (int I = 0; I < 12; I++)
+    for (int I = 0; I < 30; I++)  // Was 12 - 2.5x more particles
     {
       SetAnimLength(48);
       SetFixedMaterial(new String(I));
@@ -129,7 +79,7 @@ class CCalibre7576_85_88BulletMetalHitSmokeEffect
     }
 
     SetSizeParams(0.8, 0.75);
-    for (int I = 0; I < 8; I++)
+    for (int I = 0; I < 20; I++)  // Was 8 - 2.5x more particles
     {
       SetAnimLength(48);
       SetFixedMaterial(new String(I));
@@ -141,7 +91,7 @@ class CCalibre7576_85_88BulletMetalHitSmokeEffect
     }
 
     SetSizeParams(0.5, 0.75);
-    for (int I = 0; I < 5; I++)
+    for (int I = 0; I < 15; I++)  // Was 5 - 3x more particles
     {
       SetAnimLength(48);
       SetFixedMaterial(new String(I));
@@ -162,11 +112,11 @@ class CSubcalibre7576_85_88BulletMetalHitSmokeEffect
   {
     SetCoordSystemType(CRDSYS_Local);
 
-    SetAnimationTime(3.2);
-    SetEffectTime(3.2);
-    SetPlaceParams(0.1);
+    SetAnimationTime(6.0);     // Was 3.2 - 2x longer smoke duration
+    SetEffectTime(6.0);         // Was 3.2 - 2x longer effect
+    SetPlaceParams(0.3);        // Was 0.1 - 3x wider spawn area
 
-    for (int I = 0; I < 2; I++)
+    for (int I = 0; I < 20; I++)  // Was 8 - 2.5x more particles  // Was 2 - 4x more smoke particles
     {
       SetStartAndFinalFade(0.1, 0.5);
       SetSizeParams(1.0, 0.2);
@@ -184,7 +134,7 @@ class CSubcalibre7576_85_88BulletMetalHitSmokeEffect
     SetBaseColor(new Color(98.0 / 255.0, 95.0 / 255.0, 79.0 / 255.0, 0.65000));
     SetSizeParams(1.0, 0.2);
     SetStartAndFinalFade(0.1, 0.7);
-    for (int I = 0; I < 12; I++)
+    for (int I = 0; I < 30; I++)  // Was 12 - 2.5x more particles
     {
       SetAnimLength(48);
       SetFixedMaterial(new String(I));
@@ -197,7 +147,7 @@ class CSubcalibre7576_85_88BulletMetalHitSmokeEffect
     }
 
     SetSizeParams(0.8, 0.75);
-    for (int I = 0; I < 8; I++)
+    for (int I = 0; I < 20; I++)  // Was 8 - 2.5x more particles
     {
       SetAnimLength(48);
       SetFixedMaterial(new String(I));
@@ -209,7 +159,7 @@ class CSubcalibre7576_85_88BulletMetalHitSmokeEffect
     }
 
     SetSizeParams(0.5, 0.75);
-    for (int I = 0; I < 5; I++)
+    for (int I = 0; I < 15; I++)  // Was 5 - 3x more particles
     {
       SetAnimLength(48);
       SetFixedMaterial(new String(I));

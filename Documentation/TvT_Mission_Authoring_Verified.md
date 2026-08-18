@@ -145,6 +145,45 @@ void StartAttack()
 
 ## 4. Navpoints
 
+**A navpoint without `["Range", ...]` can never be arrived at.** This is the
+single most important property on the object and an AI-generated mission will
+omit it, because nothing complains.
+
+```
+[
+  "RetreatPath_1",
+  "NavPoint",
+  "CZAxisCylNavPoint",
+  new Matrix( ... , X, ... , Y, ... , Z, 0,0,0,1 ),
+  [
+    ["Range", 2.000000],          <- arrival radius. REQUIRED.
+    ["PositionType", "Ground"]    <- snaps to terrain. Not "".
+  ]
+]
+```
+
+Why it matters, traced through the engine:
+
+```
+no Range  ->  no arrival radius
+          ->  the leader is never "inside" the navpoint
+          ->  OnLeaderStopped never fires for it
+          ->  ContinueOrder() never runs with a live "Patrol" order
+          ->  m_NextPatrolPoint++ (UnitGroup.script:538) never executes
+          ->  every patrol order names point 01, forever
+          ->  the group advances one hop and stops, with nothing in the log
+```
+
+Verified 2026-08-18 by instrumenting the increment and comparing against a stock
+mission. `Campaign_1\Mission_1` climbs `1 of 4`, `2 of 4`, `3 of 4`. Berezov,
+whose navpoints had no `Range`, produced **zero** increments across six sessions.
+Adding `Range` produced the first increments it had ever logged.
+
+**Still open at time of writing:** with `Range` added, Berezov reaches
+`1 of 30` and stops. `Range` is necessary but not sufficient; the second arrival
+does not register. The stock control and the instrumentation are both set up to
+pursue this.
+
 - Create in the Editor: `View > Special objects > Nav Points`, then
   `Create Object() > Special Objects > Navigation Points > Z Axis Cylinder`.
 - **Keep spacing tight — roughly 170-180 world units.** Measured: a 34-point
@@ -224,6 +263,14 @@ scripts and takes a couple of minutes.
 
 ## Method notes
 
+- **Compare against a stock mission before anything else.** "How does a stock
+  mission do it?" found the missing `Range` property in twenty minutes after
+  hours of failed script reading. Two files side by side beats any amount of
+  reasoning about the engine.
+- **Instrument the exact line you care about.** `[IDX]` was placed in
+  `RepeatOrder` while the increment it was meant to observe lives in
+  `ContinueOrder` - so it logged zeros in healthy stock content too and proved
+  nothing. Put the log statement on the statement in question.
 - **Read the manual first.** `D:\T34vstiger 2023\TvT manuals\TvsT Editor Manual.pdf`
   is an original G5 document, not AI-generated, and corrected four independent
   wrong conclusions in twenty minutes.
