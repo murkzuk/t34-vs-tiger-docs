@@ -217,6 +217,105 @@ routes should look like.
 sample as ground truth on its own; confirm against the engine's routing behaviour or
 the Editor's Navigator overlay.
 
+## 4b. Group orders go inert - three engine-script bugs
+
+All three were found on Berezov by instrumenting `Scripts\Common\UnitGroup.script`
+and reading the log. All three are in G5's own code, not in mission content, so they
+affect **every** mission - stock campaigns included.
+
+### The shape of the failure
+
+`ContinueOrder()` logs `[ALARM] No orders in group <name> task script` when it finds
+`m_CurrentOrder.m_Order == ""` and `PopOrder()` has nothing to restore. A group in
+that state never recovers: it repeats the alarm for the rest of the mission and never
+moves again. Berezov produced 114 of these before the fixes, then 143 from a
+different set of groups afterwards.
+
+### 1. `OnOrderFulfilled()` destroys an order it cannot restore
+
+**This callback is fired by the engine itself.** There is no script-side caller to
+guard - which is why grepping `Scripts\` and `Missions\` for it finds almost nothing
+and sends you to the wrong place. A day was lost guarding the wrong function.
+Original code:
+
+```c
+void OnOrderFulfilled ()
+{
+  m_CurrentOrder.m_Order = "";
+  RepeatOrder();
+}
+```
+
+Measured sequence on a patrolling group:
+
+```
+Group ZugFalke: pushing order Patrol; stack size = 1
+[FULFILLED] ZugFalke order='Attack' stack=1     <- fine, pops Patrol back
+Group ZugFalke: popping order Patrol; stack size = 0
+RepeatOrder() : Patrol order to point Advance_01
+[FULFILLED] ZugFalke order='Patrol' stack=0     <- fatal
+[ALARM] No orders in group ZugFalke             <- x114
+```
+
+Fix: if nothing is stacked but the group still holds a patrol path, resume the patrol
+rather than destroying it. `SetOrder_Attack` edits `m_CurrentOrder` in place and never
+touches `m_PatrolPath` or `m_NextPatrolPoint`, so both are still intact at that moment.
+
+### 2. The same callback strands *static* groups
+
+Groups with no `Path` - dug-in AT guns, defensive platoons - have nothing to fall back
+on. `RepeatOrder()` forwards to `ContinueOrder()` (see the `// default forwarding`
+comment at the end of `RepeatOrder`), which alarms on every callback.
+
+Fix: hold position, and **do not** call `RepeatOrder()` - there is nothing to repeat.
+The group still re-engages later, because `OnEnemyTargeted` issues a fresh attack from
+an empty order.
+
+### 3. The order stack leaks
+
+`CBaseAITankTask::OnNoEnemy` in `Common\BaseTasks.script` calls:
+
+```c
+m_Group.SetOrder_Attack([], ERT_AGGRESSIVE);
+```
+
+An attack order with an **empty target list**, and a hardcoded `ERT_AGGRESSIVE` that
+walks straight past the group's own `GroupEnemyReaction`. Every time any unit loses a
+target, `SetOrder_Attack` pushes another copy of the current order. Measured stack
+depth on one platoon climbing `2,3,4,5,6,7,8,9` - none of it ever popped.
+
+Fix: do not push when the order being issued is the one already running.
+
+```c
+if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver"
+    && m_CurrentOrder.m_Order != "Attack")
+  PushOrder();
+```
+
+### Telling them apart in a log
+
+| symptom | cause |
+|---|---|
+| `[ALARM]` on a group that has a `Path` | bug 1 |
+| `[ALARM]` on a group with no `Path` | bug 2 |
+| `stack=` climbing across `[FULFILLED]` lines | bug 3 |
+| `[ALARM]` on a group still waiting for a `PositionWatcher` | not a bug - no trigger yet |
+
+Backups of the unmodified engine file sit beside it as `UnitGroup.script.bak_*`.
+
+### Instrumenting this yourself
+
+The three log points that made all of it visible, all in `UnitGroup.script`:
+
+- `[FULFILLED]` at the top of `OnOrderFulfilled()` - print the order name **and**
+  `m_OrderStack.size()`. The stack depth is what separates the three bugs.
+- `[ADVANCE]` immediately after `m_CurrentOrder.m_NextPatrolPoint++` in
+  `ContinueOrder()`. That statement is the only place the patrol index moves.
+- `[IDX]` in `RepeatOrder()`'s Patrol branch.
+
+`StatusDebug` on the group class turns on G5's own push/pop tracing, which is what
+finally showed the order being pushed and then destroyed one line apart.
+
 ## 5. Mission directory (from the manual)
 
 | file | purpose |
