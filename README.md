@@ -30,13 +30,14 @@ To make this "mountain" easier to climb, we have organized the project into key 
 - **[Technical Manuals](./Documentation):** Engine specifications, mission-scripting reference, and project analysis. See below for the highlights.
 - **[Development Tools](./Tools):** Scripts, Maya export manuals, and utilities created for TvT by G5 (the original developers).
 - **[Executables](./Executables):** The 4GB LAA patch and essential engine fixes.
-- **[Patches](./Patches):** Ready-to-apply hotfix packages — grab the latest one if you just want fixes without touching the source.
+- **[Patches](./Patches):** Ready-to-apply hotfix packages — grab the latest one if you just want fixes without touching the source. See [`RELEASING.md`](./RELEASING.md) for how to publish a new one.
 - **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.
 - **[Stable Build (Pre001)](./Fixed%20Pre001):** The first verified "fixed" pre-0.001 build, included in the patch.
 - **[Consolidated Scripts](./concatenate%20scripts):** Mission scripts processed through `cat` for easy debugging.
 - **[Original Logic](./TvT):** The base stock scripts for T-34 vs. Tiger — this is the mirror kept in sync with the live REDUX game install.
-- **[ZeeWolf Legacy](./TvTZW):** Preservation of ZeeWolf (ZW) mod scripts and logic — see the note below on what this is.
+- **[ZeeWolf Legacy](./concatenate%20scripts/ALL_ZW_SCRIPTS):** Preservation of ZeeWolf (ZW) mod scripts and logic — see the note below on what this is.
 - **[ZW Missions](./ZW%20Mission%20scripts):** Specific mission scripts from the ZeeWolf collection.
+- **[Archive](./TvT/archive):** Maya export experiments parked out of the way (not part of any working build).
 - **`TODO.md`**: Running backlog of known issues, half-finished content, and investigation notes.
 - **`CHANGELOG.md`**: Full history of fixes and changes, newest first — this is the "Confirmed Fixes" list.
 
