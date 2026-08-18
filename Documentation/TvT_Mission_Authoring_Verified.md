@@ -204,18 +204,44 @@ cost **75 steps** - and all four German groups then advanced in lockstep with ze
 - Generate routes *from* the router bitmap rather than drawing them and checking
   afterwards. A path A* found is a path the engine can also find.
 
-### Caution: zone-bitmap row order is not settled
+### Zone-bitmap row order: SETTLED — row 0 is world y=0, no flip
 
-`RouterZone_*.bmp` and `TerrainZone_*.bmp` are 8-bit indexed BMPs with a positive
-height field, which by the BMP spec means bottom-up rows. Reading them bottom-up
-produced a route with zero routing failures, which is strong evidence it is right.
-But reading stock `Campaign_1/Mission_3` bottom-up puts none of its 55 navpoints on
-road codes, while top-down puts 30 of them on roads - which is what hand-authored
-routes should look like.
+`RouterZone_*.bmp` and `TerrainZone_*.bmp` declare a **positive** height in the
+BMP header, which by the format spec means bottom-up rows. **The game does not
+read them that way.** It treats pixel row 0 as world y=0.
 
-**These two results disagree and the question is open.** Do not trust a zone-map
-sample as ground truth on its own; confirm against the engine's routing behaviour or
-the Editor's Navigator overlay.
+Settled 2026-08-18 by testing **all eight** possible orientations (four rotations,
+each with and without an axis swap) against **606 navpoints that G5 placed by hand
+across 12 stock missions**. Hand-authored routes sit on roads and open ground, not
+inside trees, so forest hit-rate discriminates cleanly:
+
+| orientation | on road codes | in forest |
+|---|---|---|
+| **row 0 = world y=0 (no flip)** | **273** | **7.8%** |
+| bottom-up (the BMP spec reading) | 70 | 44.8% |
+| mirror-X+Y | 66 | 55.5% |
+| the other five | ≤56 | 60–75% |
+
+Not a close call, and it holds per-mission: no-flip wins in **11 of 12**, often
+overwhelmingly (`Campaign_1/Mission_4` 1.5% vs 73.9%, `Campaign_1/Mission_2` 0% vs
+69.7%). The road count is the corroborating half — 273 navpoints on road codes
+versus 70. Hand-drawn routes follow roads, and only one reading shows that.
+
+**Why the wrong reading survived a whole afternoon:** a route generated on the
+vertically mirrored map ran in-game with *zero* routing failures. That looked like
+confirmation and was luck — 86.7% of that map is passable, so a corridor picked to
+avoid forest in a mirrored map lands in genuinely open ground most of the time.
+Checked afterwards against the correct orientation, 32 of its 34 navpoints were
+still fine and only two needed moving. **A successful run is weak evidence for a
+model when most random choices also succeed.**
+
+The user spotted it first, from the Editor: a waypoint that the mirrored map called
+grass had visible trees on it.
+
+`K:\tvt_terrain\tvt_terrain.py` `read_bmp8`/`write_bmp8` were both flipping rows;
+fixed 2026-08-18. Note the writer still emits a positive height, because every
+shipped TvT zone BMP does — the originals are top-down data behind a bottom-up
+header, and matching them exactly is safer than being spec-correct.
 
 ## 4b. Group orders go inert - three engine-script bugs
 
