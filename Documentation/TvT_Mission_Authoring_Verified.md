@@ -388,11 +388,83 @@ The menu reads the name via
 
 ## 7. Menu registration
 
-`Scripts\Menus\MissionsMenu.script` holds `USSR_Missions` and
-`Germany_Missions`. The list renders
-`min(GetUserValue("GerCampaign"), array size)` entries, so **appending past the
-campaign's mission count makes an entry invisible**. Missions under
-`Missions\MyMission\` are absent from these arrays and therefore Editor-only.
+`Scripts\Menus\MissionsMenu.script` holds the mission lists;
+`Scripts\Menus\MissionsControls.script` holds the menu's layout.
+
+### The three limits, and how each was removed (2026-08-18)
+
+Stock TvT could list **7 missions per side** and no more. Three separate things
+caused that, and all three are fixed in REDUX.
+
+**1. Campaign progress gates the list.** `UpdateMissionList()` builds
+`min(GetUserValue("USSRCampaign"/"GerCampaign"), array.size())` rows. Appending a
+mission to `USSR_Missions` / `Germany_Missions` therefore leaves it **invisible**
+until the player has unlocked that many campaign missions. Correct for a campaign,
+wrong for anything standalone.
+
+*Fix:* two new arrays, `USSR_ExtraMissions` and `Germany_ExtraMissions`, listed in
+full after the campaign rows and never gated. Put standalone and generated
+missions there. Campaign progression is untouched.
+
+**2. The Load handler indexes the campaign array by row position.**
+
+```c
+final int iMission = GetObject("MissionList").GetCurrentItem();
+CStartMissionMenu::MissionClassName = Germany_Missions[iMission];   // stock
+```
+
+`GetCurrentItem()` returns a **row index**. Any row not sourced from that array
+reads off the end. This is the one that bites silently — it surfaces as a mission
+failing to load or the wrong mission loading, which looks like a mission-authoring
+fault rather than a menu one.
+
+*Fix:* `UpdateMissionList()` records `ListedCampaignCount`, and the handler splits
+on it:
+
+```c
+if (iMission >= ListedCampaignCount)
+  ... = Germany_ExtraMissions[iMission - ListedCampaignCount];
+else
+  ... = Germany_Missions[iMission];
+```
+
+**3. The list box was only tall enough for ~7 rows, with no scrollbar.**
+`MissionList` was `height 0.2070` against a `25.0/768.0` element height. The space
+below it was dead all the way to the Back/Load buttons at `y 0.9128`.
+
+*Fix:* box extended to `height 0.4607` (**14 rows**), background to `0.4824`, and a
+real scrollbar added for anything beyond that.
+
+### Adding a scrollbar to a TvT list — the recipe
+
+The engine already supports this; TvT's own `ControlsSettings` and `Escape` menus
+use it, and WoV's campaign list (same engine) is built identically. Three pieces:
+
+1. A `CUIVerticalScrollBar` control beside the list, using the existing
+   `VScrollerUp` / `VScrollerDown` / `VScrollerScroller` materials.
+2. `list.SetSlaveScroller(GetObject("<BarName>"));` — **this is the piece that is
+   usually missing.** `MissionList` already called `SetListScrollStep` and still
+   did not scroll, because nothing was bound to drive it.
+3. Handlers for `<BarName>_Arrow1` / `_Arrow2` calling `ScrollUp()` / `ScrollDown()`.
+
+Bind the slave scroller **after** populating the list — `ClearWithUnregister()`
+rebuilds it every time `UpdateMissionList` runs, and TvT's own `ControlsSettings`
+menu also binds after populating.
+
+Match the scroll step to the element height. `MissionList` shipped with
+`SetListScrollStep(32.7 / 768.0)` against `25.0/768.0` rows, which does not
+correspond to a row and matters once a scrollbar is attached.
+
+### Verified
+
+`CBerezovKurskMission` was moved out of `Germany_Missions` into
+`Germany_ExtraMissions`, so the new path is exercised on every launch rather than
+lying dormant. Confirmed in play: the row lists, loads (125 objects, 2.55s), and
+`execution.log` shows **zero** `[ScriptManager]` errors with
+`Script Class CMissionsMenu 1` registering normally.
+
+Missions under `Missions\MyMission\` are absent from these arrays by default and
+are therefore Editor-only until added.
 
 ## 8. The Editor and AI
 
