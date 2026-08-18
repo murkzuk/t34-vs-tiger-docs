@@ -7,9 +7,9 @@
 //
 //-------------------------------------------------------------------
 
-class CBerezovTerrain extends CBaseTerrain, CBaseZoneMap
+class CBerezovKurskTerrain extends CBaseTerrain, CBaseZoneMap
 {
-  CBerezovTerrain()
+  CBerezovKurskTerrain()
   {
     if (!CDebugSettings::LoadWater)
       WaterRegions = [];
@@ -22,7 +22,7 @@ class CBerezovTerrain extends CBaseTerrain, CBaseZoneMap
     RegisterForestRegion(
       [ZMC_Forest01],
       Materials,
-      "Missions\\MyMission\\Berezov\\forest_Test.tex",
+      "Missions\\MyMission\\BerezovKursk\\forest_Test.tex",
       ["L1",   "L2",   "L2",   "L3",   "L3"  ],
       [0.0,    8.0,    11.0,   13.0,   14.0  ],
       [500.0,  500.0,  1000.0, 1500.0, 2000.0],  // min distance, start fade
@@ -40,7 +40,7 @@ class CBerezovTerrain extends CBaseTerrain, CBaseZoneMap
   }
 
   // terrain resources
-  String SkinClass  = "CBerezovTerrainSkin";
+  String SkinClass  = "CBerezovKurskTerrainSkin";
 
   // Sea level for compute air density
   float SeaLevel    = 450.0;
@@ -60,11 +60,11 @@ class CBerezovTerrain extends CBaseTerrain, CBaseZoneMap
   boolean IsPlanarWater    = true;
 }
 
-class CBerezovTerrainSkin extends CBaseTerrainSkin
+class CBerezovKurskTerrainSkin extends CBaseTerrainSkin
 {
-  CBerezovTerrainSkin()
+  CBerezovKurskTerrainSkin()
   {
-    SetupTerrainMainMaterial("Missions/MyMission/Berezov/lnd_Test.tex");
+    SetupTerrainMainMaterial("Missions/MyMission/BerezovKursk/lnd_Test.tex");
 
     AppendMaterials(MissionSpecificMaterials);
   }

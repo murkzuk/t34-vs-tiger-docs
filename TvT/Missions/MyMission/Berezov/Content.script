@@ -13,10 +13,10 @@
 //-------------------------------------------------------------------
 
 
-class BerezovContent
+class BerezovKurskContent
 {
-  static String m_ObjectListClassFile = "Missions/MyMission/Berezov/Content.script";
-  static String m_ObjectListClassName = "BerezovContent";
+  static String m_ObjectListClassFile = "Missions/MyMission/BerezovKursk/Content.script";
+  static String m_ObjectListClassName = "BerezovKurskContent";
 
   static Array  m_MissionObjectList   = [
     [
@@ -77,7 +77,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_ZugFalke_2",
+      "BerezovKursk_ZugFalke_2",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -88,12 +88,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_ZugFalke_3",
+      "BerezovKursk_ZugFalke_3",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -104,12 +105,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_ZugFalke_4",
+      "BerezovKursk_ZugFalke_4",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -120,12 +122,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_ZugFalke_5",
+      "BerezovKursk_ZugFalke_5",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -136,12 +139,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_HQ_1",
+      "BerezovKursk_HQ_1",
       "GameObject",
       "CGunPak40Unit",
       new Matrix(
@@ -152,12 +156,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_HQ_2",
+      "BerezovKursk_HQ_2",
       "GameObject",
       "CBtrHanomag251AusfCUnit",
       new Matrix(
@@ -168,12 +173,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_KGKaiser_1",
+      "BerezovKursk_KGKaiser_1",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -184,12 +190,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_KGKaiser_2",
+      "BerezovKursk_KGKaiser_2",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -200,12 +207,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_KGKaiser_3",
+      "BerezovKursk_KGKaiser_3",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -216,12 +224,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_KGKaiser_4",
+      "BerezovKursk_KGKaiser_4",
       "GameObject",
       "CTankPzIVGUnit",
       new Matrix(
@@ -232,12 +241,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_ZugLex_1",
+      "BerezovKursk_ZugLex_1",
       "GameObject",
       "CBtrHanomag251AusfCUnit",
       new Matrix(
@@ -248,12 +258,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_ZugLex_2",
+      "BerezovKursk_ZugLex_2",
       "GameObject",
       "CBtrHanomag251AusfCUnit",
       new Matrix(
@@ -264,44 +275,47 @@ class BerezovContent
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_ZugWeidinger_1",
+      "BerezovKursk_ZugWeidinger_1",
       "GameObject",
       "CGermanSoldierRifleUnit",
       new Matrix(
-          0.687848, 0.725855, 0.000000, 886.000000,
-          -0.725855, 0.687848, 0.000000, 6669.500000,
+          0.687848, 0.725855, 0.000000, 737.909656,
+          -0.725855, 0.687848, 0.000000, 6755.000000,
           0.000000, 0.000000, 1.000000, 607.950012,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_ZugWeidinger_2",
+      "BerezovKursk_ZugWeidinger_2",
       "GameObject",
       "CBtrHanomag251AusfCUnit",
       new Matrix(
-          0.687848, 0.725855, 0.000000, 836.000000,
-          -0.725855, 0.687848, 0.000000, 6659.500000,
+          0.687848, 0.725855, 0.000000, 688.213349,
+          -0.725855, 0.687848, 0.000000, 6699.099314,
           0.000000, 0.000000, 1.000000, 607.849976,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "FRIEND"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltStepichev_1",
+      "BerezovKursk_PltStepichev_1",
       "GameObject",
       "CSAUSU85Unit",
       new Matrix(
@@ -312,12 +326,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAISAUTask"]
       ]
     ],
 
     [
-      "Berezov_PltStepichev_2",
+      "BerezovKursk_PltStepichev_2",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
@@ -328,12 +343,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltStepichev_3",
+      "BerezovKursk_PltStepichev_3",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
@@ -344,12 +360,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltKotin_1",
+      "BerezovKursk_PltKotin_1",
       "GameObject",
       "CSAUSU85Unit",
       new Matrix(
@@ -360,12 +377,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAISAUTask"]
       ]
     ],
 
     [
-      "Berezov_PltKotin_2",
+      "BerezovKursk_PltKotin_2",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
@@ -376,12 +394,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltBerzina_1",
+      "BerezovKursk_PltBerzina_1",
       "GameObject",
       "CGunZis3Unit",
       new Matrix(
@@ -392,12 +411,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltBerzina_3",
+      "BerezovKursk_PltBerzina_3",
       "GameObject",
       "CSAUSU85Unit",
       new Matrix(
@@ -408,12 +428,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAISAUTask"]
       ]
     ],
 
     [
-      "Berezov_PltSamsonov_1",
+      "BerezovKursk_PltSamsonov_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -424,12 +445,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSamsonov_2",
+      "BerezovKursk_PltSamsonov_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -440,12 +462,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSamsonov_3",
+      "BerezovKursk_PltSamsonov_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -456,12 +479,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSamsonov_4",
+      "BerezovKursk_PltSamsonov_4",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -472,12 +496,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_SovietHQ_1",
+      "BerezovKursk_SovietHQ_1",
       "GameObject",
       "CSAUSU85Unit",
       new Matrix(
@@ -488,12 +513,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAISAUTask"]
       ]
     ],
 
     [
-      "Berezov_SovietHQ_2",
+      "BerezovKursk_SovietHQ_2",
       "GameObject",
       "CTruckZis5Unit",
       new Matrix(
@@ -504,12 +530,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_SovietHQ_3",
+      "BerezovKursk_SovietHQ_3",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
@@ -520,12 +547,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltVoronov_1",
+      "BerezovKursk_PltVoronov_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -536,12 +564,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltVoronov_2",
+      "BerezovKursk_PltVoronov_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -552,12 +581,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltVoronov_3",
+      "BerezovKursk_PltVoronov_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -568,12 +598,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltKutuzov_1",
+      "BerezovKursk_PltKutuzov_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -584,12 +615,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltKutuzov_2",
+      "BerezovKursk_PltKutuzov_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -600,12 +632,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltKutuzov_3",
+      "BerezovKursk_PltKutuzov_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -616,12 +649,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltKutuzov_4",
+      "BerezovKursk_PltKutuzov_4",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -632,12 +666,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltPopov_1",
+      "BerezovKursk_PltPopov_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -648,12 +683,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltPopov_2",
+      "BerezovKursk_PltPopov_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -664,12 +700,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltPopov_3",
+      "BerezovKursk_PltPopov_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -680,12 +717,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltPopov_4",
+      "BerezovKursk_PltPopov_4",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -696,92 +734,98 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltRhyzov_1",
+      "BerezovKursk_PltRhyzov_1",
       "GameObject",
       "CGunZis3Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 1976.000000,
-          0.000000, -1.000000, 0.000000, 6279.500000,
+          -1.000000, 0.000000, 0.000000, 1999.382686,
+          0.000000, -1.000000, 0.000000, 6293.000000,
           0.000000, 0.000000, 1.000000, 608.619995,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltRhyzov_2",
+      "BerezovKursk_PltRhyzov_2",
       "GameObject",
       "CGunZis3Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 1537.000000,
-          0.000000, -1.000000, 0.000000, 6506.500000,
+          -1.000000, 0.000000, 0.000000, 1546.317486,
+          0.000000, -1.000000, 0.000000, 6541.273330,
           0.000000, 0.000000, 1.000000, 608.750000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltRhyzov_5",
+      "BerezovKursk_PltRhyzov_5",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 1311.000000,
-          0.000000, -1.000000, 0.000000, 6569.500000,
+          -1.000000, 0.000000, 0.000000, 1320.000000,
+          0.000000, -1.000000, 0.000000, 6553.911543,
           0.000000, 0.000000, 1.000000, 608.489990,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltZhilin_1",
+      "BerezovKursk_PltZhilin_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 1586.000000,
-          0.000000, -1.000000, 0.000000, 6119.500000,
+          -1.000000, 0.000000, 0.000000, 1777.253314,
+          0.000000, -1.000000, 0.000000, 6068.253829,
           0.000000, 0.000000, 1.000000, 609.309998,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltZhilin_2",
+      "BerezovKursk_PltZhilin_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 1486.000000,
-          0.000000, -1.000000, 0.000000, 6029.500000,
+          -1.000000, 0.000000, 0.000000, 1351.000000,
+          0.000000, -1.000000, 0.000000, 6263.326859,
           0.000000, 0.000000, 1.000000, 609.979980,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltZhilin_3",
+      "BerezovKursk_PltZhilin_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -792,28 +836,30 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltZhadov_1",
+      "BerezovKursk_PltZhadov_1",
       "GameObject",
       "CGunZis3Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 2136.000000,
+          -1.000000, 0.000000, 0.000000, 2145.000000,
           0.000000, -1.000000, 0.000000, 6419.500000,
           0.000000, 0.000000, 1.000000, 608.460022,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltZhadov_2",
+      "BerezovKursk_PltZhadov_2",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
@@ -824,44 +870,47 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltZhadov_3",
+      "BerezovKursk_PltZhadov_3",
       "GameObject",
       "CGunZis3Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 1986.000000,
+          -1.000000, 0.000000, 0.000000, 2022.000000,
           0.000000, -1.000000, 0.000000, 6389.500000,
           0.000000, 0.000000, 1.000000, 608.450012,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltZhadov_4",
+      "BerezovKursk_PltZhadov_4",
       "GameObject",
       "CSovietSoldierRifleUnit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 2006.000000,
+          -1.000000, 0.000000, 0.000000, 2024.000000,
           0.000000, -1.000000, 0.000000, 6379.500000,
           0.000000, 0.000000, 1.000000, 608.460022,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltMarkov_2",
+      "BerezovKursk_PltMarkov_2",
       "GameObject",
       "CGunZis3Unit",
       new Matrix(
@@ -872,92 +921,98 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITask"]
       ]
     ],
 
     [
-      "Berezov_PltSytnik_1",
+      "BerezovKursk_PltSytnik_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 3186.000000,
-          0.000000, -1.000000, 0.000000, 5829.500000,
+          -1.000000, 0.000000, 0.000000, 3055.600013,
+          0.000000, -1.000000, 0.000000, 5864.440571,
           0.000000, 0.000000, 1.000000, 608.500000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSytnik_2",
+      "BerezovKursk_PltSytnik_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 3236.000000,
-          0.000000, -1.000000, 0.000000, 5829.500000,
+          -1.000000, 0.000000, 0.000000, 3375.093319,
+          0.000000, -1.000000, 0.000000, 5866.769942,
           0.000000, 0.000000, 1.000000, 608.280029,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSytnik_3",
+      "BerezovKursk_PltSytnik_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 3286.000000,
-          0.000000, -1.000000, 0.000000, 5829.500000,
+          -1.000000, 0.000000, 0.000000, 3372.933324,
+          0.000000, -1.000000, 0.000000, 5852.793714,
           0.000000, 0.000000, 1.000000, 608.159973,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSytnik_4",
+      "BerezovKursk_PltSytnik_4",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 3336.000000,
-          0.000000, -1.000000, 0.000000, 5829.500000,
+          -1.000000, 0.000000, 0.000000, 3367.176915,
+          0.000000, -1.000000, 0.000000, 5847.500000,
           0.000000, 0.000000, 1.000000, 608.080017,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltSytnik_5",
+      "BerezovKursk_PltSytnik_5",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 3386.000000,
+          -1.000000, 0.000000, 0.000000, 3395.000000,
           0.000000, -1.000000, 0.000000, 5829.500000,
           0.000000, 0.000000, 1.000000, 608.020020,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltOleshev_1",
+      "BerezovKursk_PltOleshev_1",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -968,12 +1023,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltOleshev_2",
+      "BerezovKursk_PltOleshev_2",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -984,12 +1040,13 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltOleshev_3",
+      "BerezovKursk_PltOleshev_3",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
@@ -1000,28 +1057,30 @@ class BerezovContent
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_PltOleshev_4",
+      "BerezovKursk_PltOleshev_4",
       "GameObject",
       "CTankT34_76_42Unit",
       new Matrix(
-          -1.000000, 0.000000, 0.000000, 6336.000000,
+          -1.000000, 0.000000, 0.000000, 6345.000000,
           0.000000, -1.000000, 0.000000, 6279.500000,
           0.000000, 0.000000, 1.000000, 609.250000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
         ["Affiliation", "ENEMY"],
+        ["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]],
         ["Task", "CBaseAITankTask"]
       ]
     ],
 
     [
-      "Berezov_House1",
+      "BerezovKursk_House1",
       "InteriorObject",
       "CUSRHouseWoodUnit",
       new Matrix(
@@ -1039,7 +1098,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_House2",
+      "BerezovKursk_House2",
       "InteriorObject",
       "CUSRHouseWoodUnit",
       new Matrix(
@@ -1057,7 +1116,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_House3",
+      "BerezovKursk_House3",
       "InteriorObject",
       "CUSRHouseWoodUnit",
       new Matrix(
@@ -1075,7 +1134,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_House4",
+      "BerezovKursk_House4",
       "InteriorObject",
       "CUSRHouseWoodUnit",
       new Matrix(
@@ -1093,7 +1152,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Shed1",
+      "BerezovKursk_Shed1",
       "InteriorObject",
       "CUSRShedWoodUnit",
       new Matrix(
@@ -1111,7 +1170,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Shed2",
+      "BerezovKursk_Shed2",
       "InteriorObject",
       "CUSRShedWood02Unit",
       new Matrix(
@@ -1129,7 +1188,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Well",
+      "BerezovKursk_Well",
       "InteriorObject",
       "CWaterWell_1Unit",
       new Matrix(
@@ -1147,7 +1206,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Fence1",
+      "BerezovKursk_Fence1",
       "InteriorObject",
       "CFenceWickerUnit",
       new Matrix(
@@ -1165,7 +1224,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Fence2",
+      "BerezovKursk_Fence2",
       "InteriorObject",
       "CFenceWickerUnit",
       new Matrix(
@@ -1183,7 +1242,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Fence3",
+      "BerezovKursk_Fence3",
       "InteriorObject",
       "CFencePoleUnit",
       new Matrix(
@@ -1201,7 +1260,7 @@ class BerezovContent
     ],
 
     [
-      "Berezov_Fence4",
+      "BerezovKursk_Fence4",
       "InteriorObject",
       "CFencePoleUnit",
       new Matrix(
@@ -1615,9 +1674,9 @@ class BerezovContent
     ],
 
     [
-      "BerezovZugFalke",
+      "BerezovKurskZugFalke",
       "UnitGroup",
-      "BerezovZugFalke",
+      "BerezovKurskZugFalke",
       new Matrix(
           0.726021, 0.685890, 0.049479, 446.000000,
           -0.580634, 0.649976, -0.490302, 6834.500000,
@@ -1625,14 +1684,22 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_ZugFalke_2", "Berezov_ZugFalke_3", "Berezov_ZugFalke_4", "Berezov_ZugFalke_5"]]
+        ["Units", ["BerezovKursk_ZugFalke_2", "BerezovKursk_ZugFalke_3", "BerezovKursk_ZugFalke_4", "BerezovKursk_ZugFalke_5"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"],
+        ["Path", ["BerezovKurskAdvance_01", "BerezovKurskAdvance_02", "BerezovKurskAdvance_03", "BerezovKurskAdvance_04", "BerezovKurskAdvance_05", "BerezovKurskAdvance_06", "BerezovKurskAdvance_07", "BerezovKurskAdvance_08", "BerezovKurskAdvance_09", "BerezovKurskAdvance_10", "BerezovKurskAdvance_11", "BerezovKurskAdvance_12", "BerezovKurskAdvance_13", "BerezovKurskAdvance_14", "BerezovKurskAdvance_15", "BerezovKurskAdvance_16", "BerezovKurskAdvance_17", "BerezovKurskAdvance_18", "BerezovKurskAdvance_19", "BerezovKurskAdvance_20", "BerezovKurskAdvance_21", "BerezovKurskAdvance_22", "BerezovKurskAdvance_23", "BerezovKurskAdvance_24", "BerezovKurskAdvance_25", "BerezovKurskAdvance_26", "BerezovKurskAdvance_27", "BerezovKurskAdvance_28", "BerezovKurskAdvance_29", "BerezovKurskAdvance_30"]],
+        ["DelayedOrder", false],
+        ["Formation", "Column"],
+        ["FormationDistance", 17],
+        ["MovingSpeed", 8.800000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
       ]
     ],
 
     [
-      "BerezovHQ",
+      "BerezovKurskHQ",
       "UnitGroup",
-      "BerezovHQ",
+      "BerezovKurskHQ",
       new Matrix(
           0.688018, 0.725693, -0.000862, 586.000000,
           -0.725312, 0.687695, 0.031594, 6874.500000,
@@ -1640,14 +1707,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_HQ_1", "Berezov_HQ_2"]]
+        ["Units", ["BerezovKursk_HQ_1", "BerezovKursk_HQ_2"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovKGKaiser",
+      "BerezovKurskKGKaiser",
       "UnitGroup",
-      "BerezovKGKaiser",
+      "BerezovKurskKGKaiser",
       new Matrix(
           0.687634, 0.725839, 0.017803, 526.000000,
           -0.725813, 0.687832, -0.009076, 6909.500000,
@@ -1655,14 +1723,22 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_KGKaiser_1", "Berezov_KGKaiser_2", "Berezov_KGKaiser_3", "Berezov_KGKaiser_4"]]
+        ["Units", ["BerezovKursk_KGKaiser_1", "BerezovKursk_KGKaiser_2", "BerezovKursk_KGKaiser_3", "BerezovKursk_KGKaiser_4"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"],
+        ["Path", ["BerezovKurskAdvance_01", "BerezovKurskAdvance_02", "BerezovKurskAdvance_03", "BerezovKurskAdvance_04", "BerezovKurskAdvance_05", "BerezovKurskAdvance_06", "BerezovKurskAdvance_07", "BerezovKurskAdvance_08", "BerezovKurskAdvance_09", "BerezovKurskAdvance_10", "BerezovKurskAdvance_11", "BerezovKurskAdvance_12", "BerezovKurskAdvance_13", "BerezovKurskAdvance_14", "BerezovKurskAdvance_15", "BerezovKurskAdvance_16", "BerezovKurskAdvance_17", "BerezovKurskAdvance_18", "BerezovKurskAdvance_19", "BerezovKurskAdvance_20", "BerezovKurskAdvance_21", "BerezovKurskAdvance_22", "BerezovKurskAdvance_23", "BerezovKurskAdvance_24", "BerezovKurskAdvance_25", "BerezovKurskAdvance_26", "BerezovKurskAdvance_27", "BerezovKurskAdvance_28", "BerezovKurskAdvance_29", "BerezovKurskAdvance_30"]],
+        ["DelayedOrder", false],
+        ["Formation", "Column"],
+        ["FormationDistance", 17],
+        ["MovingSpeed", 7.500000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
       ]
     ],
 
     [
-      "BerezovZugLex",
+      "BerezovKurskZugLex",
       "UnitGroup",
-      "BerezovZugLex",
+      "BerezovKurskZugLex",
       new Matrix(
           0.687715, 0.725797, 0.016357, 446.000000,
           -0.725906, 0.687793, 0.001135, 6879.500000,
@@ -1670,14 +1746,22 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_ZugLex_1", "Berezov_ZugLex_2"]]
+        ["Units", ["BerezovKursk_ZugLex_1", "BerezovKursk_ZugLex_2"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"],
+        ["Path", ["BerezovKurskAdvance_01", "BerezovKurskAdvance_02", "BerezovKurskAdvance_03", "BerezovKurskAdvance_04", "BerezovKurskAdvance_05", "BerezovKurskAdvance_06", "BerezovKurskAdvance_07", "BerezovKurskAdvance_08", "BerezovKurskAdvance_09", "BerezovKurskAdvance_10", "BerezovKurskAdvance_11", "BerezovKurskAdvance_12", "BerezovKurskAdvance_13", "BerezovKurskAdvance_14", "BerezovKurskAdvance_15", "BerezovKurskAdvance_16", "BerezovKurskAdvance_17", "BerezovKurskAdvance_18", "BerezovKurskAdvance_19", "BerezovKurskAdvance_20", "BerezovKurskAdvance_21", "BerezovKurskAdvance_22", "BerezovKurskAdvance_23", "BerezovKurskAdvance_24", "BerezovKurskAdvance_25", "BerezovKurskAdvance_26", "BerezovKurskAdvance_27", "BerezovKurskAdvance_28", "BerezovKurskAdvance_29", "BerezovKurskAdvance_30"]],
+        ["DelayedOrder", false],
+        ["Formation", "Column"],
+        ["FormationDistance", 17],
+        ["MovingSpeed", 8.800000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
       ]
     ],
 
     [
-      "BerezovZugWeidinger",
+      "BerezovKurskZugWeidinger",
       "UnitGroup",
-      "BerezovZugWeidinger",
+      "BerezovKurskZugWeidinger",
       new Matrix(
           0.683246, 0.719195, -0.126233, 836.000000,
           -0.729057, 0.681536, -0.063120, 6659.500000,
@@ -1685,14 +1769,22 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_ZugWeidinger_1", "Berezov_ZugWeidinger_2"]]
+        ["Units", ["BerezovKursk_ZugWeidinger_1", "BerezovKursk_ZugWeidinger_2"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"],
+        ["Path", ["BerezovKurskAdvance_01", "BerezovKurskAdvance_02", "BerezovKurskAdvance_03", "BerezovKurskAdvance_04", "BerezovKurskAdvance_05", "BerezovKurskAdvance_06", "BerezovKurskAdvance_07", "BerezovKurskAdvance_08", "BerezovKurskAdvance_09", "BerezovKurskAdvance_10", "BerezovKurskAdvance_11", "BerezovKurskAdvance_12", "BerezovKurskAdvance_13", "BerezovKurskAdvance_14", "BerezovKurskAdvance_15", "BerezovKurskAdvance_16", "BerezovKurskAdvance_17", "BerezovKurskAdvance_18", "BerezovKurskAdvance_19", "BerezovKurskAdvance_20", "BerezovKurskAdvance_21", "BerezovKurskAdvance_22", "BerezovKurskAdvance_23", "BerezovKurskAdvance_24", "BerezovKurskAdvance_25", "BerezovKurskAdvance_26", "BerezovKurskAdvance_27", "BerezovKurskAdvance_28", "BerezovKurskAdvance_29", "BerezovKurskAdvance_30"]],
+        ["DelayedOrder", false],
+        ["Formation", "Column"],
+        ["FormationDistance", 17],
+        ["MovingSpeed", 8.800000],
+        ["FirstOrder", "Patrol"],
+        ["CyclePath", false]
       ]
     ],
 
     [
-      "BerezovPltStepichev",
+      "BerezovKurskPltStepichev",
       "UnitGroup",
-      "BerezovPltStepichev",
+      "BerezovKurskPltStepichev",
       new Matrix(
           -1.000000, 0.000000, -0.000007, 4436.000000,
           -0.000000, -0.999992, 0.003881, 6529.500000,
@@ -1700,14 +1792,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltStepichev_1", "Berezov_PltStepichev_2", "Berezov_PltStepichev_3"]]
+        ["Units", ["BerezovKursk_PltStepichev_1", "BerezovKursk_PltStepichev_2", "BerezovKursk_PltStepichev_3"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltKotin",
+      "BerezovKurskPltKotin",
       "UnitGroup",
-      "BerezovPltKotin",
+      "BerezovKurskPltKotin",
       new Matrix(
           -0.997880, 0.000000, -0.065085, 3456.000000,
           0.002005, -0.999526, -0.030737, 6279.500000,
@@ -1715,14 +1808,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltKotin_1", "Berezov_PltKotin_2"]]
+        ["Units", ["BerezovKursk_PltKotin_1", "BerezovKursk_PltKotin_2"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltBerzina",
+      "BerezovKurskPltBerzina",
       "UnitGroup",
-      "BerezovPltBerzina",
+      "BerezovKurskPltBerzina",
       new Matrix(
           -0.997985, 0.000000, 0.063444, 4736.000000,
           0.004036, -0.997975, 0.063485, 6399.500000,
@@ -1730,14 +1824,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltBerzina_1", "Berezov_PltBerzina_3"]]
+        ["Units", ["BerezovKursk_PltBerzina_1", "BerezovKursk_PltBerzina_3"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltSamsonov",
+      "BerezovKurskPltSamsonov",
       "UnitGroup",
-      "BerezovPltSamsonov",
+      "BerezovKurskPltSamsonov",
       new Matrix(
           -0.999757, 0.000000, -0.022020, 3286.000000,
           0.000110, -0.999987, -0.004983, 6366.500000,
@@ -1745,14 +1840,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltSamsonov_1", "Berezov_PltSamsonov_2", "Berezov_PltSamsonov_3", "Berezov_PltSamsonov_4"]]
+        ["Units", ["BerezovKursk_PltSamsonov_1", "BerezovKursk_PltSamsonov_2", "BerezovKursk_PltSamsonov_3", "BerezovKursk_PltSamsonov_4"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovSovietHQ",
+      "BerezovKurskSovietHQ",
       "UnitGroup",
-      "BerezovSovietHQ",
+      "BerezovKurskSovietHQ",
       new Matrix(
           -0.863785, 0.000000, -0.503861, 5399.000000,
           0.375892, -0.665920, -0.644403, 6787.500000,
@@ -1760,14 +1856,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_SovietHQ_1", "Berezov_SovietHQ_2", "Berezov_SovietHQ_3"]]
+        ["Units", ["BerezovKursk_SovietHQ_1", "BerezovKursk_SovietHQ_2", "BerezovKursk_SovietHQ_3"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltVoronov",
+      "BerezovKurskPltVoronov",
       "UnitGroup",
-      "BerezovPltVoronov",
+      "BerezovKurskPltVoronov",
       new Matrix(
           -1.000000, 0.000000, -0.000010, 2546.000000,
           0.000000, -1.000000, 0.000000, 6279.500000,
@@ -1775,14 +1872,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltVoronov_1", "Berezov_PltVoronov_2", "Berezov_PltVoronov_3"]]
+        ["Units", ["BerezovKursk_PltVoronov_1", "BerezovKursk_PltVoronov_2", "BerezovKursk_PltVoronov_3"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltKutuzov",
+      "BerezovKurskPltKutuzov",
       "UnitGroup",
-      "BerezovPltKutuzov",
+      "BerezovKurskPltKutuzov",
       new Matrix(
           -0.999774, 0.000000, -0.021253, 4236.000000,
           -0.000141, -0.999978, 0.006653, 5909.500000,
@@ -1790,14 +1888,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltKutuzov_1", "Berezov_PltKutuzov_2", "Berezov_PltKutuzov_3", "Berezov_PltKutuzov_4"]]
+        ["Units", ["BerezovKursk_PltKutuzov_1", "BerezovKursk_PltKutuzov_2", "BerezovKursk_PltKutuzov_3", "BerezovKursk_PltKutuzov_4"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltPopov",
+      "BerezovKurskPltPopov",
       "UnitGroup",
-      "BerezovPltPopov",
+      "BerezovKurskPltPopov",
       new Matrix(
           -0.999659, 0.000000, -0.026106, 2624.000000,
           -0.000416, -0.999873, 0.015941, 4154.500000,
@@ -1805,14 +1904,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltPopov_1", "Berezov_PltPopov_2", "Berezov_PltPopov_3", "Berezov_PltPopov_4"]]
+        ["Units", ["BerezovKursk_PltPopov_1", "BerezovKursk_PltPopov_2", "BerezovKursk_PltPopov_3", "BerezovKursk_PltPopov_4"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltRhyzov",
+      "BerezovKurskPltRhyzov",
       "UnitGroup",
-      "BerezovPltRhyzov",
+      "BerezovKurskPltRhyzov",
       new Matrix(
           -1.000000, 0.000000, 0.000000, 1311.000000,
           0.000000, -1.000000, 0.000000, 6569.500000,
@@ -1820,14 +1920,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltRhyzov_1", "Berezov_PltRhyzov_2", "Berezov_PltRhyzov_5"]]
+        ["Units", ["BerezovKursk_PltRhyzov_1", "BerezovKursk_PltRhyzov_2", "BerezovKursk_PltRhyzov_5"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltZhilin",
+      "BerezovKurskPltZhilin",
       "UnitGroup",
-      "BerezovPltZhilin",
+      "BerezovKurskPltZhilin",
       new Matrix(
           -0.992614, 0.000000, 0.121317, 1586.000000,
           0.013699, -0.993604, 0.112087, 6119.500000,
@@ -1835,14 +1936,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltZhilin_1", "Berezov_PltZhilin_2", "Berezov_PltZhilin_3"]]
+        ["Units", ["BerezovKursk_PltZhilin_1", "BerezovKursk_PltZhilin_2", "BerezovKursk_PltZhilin_3"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltZhadov",
+      "BerezovKurskPltZhadov",
       "UnitGroup",
-      "BerezovPltZhadov",
+      "BerezovKurskPltZhadov",
       new Matrix(
           -1.000000, 0.000000, 0.000000, 2141.000000,
           0.000000, -1.000000, 0.000000, 6429.500000,
@@ -1850,14 +1952,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltZhadov_1", "Berezov_PltZhadov_2", "Berezov_PltZhadov_3", "Berezov_PltZhadov_4"]]
+        ["Units", ["BerezovKursk_PltZhadov_1", "BerezovKursk_PltZhadov_2", "BerezovKursk_PltZhadov_3", "BerezovKursk_PltZhadov_4"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltMarkov",
+      "BerezovKurskPltMarkov",
       "UnitGroup",
-      "BerezovPltMarkov",
+      "BerezovKurskPltMarkov",
       new Matrix(
           -0.999153, 0.000000, 0.041143, 5386.000000,
           0.002337, -0.998385, 0.056763, 6701.500000,
@@ -1865,14 +1968,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltMarkov_2"]]
+        ["Units", ["BerezovKursk_PltMarkov_2"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltSytnik",
+      "BerezovKurskPltSytnik",
       "UnitGroup",
-      "BerezovPltSytnik",
+      "BerezovKurskPltSytnik",
       new Matrix(
           -0.998861, 0.000000, -0.047722, 3186.000000,
           -0.002278, -0.998860, 0.047677, 5829.500000,
@@ -1880,14 +1984,15 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltSytnik_1", "Berezov_PltSytnik_2", "Berezov_PltSytnik_3", "Berezov_PltSytnik_4", "Berezov_PltSytnik_5"]]
+        ["Units", ["BerezovKursk_PltSytnik_1", "BerezovKursk_PltSytnik_2", "BerezovKursk_PltSytnik_3", "BerezovKursk_PltSytnik_4", "BerezovKursk_PltSytnik_5"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
     [
-      "BerezovPltOleshev",
+      "BerezovKurskPltOleshev",
       "UnitGroup",
-      "BerezovPltOleshev",
+      "BerezovKurskPltOleshev",
       new Matrix(
           -0.999862, 0.000000, 0.016584, 6186.000000,
           0.001040, -0.998033, 0.062689, 6366.500000,
@@ -1895,7 +2000,8 @@ class BerezovContent
           0.000000, 0.000000, 0.000000, 1.000000
         ),
       [
-        ["Units", ["Berezov_PltOleshev_1", "Berezov_PltOleshev_2", "Berezov_PltOleshev_3", "Berezov_PltOleshev_4"]]
+        ["Units", ["BerezovKursk_PltOleshev_1", "BerezovKursk_PltOleshev_2", "BerezovKursk_PltOleshev_3", "BerezovKursk_PltOleshev_4"]],
+        ["GroupEnemyReaction", "ERT_AGGRESSIVE"]
       ]
     ],
 
@@ -1917,12 +2023,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_01",
+      "BerezovKurskAdvance_01",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 522.900024,
-          0.000000, 1.000000, 0.000000, 6833.399902,
+          1.000000, 0.000000, 0.000000, 568.000000,
+          0.000000, 1.000000, 0.000000, 6828.000000,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -1940,12 +2046,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_02",
+      "BerezovKurskAdvance_02",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 707.500000,
-          0.000000, 1.000000, 0.000000, 6833.399902,
+          1.000000, 0.000000, 0.000000, 689.941406,
+          0.000000, 1.000000, 0.000000, 6947.753906,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -1963,12 +2069,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_03",
+      "BerezovKurskAdvance_03",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 883.299988,
-          0.000000, 1.000000, 0.000000, 6833.500000,
+          1.000000, 0.000000, 0.000000, 812.988281,
+          0.000000, 1.000000, 0.000000, 7053.222656,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -1986,12 +2092,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_04",
+      "BerezovKurskAdvance_04",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 1023.900024,
-          0.000000, 1.000000, 0.000000, 6965.299805,
+          1.000000, 0.000000, 0.000000, 962.402344,
+          0.000000, 1.000000, 0.000000, 7105.957031,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2009,12 +2115,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_05",
+      "BerezovKurskAdvance_05",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 1208.500000,
-          0.000000, 1.000000, 0.000000, 6974.100098,
+          1.000000, 0.000000, 0.000000, 1120.605469,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2032,12 +2138,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_06",
+      "BerezovKurskAdvance_06",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 1384.300049,
-          0.000000, 1.000000, 0.000000, 7000.399902,
+          1.000000, 0.000000, 0.000000, 1296.386719,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2055,12 +2161,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_07",
+      "BerezovKurskAdvance_07",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 1568.800049,
-          0.000000, 1.000000, 0.000000, 7000.399902,
+          1.000000, 0.000000, 0.000000, 1472.167969,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2078,12 +2184,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_08",
+      "BerezovKurskAdvance_08",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 1753.400024,
-          0.000000, 1.000000, 0.000000, 6991.600098,
+          1.000000, 0.000000, 0.000000, 1647.949219,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2101,12 +2207,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_09",
+      "BerezovKurskAdvance_09",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 1929.199951,
-          0.000000, 1.000000, 0.000000, 7018.000000,
+          1.000000, 0.000000, 0.000000, 1823.730469,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2124,12 +2230,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_10",
+      "BerezovKurskAdvance_10",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2069.800049,
-          0.000000, 1.000000, 0.000000, 6921.299805,
+          1.000000, 0.000000, 0.000000, 1999.511719,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2147,12 +2253,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_11",
+      "BerezovKurskAdvance_11",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2105.000000,
-          0.000000, 1.000000, 0.000000, 6754.299805,
+          1.000000, 0.000000, 0.000000, 2175.292969,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2170,12 +2276,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_12",
+      "BerezovKurskAdvance_12",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2131.300049,
-          0.000000, 1.000000, 0.000000, 6578.600098,
+          1.000000, 0.000000, 0.000000, 2351.074219,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2193,12 +2299,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_13",
+      "BerezovKurskAdvance_13",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2148.899902,
-          0.000000, 1.000000, 0.000000, 6411.600098,
+          1.000000, 0.000000, 0.000000, 2526.855469,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2216,12 +2322,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_14",
+      "BerezovKurskAdvance_14",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2245.600098,
-          0.000000, 1.000000, 0.000000, 6332.500000,
+          1.000000, 0.000000, 0.000000, 2702.636719,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2239,12 +2345,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_15",
+      "BerezovKurskAdvance_15",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2430.199951,
-          0.000000, 1.000000, 0.000000, 6332.500000,
+          1.000000, 0.000000, 0.000000, 2878.417969,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2262,12 +2368,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_16",
+      "BerezovKurskAdvance_16",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2614.699951,
-          0.000000, 1.000000, 0.000000, 6332.500000,
+          1.000000, 0.000000, 0.000000, 3054.199219,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2285,12 +2391,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_17",
+      "BerezovKurskAdvance_17",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2799.300049,
-          0.000000, 1.000000, 0.000000, 6332.500000,
+          1.000000, 0.000000, 0.000000, 3229.980469,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2308,12 +2414,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_18",
+      "BerezovKurskAdvance_18",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 2983.899902,
-          0.000000, 1.000000, 0.000000, 6323.700195,
+          1.000000, 0.000000, 0.000000, 3405.761719,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2331,12 +2437,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_19",
+      "BerezovKurskAdvance_19",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 3168.399902,
-          0.000000, 1.000000, 0.000000, 6323.700195,
+          1.000000, 0.000000, 0.000000, 3581.542969,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2354,12 +2460,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_20",
+      "BerezovKurskAdvance_20",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 3353.000000,
-          0.000000, 1.000000, 0.000000, 6332.500000,
+          1.000000, 0.000000, 0.000000, 3757.324219,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2377,12 +2483,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_21",
+      "BerezovKurskAdvance_21",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 3511.199951,
-          0.000000, 1.000000, 0.000000, 6341.299805,
+          1.000000, 0.000000, 0.000000, 3933.105469,
+          0.000000, 1.000000, 0.000000, 7123.535156,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2400,12 +2506,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_22",
+      "BerezovKurskAdvance_22",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 3634.000000,
-          0.000000, 1.000000, 0.000000, 6411.000000,
+          1.000000, 0.000000, 0.000000, 4100.097656,
+          0.000000, 1.000000, 0.000000, 7088.378906,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2423,12 +2529,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_23",
+      "BerezovKurskAdvance_23",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 3900.000000,
-          0.000000, 1.000000, 0.000000, 6411.000000,
+          1.000000, 0.000000, 0.000000, 4249.511719,
+          0.000000, 1.000000, 0.000000, 7026.855469,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2446,12 +2552,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_24",
+      "BerezovKurskAdvance_24",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4166.000000,
-          0.000000, 1.000000, 0.000000, 6411.000000,
+          1.000000, 0.000000, 0.000000, 4398.925781,
+          0.000000, 1.000000, 0.000000, 6956.542969,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2469,12 +2575,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_25",
+      "BerezovKurskAdvance_25",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4433.000000,
-          0.000000, 1.000000, 0.000000, 6411.000000,
+          1.000000, 0.000000, 0.000000, 4548.339844,
+          0.000000, 1.000000, 0.000000, 6886.230469,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2492,12 +2598,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_26",
+      "BerezovKurskAdvance_26",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4600.000000,
-          0.000000, 1.000000, 0.000000, 6411.000000,
+          1.000000, 0.000000, 0.000000, 4697.753906,
+          0.000000, 1.000000, 0.000000, 6815.917969,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2515,12 +2621,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_27",
+      "BerezovKurskAdvance_27",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4600.000000,
-          0.000000, 1.000000, 0.000000, 6840.000000,
+          1.000000, 0.000000, 0.000000, 4847.167969,
+          0.000000, 1.000000, 0.000000, 6754.394531,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2538,12 +2644,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_28",
+      "BerezovKurskAdvance_28",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4451.600098,
-          0.000000, 1.000000, 0.000000, 6938.899902,
+          1.000000, 0.000000, 0.000000, 4996.582031,
+          0.000000, 1.000000, 0.000000, 6684.082031,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2561,12 +2667,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_29",
+      "BerezovKurskAdvance_29",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4627.399902,
-          0.000000, 1.000000, 0.000000, 6921.299805,
+          1.000000, 0.000000, 0.000000, 5145.996094,
+          0.000000, 1.000000, 0.000000, 6613.769531,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2584,12 +2690,12 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_30",
+      "BerezovKurskAdvance_30",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
-          1.000000, 0.000000, 0.000000, 4794.399902,
-          0.000000, 1.000000, 0.000000, 6886.200195,
+          1.000000, 0.000000, 0.000000, 5295.410156,
+          0.000000, 1.000000, 0.000000, 6543.457031,
           0.000000, 0.000000, 1.000000, 610.000000,
           0.000000, 0.000000, 0.000000, 1.000000
         ),
@@ -2607,7 +2713,7 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_31",
+      "BerezovKurskAdvance_31",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
@@ -2630,7 +2736,7 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_32",
+      "BerezovKurskAdvance_32",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
@@ -2653,7 +2759,7 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_33",
+      "BerezovKurskAdvance_33",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(
@@ -2676,7 +2782,7 @@ class BerezovContent
     ],
 
     [
-      "BerezovAdvance_34",
+      "BerezovKurskAdvance_34",
       "NavPoint",
       "CZAxisCylNavPoint",
       new Matrix(

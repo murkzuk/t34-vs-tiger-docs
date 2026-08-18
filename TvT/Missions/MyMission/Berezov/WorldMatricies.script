@@ -7,49 +7,49 @@
 //
 //-------------------------------------------------------------------
 
-class BerezovWorldMatrices extends CWorldMatrices
+class BerezovKurskWorldMatrices extends CWorldMatrices
 {
   final static float MatrixWidth  = 9000.0;
   final static float MatrixHeight = 9000.0;
 }
 
 
-class BerezovLandscapeLayer extends CLandscapeLayer
+class BerezovKurskLandscapeLayer extends CLandscapeLayer
 {
   final static int     ImageWidth              = 2049;
   final static int     ImageHeight             = 2049;
 
-  final static String ImageFileName           = "Missions/MyMission/Berezov/hmap.raw";
+  final static String ImageFileName           = "Missions/MyMission/BerezovKursk/hmap.raw";
 
   final static float  FloatValueFactor        = 0.070000*257.0;
 
 }
 
-class BerezovWaterHeights extends CBaseWaterHeightsLayer
+class BerezovKurskWaterHeights extends CBaseWaterHeightsLayer
 {
-  final static String ImageFileName           = "Missions/MyMission/Berezov/hwater.raw";
+  final static String ImageFileName           = "Missions/MyMission/BerezovKursk/hwater.raw";
 
   final static float  FloatValueFactor        = 0.070000*257.0;
 }
 
-class BerezovTerrainZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+class BerezovKurskTerrainZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
 {
   final static int     ImageWidth              = 1024;
   final static int     ImageHeight             = 1024;
 
-  final static String ImageFileName           = "Missions/MyMission/Berezov/TerrainZone_Test.bmp";
+  final static String ImageFileName           = "Missions/MyMission/BerezovKursk/TerrainZone_Test.bmp";
 }
 
-class BerezovRouterZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
+class BerezovKurskRouterZoneLayer extends CTerrainZoneLayer, CBaseZoneMap
 {
   final static int     ImageWidth              = 1024;
   final static int     ImageHeight             = 1024;
 
-  final static String ImageFileName           = "Missions/MyMission/Berezov/RouterZone_Test.bmp";
+  final static String ImageFileName           = "Missions/MyMission/BerezovKursk/RouterZone_Test.bmp";
 }
 
 
-class BerezovMicroTextures1 extends CMicroTexLayer
+class BerezovKurskMicroTextures1 extends CMicroTexLayer
 {
-  final static String ImageFileName           = "Missions/MyMission/Berezov/micro_Test.bmp";
+  final static String ImageFileName           = "Missions/MyMission/BerezovKursk/micro_Test.bmp";
 }

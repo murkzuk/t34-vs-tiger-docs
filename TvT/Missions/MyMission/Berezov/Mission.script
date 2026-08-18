@@ -7,8 +7,11 @@
 //
 //-------------------------------------------------------------------
 
-class CBerezovMission extends CSPMission
+class CBerezovKurskMission extends CSPMission
 {
+  Component BerezovKurskFirstContact;
+  Component BerezovKurskDeepContact;
+
   //
   // Contruction and initialization
   //
@@ -19,9 +22,9 @@ class CBerezovMission extends CSPMission
   static String m_MissionBriefingPicMaterial = "C1M3BriefingPic";
 
   Array  m_MissionObjectives = [
-      [MOTID_Primary,   CBerezovMission_Strings::Objective01, MOSID_InProgress, true],
-      [MOTID_Primary,   CBerezovMission_Strings::Objective02, MOSID_InProgress, true],
-      [MOTID_Secondary, CBerezovMission_Strings::Objective03, MOSID_InProgress, true]
+      [MOTID_Primary,   CBerezovKurskMission_Strings::Objective01, MOSID_InProgress, true],
+      [MOTID_Primary,   CBerezovKurskMission_Strings::Objective02, MOSID_InProgress, true],
+      [MOTID_Secondary, CBerezovKurskMission_Strings::Objective03, MOSID_InProgress, true]
           ];
 
   boolean isDebug = true;
@@ -47,11 +50,11 @@ class CBerezovMission extends CSPMission
   //   m_MissionObjectives only has Primary/Secondary tiers, no Bonus.
   // Objective 1: Destroy Soviet HQ (primary)
   Array KillList_SovietHQ = [
-      "Berezov_SovietHQ_1", "Berezov_SovietHQ_2", "Berezov_SovietHQ_3"
+      "BerezovKursk_SovietHQ_1", "BerezovKursk_SovietHQ_2", "BerezovKursk_SovietHQ_3"
       ];
   // Objective 2: Destroy Plt.Samsonov (secondary)
   Array KillList_PltSamsonov = [
-      "Berezov_PltSamsonov_1", "Berezov_PltSamsonov_2", "Berezov_PltSamsonov_3", "Berezov_PltSamsonov_4"
+      "BerezovKursk_PltSamsonov_1", "BerezovKursk_PltSamsonov_2", "BerezovKursk_PltSamsonov_3", "BerezovKursk_PltSamsonov_4"
       ];
 
   final static Array RouterWorkingZones = [
@@ -69,14 +72,19 @@ class CBerezovMission extends CSPMission
   boolean MainPlayerStart = false;
   boolean Combat = false;
 
-  void CBerezovMission()
+  void CBerezovKurskMission()
   {
+    BerezovKurskFirstContact = new BerezovKurskFirstContact();
+    BerezovKurskFirstContact.Initialize(this, "BerezovKurskFirstContact");
+    BerezovKurskDeepContact = new BerezovKurskDeepContact();
+    BerezovKurskDeepContact.Initialize(this, "BerezovKurskDeepContact");
+
     // Construct mission
-    CSPMission("CBerezovMission", "BerezovContent");
+    CSPMission("CBerezovKurskMission", "BerezovKurskContent");
 
     // Set mission properties
-    SetMissionTerrain(new #ChunkedTerrain<CBerezovTerrain>());
-    SetMissionAtmosphere(new #Atmosphere<BerezovAtmosphere>());
+    SetMissionTerrain(new #ChunkedTerrain<CBerezovKurskTerrain>());
+    SetMissionAtmosphere(new #Atmosphere<BerezovKurskAtmosphere>());
     SetMissionSky(new #SkyObject<CSkyModel>());
 
     if (CDebugSettings::LoadForest)
@@ -87,12 +95,12 @@ class CBerezovMission extends CSPMission
       RegisterObject("Grass", new #Grass<CBaseGrassC1>());
 
 
-    SetMissionWorldMatrices(new #WorldMatrices<BerezovWorldMatrices>(), [
-        [ LAYER_TERRAIN_NAME, "BerezovLandscapeLayer"   ],
-        [ LAYER_TERRAIN_ZONE, "BerezovTerrainZoneLayer" ],
-        [ LAYER_ROUTER_ZONE,  "BerezovRouterZoneLayer"     ],
-        [ LAYER_MICROTEXTURE_MAP1, "BerezovMicroTextures1" ],
-        [ LAYER_TERRAIN_WATERHEIGHTS, "BerezovWaterHeights"]
+    SetMissionWorldMatrices(new #WorldMatrices<BerezovKurskWorldMatrices>(), [
+        [ LAYER_TERRAIN_NAME, "BerezovKurskLandscapeLayer"   ],
+        [ LAYER_TERRAIN_ZONE, "BerezovKurskTerrainZoneLayer" ],
+        [ LAYER_ROUTER_ZONE,  "BerezovKurskRouterZoneLayer"     ],
+        [ LAYER_MICROTEXTURE_MAP1, "BerezovKurskMicroTextures1" ],
+        [ LAYER_TERRAIN_WATERHEIGHTS, "BerezovKurskWaterHeights"]
       ]);
 
     SetRouterPrecalculatedGraph(
@@ -127,10 +135,10 @@ class CBerezovMission extends CSPMission
 
     Combat = true;
 
-    sendEvent(0.0, "BerezovZugFalke", "StartFirstAdvance", []);
-    sendEvent(1.0, "BerezovKGKaiser", "StartFirstAdvance", []);
-    sendEvent(2.0, "BerezovZugLex", "StartFirstAdvance", []);
-    sendEvent(3.0, "BerezovZugWeidinger", "StartFirstAdvance", []);
+    sendEvent(0.0, "BerezovKurskZugFalke", "StartFirstAdvance", []);
+    sendEvent(1.0, "BerezovKurskKGKaiser", "StartFirstAdvance", []);
+    sendEvent(2.0, "BerezovKurskZugLex", "StartFirstAdvance", []);
+    sendEvent(3.0, "BerezovKurskZugWeidinger", "StartFirstAdvance", []);
   }
 
   void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)

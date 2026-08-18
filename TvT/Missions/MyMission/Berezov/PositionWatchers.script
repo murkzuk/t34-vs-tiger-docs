@@ -1,0 +1,94 @@
+//-------------------------------------------------------------------
+//
+//  This code is copyright 2001 by G5 Software.
+//  Any unauthorized usage, either in part or in whole of this code
+//  is strictly prohibited. Violators WILL be prosecuted to the
+//  maximum extent allowed by law.
+//
+//-------------------------------------------------------------------
+
+//--------------------------------------------------------------------------------
+// Position watchers - the mechanism every shipped mission uses to wake groups up,
+// and the one this mission was missing entirely.
+//
+// The TvsT Editor Manual lists positionwatchers.script as a standard mission file:
+// "recursive call scripts for monitoring changes in the location of interactive
+// mission objects (units, buildings, navpoints...)". A watcher fires
+// PointRegionChanged when a watched unit crosses a radius around a named
+// positionable, and the handler sends events to the groups that should react.
+//
+// Modelled on Campaign_2\Mission_4\PositionWatchers.script, which watches the
+// player at 600 units and then wakes its AvantGuard, BaseForce and RearGuard.
+//
+// Without this the Soviet defence has nothing to activate it: the groups sit on
+// their start positions with orders they never receive a reason to execute.
+//--------------------------------------------------------------------------------
+
+class BerezovKurskFirstContact extends CPositionWatcher, CBaseUtilities
+{
+  // Watched from the first advance navpoint, so the trigger fires once the
+  // German column is genuinely under way rather than at mission start.
+  final static String Positionable  = "BerezovKurskAdvance_08";
+  final static Array  ControlPoints = ["MainPlayerUnit"];
+
+  // Radius in world units. 600 matches the shipped mission; the map is
+  // 9000 units across, so this is a local engagement trigger, not map-wide.
+  final static Array RegionDefs = [600.0];
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    logMessage("[Berezov] first contact - forward Soviet units engaging");
+
+    sendEvent(0.0, "BerezovKurskPltSamsonov",  "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskPltBerzina",   "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskPltStepichev", "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskPltZhilin",    "StartAttack", []);
+
+    GetMission().ShutdownWatcher(_PositionWatcher);
+  }
+
+  void PointRelativeSpeedChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    float     _RelativeSpeed
+                                )
+  {
+  }
+}
+
+class BerezovKurskDeepContact extends CPositionWatcher, CBaseUtilities
+{
+  // Second line, further along the advance - the reserves and HQ defence.
+  final static String Positionable  = "BerezovKurskAdvance_20";
+  final static Array  ControlPoints = ["MainPlayerUnit"];
+  final static Array  RegionDefs    = [700.0];
+
+  void PointRegionChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    int       _RegionMask
+                         )
+  {
+    logMessage("[Berezov] deep contact - second line and HQ defence engaging");
+
+    sendEvent(0.0, "BerezovKurskPltKutuzov", "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskPltPopov",   "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskPltVoronov", "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskPltKotin",   "StartAttack", []);
+    sendEvent(0.0, "BerezovKurskSovietHQ",   "StartAttack", []);
+
+    GetMission().ShutdownWatcher(_PositionWatcher);
+  }
+
+  void PointRelativeSpeedChanged(
+    Component _PositionWatcher,
+    int       _Point,
+    float     _RelativeSpeed
+                                )
+  {
+  }
+}

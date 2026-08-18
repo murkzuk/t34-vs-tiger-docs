@@ -13,7 +13,7 @@
 
 
 //--------------------------------------------------------------------------------
-// Shared base for every Berezov group.
+// Shared base for every BerezovKursk group.
 //
 // CBaseUnitGroup's default OnPathEndReached() calls PopOrder() then
 // RepeatOrder(), but PopOrder() returns early when the order stack is empty
@@ -29,8 +29,19 @@
 // engage, instead of leaving it in the undefined empty-order state.
 //--------------------------------------------------------------------------------
 
-class BerezovBaseGroup extends CBaseUnitGroup
+class BerezovKurskBaseGroup extends CBaseUnitGroup
 {
+  // Fired by PositionWatchers.script when the German advance reaches a
+  // trigger radius. Modelled on Campaign_2\Mission_4's CC2M4Gr_AvantGuard76.
+  event void StartAttack()
+  {
+    logMessage(m_GroupID + ": StartAttack - engaging");
+    ActivateRadar(true);
+    ActivateFire(true);
+    SetEnemyReactionType(ERT_AGGRESSIVE);
+    SetOrder_Attack([GetMission().GetMainPlayerObjectID()], ERT_AGGRESSIVE);
+  }
+
   void OnPathEndReached()
   {
     CBaseUnitGroup::OnPathEndReached();
@@ -43,7 +54,7 @@ class BerezovBaseGroup extends CBaseUnitGroup
   }
 }
 
-class BerezovZugFalke extends BerezovBaseGroup
+class BerezovKurskZugFalke extends BerezovKurskBaseGroup
 {
   float TankAttackSpeed = 10.0f;
 
@@ -56,46 +67,42 @@ class BerezovZugFalke extends BerezovBaseGroup
     SetEnemyReactionType(ERT_PASSIVE);
 
     Array ApproachPoints = [
-                    GetNavPointBehPos("BerezovAdvance_01"),
-                    GetNavPointBehPos("BerezovAdvance_02"),
-                    GetNavPointBehPos("BerezovAdvance_03"),
-                    GetNavPointBehPos("BerezovAdvance_04"),
-                    GetNavPointBehPos("BerezovAdvance_05"),
-                    GetNavPointBehPos("BerezovAdvance_06"),
-                    GetNavPointBehPos("BerezovAdvance_07"),
-                    GetNavPointBehPos("BerezovAdvance_08"),
-                    GetNavPointBehPos("BerezovAdvance_09"),
-                    GetNavPointBehPos("BerezovAdvance_10"),
-                    GetNavPointBehPos("BerezovAdvance_11"),
-                    GetNavPointBehPos("BerezovAdvance_12"),
-                    GetNavPointBehPos("BerezovAdvance_13"),
-                    GetNavPointBehPos("BerezovAdvance_14"),
-                    GetNavPointBehPos("BerezovAdvance_15"),
-                    GetNavPointBehPos("BerezovAdvance_16"),
-                    GetNavPointBehPos("BerezovAdvance_17"),
-                    GetNavPointBehPos("BerezovAdvance_18"),
-                    GetNavPointBehPos("BerezovAdvance_19"),
-                    GetNavPointBehPos("BerezovAdvance_20"),
-                    GetNavPointBehPos("BerezovAdvance_21"),
-                    GetNavPointBehPos("BerezovAdvance_22"),
-                    GetNavPointBehPos("BerezovAdvance_23"),
-                    GetNavPointBehPos("BerezovAdvance_24"),
-                    GetNavPointBehPos("BerezovAdvance_25"),
-                    GetNavPointBehPos("BerezovAdvance_26"),
-                    GetNavPointBehPos("BerezovAdvance_27"),
-                    GetNavPointBehPos("BerezovAdvance_28"),
-                    GetNavPointBehPos("BerezovAdvance_29"),
-                    GetNavPointBehPos("BerezovAdvance_30"),
-                    GetNavPointBehPos("BerezovAdvance_31"),
-                    GetNavPointBehPos("BerezovAdvance_32"),
-                    GetNavPointBehPos("BerezovAdvance_33"),
-                    GetNavPointBehPos("BerezovAdvance_34")
+                    GetNavPointBehPos("BerezovKurskAdvance_01"),
+                    GetNavPointBehPos("BerezovKurskAdvance_02"),
+                    GetNavPointBehPos("BerezovKurskAdvance_03"),
+                    GetNavPointBehPos("BerezovKurskAdvance_04"),
+                    GetNavPointBehPos("BerezovKurskAdvance_05"),
+                    GetNavPointBehPos("BerezovKurskAdvance_06"),
+                    GetNavPointBehPos("BerezovKurskAdvance_07"),
+                    GetNavPointBehPos("BerezovKurskAdvance_08"),
+                    GetNavPointBehPos("BerezovKurskAdvance_09"),
+                    GetNavPointBehPos("BerezovKurskAdvance_10"),
+                    GetNavPointBehPos("BerezovKurskAdvance_11"),
+                    GetNavPointBehPos("BerezovKurskAdvance_12"),
+                    GetNavPointBehPos("BerezovKurskAdvance_13"),
+                    GetNavPointBehPos("BerezovKurskAdvance_14"),
+                    GetNavPointBehPos("BerezovKurskAdvance_15"),
+                    GetNavPointBehPos("BerezovKurskAdvance_16"),
+                    GetNavPointBehPos("BerezovKurskAdvance_17"),
+                    GetNavPointBehPos("BerezovKurskAdvance_18"),
+                    GetNavPointBehPos("BerezovKurskAdvance_19"),
+                    GetNavPointBehPos("BerezovKurskAdvance_20"),
+                    GetNavPointBehPos("BerezovKurskAdvance_21"),
+                    GetNavPointBehPos("BerezovKurskAdvance_22"),
+                    GetNavPointBehPos("BerezovKurskAdvance_23"),
+                    GetNavPointBehPos("BerezovKurskAdvance_24"),
+                    GetNavPointBehPos("BerezovKurskAdvance_25"),
+                    GetNavPointBehPos("BerezovKurskAdvance_26"),
+                    GetNavPointBehPos("BerezovKurskAdvance_27"),
+                    GetNavPointBehPos("BerezovKurskAdvance_28"),
+                    GetNavPointBehPos("BerezovKurskAdvance_29"),
+                    GetNavPointBehPos("BerezovKurskAdvance_30")
                            ];
 
-    SetFirstQueueOrders([
-      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
-      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
-                        ]);
+//    SetFirstQueueOrders([
+//      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+//      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+//                        ]);
   }
 
   void EndFirstAdvance_Attack()
@@ -106,7 +113,7 @@ class BerezovZugFalke extends BerezovBaseGroup
   }
 }
 
-class BerezovHQ extends BerezovBaseGroup
+class BerezovKurskHQ extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -117,7 +124,7 @@ class BerezovHQ extends BerezovBaseGroup
   }
 }
 
-class BerezovKGKaiser extends BerezovBaseGroup
+class BerezovKurskKGKaiser extends BerezovKurskBaseGroup
 {
   float TankAttackSpeed = 10.0f;
 
@@ -130,46 +137,42 @@ class BerezovKGKaiser extends BerezovBaseGroup
     SetEnemyReactionType(ERT_PASSIVE);
 
     Array ApproachPoints = [
-                    GetNavPointBehPos("BerezovAdvance_01"),
-                    GetNavPointBehPos("BerezovAdvance_02"),
-                    GetNavPointBehPos("BerezovAdvance_03"),
-                    GetNavPointBehPos("BerezovAdvance_04"),
-                    GetNavPointBehPos("BerezovAdvance_05"),
-                    GetNavPointBehPos("BerezovAdvance_06"),
-                    GetNavPointBehPos("BerezovAdvance_07"),
-                    GetNavPointBehPos("BerezovAdvance_08"),
-                    GetNavPointBehPos("BerezovAdvance_09"),
-                    GetNavPointBehPos("BerezovAdvance_10"),
-                    GetNavPointBehPos("BerezovAdvance_11"),
-                    GetNavPointBehPos("BerezovAdvance_12"),
-                    GetNavPointBehPos("BerezovAdvance_13"),
-                    GetNavPointBehPos("BerezovAdvance_14"),
-                    GetNavPointBehPos("BerezovAdvance_15"),
-                    GetNavPointBehPos("BerezovAdvance_16"),
-                    GetNavPointBehPos("BerezovAdvance_17"),
-                    GetNavPointBehPos("BerezovAdvance_18"),
-                    GetNavPointBehPos("BerezovAdvance_19"),
-                    GetNavPointBehPos("BerezovAdvance_20"),
-                    GetNavPointBehPos("BerezovAdvance_21"),
-                    GetNavPointBehPos("BerezovAdvance_22"),
-                    GetNavPointBehPos("BerezovAdvance_23"),
-                    GetNavPointBehPos("BerezovAdvance_24"),
-                    GetNavPointBehPos("BerezovAdvance_25"),
-                    GetNavPointBehPos("BerezovAdvance_26"),
-                    GetNavPointBehPos("BerezovAdvance_27"),
-                    GetNavPointBehPos("BerezovAdvance_28"),
-                    GetNavPointBehPos("BerezovAdvance_29"),
-                    GetNavPointBehPos("BerezovAdvance_30"),
-                    GetNavPointBehPos("BerezovAdvance_31"),
-                    GetNavPointBehPos("BerezovAdvance_32"),
-                    GetNavPointBehPos("BerezovAdvance_33"),
-                    GetNavPointBehPos("BerezovAdvance_34")
+                    GetNavPointBehPos("BerezovKurskAdvance_01"),
+                    GetNavPointBehPos("BerezovKurskAdvance_02"),
+                    GetNavPointBehPos("BerezovKurskAdvance_03"),
+                    GetNavPointBehPos("BerezovKurskAdvance_04"),
+                    GetNavPointBehPos("BerezovKurskAdvance_05"),
+                    GetNavPointBehPos("BerezovKurskAdvance_06"),
+                    GetNavPointBehPos("BerezovKurskAdvance_07"),
+                    GetNavPointBehPos("BerezovKurskAdvance_08"),
+                    GetNavPointBehPos("BerezovKurskAdvance_09"),
+                    GetNavPointBehPos("BerezovKurskAdvance_10"),
+                    GetNavPointBehPos("BerezovKurskAdvance_11"),
+                    GetNavPointBehPos("BerezovKurskAdvance_12"),
+                    GetNavPointBehPos("BerezovKurskAdvance_13"),
+                    GetNavPointBehPos("BerezovKurskAdvance_14"),
+                    GetNavPointBehPos("BerezovKurskAdvance_15"),
+                    GetNavPointBehPos("BerezovKurskAdvance_16"),
+                    GetNavPointBehPos("BerezovKurskAdvance_17"),
+                    GetNavPointBehPos("BerezovKurskAdvance_18"),
+                    GetNavPointBehPos("BerezovKurskAdvance_19"),
+                    GetNavPointBehPos("BerezovKurskAdvance_20"),
+                    GetNavPointBehPos("BerezovKurskAdvance_21"),
+                    GetNavPointBehPos("BerezovKurskAdvance_22"),
+                    GetNavPointBehPos("BerezovKurskAdvance_23"),
+                    GetNavPointBehPos("BerezovKurskAdvance_24"),
+                    GetNavPointBehPos("BerezovKurskAdvance_25"),
+                    GetNavPointBehPos("BerezovKurskAdvance_26"),
+                    GetNavPointBehPos("BerezovKurskAdvance_27"),
+                    GetNavPointBehPos("BerezovKurskAdvance_28"),
+                    GetNavPointBehPos("BerezovKurskAdvance_29"),
+                    GetNavPointBehPos("BerezovKurskAdvance_30")
                            ];
 
-    SetFirstQueueOrders([
-      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
-      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
-                        ]);
+//    SetFirstQueueOrders([
+//      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+//      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+//                        ]);
   }
 
   void EndFirstAdvance_Attack()
@@ -180,7 +183,7 @@ class BerezovKGKaiser extends BerezovBaseGroup
   }
 }
 
-class BerezovZugLex extends BerezovBaseGroup
+class BerezovKurskZugLex extends BerezovKurskBaseGroup
 {
   float AdvanceSpeed = 7.0f;
 
@@ -193,46 +196,42 @@ class BerezovZugLex extends BerezovBaseGroup
     SetEnemyReactionType(ERT_PASSIVE);
 
     Array ApproachPoints = [
-                    GetNavPointBehPos("BerezovAdvance_01"),
-                    GetNavPointBehPos("BerezovAdvance_02"),
-                    GetNavPointBehPos("BerezovAdvance_03"),
-                    GetNavPointBehPos("BerezovAdvance_04"),
-                    GetNavPointBehPos("BerezovAdvance_05"),
-                    GetNavPointBehPos("BerezovAdvance_06"),
-                    GetNavPointBehPos("BerezovAdvance_07"),
-                    GetNavPointBehPos("BerezovAdvance_08"),
-                    GetNavPointBehPos("BerezovAdvance_09"),
-                    GetNavPointBehPos("BerezovAdvance_10"),
-                    GetNavPointBehPos("BerezovAdvance_11"),
-                    GetNavPointBehPos("BerezovAdvance_12"),
-                    GetNavPointBehPos("BerezovAdvance_13"),
-                    GetNavPointBehPos("BerezovAdvance_14"),
-                    GetNavPointBehPos("BerezovAdvance_15"),
-                    GetNavPointBehPos("BerezovAdvance_16"),
-                    GetNavPointBehPos("BerezovAdvance_17"),
-                    GetNavPointBehPos("BerezovAdvance_18"),
-                    GetNavPointBehPos("BerezovAdvance_19"),
-                    GetNavPointBehPos("BerezovAdvance_20"),
-                    GetNavPointBehPos("BerezovAdvance_21"),
-                    GetNavPointBehPos("BerezovAdvance_22"),
-                    GetNavPointBehPos("BerezovAdvance_23"),
-                    GetNavPointBehPos("BerezovAdvance_24"),
-                    GetNavPointBehPos("BerezovAdvance_25"),
-                    GetNavPointBehPos("BerezovAdvance_26"),
-                    GetNavPointBehPos("BerezovAdvance_27"),
-                    GetNavPointBehPos("BerezovAdvance_28"),
-                    GetNavPointBehPos("BerezovAdvance_29"),
-                    GetNavPointBehPos("BerezovAdvance_30"),
-                    GetNavPointBehPos("BerezovAdvance_31"),
-                    GetNavPointBehPos("BerezovAdvance_32"),
-                    GetNavPointBehPos("BerezovAdvance_33"),
-                    GetNavPointBehPos("BerezovAdvance_34")
+                    GetNavPointBehPos("BerezovKurskAdvance_01"),
+                    GetNavPointBehPos("BerezovKurskAdvance_02"),
+                    GetNavPointBehPos("BerezovKurskAdvance_03"),
+                    GetNavPointBehPos("BerezovKurskAdvance_04"),
+                    GetNavPointBehPos("BerezovKurskAdvance_05"),
+                    GetNavPointBehPos("BerezovKurskAdvance_06"),
+                    GetNavPointBehPos("BerezovKurskAdvance_07"),
+                    GetNavPointBehPos("BerezovKurskAdvance_08"),
+                    GetNavPointBehPos("BerezovKurskAdvance_09"),
+                    GetNavPointBehPos("BerezovKurskAdvance_10"),
+                    GetNavPointBehPos("BerezovKurskAdvance_11"),
+                    GetNavPointBehPos("BerezovKurskAdvance_12"),
+                    GetNavPointBehPos("BerezovKurskAdvance_13"),
+                    GetNavPointBehPos("BerezovKurskAdvance_14"),
+                    GetNavPointBehPos("BerezovKurskAdvance_15"),
+                    GetNavPointBehPos("BerezovKurskAdvance_16"),
+                    GetNavPointBehPos("BerezovKurskAdvance_17"),
+                    GetNavPointBehPos("BerezovKurskAdvance_18"),
+                    GetNavPointBehPos("BerezovKurskAdvance_19"),
+                    GetNavPointBehPos("BerezovKurskAdvance_20"),
+                    GetNavPointBehPos("BerezovKurskAdvance_21"),
+                    GetNavPointBehPos("BerezovKurskAdvance_22"),
+                    GetNavPointBehPos("BerezovKurskAdvance_23"),
+                    GetNavPointBehPos("BerezovKurskAdvance_24"),
+                    GetNavPointBehPos("BerezovKurskAdvance_25"),
+                    GetNavPointBehPos("BerezovKurskAdvance_26"),
+                    GetNavPointBehPos("BerezovKurskAdvance_27"),
+                    GetNavPointBehPos("BerezovKurskAdvance_28"),
+                    GetNavPointBehPos("BerezovKurskAdvance_29"),
+                    GetNavPointBehPos("BerezovKurskAdvance_30")
                            ];
 
-    SetFirstQueueOrders([
-      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
-      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
-                        ]);
+//    SetFirstQueueOrders([
+//      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
+//      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+//                        ]);
   }
 
   void EndFirstAdvance_Attack()
@@ -243,7 +242,7 @@ class BerezovZugLex extends BerezovBaseGroup
   }
 }
 
-class BerezovZugWeidinger extends BerezovBaseGroup
+class BerezovKurskZugWeidinger extends BerezovKurskBaseGroup
 {
   float AdvanceSpeed = 5.0f;
 
@@ -255,46 +254,42 @@ class BerezovZugWeidinger extends BerezovBaseGroup
     SetEnemyReactionType(ERT_PASSIVE);
 
     Array ApproachPoints = [
-                    GetNavPointBehPos("BerezovAdvance_01"),
-                    GetNavPointBehPos("BerezovAdvance_02"),
-                    GetNavPointBehPos("BerezovAdvance_03"),
-                    GetNavPointBehPos("BerezovAdvance_04"),
-                    GetNavPointBehPos("BerezovAdvance_05"),
-                    GetNavPointBehPos("BerezovAdvance_06"),
-                    GetNavPointBehPos("BerezovAdvance_07"),
-                    GetNavPointBehPos("BerezovAdvance_08"),
-                    GetNavPointBehPos("BerezovAdvance_09"),
-                    GetNavPointBehPos("BerezovAdvance_10"),
-                    GetNavPointBehPos("BerezovAdvance_11"),
-                    GetNavPointBehPos("BerezovAdvance_12"),
-                    GetNavPointBehPos("BerezovAdvance_13"),
-                    GetNavPointBehPos("BerezovAdvance_14"),
-                    GetNavPointBehPos("BerezovAdvance_15"),
-                    GetNavPointBehPos("BerezovAdvance_16"),
-                    GetNavPointBehPos("BerezovAdvance_17"),
-                    GetNavPointBehPos("BerezovAdvance_18"),
-                    GetNavPointBehPos("BerezovAdvance_19"),
-                    GetNavPointBehPos("BerezovAdvance_20"),
-                    GetNavPointBehPos("BerezovAdvance_21"),
-                    GetNavPointBehPos("BerezovAdvance_22"),
-                    GetNavPointBehPos("BerezovAdvance_23"),
-                    GetNavPointBehPos("BerezovAdvance_24"),
-                    GetNavPointBehPos("BerezovAdvance_25"),
-                    GetNavPointBehPos("BerezovAdvance_26"),
-                    GetNavPointBehPos("BerezovAdvance_27"),
-                    GetNavPointBehPos("BerezovAdvance_28"),
-                    GetNavPointBehPos("BerezovAdvance_29"),
-                    GetNavPointBehPos("BerezovAdvance_30"),
-                    GetNavPointBehPos("BerezovAdvance_31"),
-                    GetNavPointBehPos("BerezovAdvance_32"),
-                    GetNavPointBehPos("BerezovAdvance_33"),
-                    GetNavPointBehPos("BerezovAdvance_34")
+                    GetNavPointBehPos("BerezovKurskAdvance_01"),
+                    GetNavPointBehPos("BerezovKurskAdvance_02"),
+                    GetNavPointBehPos("BerezovKurskAdvance_03"),
+                    GetNavPointBehPos("BerezovKurskAdvance_04"),
+                    GetNavPointBehPos("BerezovKurskAdvance_05"),
+                    GetNavPointBehPos("BerezovKurskAdvance_06"),
+                    GetNavPointBehPos("BerezovKurskAdvance_07"),
+                    GetNavPointBehPos("BerezovKurskAdvance_08"),
+                    GetNavPointBehPos("BerezovKurskAdvance_09"),
+                    GetNavPointBehPos("BerezovKurskAdvance_10"),
+                    GetNavPointBehPos("BerezovKurskAdvance_11"),
+                    GetNavPointBehPos("BerezovKurskAdvance_12"),
+                    GetNavPointBehPos("BerezovKurskAdvance_13"),
+                    GetNavPointBehPos("BerezovKurskAdvance_14"),
+                    GetNavPointBehPos("BerezovKurskAdvance_15"),
+                    GetNavPointBehPos("BerezovKurskAdvance_16"),
+                    GetNavPointBehPos("BerezovKurskAdvance_17"),
+                    GetNavPointBehPos("BerezovKurskAdvance_18"),
+                    GetNavPointBehPos("BerezovKurskAdvance_19"),
+                    GetNavPointBehPos("BerezovKurskAdvance_20"),
+                    GetNavPointBehPos("BerezovKurskAdvance_21"),
+                    GetNavPointBehPos("BerezovKurskAdvance_22"),
+                    GetNavPointBehPos("BerezovKurskAdvance_23"),
+                    GetNavPointBehPos("BerezovKurskAdvance_24"),
+                    GetNavPointBehPos("BerezovKurskAdvance_25"),
+                    GetNavPointBehPos("BerezovKurskAdvance_26"),
+                    GetNavPointBehPos("BerezovKurskAdvance_27"),
+                    GetNavPointBehPos("BerezovKurskAdvance_28"),
+                    GetNavPointBehPos("BerezovKurskAdvance_29"),
+                    GetNavPointBehPos("BerezovKurskAdvance_30")
                            ];
 
-    SetFirstQueueOrders([
-      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
-      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
-                        ]);
+//    SetFirstQueueOrders([
+//      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
+//      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+//                        ]);
   }
 
   void EndFirstAdvance_Attack()
@@ -304,7 +299,7 @@ class BerezovZugWeidinger extends BerezovBaseGroup
   }
 }
 
-class BerezovPltStepichev extends BerezovBaseGroup
+class BerezovKurskPltStepichev extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -315,7 +310,7 @@ class BerezovPltStepichev extends BerezovBaseGroup
   }
 }
 
-class BerezovPltKotin extends BerezovBaseGroup
+class BerezovKurskPltKotin extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -326,7 +321,7 @@ class BerezovPltKotin extends BerezovBaseGroup
   }
 }
 
-class BerezovPltBerzina extends BerezovBaseGroup
+class BerezovKurskPltBerzina extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -337,7 +332,7 @@ class BerezovPltBerzina extends BerezovBaseGroup
   }
 }
 
-class BerezovPltSamsonov extends BerezovBaseGroup
+class BerezovKurskPltSamsonov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -348,7 +343,7 @@ class BerezovPltSamsonov extends BerezovBaseGroup
   }
 }
 
-class BerezovSovietHQ extends BerezovBaseGroup
+class BerezovKurskSovietHQ extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -359,7 +354,7 @@ class BerezovSovietHQ extends BerezovBaseGroup
   }
 }
 
-class BerezovPltVoronov extends BerezovBaseGroup
+class BerezovKurskPltVoronov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -370,7 +365,7 @@ class BerezovPltVoronov extends BerezovBaseGroup
   }
 }
 
-class BerezovPltKutuzov extends BerezovBaseGroup
+class BerezovKurskPltKutuzov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -381,7 +376,7 @@ class BerezovPltKutuzov extends BerezovBaseGroup
   }
 }
 
-class BerezovPltPopov extends BerezovBaseGroup
+class BerezovKurskPltPopov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -392,7 +387,7 @@ class BerezovPltPopov extends BerezovBaseGroup
   }
 }
 
-class BerezovPltRhyzov extends BerezovBaseGroup
+class BerezovKurskPltRhyzov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -403,7 +398,7 @@ class BerezovPltRhyzov extends BerezovBaseGroup
   }
 }
 
-class BerezovPltZhilin extends BerezovBaseGroup
+class BerezovKurskPltZhilin extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -414,7 +409,7 @@ class BerezovPltZhilin extends BerezovBaseGroup
   }
 }
 
-class BerezovPltZhadov extends BerezovBaseGroup
+class BerezovKurskPltZhadov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -425,7 +420,7 @@ class BerezovPltZhadov extends BerezovBaseGroup
   }
 }
 
-class BerezovPltMarkov extends BerezovBaseGroup
+class BerezovKurskPltMarkov extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -436,7 +431,7 @@ class BerezovPltMarkov extends BerezovBaseGroup
   }
 }
 
-class BerezovPltSytnik extends BerezovBaseGroup
+class BerezovKurskPltSytnik extends BerezovKurskBaseGroup
 {
   void Init()
   {
@@ -447,7 +442,7 @@ class BerezovPltSytnik extends BerezovBaseGroup
   }
 }
 
-class BerezovPltOleshev extends BerezovBaseGroup
+class BerezovKurskPltOleshev extends BerezovKurskBaseGroup
 {
   void Init()
   {

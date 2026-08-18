@@ -10,12 +10,12 @@
 //-----------------
 //  Mission strings
 //-----------------
-class CBerezovMission_Strings extends CCommonStrings
+class CBerezovKurskMission_Strings extends CCommonStrings
 {
-  final static WString MissionName    = getLocalized("MissionBerezov", "MissionName");
-  final static WString BriefingText   = getLocalized("MissionBerezov", "BriefingText");
-  final static WString ObjectivesText = getLocalized("MissionBerezov", "ObjectivesText");
-  final static WString Objective01    = getLocalized("MissionBerezov", "Objective01");
-  final static WString Objective02    = getLocalized("MissionBerezov", "Objective02");
-  final static WString Objective03    = getLocalized("MissionBerezov", "Objective03");
+  final static WString MissionName    = L"Operation Citadel: Berezov (Kursk)";
+  final static WString BriefingText   = L"Your Tiger spearheads the attack across the Kursk steppe, with the Panzer IVs of Zug Falke alongside and KG Kaiser following behind. Smash the anti-tank positions and armour barring the advance, then press east. Move quickly - the assault depends on breaking through before the Russian can reinforce.";
+  final static WString ObjectivesText = L"Advance east along the approach route and destroy the Soviet defence.";
+  final static WString Objective01    = L"Advance east along the approach route";
+  final static WString Objective02    = L"Destroy the Soviet HQ";
+  final static WString Objective03    = L"Destroy Plt. Samsonov's tank platoon";
 }
