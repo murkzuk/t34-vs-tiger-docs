@@ -45,10 +45,10 @@ from . import ms2_reader
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 1, 0),
+    "version": (1, 2, 0),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
-    "description": "Imports static mesh geometry (positions/normals/UVs/triangles/hierarchy) from T34 vs Tiger's .ms2 model format",
+    "description": "Imports mesh geometry and skin weights (positions/normals/UVs/triangles/hierarchy/vertex groups) from T34 vs Tiger's .ms2 model format",
     "category": "Import-Export",
 }
 
@@ -156,6 +156,7 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
         print("  (%s: authored normals not applied - see above)" % node.name)
 
     obj = bpy.data.objects.new(node.name or ("node_%d" % index), mesh)
+    obj["ms2_node_index"] = index
     return obj
 
 
@@ -177,6 +178,34 @@ def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTH
             obj.hide_viewport = True
             obj.hide_render = True
             hidden_count += 1
+
+    # Skin weights -> real Blender vertex groups, one per influencing
+    # joint, named after the joint node it points at. Purely additive:
+    # no vertex is moved, so this cannot change how anything looks. It
+    # is what the rigging half of the pipeline needs, and it makes the
+    # joint assignment directly inspectable in Blender's own UI.
+    weighted = 0
+    for i, node in enumerate(nodes):
+        if not node.weights or not node.positions:
+            continue
+        obj = objects[i]
+        groups = {}
+        for v, (w, js) in enumerate(zip(node.weights, node.joint_idx)):
+            for k in range(4):
+                if w[k] <= 1e-6:
+                    continue
+                j = js[k]
+                if not (0 <= j < len(nodes)):
+                    continue
+                name = nodes[j].name or ("node_%d" % j)
+                g = groups.get(name)
+                if g is None:
+                    g = groups[name] = obj.vertex_groups.new(name=name)
+                g.add([v], w[k], 'REPLACE')
+        if groups:
+            weighted += 1
+    if weighted:
+        print("  skin weights: %d objects given vertex groups" % weighted)
 
     # Wire up parenting after all objects exist, using node_id as a
     # same-file node index (confirmed against real production data).

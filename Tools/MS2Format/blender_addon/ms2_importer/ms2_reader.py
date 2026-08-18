@@ -47,6 +47,9 @@ class Ms2Node:
         self.uvs = []         # list of (u,v)
         self.indices = []     # flat list of vertex indices, 3 per triangle
         self.is_empty = False
+        self.weights = []      # per-vertex (w0,w1,w2,w3)
+        self.joint_idx = []    # per-vertex (j0,j1,j2,j3) node indices
+        self.binds = []        # (index, 4x4 matrix, vec3) per record
 
 
 def _read_cstring(data, offset):
@@ -85,9 +88,18 @@ def _skip_remaining_after_0x40_safe(data, offset, vertex_count, flags_bitmask):
     return end
 
 
+_LAST_BIND = [None]   # bind block (offset, count) seen by the most recent call
+
+
 def _skip_remaining_after_0x40(data, offset, vertex_count, flags_bitmask):
     """Continue past the blocks that come after 0x40 in check order
-    (0x200, 0x400, 0x10000, 0x4000, 0x40000), given a starting offset."""
+    (0x200, 0x400, 0x10000, 0x4000, 0x40000), given a starting offset.
+
+    NOTE: this is called speculatively (twice) by _skip_optional_blocks to
+    disambiguate the old/new exporter layouts, so _LAST_BIND is only
+    meaningful for the branch that actually gets committed - see the
+    callers, which re-run the winning branch before reading it."""
+    _LAST_BIND[0] = None
     if flags_bitmask & 0x200:
         f_count = struct.unpack_from('<i', data, offset)[0]
         offset += 4 + f_count * 112
@@ -96,6 +108,7 @@ def _skip_remaining_after_0x40(data, offset, vertex_count, flags_bitmask):
         offset += 4 + g_count * 92
     if flags_bitmask & 0x10000:
         h_count = struct.unpack_from('<i', data, offset)[0]
+        _LAST_BIND[0] = (offset + 4, h_count)
         offset += 4 + h_count * 80
     if flags_bitmask & 0x4000:
         offset += 4
@@ -104,12 +117,16 @@ def _skip_remaining_after_0x40(data, offset, vertex_count, flags_bitmask):
     return offset
 
 
+_LAST_SKIN = [None]
+
+
 def _skip_optional_blocks(data, offset, vertex_count, flags_bitmask):
     """Skip the six flags_bitmask-gated optional blocks by their known
     exact byte sizes. Content is not read (unmapped in most cases)."""
     if flags_bitmask & 0x800:
         offset += vertex_count * 8
     if flags_bitmask & 0x10:
+        _LAST_SKIN[0] = offset
         offset += vertex_count * 20
     if flags_bitmask & 0x40:
         # Two exporter behaviours confirmed to exist for this block: files
@@ -130,12 +147,15 @@ def _skip_optional_blocks(data, offset, vertex_count, flags_bitmask):
         old_valid = old_end is not None and _looks_like_valid_next(data, old_end)
         new_valid = new_end is not None and _looks_like_valid_next(data, new_end)
         if new_valid and not old_valid:
+            _skip_remaining_after_0x40_safe(data, new_style_base, vertex_count, flags_bitmask)
             return new_end
         elif old_valid and not new_valid:
+            _skip_remaining_after_0x40_safe(data, base, vertex_count, flags_bitmask)
             return old_end
         elif new_valid and old_valid:
             # Both look plausible - prefer the newer layout, since it's
             # what the decompiled June 2007 exporter binary actually does.
+            _skip_remaining_after_0x40_safe(data, new_style_base, vertex_count, flags_bitmask)
             return new_end
         else:
             # Neither validates - fall back to the newer layout as the
@@ -197,7 +217,26 @@ def _read_node(data, offset):
     offset += 4
     offset += d_count * 12 + d_count * 16
 
+    _LAST_SKIN[0] = None
+    _LAST_BIND[0] = None
     offset = _skip_optional_blocks(data, offset, vcount, flags_bitmask)
+
+    # [2026-08-18] The 20-byte per-vertex skin record is four float32
+    # weights followed by four *byte* joint indices packed into what looks
+    # like an int32 - NOT a single int32 index, as an earlier pass recorded.
+    # Reading it as one int32 returns the first joint, which is correct for
+    # the common single-influence case and is why the error went unnoticed.
+    if _LAST_SKIN[0] is not None:
+        so = _LAST_SKIN[0]
+        for v in range(vcount):
+            node.weights.append(struct.unpack_from('<4f', data, so + v * 20))
+            node.joint_idx.append(struct.unpack_from('<4B', data, so + v * 20 + 16))
+    if _LAST_BIND[0] is not None:
+        bo, h = _LAST_BIND[0]
+        for j in range(h):
+            node.binds.append((struct.unpack_from('<i', data, bo + j * 80)[0],
+                               struct.unpack_from('<16f', data, bo + j * 80 + 4),
+                               struct.unpack_from('<3f', data, bo + j * 80 + 68)))
 
     return node, offset
 
