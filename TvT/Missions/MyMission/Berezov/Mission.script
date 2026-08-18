@@ -53,23 +53,10 @@ class CBerezovMission extends CSPMission
   Array KillList_PltSamsonov = [
       "Berezov_PltSamsonov_1", "Berezov_PltSamsonov_2", "Berezov_PltSamsonov_3", "Berezov_PltSamsonov_4"
       ];
-  // Not an objective - triggers Plt.Oleshev's reinforcement move to Berezov,
-  // matching the real mission's "CG State: Plt.Kutuzov destroyed" event.
-  Array KillList_PltKutuzov = [
-      "Berezov_PltKutuzov_1", "Berezov_PltKutuzov_2", "Berezov_PltKutuzov_3", "Berezov_PltKutuzov_4"
-      ];
 
-  // Bounding box the router is allowed to compute paths within - without
-  // this, no unit on the map can path-find at all (matches the real,
-  // working zone format found in Campaign_2\Mission_5's own Mission.script).
-  // Widened to cover the whole 18000x18000 map (not just the battle area)
-  // to rule out any axis-order ambiguity in how this zone is interpreted -
-  // a real path failure (AStarSteps=20000, valid start cell but no route
-  // found) persisted even though the terrain along the whole route is
-  // confirmed passable, so this removes zone coverage as a variable.
   final static Array RouterWorkingZones = [
-      [0.0, 0.0, 18000.0, 18000.0]
-    ];
+    [40000.0, 40000.0, 60000.0, 60000.0]
+                                          ];
 
   final static Array   DefaultMask = [["ENEMY", "MainMesh"], ["NEUTRAL"]];
   final static Array          Mask = [["ENEMY", "MainMesh"], ["NEUTRAL", "InvisibleOnRadar"]];
@@ -80,6 +67,7 @@ class CBerezovMission extends CSPMission
   boolean TigerAggr = false;
 
   boolean MainPlayerStart = false;
+  boolean Combat = false;
 
   void CBerezovMission()
   {
@@ -110,7 +98,7 @@ class CBerezovMission extends CSPMission
     SetRouterPrecalculatedGraph(
       new #RouterPrecalculatedGraph<CRouterPrecalculatedGraph>());
 
-    SetRouterMap("RouterMap_Layer1", new #RouterMap<CBaseRouterMap>(), 64, RouterWorkingZones);
+    SetRouterMap("RouterMap_Layer1", new #RouterMap<CC1RouterMap>(), 64, RouterWorkingZones);
   }
 
 // TODO
@@ -129,18 +117,20 @@ class CBerezovMission extends CSPMission
 //   console.disablebeh();
    //console.showbehinf(true);
 
-    // Scripted advances ported from the real mission's CombatScript timers -
-    // dispatched here (not self-scheduled from each group's own Init()),
-    // matching the proven working pattern in Campaign_2\Mission_5's
-    // Mission.script (StartCombat() sending delayed events to named groups).
-    sendEvent(60.0,  "BerezovKGKaiser",     "StartAdvance",  []);
-    // Second leg (Gonki) dispatched separately, not as a 2nd point in the
-    // same MoveToEx call - see BerezovKGKaiser::StartAdvance2 for why.
-    // 60s wait + ~172s transit time (1725 units at 10 m/s) + buffer.
-    sendEvent(260.0, "BerezovKGKaiser",     "StartAdvance2", []);
-    sendEvent(55.0,  "BerezovZugWeidinger", "StartAdvance",  []);
-    sendEvent(180.0, "BerezovPltPopov",     "StartAdvance",  []);
-    sendEvent(35.0,  "BerezovPltZhilin",    "StartAdvance",  []);
+    sendEvent(5.0, SOID_MissionController, "StartCombat", []);
+  }
+
+  event void StartCombat()
+  {
+    if (Combat)
+      return;
+
+    Combat = true;
+
+    sendEvent(0.0, "BerezovZugFalke", "StartFirstAdvance", []);
+    sendEvent(1.0, "BerezovKGKaiser", "StartFirstAdvance", []);
+    sendEvent(2.0, "BerezovZugLex", "StartFirstAdvance", []);
+    sendEvent(3.0, "BerezovZugWeidinger", "StartFirstAdvance", []);
   }
 
   void OnObjectEnterNavPoint(String _NavPointID, String _ObjectID)
@@ -174,18 +164,7 @@ class CBerezovMission extends CSPMission
     {
       KillList_PltSamsonov.remove(_indexSamsonov);
       if (KillList_PltSamsonov.size() == 0)
-      {
         SetObjectiveStatus(2, MOSID_Completed);
-        sendEvent(90.0, "BerezovZugLex", "StartAdvance", []);
-      }
-    }
-
-    int _indexKutuzov = KillList_PltKutuzov.find(_ObjectID);
-    if (_indexKutuzov != -1)
-    {
-      KillList_PltKutuzov.remove(_indexKutuzov);
-      if (KillList_PltKutuzov.size() == 0)
-        sendEvent(570.0, "BerezovPltOleshev", "StartAdvance", []);
     }
   }
 

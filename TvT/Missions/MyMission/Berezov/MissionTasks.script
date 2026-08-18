@@ -14,12 +14,64 @@
 
 class BerezovZugFalke extends CBaseUnitGroup
 {
-  void Init()
+  float TankAttackSpeed = 10.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
+    isManeuver = false;
     ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 50, true, true);
     ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03"),
+                    GetNavPointBehPos("BerezovAdvance_04"),
+                    GetNavPointBehPos("BerezovAdvance_05"),
+                    GetNavPointBehPos("BerezovAdvance_06"),
+                    GetNavPointBehPos("BerezovAdvance_07"),
+                    GetNavPointBehPos("BerezovAdvance_08"),
+                    GetNavPointBehPos("BerezovAdvance_09"),
+                    GetNavPointBehPos("BerezovAdvance_10"),
+                    GetNavPointBehPos("BerezovAdvance_11"),
+                    GetNavPointBehPos("BerezovAdvance_12"),
+                    GetNavPointBehPos("BerezovAdvance_13"),
+                    GetNavPointBehPos("BerezovAdvance_14"),
+                    GetNavPointBehPos("BerezovAdvance_15"),
+                    GetNavPointBehPos("BerezovAdvance_16"),
+                    GetNavPointBehPos("BerezovAdvance_17"),
+                    GetNavPointBehPos("BerezovAdvance_18"),
+                    GetNavPointBehPos("BerezovAdvance_19"),
+                    GetNavPointBehPos("BerezovAdvance_20"),
+                    GetNavPointBehPos("BerezovAdvance_21"),
+                    GetNavPointBehPos("BerezovAdvance_22"),
+                    GetNavPointBehPos("BerezovAdvance_23"),
+                    GetNavPointBehPos("BerezovAdvance_24"),
+                    GetNavPointBehPos("BerezovAdvance_25"),
+                    GetNavPointBehPos("BerezovAdvance_26"),
+                    GetNavPointBehPos("BerezovAdvance_27"),
+                    GetNavPointBehPos("BerezovAdvance_28"),
+                    GetNavPointBehPos("BerezovAdvance_29"),
+                    GetNavPointBehPos("BerezovAdvance_30"),
+                    GetNavPointBehPos("BerezovAdvance_31"),
+                    GetNavPointBehPos("BerezovAdvance_32"),
+                    GetNavPointBehPos("BerezovAdvance_33"),
+                    GetNavPointBehPos("BerezovAdvance_34")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
     m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetFormation("CFrontFormation", 50, true, true);
+    ActivateRadar(true);
   }
 }
 
@@ -36,67 +88,188 @@ class BerezovHQ extends CBaseUnitGroup
 
 class BerezovKGKaiser extends CBaseUnitGroup
 {
-  void Init()
+  float TankAttackSpeed = 10.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
+    isManeuver = false;
     ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("CFrontFormation", 50, true, true);
     ActivateRadar(true);
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03"),
+                    GetNavPointBehPos("BerezovAdvance_04"),
+                    GetNavPointBehPos("BerezovAdvance_05"),
+                    GetNavPointBehPos("BerezovAdvance_06"),
+                    GetNavPointBehPos("BerezovAdvance_07"),
+                    GetNavPointBehPos("BerezovAdvance_08"),
+                    GetNavPointBehPos("BerezovAdvance_09"),
+                    GetNavPointBehPos("BerezovAdvance_10"),
+                    GetNavPointBehPos("BerezovAdvance_11"),
+                    GetNavPointBehPos("BerezovAdvance_12"),
+                    GetNavPointBehPos("BerezovAdvance_13"),
+                    GetNavPointBehPos("BerezovAdvance_14"),
+                    GetNavPointBehPos("BerezovAdvance_15"),
+                    GetNavPointBehPos("BerezovAdvance_16"),
+                    GetNavPointBehPos("BerezovAdvance_17"),
+                    GetNavPointBehPos("BerezovAdvance_18"),
+                    GetNavPointBehPos("BerezovAdvance_19"),
+                    GetNavPointBehPos("BerezovAdvance_20"),
+                    GetNavPointBehPos("BerezovAdvance_21"),
+                    GetNavPointBehPos("BerezovAdvance_22"),
+                    GetNavPointBehPos("BerezovAdvance_23"),
+                    GetNavPointBehPos("BerezovAdvance_24"),
+                    GetNavPointBehPos("BerezovAdvance_25"),
+                    GetNavPointBehPos("BerezovAdvance_26"),
+                    GetNavPointBehPos("BerezovAdvance_27"),
+                    GetNavPointBehPos("BerezovAdvance_28"),
+                    GetNavPointBehPos("BerezovAdvance_29"),
+                    GetNavPointBehPos("BerezovAdvance_30"),
+                    GetNavPointBehPos("BerezovAdvance_31"),
+                    GetNavPointBehPos("BerezovAdvance_32"),
+                    GetNavPointBehPos("BerezovAdvance_33"),
+                    GetNavPointBehPos("BerezovAdvance_34")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, TankAttackSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
+  }
+
+  void EndFirstAdvance_Attack()
+  {
     m_EnemyReactionType == ERT_AGGRESSIVE;
-  }
-
-  // Called from CBerezovMission::StartMission (delayed via sendEvent) -
-  // matches the real mission's CombatScript: wait 1:00, then move by
-  // road through Berezov to Gonki (the German main advance column).
-  // Split into two single-point legs rather than one 2-point
-  // SetOrder_MoveToEx call - every queued leg in SetOrder_MoveToEx
-  // is tagged with the identical literal "MoveToEx" order name
-  // regardless of array index, which broke routing entirely when
-  // more than one point was queued at once (confirmed: every other
-  // group's single-point call worked, this was the only 2-point one
-  // and the only one that got stuck in an unreachable-path loop).
-  event void StartAdvance()
-  {
-    SetOrder_MoveToEx([ new Vector(2150.0, 6328.0, 610.0) ], 10.0f);
-  }
-
-  event void StartAdvance2()
-  {
-    SetOrder_MoveToEx([ new Vector(5437.0, 6722.5, 610.0) ], 10.0f);
+    SetFormation("CFrontFormation", 50, true, true);
+    ActivateRadar(true);
   }
 }
 
 class BerezovZugLex extends CBaseUnitGroup
 {
-  void Init()
+  float AdvanceSpeed = 7.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
+    isManeuver = false;
     ForEachUnitTask("ActivateBehavior", [true]);
+    SetFormation("Column", 30, true, true);
     ActivateRadar(true);
-    m_EnemyReactionType == ERT_AGGRESSIVE;
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03"),
+                    GetNavPointBehPos("BerezovAdvance_04"),
+                    GetNavPointBehPos("BerezovAdvance_05"),
+                    GetNavPointBehPos("BerezovAdvance_06"),
+                    GetNavPointBehPos("BerezovAdvance_07"),
+                    GetNavPointBehPos("BerezovAdvance_08"),
+                    GetNavPointBehPos("BerezovAdvance_09"),
+                    GetNavPointBehPos("BerezovAdvance_10"),
+                    GetNavPointBehPos("BerezovAdvance_11"),
+                    GetNavPointBehPos("BerezovAdvance_12"),
+                    GetNavPointBehPos("BerezovAdvance_13"),
+                    GetNavPointBehPos("BerezovAdvance_14"),
+                    GetNavPointBehPos("BerezovAdvance_15"),
+                    GetNavPointBehPos("BerezovAdvance_16"),
+                    GetNavPointBehPos("BerezovAdvance_17"),
+                    GetNavPointBehPos("BerezovAdvance_18"),
+                    GetNavPointBehPos("BerezovAdvance_19"),
+                    GetNavPointBehPos("BerezovAdvance_20"),
+                    GetNavPointBehPos("BerezovAdvance_21"),
+                    GetNavPointBehPos("BerezovAdvance_22"),
+                    GetNavPointBehPos("BerezovAdvance_23"),
+                    GetNavPointBehPos("BerezovAdvance_24"),
+                    GetNavPointBehPos("BerezovAdvance_25"),
+                    GetNavPointBehPos("BerezovAdvance_26"),
+                    GetNavPointBehPos("BerezovAdvance_27"),
+                    GetNavPointBehPos("BerezovAdvance_28"),
+                    GetNavPointBehPos("BerezovAdvance_29"),
+                    GetNavPointBehPos("BerezovAdvance_30"),
+                    GetNavPointBehPos("BerezovAdvance_31"),
+                    GetNavPointBehPos("BerezovAdvance_32"),
+                    GetNavPointBehPos("BerezovAdvance_33"),
+                    GetNavPointBehPos("BerezovAdvance_34")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
   }
 
-  // Called from CBerezovMission::OnObjectDestroyed (delayed via sendEvent)
-  // once Plt.Samsonov's KillList hits zero - matches the real mission's
-  // "CG State: Plt.Samsonov destroyed" trigger.
-  event void StartAdvance()
+  void EndFirstAdvance_Attack()
   {
-    SetOrder_MoveToEx([ new Vector(5437.0, 6722.5, 610.0) ], 10.0f);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    SetFormation("Column", 30, true, true);
+    ActivateRadar(true);
   }
 }
 
 class BerezovZugWeidinger extends CBaseUnitGroup
 {
-  void Init()
+  float AdvanceSpeed = 5.0f;
+
+  event void StartFirstAdvance()
   {
-    CBaseUnitGroup::Init();
+    isManeuver = false;
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
-    m_EnemyReactionType == ERT_AGGRESSIVE;
+    m_EnemyReactionType == ERT_PASSIVE;
+
+    Array ApproachPoints = [
+                    GetNavPointBehPos("BerezovAdvance_01"),
+                    GetNavPointBehPos("BerezovAdvance_02"),
+                    GetNavPointBehPos("BerezovAdvance_03"),
+                    GetNavPointBehPos("BerezovAdvance_04"),
+                    GetNavPointBehPos("BerezovAdvance_05"),
+                    GetNavPointBehPos("BerezovAdvance_06"),
+                    GetNavPointBehPos("BerezovAdvance_07"),
+                    GetNavPointBehPos("BerezovAdvance_08"),
+                    GetNavPointBehPos("BerezovAdvance_09"),
+                    GetNavPointBehPos("BerezovAdvance_10"),
+                    GetNavPointBehPos("BerezovAdvance_11"),
+                    GetNavPointBehPos("BerezovAdvance_12"),
+                    GetNavPointBehPos("BerezovAdvance_13"),
+                    GetNavPointBehPos("BerezovAdvance_14"),
+                    GetNavPointBehPos("BerezovAdvance_15"),
+                    GetNavPointBehPos("BerezovAdvance_16"),
+                    GetNavPointBehPos("BerezovAdvance_17"),
+                    GetNavPointBehPos("BerezovAdvance_18"),
+                    GetNavPointBehPos("BerezovAdvance_19"),
+                    GetNavPointBehPos("BerezovAdvance_20"),
+                    GetNavPointBehPos("BerezovAdvance_21"),
+                    GetNavPointBehPos("BerezovAdvance_22"),
+                    GetNavPointBehPos("BerezovAdvance_23"),
+                    GetNavPointBehPos("BerezovAdvance_24"),
+                    GetNavPointBehPos("BerezovAdvance_25"),
+                    GetNavPointBehPos("BerezovAdvance_26"),
+                    GetNavPointBehPos("BerezovAdvance_27"),
+                    GetNavPointBehPos("BerezovAdvance_28"),
+                    GetNavPointBehPos("BerezovAdvance_29"),
+                    GetNavPointBehPos("BerezovAdvance_30"),
+                    GetNavPointBehPos("BerezovAdvance_31"),
+                    GetNavPointBehPos("BerezovAdvance_32"),
+                    GetNavPointBehPos("BerezovAdvance_33"),
+                    GetNavPointBehPos("BerezovAdvance_34")
+                           ];
+
+    SetFirstQueueOrders([
+      ["StartFirstAdvance", "SetOrder_MoveToEx", [ApproachPoints, AdvanceSpeed], ""],
+      ["StartFirstAdvance", "EndFirstAdvance_Attack", [], ""]
+                        ]);
   }
 
-  event void StartAdvance()
+  void EndFirstAdvance_Attack()
   {
-    SetOrder_MoveToEx([ new Vector(5437.0, 6722.5, 610.0) ], 10.0f);
+    m_EnemyReactionType == ERT_AGGRESSIVE;
+    ActivateRadar(true);
   }
 }
 
@@ -186,15 +359,6 @@ class BerezovPltPopov extends CBaseUnitGroup
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
   }
-
-  // Matches the real mission's unconditional "move to Zug Falke" order -
-  // converges on wherever the player is when the timer fires.
-  event void StartAdvance()
-  {
-    Component Player = GetMission().GetObject("MainPlayerUnit");
-    if (Player != null)
-      SetOrder_MoveToEx([ getPosition(Player).origin ], 10.0f);
-  }
 }
 
 class BerezovPltRhyzov extends CBaseUnitGroup
@@ -216,13 +380,6 @@ class BerezovPltZhilin extends CBaseUnitGroup
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
-  }
-
-  event void StartAdvance()
-  {
-    Component Player = GetMission().GetObject("MainPlayerUnit");
-    if (Player != null)
-      SetOrder_MoveToEx([ getPosition(Player).origin ], 10.0f);
   }
 }
 
@@ -267,13 +424,5 @@ class BerezovPltOleshev extends CBaseUnitGroup
     ForEachUnitTask("ActivateBehavior", [true]);
     ActivateRadar(true);
     m_EnemyReactionType == ERT_AGGRESSIVE;
-  }
-
-  // Called from CBerezovMission::OnObjectDestroyed (delayed via sendEvent)
-  // once Plt.Kutuzov's KillList hits zero - matches the real mission's
-  // "CG State: Plt.Kutuzov destroyed" trigger (reinforcement to Berezov).
-  event void StartAdvance()
-  {
-    SetOrder_MoveToEx([ new Vector(2150.0, 6328.0, 610.0) ], 10.0f);
   }
 }
