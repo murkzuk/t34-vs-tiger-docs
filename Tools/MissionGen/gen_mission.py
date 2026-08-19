@@ -33,6 +33,8 @@ import random
 import re
 import shutil
 import struct
+import subprocess
+import sys
 from collections import deque
 
 GAME = r"M:\T34vsTiger"
@@ -232,9 +234,37 @@ class HeightMap:
 
 # ----------------------------------------------------------------- mission text
 
-COMPASS = [(22.5, "eastward"), (67.5, "north-eastward"), (112.5, "northward"),
-           (157.5, "north-westward"), (202.5, "westward"), (247.5, "south-westward"),
-           (292.5, "southward"), (337.5, "south-eastward"), (360.1, "eastward")]
+# Briefings follow G5's own house style, taken from the shipped resources
+# (Resources\MissionC2M4.rsr):
+#
+#   SITUATION:\n\n <why we are here> \n\n MISSION DESCRIPTION:\n\n <what to do>
+#   ... closing with a readiness time and the weather.
+#
+# "\n" in a WString literal is supported - G5 uses it in Scripts\Common\Mission.script.
+#
+# Everything below is derived from the mission's own data: the axis and length from
+# the generated route, the hour from the sun elevation in Atmosphere.script, the
+# weather from its fog density. A briefing that contradicts the map is worse than
+# no briefing - the first version of this generator told the player to "press east"
+# on missions that advanced west.
+
+COMPASS = [(22.5, "east"), (67.5, "north-east"), (112.5, "north"),
+           (157.5, "north-west"), (202.5, "west"), (247.5, "south-west"),
+           (292.5, "south"), (337.5, "south-east"), (360.1, "east")]
+
+# Real Kampfgruppen and sectors of the northern Kursk salient, 5-12 July 1943.
+SECTORS = ["Ponyri", "Olkhovatka", "Ssoborovka", "Teploye", "Samodurovka",
+           "Podolyan", "Butyrki", "Saborovka"]
+
+OPENERS = [
+    "Ivan has had four months to dig this ground and he has used every hour of it.",
+    "Aerial reconnaissance reports a belt of field positions astride our axis, "
+    "wired and mined, with armour held back behind it.",
+    "The Russian has laid his guns in depth here, sited to take our flanks as we "
+    "close on the forward trenches.",
+    "Prisoner reports place an anti-tank regiment across this sector, with T-34s "
+    "in hull-down positions behind the crest.",
+]
 
 
 def bearing_name(a, b):
@@ -243,38 +273,101 @@ def bearing_name(a, b):
     for limit, word in COMPASS:
         if deg < limit:
             return word
-    return "eastward"
+    return "east"
 
 
-def retitle(dest, name, route, title=None):
-    """Give the clone its own name and a briefing that matches the battle it
-    actually generated. Without this every clone inherits the template's name and
-    shows up in the menu as a duplicate - and its briefing points the player the
-    wrong way, since the corridor direction is different every time."""
+def read_atmosphere(dest):
+    """Hour and weather, derived from the mission's own atmosphere settings so the
+    briefing cannot contradict what the player sees when the map loads."""
+    hour, weather = "05:30", "clear, with haze building over the steppe"
+    try:
+        txt = open(os.path.join(dest, "Atmosphere.script"), "rb").read().decode("cp1251")
+    except OSError:
+        return hour, weather
+    m = re.search(r"SunDirection\s*=\s*new Vector\(([-\d\.]+),\s*([-\d\.]+),\s*([-\d\.]+)\)", txt)
+    if m:
+        x, y, z = (float(v) for v in m.groups())
+        length = math.sqrt(x * x + y * y + z * z) or 1.0
+        elevation = math.degrees(math.asin(min(1.0, abs(z) / length)))
+        if elevation < 15:
+            hour = "04:45"
+        elif elevation < 30:
+            hour = "06:15"
+        elif elevation < 50:
+            hour = "08:30"
+        else:
+            hour = "11:00"
+    m = re.search(r"FogDensity\s*=\s*([\d\.]+)", txt)
+    if m:
+        density = float(m.group(1))
+        if density >= 0.0015:
+            weather = "thick ground mist; visibility short until the sun burns it off"
+        elif density >= 0.0005:
+            weather = "hazy, with dust already rising off the tracks"
+        else:
+            weather = "clear, and we will be seen at long range"
+    return hour, weather
+
+
+def compose_briefing(name, route, rng, dest):
+    """G5's SITUATION / MISSION DESCRIPTION structure, in period register."""
+    heading = bearing_name(route[0], route[-1])
+    metres = int(sum(math.hypot(route[i][0] - route[i - 1][0],
+                                route[i][1] - route[i - 1][1])
+                     for i in range(1, len(route))))
+    km = metres / 1000.0
+    sector = rng.choice(SECTORS)
+    opener = rng.choice(OPENERS)
+    hour, weather = read_atmosphere(dest)
+
+    title = "Zitadelle: %s - %sward advance" % (sector, heading)
+
+    briefing = (
+        "SITUATION:\\n\\n"
+        "Unternehmen Zitadelle. The division continues its attack on the %s sector. "
+        "%s Our own artillery preparation will be brief; there is no longer any "
+        "question of surprise.\\n\\n"
+        "MISSION DESCRIPTION:\\n\\n"
+        "Your Tiger leads the Panzerkeil. Zug Falke goes forward on your flank with "
+        "Panzer IV, Kampfgruppe Kaiser follows in echelon. The axis of advance runs "
+        "%sward, some %.1f kilometres to the objective.\\n\\n"
+        "Break the Pakfront first. The guns are the danger, not the tanks - close "
+        "the range at the halt and shoot them out before you commit to the open "
+        "ground. Let the Panzer IV work the flanks; your armour is proof against "
+        "the 76mm at range, theirs is not.\\n\\n"
+        "Do not outrun the Kampfgruppe. A Tiger alone among dug-in infantry is a "
+        "Tiger lost.\\n\\n"
+        "Be ready to move at %sh. Weather: %s."
+        % (sector, opener, heading, km, hour, weather)
+    )
+
+    objectives_text = ("Advance %sward along the approach route and break the "
+                       "Russian defence." % heading)
+    objective01 = "Advance %sward and take the objective" % heading
+    return title, briefing, objectives_text, objective01
+
+
+def retitle(dest, name, route, rng, title=None):
+    """Give the clone its own name and a briefing describing the battle it actually
+    generated. Without this every clone inherits the template's name, shows up in
+    the menu as a duplicate, and points the player the wrong way."""
     path = os.path.join(dest, "MissionTestStrings.script")
     b = open(path, "rb").read()
-    heading = bearing_name(route[0], route[-1])
-    distance = sum(math.hypot(route[i][0] - route[i - 1][0],
-                              route[i][1] - route[i - 1][1])
-                   for i in range(1, len(route)))
-    shown = title or ("Kursk Steppe - %s advance (%s)" % (heading, name))
+    shown, briefing, objectives, obj01 = compose_briefing(name, route, rng, dest)
+    if title:
+        shown = title
 
     def put(field, value):
         nonlocal b
         pat = re.compile((r'(final static WString %s\s*=\s*L")[^"]*(")' % field).encode())
         if pat.search(b):
-            b = pat.sub(lambda m: m.group(1) + value.encode("cp1251") + m.group(2), b, count=1)
+            b = pat.sub(lambda m: m.group(1) + value.encode("cp1251") + m.group(2),
+                        b, count=1)
 
     put("MissionName", shown)
-    put("BriefingText",
-        "Your Tiger spearheads the attack across the Kursk steppe, with the Panzer IVs "
-        "of Zug Falke alongside and KG Kaiser following behind. The axis of advance runs "
-        "%s for some %d metres. Smash the anti-tank positions and armour barring the "
-        "route, then press on. Move quickly - the assault depends on breaking through "
-        "before the Russian can reinforce." % (heading, int(distance)))
-    put("ObjectivesText",
-        "Advance %s along the approach route and destroy the Soviet defence." % heading)
-    put("Objective01", "Advance %s along the approach route" % heading)
+    put("BriefingText", briefing)
+    put("ObjectivesText", objectives)
+    put("Objective01", obj01)
     open(path, "wb").write(b)
     return shown
 
@@ -308,7 +401,48 @@ def clone(name):
     return dest, renamed
 
 
+EMPLACEMENT_SUFFIXES = ("_Gunner_", "_Cover", "_SandL", "_SandR", "_Tractor")
+
+
+def strip_emplacements(dest):
+    """Remove any gun-position furniture inherited from the template.
+
+    The template is itself an emplaced mission, so a clone arrives with crew,
+    cover and prime movers already in place - positioned for the TEMPLATE's
+    corridor. retarget() then rotates them bodily onto the new one, which leaves
+    the guns facing the wrong way again and the crew standing on the wrong side.
+    Strip them here and let emplace_guns build fresh positions afterwards, from
+    the corrected facings.
+    """
+    path = os.path.join(dest, "Content.script")
+    src = open(path, "rb").read().decode("cp1251")
+    block = re.compile(r'    \[\s*\n\s*"([A-Za-z0-9_]+)",\s*\n\s*"GameObject",'
+                       r'.*?\n    \],\n', re.S)
+    removed = []
+
+    def drop(m):
+        name = m.group(1)
+        if any(sfx in name for sfx in EMPLACEMENT_SUFFIXES):
+            removed.append(name)
+            return ""
+        return m.group(0)
+
+    out = block.sub(drop, src)
+    if removed:
+        open(path, "wb").write(out.encode("cp1251"))
+    return len(removed)
+
+
 def nudge(zm, x, y):
+    # Pull anything outside the world back inside FIRST. The rigid transform can
+    # push a unit off the map entirely - measured: four T-34s landed at y=9520 on
+    # a 9000-unit map - and the search below cannot rescue them, because every
+    # cell it probes is out of bounds and reads as blocked. They would then sit
+    # off the edge, invisible and useless, with nothing in the log to say so.
+    margin = zm.cell_size * 4
+    x = max(margin, min(WORLD - margin, x))
+    y = max(margin, min(WORLD - margin, y))
+
     cx, cy = zm.world_to_cell(x, y)
     if zm.at(cx, cy) == PASSABLE:
         return (x, y), 0.0
@@ -454,6 +588,8 @@ def main():
     ap.add_argument("--side", default="Germany", choices=["Germany", "USSR"])
     ap.add_argument("--title", default=None,
                     help="menu name; defaults to one describing the generated advance")
+    ap.add_argument("--no-guns", action="store_true",
+                    help="skip building gun positions (crew, cover, prime movers)")
     ap.add_argument("--no-register", action="store_true")
     args = ap.parse_args()
 
@@ -468,6 +604,10 @@ def main():
     dest, renamed = clone(args.name)
     print("  cloned template, renamed %d identifiers" % renamed)
 
+    dropped = strip_emplacements(dest)
+    if dropped:
+        print("  stripped %d inherited gun-position objects" % dropped)
+
     zm = ZoneMap(os.path.join(dest, "RouterZone_Test.bmp"))
     hm = HeightMap(os.path.join(dest, "hmap.raw"))
     cells = open_region(zm)
@@ -479,12 +619,30 @@ def main():
     print("  corridor: %.0f units, straightness %.4f, %d navpoints ~%.0f apart"
           % (total, ratio, len(route), step))
 
-    shown = retitle(dest, args.name, route, args.title)
+    shown = retitle(dest, args.name, route, rng, args.title)
     print("  titled %r" % shown)
 
     stats = retarget(dest, args.name, route, zm, hm)
     print("  placed %d navpoints, %d objects (%d nudged, %d unplaceable)"
           % (stats["nav"], stats["obj"], stats["nudged"], stats["stuck"]))
+
+    # Build proper gun positions - crew, cover, prime movers - and turn the guns
+    # to face the advance. Must run AFTER retarget(): the rigid transform rotates
+    # every gun bodily onto the new corridor and destroys whatever facing it had.
+    # Measured on Berezov before this existed: not one of seven guns faced the
+    # advance, and two pointed 150 degrees away.
+    if not args.no_guns:
+        tool = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            'emplace_guns.py')
+        r = subprocess.run([sys.executable, tool, '--mission', args.name],
+                           capture_output=True, text=True)
+        for line in r.stdout.splitlines():
+            t = line.strip()
+            if t and not t.startswith(args.name) and 'Scripts.cache' not in t:
+                print('  ' + t)
+        if r.returncode != 0:
+            print('  WARNING: gun emplacement failed:')
+            print(r.stderr.strip())
 
     v = validate(dest, args.name, zm)
     print("  VALIDATION")

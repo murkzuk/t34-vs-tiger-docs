@@ -127,6 +127,26 @@ ZugWeidinger::RepeatOrder() : Patrol order to point Kursk03Advance_01
 
 All four German groups accepted the generated route.
 
+## Gun positions are built automatically
+
+`emplace_guns.py` runs as part of generation: every anti-tank gun is turned to face
+the advance, then given crew (`["Guncrew", true]`), a barricade, flanking sandbags
+and a nationality-matched prime mover. See `TvT_Object_Placement.md` for the
+measurements behind it.
+
+Two things the generator must do around this, both learned the hard way:
+
+- **Strip inherited emplacements on clone.** The template is itself emplaced, so a
+  clone arrives with crew positioned for the *template's* corridor, which the
+  transform then rotates onto the new one - leaving crew on the wrong side of the
+  gun while the tool skips them as "already done". 42 objects are stripped per
+  clone and rebuilt from the corrected facings.
+- **Clamp positions into the world before nudging.** The transform can push units
+  clean off the map (measured: four T-34s at y=9520 on a 9000-unit map). The
+  passable-ground search cannot rescue them, because every cell it probes is out of
+  bounds and reads as blocked, so they sit off the edge, invisible, with nothing in
+  the log to say so.
+
 ## Limitations, honestly
 
 - **Terrain is inherited, not generated.** Every clone shares the template's
