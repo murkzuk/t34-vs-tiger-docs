@@ -11,6 +11,55 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 - [x] **Duplicate T-34/85 MS2 model + Unit script (GitHub issue #7) — scoped and resolved 2026-07-03, no in-game testing needed after all.** Two file sets in `Models\`: `u_veh_t34_85_44.ms2`/`.script` (2007) and `u_veh_t34_85_44_2.ms2`/`.script` (2006). Code evidence alone settled it: the 2007 set is the live model, directly wired into the real playable/AI unit (`Units\T34_85_44.script:1306`, `SetupExtendMesh("Cu_veh_t34_85_44Model", ...)`) and the only one with cockpit-camera/hatch joint wiring (`CockpitCameraDriver`, `Luk_A`) needed for the driver's interior view. The 2006 `_2` set uses nearly identical textures/skin to the 2007 one (same hull/turret/track skins) but has **no cockpit-camera or hatch joints at all** - an old pre-cockpit-support export, not a distinct tank variant, unlike the genuinely-unfinished cut-content roster (`TankPzVI_LATE`, `T34_76_41`) which have real distinct stats waiting to be finished. Confirmed it was never wired to any Unit gameplay class, never placed in any mission, and not in the Editor's placeable-object list - only referenced in 8 generic per-model housekeeping scripts (`Shadows.script`, `FakeShadows.script`, `PlanarShadows.script`, `PlanarShadowsLodShift.script`, `ShadowsChange.script`, `ShadowHide.script`, `Instances.script`, `Intersections.script`, 10 lines total), which were removed. The two orphaned files themselves were moved to `Models\_Removed\` on the live install (not hard-deleted - an auto-mode safety check correctly declined to let a model-derived-target file deletion proceed without the user explicitly naming the files, so they were relocated instead, fully reversible).
 - [x] **Intersection script entries missing for models (GitHub issue #8) — scoped and partly fixed 2026-07-03.** Header-completeness half already resolved, same as issue #4: every real gameplay model already declares both `UseBoxForIsection`/`UseShapesAsWalkedMesh` in its header; only skyboxes/dev-test scaffolding lack them, correctly. The real gaps were in `Common\Intersections.script`'s per-model override list: (1) `Cfence_PoleModel` had zero entries at all despite its siblings (`Cfence_WickerModel`/`Cfence_PalisadeModel`) both being set - added `true`/`false` matching the static-prop pattern. (2) Two tanks' `UseBoxForIsection` lines were commented out with a note "creates error in execution log" - turned out to be a genuine typo, not an engine issue: `= fasle;` (misspelled "false", an invalid identifier) instead of `= false;` - confirmed via a full-codebase grep that `fasle` appears nowhere else. Uncommented and corrected both (`Cu_veh_PzIVGModel`, `Cu_veh_t34_76_42Model`), matching every other tank's existing `false`/`true` pattern. **Left alone, flagged as open questions rather than guessed at** (matching Stevan's own "assumption, needs testing" caveat on the whole issue): the two cockpit-interior `_Inside` extend-mesh models (`Cu_veh_PzVI_MAIN_InsideModel`, `Cu_veh_t34_85_44_InsideModel`) have no entries either, but are attached submeshes not standalone collidable objects, likely correctly exempt; and `Chum_GermanTankmanModel`/`Chum_SovietTankmanModel` (real AI Unit classes) are set as "static" (box=true) while the analogous `...SoldierRifleModel` infantry are set as "moving" (walked=true) - could be intentional (fixed hatch pose) or a real inconsistency, genuinely unclear without in-game testing.
 - [ ] **Control settings not saving (GitHub issue #3)** — "change ammo"/"load ammo" key bindings don't persist across restart. Not investigated yet.
+- [ ] **Compass / heading indicator - PARKED 2026-08-19, reverted, but a real possible.**
+  WoV (same engine) has a working compass; TvT ships most of the parts and uses none
+  of them. Everything below was measured, so a later attempt does not have to repeat it.
+
+  **What TvT already has:**
+  - `Scripts\Common\Navigator.script` defines `CBaseNavigatorScreen` and
+    `CNavigatorScreen_Uh1` - near-identical to WoV's, one line apart - including a
+    full compass layout (`ElCompassBar`, tiles, azimuth text, N/E/S/W labels).
+  - `NavBar` is an engine-native class (`new #NavBar<CNavigatorScreen_Uh1>()`) and the
+    string is present in **all four** TvT engine binaries, so this build registers it.
+  - `Cockpit.script` has an `OnCompassChange(float)` handler - an **empty stub**.
+
+  **What was tried, and what each attempt proved:**
+  1. Created the NavBar in `SetupCockpitUIControls` following TvT's own control idiom.
+     **It rendered** - a compass bar with tiles and an azimuth readout appeared. So the
+     native class exists and works in this build.
+  2. Filled the `OnCompassChange` stub to call `NavBar.SetCompassAngle(_CurrentAngle)`.
+     The readout sat at **89**, which is the `CompassAngle = 90.0` default in
+     `CNavigatorScreen_Uh1` - i.e. never written.
+  3. Registry: `HKCU\Software\G5 Software\T34\IntelligentCompass` is `0`, while WoV's
+     is `1`. Setting it to 1 changed nothing - the engine still logged
+     `bIntelligentCompass: false`. **The setting is forced off in the TvT build.**
+     (Confirmed the engine does read that key: ScreenWidth, RefreshRate and
+     CockpitDevicesColor all match the registry exactly.)
+  4. Instrumented `OnCompassChange` directly. **Zero calls across two missions.** The
+     engine never fires it in TvT. This is the finding that matters.
+  5. Re-driven from `OnWeaponDirectionChanged(_HAngle, _VAngle)`, which demonstrably
+     does fire (it drives the target pointer). Result: **one call, `HAngle = 0.0`, then
+     nothing.** It does not carry a live traverse angle either.
+
+  **Why a fresh attempt is still plausible:** the heading exists somewhere - the engine
+  renders the world from it. The remaining routes are (a) find another cockpit event
+  that carries orientation, (b) read the player object's matrix directly, which needs
+  `getPosition(user).xvec` **and an inverse trig function the .script language does not
+  appear to have** - only `sin` and `cos` were found anywhere in the codebase, or
+  (c) compute it natively via the injection toolchain (`K:\tvt_probe`), which already
+  reads live game memory.
+
+  **Positioning note for whoever retries:** there are TWO bars - `ElCompassBar` (the
+  tape) and `ElCompassBar2` (the azimuth readout). Both default to y=0.95833, the
+  bottom of the screen, which is where WoV puts it for a helicopter. Move both or they
+  end up at opposite edges. The user prefers the default black - it reads well against
+  the sky - and the white centre number comes from `CI_LIGHT`, which is off-white in
+  all three colour schemes, so blackening it means editing `ColorMap.script` and
+  affecting everything else that uses `CI_LIGHT`.
+
+  All changes reverted 2026-08-19: `Cockpit.script`, `Navigator.script`,
+  `GameSettings.script` restored from backups, registry key set back to 0.
+
 - [ ] **Gun emplacement geometry - waiting on a hand-placed reference (added 2026-08-19).**
   The user is hand-placing gun positions in one mission in the Editor, to be used as the
   ground truth for what a correct emplacement looks like. **Do not guess at these offsets
