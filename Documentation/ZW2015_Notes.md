@@ -87,31 +87,60 @@ pointed straight at the near plane.
 
 ---
 
-## 2. The framerate is unit count, not maps or models
+## 2. The framerate: a ~20 ms CPU floor, cause not yet identified
 
-Measured with the DXVK HUD on ZW Campaign_2/Mission_1:
+*This section was first written after two readings and claimed the answer was
+unit count. A third reading broke that, and the correction is more interesting
+than the original claim.*
 
-| | ZW2015 | REDUX |
-|---|---|---|
-| fps | 50 | 90 |
-| draw calls | 911 | 450 |
-| **GPU load** | **12%** | 29% |
+Measured with the DXVK HUD:
 
-**The GPU is idle.** The high-poly models are not the cost. 911 draw calls is
-low enough that the wrapper choice — DXVK or dgVoodoo — barely matters either.
+| | units | fps | frame | draw calls | GPU | GPU ms | **CPU ms** |
+|---|---|---|---|---|---|---|---|
+| REDUX C2M5 | 29 | 90 | 11.1 ms | 450 | 29% | 3.2 | **~8** |
+| ZW C2M1 | 116 | 50 | 20.0 ms | 911 | 12% | 2.4 | **17.6** |
+| ZW KurskMission4 | **426** | 32 | 31.3 ms | 3484 | 36% | 11.3 | **20.0** |
 
-Per frame: 50 fps is 20 ms with the GPU busy for 2.4 ms, so **~17.6 ms of CPU
-work that is not drawing**, against roughly 8 ms on REDUX.
+("CPU ms" is frame time minus GPU time — the per-frame cost that is not
+drawing.)
 
-The mission holds **116 fighting units, 81 of them infantry** (48 Soviet and 33
-German riflemen), against 29 in Campaign_2/Mission_5 and 51 in Berezov. That is
-**~2.5× the units for ~2.2× the non-render CPU time** — the two numbers agree,
-and neither has anything to do with the 18 km maps or the model fidelity.
+### What is solid
 
-Consequences:
+**Not GPU-bound, in any scene measured.** 12% and 36%. Even where draw calls
+nearly quadrupled the card stayed two-thirds idle. Graphics settings — LOD,
+draw distance, resolution — are close to free on this install.
 
-- **Graphics settings are free.** At 12% GPU, LOD, draw distance and resolution
-  cost essentially nothing.
-- **The lever is the order of battle**, particularly the infantry count.
-- The grass-overflow fix that was worth ~70 fps on REDUX does **not** apply —
-  ZW's log is clean of those warnings.
+**Not draw-call bound either.** Between the two ZW readings draw calls went up
+**3.8×** and CPU time rose **14%**, from 17.6 ms to 20.0 ms. Submission is
+cheap. Batching, instancing and state caching are dead ends here.
+
+**There is a floor of roughly 18–20 ms per frame** of CPU work that is not
+drawing, and it barely moves between two very different scenes.
+
+### Where the first conclusion was wrong
+
+Two readings gave 2.5× the units for 2.2× the CPU time and that looked
+conclusive. The third has **3.7× the units of the second** and costs **14%
+more CPU**. If the cost were per-unit, 426 units against 116 would be 65 ms a
+frame and about 15 fps. It is 32.
+
+So **the engine is not ticking all 426 units at full rate.** It is almost
+certainly culling or staggering distant AI — which is sensible design, and
+means ZW's very large orders of battle are considerably cheaper than they look.
+KurskMission4 fields **426 fighting units, 306 of them Soviet riflemen**, plus
+574 building interiors and 41 object groups.
+
+Unit count is therefore *at most* part of it, and the floor's real cause is
+unidentified. Candidates, in no particular order: terrain paging over the 18 km
+maps, the interior objects, general object management, or something fixed per
+frame that has nothing to do with content at all.
+
+### The measurement that would settle it
+
+Boring and decisive: the same spot in the same mission, once as shipped and
+once with most AI groups removed from `Content.script`. **If the ~20 ms floor
+does not move, it was never the units** — and the search moves to terrain and
+object management.
+
+Until someone runs that, "ZW is slow because of the unit count" is a plausible
+story rather than a finding, and this document should not have said otherwise.
