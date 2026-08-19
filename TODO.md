@@ -121,6 +121,44 @@ established, see
   `K:	vt_terrain\make_map.py` generates them; the work is going bigger and
   siting missions by coordinate. Note the LOS march must read grid and cell size
   rather than assume — range is 4.4 m to 19.8 m cells, 2049 to 4097 grids.
+- [ ] **The theatre layer — a Falcon 4 style bubble.** The user's framing, and
+  it is the right one: simulate the whole sector, and the mission you play is
+  the bubble. Battles outside it resolve abstractly and their outcomes move the
+  line you fight on next.
+
+  **Why this is easier here than it was for Falcon.** Falcon had to move units
+  in and out of detailed simulation *while running* - a statistic becoming a
+  rendered aircraft mid-session, with state handed over cleanly. That is where
+  its complexity and most of its bugs lived. Here the mission IS the bubble and
+  the boundary is the mission load, so everything outside resolves in Python
+  between missions. Most of the payoff, none of the hardest engineering.
+
+  **Two properties make it real rather than cosmetic:**
+  - *One terrain means one coordinate space.* A regiment at (34000, 21000) in
+    the theatre model is at (34000, 21000) when a mission loads there. No
+    translation, no "roughly the same area". The abstract map IS the ground.
+  - *The abstract combat can use the same physics.* `can_i_kill.py` already
+    computes penetration against armour by range from the game's own tables, so
+    an off-bubble battle resolves by exactly the numbers an on-screen one would.
+    That is normally where dynamic campaigns feel fake - two different games
+    wearing the same skin. Here it is free.
+
+  | piece | status |
+  |---|---|
+  | Theatre state: units, positions, strength, supply | new, Python |
+  | Off-bubble combat resolver | new, built on `can_i_kill.py` |
+  | Generate a mission at a chosen contact point | **exists** |
+  | Read the outcome back | **~5 lines** + log parsing |
+
+- [ ] **BUILD THIS FIRST, not the theatre.** Two missions, one shared terrain,
+  where mission 1's outcome visibly changes mission 2's starting positions.
+  That is a weekend, and it proves or kills the whole architecture at once -
+  shared coordinate space, outcome capture, state carry, regeneration. If it
+  works, going from two missions to a front is content and tuning. If it does
+  not, a weekend is lost rather than six months.
+
+  *Every dynamic campaign that died, died from being built middle-out.*
+
 - [ ] **Campaign state in Python.** Read the casualties, work out survivors,
   generate the next mission on the same ground. No engine work.
 - [ ] **Open question:** survivors' final positions are not logged, only deaths.
