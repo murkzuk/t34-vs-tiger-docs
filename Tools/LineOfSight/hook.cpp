@@ -300,6 +300,21 @@ static bool identify()
   if (!best[0] || bestk * 10 < n * 6 || bestk * 4 < secondk * 5)
     return false;
 
+  // Same mission as last time - nothing to do. This runs every two seconds
+  // for the life of the process, so it must be quiet and cheap in the common
+  // case.
+  if (g_terrain.valid() && !strcmp(g_terrain.name, best))
+    return true;
+
+  if (g_terrain.valid()) {
+    llog("");
+    llog("MISSION CHANGED - reloading terrain");
+    InterlockedExchange(&g_ready, 0);   // deny rather than use the old map
+    free_terrain(&g_terrain);
+    g_nprobe = 0;
+    g_checked = false;
+  }
+
   llog("read %d object loads from execution.log, %d distinct names used",
        g_last_total, n);
   llog("mission match: %d/%d names, runner-up %d  ->  %s",
@@ -321,20 +336,39 @@ static bool identify()
 // is no window in which sightings go unexamined.
 static DWORD WINAPI MissionWatcher(LPVOID)
 {
-  for (int i = 0; i < 100; i++) {          // 100 x 200 ms = 20 s
+  int misses = 0;
+  bool announced = false;
+  for (;;) {
     if (g_mode != MODE_LOS) return 0;
+
     if (identify()) {
-      InterlockedExchange(&g_ready, 1);
-      llog("  enforcement live");
+      if (!g_ready) {
+        InterlockedExchange(&g_ready, 1);
+        llog("  enforcement live");
+      }
+      announced = false;
+      misses = 0;
+      // Settled. Keep looking, but slowly: the only thing left to catch is the
+      // player quitting to the menu and loading a different mission, which
+      // would otherwise leave us enforcing against the wrong map forever.
+      Sleep(2000);
+      continue;
+    }
+
+    // Not identified. Before the first success this is just the mission
+    // loading; give it 20 s and then stand down rather than stay blind.
+    if (!g_terrain.valid() && ++misses >= 100) {
+      if (!announced) {
+        InterlockedExchange(&g_giveup, 1);
+        llog("could not identify the mission within 20 s - no occlusion this "
+             "run (watch behaviour, nothing denied)");
+        g_mode = MODE_WATCH;
+        announced = true;
+      }
       return 0;
     }
     Sleep(200);
   }
-  InterlockedExchange(&g_giveup, 1);
-  llog("could not identify the mission within 20 s - no occlusion this run "
-       "(watch behaviour, nothing denied)");
-  g_mode = MODE_WATCH;
-  return 0;
 }
 
 // ---------------------------------------------------------------------------

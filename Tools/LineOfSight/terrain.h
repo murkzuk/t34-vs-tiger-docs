@@ -166,6 +166,13 @@ static unsigned char *load_bmp8(const char *path, int *w, int *h, int *stride)
   return px;
 }
 
+static void free_terrain(Terrain *t)
+{
+  if (t->h) { free(t->h); t->h = NULL; }
+  if (t->z) { free(t->z); t->z = NULL; }
+  t->name[0] = 0;
+}
+
 static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
 {
   char p[MAX_PATH];
