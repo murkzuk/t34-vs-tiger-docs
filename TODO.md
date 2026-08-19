@@ -4,6 +4,56 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## MAIN LINE — give the AI line of sight (2026-08-19)
+
+Agreed with the user as the single highest-leverage flaw in TvT as a tank sim.
+Everything else is support or polish. Two write-ups:
+[the engine side](Documentation/RE/TvT_Vision_Model_Decoded.md) and
+[the maths](Documentation/TvT_Line_Of_Sight.md).
+
+- [x] **Decode the vision model.** `Behavior.dll + 0xC9E50` is the whole of it,
+  752 bytes: state × angle curve × range curve × modifier list, then
+  `rand() < 1 - pow(1 - v, dt)`. Two-component vector maths throughout; the
+  observer's Z is passed in and never read. **No ray, no terrain sample, no
+  foliage test anywhere in the engine.**
+- [x] **Find where occlusion goes.** The function already walks a list of
+  0x1c-byte modifiers, each of which may multiply visibility by a factor and
+  bail out at zero. Occlusion is one more modifier returning zero — no new
+  subsystem, no fight with the architecture.
+- [x] **Build the LOS maths and check it against real missions.**
+  `Tools/LineOfSight/canopy_los.py`. Terrain from `hmap.raw`, vegetation as
+  accumulated optical depth rather than a canopy ceiling (a ceiling wrongly
+  blinds anyone standing inside a wood). Canopy heights are the engine's own —
+  every stock `Terrain.script` registers a 17 m vertical forest for `Forest01`.
+- [x] **Build the watcher.** `Tools/LineOfSight/hook.cpp`. Calls the original,
+  returns its answer unchanged, records what was asked and answered. Sandbox
+  only, enforced in both the injector and the DLL.
+- [ ] **Run it.** `K:\tvt_los\watch.bat` — start any mission, drive near enemy
+  units for a minute, quit, read `M:\TvT_INJECT_SANDBOX\tvt_los.log`. Confirms
+  the hook is stable, the prologue check passed, and shows real traffic volume.
+  *Needs a human at the keyboard; nothing else is blocked on it.*
+- [ ] **Influence one decision.** Force a single `SEEN` to `-` and watch the AI
+  react. Small and reversible, before any wiring.
+- [ ] **Port the march into the hook**, with the mission's heightfield and zone
+  map loaded from disk. Note the hook needs no engine Z at all — it can take
+  both endpoints from the heightfield, as the Python does.
+- [ ] **Cache and stagger.** Never ray-test per observer per target per frame.
+  Ray-test only pairs that survive the existing distance and angle gates, cache
+  the answer, refresh on a stagger. The game is CPU-bound (90 fps, 450 draw
+  calls, GPU 29%) — adding raw CPU work is the one way to get this wrong.
+- [ ] **Tune the sight-through distances** against play. The canopy heights are
+  data; those are the one genuinely tuned quantity.
+
+**Constraint, do not forget:** `Behavior.dll` relocates ~237 MB from its
+preferred base. Resolve addresses at runtime (`GetModuleHandleA` + static RVA).
+A hardcoded address is what killed the November 2025 attempt — whose
+`tvt_los_hook.dll` (18 Nov 2025) is still sitting unused in the live game root.
+
+**Also worth knowing:** `this+0x1A` is a byte that switches the entire vision
+check off — zero means everything is visible, unconditionally.
+
+---
+
 ## Issue tracker audit (2026-07-03)
 
 - [x] **German distance-callout voice lines were entirely broken, not just the 100/200 mix-up GitHub issue #11 described — fixed 2026-07-03.** Issue #11 diagnosed `Dialogs.script`'s German distance table as calling `g_200.wav` for both the 100m and 200m callouts. Checked the actual `Resources/` folder: neither `g_100.wav` nor `g_200.wav` (nor any `g_XXX.wav`) exist at all — the real files are named `GDistance100.wav`, `GDistance200.wav`, etc. (original G5 2008-dated assets). So **every single entry** in the table (100 through 1600, 16 entries) pointed at a nonexistent file, not just the one pair the issue caught. Applying the issue's suggested fix verbatim would have just traded one missing file for another. Fixed all 16 entries to reference the real `GDistanceXXX.wav` filenames. No equivalent Soviet-side table exists in this file to check.
