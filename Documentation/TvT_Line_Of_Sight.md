@@ -142,3 +142,69 @@ substitutes for looking at the ground.
 `TerrainZone` bitmap — byte-identical. Variety in the generated set comes from
 routes and order of battle, not terrain. Worth knowing before reading anything
 into their identical LOS numbers.
+
+## Measured against the live engine (2026-08-19)
+
+The watcher was run on Campaign_1/Mission_2 and its captured calls replayed
+through this model. This is the engine's own traffic, at positions the game
+chose, not random sampling.
+
+**Call rate: 5000 calls in 156 s — 31 per second, with `dt` between 3.0 and
+89.2 s.** The vision check is a slow AI tick, not a per-frame poll. A 20-50
+lookup march at that rate is roughly 1,200 lookups a second. **The performance
+constraint that shaped this whole plan is gone.** Caching and staggering remain
+worth doing as insurance, but nothing depends on them.
+
+**Of the engine's positive sightings, 70% are through solid ground or woodland**
+(30 of 43 sampled). A further 29 were correctly missed, and 7 were misses the
+dice caused where the ground was actually clear.
+
+### The object origin is not ground contact
+
+Height of a unit's origin above the sampled heightfield, from live positions:
+
+| class | calls | offset | spread |
+|---|---|---|---|
+| `CTankT34_76_42Unit` | 38 | +1.41 m | 0.04 |
+| `CTankT34_85_44Unit` | 19 | +1.39 m | 0.00 |
+| `CTankPzVIAusfEUnit` | 12 | +1.65 m | 0.00 |
+| `CTankPzIVGUnit` | 6 | +1.44 m | 0.00 |
+| `CSovietSoldierRifleUnit` | 17 (authored) | +0.85 m | 0.01 |
+
+The offset scales with model height — roughly half of it — so origins sit near
+mid-model. That is a convention, **not** a bias in the heightfield: a sampling
+error would shift every class equally. Seventeen soldiers agreeing to within a
+centimetre is the strongest check the heightfield has had.
+
+**Consequence:** take both endpoints as absolute heights above sampled ground
+and ignore the engine's Z. Adding an eye height on top of a Z that is already
+mid-model puts the gunner a metre and a half too high and quietly makes
+everything look more visible. Doing exactly that gave 60% instead of 70%.
+
+### A worked block, checked by hand
+
+Call 3329, a T-34/85 at 833 m from its target:
+
+```
+   0 m  ground 599.96  ray 602.11
+  40 m  ground 601.26  ray 601.43
+  60 m  ground 601.24  ray 601.09   blocked by 0.15 m
+ 120 m  ground 601.25  ray 600.07   blocked by 1.19 m
+ 200 m  ground 601.07  ray 598.70   blocked by 2.37 m
+```
+
+The tank sits in a hollow; the ground rises about 1.3 m within 40 m and then
+runs flat for hundreds of metres, while the target is 13 m lower and far away.
+A classic turret-down position. Drive forward 40 m and the shot opens. The
+engine currently takes it from where it stands.
+
+### Partial cover falls out for free
+
+Several blocks begin marginally — 0.15 to 0.5 m of intervening ground, which is
+inside the fuzz of a 4.4 m heightfield. Rather than pick a tolerance, note that
+the engine's model **multiplies** visibility by each modifier's factor. So the
+right answer is not a binary block at all: mask a third of the target's height
+and return 0.6, mask all of it and return 0. Hull-down becomes harder to spot
+rather than impossible, which is both more realistic and more forgiving of
+heightfield noise — and it costs nothing extra, because the architecture already
+wanted a float.

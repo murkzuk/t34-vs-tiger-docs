@@ -54,6 +54,7 @@ static CRITICAL_SECTION g_lock;
 static FILE *g_log;
 static __int64 g_calls, g_true, g_logged;
 static DWORD g_tick0;
+static float g_dt_min = 1e30f, g_dt_max = -1e30f;
 
 static void llog(const char *fmt, ...)
 {
@@ -100,10 +101,20 @@ static char __fastcall Hook(void *self, void *pad,
   g_calls++;
   if (r) g_true++;
 
-  // One line every 4096 calls. This runs for every observer against every
-  // candidate every tick; logging all of it would drown the disk and change
-  // the very timing the experiment is meant to measure.
-  if ((g_calls & 0xFFF) == 1 && g_logged < 400)
+  // dt turned out to be the most interesting number in the first run: the very
+  // first call arrived with dt = 3.0, i.e. this is a slow AI tick, not a
+  // per-frame poll. If that holds, the cost budget for a ray march is enormous
+  // and the whole "do not add CPU work to a CPU-bound game" worry shrinks to
+  // almost nothing. So track its range rather than assuming.
+  float dtf = F(dt);
+  if (dtf < g_dt_min) g_dt_min = dtf;
+  if (dtf > g_dt_max) g_dt_max = dtf;
+
+  // The first run logged exactly one sample line, because one-in-4096 was
+  // calibrated for a call rate this function does not have. Log the opening
+  // burst verbatim, then thin out.
+  bool want = (g_calls <= 60) || ((g_calls & 0xFF) == 1);
+  if (want && g_logged < 600)
   {
     g_logged++;
     // arg6 is a 4x4 row-major matrix: position in the 4th column
@@ -123,10 +134,13 @@ static char __fastcall Hook(void *self, void *pad,
          r ? "SEEN" : "-");
   }
 
-  if ((g_calls % 200000) == 0)
-    llog("--- %I64d calls, %I64d seen (%.1f%%), %.0f s elapsed",
-         g_calls, g_true, 100.0 * g_true / g_calls,
-         (GetTickCount() - g_tick0) / 1000.0);
+  if ((g_calls % 5000) == 0) {
+    double secs = (GetTickCount() - g_tick0) / 1000.0;
+    llog("--- %I64d calls, %I64d seen (%.1f%%), %.0f s elapsed, %.0f calls/s, "
+         "dt %.3f..%.3f",
+         g_calls, g_true, 100.0 * g_true / g_calls, secs,
+         secs > 0 ? g_calls / secs : 0.0, g_dt_min, g_dt_max);
+  }
 
   LeaveCriticalSection(&g_lock);
   return r;
