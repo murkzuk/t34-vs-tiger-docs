@@ -132,3 +132,51 @@ work out who survived and where the line ended, write the next mission's
 deaths. Either log those too from the mission script, or accept that each
 mission starts from planned lines rather than exactly where the last one
 stopped — which is arguably how a real staff would do it anyway.
+
+---
+
+## 4. TESTED: a TvT mission CAN load another mission's terrain
+
+*2026-08-19 evening. This was the gate on everything above, so it was tested
+before anything was built on it.*
+
+Every TvT mission without exception points `ImageFileName` at its own folder.
+WoV points at a campaign-level file. The path is only a string from the game
+root, so it *should* work — but no TvT mission had ever done it, so for this
+build it was unproven.
+
+**The test.** In the sandbox, `MyMission\BerezovKursk\WorldMatricies.script`
+was pointed at `Missions/MyMission/Berezov/hmap.raw`. The two heightmaps
+genuinely differ (`a1d1c67a` against `ed8f119d`), so the result would be visible
+rather than inferred.
+
+**The result: it works.** The mission loads, the terrain is visibly Berezov's,
+and the engine logs no complaint. **A TvT mission can load a heightmap from
+anywhere under the game root**, exactly as WoV does. The one-map campaign design
+is open.
+
+### And the LOS fit check caught it, unprompted
+
+Worth recording because it was not the point of the test:
+
+```
+fit check over 3 observer positions: offsets -75.90..-70.88 m
+FIT FAILED - that is not the terrain these units are standing on.
+             Dropping to watch mode rather than enforcing against the wrong map.
+```
+
+Earlier runs on the same mission gave **+0.98 to +1.66 m**. The game had loaded
+Berezov's heightmap while the LOS DLL, which finds terrain by *mission folder*,
+had loaded BerezovKursk's. Two different worlds, seventy metres apart.
+
+The check refused to enforce, said why, and fell back to watch mode. It was
+written that morning as insurance against a bug that was not expected to happen,
+and it caught a real one the same day in a situation nobody had anticipated.
+
+### The consequence for the LOS tooling
+
+**Once missions share terrain, finding the heightmap by folder stops working.**
+The DLL must read `ImageFileName` out of `WorldMatricies.script` for the
+identified mission instead of assuming `<folder>\hmap.raw`. Same for the zone
+bitmaps. That is a small change and it is now on the backlog — discovered free,
+as a side effect of a test aimed at something else.

@@ -114,6 +114,16 @@ established, see
   death with `GetLastDamager()` for attribution. The `m_PlayerVictims_*`
   counters are player-only, but the event is not, and `EndMissionMenu.script`
   already reads the totals.
+- [x] **PROVEN: a mission can load another mission's terrain.** Tested by
+  pointing BerezovKursk's `WorldMatricies.script` at Berezov's `hmap.raw` in the
+  sandbox. Loads clean, terrain visibly different, no engine complaint. This was
+  the gate on the whole design and it is open.
+- [ ] **LOS tooling must read the terrain path, not assume the folder.** The
+  DLL locates `hmap.raw` and the zone bitmaps as `<mission folder>\hmap.raw`.
+  Once missions share terrain that is wrong, and the fit check proved it by
+  failing at -75.90 m during the test above. Read `ImageFileName` out of
+  `WorldMatricies.script` for the identified mission instead. Small, and it
+  pairs naturally with reading `MatrixWidth` for ZW support.
 - [ ] **Log casualties.** One `logMessage` in that handler, before the
   `Killer == MainPlayerID` test, gives every death on both sides with
   attribution in `execution.log` — a file the tooling already parses.
