@@ -329,7 +329,29 @@ if (m_CurrentOrder.m_Order != "" && m_CurrentOrder.m_Order != "Maneuver"
 
 Backups of the unmodified engine file sit beside it as `UnitGroup.script.bak_*`.
 
-### Instrumenting this yourself
+### `[PATROL]` - the permanent progress line
+
+`ContinueOrder()` carries one deliberate, permanent log line at the patrol
+increment:
+
+```
+[PATROL] <GroupID> reached point 7 of 34
+```
+
+`m_CurrentOrder.m_NextPatrolPoint++` is the **only** place the patrol index moves,
+so this single line is the entire progress signal for any mission. It is not gated
+by `StatusDebug`, because without it progress has to be inferred from proxies - and
+inferring it from the wrong proxy has already produced one confidently wrong "zero
+advances" reading of a log where the advance was in fact running.
+
+To count progress per group:
+
+```bash
+grep -a '\[PATROL\]' execution.log | awk '{print $2, $6}'   | awk '{if($2+0>m[$1])m[$1]=$2+0} END{for(g in m) printf "%-16s %d
+", g, m[g]}'
+```
+
+### Instrumenting something else yourself
 
 The three log points that made all of it visible, all in `UnitGroup.script`:
 
