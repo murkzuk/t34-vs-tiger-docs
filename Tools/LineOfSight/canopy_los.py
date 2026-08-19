@@ -93,22 +93,22 @@ VEGETATION = {
     # CMiddleForest, CLargeForest - so they are woodland. They were missing from
     # this table at first, which silently treated real forest as open ground;
     # Campaign_1/Mission_3 has units standing in 27.
-    27: (  3.2,  75.0),
-    28: (  4.6,  55.0),
-    29: (20.0,  15.0),
-    30: (23.9,  30.0),
-    11: (17.0,  15.0),
-    12: (  4.6,  55.0),
-    13: (17.0,  40.0),
-    14: (23.9,  30.0),
-    20: (28.0,  70.0),
-    49: (  5.0,  25.0),
-    50: (  3.5,  30.0),
-    51: (  3.0,  35.0),
-    52: (28.0, 140.0),
-    60: (  8.0,  40.0),
-    61: (  8.0,  40.0),
-    62: (  7.5,  45.0),
+    27: (  3.2,   60.0),
+    28: (  4.6,   44.0),
+    29: (20.0,   12.0),
+    30: (23.9,   24.0),
+    11: (17.0,   12.0),
+    12: (  4.6,   44.0),
+    13: (17.0,   32.0),
+    14: (23.9,   24.0),
+    20: (28.0,   56.0),
+    49: (  5.0,   20.0),
+    50: (  3.5,   24.0),
+    51: (  3.0,   28.0),
+    52: (28.0, 112.0),
+    60: (  8.0,   32.0),
+    61: (  8.0,   32.0),
+    62: (  7.5,   36.0),
 }
 
 # Eye and target heights above the object's own origin, in metres. Sighting is
@@ -137,6 +137,13 @@ HULL = {
 HULL_DEFAULT = 1.30
 
 CLEAR, BLOCKED_TERRAIN, BLOCKED_FOLIAGE = "clear", "terrain", "foliage"
+
+# A tank is about three metres tall; the exposed fraction of that is what
+# terrain masking is really asking about. MARCH_START keeps the observer's own
+# footprint out of it - dividing by a tiny fraction-along amplifies a 20 cm
+# interpolation artefact into a mountain.
+TARGET_HEIGHT = 3.0
+MARCH_START = 12.0
 
 
 class Terrain:
@@ -221,7 +228,9 @@ def los(t, ax, ay, az, bx, by, bz, step=None, detail=False):
     inv = 1.0 / flat
     ux, uy = dx * inv, dy * inv
     dz = bz - az
-    budget = 1.0                                 # fraction of sight remaining
+    depth_veg = 0.0                              # accumulated optical depth
+    need = -1e9                                  # required height at the target
+    lost = flat
     trace = [] if detail else None
 
     for i in range(1, n):
@@ -231,24 +240,41 @@ def los(t, ax, ay, az, bx, by, bz, step=None, detail=False):
         rz = az + dz * (d * inv)
         g = t.ground(x, y)
 
-        if rz < g:
-            if detail:
-                trace.append((round(d, 1), round(rz, 1), round(g, 1), "GROUND"))
-            return False, BLOCKED_TERRAIN, d
+        # The lowest height at the target's end that clears this point. Taking
+        # the worst of these over the line asks the silhouette question - how
+        # much of a three-metre tank stands above the intervening ground -
+        # rather than tracing one ray to the hull centre and calling any
+        # interruption a block.
+        if d >= MARCH_START:
+            req = az + (g - az) / (d * inv)
+            if req > need:
+                need = req
+                lost = d
+                if detail:
+                    trace.append((round(d, 1), round(rz, 1), round(g, 1), "GROUND"))
 
         veg = VEGETATION.get(t.zone_at(x, y))
         if veg is not None:
             canopy_h, sight = veg
             if rz < g + canopy_h:
-                budget -= step / sight
+                # Beer-Lambert optical depth, matching terrain.h. `sight`
+                # is the e-folding depth, not a hard budget: a line clipping
+                # one forest cell is degraded, not annihilated.
+                depth_veg += step / sight
                 if detail:
                     trace.append((round(d, 1), round(rz, 1),
-                                  round(g + canopy_h, 1), "%.2f" % budget))
-                if budget <= 0.0:
+                                  round(g + canopy_h, 1), "%.2f" % depth_veg))
+                if depth_veg > 1.0:
                     return False, BLOCKED_FOLIAGE, d
 
     if detail:
         los.last_trace = trace
+
+    exposed = (bz - HULL_DEFAULT) + TARGET_HEIGHT - need
+    if exposed <= 0.0:
+        return False, BLOCKED_TERRAIN, lost
+    if depth_veg >= 1.0:
+        return False, BLOCKED_FOLIAGE, lost
     return True, CLEAR, flat
 
 

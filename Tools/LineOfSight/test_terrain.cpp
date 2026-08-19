@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include "terrain.h"
 
+// terrain.h declares this; the DLL defines it. The test harness needs its
+// own copy so it can be linked standalone.
+float g_sight_scale = 1.0f;
+
 int main(int argc, char **argv)
 {
   const char *dir = argc > 1 ? argv[1]
