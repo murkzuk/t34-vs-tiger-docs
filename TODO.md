@@ -53,10 +53,27 @@ Everything else is support or polish. Two write-ups:
   job as the vision hook.
 - [ ] **Tune the sight-through distances** against play. Recalibrated twice so
   far; `sight_scale` in the ini moves them all without a rebuild.
-- [ ] **ZW2015 support** (optional): `WORLD_M` is hardcoded to 9000 and ZW's
-  maps are 18000. Read `MatrixWidth` from `WorldMatricies.script` during
-  identification - about fifteen lines. Its `Behavior.dll` is byte-identical, so
-  the hook itself needs no changes.
+- [ ] **Run the LOS work on ZW2015 too.** Its `Behavior.dll` is byte-identical
+  to REDUX's - same MD5, same prologue at `0xC9E50` - so `tvt_los_hook.dll`
+  needs no rebuild. Four concrete jobs, none large:
+  1. `WORLD_M` is hardcoded to 9000 in `terrain.h`; ZW's maps are 18000
+     (`MatrixWidth` in each mission's `WorldMatricies.script`). Read it during
+     identification and carry it on the `Terrain` struct. Note ZW's zone
+     bitmaps are 2048 not 1024, so the cell size works out the same 8.789 m -
+     but the heightfield is 2049 over 18000 m, i.e. HALF the resolution per
+     metre, 8.79 m per sample against REDUX's 4.39.
+  2. The sandbox rail is a hardcoded string in two places (the injector and the
+     DLL). Replace with an allow-list read from the ini so each install is
+     opted in by name and the live one still cannot be hit by accident.
+  3. Log, ini and mission-search paths derive from `SANDBOX`; derive them from
+     the running executable's folder instead.
+  4. Re-check the fit test - it assumes origin offsets measured on REDUX units
+     (+0.85 m soldier, +1.65 m Tiger). ZW has its own models and they may sit
+     differently; the check should still pass but confirm rather than assume.
+
+  Worth doing because the exchange already runs both ways: today's near-plane
+  fix was REDUX knowledge applied to ZW, and the depth work transfers back the
+  same way.
 
 - [ ] **Port the march into the hook**, with the mission's heightfield and zone
   map loaded from disk. Note the hook needs no engine Z at all — it can take
