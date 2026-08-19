@@ -95,6 +95,40 @@ check off — zero means everything is visible, unconditionally.
 
 ---
 
+## One-map dynamic campaign (2026-08-19) — the parts exist
+
+The user's long-standing idea: one large terrain, start at one end and advance
+across it, where the next mission depends on how the last went. Feasibility
+established, see
+[Documentation/TvT_Campaign_Scale_And_Persistence.md](Documentation/TvT_Campaign_Scale_And_Persistence.md).
+
+- [x] **Establish the engine's real world size.** WoV ships **81,000 m** maps on
+  a **4097** height grid — 81x TvT's area. The 9 km map is a G5 decision, not a
+  limit.
+- [x] **Establish that one terrain can serve many missions.** WoV's eleven
+  Campaign_1 missions all reference `Missions/Campaign_1/hmap_c1.raw`.
+- [x] **Establish what carries between missions: nothing.** `Campaigns.rsr` is
+  localised names only; `IPersistent` is object-level within a session; no save
+  files or registry state in either game.
+- [x] **Find the death event.** `Common\Mission.script` handles every object's
+  death with `GetLastDamager()` for attribution. The `m_PlayerVictims_*`
+  counters are player-only, but the event is not, and `EndMissionMenu.script`
+  already reads the totals.
+- [ ] **Log casualties.** One `logMessage` in that handler, before the
+  `Killer == MainPlayerID` test, gives every death on both sides with
+  attribution in `execution.log` — a file the tooling already parses.
+- [ ] **Build one large Kursk terrain** rather than a 9 km island per mission.
+  `K:	vt_terrain\make_map.py` generates them; the work is going bigger and
+  siting missions by coordinate. Note the LOS march must read grid and cell size
+  rather than assume — range is 4.4 m to 19.8 m cells, 2049 to 4097 grids.
+- [ ] **Campaign state in Python.** Read the casualties, work out survivors,
+  generate the next mission on the same ground. No engine work.
+- [ ] **Open question:** survivors' final positions are not logged, only deaths.
+  Either log them from the mission script, or start each mission from planned
+  lines rather than exactly where the last stopped.
+
+---
+
 ## Issue tracker audit (2026-07-03)
 
 - [x] **German distance-callout voice lines were entirely broken, not just the 100/200 mix-up GitHub issue #11 described — fixed 2026-07-03.** Issue #11 diagnosed `Dialogs.script`'s German distance table as calling `g_200.wav` for both the 100m and 200m callouts. Checked the actual `Resources/` folder: neither `g_100.wav` nor `g_200.wav` (nor any `g_XXX.wav`) exist at all — the real files are named `GDistance100.wav`, `GDistance200.wav`, etc. (original G5 2008-dated assets). So **every single entry** in the table (100 through 1600, 16 entries) pointed at a nonexistent file, not just the one pair the issue caught. Applying the issue's suggested fix verbatim would have just traded one missing file for another. Fixed all 16 entries to reference the real `GDistanceXXX.wav` filenames. No equivalent Soviet-side table exists in this file to check.
