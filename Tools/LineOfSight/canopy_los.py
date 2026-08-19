@@ -145,6 +145,11 @@ CLEAR, BLOCKED_TERRAIN, BLOCKED_FOLIAGE = "clear", "terrain", "foliage"
 TARGET_HEIGHT = 3.0
 MARCH_START = 12.0
 
+# How much of a target must be showing before a summary counts it as "seen".
+# The DLL has no such threshold - it rolls against the fraction - but a table
+# of counts needs one, and half a tank is a fair line to draw.
+VISIBLE = 0.5
+
 
 class Terrain:
     """The static half of a mission: ground height and vegetation cover.
@@ -218,12 +223,12 @@ def los(t, ax, ay, az, bx, by, bz, step=None, detail=False):
     dx, dy = bx - ax, by - ay
     flat = math.hypot(dx, dy)
     if flat < 1.0:
-        return True, CLEAR, 0.0
+        return 1.0, CLEAR, 0.0
     if step is None:
         step = t.zcell * 0.5                     # two samples per zone cell
     n = int(flat / step)
     if n < 2:
-        return True, CLEAR, 0.0
+        return 1.0, CLEAR, 0.0
 
     inv = 1.0 / flat
     ux, uy = dx * inv, dy * inv
@@ -264,18 +269,29 @@ def los(t, ax, ay, az, bx, by, bz, step=None, detail=False):
                 if detail:
                     trace.append((round(d, 1), round(rz, 1),
                                   round(g + canopy_h, 1), "%.2f" % depth_veg))
-                if depth_veg > 1.0:
-                    return False, BLOCKED_FOLIAGE, d
+                if depth_veg > 6.0:      # e^-6 is 0.25%, call it opaque
+                    return 0.0, BLOCKED_FOLIAGE, d
 
     if detail:
         los.last_trace = trace
 
-    exposed = (bz - HULL_DEFAULT) + TARGET_HEIGHT - need
-    if exposed <= 0.0:
-        return False, BLOCKED_TERRAIN, lost
-    if depth_veg >= 1.0:
-        return False, BLOCKED_FOLIAGE, lost
-    return True, CLEAR, flat
+    # Mirror terrain.h exactly. This returns a FRACTION of the target that is
+    # visible, not a verdict: the DLL feeds it into a probability, so an
+    # offline tool that answered yes/no was reporting "blocked" at 63% masking
+    # and quietly overstated every foliage number measured through it.
+    factor = (bz - HULL_DEFAULT) + TARGET_HEIGHT - need
+    factor = max(0.0, min(1.0, factor / TARGET_HEIGHT))
+    why = BLOCKED_TERRAIN if factor < 1.0 else CLEAR
+    if factor <= 0.0:
+        return 0.0, BLOCKED_TERRAIN, lost
+    if depth_veg > 0.0:
+        pass_veg = math.exp(-depth_veg)
+        factor *= pass_veg
+        if pass_veg < 1.0 and why != BLOCKED_TERRAIN:
+            why = BLOCKED_FOLIAGE
+        elif pass_veg < 0.5:
+            why = BLOCKED_FOLIAGE
+    return factor, (CLEAR if factor >= 0.999 else why), lost
 
 
 # --------------------------------------------------------------------------
@@ -379,8 +395,8 @@ def survey(folder, ranges=(500.0, 1000.0, 1500.0)):
                 if d > R:
                     continue
                 pairs += 1
-                ok, why, _ = los(t, a.x, a.y, a.eye(t), b.x, b.y, b.hull(t))
-                if ok:
+                f, why, _ = los(t, a.x, a.y, a.eye(t), b.x, b.y, b.hull(t))
+                if f >= VISIBLE:
                     seen += 1
                 elif why == BLOCKED_TERRAIN:
                     terr += 1
@@ -436,9 +452,9 @@ def map_survey(folder, ranges=(200, 400, 800, 1500), samples=4000, seed=7):
             bx, by = x + math.cos(th) * R, y + math.sin(th) * R
             if not (0 < bx < WORLD and 0 < by < WORLD):
                 continue
-            ok, why, _ = los(t, x, y, t.ground(x, y) + 2.2,
-                             bx, by, t.ground(bx, by) + 1.3)
-            c[why] += 1
+            f, why, _ = los(t, x, y, t.ground(x, y) + 2.2,
+                            bx, by, t.ground(bx, by) + 1.3)
+            c[CLEAR if f >= VISIBLE else why] += 1
         n = sum(c.values()) or 1
         print("  %5d m   clear %5.1f%%   ground %5.1f%%   trees %5.1f%%"
               % (R, 100.0 * c[CLEAR] / n, 100.0 * c[BLOCKED_TERRAIN] / n,
