@@ -27,10 +27,25 @@ static const float HEIGHT_FACTOR = 0.07f;
 
 struct Veg { float canopy; float sight; };
 
-// Zone code -> canopy height and metres-of-sight-before-opaque. Canopy heights
-// are the engine's own: every stock Terrain.script registers a 17 m vertical
-// forest for Forest01 (zone 11), and the rest are weighted means of TreeSize in
-// BaseSTTree.script over each zone's species mix in BaseForest.script.
+// Zone code -> canopy height and metres-of-sight-before-opaque.
+//
+// CANOPY HEIGHTS are the engine's own: every stock Terrain.script registers a
+// 17 m vertical forest for Forest01 (zone 11), and the rest are weighted means
+// of TreeSize in BaseSTTree.script over each zone's species mix.
+//
+// SIGHT DISTANCES are calibrated, not derived, and were recalibrated once
+// against play. The first set was seeded from intuition about forest
+// visibility and came out about three times too generous: an observer 132 m
+// away in the open saw a tank 13 m inside a dense conifer stand with only 29%
+// masking. BaseForest places CMiddleForest at MinDistance 2.0 m with 90% of
+// the mix as real trees; even at 0.6 m of effective blocking width per trunk
+// that is roughly 0.15 extinction per metre, so 13 m in should be most of the
+// way to concealed. Scaled by a third throughout.
+//
+// g_sight_scale (sight_scale in the ini) multiplies all of them at load, so
+// this can be tuned between runs without a rebuild.
+extern float g_sight_scale;
+
 static inline const Veg *veg_for(int zone)
 {
   switch (zone) {
@@ -39,21 +54,21 @@ static inline const Veg *veg_for(int zone)
     //   27 CExtraLightForest  28 CLightForest  29 CMiddleForest  30 CLargeForest
     // They were missing from this table entirely, which silently treated real
     // forest as open ground - Campaign_1/Mission_3 has units standing in 27.
-    case 27: { static const Veg v = {  3.2f, 220.0f }; return &v; }  // scattered holly, 45% occupied
-    case 28: { static const Veg v = {  4.6f, 160.0f }; return &v; }  // as Forest02
-    case 29: { static const Veg v = { 20.0f,  45.0f }; return &v; }  // as Forest01
-    case 30: { static const Veg v = { 23.9f,  90.0f }; return &v; }  // as Forest04
-    case 11: { static const Veg v = { 17.0f,  45.0f }; return &v; }  // Forest01, dense conifer
-    case 12: { static const Veg v = {  4.6f, 160.0f }; return &v; }  // Forest02, scrub
-    case 13: { static const Veg v = { 17.0f, 120.0f }; return &v; }  // Forest03, live oak
-    case 14: { static const Veg v = { 23.9f,  90.0f }; return &v; }  // Forest04, tall but half empty
-    case 20: { static const Veg v = { 28.0f, 200.0f }; return &v; }  // RoadForest
-    case 49: { static const Veg v = {  5.0f,  70.0f }; return &v; }
-    case 50: { static const Veg v = {  3.5f,  90.0f }; return &v; }
-    case 51: { static const Veg v = {  3.0f, 100.0f }; return &v; }
-    case 52: { static const Veg v = { 28.0f, 400.0f }; return &v; }
-    case 60: case 61: { static const Veg v = { 8.0f, 120.0f }; return &v; }
-    case 62: { static const Veg v = {  7.5f, 130.0f }; return &v; }
+    case 27: { static const Veg v = {    3.2f,  75.0f }; return &v; }  // scattered holly, 45% occupied
+    case 28: { static const Veg v = {    4.6f,  55.0f }; return &v; }  // as Forest02
+    case 29: { static const Veg v = {  20.0f,  15.0f }; return &v; }  // as Forest01
+    case 30: { static const Veg v = {  23.9f,  30.0f }; return &v; }  // as Forest04
+    case 11: { static const Veg v = {  17.0f,  15.0f }; return &v; }  // Forest01, dense conifer
+    case 12: { static const Veg v = {    4.6f,  55.0f }; return &v; }  // Forest02, scrub
+    case 13: { static const Veg v = {  17.0f,  40.0f }; return &v; }  // Forest03, live oak
+    case 14: { static const Veg v = {  23.9f,  30.0f }; return &v; }  // Forest04, tall but half empty
+    case 20: { static const Veg v = {  28.0f,  70.0f }; return &v; }  // RoadForest
+    case 49: { static const Veg v = {    5.0f,  25.0f }; return &v; }
+    case 50: { static const Veg v = {    3.5f,  30.0f }; return &v; }
+    case 51: { static const Veg v = {    3.0f,  35.0f }; return &v; }
+    case 52: { static const Veg v = {  28.0f, 140.0f }; return &v; }
+    case 60: case 61: { static const Veg v = {  8.0f,  40.0f }; return &v; }
+    case 62: { static const Veg v = {    7.5f,  45.0f }; return &v; }
   }
   return NULL;
 }
@@ -232,7 +247,7 @@ static Sight march(const Terrain *t, float ax, float ay, float az,
       // distances - the one quantity here that was tuned rather than read out
       // of the game's own data - can be judged against real engagements
       // instead of adjusted by feel.
-      float spend = step / v->sight;
+      float spend = step / (v->sight * g_sight_scale);
       budget -= spend;
       s.veg_metres += step;
       if (spend > worst) { worst = spend; s.veg_zone = zc; }

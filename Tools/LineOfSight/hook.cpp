@@ -51,6 +51,10 @@ static const char *INI_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.ini";
 // back to target+6. Nothing is split, nothing needs fixing up.
 static const int PATCH_LEN = 6;
 
+// Scales every vegetation sight-through distance. Below 1.0 makes woods
+// denser. Defined here rather than in terrain.h so the header stays pure data.
+float g_sight_scale = 1.0f;
+
 enum Mode { MODE_WATCH, MODE_DENY_FAR, MODE_LOS };
 static Mode  g_mode = MODE_WATCH;
 static float g_deny_beyond = 400.0f;
@@ -500,6 +504,10 @@ static void read_ini()
   else if (!_stricmp(buf, "deny_far")) g_mode = MODE_DENY_FAR;
   else g_mode = MODE_WATCH;
   g_deny_beyond = (float)GetPrivateProfileIntA("los", "deny_beyond", 400, INI_PATH);
+  int pct = GetPrivateProfileIntA("los", "sight_scale", 100, INI_PATH);
+  if (pct < 10) pct = 10;
+  if (pct > 500) pct = 500;
+  g_sight_scale = pct / 100.0f;
 }
 
 static DWORD WINAPI Boot(LPVOID)
@@ -524,6 +532,9 @@ static DWORD WINAPI Boot(LPVOID)
        g_mode == MODE_DENY_FAR ? "" : "");
   if (g_mode == MODE_DENY_FAR)
     llog("  will refuse every sighting beyond %.0f m", g_deny_beyond);
+  if (g_mode == MODE_LOS)
+    llog("  sight_scale %.2f (dense conifer opaque at %.0f m)",
+         g_sight_scale, 15.0f * g_sight_scale);
 
   // Behavior.dll relocates - +237, +252 and +241 MB observed on different runs.
   // Resolving at runtime rather than hardcoding is what makes this work at all.

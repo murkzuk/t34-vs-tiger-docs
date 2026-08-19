@@ -23,3 +23,13 @@
 [los]
 mode = los
 deny_beyond = 400
+
+; sight_scale, percent. Multiplies every vegetation sight-through distance.
+; LOWER makes woods denser and harder to see through. This is the one quantity
+; in the model that is calibrated rather than read out of the game's own data,
+; so it is meant to be moved.
+;
+; At 100 a dense conifer stand (zone 11, Forest01) goes opaque at 15 m, so a
+; tank 13 m inside one is about 87% masked. At 50 it would be opaque at 7.5 m,
+; at 200 at 30 m.
+sight_scale = 100
