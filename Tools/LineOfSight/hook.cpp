@@ -363,6 +363,7 @@ static char __fastcall Hook(void *self, void *pad,
   char out = r;
   const char *note = "";
   float factor = 1.0f;
+  Sight sight = { 1.0f, "clear", 0.0f, 0.0f, 0 };
 
   // Occlusion may only subtract. If the engine already said no, leave it.
   if (r && haveobs && havetgt)
@@ -380,6 +381,7 @@ static char __fastcall Hook(void *self, void *pad,
       Sight s = march(&g_terrain, ox, oy, gz + 2.0f,
                       tx, ty, g_terrain.ground(tx, ty) + 1.3f);
       factor = s.factor;
+      sight = s;
       if (factor <= 0.0f || frand() > factor) {
         out = 0;
         note = (s.why[0] == 't') ? " DENIED(terrain)" : " DENIED(foliage)";
@@ -396,6 +398,18 @@ static char __fastcall Hook(void *self, void *pad,
          "  dist %8.1f  dt %.4f  -> %s%s",
          g_calls, ox, oy, oz, haveobs ? mat[0] : 0.0f, haveobs ? mat[4] : 0.0f,
          tx, ty, distf, dtf, r ? "SEEN" : "-", note);
+    // The march returns a fraction, not a verdict. Recording it shows how much
+    // of the effect is partial cover - a turret over a crest - rather than
+    // total masking, which is what decides whether the fraction is earning its
+    // keep or could be a plain bool.
+    if (g_mode == MODE_LOS && r && haveobs && havetgt &&
+        (factor < 1.0f || sight.veg_metres > 0.0f))
+      llog("           masked %.0f%%  |  %.0f m of vegetation crossed"
+           "%s%d%s",
+           (1.0f - factor) * 100.0f, sight.veg_metres,
+           sight.veg_metres > 0.0f ? ", mostly zone " : "",
+           sight.veg_metres > 0.0f ? sight.veg_zone : 0,
+           sight.veg_metres > 0.0f ? "" : "");
   }
 
   if ((g_calls % 5000) == 0) {

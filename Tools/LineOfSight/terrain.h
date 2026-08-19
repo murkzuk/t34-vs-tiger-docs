@@ -172,12 +172,18 @@ static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
 // by each modifier's factor, so partial masking can be expressed honestly as a
 // fraction rather than rounded to blocked/clear. Hull-down should be hard to
 // spot, not impossible.
-struct Sight { float factor; const char *why; float lost_at; };
+struct Sight {
+  float factor;
+  const char *why;
+  float lost_at;
+  float veg_metres;   // how much vegetation the line actually crossed
+  int   veg_zone;     // the zone code that cost the most of the sight budget
+};
 
 static Sight march(const Terrain *t, float ax, float ay, float az,
                    float bx, float by, float bz)
 {
-  Sight s = { 1.0f, "clear", 0.0f };
+  Sight s = { 1.0f, "clear", 0.0f, 0.0f, 0 };
   float dx = bx - ax, dy = by - ay;
   float flat = (float)sqrt(dx * dx + dy * dy);
   if (flat < 1.0f) return s;
@@ -189,6 +195,7 @@ static Sight march(const Terrain *t, float ax, float ay, float az,
   float inv = 1.0f / flat;
   float ux = dx * inv, uy = dy * inv, dz = bz - az;
   float budget = 1.0f;
+  float worst = 0.0f;
 
   for (int i = 1; i < n; i++) {
     float d = i * step;
@@ -209,9 +216,17 @@ static Sight march(const Terrain *t, float ax, float ay, float az,
       continue;
     }
 
-    const Veg *v = veg_for(t->zone(x, y));
+    int zc = t->zone(x, y);
+    const Veg *v = veg_for(zc);
     if (v && rz < g + v->canopy) {
-      budget -= step / v->sight;
+      // Record what the vegetation actually cost, so the sight-through
+      // distances - the one quantity here that was tuned rather than read out
+      // of the game's own data - can be judged against real engagements
+      // instead of adjusted by feel.
+      float spend = step / v->sight;
+      budget -= spend;
+      s.veg_metres += step;
+      if (spend > worst) { worst = spend; s.veg_zone = zc; }
       if (budget <= 0.0f) {
         s.factor = 0.0f; s.why = "foliage"; s.lost_at = d;
         return s;
