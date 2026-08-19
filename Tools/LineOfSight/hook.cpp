@@ -61,6 +61,10 @@ static __int64 g_calls, g_true, g_denied, g_logged;
 static DWORD g_tick0;
 static float g_dt_min = 1e30f, g_dt_max = -1e30f;
 static Terrain g_terrain;
+static volatile LONG g_ready;       // terrain loaded, enforcement live
+static volatile LONG g_giveup;      // identification failed, do not enforce
+static __int64 g_gap_denied;        // sightings refused while waiting
+static int g_last_total;            // object loads seen on the last attempt
 
 static void llog(const char *fmt, ...)
 {
@@ -127,7 +131,7 @@ static float F(DWORD u) { float f; memcpy(&f, &u, 4); return f; }
 static const int NPROBE = 12;
 static float g_px[NPROBE], g_py[NPROBE], g_pz[NPROBE];
 static int   g_nprobe;
-static bool  g_identified;
+static bool  g_checked;   // fit check done
 
 static bool find_zone_bmp(const char *folder, char *out)
 {
@@ -225,8 +229,7 @@ static int collect_names(char names[NNAMES][NAMELEN])
     if (!dup) strncpy(names[n++], src, NAMELEN - 1);
   }
   free(all);
-  llog("read %d object loads from execution.log, %d distinct names used",
-       total, n);
+  g_last_total = total;
   return n;
 }
 
@@ -274,47 +277,60 @@ static void score_tree(const char *root, char names[NNAMES][NAMELEN], int n,
   FindClose(h);
 }
 
-static void identify()
+static bool identify()
 {
-  g_identified = true;      // one attempt, whatever happens
   static char names[NNAMES][NAMELEN];   // 19 KB - not on the stack
   int n = collect_names(names);
-  if (n < 10) {
-    llog("only %d object names in execution.log - not enough to identify the "
-         "mission, staying in watch mode", n);
-    g_mode = MODE_WATCH;
-    return;
-  }
+  if (n < 10)
+    return false;          // mission still loading; the watcher retries
 
   char root[MAX_PATH], best[MAX_PATH] = "";
   _snprintf(root, MAX_PATH, "%s\\Missions", SANDBOX);
   int bestk = 0, secondk = 0;
   score_tree(root, names, n, best, &bestk, &secondk, 0);
-  llog("mission match: %d/%d names, runner-up %d  ->  %s",
-       bestk, n, secondk, best[0] ? best : "(none)");
 
   // Insist on a real margin. Generic object names ("AllVillageNavPoints")
   // appear in several missions, so a narrow win means the answer is not known.
-  if (!best[0] || bestk * 10 < n * 6 || bestk * 4 < secondk * 5) {
-    llog("  match is not decisive - watch mode");
-    g_mode = MODE_WATCH;
-    return;
-  }
+  // A near-tie early on usually just means the mission is still loading, so
+  // this is a retry rather than a failure.
+  if (!best[0] || bestk * 10 < n * 6 || bestk * 4 < secondk * 5)
+    return false;
+
+  llog("read %d object loads from execution.log, %d distinct names used",
+       g_last_total, n);
+  llog("mission match: %d/%d names, runner-up %d  ->  %s",
+       bestk, n, secondk, best);
   char zbmp[MAX_PATH];
   if (!find_zone_bmp(best, zbmp) || !load_terrain(&g_terrain, best, zbmp)) {
-    llog("  could not load its terrain - watch mode");
-    g_mode = MODE_WATCH;
-    return;
+    llog("  could not load its terrain");
+    return false;
   }
   llog("  MISSION: %s", best);
   llog("  hmap %dx%d cell %.3f m ; zones %dx%d cell %.3f m",
        g_terrain.hdim, g_terrain.hdim, g_terrain.hcell,
        g_terrain.zw, g_terrain.zh, g_terrain.zcell);
-  if (!terrain_fits()) {
-    llog("  FIT FAILED - that is not the terrain these units are standing on. "
-         "Falling back to watch mode rather than enforcing against the wrong map.");
-    g_mode = MODE_WATCH;
+  return true;
+}
+
+// Poll for the mission from the moment the DLL attaches. Objects load before
+// gameplay starts, so terrain is ready before the first vision call and there
+// is no window in which sightings go unexamined.
+static DWORD WINAPI MissionWatcher(LPVOID)
+{
+  for (int i = 0; i < 100; i++) {          // 100 x 200 ms = 20 s
+    if (g_mode != MODE_LOS) return 0;
+    if (identify()) {
+      InterlockedExchange(&g_ready, 1);
+      llog("  enforcement live");
+      return 0;
+    }
+    Sleep(200);
   }
+  InterlockedExchange(&g_giveup, 1);
+  llog("could not identify the mission within 20 s - no occlusion this run "
+       "(watch behaviour, nothing denied)");
+  g_mode = MODE_WATCH;
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -356,9 +372,18 @@ static char __fastcall Hook(void *self, void *pad,
       g_nprobe++;
     }
   }
-  if (g_mode == MODE_LOS && !g_identified &&
-      (g_nprobe >= NPROBE || (g_calls > 400 && g_nprobe >= 3)))
-    identify();
+  // The fit check is a safety net, not part of identification: it confirms
+  // afterwards that the terrain we loaded is the one these units are standing
+  // on. Run it once enough spatially distinct positions exist.
+  if (g_ready && !g_checked && g_nprobe >= 3) {
+    g_checked = true;
+    if (!terrain_fits()) {
+      llog("  FIT FAILED - that is not the terrain these units are standing "
+           "on. Dropping to watch mode rather than enforcing against the "
+           "wrong map.");
+      g_mode = MODE_WATCH;
+    }
+  }
 
   char out = r;
   const char *note = "";
@@ -373,7 +398,15 @@ static char __fastcall Hook(void *self, void *pad,
       // prove a decision can be influenced at all before trusting a subtle one.
       if (distf > g_deny_beyond) { out = 0; factor = 0.0f; note = " DENIED(far)"; }
     }
-    else if (g_mode == MODE_LOS && g_terrain.valid()) {
+    else if (g_mode == MODE_LOS && !g_ready && !g_giveup) {
+      // Terrain not loaded yet, so we cannot say whether this is visible -
+      // refuse it. Letting it through is what produced x-ray vision through
+      // woodland for the first thirteen seconds of a mission, and a target
+      // acquired in that window stays acquired long after it closes.
+      out = 0; factor = 0.0f; note = " DENIED(not ready)";
+      g_gap_denied++;
+    }
+    else if (g_mode == MODE_LOS && g_ready) {
       // Both endpoints come from the heightfield. The engine's Z is mid-model,
       // not ground contact, so adding an eye height to it would put the gunner
       // a metre and a half too high.
@@ -418,9 +451,9 @@ static char __fastcall Hook(void *self, void *pad,
 
   if ((g_calls % 5000) == 0) {
     double secs = (GetTickCount() - g_tick0) / 1000.0;
-    llog("--- %I64d calls, %I64d seen (%.1f%%), %I64d denied by LOS, "
-         "%.0f s, %.0f calls/s, dt %.3f..%.3f",
-         g_calls, g_true, 100.0 * g_true / g_calls, g_denied, secs,
+    llog("--- %I64d calls, %I64d seen (%.1f%%), %I64d denied by LOS "
+         "(%I64d before terrain was ready), %.0f s, %.0f calls/s, dt %.3f..%.3f",
+         g_calls, g_true, 100.0 * g_true / g_calls, g_denied, g_gap_denied, secs,
          secs > 0 ? g_calls / secs : 0.0, g_dt_min, g_dt_max);
   }
 
@@ -515,6 +548,8 @@ static DWORD WINAPI Boot(LPVOID)
   }
   llog("prologue verified");
   install(target);
+  if (g_mode == MODE_LOS)
+    CreateThread(NULL, 0, MissionWatcher, NULL, 0, NULL);
   return 0;
 }
 
