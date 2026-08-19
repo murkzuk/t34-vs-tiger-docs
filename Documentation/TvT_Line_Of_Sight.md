@@ -208,3 +208,41 @@ and return 0.6, mask all of it and return 0. Hull-down becomes harder to spot
 rather than impossible, which is both more realistic and more forgiving of
 heightfield noise — and it costs nothing extra, because the architecture already
 wanted a float.
+
+## It works (2026-08-19)
+
+First run with the march enforcing, Campaign_1/Mission_2:
+
+```
+read 306 object loads from execution.log, 198 distinct names used
+mission match: 179/198 names, runner-up 90  ->  Campaign_1\Mission_2
+fit check over 8 observer positions: offsets +0.60..+1.71 m
+--- 5000 calls, 2912 seen, 2161 denied by LOS, 175 s, 28 calls/s
+```
+
+**2161 sightings refused — 74% of the engine's positives**, against 70%
+predicted offline from the previous run's captured traffic. No access
+violations; the engine took it without complaint.
+
+Where the effect lands:
+
+| range | allowed | denied | denied share |
+|---|---|---|---|
+| 200–400 m | 3 | 0 | 0% |
+| 400–600 m | 5 | 1 | 17% |
+| 600–800 m | 29 | 6 | 17% |
+| 800–1000 m | 9 | 107 | **92%** |
+| 1000 m+ | 1 | 40 | **98%** |
+
+Close fighting is untouched. The cliff at 800 m is not arbitrary: in this
+mission the Germans sit at 601–606 m and the Soviets at 586–589 m with a crest
+between them, about 900 m apart across dead ground. Every one of those long
+shots was going through a hill.
+
+**The user's verdict: "the game was good it felt more tactical (slower paced)".**
+
+That pacing change is the point, and it is worth being explicit about why it
+happens. Tanks that cannot see across a valley have to move to a position where
+they can. Manoeuvre takes time. The engagement no longer opens the instant two
+forces are within gun range, so the mission acquires an approach phase it never
+had — which is most of what a tank sim is for.
