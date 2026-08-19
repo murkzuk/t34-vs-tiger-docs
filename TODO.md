@@ -57,6 +57,24 @@ Running list of things flagged during work sessions, not yet done. Newest first 
   all three colour schemes, so blackening it means editing `ColorMap.script` and
   affecting everything else that uses `CI_LIGHT`.
 
+  **The engine DOES have the heading - user's observation, checked and confirmed.**
+  Map icons rotate with the tank. `Editor\TerrainMap.script` declares behaviour masks
+  `BEH_FIT_MAP` and `BEH_NOT_ROTATE_TEX`, the latter being an opt-OUT - so rotating
+  with the object's heading is the DEFAULT, and the player icon (`PLAYER_BEHAVIOR`)
+  does not opt out. `OrientationMode` (0/1) in the settings is north-up vs heading-up
+  for the whole map.
+
+  This rules out "TvT does not track heading". It tracks it per object per frame. But
+  script only hands the map a behaviour *mask* - the native renderer reads each
+  object's matrix itself, and no angle is ever passed back. Same wall: the number
+  exists only on the C++ side.
+
+  **Best remaining route: the injection toolchain** (`K:	vt_probe`), which already
+  reads live game memory and locates objects by RTTI. The player tank's matrix is
+  exactly what it was built to find. Cheaper thing to try first: look for a native
+  control method that takes an OBJECT rather than an angle - a "track this object"
+  mode on NavBar would sidestep the whole problem.
+
   All changes reverted 2026-08-19: `Cockpit.script`, `Navigator.script`,
   `GameSettings.script` restored from backups, registry key set back to 0.
 
