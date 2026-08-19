@@ -179,11 +179,16 @@ static bool terrain_fits()
 }
 
 
-static const int NNAMES = 40, NAMELEN = 96;
+static const int NNAMES = 200, NAMELEN = 96, MAXOBJ = 1024;
 
 // The engine names every object it loads in its own log:
 //     [MissionController] Object CC1M2Gr_NUSSR_Tanks successfully loaded at 17379
-// Collect the last NNAMES distinct ones - the most recent mission load.
+//
+// Collect the last NNAMES DISTINCT names by walking BACKWARDS. Taking the last
+// NNAMES entries and de-duplicating afterwards does not work: objects load
+// units-first and scenery-last, so the tail is all "_3", "_4", "fence_11" -
+// names half the missions in the game share. Walking back until enough
+// distinct names are held reaches into the unit names, which are specific.
 static int collect_names(char names[NNAMES][NAMELEN])
 {
   char p[MAX_PATH];
@@ -191,36 +196,37 @@ static int collect_names(char names[NNAMES][NAMELEN])
   char *buf = slurp(p, NULL);
   if (!buf) {
     // Worth saying loudly: if the engine holds its own log open without
-    // FILE_SHARE_READ, this whole identification route is closed and the
-    // fallback is a height probe, which cannot separate missions that share a
-    // base heightfield. One run tells us which world we are in.
+    // FILE_SHARE_READ, this identification route is closed entirely.
     llog("could not read execution.log (error %lu)", GetLastError());
     return 0;
   }
 
   static const char TAG[] = "[MissionController] Object ";
-  // Walk forward collecting into a ring, so what survives is the tail.
-  char ring[NNAMES][NAMELEN];
-  int n = 0, total = 0;
+  char (*all)[NAMELEN] = (char (*)[NAMELEN])malloc((size_t)MAXOBJ * NAMELEN);
+  if (!all) { free(buf); return 0; }
+
+  int total = 0;
   for (char *c = buf; (c = strstr(c, TAG)) != NULL; c += sizeof(TAG) - 1) {
-    char *s = c + sizeof(TAG) - 1;
-    char *sp = strchr(s, ' ');
-    if (!sp || sp - s >= NAMELEN) continue;
-    memcpy(ring[total % NNAMES], s, sp - s);
-    ring[total % NNAMES][sp - s] = 0;
+    char *t = c + sizeof(TAG) - 1;
+    char *sp = strchr(t, ' ');
+    if (!sp || sp - t >= NAMELEN) continue;
+    memcpy(all[total % MAXOBJ], t, sp - t);
+    all[total % MAXOBJ][sp - t] = 0;
     total++;
   }
   free(buf);
-  if (!total) return 0;
 
-  int have = total < NNAMES ? total : NNAMES;
-  int start = total < NNAMES ? 0 : total % NNAMES;
-  for (int i = 0; i < have; i++) {
-    const char *src = ring[(start + i) % NNAMES];
+  int have = total < MAXOBJ ? total : MAXOBJ;
+  int n = 0;
+  for (int i = 0; i < have && n < NNAMES; i++) {
+    const char *src = all[((total - 1 - i) % MAXOBJ + MAXOBJ) % MAXOBJ];
     bool dup = false;
     for (int j = 0; j < n; j++) if (!strcmp(names[j], src)) { dup = true; break; }
     if (!dup) strncpy(names[n++], src, NAMELEN - 1);
   }
+  free(all);
+  llog("read %d object loads from execution.log, %d distinct names used",
+       total, n);
   return n;
 }
 
@@ -271,9 +277,9 @@ static void score_tree(const char *root, char names[NNAMES][NAMELEN], int n,
 static void identify()
 {
   g_identified = true;      // one attempt, whatever happens
-  char names[NNAMES][NAMELEN];
+  static char names[NNAMES][NAMELEN];   // 19 KB - not on the stack
   int n = collect_names(names);
-  if (n < 5) {
+  if (n < 10) {
     llog("only %d object names in execution.log - not enough to identify the "
          "mission, staying in watch mode", n);
     g_mode = MODE_WATCH;
@@ -289,7 +295,7 @@ static void identify()
 
   // Insist on a real margin. Generic object names ("AllVillageNavPoints")
   // appear in several missions, so a narrow win means the answer is not known.
-  if (!best[0] || bestk < 5 || bestk <= secondk + 3) {
+  if (!best[0] || bestk * 10 < n * 6 || bestk * 4 < secondk * 5) {
     llog("  match is not decisive - watch mode");
     g_mode = MODE_WATCH;
     return;
