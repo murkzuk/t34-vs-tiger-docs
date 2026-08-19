@@ -404,12 +404,16 @@ static char __fastcall Hook(void *self, void *pad,
     // keep or could be a plain bool.
     if (g_mode == MODE_LOS && r && haveobs && havetgt &&
         (factor < 1.0f || sight.veg_metres > 0.0f))
-      llog("           masked %.0f%%  |  %.0f m of vegetation crossed"
-           "%s%d%s",
-           (1.0f - factor) * 100.0f, sight.veg_metres,
-           sight.veg_metres > 0.0f ? ", mostly zone " : "",
-           sight.veg_metres > 0.0f ? sight.veg_zone : 0,
-           sight.veg_metres > 0.0f ? "" : "");
+    {
+      char veg[64];
+      if (sight.veg_metres > 0.0f)
+        _snprintf(veg, sizeof(veg), "%.0f m of vegetation, mostly zone %d",
+                  sight.veg_metres, sight.veg_zone);
+      else
+        strcpy(veg, "no vegetation on the line");
+      llog("           masked %.0f%%  |  %s",
+           (1.0f - factor) * 100.0f, veg);
+    }
   }
 
   if ((g_calls % 5000) == 0) {

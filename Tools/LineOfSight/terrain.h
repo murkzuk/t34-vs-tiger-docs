@@ -34,6 +34,15 @@ struct Veg { float canopy; float sight; };
 static inline const Veg *veg_for(int zone)
 {
   switch (zone) {
+    // Bush01..Bush04 are NOT bushes. BaseForest.script's CellTemplates maps
+    // them to the variable-density forest templates, so they are woodland:
+    //   27 CExtraLightForest  28 CLightForest  29 CMiddleForest  30 CLargeForest
+    // They were missing from this table entirely, which silently treated real
+    // forest as open ground - Campaign_1/Mission_3 has units standing in 27.
+    case 27: { static const Veg v = {  3.2f, 220.0f }; return &v; }  // scattered holly, 45% occupied
+    case 28: { static const Veg v = {  4.6f, 160.0f }; return &v; }  // as Forest02
+    case 29: { static const Veg v = { 20.0f,  45.0f }; return &v; }  // as Forest01
+    case 30: { static const Veg v = { 23.9f,  90.0f }; return &v; }  // as Forest04
     case 11: { static const Veg v = { 17.0f,  45.0f }; return &v; }  // Forest01, dense conifer
     case 12: { static const Veg v = {  4.6f, 160.0f }; return &v; }  // Forest02, scrub
     case 13: { static const Veg v = { 17.0f, 120.0f }; return &v; }  // Forest03, live oak

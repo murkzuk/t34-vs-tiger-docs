@@ -88,6 +88,15 @@ HEIGHT_FACTOR = 0.07
 # The sight budget scales with how solid the template is. CLargeForest is half
 # NullTree, so it is tall but see-through; CMiddleForest is 90% occupied.
 VEGETATION = {
+    # Bush01..Bush04 are NOT bushes. BaseForest.script's CellTemplates maps them
+    # to the variable-density forest templates - CExtraLightForest, CLightForest,
+    # CMiddleForest, CLargeForest - so they are woodland. They were missing from
+    # this table at first, which silently treated real forest as open ground;
+    # Campaign_1/Mission_3 has units standing in 27.
+    27: ( 3.2, 220.0),
+    28: ( 4.6, 160.0),
+    29: (20.0,  45.0),
+    30: (23.9,  90.0),
     11: (17.0,  45.0),
     12: ( 4.6, 160.0),
     13: (17.0, 120.0),
