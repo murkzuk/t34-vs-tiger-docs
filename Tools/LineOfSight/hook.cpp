@@ -1,11 +1,11 @@
-// tvt_los_hook - watch TvT's entire AI vision model from the inside.
+// tvt_los_hook - give TvT's AI line of sight.
 //
-// Target: Behavior.dll + 0xC9E50 (FUN_100c9e50 with the DLL at its preferred
-// base 0x10000000). This one function IS TvT's vision. Decoded from its
-// disassembly, it computes:
+// Target: Behavior.dll + 0xC9E50 (FUN_100c9e50 at the DLL's preferred base
+// 0x10000000). That one function IS TvT's vision model. Decoded from its
+// disassembly:
 //
 //     visibility  = 1.0                       (or [this+0x110] if target changed)
-//     visibility *= stateTable[target->GetState()]      // [this+0x114][i]
+//     visibility *= stateTable[target->GetState()]          // [this+0x114][i]
 //     visibility *= angleCurve(dot(dirToTarget, forward))   // curve at this+0xEC
 //     visibility *= rangeCurve(distance)                    // curve at this+0xF8
 //     if (visibility <= 0) return false
@@ -16,22 +16,20 @@
 //     if (visibility >= 1.0) return true
 //     return rand()/32767.0 < 1 - pow(1 - visibility, dt)
 //
-// (0x1018BC30 is textbook MSVC rand(), LCG 0x343FD/0x269EC3 & 0x7FFF;
-//  0x1018D0A0 is pow; 0x10042CB0 is a piecewise-linear curve evaluator;
-//  0x1003DE80 is a 2-component vector product. Constants 0.0/1.0/32767.0.)
+// Two dimensions throughout: the observer's transform is passed in and its Z
+// is never read. No ray cast, no terrain sample, no foliage test anywhere.
 //
-// Two dimensions throughout. No ray, no terrain sample, no foliage test.
+// Measured live: 31 calls a second, dt between 3 and 89 s. This is a slow AI
+// tick, not a per-frame poll, so a 20-50 lookup march costs about 1,200
+// lookups a second. There is no performance problem here.
 //
-// WHAT THIS BUILD DOES: nothing but watch. It calls the original, records what
-// was asked and what was answered, and returns the original's answer unchanged.
-// Proving the hook is stable and reading real traffic comes before changing a
-// single decision - wiring new work into a per-frame AI call on a 2001 engine
-// is exactly the kind of thing that wrecks performance or destabilises the AI,
-// and none of that is proven yet.
+// Also measured live: 70% of the engine's positive sightings are through solid
+// ground or woodland.
 //
-// The insertion point for occlusion is already obvious from the model above:
-// it is one more multiplier of zero, the same shape as the modifier records the
-// engine already walks. The architecture does not have to be fought.
+// THE ONE RULE: this may only ever turn a SEEN into a miss. The engine's own
+// "not seen" is usually just its detection dice failing on that tick and says
+// nothing about geometry, so promoting one to a sighting would invent
+// information. Occlusion subtracts; it never adds.
 //
 // SANDBOX ONLY. Refuses to arm anywhere but M:\TvT_INJECT_SANDBOX.
 
@@ -39,31 +37,37 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
+#include "terrain.h"
 
 static const DWORD VISION_RVA = 0x000C9E50;
-static const char *LOG_PATH   = "M:\\TvT_INJECT_SANDBOX\\tvt_los.log";
-static const char *SANDBOX    = "M:\\TvT_INJECT_SANDBOX";
+static const char *SANDBOX  = "M:\\TvT_INJECT_SANDBOX";
+static const char *LOG_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.log";
+static const char *INI_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.ini";
 
 // The first instruction is `mov eax, fs:[0]` - six bytes, one instruction, and
-// it carries no relocation. That is the whole reason a 5-byte JMP is safe here
-// without a length disassembler: copy exactly those six bytes to the
-// trampoline and jump back to target+6. Nothing is split, nothing is fixed up.
+// it carries no relocation. That is why a 5-byte JMP is safe here without a
+// length disassembler: copy exactly those six bytes to the trampoline and jump
+// back to target+6. Nothing is split, nothing needs fixing up.
 static const int PATCH_LEN = 6;
+
+enum Mode { MODE_WATCH, MODE_DENY_FAR, MODE_LOS };
+static Mode  g_mode = MODE_WATCH;
+static float g_deny_beyond = 400.0f;
 
 static CRITICAL_SECTION g_lock;
 static FILE *g_log;
-static __int64 g_calls, g_true, g_logged;
+static __int64 g_calls, g_true, g_denied, g_logged;
 static DWORD g_tick0;
 static float g_dt_min = 1e30f, g_dt_max = -1e30f;
+static Terrain g_terrain;
 
 static void llog(const char *fmt, ...)
 {
   if (!g_log) return;
   va_list ap; va_start(ap, fmt);
-  vfprintf(g_log, fmt, ap);
-  va_end(ap);
-  fputc('\n', g_log);
-  fflush(g_log);
+  vfprintf(g_log, fmt, ap); va_end(ap);
+  fputc('\n', g_log); fflush(g_log);
 }
 
 static bool readable(const void *p, size_t n)
@@ -75,21 +79,239 @@ static bool readable(const void *p, size_t n)
   return (const BYTE *)p + n <= (const BYTE *)mbi.BaseAddress + mbi.RegionSize;
 }
 
+// Our own generator. The engine's detection roll uses the CRT rand() in
+// Behavior.dll and its sequence is part of the behaviour being observed -
+// borrowing it would perturb the very thing under test.
+static DWORD g_seed = 0x13579BDF;
+static float frand()
+{
+  g_seed = g_seed * 1103515245u + 12345u;
+  return ((g_seed >> 16) & 0x7FFF) / 32767.0f;
+}
+
 // __fastcall with a dummy second parameter is bit-for-bit __thiscall: arg1 in
 // ECX, arg2 in EDX (unused), the remaining seven dwords pushed, callee cleans
 // 0x1c. That lets the hook and the trampoline both be ordinary C functions and
-// keeps hand-written assembly out of this entirely.
-//
-// Everything is typed as a dword and the floats are bit-cast, so no float ABI
-// question can arise on the way through.
+// keeps hand-written assembly out of this entirely. Everything is typed as a
+// dword and floats are bit-cast, so no float ABI question can arise.
 typedef char (__fastcall *VisFn)(void *self, void *pad,
                                  DWORD dt, DWORD *tgt, DWORD key, DWORD *a4,
                                  float *pos, float *mat, DWORD dist);
-
-static VisFn g_orig;          // -> trampoline
-static BYTE *g_target;
+static VisFn g_orig;
 
 static float F(DWORD u) { float f; memcpy(&f, &u, 4); return f; }
+
+// ---------------------------------------------------------------------------
+// Which mission is loaded?
+//
+// Nothing needs configuring, and this does not guess. The engine names every
+// object it loads in its own log:
+//
+//     [MissionController] Object CC1M2Gr_NUSSR_Tanks successfully loaded at 17379
+//
+// Those names are unique to a mission and appear verbatim in exactly one
+// Content.script, so the folder can be found by exact string match.
+//
+// A statistical approach was tried first - match observer heights against each
+// candidate heightfield and take the tightest fit - and it does not work.
+// Several missions share most of a base heightfield with only local edits, so
+// Campaign_1/Mission_2, CF3Mission and DM5Mission returned IDENTICAL ground at
+// all nine probe points despite being different files. Heights cannot separate
+// maps that are identical where you are standing. Their ZONE maps do differ,
+// which is what makes picking the wrong one harmful rather than harmless.
+//
+// The height probe is kept, but demoted to what it is good for: checking after
+// the fact that the loaded terrain actually fits, and saying so in the log.
+// ---------------------------------------------------------------------------
+
+static const int NPROBE = 12;
+static float g_px[NPROBE], g_py[NPROBE], g_pz[NPROBE];
+static int   g_nprobe;
+static bool  g_identified;
+
+static bool find_zone_bmp(const char *folder, char *out)
+{
+  char pat[MAX_PATH];
+  _snprintf(pat, MAX_PATH, "%s\\TerrainZone*.bmp", folder);
+  WIN32_FIND_DATAA fd;
+  HANDLE h = FindFirstFileA(pat, &fd);
+  if (h == INVALID_HANDLE_VALUE) return false;
+  _snprintf(out, MAX_PATH, "%s\\%s", folder, fd.cFileName);
+  FindClose(h);
+  return true;
+}
+
+// Read a file the game may still have open for writing.
+static char *slurp(const char *path, long *len)
+{
+  HANDLE h = CreateFileA(path, GENERIC_READ,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (h == INVALID_HANDLE_VALUE) return NULL;
+  DWORD sz = GetFileSize(h, NULL);
+  if (sz == INVALID_FILE_SIZE || sz == 0) { CloseHandle(h); return NULL; }
+  char *buf = (char *)malloc(sz + 1);
+  if (!buf) { CloseHandle(h); return NULL; }
+  DWORD got = 0;
+  ReadFile(h, buf, sz, &got, NULL);
+  CloseHandle(h);
+  buf[got] = 0;
+  if (len) *len = (long)got;
+  return buf;
+}
+
+// After loading, confirm the terrain actually fits where the units are. A
+// unit's origin sits a fixed height above ground for its class - measured
+// +0.85 m for a soldier, +1.41 m for a T-34/76, +1.65 m for a Tiger - so every
+// offset should land in a narrow positive band. If it does not, the wrong
+// terrain is loaded and enforcing against it would be worse than not enforcing.
+static bool terrain_fits()
+{
+  float lo = 1e30f, hi = -1e30f;
+  for (int i = 0; i < g_nprobe; i++) {
+    float d = g_pz[i] - g_terrain.ground(g_px[i], g_py[i]);
+    if (d < lo) lo = d;
+    if (d > hi) hi = d;
+  }
+  llog("  fit check over %d observer positions: offsets %+.2f..%+.2f m",
+       g_nprobe, lo, hi);
+  return lo > 0.0f && hi < 3.0f;
+}
+
+
+static const int NNAMES = 40, NAMELEN = 96;
+
+// The engine names every object it loads in its own log:
+//     [MissionController] Object CC1M2Gr_NUSSR_Tanks successfully loaded at 17379
+// Collect the last NNAMES distinct ones - the most recent mission load.
+static int collect_names(char names[NNAMES][NAMELEN])
+{
+  char p[MAX_PATH];
+  _snprintf(p, MAX_PATH, "%s\\execution.log", SANDBOX);
+  char *buf = slurp(p, NULL);
+  if (!buf) {
+    // Worth saying loudly: if the engine holds its own log open without
+    // FILE_SHARE_READ, this whole identification route is closed and the
+    // fallback is a height probe, which cannot separate missions that share a
+    // base heightfield. One run tells us which world we are in.
+    llog("could not read execution.log (error %lu)", GetLastError());
+    return 0;
+  }
+
+  static const char TAG[] = "[MissionController] Object ";
+  // Walk forward collecting into a ring, so what survives is the tail.
+  char ring[NNAMES][NAMELEN];
+  int n = 0, total = 0;
+  for (char *c = buf; (c = strstr(c, TAG)) != NULL; c += sizeof(TAG) - 1) {
+    char *s = c + sizeof(TAG) - 1;
+    char *sp = strchr(s, ' ');
+    if (!sp || sp - s >= NAMELEN) continue;
+    memcpy(ring[total % NNAMES], s, sp - s);
+    ring[total % NNAMES][sp - s] = 0;
+    total++;
+  }
+  free(buf);
+  if (!total) return 0;
+
+  int have = total < NNAMES ? total : NNAMES;
+  int start = total < NNAMES ? 0 : total % NNAMES;
+  for (int i = 0; i < have; i++) {
+    const char *src = ring[(start + i) % NNAMES];
+    bool dup = false;
+    for (int j = 0; j < n; j++) if (!strcmp(names[j], src)) { dup = true; break; }
+    if (!dup) strncpy(names[n++], src, NAMELEN - 1);
+  }
+  return n;
+}
+
+static int score_folder(const char *folder, char names[NNAMES][NAMELEN], int n)
+{
+  char p[MAX_PATH];
+  _snprintf(p, MAX_PATH, "%s\\Content.script", folder);
+  char *buf = slurp(p, NULL);
+  if (!buf) return 0;
+  int k = 0;
+  char quoted[NAMELEN + 4];
+  for (int i = 0; i < n; i++) {
+    _snprintf(quoted, sizeof(quoted), "\"%s\"", names[i]);
+    if (strstr(buf, quoted)) k++;
+  }
+  free(buf);
+  return k;
+}
+
+static void score_tree(const char *root, char names[NNAMES][NAMELEN], int n,
+                       char best[MAX_PATH], int *bestk, int *secondk, int depth)
+{
+  if (depth > 3) return;
+  char pat[MAX_PATH];
+  _snprintf(pat, MAX_PATH, "%s\\*", root);
+  WIN32_FIND_DATAA fd;
+  HANDLE h = FindFirstFileA(pat, &fd);
+  if (h == INVALID_HANDLE_VALUE) return;
+  do {
+    if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+    if (fd.cFileName[0] == '.') continue;
+    char sub[MAX_PATH];
+    _snprintf(sub, MAX_PATH, "%s\\%s", root, fd.cFileName);
+    char hmap[MAX_PATH];
+    _snprintf(hmap, MAX_PATH, "%s\\hmap.raw", sub);
+    if (GetFileAttributesA(hmap) != INVALID_FILE_ATTRIBUTES) {
+      int k = score_folder(sub, names, n);
+      if (k > *bestk) {
+        *secondk = *bestk; *bestk = k;
+        strncpy(best, sub, MAX_PATH - 1);
+      } else if (k > *secondk) *secondk = k;
+    }
+    score_tree(sub, names, n, best, bestk, secondk, depth + 1);
+  } while (FindNextFileA(h, &fd));
+  FindClose(h);
+}
+
+static void identify()
+{
+  g_identified = true;      // one attempt, whatever happens
+  char names[NNAMES][NAMELEN];
+  int n = collect_names(names);
+  if (n < 5) {
+    llog("only %d object names in execution.log - not enough to identify the "
+         "mission, staying in watch mode", n);
+    g_mode = MODE_WATCH;
+    return;
+  }
+
+  char root[MAX_PATH], best[MAX_PATH] = "";
+  _snprintf(root, MAX_PATH, "%s\\Missions", SANDBOX);
+  int bestk = 0, secondk = 0;
+  score_tree(root, names, n, best, &bestk, &secondk, 0);
+  llog("mission match: %d/%d names, runner-up %d  ->  %s",
+       bestk, n, secondk, best[0] ? best : "(none)");
+
+  // Insist on a real margin. Generic object names ("AllVillageNavPoints")
+  // appear in several missions, so a narrow win means the answer is not known.
+  if (!best[0] || bestk < 5 || bestk <= secondk + 3) {
+    llog("  match is not decisive - watch mode");
+    g_mode = MODE_WATCH;
+    return;
+  }
+  char zbmp[MAX_PATH];
+  if (!find_zone_bmp(best, zbmp) || !load_terrain(&g_terrain, best, zbmp)) {
+    llog("  could not load its terrain - watch mode");
+    g_mode = MODE_WATCH;
+    return;
+  }
+  llog("  MISSION: %s", best);
+  llog("  hmap %dx%d cell %.3f m ; zones %dx%d cell %.3f m",
+       g_terrain.hdim, g_terrain.hdim, g_terrain.hcell,
+       g_terrain.zw, g_terrain.zh, g_terrain.zcell);
+  if (!terrain_fits()) {
+    llog("  FIT FAILED - that is not the terrain these units are standing on. "
+         "Falling back to watch mode rather than enforcing against the wrong map.");
+    g_mode = MODE_WATCH;
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 static char __fastcall Hook(void *self, void *pad,
                             DWORD dt, DWORD *tgt, DWORD key, DWORD *a4,
@@ -101,49 +323,85 @@ static char __fastcall Hook(void *self, void *pad,
   g_calls++;
   if (r) g_true++;
 
-  // dt turned out to be the most interesting number in the first run: the very
-  // first call arrived with dt = 3.0, i.e. this is a slow AI tick, not a
-  // per-frame poll. If that holds, the cost budget for a ray march is enormous
-  // and the whole "do not add CPU work to a CPU-bound game" worry shrinks to
-  // almost nothing. So track its range rather than assuming.
-  float dtf = F(dt);
+  float dtf = F(dt), distf = F(dist);
   if (dtf < g_dt_min) g_dt_min = dtf;
   if (dtf > g_dt_max) g_dt_max = dtf;
 
-  // The first run logged exactly one sample line, because one-in-4096 was
-  // calibrated for a call rate this function does not have. Log the opening
-  // burst verbatim, then thin out.
-  bool want = (g_calls <= 60) || ((g_calls & 0xFF) == 1);
-  if (want && g_logged < 600)
+  // arg6 is a 4x4 row-major matrix: position in the 4th column, forward in the
+  // first. Confirmed against Content.script to the digit on live traffic.
+  float ox = 0, oy = 0, oz = 0;
+  bool haveobs = readable(mat, 48);
+  if (haveobs) { ox = mat[3]; oy = mat[7]; oz = mat[11]; }
+  float tx = 0, ty = 0;
+  bool havetgt = readable(pos, 8);
+  if (havetgt) { tx = pos[0]; ty = pos[1]; }
+
+  // Keep probes spatially separated. Consecutive calls are one observer
+  // against many targets, so twelve in a row are twelve copies of the same
+  // tank - and a fit check against a single point proves almost nothing.
+  if (haveobs && g_nprobe < NPROBE && oz > 1.0f) {
+    bool tooclose = false;   // "near" is an MSVC keyword
+    for (int i = 0; i < g_nprobe; i++) {
+      float ddx = g_px[i] - ox, ddy = g_py[i] - oy;
+      if (ddx * ddx + ddy * ddy < 2500.0f) { tooclose = true; break; }
+    }
+    if (!tooclose) {
+      g_px[g_nprobe] = ox; g_py[g_nprobe] = oy; g_pz[g_nprobe] = oz;
+      g_nprobe++;
+    }
+  }
+  if (g_mode == MODE_LOS && !g_identified &&
+      (g_nprobe >= NPROBE || (g_calls > 400 && g_nprobe >= 3)))
+    identify();
+
+  char out = r;
+  const char *note = "";
+  float factor = 1.0f;
+
+  // Occlusion may only subtract. If the engine already said no, leave it.
+  if (r && haveobs && havetgt)
+  {
+    if (g_mode == MODE_DENY_FAR) {
+      // Not a model of anything - a deliberately crude, unmistakable effect, to
+      // prove a decision can be influenced at all before trusting a subtle one.
+      if (distf > g_deny_beyond) { out = 0; factor = 0.0f; note = " DENIED(far)"; }
+    }
+    else if (g_mode == MODE_LOS && g_terrain.valid()) {
+      // Both endpoints come from the heightfield. The engine's Z is mid-model,
+      // not ground contact, so adding an eye height to it would put the gunner
+      // a metre and a half too high.
+      float gz = g_terrain.ground(ox, oy);
+      Sight s = march(&g_terrain, ox, oy, gz + 2.0f,
+                      tx, ty, g_terrain.ground(tx, ty) + 1.3f);
+      factor = s.factor;
+      if (factor <= 0.0f || frand() > factor) {
+        out = 0;
+        note = (s.why[0] == 't') ? " DENIED(terrain)" : " DENIED(foliage)";
+      }
+    }
+    if (!out) g_denied++;
+  }
+
+  bool want = (g_calls <= 60) || ((g_calls & 0xFF) == 1) || (note[0] != 0 && g_logged < 200);
+  if (want && g_logged < 800)
   {
     g_logged++;
-    // arg6 is a 4x4 row-major matrix: position in the 4th column
-    // (m[0][3], m[1][3], m[2][3]) and forward in the first column
-    // (m[0][0], m[1][0]).
-    float ox = 0, oy = 0, oz = 0, fx = 0, fy = 0;
-    if (readable(mat, 48)) {
-      ox = mat[3]; oy = mat[7]; oz = mat[11];
-      fx = mat[0]; fy = mat[4];
-    }
-    float tx = 0, ty = 0;
-    if (readable(pos, 8)) { tx = pos[0]; ty = pos[1]; }
-
     llog("[%6I64d] obs (%7.1f,%7.1f,%6.1f) fwd (%5.2f,%5.2f)  tgt (%7.1f,%7.1f)"
-         "  dist %8.1f  dt %.4f  -> %s",
-         g_calls, ox, oy, oz, fx, fy, tx, ty, F(dist), F(dt),
-         r ? "SEEN" : "-");
+         "  dist %8.1f  dt %.4f  -> %s%s",
+         g_calls, ox, oy, oz, haveobs ? mat[0] : 0.0f, haveobs ? mat[4] : 0.0f,
+         tx, ty, distf, dtf, r ? "SEEN" : "-", note);
   }
 
   if ((g_calls % 5000) == 0) {
     double secs = (GetTickCount() - g_tick0) / 1000.0;
-    llog("--- %I64d calls, %I64d seen (%.1f%%), %.0f s elapsed, %.0f calls/s, "
-         "dt %.3f..%.3f",
-         g_calls, g_true, 100.0 * g_true / g_calls, secs,
+    llog("--- %I64d calls, %I64d seen (%.1f%%), %I64d denied by LOS, "
+         "%.0f s, %.0f calls/s, dt %.3f..%.3f",
+         g_calls, g_true, 100.0 * g_true / g_calls, g_denied, secs,
          secs > 0 ? g_calls / secs : 0.0, g_dt_min, g_dt_max);
   }
 
   LeaveCriticalSection(&g_lock);
-  return r;
+  return out;
 }
 
 static bool install(BYTE *target)
@@ -158,12 +416,9 @@ static bool install(BYTE *target)
       (DWORD)(target + PATCH_LEN) - (DWORD)(tramp + PATCH_LEN + 5);
 
   // Publish the trampoline BEFORE the jump goes in. The moment the first byte
-  // of the target changes, another thread can be inside Hook - and this is a
-  // function the AI calls every tick for every observer against every
-  // candidate, so "unlikely" is not a defence. If g_orig were still null it
-  // would call address zero.
+  // of the target changes, another thread can be inside Hook; if g_orig were
+  // still null it would call address zero.
   g_orig = (VisFn)tramp;
-  g_target = target;
 
   DWORD old;
   if (!VirtualProtect(target, PATCH_LEN, PAGE_EXECUTE_READWRITE, &old)) {
@@ -174,9 +429,20 @@ static bool install(BYTE *target)
   for (int i = 5; i < PATCH_LEN; i++) target[i] = 0x90;
   VirtualProtect(target, PATCH_LEN, old, &old);
   FlushInstructionCache(GetCurrentProcess(), target, PATCH_LEN);
+
   llog("hooked: target %08X  trampoline %08X  hook %08X",
        (DWORD)target, (DWORD)tramp, (DWORD)Hook);
   return true;
+}
+
+static void read_ini()
+{
+  char buf[64];
+  GetPrivateProfileStringA("los", "mode", "watch", buf, sizeof(buf), INI_PATH);
+  if (!_stricmp(buf, "los")) g_mode = MODE_LOS;
+  else if (!_stricmp(buf, "deny_far")) g_mode = MODE_DENY_FAR;
+  else g_mode = MODE_WATCH;
+  g_deny_beyond = (float)GetPrivateProfileIntA("los", "deny_beyond", 400, INI_PATH);
 }
 
 static DWORD WINAPI Boot(LPVOID)
@@ -184,8 +450,8 @@ static DWORD WINAPI Boot(LPVOID)
   char exe[MAX_PATH];
   GetModuleFileNameA(NULL, exe, MAX_PATH);
   if (!strstr(exe, SANDBOX)) {
-    // Not the sandbox. Say so and do nothing - a hook that silently arms in
-    // the live install is how a good install gets ruined.
+    // A hook that silently arms in the live install is how a good install gets
+    // ruined. Say so, do nothing.
     g_log = fopen(LOG_PATH, "a");
     llog("REFUSING to arm: %s is outside %s", exe, SANDBOX);
     if (g_log) fclose(g_log);
@@ -194,12 +460,16 @@ static DWORD WINAPI Boot(LPVOID)
 
   g_log = fopen(LOG_PATH, "w");
   g_tick0 = GetTickCount();
+  read_ini();
   llog("tvt_los_hook attached to %s", exe);
+  llog("mode = %s%s",
+       g_mode == MODE_LOS ? "los" : g_mode == MODE_DENY_FAR ? "deny_far" : "watch",
+       g_mode == MODE_DENY_FAR ? "" : "");
+  if (g_mode == MODE_DENY_FAR)
+    llog("  will refuse every sighting beyond %.0f m", g_deny_beyond);
 
-  // Behavior.dll relocates - it has landed +237MB, +252MB and +234MB from its
-  // preferred base on different runs. Resolving at runtime rather than
-  // hardcoding is what makes this work at all; a hardcoded address is what
-  // killed the November 2025 attempt.
+  // Behavior.dll relocates - +237, +252 and +241 MB observed on different runs.
+  // Resolving at runtime rather than hardcoding is what makes this work at all.
   HMODULE beh = NULL;
   for (int i = 0; i < 600 && !beh; i++) {
     beh = GetModuleHandleA("Behavior.dll");
@@ -211,21 +481,15 @@ static DWORD WINAPI Boot(LPVOID)
   llog("Behavior.dll at %08X (preferred 10000000, delta %+d MB); vision fn at %08X",
        (DWORD)beh, ((int)(DWORD)beh - 0x10000000) / (1024 * 1024), (DWORD)target);
 
-  // Verify before patching. The expected first six bytes are
-  // `mov eax, fs:[0]` = 64 A1 00 00 00 00, followed by `push -1` = 6A FF.
-  // If the bytes are not what the disassembly said, the RVA is wrong or the
-  // build differs, and patching would corrupt a live function.
+  // Verify before patching. If the bytes are not what the disassembly said,
+  // the RVA is wrong or the build differs, and patching would corrupt a live
+  // function.
   static const BYTE EXPECT[8] = { 0x64,0xA1,0x00,0x00,0x00,0x00,0x6A,0xFF };
   if (!readable(target, 8) || memcmp(target, EXPECT, 8) != 0) {
-    llog("prologue mismatch - NOT patching. found:");
-    if (readable(target, 8))
-      llog("  %02X %02X %02X %02X %02X %02X %02X %02X",
-           target[0],target[1],target[2],target[3],
-           target[4],target[5],target[6],target[7]);
+    llog("prologue mismatch - NOT patching");
     return 0;
   }
   llog("prologue verified");
-
   install(target);
   return 0;
 }

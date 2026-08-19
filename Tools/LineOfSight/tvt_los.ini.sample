@@ -1,0 +1,25 @@
+; tvt_los_hook settings. Read once, when the DLL attaches - change it before
+; launching, not during.
+;
+; mode
+;   watch      call the engine's vision function, log what it was asked and
+;              what it answered, change nothing. Always safe.
+;   deny_far   refuse every sighting beyond deny_beyond metres. Not a model of
+;              anything - a crude, unmistakable effect, for proving a decision
+;              can be influenced at all.
+;   los        the real thing: terrain and foliage occlusion, marched against
+;              the mission's own heightfield and zone map.
+;
+; In every mode this may only ever turn a sighting into a miss. The engine's
+; own "not seen" is usually just its detection dice failing on that tick and
+; says nothing about geometry, so promoting one would invent information.
+;
+; In los mode the DLL identifies the loaded mission by itself, by scoring the
+; object names in execution.log against every Content.script, and then checks
+; that the terrain it loaded actually fits where the units are standing. If
+; either step is not decisive it falls back to watch mode and says so in the
+; log rather than enforcing against the wrong map.
+
+[los]
+mode = los
+deny_beyond = 400
