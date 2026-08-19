@@ -28,12 +28,36 @@ Everything else is support or polish. Two write-ups:
 - [x] **Build the watcher.** `Tools/LineOfSight/hook.cpp`. Calls the original,
   returns its answer unchanged, records what was asked and answered. Sandbox
   only, enforced in both the injector and the DLL.
-- [ ] **Run it.** `K:\tvt_los\watch.bat` — start any mission, drive near enemy
-  units for a minute, quit, read `M:\TvT_INJECT_SANDBOX\tvt_los.log`. Confirms
-  the hook is stable, the prologue check passed, and shows real traffic volume.
-  *Needs a human at the keyboard; nothing else is blocked on it.*
-- [ ] **Influence one decision.** Force a single `SEEN` to `-` and watch the AI
-  react. Small and reversible, before any wiring.
+- [x] **Run it.** Done repeatedly. Confirmed working: enforcement live before
+  the first vision call, mission auto-identified from the engine's own log, and
+  74% of the engine's positive sightings refused on Campaign_2/Mission_5.
+- [x] **Influence one decision.** Settled by the blunt version instead - total
+  blindness, `deny_far` with `deny_beyond = 1`. 7448 of 7448 positives denied
+  and **every AI unit fell silent**, so `FUN_100c9e50` is confirmed as the gate.
+- [x] **Port the march into the hook.** Done, `Tools/LineOfSight/terrain.h`,
+  checked against the Python offline by `test_terrain.exe` rather than by
+  burning game runs.
+- [ ] **The player's crew is a SECOND vision system, and it is untouched.** The
+  player's tank appears in the hook's log 53 times as a target and never as an
+  observer. Its gunner runs on `CAutoShooter` / `CAutoCommander`
+  (`RadarMaxDistance` 3000 / 1500). Any cockpit judgement of "the AI" has to say
+  which crew it means - two reports of "no difference" turned out to be correct
+  observations about the wrong one. See
+  [Documentation/TvT_AI_Engagement_Logic.md](Documentation/TvT_AI_Engagement_Logic.md).
+- [ ] **Replace `RadarMaxDistance` with "can I get through?"** TvT already holds
+  penetration-vs-range per ammo (`Piercing.script`) and armour per facet
+  (`Armour.script`); `Tools/LineOfSight/can_i_kill.py` computes the answer today
+  and it comes out historically correct with no tuning - a T-34/76 can only kill
+  a Tiger from the side inside ~300 m. The missing input is which facet is
+  presented, which the engine has and the script layer does not. Same shape of
+  job as the vision hook.
+- [ ] **Tune the sight-through distances** against play. Recalibrated twice so
+  far; `sight_scale` in the ini moves them all without a rebuild.
+- [ ] **ZW2015 support** (optional): `WORLD_M` is hardcoded to 9000 and ZW's
+  maps are 18000. Read `MatrixWidth` from `WorldMatricies.script` during
+  identification - about fifteen lines. Its `Behavior.dll` is byte-identical, so
+  the hook itself needs no changes.
+
 - [ ] **Port the march into the hook**, with the mission's heightfield and zone
   map loaded from disk. Note the hook needs no engine Z at all — it can take
   both endpoints from the heightfield, as the Python does.
