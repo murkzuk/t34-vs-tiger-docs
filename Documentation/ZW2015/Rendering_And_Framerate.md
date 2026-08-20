@@ -144,3 +144,64 @@ object management.
 
 Until someone runs that, "ZW is slow because of the unit count" is a plausible
 story rather than a finding, and this document should not have said otherwise.
+
+---
+
+## 3. The executables: only one of six can use more than 2 GB — FIXED
+
+*Found 2026-08-20 after the 36 km `KurskMission` crashed twice during load.*
+
+Every ZW executable was built **without** the large-address-aware flag,
+including the one named `TvsT_fullLOD_HARD_4GB.exe`:
+
+| executable | LAA before | LAA now |
+|---|---|---|
+| ZW `TvsT_fullLOD_HARD_4GB.exe` | **False** | **True** |
+| ZW `TvsT HDR.exe` | False | False |
+| ZW `TvsT FULL LOD.exe`, `TvsT.exe`, `TvsT_fullLOD_HARD.exe`, `TvsT - Copy.exe` | False | False |
+| REDUX `TvsT_fullLOD_HARD_4GB.exe` | True | True |
+
+So ZW was capped at 2 GB despite the filename. The 36 km map died during
+terrain vertex-buffer creation:
+
+```
+[STForest] 155914 trees generated
+[3DDriver] Evict all managed resources
+[Logger] Resource in DEFAULT pool created after resource in MANAGED pool
+```
+
+Setting the flag (`0x010F` → `0x012F` in the PE characteristics word) fixed it.
+The same mission now loads in 17.5 seconds and plays. Backup:
+`TvsT_fullLOD_HARD_4GB.exe.bak_notLAA`.
+
+**Launch only `TvsT_fullLOD_HARD_4GB.exe`.** The other five are still 2 GB and
+will still fail on the large maps.
+
+## 4. Graphics wrappers
+
+ZW has both available. `M:\T34vsTiger_ZW2015\wrapper.bat` switches between
+them (`dgvoodoo` | `dxvk` | `status`).
+
+| | DXVK | dgVoodoo 2.86.4 |
+|---|---|---|
+| API | Vulkan | D3D11 |
+| framerate here | better | worse |
+| DirectDraw | **none** — `ddraw.dll` gets parked | provided |
+| the Editor | may not open | opens |
+| address space | hungrier | lighter |
+
+**DXVK for playing, dgVoodoo for the Editor.** The 2 GB cap, not DXVK, was
+what crashed the big map — with LAA set, DXVK loads it fine.
+
+**ReShade is independent of both.** It loads from
+`C:\ProgramData\ReShade\ReShade32.dll` through its own global injector, not
+through `d3d9.dll`, so swapping wrappers does not disturb it. Screenshots:
+**Print Screen**, PNG, saved into the game folder. **Numpad 2** toggles
+effects, **Numpad 1** opens the overlay.
+
+## 5. `TvT ZW.bat` deletes the logs
+
+The launcher in the ZW root runs `DEL /Q *.log` and `DEL /Q *.cache` before
+starting the game. Useful after a script edit, but it destroys
+`execution.log`, `tvt_los.log` and the shader caches every time — so never use
+it before a run whose log matters, or for a framerate measurement.
