@@ -414,3 +414,39 @@ established, see
 - [ ] `IsMissionFullCompleted()` vs `IsMissionCompleted()` — when is the "full" variant actually used?
 - [ ] The 5th `m_MissionObjectives` tuple element (`RedTeamObj`/`BlueTeamObj` counting) — looks multiplayer-specific, needs an MP mission example to confirm.
 - [ ] `SOID_MissionController`'s full event/method surface — only `"StartRetreat"`/`"CompleteMissionStatus"` traced so far.
+
+---
+
+## Where things stand, end of 2026-08-20
+
+Four things are **built and waiting on one play session** each. None needs any
+work first — launch ZW through `K:	vt_los\play_zw.bat`, play Zitadelle M1,
+then read the logs.
+
+1. **Commander field scan.** `tvt_los_hook.dll` now walks
+   `CAutoCommanderComponent` on its first tick looking for values
+   `Common\AutoCommander.script` sets — RadarMaxDistance 3100, RadarUpdateTime
+   4.0, FrontDanger 130, BackDanger 120, LastTargetDangerAdd 30. The log line
+   `[CMDR] scanning the live object...` gives its field layout, and from there
+   the range comparison that needs gating. **This is the next real step on the
+   gunner.** Static scanning of the update was tried and found nothing: no
+   float member reads, no calls to the distance helper. It calls three nearby
+   helpers (`+0x0413A0`, `+0x041680`, `+0x0417D0`) which are the likely
+   location.
+2. **Wingman cruise speed.** `0.8 * max_speed` → `0.15 * max_speed` in
+   `setOrder_Formation`. Measured cause: on station it averaged 1.14 m/s
+   against the leader's 0.92 and sat fully stopped in 10% of samples. Untested.
+3. **Lighter, sky-tinted shadows** `(122, 140, 156)` in ZW Kursk and REDUX
+   BerezovKursk. Verdict never reported.
+4. **Wingman LOS calibration** — ZW `sight_scale = 1300`, canopy-depth
+   attenuation. Confirmed working on the AI (84–91% of sightings refused); the
+   1600 m Pak engagement was never re-tested after the fix.
+
+**Clean up when the wingman is settled:** `WMTrace` and its `sendEvent` in
+`CEFM1LAH_WingmanTask::Init()`, both marked `WMTRACE`, in
+`KurskMission\MissionTasks.script`. Backups `.bak_wmtrace*`.
+
+**Closed today:** ZW line of sight (map size and terrain path now read per
+mission); the fit check that rejected correct ZW terrain; ZW's executable never
+being large-address-aware; the wingman micro-stutter mechanism; fog-on-objects
+ruled out as an `Atmosphere.script` value.
