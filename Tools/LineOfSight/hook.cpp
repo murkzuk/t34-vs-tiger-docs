@@ -41,6 +41,23 @@
 #include "terrain.h"
 
 static const DWORD VISION_RVA = 0x000C9E50;
+
+// CAutoShooterComponent::Update - vtable slot 7 of the primary vtable at RVA
+// 0x249258. This is the PLAYER's gunner, which does not use the AI vision
+// function at all. Field offsets on that object, from its property loader at
+// 0x1004AA80..0x1004ABC5:  +0x144 RadarMaxDistance (3000.0 by default),
+// +0x148 ViewAngle in RADIANS, +0xE0 touched 13 times in the update and most
+// likely the current target.
+static const DWORD CREW_RVA = 0x0004B1E0;
+static const DWORD CREW_VTABLE_RVA = 0x00249258;   // primary, this_offset 0
+
+// The `call 0x1000ef80` at the heart of the range gate. Patching the CALL SITE
+// rather than the function keeps this to one address; the function itself has
+// 80 callers and is a generic 3D vector length.
+static const DWORD GATE_CALL_RVA = 0x0004B400;
+static const DWORD VECLEN_RVA    = 0x0000EF80;
+static const DWORD CREW_RADAR_MAX = 0x144;
+static const DWORD CREW_VIEW_ANGLE = 0x148;
 static const char *SANDBOX  = "M:\\TvT_INJECT_SANDBOX";
 static const char *LOG_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.log";
 static const char *INI_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.ini";
@@ -69,6 +86,13 @@ static volatile LONG g_ready;       // terrain loaded, enforcement live
 static volatile LONG g_giveup;      // identification failed, do not enforce
 static __int64 g_gap_denied;        // sightings refused while waiting
 static int g_last_total;            // object loads seen on the last attempt
+
+static bool     g_crew_watch;       // hook the player's gunner tick
+static bool g_gate_probe;       // watch the range gate's call site
+static bool g_gate_enforce;     // and actually reject blocked candidates
+static __int64 g_gate_denied, g_gate_nopair;
+static __int64 g_gate_calls, g_gate_logged;
+static __int64  g_crew_calls, g_crew_logged;
 
 static void llog(const char *fmt, ...)
 {
@@ -499,6 +523,307 @@ static char __fastcall Hook(void *self, void *pad,
   return out;
 }
 
+// __fastcall(this, edx, arg) is exactly what the disassembly shows: ecx holds
+// `this`, edx is stored to a local and passed onward, and the function ends
+// `ret 4` for a single stack argument.
+typedef void (__fastcall *CrewFn)(void *self, void *edx, DWORD arg);
+static CrewFn g_crew_orig;
+
+// Does this dword look like one of the values we know the script set?
+static const char *known_value(float f)
+{
+  if (f > 2999.0f && f < 3001.0f)   return "RadarMaxDistance 3000";
+  if (f > 1499.0f && f < 1501.0f)   return "RadarMaxDistance 1500 (commander)";
+  if (f > 0.2090f && f < 0.2099f)   return "ViewAngle 12 deg in radians";
+  if (f > 11.99f  && f < 12.01f)    return "ViewAngle 12 deg";
+  if (f > 1.999f  && f < 2.001f)    return "RadarUpdateTime 2.0";
+  return NULL;
+}
+
+static void __fastcall CrewHook(void *self, void *edx, DWORD arg)
+{
+  g_crew_orig(self, edx, arg);
+
+  EnterCriticalSection(&g_lock);
+  g_crew_calls++;
+  // The opening burst, then thin right out - this is a per-tick update and the
+  // point of this pass is confirmation, not volume.
+  // The update bails early most of the time and the range gate sits deep
+  // inside it. These are the three flags it tests on the way in - logging them
+  // says WHICH gate is closing, rather than leaving it to be guessed:
+  //   1004B225  cmp [esi+0x44], edi   je exit
+  //   1004B22E  mov al, [esi+0x11c]   test al,al  je  exit   (must be non-zero)
+  //   1004B248  mov al, [esi+0x118]   test al,al  jne exit    (must be zero)
+  if ((g_crew_calls & 0x7F) == 1) {
+    const BYTE *o = (const BYTE *)self;
+    // The gating virtual is UI.dll+0x199650, which is nothing but
+    //     mov al, [ecx+0x9cd] ; ret
+    // on the CTankAutoThingControl at [esi+0x5c]. Read that byte and its
+    // neighbours directly: the auto driver / gunner / commander flags should
+    // sit together, and whichever bytes track the seat identify themselves.
+    DWORD ctl = readable(o + 0x5c, 4) ? *(const DWORD *)(o + 0x5c) : 0;
+    if (ctl && readable((void *)(ctl + 0x9C0), 0x20)) {
+      const BYTE *c = (const BYTE *)ctl;
+      char line[160]; int n = 0;
+      for (DWORD k = 0x9C4; k <= 0x9D8; k++)
+        n += _snprintf(line + n, sizeof(line) - n, "%s%02X",
+                       k == 0x9CD ? "[" : " ", c[k]);
+      llog("[CTRL %5I64d] CTankAutoThingControl +0x9C4..+0x9D8: %s"
+           "   (the gate reads +0x9CD)", g_crew_calls, line);
+    }
+    if (readable(o + 0x11c, 4))
+      llog("[CREW %5I64d] flags: +0x118 %d (want 0)  +0x11c %d (want non-zero)"
+           "  +0x44 %08X  +0xE0 %08X",
+           g_crew_calls, o[0x118], o[0x11c],
+           *(const DWORD *)(o + 0x44), *(const DWORD *)(o + 0xE0));
+  }
+
+  // What ARE the objects this component holds? The update only proceeds when a
+  // virtual on [esi+0x5c] returns true, and knowing its class tells us what
+  // that test means - a timer, a weapon-ready check, an enable flag. Resolving
+  // RTTI at runtime beats guessing, which has been wrong three times today.
+  if (g_crew_calls == 1) {
+    HMODULE bm = GetModuleHandleA("Behavior.dll");
+    const BYTE *o = (const BYTE *)self;
+    static const DWORD OFFS[] = { 0x34, 0x5c, 0x60, 0x68, 0xE0, 0xE4 };
+    llog("[CREW] classes of the objects this component holds:");
+    for (int k = 0; k < 6; k++) {
+      DWORD off = OFFS[k];
+      if (!readable(o + off, 4)) continue;
+      DWORD obj = *(const DWORD *)(o + off);
+      if (obj < 0x10000 || !readable((void *)obj, 4)) continue;
+      DWORD vt = *(const DWORD *)obj;
+      if (!readable((void *)(vt - 4), 4)) { llog("        +0x%02X -> %08X (no vtable)", off, obj); continue; }
+      DWORD col = *(const DWORD *)(vt - 4);
+      const char *nm = "?";
+      if (col > (DWORD)bm && readable((void *)(col + 0x0C), 4)) {
+        DWORD td = *(const DWORD *)(col + 0x0C);
+        if (readable((void *)(td + 8), 64)) nm = (const char *)(td + 8);
+      }
+      DWORD slot10 = readable((void *)(vt + 0x28), 4) ? *(const DWORD *)(vt + 0x28) : 0;
+      // These vtables live in OTHER modules - Behavior.dll is only one of ten
+      // engine DLLs - so resolve the owning module and give an RVA that can be
+      // looked up in the right file afterwards.
+      char vmod[64] = "?", fmod[64] = "?";
+      DWORD vrva = 0, frva = 0;
+      MEMORY_BASIC_INFORMATION mbi;
+      char path[MAX_PATH];
+      if (VirtualQuery((void *)vt, &mbi, sizeof(mbi)) && mbi.AllocationBase &&
+          GetModuleFileNameA((HMODULE)mbi.AllocationBase, path, MAX_PATH)) {
+        const char *b = strrchr(path, 92)   /* backslash, by code, to keep escapes out of it */;
+        lstrcpynA(vmod, b ? b + 1 : path, 63);
+        vrva = vt - (DWORD)mbi.AllocationBase;
+      }
+      if (slot10 && VirtualQuery((void *)slot10, &mbi, sizeof(mbi)) && mbi.AllocationBase &&
+          GetModuleFileNameA((HMODULE)mbi.AllocationBase, path, MAX_PATH)) {
+        const char *b = strrchr(path, 92)   /* backslash, by code, to keep escapes out of it */;
+        lstrcpynA(fmod, b ? b + 1 : path, 63);
+        frva = slot10 - (DWORD)mbi.AllocationBase;
+      }
+      llog("        +0x%02X -> %08X  vtable %s+0x%06X   slot[0x28] = %s+0x%06X",
+           off, obj, vmod, vrva, fmod, frva);
+    }
+  }
+
+  // Once only: confirm the object, then hunt the known values through it.
+  if (g_crew_logged == 0)
+  {
+    g_crew_logged++;
+    const BYTE *o = (const BYTE *)self;
+    HMODULE beh = GetModuleHandleA("Behavior.dll");
+    DWORD want = (DWORD)beh + CREW_VTABLE_RVA, got = 0;
+    if (readable(o, 4)) memcpy(&got, o, 4);
+    llog("[CREW] this %08X  vtable %08X  expected %08X  %s",
+         (DWORD)self, got, want,
+         got == want ? "MATCH - right object" : "MISMATCH - wrong object");
+
+    llog("[CREW] searching the first 0x400 bytes for values the script set:");
+    int found = 0;
+    for (DWORD off = 0; off < 0x400; off += 4) {
+      if (!readable(o + off, 4)) break;
+      float f; memcpy(&f, o + off, 4);
+      const char *what = known_value(f);
+      if (what) { llog("        +0x%03X = %10.4f   <- %s", off, f, what); found++; }
+    }
+    if (!found)
+      llog("        nothing found - the values live behind a pointer, so dump "
+           "the pointer fields next");
+
+    // Pointers into the heap are the candidates for that indirection.
+    llog("[CREW] pointer-looking fields, for following next time:");
+    for (DWORD off = 0; off < 0x160; off += 4) {
+      if (!readable(o + off, 4)) break;
+      DWORD v; memcpy(&v, o + off, 4);
+      if (v > 0x00100000 && v < 0x7FFF0000 && (v & 3) == 0 && readable((void *)v, 4))
+        llog("        +0x%03X -> %08X", off, v);
+    }
+  }
+  LeaveCriticalSection(&g_lock);
+}
+
+// ---------------------------------------------------------------------------
+// The range gate's call site.
+//
+// __thiscall with no stack args: ecx holds the delta vector, the result comes
+// back in st(0). Declaring it __fastcall with a dummy second parameter gives
+// exactly that, and returning float puts the answer where the caller's
+// `fstp [esp+0x1c]` expects it.
+// ---------------------------------------------------------------------------
+
+typedef float (__fastcall *VecLenFn)(const float *v, void *edx);
+static VecLenFn g_veclen;
+
+// Does this look like a position on a 9000 m map whose ground sits near 600 m,
+// rather than a delta, a normal, or noise?
+static bool looks_like_world_pos(const float *v)
+{
+  return v[0] > 1.0f && v[0] < 9000.0f &&
+         v[1] > 1.0f && v[1] < 9000.0f &&
+         v[2] > -50.0f && v[2] < 2000.0f;
+}
+
+// Find the observer and target in the caller's frame by matching their
+// difference against the delta we were handed. Self-validating: no other pair
+// of world-looking vectors in that window can satisfy the arithmetic.
+static bool find_endpoints(const float *v, float *obs, float *tgt)
+{
+  if (!readable(v, 12)) return false;
+  const float dx = v[0], dy = v[1], dz = v[2];
+  const BYTE *base = (const BYTE *)v - 0x100;
+
+  for (int i = 0; i < 128; i++) {
+    const float *a = (const float *)(base + i * 4);
+    if (!readable(a, 12) || !looks_like_world_pos(a)) continue;
+    for (int j = 0; j < 128; j++) {
+      const float *b = (const float *)(base + j * 4);
+      if (i == j || !readable(b, 12) || !looks_like_world_pos(b)) continue;
+      if (fabsf((b[0] - a[0]) - dx) < 0.05f &&
+          fabsf((b[1] - a[1]) - dy) < 0.05f &&
+          fabsf((b[2] - a[2]) - dz) < 0.05f) {
+        obs[0] = a[0]; obs[1] = a[1]; obs[2] = a[2];
+        tgt[0] = b[0]; tgt[1] = b[1]; tgt[2] = b[2];
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+static float __fastcall GateProbe(const float *v, void *edx)
+{
+  float len = g_veclen(v, edx);
+
+  EnterCriticalSection(&g_lock);
+  g_gate_calls++;
+
+  // Enforcement. Only ever pushes a candidate OUT of range - never in.
+  if (g_gate_enforce && g_ready && g_terrain.valid()) {
+    float obs[3], tgt[3];
+    if (find_endpoints(v, obs, tgt)) {
+      // Both endpoints off the heightfield, as on the AI side: the authored Z
+      // is mid-model, not ground contact, so adding an eye height to it would
+      // put the gunner a metre and a half too high.
+      Sight sg = march(&g_terrain, obs[0], obs[1], g_terrain.ground(obs[0], obs[1]) + 2.0f,
+                       tgt[0], tgt[1], g_terrain.ground(tgt[0], tgt[1]) + 1.3f);
+      if (sg.factor <= 0.0f || frand() > sg.factor) {
+        g_gate_denied++;
+        if (g_gate_logged < 60) {
+          g_gate_logged++;
+          llog("[GATE] REFUSED (%7.1f,%7.1f) -> (%7.1f,%7.1f) at %6.0f m, "
+               "%s, %.0f%% masked", obs[0], obs[1], tgt[0], tgt[1], len,
+               sg.why, (1.0f - sg.factor) * 100.0f);
+        }
+        LeaveCriticalSection(&g_lock);
+        return 1.0e9f;      // beyond any RadarMaxDistance, so it is discarded
+      }
+    } else {
+      g_gate_nopair++;      // could not identify the pair; leave it alone
+    }
+  }
+
+  if ((g_gate_calls % 2000) == 0)
+    llog("--- gate: %I64d checks, %I64d refused, %I64d unmatched",
+         g_gate_calls, g_gate_denied, g_gate_nopair);
+  if (!g_gate_enforce && g_gate_logged < 24)
+  {
+    g_gate_logged++;
+    float dx = 0, dy = 0, dz = 0;
+    if (readable(v, 12)) { dx = v[0]; dy = v[1]; dz = v[2]; }
+    llog("[GATE %4I64d] delta (%9.2f,%9.2f,%9.2f)  len %8.2f",
+         g_gate_calls, dx, dy, dz, len);
+
+    // The march needs a real world position, and a delta alone will not do.
+    // Sweep a window of the caller's stack for anything that reads like one.
+    const float *sp = (const float *)((BYTE *)&v - 0x20);
+    int found = 0;
+    for (int i = 0; i < 64 && found < 6; i++) {
+      const float *c = sp + i;
+      if (!readable(c, 12)) continue;
+      if (looks_like_world_pos(c)) {
+        llog("          stack+0x%02X world-ish (%8.1f,%8.1f,%7.1f)",
+             i * 4, c[0], c[1], c[2]);
+        found++;
+      }
+    }
+    if (!found)
+      llog("          no world position on the stack near the call - the "
+           "observer's position must come from the component instead");
+  }
+  LeaveCriticalSection(&g_lock);
+  return len;
+}
+
+// Patch a CALL instruction to point somewhere else, leaving everything around
+// it untouched. Five bytes at one address, so no other caller is affected.
+static bool patch_call(BYTE *site, void *dest, void **orig, const char *what)
+{
+  if (site[0] != 0xE8) { llog("%s: not a call at %08X", what, (DWORD)site); return false; }
+  DWORD old_target = (DWORD)(site + 5) + *(DWORD *)(site + 1);
+  *orig = (void *)old_target;
+
+  DWORD prot;
+  if (!VirtualProtect(site, 5, PAGE_EXECUTE_READWRITE, &prot)) {
+    llog("%s: VirtualProtect failed", what); return false;
+  }
+  *(DWORD *)(site + 1) = (DWORD)dest - (DWORD)(site + 5);
+  VirtualProtect(site, 5, prot, &prot);
+  FlushInstructionCache(GetCurrentProcess(), site, 5);
+  llog("%s: call at %08X redirected from %08X to %08X",
+       what, (DWORD)site, old_target, (DWORD)dest);
+  return true;
+}
+
+// Both hooks share this shape; only the patch length differs, because each
+// target's first whole instructions add up differently.
+static bool patch_jump(BYTE *target, int len, void *hook, void **orig,
+                       const char *what)
+{
+  BYTE *tramp = (BYTE *)VirtualAlloc(NULL, 64, MEM_COMMIT | MEM_RESERVE,
+                                     PAGE_EXECUTE_READWRITE);
+  if (!tramp) { llog("%s: VirtualAlloc failed", what); return false; }
+
+  memcpy(tramp, target, len);
+  tramp[len] = 0xE9;
+  *(DWORD *)(tramp + len + 1) =
+      (DWORD)(target + len) - (DWORD)(tramp + len + 5);
+
+  *orig = tramp;                      // publish before the jump goes in
+
+  DWORD old;
+  if (!VirtualProtect(target, len, PAGE_EXECUTE_READWRITE, &old)) {
+    llog("%s: VirtualProtect failed", what); return false;
+  }
+  target[0] = 0xE9;
+  *(DWORD *)(target + 1) = (DWORD)hook - (DWORD)(target + 5);
+  for (int i = 5; i < len; i++) target[i] = 0x90;
+  VirtualProtect(target, len, old, &old);
+  FlushInstructionCache(GetCurrentProcess(), target, len);
+
+  llog("%s hooked: target %08X  trampoline %08X", what,
+       (DWORD)target, (DWORD)tramp);
+  return true;
+}
+
 static bool install(BYTE *target)
 {
   BYTE *tramp = (BYTE *)VirtualAlloc(NULL, 64, MEM_COMMIT | MEM_RESERVE,
@@ -542,6 +867,11 @@ static void read_ini()
   if (pct < 10) pct = 10;
   if (pct > 500) pct = 500;
   g_sight_scale = pct / 100.0f;
+  GetPrivateProfileStringA("los", "crew", "off", buf, sizeof(buf), INI_PATH);
+  g_crew_watch = (_stricmp(buf, "watch") == 0);
+  GetPrivateProfileStringA("los", "gate", "off", buf, sizeof(buf), INI_PATH);
+  g_gate_enforce = (_stricmp(buf, "los") == 0);
+  g_gate_probe = g_gate_enforce || (_stricmp(buf, "probe") == 0);
 }
 
 static DWORD WINAPI Boot(LPVOID)
@@ -569,6 +899,12 @@ static DWORD WINAPI Boot(LPVOID)
   if (g_mode == MODE_LOS)
     llog("  sight_scale %.2f (dense conifer opaque at %.0f m)",
          g_sight_scale, 15.0f * g_sight_scale);
+  if (g_crew_watch)
+    llog("  crew = watch (the player's own gunner tick, logging only)");
+  if (g_gate_enforce)
+    llog("  gate = los (the player's own gunner now needs line of sight)");
+  else if (g_gate_probe)
+    llog("  gate = probe (the range-gate call site, logging only)");
 
   // Behavior.dll relocates - +237, +252 and +241 MB observed on different runs.
   // Resolving at runtime rather than hardcoding is what makes this work at all.
@@ -593,6 +929,34 @@ static DWORD WINAPI Boot(LPVOID)
   }
   llog("prologue verified");
   install(target);
+
+  if (g_gate_probe) {
+    BYTE *site = (BYTE *)beh + GATE_CALL_RVA;
+    DWORD want = (DWORD)beh + VECLEN_RVA;
+    if (readable(site, 5) && site[0] == 0xE8 &&
+        (DWORD)(site + 5) + *(DWORD *)(site + 1) == want) {
+      patch_call(site, (void *)GateProbe, (void **)&g_veclen,
+                 "range gate");
+    } else {
+      llog("range gate: call site at %08X is not the expected call to %08X "
+           "- NOT patching", (DWORD)site, want);
+    }
+  }
+
+  if (g_crew_watch) {
+    // push -1 ; push imm32  = 7 bytes, one clean boundary. The pushed value is
+    // relocated at load time and the trampoline copies the LIVE bytes, so it
+    // carries the fixed-up address.
+    BYTE *crew = (BYTE *)beh + CREW_RVA;
+    static const BYTE CREW_EXPECT[3] = { 0x6A, 0xFF, 0x68 };
+    if (readable(crew, 8) && memcmp(crew, CREW_EXPECT, 3) == 0) {
+      llog("crew gunner tick at %08X, prologue verified", (DWORD)crew);
+      patch_jump(crew, 7, (void *)CrewHook, (void **)&g_crew_orig,
+                 "CAutoShooterComponent::Update");
+    } else {
+      llog("crew prologue mismatch at %08X - NOT patching", (DWORD)crew);
+    }
+  }
   if (g_mode == MODE_LOS)
     CreateThread(NULL, 0, MissionWatcher, NULL, 0, NULL);
   return 0;

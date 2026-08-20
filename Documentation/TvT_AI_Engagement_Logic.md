@@ -157,3 +157,101 @@ The *idea* is Panzer Elite's: engagement decided by whether the round can defeat
 the armour, not by a visibility radius. The *data* is entirely TvT's. Nothing
 transfers between the two but the design — they share no engine, no format and
 no code.
+
+---
+
+## 3. The player's crew now has line of sight too
+
+*2026-08-20. Section 1 established that the player's crew is a separate vision
+system the AI hook never touched. This closes it.*
+
+### The classes, and the offsets that had to be measured
+
+The RTTI names carry a `Component` suffix, which is why an earlier search found
+nothing:
+
+| script class | native class | primary vtable RVA |
+|---|---|---|
+| `CAutoShooter` | `CAutoShooterComponent` | 0x249258 |
+| `CAutoCommander` | `CAutoCommanderComponent` | 0x248D98 |
+
+Its per-tick update is **vtable slot 7, RVA 0x4B1E0** — 1283 bytes,
+`void __fastcall(this, edx, arg)`, `ret 4`.
+
+Field offsets **measured on a live object**, after being deduced wrongly twice:
+
+| offset | value | |
+|---|---|---|
+| +0x154 | 3000.0 | `RadarMaxDistance` |
+| +0x158 | 0.2094 | `ViewAngle`, 12 deg in radians |
+| +0x1CC | 1500.0 | the commander's radar, on the same object |
+
+Not +0x144/+0x148. Those come from the property loader, whose writes go through
+EDI — and that same function writes `CWeaponDescriptor`'s vtable to `[EDI]`.
+EDI is a descriptor the component holds, not the component. Searching the live
+object for values the script sets found the truth in one run.
+
+### The gate
+
+```asm
+1004B3FC  lea ecx, [esp+0x38]     ; delta to the candidate
+1004B400  call 0x1000ef80         ; length(delta)
+1004B405  fstp [esp+0x1c]
+1004B409  fld  [esi+0x154]        ; RadarMaxDistance
+1004B40F  fcomp [esp+0x1c]
+1004B418  jne  ...                ; too far -> candidate skipped
+```
+
+The whole of the player gunner's target acceptance: one distance comparison, no
+geometry.
+
+**It is gated on a UI flag.** The update only reaches that code when a virtual
+on the `CTankAutoThingControl` at `[esi+0x5c]` returns true — and that virtual,
+in `UI.dll`, is nothing but:
+
+```asm
+mov al, byte ptr [ecx+0x9cd]
+ret
+```
+
+One boolean, which reads true when the commander has given the gunner a target.
+Four hypotheses about that flag were wrong (a timer, the auto-gunner, the
+auto-commander, the seat) before it was simply read.
+
+### The fix: redirect the call site, not the function
+
+`0x1000EF80` is a generic 3D vector length with **80 callers**, so hooking it
+was out. Redirecting the single `call` at `0x1004B400` touches five bytes at one
+address and nothing else in the engine.
+
+The filter runs the march and returns a huge length when the line is blocked;
+the engine's own comparison then discards the candidate. No new logic in the
+engine at all.
+
+**Finding the endpoints without hardcoding stack offsets.** The observer and
+target sit in the caller's frame as plain world coordinates. Rather than assume
+their offsets — deduced offsets had already been wrong four times on this
+problem — the filter searches a window of that frame for the pair whose
+difference equals the delta it was handed. Self-validating: no wrong pair can
+satisfy the arithmetic.
+
+### Measured
+
+```
+--- gate: 6000 checks, 4069 refused, 0 unmatched
+[GATE] REFUSED (4706.7,3264.5) -> (4562.5,3808.2) at 562 m, foliage, 83% masked
+```
+
+**68% refused, and the endpoint search never failed once in 6000 checks.** No
+access violations; the AI hook ran alongside unaffected.
+
+### What it is and is not worth
+
+In the commander's seat you can only designate what you can already see, so this
+does not change acquisition. What it changes is **retention**: the line is
+re-tested every tick, so a target that moves behind a crest is now lost instead
+of being tracked through it.
+
+Acquisition through terrain belongs to `CAutoCommanderComponent`, which does the
+designating whenever the player is *not* in the commander's seat. That is the
+next target, and its vtable is already known.

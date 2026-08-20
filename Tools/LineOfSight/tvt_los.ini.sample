@@ -33,3 +33,54 @@ deny_beyond = 400
 ; tank 13 m inside one is about 87% masked. At 50 it would be opaque at 7.5 m,
 ; at 200 at 30 m.
 sight_scale = 100
+
+; crew = off | watch
+;
+; The PLAYER's own gunner is a separate vision system - CAutoShooterComponent,
+; not the AI's FUN_100c9e50 - which is why occlusion never changed what you saw
+; from the cockpit. "watch" hooks its per-tick update and logs only: it calls
+; the original and returns its answer untouched.
+;
+; This pass exists to confirm the field mapping against a live object before
+; anything is denied. Expect RadarMax 3000.0 and ViewAngle 12.0 deg. If those
+; two read back correctly we have the right object and can go further.
+crew = watch
+
+; gate = off | probe | los
+;
+; The player gunner's whole target acceptance is one comparison inside its
+; update: distance-to-candidate against RadarMaxDistance. "probe" redirects
+; only the CALL that computes that distance - five bytes at one address, so no
+; other caller of the shared vector-length helper is affected - and logs what
+; it sees while returning the true length unchanged.
+;
+; "los" enforces: the march runs between the two endpoints and a blocked line
+; returns a huge length, so the engine's own comparison discards the candidate.
+; It can only ever REJECT a target - never make one visible that the engine had
+; already dropped.
+;
+; The endpoints are found by searching the caller's frame for the pair whose
+; difference matches the delta, rather than by hardcoded stack offsets. That is
+; self-validating: no wrong pair can satisfy the arithmetic.
+gate = los
+
+; -------------------------------------------------------------------------
+; TOTAL BLINDNESS TEST (2026-08-19) - RUN, ANSWERED, mode restored to los
+;
+; mode=deny_far with deny_beyond=1 refuses EVERY sighting past one metre. Not
+; a model of anything - a single unambiguous question:
+;
+;   AI goes passive, stops shooting  -> FUN_100c9e50 really is the gate, and
+;                                       the line-of-sight work is on the right
+;                                       lever; whatever is left is tuning.
+;   AI fights exactly as normal      -> that function does NOT control
+;                                       engagement. Something else does, and
+;                                       no amount of occlusion here will ever
+;                                       show up in play.
+;
+; RESULT: 7448 of 7448 positives denied, and every AI unit went silent - so
+; FUN_100c9e50 IS the gate for AI units. The player's OWN gunner carried on
+; firing normally, because the player's tank never appears as an observer in
+; this function at all. Its crew runs on CAutoShooter / CAutoCommander, which
+; have their own radar (RadarMaxDistance 3000 / 1500) and a separate path.
+; -------------------------------------------------------------------------
