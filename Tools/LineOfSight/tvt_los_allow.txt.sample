@@ -1,0 +1,27 @@
+# Installs permitted to run tvt_los_hook.dll. One folder per line.
+#
+# This file lives beside the DLL, NEVER inside a game folder - a file there
+# would let any install authorise itself, which is no rail at all.
+#
+# Both the injector and the DLL check this same list independently: the
+# injector refuses to launch an install that is not here, and the DLL refuses
+# to arm inside one even if it gets there some other way. Either alone would
+# do; both means a mistake in one does not matter.
+#
+# No file, or a host not listed, means nothing arms. Fail-safe by design.
+
+M:\TvT_INJECT_SANDBOX
+M:\T34vsTiger
+M:\T34vsTiger_ZW2015
+
+# ZW was added 2026-08-20, once the world size stopped being assumed. Its
+# engine binaries are byte-identical to REDUX's, so both hooks land on the same
+# addresses; its missions run 9000 to 36000 m, which is now read per mission
+# from each folder's WorldMatricies.script.
+#
+# ZW's forests are denser than REDUX's - same forest classes, but a thicker
+# species mix - so it may want its own sight_scale. tvt_los.ini is per install,
+# so tuning one does not disturb the other.
+
+# Not listed on purpose - add deliberately if you ever want it:
+# M:\T34vsTiger - REDUX0.001    (stale branch, not the live install)

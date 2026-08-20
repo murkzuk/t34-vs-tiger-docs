@@ -9,8 +9,12 @@
 //     Height = raw * 0.07.
 //   - The zone bitmaps are the OPPOSITE: row 0 is world y = 0, no flip,
 //     despite a positive BMP height field which by spec means bottom-up.
-//   - World is 9000 x 9000 m, so a 1024 zone cell is 8.789 m and a 2049 height
-//     sample is 4.395 m.
+//   - The world is NOT a fixed size. Each mission folder carries its own
+//     WorldMatricies.script with MatrixWidth in metres, and the shipped
+//     missions run 9000, 12000, 18000, 20002 and 36000. Assuming 9000 puts
+//     every lookup in the wrong place on the larger maps, silently. On a
+//     9000 m map a 1024 zone cell is 8.789 m and a 2049 height sample 4.395 m;
+//     on any other map those scale with it.
 //
 // The DLL works out which mission is loaded by itself - see identify() - so
 // there is nothing to configure and nothing to keep in step with the game.
@@ -22,7 +26,37 @@
 #include <string.h>
 #include <math.h>
 
-static const float WORLD_M = 9000.0f;
+// Only a fallback, for a mission folder with no WorldMatricies.script of its
+// own. It matches CWorldMatrices::MatrixWidth in Scripts\Common, the value a
+// mission inherits when it overrides nothing. Every shipped mission does
+// override it, so this should never be the value actually used.
+static const float DEFAULT_WORLD_M = 10000.0f;
+
+// Pull MatrixWidth out of a mission's WorldMatricies.script. Text search
+// rather than a parser: the line is always of the form
+//   final static float MatrixWidth  = 18000.0; // meters
+// and a real parser for this language does not exist outside the engine.
+static float read_world_size(const char *folder)
+{
+  char p[MAX_PATH];
+  _snprintf(p, MAX_PATH, "%s\\WorldMatricies.script", folder);
+  FILE *f = fopen(p, "rb");
+  if (!f) return 0.0f;
+  char buf[8192];
+  size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+  fclose(f);
+  buf[n] = 0;
+  const char *k = strstr(buf, "MatrixWidth");
+  if (!k) return 0.0f;
+  const char *eq = strchr(k, '=');
+  if (!eq) return 0.0f;
+  float v = (float)atof(eq + 1);
+  // A plausible map is between a hamlet and the biggest thing the engine
+  // ships. Anything outside that is a misparse, and silently using it would
+  // be worse than falling back.
+  if (v < 500.0f || v > 100000.0f) return 0.0f;
+  return v;
+}
 static const float HEIGHT_FACTOR = 0.07f;
 
 struct Veg {
@@ -89,9 +123,12 @@ struct Terrain
   int   zw, zh, zstride;
   float zcell;
 
+  float world;         // metres across, from the mission's MatrixWidth
+
   char  name[MAX_PATH];
 
-  Terrain() : h(0), hdim(0), hcell(0), z(0), zw(0), zh(0), zstride(0), zcell(0)
+  Terrain() : h(0), hdim(0), hcell(0), z(0), zw(0), zh(0), zstride(0), zcell(0),
+              world(DEFAULT_WORLD_M)
   { name[0] = 0; }
 
   bool valid() const { return h && z; }
@@ -101,7 +138,7 @@ struct Terrain
   float ground(float x, float y) const
   {
     float fx = x / hcell;
-    float fy = (WORLD_M - y) / hcell;          // flipped: row 0 is world y = MAX
+    float fy = (world - y) / hcell;            // flipped: row 0 is world y = MAX
     int ix = (int)fx, iy = (int)fy;
     if (ix < 0) ix = 0;
     if (iy < 0) iy = 0;
@@ -123,9 +160,88 @@ struct Terrain
   }
 };
 
+// Find the mission's heightfield. It is NOT always <folder>\hmap.raw:
+// WorldMatricies.script declares an ImageFileName per layer, relative to the
+// game root and with forward slashes, and ZW's missions use names like
+// hmap1.raw. A mission may also point at another mission's terrain, which is
+// exactly what sharing one map between missions would rely on.
+//
+// The height layer is the first .raw that is not the water layer - hwater by
+// convention in every mission on disk, in both builds.
+static bool find_height_file(const char *folder, char *out)
+{
+  char p[MAX_PATH];
+  _snprintf(p, MAX_PATH, "%s\\WorldMatricies.script", folder);
+  FILE *f = fopen(p, "rb");
+  char rel[MAX_PATH] = "";
+  if (f) {
+    char buf[16384];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    buf[n] = 0;
+    const char *k = buf;
+    while ((k = strstr(k, "ImageFileName")) != NULL) {
+      const char *q1 = strchr(k, '"');
+      if (!q1) break;
+      const char *q2 = strchr(q1 + 1, '"');
+      if (!q2) break;
+      size_t len = (size_t)(q2 - q1 - 1);
+      if (len > 0 && len < MAX_PATH) {
+        char val[MAX_PATH];
+        memcpy(val, q1 + 1, len);
+        val[len] = 0;
+        // basename, for the .raw and hwater tests
+        const char *base = val;
+        for (const char *c = val; *c; c++)
+          if (*c == 47 || *c == 92) base = c + 1;
+        size_t bl = strlen(base);
+        bool is_raw = bl > 4 && _stricmp(base + bl - 4, ".raw") == 0;
+        if (is_raw && _strnicmp(base, "hwater", 6) != 0) {
+          strncpy(rel, val, MAX_PATH - 1);
+          break;
+        }
+      }
+      k = q2 + 1;
+    }
+  }
+
+  if (rel[0]) {
+    // Forward slashes to backslashes.
+    for (char *c = rel; *c; c++) if (*c == 47) *c = 92;
+
+    // The path is relative to the GAME ROOT, and the mission folder is
+    // <root>\Missions\... - so cut the folder at its "\Missions\" to
+    // recover the root rather than requiring the caller to pass it.
+    char root[MAX_PATH];
+    strncpy(root, folder, MAX_PATH - 1);
+    root[MAX_PATH - 1] = 0;
+    char *cut = NULL;
+    for (char *c = root; *c; c++)
+      if (*c == 92 && _strnicmp(c, "\\Missions\\", 10) == 0) cut = c;
+    if (cut) {
+      *cut = 0;
+      _snprintf(out, MAX_PATH, "%s\\%s", root, rel);
+      if (GetFileAttributesA(out) != INVALID_FILE_ATTRIBUTES) return true;
+    }
+
+    // Declared but not where it said. Try its basename in the mission folder,
+    // which covers a mission moved without its script being updated.
+    const char *base = rel;
+    for (const char *c = rel; *c; c++) if (*c == 92) base = c + 1;
+    _snprintf(out, MAX_PATH, "%s\\%s", folder, base);
+    if (GetFileAttributesA(out) != INVALID_FILE_ATTRIBUTES) return true;
+  }
+
+  // Nothing declared, or nothing found: the original assumption, which is
+  // right for every stock REDUX mission.
+  _snprintf(out, MAX_PATH, "%s\\hmap.raw", folder);
+  return GetFileAttributesA(out) != INVALID_FILE_ATTRIBUTES;
+}
+
 // Read only a handful of height samples without loading the file, so every
 // candidate mission can be tested cheaply during identification.
-static bool probe_heights(const char *hmap, const float *xs, const float *ys,
+static bool probe_heights(const char *hmap, float world,
+                          const float *xs, const float *ys,
                           int n, float *out)
 {
   FILE *f = fopen(hmap, "rb");
@@ -135,11 +251,11 @@ static bool probe_heights(const char *hmap, const float *xs, const float *ys,
   int dim = 0;
   while ((long)dim * dim * 2 < bytes) dim++;
   if ((long)dim * dim * 2 != bytes) { fclose(f); return false; }
-  float cell = WORLD_M / (dim - 1);
+  float cell = world / (dim - 1);
 
   for (int i = 0; i < n; i++) {
     int ix = (int)(xs[i] / cell);
-    int iy = (int)((WORLD_M - ys[i]) / cell);
+    int iy = (int)((world - ys[i]) / cell);
     if (ix < 0) ix = 0; if (ix > dim - 1) ix = dim - 1;
     if (iy < 0) iy = 0; if (iy > dim - 1) iy = dim - 1;
     unsigned short v = 0;
@@ -182,7 +298,7 @@ static void free_terrain(Terrain *t)
 static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
 {
   char p[MAX_PATH];
-  _snprintf(p, MAX_PATH, "%s\\hmap.raw", folder);
+  if (!find_height_file(folder, p)) return false;
   FILE *f = fopen(p, "rb");
   if (!f) return false;
   fseek(f, 0, SEEK_END);
@@ -196,11 +312,14 @@ static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
   fread(t->h, 1, bytes, f);
   fclose(f);
   t->hdim = dim;
-  t->hcell = WORLD_M / (dim - 1);
+
+  float w = read_world_size(folder);
+  t->world = (w > 0.0f) ? w : DEFAULT_WORLD_M;
+  t->hcell = t->world / (dim - 1);
 
   t->z = load_bmp8(zonebmp, &t->zw, &t->zh, &t->zstride);
   if (!t->z) { free(t->h); t->h = NULL; return false; }
-  t->zcell = WORLD_M / t->zw;
+  t->zcell = t->world / t->zw;
   strncpy(t->name, folder, MAX_PATH - 1);
   return true;
 }

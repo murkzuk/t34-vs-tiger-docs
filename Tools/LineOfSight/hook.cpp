@@ -31,7 +31,9 @@
 // nothing about geometry, so promoting one to a sighting would invent
 // information. Occlusion subtracts; it never adds.
 //
-// SANDBOX ONLY. Refuses to arm anywhere but M:\TvT_INJECT_SANDBOX.
+// OPT-IN ONLY. Refuses to arm unless the host install is listed in
+// tvt_los_allow.txt, which sits beside this DLL - never inside a game folder,
+// so an install cannot authorise itself.
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -58,9 +60,15 @@ static const DWORD GATE_CALL_RVA = 0x0004B400;
 static const DWORD VECLEN_RVA    = 0x0000EF80;
 static const DWORD CREW_RADAR_MAX = 0x144;
 static const DWORD CREW_VIEW_ANGLE = 0x148;
-static const char *SANDBOX  = "M:\\TvT_INJECT_SANDBOX";
-static const char *LOG_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.log";
-static const char *INI_PATH = "M:\\TvT_INJECT_SANDBOX\\tvt_los.ini";
+// Filled in at attach from the running executable and this DLL's own location.
+// Nothing here is a fixed install path any more.
+static char g_root[MAX_PATH];       // the game folder hosting us
+static char g_log_path[MAX_PATH];   // <root>\tvt_los.log
+static char g_ini_path[MAX_PATH];   // <root>\tvt_los.ini
+static char g_allow_path[MAX_PATH]; // <dll folder>\tvt_los_allow.txt
+#define SANDBOX   g_root
+#define LOG_PATH  g_log_path
+#define INI_PATH  g_ini_path
 
 // The first instruction is `mov eax, fs:[0]` - six bytes, one instruction, and
 // it carries no relocation. That is why a 5-byte JMP is safe here without a
@@ -111,6 +119,15 @@ static bool readable(const void *p, size_t n)
   return (const BYTE *)p + n <= (const BYTE *)mbi.BaseAddress + mbi.RegionSize;
 }
 
+// Last path separator, either kind - a path may arrive with forward slashes
+// and looking for only one of them silently yields the wrong folder.
+static char *last_sep(char *p)
+{
+  char *a = strrchr(p, 92);   // backslash, by code, to keep escapes out
+  char *b = strrchr(p, 47);      // forward slash
+  return (a > b) ? a : b;
+}
+
 // Our own generator. The engine's detection roll uses the CRT rand() in
 // Behavior.dll and its sequence is part of the behaviour being observed -
 // borrowing it would perturb the very thing under test.
@@ -130,6 +147,7 @@ typedef char (__fastcall *VisFn)(void *self, void *pad,
                                  DWORD dt, DWORD *tgt, DWORD key, DWORD *a4,
                                  float *pos, float *mat, DWORD dist);
 static VisFn g_orig;
+static HINSTANCE g_self;
 
 static float F(DWORD u) { float f; memcpy(&f, &u, 4); return f; }
 
@@ -291,9 +309,12 @@ static void score_tree(const char *root, char names[NNAMES][NAMELEN], int n,
     if (fd.cFileName[0] == '.') continue;
     char sub[MAX_PATH];
     _snprintf(sub, MAX_PATH, "%s\\%s", root, fd.cFileName);
-    char hmap[MAX_PATH];
-    _snprintf(hmap, MAX_PATH, "%s\\hmap.raw", sub);
-    if (GetFileAttributesA(hmap) != INVALID_FILE_ATTRIBUTES) {
+    // A mission folder is one that declares a world, not one that happens to
+    // contain a file called hmap.raw. ZW names its heightfields hmap1.raw and
+    // declares the path in the script, so the old test skipped them entirely.
+    char wm[MAX_PATH];
+    _snprintf(wm, MAX_PATH, "%s\\WorldMatricies.script", sub);
+    if (GetFileAttributesA(wm) != INVALID_FILE_ATTRIBUTES) {
       int k = score_folder(sub, names, n);
       if (k > *bestk) {
         *secondk = *bestk; *bestk = k;
@@ -349,6 +370,11 @@ static bool identify()
     return false;
   }
   llog("  MISSION: %s", best);
+  // Print the world size. It is read from the mission's own
+  // WorldMatricies.script and the shipped missions are not all the same size,
+  // so a wrong one here is the first thing to suspect if sight lines look
+  // nonsensical rather than merely wrong.
+  llog("  world %.0f m across", g_terrain.world);
   llog("  hmap %dx%d cell %.3f m ; zones %dx%d cell %.3f m",
        g_terrain.hdim, g_terrain.hdim, g_terrain.hcell,
        g_terrain.zw, g_terrain.zh, g_terrain.zcell);
@@ -513,6 +539,11 @@ static char __fastcall Hook(void *self, void *pad,
 
   if ((g_calls % 5000) == 0) {
     double secs = (GetTickCount() - g_tick0) / 1000.0;
+    // Carry the gate counters here too. Their own summary only fires every
+    // 2000 checks, which left it impossible to tell "ran a few hundred times
+    // with nothing to refuse" from "never ran at all".
+    llog("---   gate: %I64d checks, %I64d refused, %I64d unmatched",
+         g_gate_calls, g_gate_denied, g_gate_nopair);
     llog("--- %I64d calls, %I64d seen (%.1f%%), %I64d denied by LOS "
          "(%I64d before terrain was ready), %.0f s, %.0f calls/s, dt %.3f..%.3f",
          g_calls, g_true, 100.0 * g_true / g_calls, g_denied, g_gap_denied, secs,
@@ -610,13 +641,13 @@ static void __fastcall CrewHook(void *self, void *edx, DWORD arg)
       char path[MAX_PATH];
       if (VirtualQuery((void *)vt, &mbi, sizeof(mbi)) && mbi.AllocationBase &&
           GetModuleFileNameA((HMODULE)mbi.AllocationBase, path, MAX_PATH)) {
-        const char *b = strrchr(path, 92)   /* backslash, by code, to keep escapes out of it */;
+        const char *b = last_sep(path)   /* backslash, by code, to keep escapes out of it */;
         lstrcpynA(vmod, b ? b + 1 : path, 63);
         vrva = vt - (DWORD)mbi.AllocationBase;
       }
       if (slot10 && VirtualQuery((void *)slot10, &mbi, sizeof(mbi)) && mbi.AllocationBase &&
           GetModuleFileNameA((HMODULE)mbi.AllocationBase, path, MAX_PATH)) {
-        const char *b = strrchr(path, 92)   /* backslash, by code, to keep escapes out of it */;
+        const char *b = last_sep(path)   /* backslash, by code, to keep escapes out of it */;
         lstrcpynA(fmod, b ? b + 1 : path, 63);
         frva = slot10 - (DWORD)mbi.AllocationBase;
       }
@@ -673,12 +704,14 @@ static void __fastcall CrewHook(void *self, void *edx, DWORD arg)
 typedef float (__fastcall *VecLenFn)(const float *v, void *edx);
 static VecLenFn g_veclen;
 
-// Does this look like a position on a 9000 m map whose ground sits near 600 m,
+// Does this look like a position on this mission's map, whose ground sits near
+// 600 m,
 // rather than a delta, a normal, or noise?
 static bool looks_like_world_pos(const float *v)
 {
-  return v[0] > 1.0f && v[0] < 9000.0f &&
-         v[1] > 1.0f && v[1] < 9000.0f &&
+  const float w = g_terrain.valid() ? g_terrain.world : DEFAULT_WORLD_M;
+  return v[0] > 1.0f && v[0] < w &&
+         v[1] > 1.0f && v[1] < w &&
          v[2] > -50.0f && v[2] < 2000.0f;
 }
 
@@ -874,23 +907,63 @@ static void read_ini()
   g_gate_probe = g_gate_enforce || (_stricmp(buf, "probe") == 0);
 }
 
+// One file beside the DLL, one install root per line, # for comments. Kept out
+// of the game folders deliberately: a file living there would let any install
+// authorise itself, which is no rail at all.
+static bool install_is_allowed()
+{
+  FILE *f = fopen(g_allow_path, "r");
+  if (!f) {
+    llog("no allow list at %s", g_allow_path);
+    return false;                       // fail safe: no list, no arming
+  }
+  char line[MAX_PATH];
+  bool ok = false;
+  while (!ok && fgets(line, sizeof(line), f)) {
+    char *t = line;
+    while (*t == ' ' || *t == '\t') t++;
+    if (*t == '#' || *t == ';' || *t == '\n' || *t == '\r' || !*t) continue;
+    int n = (int)strlen(t);
+    while (n > 0 && (t[n-1] == '\n' || t[n-1] == '\r' ||
+                     t[n-1] == ' '  || t[n-1] == 92)) t[--n] = 0;
+    if (n && _stricmp(t, g_root) == 0) ok = true;
+  }
+  fclose(f);
+  return ok;
+}
+
 static DWORD WINAPI Boot(LPVOID)
 {
+  // Where are we? The game folder comes from the running executable, and the
+  // allow list from beside this DLL.
   char exe[MAX_PATH];
   GetModuleFileNameA(NULL, exe, MAX_PATH);
-  if (!strstr(exe, SANDBOX)) {
-    // A hook that silently arms in the live install is how a good install gets
-    // ruined. Say so, do nothing.
-    g_log = fopen(LOG_PATH, "a");
-    llog("REFUSING to arm: %s is outside %s", exe, SANDBOX);
-    if (g_log) fclose(g_log);
-    return 0;
-  }
+  lstrcpynA(g_root, exe, MAX_PATH);
+  char *slash = last_sep(g_root);       // backslash by code, no escapes
+  if (slash) *slash = 0;
+  _snprintf(g_log_path, MAX_PATH, "%s\\tvt_los.log", g_root);
+  _snprintf(g_ini_path, MAX_PATH, "%s\\tvt_los.ini", g_root);
+
+  char dll[MAX_PATH];
+  GetModuleFileNameA(g_self, dll, MAX_PATH);
+  slash = last_sep(dll);
+  if (slash) *slash = 0;
+  _snprintf(g_allow_path, MAX_PATH, "%s\\tvt_los_allow.txt", dll);
 
   g_log = fopen(LOG_PATH, "w");
+  llog("tvt_los_hook attached to %s", exe);
+  llog("install root: %s", g_root);
+
+  if (!install_is_allowed()) {
+    llog("REFUSING to arm. This install is not listed in %s", g_allow_path);
+    llog("Add its folder on a line of its own to opt in. A hook that arms "
+         "somewhere unintended is how a good install gets ruined.");
+    if (g_log) fclose(g_log);
+    g_log = NULL;
+    return 0;
+  }
   g_tick0 = GetTickCount();
   read_ini();
-  llog("tvt_los_hook attached to %s", exe);
   llog("mode = %s%s",
        g_mode == MODE_LOS ? "los" : g_mode == MODE_DENY_FAR ? "deny_far" : "watch",
        g_mode == MODE_DENY_FAR ? "" : "");
@@ -965,6 +1038,7 @@ static DWORD WINAPI Boot(LPVOID)
 BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID)
 {
   if (reason == DLL_PROCESS_ATTACH) {
+    g_self = h;
     DisableThreadLibraryCalls(h);
     InitializeCriticalSection(&g_lock);
     CreateThread(NULL, 0, Boot, NULL, 0, NULL);

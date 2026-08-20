@@ -53,7 +53,10 @@ GEOMETRY CONVENTIONS - each cost a debugging session earlier in this project
     give RMS 6.6 to 33.
   - The zone bitmaps are the OPPOSITE: row 0 is world y=0, no flip, despite a
     positive BMP height field.
-  - World is 9000 x 9000 m (CWorldMatrices.MatrixWidth), so a 1024 zone cell is
+  - The world is NOT a fixed size. Each mission folder has its own
+    WorldMatricies.script setting MatrixWidth in metres, and the shipped
+    missions run 9000, 12000, 18000, 20002 and 36000. On a 9000 m map a
+    1024 zone cell is
     8.789 m and a 2049 height sample is 4.395 m.
 """
 
@@ -62,7 +65,30 @@ import os
 import re
 import struct
 
-WORLD = 9000.0
+# Fallback only, for a mission with no WorldMatricies.script of its own. It is
+# CWorldMatrices::MatrixWidth from Scripts\Common - what a mission inherits
+# when it overrides nothing. Every shipped mission does override it.
+DEFAULT_WORLD = 10000.0
+
+
+def read_world_size(folder):
+    """MatrixWidth out of a mission's WorldMatricies.script, in metres.
+
+    Text search rather than a parser, matching the C: the line is always
+    `final static float MatrixWidth  = 18000.0; // meters` and no parser for
+    this language exists outside the engine.
+    """
+    path = os.path.join(folder, "WorldMatricies.script")
+    if not os.path.exists(path):
+        return None
+    txt = open(path, "rb").read().decode("cp1251", "replace")
+    m = re.search(r"MatrixWidth\s*=\s*([0-9.]+)", txt)
+    if not m:
+        return None
+    v = float(m.group(1))
+    # Between a hamlet and the largest thing the engine ships. Outside that it
+    # is a misparse, and using it silently would be worse than falling back.
+    return v if 500.0 <= v <= 100000.0 else None
 HEIGHT_FACTOR = 0.07
 
 # Zone code -> (canopy height in metres, metres of sight before opaque).
@@ -160,7 +186,8 @@ class Terrain:
 
     def __init__(self, folder):
         self.folder = folder
-        self._load_height(_find(folder, "hmap.raw"))
+        self.world = read_world_size(folder) or DEFAULT_WORLD
+        self._load_height(find_height_file(folder))
         self._load_zones(_find_bmp(folder, "terrainzone"))
 
     def _load_height(self, path):
@@ -168,7 +195,7 @@ class Terrain:
         n = len(raw) // 2
         self.hdim = int(math.isqrt(n))
         self.h = struct.unpack("<%dH" % n, raw)
-        self.hcell = WORLD / (self.hdim - 1)
+        self.hcell = self.world / (self.hdim - 1)
 
     def _load_zones(self, path):
         d = open(path, "rb").read()
@@ -177,14 +204,14 @@ class Terrain:
         self.zw, self.zh = w, abs(h)
         self.zstride = (w + 3) // 4 * 4
         self.z = d
-        self.zcell = WORLD / w
+        self.zcell = self.world / w
 
     def ground(self, x, y):
         """Bilinear, because a march that samples nearest-neighbour on a 4.4 m
         grid produces staircase ridges that block sight lines that are actually
         open. The interpolation costs three multiplies and removes the artefact."""
         fx = x / self.hcell
-        fy = (WORLD - y) / self.hcell           # flipped: row 0 is world y=MAX
+        fy = (self.world - y) / self.hcell      # flipped: row 0 is world y=MAX
         ix, iy = int(fx), int(fy)
         if ix < 0: ix = 0
         if iy < 0: iy = 0
@@ -352,6 +379,47 @@ def read_units(folder):
     return out
 
 
+def find_height_file(folder):
+    """The mission's heightfield, which is NOT always <folder>/hmap.raw.
+
+    WorldMatricies.script declares an ImageFileName per layer, relative to the
+    game root and with forward slashes, and ZW names its heightfields hmap1.raw
+    and similar. A mission may also point at another mission's terrain, which
+    is what sharing one map between missions would rely on.
+
+    The height layer is the first .raw that is not the water layer - hwater by
+    convention in every mission on disk, in both builds.
+    """
+    wm = os.path.join(folder, "WorldMatricies.script")
+    rel = None
+    if os.path.exists(wm):
+        txt = open(wm, "rb").read().decode("cp1251", "replace")
+        for m in re.finditer(r'ImageFileName\s*=\s*"([^"]+)"', txt):
+            val = m.group(1)
+            base = val.replace("\\", "/").rsplit("/", 1)[-1]
+            if base.lower().endswith(".raw") and not base.lower().startswith("hwater"):
+                rel = val
+                break
+
+    if rel:
+        rel = rel.replace("/", os.sep).replace("\\", os.sep)
+        # Relative to the GAME ROOT, and the mission folder is
+        # <root>/Missions/... - so cut at Missions to recover the root.
+        parts = os.path.normpath(folder).split(os.sep)
+        low = [q.lower() for q in parts]
+        if "missions" in low:
+            root = os.sep.join(parts[:len(low) - 1 - low[::-1].index("missions")])
+            cand = os.path.join(root, rel)
+            if os.path.exists(cand):
+                return cand
+        # Declared but not where it said: try its basename here.
+        cand = os.path.join(folder, os.path.basename(rel))
+        if os.path.exists(cand):
+            return cand
+
+    return _find(folder, "hmap.raw")
+
+
 def _find(folder, name):
     for fn in os.listdir(folder):
         if fn.lower() == name:
@@ -447,10 +515,11 @@ def map_survey(folder, ranges=(200, 400, 800, 1500), samples=4000, seed=7):
     for R in ranges:
         c = {CLEAR: 0, BLOCKED_TERRAIN: 0, BLOCKED_FOLIAGE: 0}
         for _ in range(samples):
-            x, y = rng.uniform(400, WORLD - 400), rng.uniform(400, WORLD - 400)
+            x, y = (rng.uniform(400, t.world - 400),
+                    rng.uniform(400, t.world - 400))
             th = rng.uniform(0, math.tau)
             bx, by = x + math.cos(th) * R, y + math.sin(th) * R
-            if not (0 < bx < WORLD and 0 < by < WORLD):
+            if not (0 < bx < t.world and 0 < by < t.world):
                 continue
             f, why, _ = los(t, x, y, t.ground(x, y) + 2.2,
                             bx, by, t.ground(bx, by) + 1.3)

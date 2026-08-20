@@ -62,23 +62,35 @@ Everything else is support or polish. Two write-ups:
   job as the vision hook.
 - [ ] **Tune the sight-through distances** against play. Recalibrated twice so
   far; `sight_scale` in the ini moves them all without a rebuild.
-- [ ] **Run the LOS work on ZW2015 too.** Its `Behavior.dll` is byte-identical
-  to REDUX's - same MD5, same prologue at `0xC9E50` - so `tvt_los_hook.dll`
-  needs no rebuild. Four concrete jobs, none large:
-  1. `WORLD_M` is hardcoded to 9000 in `terrain.h`; ZW's maps are 18000
-     (`MatrixWidth` in each mission's `WorldMatricies.script`). Read it during
-     identification and carry it on the `Terrain` struct. Note ZW's zone
-     bitmaps are 2048 not 1024, so the cell size works out the same 8.789 m -
-     but the heightfield is 2049 over 18000 m, i.e. HALF the resolution per
-     metre, 8.79 m per sample against REDUX's 4.39.
-  2. The sandbox rail is a hardcoded string in two places (the injector and the
-     DLL). Replace with an allow-list read from the ini so each install is
-     opted in by name and the live one still cannot be hit by accident.
-  3. Log, ini and mission-search paths derive from `SANDBOX`; derive them from
-     the running executable's folder instead.
-  4. Re-check the fit test - it assumes origin offsets measured on REDUX units
-     (+0.85 m soldier, +1.65 m Tiger). ZW has its own models and they may sit
-     differently; the check should still pass but confirm rather than assume.
+- [x] **Run the LOS work on ZW2015 too — DONE 2026-08-20, not yet play-tested.**
+  `Behavior.dll`, `Engine.dll` and `UI.dll` are byte-identical to REDUX's
+  (SHA-256 checked), so both hooks land on the same addresses and nothing
+  needed rebuilding for ZW itself. Enabled by adding `M:\T34vsTiger_ZW2015` to
+  `tvt_los_allow.txt`; launch with `K:\tvt_los\play_zw.bat`, settings in
+  `M:\T34vsTiger_ZW2015\tvt_los.ini` (its own file, because ZW's woods are
+  planted more thickly — same forest classes, denser species mix — and may want
+  a lower `sight_scale`).
+  1. **DONE — and the premise was wrong in a way worth recording.** ZW's maps
+     are not "18000": they run **9000, 12000, 18000, 20002 and 36000**, and
+     `MatrixWidth` now comes from each mission's own `WorldMatricies.script`
+     rather than any constant. **REDUX was already affected**: `SteppeTemplate`
+     and `SteppeQuickMission` are 18000 m, so the shipped tool had been
+     silently computing every position on those two at half scale. Verified
+     against four maps, C and Python agreeing exactly: Berezov 9000/2049
+     (4.395 m), Steppe 18000/2049 (8.789 m), ZW Campaign_2 Mission_1
+     18000/2049 with 2048 zones, ZW Kursk **36000/4097** — a larger heightfield
+     than TvT itself ever ships. The identified world size is now printed in
+     the log as `world NNNN m across`.
+  2. **DONE** when LOS shipped live: the rail is an allow list beside the DLL,
+     checked independently by the injector and the DLL.
+  3. **DONE** at the same time: log, ini and mission-search paths all derive
+     from the running executable's folder.
+  4. **STILL OPEN, and it is the one thing to watch on the first ZW run.** The
+     fit test assumes origin offsets measured on REDUX units (+0.85 m soldier,
+     +1.65 m Tiger). ZW has its own models and they may sit differently. If the
+     fit check reports offsets far from +1.4..+1.7 m, that is the reason, and
+     the DLL will correctly fall back to watch mode rather than enforce against
+     a bad fit.
 
   Worth doing because the exchange already runs both ways: today's near-plane
   fix was REDUX knowledge applied to ZW, and the depth work transfers back the
@@ -122,12 +134,17 @@ established, see
   pointing BerezovKursk's `WorldMatricies.script` at Berezov's `hmap.raw` in the
   sandbox. Loads clean, terrain visibly different, no engine complaint. This was
   the gate on the whole design and it is open.
-- [ ] **LOS tooling must read the terrain path, not assume the folder.** The
-  DLL locates `hmap.raw` and the zone bitmaps as `<mission folder>\hmap.raw`.
-  Once missions share terrain that is wrong, and the fit check proved it by
-  failing at -75.90 m during the test above. Read `ImageFileName` out of
-  `WorldMatricies.script` for the identified mission instead. Small, and it
-  pairs naturally with reading `MatrixWidth` for ZW support.
+- [x] **LOS tooling must read the terrain path, not assume the folder — DONE
+  2026-08-20.** `find_height_file()` in `terrain.h`, mirrored in
+  `canopy_los.py`, reads `ImageFileName` out of the mission's
+  `WorldMatricies.script`, resolves it against the game root, and falls back to
+  `<folder>\hmap.raw`. This was not only a shared-terrain concern: **ZW names
+  its heightfields `hmap1.raw`**, so the old test skipped every such mission
+  entirely — including the whole `CustomMissions` set. The mission-candidate
+  scan now recognises a mission by the presence of `WorldMatricies.script`
+  rather than a file literally called `hmap.raw`. Zone bitmaps are still found
+  by globbing `TerrainZone*.bmp`, which works on every mission in both builds;
+  reading those from the script too is a tidy-up, not a fix.
 - [ ] **Log casualties.** One `logMessage` in that handler, before the
   `Killer == MainPlayerID` test, gives every death on both sides with
   attribution in `execution.log` — a file the tooling already parses.
