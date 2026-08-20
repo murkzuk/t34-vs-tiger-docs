@@ -37,13 +37,22 @@ Everything else is support or polish. Two write-ups:
 - [x] **Port the march into the hook.** Done, `Tools/LineOfSight/terrain.h`,
   checked against the Python offline by `test_terrain.exe` rather than by
   burning game runs.
-- [ ] **The player's crew is a SECOND vision system, and it is untouched.** The
-  player's tank appears in the hook's log 53 times as a target and never as an
-  observer. Its gunner runs on `CAutoShooter` / `CAutoCommander`
-  (`RadarMaxDistance` 3000 / 1500). Any cockpit judgement of "the AI" has to say
-  which crew it means - two reports of "no difference" turned out to be correct
-  observations about the wrong one. See
-  [Documentation/TvT_AI_Engagement_Logic.md](Documentation/TvT_AI_Engagement_Logic.md).
+- [x] **The player's crew now has line of sight too.** It was a SECOND vision
+  system that `FUN_100c9e50` never touched, which is why occlusion changed
+  nothing visible from the cockpit. `CAutoShooterComponent`'s per-tick update is
+  vtable slot 7 at RVA 0x4B1E0; its whole target acceptance is one distance
+  comparison against `RadarMaxDistance` (+0x154, measured live) with no
+  geometry. Fixed by redirecting the single `call` at 0x1004B400 - the length
+  helper it calls has 80 callers and must not be hooked itself. **6000 checks,
+  4069 refused, 0 unmatched.** Endpoints found by matching the arithmetic rather
+  than hardcoded stack offsets, which never failed once.
+- [ ] **`CAutoCommanderComponent` — acquisition, and the best home for
+  penetration.** The gunner fix changes RETENTION, not acquisition: in the
+  commander's seat you can only designate what you can already see. The AI
+  commander designates whenever the player is NOT commander, and it is the class
+  holding `PreferedTargets` - so it is both where terrain-blind acquisition
+  lives and the natural place for "can I actually hurt it from here". Vtable RVA
+  **0x248D98**; same technique as the two hooks already working.
 - [ ] **Replace `RadarMaxDistance` with "can I get through?"** TvT already holds
   penetration-vs-range per ammo (`Piercing.script`) and armour per facet
   (`Armour.script`); `Tools/LineOfSight/can_i_kill.py` computes the answer today
@@ -75,15 +84,10 @@ Everything else is support or polish. Two write-ups:
   fix was REDUX knowledge applied to ZW, and the depth work transfers back the
   same way.
 
-- [ ] **Port the march into the hook**, with the mission's heightfield and zone
-  map loaded from disk. Note the hook needs no engine Z at all — it can take
-  both endpoints from the heightfield, as the Python does.
 - [ ] **Cache and stagger.** Never ray-test per observer per target per frame.
   Ray-test only pairs that survive the existing distance and angle gates, cache
   the answer, refresh on a stagger. The game is CPU-bound (90 fps, 450 draw
   calls, GPU 29%) — adding raw CPU work is the one way to get this wrong.
-- [ ] **Tune the sight-through distances** against play. The canopy heights are
-  data; those are the one genuinely tuned quantity.
 
 **Constraint, do not forget:** `Behavior.dll` relocates ~237 MB from its
 preferred base. Resolve addresses at runtime (`GetModuleHandleA` + static RVA).
