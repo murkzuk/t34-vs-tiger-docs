@@ -205,3 +205,34 @@ The launcher in the ZW root runs `DEL /Q *.log` and `DEL /Q *.cache` before
 starting the game. Useful after a script edit, but it destroys
 `execution.log`, `tvt_los.log` and the shader caches every time — so never use
 it before a run whose log matters, or for a framerate measurement.
+
+## 6. Fog is not applied to distant objects — OPEN
+
+Reported from play in **both** builds: distant tanks and their shadows stay
+dark while the ground around them hazes out, making them easy to spot and easy
+to kill.
+
+Each mission's `Atmosphere.script` declares:
+
+```
+DefaultFogMode = "Exp"
+FogDensity     = 0.0005   (ZW Kursk)  /  0.0007  (REDUX Berezov)
+FogNear = 10 ; FogFar = 800 ; FogFarMax = 3500
+```
+
+`Exp` fog uses **density** and ignores near/far, so on paper an object at 800 m
+— where `FogFar` says the terrain is fully hazed — is still 67% unfogged. That
+looked like the answer.
+
+**Tested and disproven.** `FogDensity` was raised 0.0005 → 0.0020, a **4×**
+increase, cache cleared, mission replayed: the fog looked exactly the same. If
+that value reached objects at all, quadrupling it could not have gone
+unnoticed.
+
+So fog is not reaching units, and no value in `Atmosphere.script` will fix it.
+Worth noting it appears in both builds, which argues against the graphics
+wrapper (ZW is on DXVK, REDUX on dgVoodoo).
+
+`ShadowColor` is a separate, per-mission and genuinely effective lever; it was
+lightened and sky-tinted to `(122, 140, 156)` in ZW Kursk and REDUX
+BerezovKursk on the same day.
