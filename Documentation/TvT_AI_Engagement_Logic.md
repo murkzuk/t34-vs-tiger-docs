@@ -255,3 +255,62 @@ of being tracked through it.
 Acquisition through terrain belongs to `CAutoCommanderComponent`, which does the
 designating whenever the player is *not* in the commander's seat. That is the
 next target, and its vtable is already known.
+
+## Wingmen: Follow and Formation are issued together and must agree
+
+`CWingmanTask::Wingman_Follow()` in `Common\BaseTasks.script` issues **two
+movement orders on the same tick**:
+
+```
+SetOrder_Follow   (leader, FOLLOW_DISTANCE_MIN/OPT/MAX, ...)
+setOrder_Formation(leader, GetFormationVector(),
+                   FORMATION_DISTANCE_OPT/MAX, ...)
+```
+
+Follow holds a **distance**. Formation holds an **offset vector**. Nothing
+reconciles them, so if the vector's length disagrees with
+`FOLLOW_DISTANCE_OPT` the unit is dragged between two targets every update.
+In play this reads as continuous micro-stuttering, with the spacing settling
+near the tighter of the two rather than the one you set.
+
+**Rule when authoring or tuning any wingman:**
+
+- `|GetFormationVector()|` should be about `FOLLOW_DISTANCE_OPT`
+- `FORMATION_DISTANCE_OPT` / `_MAX` should match `FOLLOW_DISTANCE_OPT` / `_MAX`
+- check the **longest** vector in `FORMATION_VECTORS` against `_MAX`, not the
+  first one
+
+### The stock numbers are helicopter numbers
+
+REDUX still carries them untouched, straight from Whirlwind over Vietnam:
+
+```
+FOLLOW 180 / 200 / 220
+FORMATION_VECTORS = [ new Vector(200, 120, 30), new Vector(200, -120, 30) ]
+```
+
+That `z = 30` is **altitude** — wingmen thirty metres up. They at least agreed
+with each other (opt 200 against a vector length of 233). Anyone adding a
+wingman to REDUX must fix this block and zero the z, or the tank is being told
+to fly.
+
+### ZW, found and fixed 2026-08-20
+
+ZeeWolf correctly rewrote the block for tanks but the two orders stopped
+matching — an 11 m formation slot against a 10 m minimum follow distance, so
+the commanded position sat right on the "too close, brake" threshold.
+
+| | before | after |
+|---|---|---|
+| follow min / opt / max | 10 / 20 / 60 | 25 / 40 / 110 |
+| formation opt / max | 20 / 60 | 40 / 110 |
+| slot distance | 11 m | 40 m |
+
+The formation shape was preserved exactly: every vector scaled by the same 3.6.
+
+### Unused, and broken if it were used
+
+`Common\KameradTask.script` (ZW only). `CKamerad2Task::Init()` sends the event
+`move2Player`, but that class defines only `move2Player2`, `move2Player3` and
+`move2Player4` — so those wingmen would never start following. Referenced only
+by `KurskMission2` and `KurskMission3`.
