@@ -80,3 +80,52 @@ for wm in glob.glob(r'M:\T34vsTiger_ZW2015\Missions\*\*\WorldMatricies.script'):
 ```
 
 `canopy_los.py` is in [`../../Tools/LineOfSight/`](../../Tools/LineOfSight).
+
+---
+
+## Map size is paid for in terrain detail
+
+*Measured 2026-08-20 on Zitadelle M1.*
+
+Making a map bigger costs nothing to author — the same 2049² heightfield with a
+larger `MatrixWidth`, stretched by the engine. But stretching does not add
+terrain, it spreads the same samples thinner:
+
+| map | world | samples | metres per height sample |
+|---|---|---|---|
+| REDUX Berezov | 9 km | 2049² | **4.39 m** |
+| REDUX SteppeTemplate | 18 km | 2049² | 8.79 m |
+| ZW Zitadelle M4 | 18 km | 2049² | 8.79 m |
+| ZW Zitadelle M1 | 36 km | **4097²** | 8.79 m |
+| ZW Zitadelle M2/M3 | 36 km | 2049² | **17.58 m** |
+
+At 17.6 m between height samples every fold of ground smaller than a football
+pitch is averaged out — **dead ground, reverse slopes and hull-down positions
+stop existing**.
+
+It shows in play. From line-of-sight logs the same day:
+
+| | blocked by terrain | blocked by foliage |
+|---|---|---|
+| Berezov at 1200 m | **59%** | 41% |
+| Zitadelle M1 | 24% | **76%** |
+
+On the fine map the ground hides tanks. On the coarse one it barely can, so
+trees do the hiding instead.
+
+**ZeeWolf clearly knew this.** Zitadelle M1 is the only mission in his entire
+set with a 4097² heightfield — the terrain data was doubled specifically to
+hold 8.79 m across a 36 km world. That is also the 32 MB that crashed a 2 GB
+executable, see [Rendering_And_Framerate.md](Rendering_And_Framerate.md).
+
+### The map is far bigger than the battle
+
+Zitadelle M1's 482 fighting units sit in a box of **14 x 10.7 km** — 11.6% of
+the 1,296 km² map, and not centred (X 7.7–21.7 km, Y 8.2–18.9 km). The rest is
+empty ground.
+
+So the size is not driven by the engagement. It is close to free, and the price
+is paid in detail rather than in files.
+
+To measure a mission's battle extent, parse `Content.script`: each placement is
+`"CClassName", new Matrix(...)` with world X as the 4th number and Y the 8th.
