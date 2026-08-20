@@ -115,7 +115,11 @@ static inline const Veg *veg_for(int zone)
 
 struct Terrain
 {
-  unsigned short *h;   // hmap, flipped rows
+  // The heightfield is MAPPED, not read. See load_terrain: on a 36 km map this
+  // is 32 MB, and a 32-bit game process generating a forest does not need us
+  // asking for that contiguously out of its heap.
+  const unsigned short *h;   // hmap, flipped rows - into the mapped view
+  HANDLE hfile, hmapping;
   int   hdim;
   float hcell;
 
@@ -127,7 +131,8 @@ struct Terrain
 
   char  name[MAX_PATH];
 
-  Terrain() : h(0), hdim(0), hcell(0), z(0), zw(0), zh(0), zstride(0), zcell(0),
+  Terrain() : h(0), hfile(INVALID_HANDLE_VALUE), hmapping(0),
+              hdim(0), hcell(0), z(0), zw(0), zh(0), zstride(0), zcell(0),
               world(DEFAULT_WORLD_M)
   { name[0] = 0; }
 
@@ -290,7 +295,12 @@ static unsigned char *load_bmp8(const char *path, int *w, int *h, int *stride)
 
 static void free_terrain(Terrain *t)
 {
-  if (t->h) { free(t->h); t->h = NULL; }
+  if (t->h) { UnmapViewOfFile((LPCVOID)t->h); t->h = NULL; }
+  if (t->hmapping) { CloseHandle(t->hmapping); t->hmapping = NULL; }
+  if (t->hfile != INVALID_HANDLE_VALUE) {
+    CloseHandle(t->hfile);
+    t->hfile = INVALID_HANDLE_VALUE;
+  }
   if (t->z) { free(t->z); t->z = NULL; }
   t->name[0] = 0;
 }
@@ -299,18 +309,30 @@ static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
 {
   char p[MAX_PATH];
   if (!find_height_file(folder, p)) return false;
-  FILE *f = fopen(p, "rb");
-  if (!f) return false;
-  fseek(f, 0, SEEK_END);
-  long bytes = ftell(f);
-  fseek(f, 0, SEEK_SET);
+
+  // Read-only file mapping rather than malloc + fread. Same pointer to the
+  // same bytes as far as everything below is concerned, but the pages are
+  // backed by the file, so this costs the game no committed memory and no
+  // 32 MB contiguous heap block.
+  t->hfile = CreateFileA(p, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (t->hfile == INVALID_HANDLE_VALUE) return false;
+
+  DWORD hi = 0;
+  DWORD lo = GetFileSize(t->hfile, &hi);
+  if (lo == INVALID_FILE_SIZE || hi != 0) { free_terrain(t); return false; }
+  long bytes = (long)lo;
+
   int dim = 0;
   while ((long)dim * dim * 2 < bytes) dim++;
-  if ((long)dim * dim * 2 != bytes) { fclose(f); return false; }
-  t->h = (unsigned short *)malloc(bytes);
-  if (!t->h) { fclose(f); return false; }
-  fread(t->h, 1, bytes, f);
-  fclose(f);
+  if ((long)dim * dim * 2 != bytes) { free_terrain(t); return false; }
+
+  t->hmapping = CreateFileMappingA(t->hfile, NULL, PAGE_READONLY, 0, 0, NULL);
+  if (!t->hmapping) { free_terrain(t); return false; }
+  t->h = (const unsigned short *)MapViewOfFile(t->hmapping, FILE_MAP_READ,
+                                               0, 0, 0);
+  if (!t->h) { free_terrain(t); return false; }
+
   t->hdim = dim;
 
   float w = read_world_size(folder);
@@ -318,7 +340,7 @@ static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
   t->hcell = t->world / (dim - 1);
 
   t->z = load_bmp8(zonebmp, &t->zw, &t->zh, &t->zstride);
-  if (!t->z) { free(t->h); t->h = NULL; return false; }
+  if (!t->z) { free_terrain(t); return false; }
   t->zcell = t->world / t->zw;
   strncpy(t->name, folder, MAX_PATH - 1);
   return true;
