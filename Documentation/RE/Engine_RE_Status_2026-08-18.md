@@ -378,3 +378,31 @@ Any AI-vision test must run on **Campaign_1 Mission_2** (67.92% forest) or
 Campaign_2 Mission_4 (63.94%). Berezov and the steppe maps are 9.17% and cannot
 show the effect. The Editor cannot test AI at all — it loads missions but never
 runs the behaviour classes.
+
+---
+
+## OUTCOME, 2026-08-20: the intersector was NOT used
+
+The line-of-sight work is finished and did **not** use any of the geometry
+system catalogued above. It hooks the live vision function
+(`Behavior.dll + 0xC9E50`) and does the geometry itself, marching the mission's
+own `hmap.raw` and zone bitmaps.
+
+Neither `CStaticIntersector` nor `CUnitRadar2` is touched, for two reasons:
+
+- `CUnitRadar2` was traced here and found **geometry-plumbed, not
+  geometry-querying** - it holds `WorldGeometry`/`GeometryGroup`, guards on them
+  and passes them onward, but the path followed ends in classificator/mask
+  matching rather than a ray cast. Reaching it would also mean switching the
+  whole unit roster to `#VehicleBehavior3`.
+- `CStaticIntersector` would still need wiring from scratch, and a heightfield
+  march is cheaper than ray-triangle work while covering terrain and foliage in
+  one pass.
+
+**The right conclusion from this document is that G5 intended occlusion and ran
+out of time - not that the capability was sitting there ready to switch on.**
+The earlier framing of "occlusion is a wiring problem, not a missing capability"
+was a hypothesis, and it is not what happened.
+
+See `Documentation/TvT_Line_Of_Sight.md` and
+`Documentation/RE/TvT_Vision_Model_Decoded.md`.
