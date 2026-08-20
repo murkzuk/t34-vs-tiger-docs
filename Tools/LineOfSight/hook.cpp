@@ -100,6 +100,21 @@ static bool g_gate_probe;       // watch the range gate's call site
 static bool g_gate_enforce;     // and actually reject blocked candidates
 static __int64 g_gate_denied, g_gate_nopair;
 static __int64 g_gate_calls, g_gate_logged;
+
+// Self-timing. The march is the only part of this that scales with anything -
+// it walks the line at half a zone cell per step, so a 5 km sight line on an
+// 18 km map is around 500 steps. Whether that matters is a measurement, not an
+// opinion: these accumulate raw performance-counter ticks and the summary
+// turns them into a share of wall time.
+static __int64 g_march_ticks, g_march_count;
+static __int64 g_qpc_freq;
+
+static inline __int64 tick()
+{
+  LARGE_INTEGER t;
+  QueryPerformanceCounter(&t);
+  return t.QuadPart;
+}
 static __int64  g_crew_calls, g_crew_logged;
 
 static void llog(const char *fmt, ...)
@@ -211,10 +226,21 @@ static char *slurp(const char *path, long *len)
 }
 
 // After loading, confirm the terrain actually fits where the units are. A
-// unit's origin sits a fixed height above ground for its class - measured
-// +0.85 m for a soldier, +1.41 m for a T-34/76, +1.65 m for a Tiger - so every
-// offset should land in a narrow positive band. If it does not, the wrong
-// terrain is loaded and enforcing against it would be worse than not enforcing.
+// unit's origin sits a fixed height above ground for its class, so every
+// offset should be positive and they should all be CLOSE TO EACH OTHER.
+//
+// Judge by that agreement, not by an absolute band. The first version required
+// every offset under 3.0 m, which was the band REDUX's own models happen to
+// occupy (+0.85 m soldier, +1.41 m T-34/76, +1.65 m Tiger). ZW's models sit
+// higher: its first run measured +3.30..+3.31 m and the check threw away a
+// terrain that was demonstrably correct, dropping to watch mode for the whole
+// session. A spread of 0.01 m across three separated tanks cannot happen on
+// the wrong map.
+//
+// What a genuinely wrong terrain looks like: the shared-terrain experiment
+// failed at -75.90 m. Wrong maps miss by tens of metres and disagree with each
+// other. So the test is agreement plus a sanity range, with the band wide
+// enough to hold any tank anyone models.
 static bool terrain_fits()
 {
   float lo = 1e30f, hi = -1e30f;
@@ -223,9 +249,14 @@ static bool terrain_fits()
     if (d < lo) lo = d;
     if (d > hi) hi = d;
   }
-  llog("  fit check over %d observer positions: offsets %+.2f..%+.2f m",
-       g_nprobe, lo, hi);
-  return lo > 0.0f && hi < 3.0f;
+  float spread = hi - lo;
+  // Slightly negative is possible where a tank straddles a bilinear cell on a
+  // slope; metres below ground is not.
+  bool ok = lo > -1.5f && hi < 12.0f && spread < 3.0f;
+  llog("  fit check over %d observer positions: offsets %+.2f..%+.2f m "
+       "(spread %.2f m) - %s",
+       g_nprobe, lo, hi, spread, ok ? "consistent, terrain accepted" : "REJECTED");
+  return ok;
 }
 
 
@@ -470,6 +501,14 @@ static char __fastcall Hook(void *self, void *pad,
            "on. Dropping to watch mode rather than enforcing against the "
            "wrong map.");
       g_mode = MODE_WATCH;
+      // And the player's gunner with it. These are two separate hooks against
+      // ONE terrain: if that terrain is not trusted, neither may use it. The
+      // first ZW run had the AI stand down while the gate went on refusing
+      // targets for another 2000 checks.
+      if (g_gate_enforce) {
+        llog("  the player-gunner gate stands down for the same reason.");
+        g_gate_enforce = false;
+      }
     }
   }
 
@@ -499,8 +538,11 @@ static char __fastcall Hook(void *self, void *pad,
       // not ground contact, so adding an eye height to it would put the gunner
       // a metre and a half too high.
       float gz = g_terrain.ground(ox, oy);
+      __int64 t0 = tick();
       Sight s = march(&g_terrain, ox, oy, gz + 2.0f,
                       tx, ty, g_terrain.ground(tx, ty) + 1.3f);
+      g_march_ticks += tick() - t0;
+      g_march_count++;
       factor = s.factor;
       sight = s;
       if (factor <= 0.0f || frand() > factor) {
@@ -544,6 +586,17 @@ static char __fastcall Hook(void *self, void *pad,
     // with nothing to refuse" from "never ran at all".
     llog("---   gate: %I64d checks, %I64d refused, %I64d unmatched",
          g_gate_calls, g_gate_denied, g_gate_nopair);
+    // What the marching actually cost. If this is not a visible fraction of
+    // wall time, the DLL is not the reason for a framerate.
+    if (g_qpc_freq > 0 && g_march_count > 0) {
+      double march_s = (double)g_march_ticks / (double)g_qpc_freq;
+      llog("---   march: %I64d lines, %.0f us each, %.2f s total = %.2f%% of "
+           "wall time", g_march_count,
+           march_s * 1e6 / (double)g_march_count, march_s,
+           secs > 0 ? 100.0 * march_s / secs : 0.0);
+    } else if (g_march_count == 0) {
+      llog("---   march: not run - the line is only walked in los mode");
+    }
     llog("--- %I64d calls, %I64d seen (%.1f%%), %I64d denied by LOS "
          "(%I64d before terrain was ready), %.0f s, %.0f calls/s, dt %.3f..%.3f",
          g_calls, g_true, 100.0 * g_true / g_calls, g_denied, g_gap_denied, secs,
@@ -756,8 +809,11 @@ static float __fastcall GateProbe(const float *v, void *edx)
       // Both endpoints off the heightfield, as on the AI side: the authored Z
       // is mid-model, not ground contact, so adding an eye height to it would
       // put the gunner a metre and a half too high.
+      __int64 tg0 = tick();
       Sight sg = march(&g_terrain, obs[0], obs[1], g_terrain.ground(obs[0], obs[1]) + 2.0f,
                        tgt[0], tgt[1], g_terrain.ground(tgt[0], tgt[1]) + 1.3f);
+      g_march_ticks += tick() - tg0;
+      g_march_count++;
       if (sg.factor <= 0.0f || frand() > sg.factor) {
         g_gate_denied++;
         if (g_gate_logged < 60) {
@@ -951,6 +1007,11 @@ static DWORD WINAPI Boot(LPVOID)
   _snprintf(g_allow_path, MAX_PATH, "%s\\tvt_los_allow.txt", dll);
 
   g_log = fopen(LOG_PATH, "w");
+  {
+    LARGE_INTEGER f;
+    QueryPerformanceFrequency(&f);
+    g_qpc_freq = f.QuadPart;
+  }
   llog("tvt_los_hook attached to %s", exe);
   llog("install root: %s", g_root);
 
