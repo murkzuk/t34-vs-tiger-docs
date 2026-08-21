@@ -615,3 +615,32 @@ The old `CHANGELOD.md` (LOD-specific) stays as a separate file. This `CHANGELOG.
 ---
 
 *Last updated: 2026-06-03*
+
+## v0.260821 - 21 August 2026
+
+**Versioning starts here.** Both builds now carry a date-stamped `VersionID` in
+`Scripts\GameSettings.script`, shown bottom right in game: `REDUX v0.260821`
+and `ZW v0.260821`. The format is **`v0.YYMMDD`** deliberately - DDMMYY would
+sort a September build below an August one. ZW's version string had been
+commented out entirely and showed nothing.
+
+Bump it whenever a change ships. It is how "which build am I running" gets
+answered from the screen instead of from a log, which cost real time twice this
+week.
+
+### This week, in both builds
+
+- **Line of sight runs on ZW** as well as REDUX - no rebuild needed, the engine
+  binaries are identical. 84-90% of AI sightings refused, at 0.4-0.95% of wall
+  time.
+- **Three things are read per mission, not assumed**: `MatrixWidth`,
+  `ImageFileName` and `FloatValueFactor`. Each was hardcoded and each was wrong
+  somewhere - including on REDUX's own steppe missions, which had been running
+  at half scale.
+- **ZW's "4GB" executable was never large-address-aware.** Capped at 2 GB,
+  which is why the 36 km Kursk map crashed. One bit.
+- **Wingman and Hanomag followers fixed** - cruise speed in one case, the wrong
+  kind of order in the other.
+- **Commander/binocular mouse speed** is editable, and the mouse is held inside
+  the game window on multi-monitor desktops.
+- **A launcher GUI** and a launch-time banner that says whether occlusion armed.
