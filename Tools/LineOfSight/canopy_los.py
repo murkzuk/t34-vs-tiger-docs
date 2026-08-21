@@ -71,6 +71,22 @@ import struct
 DEFAULT_WORLD = 10000.0
 
 
+def read_height_factor(folder):
+    """Metres per raw heightfield unit, from FloatValueFactor.
+
+    Also per mission: Kursk 0.07, the winter maps 0.05. Mirrors terrain.h.
+    """
+    path = os.path.join(folder, "WorldMatricies.script")
+    if not os.path.exists(path):
+        return None
+    txt = open(path, "rb").read().decode("cp1251", "replace")
+    m = re.search(r"FloatValueFactor\s*=\s*([0-9.]+)", txt)
+    if not m:
+        return None
+    v = float(m.group(1))
+    return v if 0.005 <= v <= 1.0 else None
+
+
 def read_world_size(folder):
     """MatrixWidth out of a mission's WorldMatricies.script, in metres.
 
@@ -187,6 +203,7 @@ class Terrain:
     def __init__(self, folder):
         self.folder = folder
         self.world = read_world_size(folder) or DEFAULT_WORLD
+        self.hfactor = read_height_factor(folder) or HEIGHT_FACTOR
         self._load_height(find_height_file(folder))
         self._load_zones(_find_bmp(folder, "terrainzone"))
 
@@ -225,7 +242,7 @@ class Terrain:
         e = v[(iy + 1) * d + ix + 1]
         top = a + (b - a) * tx
         bot = c + (e - c) * tx
-        return (top + (bot - top) * ty) * HEIGHT_FACTOR
+        return (top + (bot - top) * ty) * self.hfactor
 
     def zone(self, cx, cy):
         if not (0 <= cx < self.zw and 0 <= cy < self.zh):
@@ -292,7 +309,14 @@ def los(t, ax, ay, az, bx, by, bz, step=None, detail=False):
                 # Beer-Lambert optical depth, matching terrain.h. `sight`
                 # is the e-folding depth, not a hard budget: a line clipping
                 # one forest cell is degraded, not annihilated.
-                depth_veg += step / sight
+                # Scale by how far below the canopy TOP the ray is: grazing
+                # the crowns costs almost nothing, being down among the trunks
+                # costs full price. Mirrors terrain.h exactly - the two have
+                # drifted before and the offline numbers then stop describing
+                # what the game does.
+                frac = ((g + canopy_h) - rz) / canopy_h if canopy_h > 0.01 else 1.0
+                frac = 0.0 if frac < 0.0 else (1.0 if frac > 1.0 else frac)
+                depth_veg += step * frac / sight
                 if detail:
                     trace.append((round(d, 1), round(rz, 1),
                                   round(g + canopy_h, 1), "%.2f" % depth_veg))

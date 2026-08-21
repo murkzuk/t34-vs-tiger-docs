@@ -32,6 +32,34 @@
 // override it, so this should never be the value actually used.
 static const float DEFAULT_WORLD_M = 10000.0f;
 
+// Height scale, ALSO declared per mission. WorldMatricies.script's landscape
+// layer carries `FloatValueFactor = 0.070000*257.0`, and it is not the same
+// everywhere: Kursk is 0.07, the winter maps are 0.05. Hardcoding 0.07 put a
+// winter map's ground 97 m above where its tanks were standing - below the
+// map's own minimum - and the fit check correctly threw it out.
+// Only the leading float matters; the *257 is the engine's own normalisation.
+static const float DEFAULT_HEIGHT_FACTOR = 0.07f;
+
+static float read_height_factor(const char *folder)
+{
+  char p[MAX_PATH];
+  _snprintf(p, MAX_PATH, "%s\\WorldMatricies.script", folder);
+  FILE *f = fopen(p, "rb");
+  if (!f) return 0.0f;
+  char buf[16384];
+  size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+  fclose(f);
+  buf[n] = 0;
+  const char *k = strstr(buf, "FloatValueFactor");
+  if (!k) return 0.0f;
+  const char *eq = strchr(k, '=');
+  if (!eq) return 0.0f;
+  float v = (float)atof(eq + 1);
+  // A sane metres-per-raw-unit for a uint16 heightfield.
+  if (v < 0.005f || v > 1.0f) return 0.0f;
+  return v;
+}
+
 // Pull MatrixWidth out of a mission's WorldMatricies.script. Text search
 // rather than a parser: the line is always of the form
 //   final static float MatrixWidth  = 18000.0; // meters
@@ -128,12 +156,13 @@ struct Terrain
   float zcell;
 
   float world;         // metres across, from the mission's MatrixWidth
+  float hfactor;       // metres per raw unit, from FloatValueFactor
 
   char  name[MAX_PATH];
 
   Terrain() : h(0), hfile(INVALID_HANDLE_VALUE), hmapping(0),
               hdim(0), hcell(0), z(0), zw(0), zh(0), zstride(0), zcell(0),
-              world(DEFAULT_WORLD_M)
+              world(DEFAULT_WORLD_M), hfactor(DEFAULT_HEIGHT_FACTOR)
   { name[0] = 0; }
 
   bool valid() const { return h && z; }
@@ -154,7 +183,7 @@ struct Terrain
     const unsigned short *r1 = r0 + hdim;
     float top = r0[0] + (r0[1] - r0[0]) * tx;
     float bot = r1[0] + (r1[1] - r1[0]) * tx;
-    return (top + (bot - top) * ty) * HEIGHT_FACTOR;
+    return (top + (bot - top) * ty) * hfactor;
   }
 
   int zone(float x, float y) const
@@ -337,6 +366,8 @@ static bool load_terrain(Terrain *t, const char *folder, const char *zonebmp)
 
   float w = read_world_size(folder);
   t->world = (w > 0.0f) ? w : DEFAULT_WORLD_M;
+  float hf = read_height_factor(folder);
+  t->hfactor = (hf > 0.0f) ? hf : DEFAULT_HEIGHT_FACTOR;
   t->hcell = t->world / (dim - 1);
 
   t->z = load_bmp8(zonebmp, &t->zw, &t->zh, &t->zstride);
@@ -414,7 +445,14 @@ static Sight march(const Terrain *t, float ax, float ay, float az,
       // budget and blocked at zero, which is a cliff: a line clipping two
       // forest cells was as opaque as one through half a kilometre of trees.
       // Accumulate optical depth instead and take the exponential at the end.
-      float spend = step / (v->sight * g_sight_scale);
+      // How far below the canopy top, as a fraction of canopy height: 0 just
+      // grazing the crowns, 1 at ground level. A line skimming the treetops
+      // pays a fraction of what a line through the trunks pays.
+      float below = (g + v->canopy) - rz;
+      float frac = (v->canopy > 0.01f) ? (below / v->canopy) : 1.0f;
+      if (frac > 1.0f) frac = 1.0f;
+      if (frac < 0.0f) frac = 0.0f;
+      float spend = step * frac / (v->sight * g_sight_scale);
       depth_veg += spend;
       s.veg_metres += step;
       if (spend > worst) { worst = spend; s.veg_zone = zc; }

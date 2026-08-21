@@ -58,6 +58,13 @@ static const DWORD CREW_VTABLE_RVA = 0x00249258;   // primary, this_offset 0
 // 80 callers and is a generic 3D vector length.
 static const DWORD GATE_CALL_RVA = 0x0004B400;
 static const DWORD VECLEN_RVA    = 0x0000EF80;
+// CAutoCommanderComponent - the OTHER half of the player's crew. It picks
+// targets; CAutoShooterComponent only keeps them. Its Update is taken from the
+// same slot 7 of its primary vtable, resolved at runtime rather than by
+// address, so nothing here depends on a disassembly being right.
+static const DWORD CMDR_VTABLE_RVA = 0x00248D98;
+static const int   UPDATE_SLOT = 7;
+
 static const DWORD CREW_RADAR_MAX = 0x144;
 static const DWORD CREW_VIEW_ANGLE = 0x148;
 // Filled in at attach from the running executable and this DLL's own location.
@@ -96,10 +103,16 @@ static __int64 g_gap_denied;        // sightings refused while waiting
 static int g_last_total;            // object loads seen on the last attempt
 
 static bool     g_crew_watch;       // hook the player's gunner tick
+static bool g_clip_cursor = true;   // keep the mouse inside the game window
 static bool g_gate_probe;       // watch the range gate's call site
 static bool g_gate_enforce;     // and actually reject blocked candidates
 static __int64 g_gate_denied, g_gate_nopair;
 static __int64 g_gate_calls, g_gate_logged;
+static __int64 g_cmdr_calls;   // CAutoCommanderComponent::Update, watch pass
+// True once execution.log shows mission objects loading. Until then the game
+// is sitting in a menu and the identification budget must not be spent.
+static volatile bool g_saw_objects = false;
+static bool g_announced_mode_los = false;
 
 // Self-timing. The march is the only part of this that scales with anything -
 // it walks the line at half a zone cell per step, so a 5 km sight line on an
@@ -361,8 +374,13 @@ static bool identify()
 {
   static char names[NNAMES][NAMELEN];   // 19 KB - not on the stack
   int n = collect_names(names);
-  if (n < 10)
-    return false;          // mission still loading; the watcher retries
+  if (n < 10) {
+    // No mission objects in the log yet. This is the MENU, not a slow load,
+    // and the watcher must not count it against the give-up budget - see
+    // g_saw_objects below.
+    return false;
+  }
+  g_saw_objects = true;
 
   char root[MAX_PATH], best[MAX_PATH] = "";
   _snprintf(root, MAX_PATH, "%s\\Missions", SANDBOX);
@@ -420,9 +438,18 @@ static DWORD WINAPI MissionWatcher(LPVOID)
   int misses = 0;
   bool announced = false;
   for (;;) {
-    if (g_mode != MODE_LOS) return 0;
+    // Deliberately NOT "if (g_mode != MODE_LOS) return" any more: a give-up
+    // sets watch mode, and the watcher is what un-does that.
+    if (g_mode == MODE_DENY_FAR) return 0;
 
     if (identify()) {
+      if (g_mode != MODE_LOS && g_announced_mode_los == false) {
+        // Recovered after a give-up: arm properly rather than stay in watch.
+        g_mode = MODE_LOS;
+        InterlockedExchange(&g_giveup, 0);
+        g_announced_mode_los = true;
+        llog("  mission identified after all - occlusion is ON from here");
+      }
       if (!g_ready) {
         InterlockedExchange(&g_ready, 1);
         llog("  enforcement live");
@@ -436,17 +463,27 @@ static DWORD WINAPI MissionWatcher(LPVOID)
       continue;
     }
 
-    // Not identified. Before the first success this is just the mission
-    // loading; give it 20 s and then stand down rather than stay blind.
-    if (!g_terrain.valid() && ++misses >= 100) {
+    // Not identified.
+    //
+    // The budget is only spent while a mission is actually LOADING. The first
+    // version counted from the moment the DLL attached, so a player who spent
+    // twenty seconds in the menus - which is normal - used the whole budget
+    // before the mission existed, and the run had no occlusion at all. That
+    // happened, and it looked exactly like the AI seeing through hills again.
+    if (!g_saw_objects) { Sleep(200); continue; }
+
+    if (!g_terrain.valid() && ++misses >= 150) {
       if (!announced) {
         InterlockedExchange(&g_giveup, 1);
-        llog("could not identify the mission within 20 s - no occlusion this "
-             "run (watch behaviour, nothing denied)");
+        llog("could not identify the mission within 30 s of its objects "
+             "loading - watch behaviour for now, still retrying");
         g_mode = MODE_WATCH;
         announced = true;
       }
-      return 0;
+      // Do NOT return. Quitting to the menu and loading another mission must
+      // still arm. Keep looking, slowly.
+      Sleep(2000);
+      continue;
     }
     Sleep(200);
   }
@@ -586,6 +623,8 @@ static char __fastcall Hook(void *self, void *pad,
     // with nothing to refuse" from "never ran at all".
     llog("---   gate: %I64d checks, %I64d refused, %I64d unmatched",
          g_gate_calls, g_gate_denied, g_gate_nopair);
+    if (g_crew_watch)
+      llog("---   commander: %I64d updates", g_cmdr_calls);
     // What the marching actually cost. If this is not a visible fraction of
     // wall time, the DLL is not the reason for a framerate.
     if (g_qpc_freq > 0 && g_march_count > 0) {
@@ -621,6 +660,16 @@ static const char *known_value(float f)
   if (f > 0.2090f && f < 0.2099f)   return "ViewAngle 12 deg in radians";
   if (f > 11.99f  && f < 12.01f)    return "ViewAngle 12 deg";
   if (f > 1.999f  && f < 2.001f)    return "RadarUpdateTime 2.0";
+  // CAutoCommander, read out of ZW's Common\AutoCommander.script. Deducing
+  // offsets statically was wrong four times on the shooter; searching the live
+  // object for values the script sets found them immediately.
+  if (f > 3099.0f && f < 3101.0f)   return "RadarMaxDistance 3100 (ZW)";
+  if (f > 3.999f  && f < 4.001f)    return "RadarUpdateTime 4.0 (commander)";
+  if (f > 129.9f  && f < 130.1f)    return "FrontDanger angle 130";
+  if (f > 119.9f  && f < 120.1f)    return "BackDanger angle 120";
+  if (f > 29.99f  && f < 30.01f)    return "LastTargetDangerAdd 30";
+  if (f > 999.0f  && f < 1001.0f)   return "PreferedTargets distance 1000";
+  if (f > 9999.0f && f < 10001.0f)  return "PreferedTargets range max 10000";
   return NULL;
 }
 
@@ -952,14 +1001,27 @@ static void read_ini()
   else if (!_stricmp(buf, "deny_far")) g_mode = MODE_DENY_FAR;
   else g_mode = MODE_WATCH;
   g_deny_beyond = (float)GetPrivateProfileIntA("los", "deny_beyond", 400, INI_PATH);
+  // The ceiling was 500, which was fine while every map was one of REDUX's.
+  // ZW's Kursk map paints a THIRD of a 36 km world as forest and then plants
+  // 335 trees per square kilometre in it - one per 2985 m2, a tree every 55 m.
+  // REDUX's Berezov is 4310 per square kilometre, one per 232 m2. That is a
+  // factor of THIRTEEN, so a map like that needs a scale around 1300 and the
+  // old ceiling silently clamped it to a quarter of what it needed.
   int pct = GetPrivateProfileIntA("los", "sight_scale", 100, INI_PATH);
   if (pct < 10) pct = 10;
-  if (pct > 500) pct = 500;
+  if (pct > 5000) pct = 5000;
   g_sight_scale = pct / 100.0f;
   GetPrivateProfileStringA("los", "crew", "off", buf, sizeof(buf), INI_PATH);
   g_crew_watch = (_stricmp(buf, "watch") == 0);
   GetPrivateProfileStringA("los", "gate", "off", buf, sizeof(buf), INI_PATH);
   g_gate_enforce = (_stricmp(buf, "los") == 0);
+
+  // clip_cursor: keep the mouse inside the game window on a multi-monitor
+  // desktop. Defaults ON - it releases the moment the game loses focus, so it
+  // cannot strand the desktop.
+  GetPrivateProfileStringA("los", "clip_cursor", "on", buf, sizeof(buf),
+                           g_ini_path);
+  g_clip_cursor = (_stricmp(buf, "off") != 0 && _stricmp(buf, "0") != 0);
   g_gate_probe = g_gate_enforce || (_stricmp(buf, "probe") == 0);
 }
 
@@ -986,6 +1048,146 @@ static bool install_is_allowed()
   }
   fclose(f);
   return ok;
+}
+
+// Hold the cursor inside the game's own window while the game has focus, and
+// let it go the moment it does not - so alt-tab still works and a crash or a
+// breakpoint can never leave the desktop with a trapped mouse.
+//
+// Only windows belonging to THIS process are considered, and the rectangle is
+// re-read every pass, so a resolution change or a mode switch is picked up
+// without any bookkeeping.
+static BOOL CALLBACK pick_window(HWND w, LPARAM lp)
+{
+  DWORD pid = 0;
+  GetWindowThreadProcessId(w, &pid);
+  if (pid == GetCurrentProcessId() && IsWindowVisible(w)) {
+    RECT r;
+    if (GetClientRect(w, &r) && (r.right - r.left) > 320) {
+      *(HWND *)lp = w;
+      return FALSE;          // first big visible one is the game
+    }
+  }
+  return TRUE;
+}
+
+static DWORD WINAPI CursorKeeper(LPVOID)
+{
+  bool clipped = false;
+  for (;;) {
+    Sleep(120);
+    if (!g_clip_cursor) {
+      if (clipped) { ClipCursor(NULL); clipped = false; }
+      continue;
+    }
+
+    HWND fg = GetForegroundWindow();
+    DWORD pid = 0;
+    if (fg) GetWindowThreadProcessId(fg, &pid);
+
+    if (fg && pid == GetCurrentProcessId()) {
+      HWND target = fg;
+      RECT c;
+      if (!GetClientRect(target, &c) || (c.right - c.left) < 320) {
+        HWND found = NULL;
+        EnumWindows(pick_window, (LPARAM)&found);
+        if (found) target = found;
+      }
+      RECT r;
+      if (GetClientRect(target, &r)) {
+        POINT tl = { r.left, r.top }, br = { r.right, r.bottom };
+        ClientToScreen(target, &tl);
+        ClientToScreen(target, &br);
+        RECT s = { tl.x, tl.y, br.x, br.y };
+        ClipCursor(&s);
+        clipped = true;
+      }
+    }
+    else if (clipped) {
+      // Focus is elsewhere - release immediately.
+      ClipCursor(NULL);
+      clipped = false;
+    }
+  }
+  return 0;
+}
+
+// ---- CAutoCommanderComponent watch -------------------------------------
+typedef void (__fastcall *CmdrFn)(void *, void *, DWORD);
+static CmdrFn g_cmdr_orig;
+
+static void __fastcall CmdrHook(void *self, void *edx, DWORD arg)
+{
+  g_cmdr_orig(self, edx, arg);
+
+  EnterCriticalSection(&g_lock);
+  g_cmdr_calls++;
+  if (g_cmdr_calls == 1 || (g_cmdr_calls & 0x3FF) == 1) {
+    const BYTE *o = (const BYTE *)self;
+    HMODULE beh = GetModuleHandleA("Behavior.dll");
+    DWORD want = (DWORD)beh + CMDR_VTABLE_RVA, got = 0;
+    if (readable(o, 4)) memcpy(&got, o, 4);
+    // Dump the pointer fields. Whatever this component is handing to the
+    // gunner is one of them, and comparing the list between a tick with a
+    // target and a tick without will say which.
+    char line[200]; int n = 0;
+    for (DWORD off = 0xD8; off <= 0xF8 && n < 150; off += 4) {
+      DWORD v = readable(o + off, 4) ? *(const DWORD *)(o + off) : 0;
+      n += _snprintf(line + n, sizeof(line) - n, " +%02X=%08X", off, v);
+    }
+    // Once only: walk the object for values the script sets. This is how the
+    // shooter's fields were finally pinned down, after two failed attempts to
+    // read them out of the property loader.
+    if (g_cmdr_calls == 1) {
+      llog("[CMDR] scanning the live object for values AutoCommander.script sets:");
+      int found = 0;
+      for (DWORD off = 0; off < 0x400; off += 4) {
+        if (!readable(o + off, 4)) break;
+        float f; memcpy(&f, o + off, 4);
+        const char *what = known_value(f);
+        if (what) { llog("        +0x%03X = %10.4f   <- %s", off, f, what); found++; }
+      }
+      if (!found)
+        llog("        nothing found in the first 0x400 bytes - the values are "
+             "behind a pointer, dump the pointer fields next");
+    }
+    llog("[CMDR %6I64d] this %08X vtable %s  radar %.0f %.0f  |%s",
+         g_cmdr_calls, (DWORD)self,
+         got == want ? "OK" : "MISMATCH",
+         readable(o + 0x154, 4) ? *(const float *)(o + 0x154) : -1.0f,
+         readable(o + 0x1CC, 4) ? *(const float *)(o + 0x1CC) : -1.0f,
+         line);
+  }
+  LeaveCriticalSection(&g_lock);
+}
+
+// Print both crew vtables side by side. Slot 7 of the shooter's is known to be
+// its Update (that is what CREW_RVA is), so if the two tables line up the same
+// slot on the commander's is the function to watch. This prints rather than
+// assumes, because deducing offsets on this pair has been wrong four times.
+static DWORD find_commander_update(HMODULE beh)
+{
+  const DWORD *vs = (const DWORD *)((BYTE *)beh + CREW_VTABLE_RVA);
+  const DWORD *vc = (const DWORD *)((BYTE *)beh + CMDR_VTABLE_RVA);
+  if (!readable((void *)vs, 64) || !readable((void *)vc, 64)) {
+    llog("[CMDR] vtables not readable - skipping");
+    return 0;
+  }
+  llog("[CMDR] crew vtables, as RVAs in Behavior.dll:");
+  llog("        slot   CAutoShooter   CAutoCommander");
+  for (int i = 0; i < 12; i++) {
+    if (!readable((void *)(vs + i), 4) || !readable((void *)(vc + i), 4)) break;
+    DWORD s = vs[i] - (DWORD)beh, c = vc[i] - (DWORD)beh;
+    llog("        %2d     +0x%06X      +0x%06X%s", i, s, c,
+         (s == CREW_RVA) ? "   <- shooter Update" : "");
+  }
+  DWORD s7 = vs[UPDATE_SLOT] - (DWORD)beh;
+  if (s7 != CREW_RVA) {
+    llog("[CMDR] slot %d of the shooter vtable is +0x%06X, not the known "
+         "Update +0x%06X - NOT hooking on a guess", UPDATE_SLOT, s7, CREW_RVA);
+    return 0;
+  }
+  return vc[UPDATE_SLOT];
 }
 
 static DWORD WINAPI Boot(LPVOID)
@@ -1025,6 +1227,8 @@ static DWORD WINAPI Boot(LPVOID)
   }
   g_tick0 = GetTickCount();
   read_ini();
+  if (g_clip_cursor)
+    llog("  mouse held inside the game window (clip_cursor = on)");
   llog("mode = %s%s",
        g_mode == MODE_LOS ? "los" : g_mode == MODE_DENY_FAR ? "deny_far" : "watch",
        g_mode == MODE_DENY_FAR ? "" : "");
@@ -1091,8 +1295,31 @@ static DWORD WINAPI Boot(LPVOID)
       llog("crew prologue mismatch at %08X - NOT patching", (DWORD)crew);
     }
   }
+  // The commander half. Watch only - it is resolved from the vtable, its
+  // prologue is checked against the same 7-byte pattern the shooter's Update
+  // had, and if either test fails nothing is patched.
+  if (g_crew_watch) {
+    DWORD upd = find_commander_update(beh);
+    if (upd) {
+      BYTE *c = (BYTE *)upd;
+      static const BYTE EXPECT[3] = { 0x6A, 0xFF, 0x68 };
+      llog("[CMDR] CAutoCommanderComponent::Update at %08X (+0x%06X)",
+           upd, upd - (DWORD)beh);
+      if (readable(c, 8) && memcmp(c, EXPECT, 3) == 0) {
+        patch_jump(c, 7, (void *)CmdrHook, (void **)&g_cmdr_orig,
+                   "CAutoCommanderComponent::Update");
+      } else {
+        llog("[CMDR] prologue is %02X %02X %02X, not the expected %02X %02X "
+             "%02X - NOT patching", c[0], c[1], c[2],
+             EXPECT[0], EXPECT[1], EXPECT[2]);
+      }
+    }
+  }
+
   if (g_mode == MODE_LOS)
     CreateThread(NULL, 0, MissionWatcher, NULL, 0, NULL);
+  if (g_clip_cursor)
+    CreateThread(NULL, 0, CursorKeeper, NULL, 0, NULL);
   return 0;
 }
 
