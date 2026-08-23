@@ -183,6 +183,36 @@ needs the native `LMDL_*`->letter enum (engine-side, not script), but the affect
 group is already precise: the K-lit and N+B/P skinned meshes, plus every distant
 `vs_1_1` LOD pass.
 
+### vs_1_1 LACKS FogDensity — the shader-content smoking gun (2026-08-23)
+
+Inside each `SkinMesh*.fxo` the fog capability is a **shader-model** split, read
+straight from the per-shader `CTAB` constant tables:
+
+| shader model | FogNear | FogDensity | FogFar | engine writes fog to it |
+|---|---|---|---|---|
+| `vs_1_1` (distant / low-detail) | c89 | **absent** | absent | **never** |
+| `vs_2_0` (near / high-detail) | c100/c118 | c101/c119 | in pixel shader | some passes |
+
+The game's fog is `Exp`-mode and driven by **`FogDensity`** (the 4× density test
+already proved density is the only working lever). So the distant-LOD shader
+(`vs_1_1`) **cannot be fogged at all** — it has no `FogDensity` input — and it
+is not merely "unfed"; it is fog-incapable by construction. Near tanks render
+through `vs_2_0`, which has `FogDensity`, so they fade correctly. This is the
+exact mechanism of **"distant tanks stay sharp"**.
+
+**Conclusion: the fix is a shader/effect change, not an atmosphere value change.**
+Two options, in order of preference:
+1. Recompile the `vs_1_1` SkinMesh shaders with `FogDensity`/`FogFar` (needs the
+   `.fx` source, which does not ship — only `.fxo`).
+2. Force distant units onto the fog-capable `vs_2_0` shader (engine/script LOD
+   change — simpler, but forfeits the perf the low LOD buys).
+
+Limitation recorded for the next session: the D3DX *instruction* bytecode lives
+inside the `.fxo` `PRES`/`XFSH` comment blocks (proprietary D3DX binary); the
+constant tables were parsed fully but the instruction stream was not disassembled.
+The parameter-level difference above is already decisive because `CTAB` is
+unambiguous.
+
 ### Probe build notes (worth keeping)
 - The game exits via `TerminateProcess` (DXVK/Vulkan stuck-in-driver), so
   `DLL_PROCESS_DETACH` does NOT fire — a detach-only summary is lost. v5+ dumps
