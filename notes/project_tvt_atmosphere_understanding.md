@@ -103,3 +103,11 @@ negative (low sun), unit length. Example clean east-dawn: (-0.2, -0.95, -0.24) ~
 CORRECTION: earlier "each mission faces a different direction" was WRONG - the compass is
 global. C2M2's dawn sun (light SW -> sun NE) is slightly off true-east; a true east sunrise
 needs the westward vector.
+## Stub sweep complete (2026-08-23)
+
+SetIsCameraAdjustEnabled is a ZW-ONLY issue: ZW BaseAtmosphere.script:140 CALLS it, but
+REDUX BaseAtmosphere does NOT - so REDUX needs no stub. Fixed at the COMMON level:
+added `void SetIsCameraAdjustEnabled(boolean value) { }` to ZW Scripts\Common\Atmosphere.script
+(CCommonAtmosphere), so ALL ZW missions inherit it. The two mission-level stubs already
+present (CC2M2Atmosphere, CWinterM1Atmosphere) are now redundant-but-harmless overrides.
+Backup: K:\TvTDeepseek\rollback\zw_Common_Atmosphere.script.bak_2026-08-23.
