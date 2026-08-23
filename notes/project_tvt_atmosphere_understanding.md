@@ -111,3 +111,16 @@ added `void SetIsCameraAdjustEnabled(boolean value) { }` to ZW Scripts\Common\At
 (CCommonAtmosphere), so ALL ZW missions inherit it. The two mission-level stubs already
 present (CC2M2Atmosphere, CWinterM1Atmosphere) are now redundant-but-harmless overrides.
 Backup: K:\TvTDeepseek\rollback\zw_Common_Atmosphere.script.bak_2026-08-23.
+## Winter rollout complete (2026-08-23)
+
+All 4 ZW winter missions now share the winter-overcast treatment (each kept its OWN
+palette - not forced to one value; sun normalised to fix glare; Atmosphere.script
+reconciled to match Content.script's runtime values):
+- CWinterMission1 - done earlier (bright overcast, stub added)
+- CWinterMission2 - sun normalised + 18 fields reconciled
+- CWinterMission3 - sun normalised + 18 fields reconciled
+- CLeningrad43_M1 - sun normalised + 19 fields reconciled (uniform grey fog, SunColor
+  alpha 0 = invisible sun - true overcast, DefaultFogMode Exp->Exp2)
+Backups: rollback\zw_cwinterm2_scripts, zw_cwinterm3_scripts, zw_cleningrad43m1_scripts
+(each 2026-08-23.zip). Stub sweep (SetIsCameraAdjustEnabled) already covered all via
+CCommonAtmosphere.
