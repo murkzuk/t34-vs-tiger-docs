@@ -124,3 +124,13 @@ reconciled to match Content.script's runtime values):
 Backups: rollback\zw_cwinterm2_scripts, zw_cwinterm3_scripts, zw_cleningrad43m1_scripts
 (each 2026-08-23.zip). Stub sweep (SetIsCameraAdjustEnabled) already covered all via
 CCommonAtmosphere.
+## Leningrad verified: true overcast (2026-08-23, user-approved, leave as-is)
+
+User played CLeningrad43_M1 ("Operation Spark") - verdict: bright ground + grey sky is
+CORRECT, not a bug. It is the one mission the original devs got fully right as a TRUE
+overcast: uniform grey fog (all 4 FogColor = 0.447,0.459,0.565), SunColor alpha 0
+(invisible sun disc), FogMode "Exp2". Bright ground = snow reflecting diffuse light; grey
+sky = cloud layer; no sun = overcast. My only edit was sun-normalisation (no visible
+effect here, since the sun is already invisible). LEAVE IT AS-IS - it is the reference
+for "true overcast". Remaining Leningrad log lines are cosmetic (missing str_NavPointRedArmy
+locale string) - pre-existing, not atmosphere.
