@@ -157,6 +157,32 @@ almost certainly the tank mesh.
   slots 16/17, 19/20, 25/26, … with the `.fxo` constant tables) to name the
   affected meshes, then fix the engine/script that fails to set fog for them.
 
+### Which units are unfogged — .fxo constant-table analysis (2026-08-23)
+
+Parsed the D3DX `CTAB` constant tables inside every `SkinMesh*.fxo` and matched
+each shader's `FogNear`/`FogDensity` register against the registers the engine
+actually wrote at runtime (16/17, 19/20, 25/26, 97, 104/105, 110/111, 190/191,
+192, 195/196, 226/227). Result — fog is skipped for **specific material
+families**, not randomly:
+
+- **`SkinMesh1_K*`** (every K-lighting variant) — ENTIRELY unfogged.
+- **`SkinMesh1_NB*` / `SkinMesh1_NP*`** (N-lighting + B/P diffuse) — entirely unfogged.
+- **`ANNN`, `MNNN`, `Laser`, `Thermal`** (SkinMesh1 and 4) — unfogged special cases.
+- **`C*`, `D*`, `E*`, `M*`, `N*` (M/N diffuse)** — MIXED: some passes fogged, some not.
+
+Key structural fact: each `.fxo` carries BOTH `vs_1_1` passes (FogNear only, no
+`FogDensity`/`FogFar`) and `vs_2_0` passes (FogNear + FogDensity; `FogFar` is a
+pixel-shader param). The `vs_1_1` passes are the low-detail (distant) renders and
+are never fogged. This is the mechanism behind **"distant tanks stay sharp"**:
+the near/high-detail LOD gets fog, the distant/low-detail LOD does not.
+
+The material suffix is `[lighting][diffuse][normal/specular][LOD]`, derived by the
+engine from each `CModelMaterial` (Models\*.script: texture/bump/specular present,
+`LMDL_*` lighting model, `MSID_*` substance). To name the exact tank models still
+needs the native `LMDL_*`->letter enum (engine-side, not script), but the affected
+group is already precise: the K-lit and N+B/P skinned meshes, plus every distant
+`vs_1_1` LOD pass.
+
 ### Probe build notes (worth keeping)
 - The game exits via `TerminateProcess` (DXVK/Vulkan stuck-in-driver), so
   `DLL_PROCESS_DETACH` does NOT fire — a detach-only summary is lost. v5+ dumps
