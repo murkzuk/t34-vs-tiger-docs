@@ -1,6 +1,6 @@
 # Fog-on-objects — hook scoping plan (2026-08-23)
 
-STATUS: **scoping only** (read-only; no game changes; no hook code written yet).
+STATUS: **probe built** (`K:\TvTDeepseek\fog_probe\`); read-only; awaiting a Zitadelle run.
 
 ## The question
 
@@ -75,3 +75,40 @@ The user runs DXVK (has the choice dgVoodoo/DXVK via wrapper.bat). Implications 
   entirely about whether the ENGINE sets those uniforms for the unit pass.
 - Bonus: DXVK is open-source - its D3D9 source is a reference if we ever need to trace the
   uniform-passing path, but it is not the source of the bug.
+
+## Progress 2026-08-23 — fog_probe (the D3D9 probe)
+
+Built `K:\TvTDeepseek\fog_probe\fog_probe.dll` (x86 MSVC). Hook chain:
+`Direct3DCreate9` export -> `IDirect3D9::CreateDevice` (slot 16) -> device slots
+57/81/82/94/109 (`SetRenderState` / `DrawPrimitive` / `DrawIndexedPrimitive` /
+`SetVertexShaderConstantF` / `SetPixelShaderConstantF`). Logs fog render states,
+deduped shader-constant registers, and draw volume. Read-only: pass-through hooks,
+append log only.
+
+**Critical finding (dumpbin-verified): `TvsT_fullLOD_HARD_4GB.exe` does NOT
+statically import `d3d9.dll`.** Its import table has `LoadLibraryA` +
+`GetProcAddress` (plus WINMM/USER32/GDI32/ole32/MSVCR70) but no d3d9. So the game
+loads the wrapper (`d3d9.dll` = DXVK/dgVoodoo) **at runtime** and immediately
+`GetProcAddress("Direct3DCreate9")` + calls it.
+
+Consequence — three hook-timing attempts, two wrong directions:
+- **v1 (polling boot thread + Sleep):** patched too late — the game had already
+  created its device (log: patch landed, zero draws, no `Direct3DCreate9(...)`).
+- **v2 (synchronous patch in DllMain):** too early — under `CreateRemoteThread`
+  injection the main thread is suspended, so the runtime-loaded `d3d9.dll` is not
+  yet mapped at attach (log: `d3d9.dll not loaded at attach`).
+- **v3 (loader notification, current):** register `LdrRegisterDllNotification`
+  (ntdll); its callback fires DURING `d3d9.dll`'s load, before `LoadLibraryA`
+  returns, so we patch `Direct3DCreate9` (resolved by walking the PE export
+  directory — the callback must NOT call `GetProcAddress`, which takes the loader
+  lock) before the game can ever `GetProcAddress` the export. Boot thread kept as
+  fallback only.
+
+The LOS hook's own pattern (`K:\tvt_los\hook.cpp`: DllMain -> `Boot` thread ->
+`GetModuleHandleA("Behavior.dll")` poll with `Sleep(100)`) is NOT suitable here:
+`Behavior.dll` is loaded early and its hooked functions fire during gameplay — a
+huge window — whereas `Direct3DCreate9` fires microseconds after a runtime
+`LoadLibraryA`.
+
+Next: run Zitadelle with v3, confirm the full chain (attach -> notify -> patch ->
+`Direct3DCreate9(31)` -> device -> fog/draw lines).
