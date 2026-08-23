@@ -584,7 +584,7 @@ class CGroundUnitTraceEffect
     SetSizeParams(1.0, 4.5); //jm 0.75, 1.75
     m_PlacePower = 1.0; //jm 1.0
     m_Gravity    = new Vector(0.0, 0.0, -4.0); //jm 0.0, 0.0, -10.0
-    SetBaseColor(new Color(0.33, 0.28, 0.28, 0.35));   //  ));
+    SetBaseColor(new Color(0.25, 0.21, 0.21, 0.35));   //  ));
   //  SetBaseColor(new Color(1.0, 1.0, 1.0));//, 0.7));   
     SetStartAndFinalFade(0.4, 0.0); //jm 0.5
 
