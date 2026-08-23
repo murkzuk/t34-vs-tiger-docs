@@ -143,3 +143,9 @@ at spawn (safe to observe). Test: at spawn, look at the distant friendly tanks -
 are SHARP/DARK while the ground hazes = fog-on-objects bug clearly demonstrated (the
 screenshot/observation needed to scope the D3D9 hook fix). If they haze like the ground
 = fog already reaches units.
+## Zitadelle fog observation (2026-08-23)
+
+User tested Zitadelle ("ZITADELLEEE: M1, Attack!") at spawn with distant friendly tanks
+in view. Verdict: "looks the same to my eye" - the tank-vs-ground fog difference is NOT
+visible to the naked eye at spawn distance. Conclusion: this needs MEASUREMENT (a hook),
+not eyesight. Scoping plan written in project_tvt_fog_hook_scoping.md.
