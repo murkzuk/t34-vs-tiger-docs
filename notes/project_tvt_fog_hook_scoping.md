@@ -170,42 +170,50 @@ families**, not randomly:
 - **`ANNN`, `MNNN`, `Laser`, `Thermal`** (SkinMesh1 and 4) — unfogged special cases.
 - **`C*`, `D*`, `E*`, `M*`, `N*` (M/N diffuse)** — MIXED: some passes fogged, some not.
 
-Key structural fact: each `.fxo` carries BOTH `vs_1_1` passes (FogNear only, no
-`FogDensity`/`FogFar`) and `vs_2_0` passes (FogNear + FogDensity; `FogFar` is a
-pixel-shader param). The `vs_1_1` passes are the low-detail (distant) renders and
-are never fogged. This is the mechanism behind **"distant tanks stay sharp"**:
-the near/high-detail LOD gets fog, the distant/low-detail LOD does not.
+Structural fact (verified): each `.fxo` carries BOTH `vs_1_1` shader variants
+(FogNear only, no `FogDensity`/`FogFar`) and `vs_2_0` variants (FogNear +
+FogDensity; `FogFar` is a pixel-shader param).
 
-The material suffix is `[lighting][diffuse][normal/specular][LOD]`, derived by the
-engine from each `CModelMaterial` (Models\*.script: texture/bump/specular present,
-`LMDL_*` lighting model, `MSID_*` substance). To name the exact tank models still
-needs the native `LMDL_*`->letter enum (engine-side, not script), but the affected
-group is already precise: the K-lit and N+B/P skinned meshes, plus every distant
-`vs_1_1` LOD pass.
+**RETRACTED (2026-08-23):** the earlier claim that `vs_1_1` = "distant/low-detail
+LOD" and `vs_2_0` = "near/high-detail LOD" was an **UNPROVEN inference**. The LOD
+system is separate (`SetLods([...])` distances + baked `.ms2` levels — see
+`project_tvt_lod_distances.md`), and `vs_1_1` vs `vs_2_0` is almost certainly a
+**GPU shader-model capability** split (shader model 1.1 vs 2.0 fallback), not an
+LOD split. The runtime probe tagged fog on/off and skinned/shadow, but NOT shader
+model, so we do NOT actually know whether the unfogged passes are `vs_1_1` or
+`vs_2_0`.
 
-### vs_1_1 LACKS FogDensity — the shader-content smoking gun (2026-08-23)
+The material suffix is `[lighting][diffuse][normal/specular][LOD]` (hypothesised;
+confirming per-model needs the native `LMDL_*`->letter enum). The affected group is
+still precise at the family level: the K-lit and N+B/P skinned meshes are entirely
+unfogged; C/D/E/M/N materials are MIXED (some passes fogged, some not).
 
-Inside each `SkinMesh*.fxo` the fog capability is a **shader-model** split, read
-straight from the per-shader `CTAB` constant tables:
+### vs_1_1 LACKS FogDensity — a real shader-content fact (2026-08-23)
 
-| shader model | FogNear | FogDensity | FogFar | engine writes fog to it |
+Read straight from the per-shader `CTAB` constant tables — this part is solid:
+
+| shader variant | FogNear | FogDensity | FogFar | engine writes fog to it |
 |---|---|---|---|---|
-| `vs_1_1` (distant / low-detail) | c89 | **absent** | absent | **never** |
-| `vs_2_0` (near / high-detail) | c100/c118 | c101/c119 | in pixel shader | some passes |
+| `vs_1_1` | c89 | **absent** | absent | **never** |
+| `vs_2_0` | c100/c118 | c101/c119 | in pixel shader | some passes |
 
 The game's fog is `Exp`-mode and driven by **`FogDensity`** (the 4× density test
-already proved density is the only working lever). So the distant-LOD shader
-(`vs_1_1`) **cannot be fogged at all** — it has no `FogDensity` input — and it
-is not merely "unfed"; it is fog-incapable by construction. Near tanks render
-through `vs_2_0`, which has `FogDensity`, so they fade correctly. This is the
-exact mechanism of **"distant tanks stay sharp"**.
+proved density is the only working lever). So a `vs_1_1` shader **cannot be fogged
+at all** — it has no `FogDensity` input. That is a genuine limitation of the
+`vs_1_1` variant, but because we have not proven the unfogged units render through
+`vs_1_1` (vs. an unfed `vs_2_0` pass), it is a *candidate* cause, not the proven
+mechanism.
 
-**Conclusion: the fix is a shader/effect change, not an atmosphere value change.**
-Two options, in order of preference:
-1. Recompile the `vs_1_1` SkinMesh shaders with `FogDensity`/`FogFar` (needs the
-   `.fx` source, which does not ship — only `.fxo`).
-2. Force distant units onto the fog-capable `vs_2_0` shader (engine/script LOD
-   change — simpler, but forfeits the perf the low LOD buys).
+**What IS proven:** fog is skipped for ~half of unit draws; the unfogged group is
+the K/NB/NP material families plus certain passes of the other materials; and the
+engine never feeds fog values to those passes.
+
+**Open question before any fix:** are the unfogged passes `vs_1_1` (fog-incapable
+→ recompile shader) or unfed `vs_2_0` (→ engine/effect wiring fix)? One more probe
+tag (shader model per draw) would answer it. Fix paths then:
+1. Recompile the shaders with `FogDensity`/`FogFar` (needs the `.fx` source, which
+   does not ship — only `.fxo`).
+2. Fix the engine/effect to feed fog to the skipped passes.
 
 Limitation recorded for the next session: the D3DX *instruction* bytecode lives
 inside the `.fxo` `PRES`/`XFSH` comment blocks (proprietary D3DX binary); the
