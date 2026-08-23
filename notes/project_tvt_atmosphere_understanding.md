@@ -69,3 +69,37 @@ Track-mark *brightness/colour* itself is `SetBaseColor(...)` in `Scripts\Common\
 - **Delete `Cache\Scripts.cache`** after any script edit.
 - Backups live **outside** game folders (rollback kit); never leave stray files in a game folder (TvT reads every file regardless of extension).
 - One change at a time; user is the last gate.
+
+## ZW snow mission - winter overcast (Option A) + stub (2026-08-23)
+
+CWinterMission1 (ZW, M:\T34vsTiger_ZW2015\Missions\CustomMissions\CWinterMission1) is now
+the SECOND reference recipe (winter overcast, opposite of C2M2 dawn). User-approved
+"looks cooler (temperature)". Changes applied:
+- Content.script: sun normalised (-0.69,0.87,-0.45 -> -0.576,0.726,-0.376) - same glare fix.
+- Atmosphere.script: reconciled 17 fields to match Content's bright overcast values
+  (bright ambient 0.59, pale blue-white fog, soft shadows).
+- Atmosphere.script: added interface-silencer stub
+  `void SetIsCameraAdjustEnabled(boolean value) { }` - fixes base-class call failing
+  every load (same precedent as CC2M2Atmosphere). Harmless no-op; removes a log-spam line.
+Backups: K:\TvTDeepseek\rollback\zw_cwinterm1_scripts_2026-08-23.zip (original) +
+Atmosphere.script.pre_stub_2026-08-23.
+## Compass + sun-direction convention (2026-08-23)
+
+The map orientation is FIXED and GLOBAL - written in BaseAtmosphere.script (identical in
+REDUX/ZW/WoV) via the directional fog colour comments:
+  FogColorXPos = // S  ->  +X = SOUTH
+  FogColorXNeg = // N  ->  -X = NORTH
+  FogColorYPos = // E  ->  +Y = EAST
+  FogColorYNeg = // W  ->  -Y = WEST
+(+Z = up). Every mission uses the same compass; "east" is ALWAYS +Y - not per-mission.
+
+SunDirection = LIGHT direction (rays from sun down to ground - z always negative). The sun
+sits OPPOSITE the vector's horizontal part. So a morning/east sun = light heading WEST
+(strong -Y), z small negative (low), unit-length.
+
+DAWN FORMULA (any mission): SunDirection horizontal points WEST (-Y dominant), z small and
+negative (low sun), unit length. Example clean east-dawn: (-0.2, -0.95, -0.24) ~14 deg up.
+
+CORRECTION: earlier "each mission faces a different direction" was WRONG - the compass is
+global. C2M2's dawn sun (light SW -> sun NE) is slightly off true-east; a true east sunrise
+needs the westward vector.
