@@ -134,3 +134,12 @@ sky = cloud layer; no sun = overcast. My only edit was sun-normalisation (no vis
 effect here, since the sun is already invisible). LEAVE IT AS-IS - it is the reference
 for "true overcast". Remaining Leningrad log lines are cosmetic (missing str_NavPointRedArmy
 locale string) - pre-existing, not atmosphere.
+## FOG-TEST BED (2026-08-23)
+
+Use "Zitadelle Attack" (folder: ZW CustomMissions\KurskMission, class KurskM1Mission/
+KurskM1Atmosphere, rsr "ZITADELLEEE: M1, Attack!") as the fog-on-objects test mission.
+Why ideal: 36,000 m map (MatrixWidth 36000), FogFar 4000, DISTANT FRIENDLY tanks visible
+at spawn (safe to observe). Test: at spawn, look at the distant friendly tanks - if they
+are SHARP/DARK while the ground hazes = fog-on-objects bug clearly demonstrated (the
+screenshot/observation needed to scope the D3D9 hook fix). If they haze like the ground
+= fog already reaches units.
