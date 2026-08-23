@@ -112,3 +112,54 @@ huge window — whereas `Direct3DCreate9` fires microseconds after a runtime
 
 Next: run Zitadelle with v3, confirm the full chain (attach -> notify -> patch ->
 `Direct3DCreate9(31)` -> device -> fog/draw lines).
+
+## RESULT 2026-08-23 — fog DOES NOT reach ~half the unit draws (bug confirmed)
+
+The probe now works end-to-end (loader-notification hook, v3+, then per-draw
+tagging v4..v7). Final v7 histogram tags each draw with: bound vertex shader,
+fog ON/OFF (`FOGENABLE!=0 && FOGVERTEXMODE!=0`), shadow pass
+(`D3DRS_COLORWRITEENABLE==0`), and SKINNED (wrote a bone-array, `vcount>=8`).
+
+**The answer to "does fog reach units": partially — and the missing half is the
+bug.** Skinned (unit) shaders split cleanly in two:
+
+- **Fogged** units: ~430k draws, fog ON, receive `FogFar=1000`/`FogDensity=0.0005`
+  constants.
+- **Unfogged** units: ~477k draws, fog OFF, **never receive fog constants**, and
+  `shadow=0` (colour-writes ON) so they are real geometry, NOT stencil shadows.
+
+The unfogged skinned shaders (this run's handles — opaque, re-randomised per run):
+
+| shader | draws | fog | shadow |
+|---|---|---|---|
+| 242C0930 | 177,049 | OFF | 0 |
+| 242C4BE0 | 68,491 | OFF | 0 |
+| 242BF700 | 68,491 | OFF | 0 |
+| 242C3CB8 | 68,491 | OFF | 0 |
+| 207A54F8 | 68,358 | OFF | 0 |
+| 207A45D0 | 26,737 | OFF | 0 |
+
+So the engine sets fog uniforms for SOME unit passes and skips others. This is
+the **"missing uniforms"** case (scoping-note step 4, first branch), and it
+explains "distant tanks stay sharp": the biggest unfogged shader (177k draws) is
+almost certainly the tank mesh.
+
+### Root-cause shape (not yet proven which units)
+- The unfogged shaders are the SAME kind of skinned mesh as the fogged ones, so
+  it is not a capability gap — it is a per-pass wiring gap.
+- Two plausible mechanisms, both need the shader→`.fxo` mapping to decide:
+  1. **LOD swap**: near tanks use a fogged LOD, distant tanks swap to an unfogged
+     LOD (matches "distant" precisely).
+  2. **Per-unit-type**: one unit family (e.g. the Tiger, or the T-34) is drawn
+     through an unfogged shader while the other is fogged.
+- Next step: map the runtime shader handles to the `.fxo` files (hash the shader
+  bytecode via a `CreateVertexShader` hook, or correlate fog-constant register
+  slots 16/17, 19/20, 25/26, … with the `.fxo` constant tables) to name the
+  affected meshes, then fix the engine/script that fails to set fog for them.
+
+### Probe build notes (worth keeping)
+- The game exits via `TerminateProcess` (DXVK/Vulkan stuck-in-driver), so
+  `DLL_PROCESS_DETACH` does NOT fire — a detach-only summary is lost. v5+ dumps
+  the histogram every 100k draws from the draw path instead.
+- Killed game processes linger as zombies holding `fog_probe.dll`; the DLL must
+  be renamed aside (`fog_probe.locked*.dll`) before rebuilding.
