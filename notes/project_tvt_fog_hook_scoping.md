@@ -60,3 +60,18 @@ The unit shaders *can* fog (params exist) but never receive the values.
    unit shader pass (if it's a shader-selection issue).
 
 Safety: all of the above is read-only until step 4; backups not needed yet.
+
+## Wrapper consideration (DXVK vs dgVoodoo) — 2026-08-23
+
+The user runs DXVK (has the choice dgVoodoo/DXVK via wrapper.bat). Implications for the hook:
+- The hook targets the D3D9 device VTABLE (SetVertexShaderConstantF, DrawIndexedPrimitive,
+  etc.) - the SAME API both wrappers implement. So the hook is WRAPPER-INDEPENDENT: it
+  works whether d3d9.dll is dgVoodoo or DXVK.
+- The fog bug is confirmed in BOTH builds/wrappers (Rendering_And_Framerate.md) -> it is
+  ENGINE-side, not wrapper-side. We observe the ENGINE's calls, not the wrapper.
+- IMPORTANT: the G5 fog is SHADER-computed (the .fxo files read FogFar/FogDensity and
+  compute fog themselves). DXVK/dgVoodoo do NOT decide fog - they just run the shader and
+  pass the uniforms through. So there is no wrapper "fog toggle" to flip; the fix is
+  entirely about whether the ENGINE sets those uniforms for the unit pass.
+- Bonus: DXVK is open-source - its D3D9 source is a reference if we ever need to trace the
+  uniform-passing path, but it is not the source of the bug.
