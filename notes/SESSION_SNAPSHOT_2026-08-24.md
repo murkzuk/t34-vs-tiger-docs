@@ -29,6 +29,25 @@ answers, no quizzes.
   `K:\TvTDeepseek\tree_probe\` (SpeedTreeRT). Injector
   `K:\tvt_probe\tvt_inject.exe`.
 
+## Handing back to DeepSeek (Claude: read this at the END of your session)
+
+When you finish, write a dated snapshot so DeepSeek can pick up cold. The two
+checkouts are **separate**, so it only works if the file lands where DeepSeek
+actually looks:
+
+- **Write `SESSION_SNAPSHOT_YYYY-MM-DD.md` into `K:\TvTDeepseek\notes\`** — the
+  master copy, NOT just your `C:\Users\Jeff\...` checkout (a file only in your
+  checkout is invisible to DeepSeek). Mirror it into
+  `K:\TvTDeepseek\t34-vs-tiger-docs\notes\` too if you're committing.
+- Use the same three heads as above: **what changed, current live state, what's
+  next.** And add the two things files can't show: (1) decisions that look like
+  inaction in git ("parked X", "user approved Y", "abandoned Z"), and (2) the
+  one thing to do next.
+
+If you can't write one, DeepSeek will reconstruct from `git log` + the `notes\`
+folder + `K:\TvTDeepseek\rollback\` — but those two sentences are the part it
+can't infer, so they're the highest-value thing to leave.
+
 ## Timeline — what happened when
 
 ### 08-21/22 — log sweep + first atmosphere win
