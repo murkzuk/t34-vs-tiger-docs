@@ -33,6 +33,17 @@ deleting it.
 | **Tactical map cursor + navpoints** | `Common\Cockpit.script:190` `//TerrainMap.SetCursorControl` | `Cockpit.script:277` (live) |
 | **Interior-device damage effect leak** | `Common\IntDevices.script:95` `//DeleteEffect(m_EffectInstanceID)` | `IntDevices.script:262` (live) |
 
+## False positives (verified 2026-08-24 — do NOT "fix" these)
+
+- **"Infantry fire silently"** — NOT a bug. The rifle uses `FireSoundId` (string →
+  registry), not `BurstFireSound`. TvT soldier rifles already have
+  `FireSoundId = "98kRifleFireSound"` / `"MosinRifleFireSound"` (both registered
+  in `Sounds.script:1333-1334`). `BurstFireSound = null` is correct for a
+  single-shot `CRifle`. The WoV comparison was apples-to-oranges: WoV's "rifle"
+  is an M16 (burst, `CMachineGun`), so it uses `BurstFireSound`. Lesson: this
+  whole table is agent-inferred — **verify each entry's mechanism before
+  uncommenting**, or you'll re-enable nothing / the wrong thing.
+
 ## Borderline (plug-in, but verify)
 
 - **`CanStayAttack` AI flag** — `//final static boolean CanStayAttack = false` on
