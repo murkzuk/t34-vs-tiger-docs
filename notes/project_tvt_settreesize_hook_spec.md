@@ -76,6 +76,18 @@ Identify by **filename** (`Birch.spt` / `Linden.spt`).
 not import it; `STTree.dll` statically imports it). The loader-notification
 approach (`fog_probe`'s) works — patched on load, confirmed live.
 
+## Execution-log findings (2026-08-24)
+
+The hook runs **clean** — no new error lines in `M:\T34vsTiger\execution.log`
+(the only "error" lines are four pre-existing stock script warnings).
+
+- `[STTreeReadonlyMesh] Create Models/Trees/*.spt tree` — the engine's tree
+  class is **native** (not in any `.script`) and named "read-only": it renders
+  SpeedTreeRT's geometry, never edits it. Confirms the seam is the `GetGeometry`
+  call out of that class.
+- `[STForest] 45329 trees generated` — a mission spawns ~45,000 trees, which is
+  why raising `ModelLOD` cost so much framerate.
+
 ## Risks / side effects
 
 - **LOD coupling:** scaling geometry Y does NOT feed SpeedTreeRT's LOD (LOD uses
