@@ -102,6 +102,9 @@ The existing `fog_probe` still flags the engine's shadow pass
 is the right starting point to extend — but the tree side needs new hooks into
 the SpeedTree DLLs.
 
+**Chosen plan:** the *harvest* approach (hook `STTree.dll`, reuse the tree
+geometry it already receives) — see `project_tvt_speedtree_harvest.md`.
+
 ## Related: `TreeShadowLodDistance` (tree→ground shadow distance)
 
 - `BaseAtmosphere` default is `500`, but **campaign / quick missions deliberately
