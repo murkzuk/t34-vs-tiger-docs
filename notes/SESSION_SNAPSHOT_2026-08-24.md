@@ -1,107 +1,172 @@
-# Session snapshot 2026-08-24 — handoff for Claude
+# SESSION SNAPSHOT — 2026-08-24 (full handoff for Claude)
 
-Written by the DeepSeek agent at the end of its session, so the returning
-Claude agent can pick up without replaying the investigation. Everything below
-names a file you can check.
+Cold-start handoff covering the whole recent arc **2026-08-21 → 08-24**.
+**Supersedes `SESSION_SNAPSHOT_2026-08-23.md`** (folded in here). Everything
+below names a file you can check.
 
-## When / who / where
+## The goal (unchanged across all three sessions)
 
-- **When:** 2026-08-23 → 2026-08-24 (one long session, atmosphere/lighting then
-  tree work).
-- **This agent's checkout:** `K:\TvTDeepseek\t34-vs-tiger-docs`, branch
-  **`deepseek/atmosphere-dawn-fog`**. This is where all commits below live.
-- **Claude's checkout:** `C:\Users\Jeff\t34-vs-tiger-docs`, main @ `62e077f`
-  (plus an untracked `FINDINGS_2026-08-21_log_sweep.md`). **Not pushed** — no
-  network. The two checkouts have diverged; the DeepSeek branch is NOT on main.
-- **Notes are mirrored** in two places, keep them in sync:
-  - `K:\TvTDeepseek\t34-vs-tiger-docs\notes\` (in-repo, committed)
-  - `K:\TvTDeepseek\notes\` (master copy outside the repo)
-- **Live install:** `M:\T34vsTiger` (REDUX). Reference: `G:\WoV`. ZW:
+Make each mission's lighting / atmosphere / time-of-day **(A) historically
+correct** and **(B) as good as the 2001 engine allows** — plus, this session,
+tree rendering quality. The user is a non-coder, dyslexic; plain scannable
+answers, no quizzes.
+
+## Who / where
+
+- **This agent (DeepSeek)** works in `K:\TvTDeepseek\t34-vs-tiger-docs`, branch
+  **`deepseek/atmosphere-dawn-fog`**. All commits below live there.
+- **Claude's checkout** is `C:\Users\Jeff\t34-vs-tiger-docs`, main @ `62e077f`
+  (+ untracked `FINDINGS_2026-08-21_log_sweep.md`). **Not pushed — no network.**
+  The branches have diverged; DeepSeek's is NOT merged to main.
+- **Notes mirrored** in two places — keep both in sync:
+  - `K:\TvTDeepseek\t34-vs-tiger-docs\notes\` (in-repo)
+  - `K:\TvTDeepseek\notes\` (master copy)
+- **Live install:** `M:\T34vsTiger` (REDUX). Reference `G:\WoV`. ZW
   `M:\T34vsTiger_ZW2015`.
-- **Rollback kit:** `K:\TvTDeepseek\rollback\` — every game-file edit is backed
-  up here (timestamped `.bak` files). Never put backups in the game folder.
-- **Injection probes:** `K:\TvTDeepseek\fog_probe\` (D3D9 fog, finished) and
-  `K:\TvTDeepseek\tree_probe\` (SpeedTreeRT, this session). Injector:
+- **Rollback kit:** `K:\TvTDeepseek\rollback\` (every game edit backed up,
+  timestamped). Never put backups in the game folder.
+- **Probes:** `K:\TvTDeepseek\fog_probe\` (D3D9 fog) and
+  `K:\TvTDeepseek\tree_probe\` (SpeedTreeRT). Injector
   `K:\tvt_probe\tvt_inject.exe`.
 
-## What happened this session (roughly in order)
+## Timeline — what happened when
 
-1. **Resolution** — investigated the internal render res. Found it is **already
-   native 1920×1080** (registry `HKCU\Software\G5 Software\T34` → ScreenWidth/
-   ScreenHeight). No bump available; the `WindowWidth=1024` in GameSettings.script
-   is only a first-run fallback. → `project_tvt_resolution_finding.md`.
+### 08-21/22 — log sweep + first atmosphere win
+- Swept two play-session logs; root-caused **6 issues** (recursion,
+  `ActivateMove` typo, ghost menu entry, ZW gun animators, Stuka lines,
+  atmosphere silencer). REDUX fixes applied then **REVERTED** after a
+  trailing-comma parse error — that's now a permanent warning note
+  (`feedback_trailing_comma_incident_warning.md`). Fix cards ready in
+  `K:\TvTDeepseek\patches\`.
+- **C2M2 dawn** applied + play-tested (commit `9cb770d`): the first proper dawn.
+- Notes: `project_tvt_big_map_2d_campaign_layer.md`,
+  `project_tvt_c1m2_tigers_passive_by_design.md`,
+  `project_tvt_pb_campaign_reference.md`.
 
-2. **Dawn/sunset rollout** — **C1M3 (19:30 sunset) is DONE and the user says
-   "chef's kiss"**. Recipe in `Missions\Campaign_1\Mission_3\Content.script`:
-   SunDirection `(0.815587, 0.551964, -0.173648)`, SunColor `(1.0, 0.749020,
-   0.294118)` (warmed), AmbientLight `(0.157, 0.204, 0.243)`, FogMode `Exp`,
-   FogDensity `0.0013`, FogNear `10`, FogFar `450`. The earlier C1M2/C2M2 dawns
-   were already done. **C2M4 (the other sunset) is still pending.**
+### 08-23 — atmosphere model + fog probe + LOD + Pz IV G
+- **Learned the atmosphere system from scratch.** Key reusable knowledge:
+  - **3 layers:** mission `Content.script` Atmosphere block (wins) →
+    `Atmosphere.script` class fields → `BaseAtmosphere` defaults.
+  - **Compass:** +X=South, −X=North, +Y=East, −Y=West, +Z=up.
+    `SunDirection` = *light* direction (the sun is opposite its horizontal
+    component). East dawn = light heading West (−Y).
+  - **Dawn recipe (validated):** SunDirection `(0.815587, -0.551964, -0.173648)`,
+    SunColor `(1.0, 0.749020, 0.294118)`, AmbientLight `(0.156863, 0.203922,
+    0.243137)`, FogMode `Exp`, FogDensity `0.0013`, FogNear `10`, FogFar `450`.
+  - **Fixed a 20-year-old bug:** a non-unit sun vector = real glare / white-out
+    (the devs shipped wrong sun coords; the sun was invisible). Now visible.
+  - **Fog correction:** in `Exp` mode the engine drives fog off `FogDensity`
+    (it IGNORES `FogNear`/`FogFar`). Fog is shader-computed in compiled `.fxo`.
+  - Full detail: `project_tvt_atmosphere_understanding.md`,
+    `project_tvt_atmosphere_lighting_plan.md`.
+- **Fog-on-objects** (tanks stay sharp in mist) root-caused as a renderer-pass
+  issue → built **`fog_probe.dll`** (read-only D3D9 hook) to confirm. It proved
+  **fog is skipped for ~half of unit draws** (distant-LOD `vs_1_1` shaders lack
+  `FogDensity`). `vs_1_1` is a GPU shader-model split (1.1 vs 2.0), NOT an LOD
+  level. → `project_tvt_fog_hook_scoping.md`, probe in `K:\TvTDeepseek\fog_probe\`.
+- **LOD system mapped:** geometry is BAKED into `.ms2`; `SetLods([...])` arrays
+  are DESCENDING far→near; **LOD 0 = coarsest**, so `[0]` = always-coarsest.
+  **Pz II** `[0]` → `[300,100,50,5]` (applied, untested). Full tank table in
+  `project_tvt_lod_distances.md`.
+- **Pz IV G:** the AI unit uses a reduced 11.9 MB mesh vs the full 17.4 MB one.
+  Swapping the mesh broke damage (double-render) → reverted. **Correct fix =
+  swap the whole UNIT** in mission Content.script. `Panther_M1` + `C1M1`
+  swapped; **13 more backed up but not swapped.** →
+  `project_tvt_pz4g_full_unit_swap.md`.
+- Winter/overcast rollout (3 missions) + Leningrad overcast + Zitadelle fog-test
+  bed recorded (commits `9d87bc9`, `bf9d1c9`, `c5d20a6`).
 
-3. **Tree shadows** — trees are **SpeedTreeRT v1** (`SpeedTreeRT.dll` +
-   `STTree.dll` + `.spt` files). Their shadows are terrain-only; they never fall
-   on tanks. → `project_tvt_tree_shadow_limitation.md`,
-   `project_tvt_speedtree_harvest.md` (SpeedTreeRT is a *geometry factory*, no
-   Render method — the "harvest" plan reuses its geometry).
-
-4. **Tree LOD tuning (a saga — read `project_tvt_tree_lod_tuning.md`)**:
-   - `ModelLOD` in `BaseSTTree.script` was `[40,70,180,250]` (REDUX "jm" value),
-     dev original is `[160,280,480,720]`.
-   - Tried `[240,400,700,1000]` → low 30s FPS. Settled on **`[160,280,480,720]`**
-     (dev original) — that is the CURRENT live value.
-   - `TreeSize` (per species) drives SpeedTree's *internal* LOD AND the drawn
-     size (coupled). Raising it → "redwood". Reverted to stock.
-   - `TreeShadowLodDistance` (C1M3) experimented with 500, reverted to **25**.
-
-5. **SetTreeSize height-only stretch (the live front)**:
-   - **Phase 0** (read-only) proved `STTree.dll` calls
-     `SetTreeSize(width = TreeSize, height = 0.0)` — height 0 means "use the
-     `.spt`'s own height". That is why the birch is squat (correct width, too
-     short).
-   - **Phase 1 built but NOT yet user-tested:** `K:\TvTDeepseek\tree_probe\
-     tree_stretch.dll`. Hooks `SetTreeSize`; when `h==0` and the tree is
-     `Birch.spt`/`Linden.spt`, passes `h = width × K` (K = `2.0`, a `#define`).
-   - Spec + Phase 0 result: `project_tvt_settreesize_hook_spec.md`.
+### 08-24 — dawn/sunset rollout + resolution + trees
+- **C1M2 dawn** applied + confirmed (commit `5b9d31c`). **C1M3 sunset** applied
+  + confirmed "chef's kiss": SunDirection `(0.815587, 0.551964, -0.173648)`,
+  SunColor warmed to `(1.0, 0.749020, 0.294118)`, FogMode `Exp`, FogDensity
+  `0.0013`, FogNear `10`, FogFar `450`. → `project_tvt_dawn_rollout.md`.
+- **Resolution:** game already renders native **1920×1080** (registry
+  `HKCU\Software\G5 Software\T34`). No bump available. →
+  `project_tvt_resolution_finding.md`.
+- **Trees = SpeedTreeRT v1** (`SpeedTreeRT.dll` + `STTree.dll` + `.spt`).
+  Terrain-only shadows; "mesh + billboard" hybrid; per-client procedural layout
+  (the multiplayer desync). → `project_tvt_tree_shadow_limitation.md`,
+  `project_tvt_speedtree_harvest.md`.
+- **Tree LOD tuning:** settled `ModelLOD` = `[160, 280, 480, 720]` (dev
+  original). `TreeSize` couples size↔LOD, so height edits were reverted.
+  → `project_tvt_tree_lod_tuning.md`.
+- **SetTreeSize height-only stretch:** Phase 0 proved the engine passes
+  `SetTreeSize(width=TreeSize, height=0.0)`. Phase 1 `tree_stretch.dll` built
+  (**not yet user-tested**). → `project_tvt_settreesize_hook_spec.md`.
 
 ## Current live game state (`M:\T34vsTiger`) — the deltas from stock
 
-- `Missions\Campaign_1\Mission_3\Content.script` — sunset recipe (above),
-  TreeShadowLodDistance = 25 (stock).
-- `Scripts\Common\BaseSTTree.script` — **ModelLOD = `[160, 280, 480, 720]`**
-  (this is the ONE tree change still live); TreeSize all stock.
-- `Scripts\Common\BaseForest.script` — ModelDistance = 15 (stock).
-- Everything else: untouched this session.
+- `Missions\Campaign_2\Mission_2\Content.script` — C2M2 dawn (23rd, approved).
+- `Missions\Campaign_1\Mission_2\Content.script` — C1M2 dawn (24th, approved).
+- `Missions\Campaign_1\Mission_3\Content.script` — C1M3 sunset (24th, approved).
+- `Scripts\Common\BaseSTTree.script` — **`ModelLOD = [160, 280, 480, 720]`**
+  (the ONE tree change still live); TreeSize stock.
+- Pz II `[300,100,50,5]` — applied, untested.
+- Pz IV G full unit — `Panther_M1` + `C1M1` swapped.
+- `Scripts\Common\EffectsBase.script` — track marks darkened; "barely changed",
+  parked.
+- Winter/overcast rollout — 3 missions recorded (see atmosphere plan note).
 
-## What's next / pending
+## Pending / next (in rough order)
 
-1. **Test `tree_stretch.dll` in-game** (user's next action). Command:
-   `K:\tvt_probe\tvt_inject.exe "M:\T34vsTiger\TvsT_fullLOD_HARD_4GB.exe" "K:\TvTDeepseek\tree_probe\tree_stretch.dll"`.
-   Tune `K` in `tree_stretch.cpp` (one `#define`) and rebuild with
-   `build_stretch.bat`. Log: `K:\TvTDeepseek\tree_probe\tree_stretch.log`.
-2. **C2M4 sunset** — the other 19:30 mission, same recipe family.
-3. **Tree shadows on tanks** — "harvest" path scoped (`project_tvt_speedtree_
-   harvest.md`), not started.
-4. Older open items still valid (from prior snapshots): Pz IV G rollout across
-   13 missions; Pz II / Pz III `[0]` LOD fix; 5 "stock noon" missions polish.
+1. **Test `tree_stretch.dll`** — `K:\tvt_probe\tvt_inject.exe
+   "M:\T34vsTiger\TvsT_fullLOD_HARD_4GB.exe" "K:\TvTDeepseek\tree_probe\tree_stretch.dll"`.
+   Tune `K` (`#define HEIGHT_STRETCH` in `tree_stretch.cpp`), rebuild with
+   `build_stretch.bat`. Log `tree_stretch.log`.
+2. **C2M4 sunset** — the other 19:30 mission.
+3. **Tree shadows on tanks** — "harvest" path scoped, not started.
+4. **Fog-on-objects hook** — actual fix (probe only diagnosed it).
+5. **Pz IV G rollout** — 13 missions backed up, not swapped.
+6. **Pz III** `[0]` fix; **Pz II** in-game test.
+7. **5 "stock noon" missions** polish (C1M1, C1M4, C2M1, C2M3, C2M6).
+8. **Re-apply the 6 log-sweep fixes** (cards ready); **track marks** stronger;
+   **snow mission** (CWinterMission1).
 
-## Rules that bit us this session (respect them)
+## Where everything lives (quick map)
+
+| What | Path |
+|---|---|
+| Atmosphere reference | `notes/project_tvt_atmosphere_understanding.md` |
+| Lighting plan | `notes/project_tvt_atmosphere_lighting_plan.md` |
+| Fog hook scoping | `notes/project_tvt_fog_hook_scoping.md` |
+| LOD distances | `notes/project_tvt_lod_distances.md` |
+| Pz IV G swap | `notes/project_tvt_pz4g_full_unit_swap.md` |
+| Dawn rollout | `notes/project_tvt_dawn_rollout.md` |
+| Tree LOD tuning | `notes/project_tvt_tree_lod_tuning.md` |
+| SetTreeSize spec | `notes/project_tvt_settreesize_hook_spec.md` |
+| Fog probe | `K:\TvTDeepseek\fog_probe\` |
+| Tree probes | `K:\TvTDeepseek\tree_probe\` |
+| Rollback | `K:\TvTDeepseek\rollback\` |
+| Patch cards | `K:\TvTDeepseek\patches\` |
+
+## Rules that never change
 
 - `.script` = **CP1251**, byte-level edits only; verify EF BF BD count = 0
-  before/after. The UTF-8 edit tool is safe ONLY on pure-ASCII files.
+  before/after. UTF-8 edit tool is safe ONLY on pure-ASCII files.
 - **Delete `Cache\Scripts.cache`** after any script edit (cold rebuild ~2 min).
 - **Backups** in `K:\TvTDeepseek\rollback\`, never inside a game folder.
 - **Per-AI separation** — each AI works in its own checkout; **the user is the
   last gate** (no game-file write without their go-ahead).
 - The game is **not run by this agent** — all in-game verification is the user's.
-- Injection allow-list must sit **beside the DLL** (`tvt_los_allow.txt`).
+- Injection allow-list sits **beside the DLL** (`tvt_los_allow.txt`).
 
-## Commits this session (DeepSeek branch)
+## Recent commits (DeepSeek branch, newest first)
 
 ```
+d82a8f1 session snapshot 2026-08-24 (handoff)
 d85a1a7 SetTreeSize Phase 0 result - engine passes h=0
-5607dbf tree LOD tuning - ModelLOD vs TreeSize, coupled size/LOD
-cac8da8 SpeedTreeRT is a geometry factory - harvest plan
-74a2694 trees are SpeedTreeRT (mesh+billboard), per-client procedural desync
-fc92d70 tree shadows are terrain-only (engine limitation)
-501e114 internal resolution - already native 1920x1080
+1555d38 spec SetTreeSize hook
+5607dbf tree LOD tuning
+cac8da8 SpeedTreeRT harvest plan
+74a2694 trees are SpeedTreeRT
+fc92d70 tree shadows terrain-only
+501e114 resolution native
+5b9d31c dawn rollout C1M2
+55d5ddb Pz IV G swap + dawn research
+c4b4746 retract vs_1_1 (GPU shader split)
+84aedc9 LOD distances [0] bug
+2bef008 fog probe result
+f9796b0 fog probe v3 (loader notification)
+…(earlier: fog scoping, compass, winter rollout, C2M2 dawn, log sweep)
 ```
