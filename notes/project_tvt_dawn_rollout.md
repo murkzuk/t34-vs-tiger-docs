@@ -1,4 +1,4 @@
-# Dawn rollout (Phase 2) — progress (2026-08-24)
+# Dawn + sunset rollout (Phase 2) — progress (2026-08-24)
 
 ## Reference dawn recipe (confirmed good, C2M2 & C1M2)
 
@@ -14,11 +14,30 @@ FogFar         = 450.0
 FogFarMax      = 3000.0
 ```
 
+## Reference sunset recipe (confirmed good, C1M3 & C2M4)
+
+Mirror of the dawn — same warm orange sun + cool blue ambient, sun in the WEST
+(light heading SE):
+
+```
+SunDirection   = (0.815587, 0.551964, -0.173648)     // low evening sun (NW)
+SunColor       = (1.000000, 0.749020, 0.294118, 1.0)  // orange sunset
+AmbientLight   = (0.156863, 0.203922, 0.243137, 1.0)  // cool blue
+FogMode        = "Exp"
+FogDensity     = 0.0013
+FogNear        = 10.0
+FogFar         = 450.0
+```
+
 ## Applied
 
 - **C2M2** (German, 07:00 morning low fog) — applied earlier, user confirmed.
 - **C1M2** (Soviet, 07:00 dawn, "after the Krinovichi breakthrough") — applied
   2026-08-24, user confirmed "feels very nice / looks good".
+- **C1M3** (Soviet, 19:30 sunset) — applied 2026-08-24, user "chef's kiss".
+  Sun position was bugged (no SunDirection = noon overhead); fixed to the west.
+- **C2M4** (German, 19:30 sunset) — applied 2026-08-24, user "looked good".
+  Sun position was bugged (east-ish); fixed to the west.
 
 ### CORRECTION (important)
 
@@ -39,5 +58,4 @@ day-by-day timeline are fictionalised.
 
 - 5 "stock noon" missions (C1M1, C1M4, C2M1, C2M3, C2M6) — refine to proper
   late-morning/noon recipes.
-- C1M3 on `Exp2` + `FogFar 1500` (odd for a sunset) — review.
-- Other dawn-capable missions: none at 07:00 besides C1M2/C2M2 (both done).
+- Other dawn/sunset missions: all done (C1M2, C2M2 dawns; C1M3, C2M4 sunsets).
