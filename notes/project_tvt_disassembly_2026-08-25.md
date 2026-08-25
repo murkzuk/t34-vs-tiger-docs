@@ -143,3 +143,100 @@ read the DLLs.
 - **Trees are confirmed as the biggest single named cost.** Already acted on.
 - **Objects.dll at half the frame time is still unexplained** — and it is the
   only remaining place where a large win could hide. One profiler run away.
+
+---
+
+# UPDATE, same day — the Objects.dll run happened. It is vegetation.
+
+The fresh run (`MAX_MODULES = 512`) worked: **164 modules known, unknown memory
+down to 0.80%**, and Objects.dll now has page-level addresses. Steady state this
+run: Objects.dll 48.70%, Engine.dll 21.03%, ntdll 7.96%, d3dx9 6.27%,
+Service 4.76%, Controls 3.29%, J5Script 3.09%, Behavior **0.48%**.
+
+Every hot Objects.dll page resolves through the RTTI map to a named class:
+
+| page | share | class | what |
+|---|---|---|---|
+| `+0x17D000` | **9.90%** | between `CTreeKiller2` and `CSTTreesQuadTree` | forest spatial-grid query |
+| `+0x0E6000` | 4.54% | `CVBWrapperTemplate<CGrassVertex,520,0>`, `CGrass` | **grass** vertex buffer fill |
+| `+0x0E7000` | 2.23% | `CGrass` | **grass** |
+| `+0x0EA000` | 2.12% | `CGrass` | **grass** |
+| `+0x230000` | 2.01% | CRT transcendentals (`log10`,`exp2`,`atan`,`floor`) | called by the above |
+| `+0x187000` | 1.66% | `CSTForest` | trees |
+| `+0x186000` | 1.56% | `CSTForest` / `CTreeKiller2` | trees |
+| `+0x0F1000` | 1.51% | `CGrass` / `CGridObject` | grass + spatial grid |
+| `+0x19B000` | 1.47% | `CSTTreesArray` / `CTreeKiller` | trees |
+
+Plus `Engine.dll+0x17D000` at 2.29% — the SpeedTree draw path from the first
+half of this note.
+
+### The headline
+
+**Trees ~17% + grass ~9% = about 26% of total frame time, in the top fifteen
+4 KB pages alone.** The real total across the whole vegetation code is higher —
+this is only what surfaced above the reporting cut.
+
+Vegetation is the single largest cost in this game by a wide margin. Nothing
+else is close: all of the AI is 0.48%, the whole script interpreter 3.09%.
+
+### The hottest page in the game, disassembled
+
+`Objects.dll+0x17DD00` (736 bytes, one caller at `+0x18ACAE` inside `CSTForest`)
+converts a world-space box into forest grid-cell indices:
+
+```asm
+0017DD0B  fld    dword ptr [eax]          ; x
+0017DD0D  fsub   dword ptr [esp+0x18]     ; - radius
+0017DD14  fdiv   dword ptr [ecx+0x43cc]   ; / cell size
+0017DD22  fistp  dword ptr [esp+0x14]     ; -> int cell index
+0017DD2A  test   eax, eax
+0017DD32  jge    ...                      ; clamp to 0
+0017DD38  mov    ecx, dword ptr [edx+0x43d0]
+0017DD3E  dec    ecx
+0017DD3F  cmp    eax, ecx
+0017DD41  jle    ...                      ; clamp to gridDim-1
+```
+
+Four of those `fld`/`fistp` float-to-int round trips per query (min x, max x,
+min y, max y). On x87 each one is a store-forward with a rounding-mode cost.
+Run per query, per object, per frame — which is exactly the shape of a hot spot.
+
+`"Cache miss"` sits one page further on at `+0x17E908`, in the same subsystem —
+so this grid query *has* a cache in front of it and the cache is missing often
+enough to log about it.
+
+## The immediately actionable part: grass has an in-game slider
+
+`GameSettings.script:25` — `final static float GrassDetail = 1.0;` — and
+`VideoOptionsMenuBase.script` wires it to an actual **Video Options slider**
+(`h_grass`). So the ~9% grass cost can be tested live, with no file edit, no
+cache clear, and no risk. Move the slider, watch the framerate.
+
+`Scripts\Common\BaseGrass.script` holds the rest: `MaxVisDist = [20.0, 150.0]`
+(grass draws to **150 m** at full detail), `MaxVisDistPower = 5`, and per-type
+`Density` up to **2.9** for rye.
+
+Note two REDUX changes already in that file, both marked `//jm`, and both of
+which *increase* grass cost:
+
+```
+float   AlphaBlendDistanceFactor = 0.8;  //jm 0.4
+boolean RenderOverShadow         = true; //jm false
+```
+
+`RenderOverShadow = true` means grass is drawn over shadowed ground as well —
+extra fill. Worth knowing before tuning anything else.
+
+## Bug found in the same log — `Cu_veh_PzVI_LATEModel`
+
+`execution.log`: `"Scripts\Common\ShadowHide.script", 45(7): invalid LValue in
+assignment`.
+
+`ShadowHide.script:45` assigns `Cu_veh_PzVI_LATEModel::LodForShadowHide = 2.6`,
+but **`Models\u_veh_PzVI_LATE.script` never declares that field** — it is the
+only model file of the whole set that omits it. Every other one has it at the
+same place, right after `LodForShadowChange`.
+
+Effect: the late-model Tiger never gets its shadow-hide LOD, so its shadow
+behaves differently from every other tank. One missing line, cosmetic, real.
+NOT yet applied — awaiting the user's go-ahead.
