@@ -17,7 +17,101 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-25 — Three theories, three autopsies, and one real target
+
+Spent a day finding out why TvT runs the way it does. Most of it was being
+wrong in public, so here is the whole thing including the parts that failed.
+
+**The finding everything else rests on:** TvT is CPU-bound with the GPU idle.
+Not "mostly" — measured, every run:
+
+```
+inside Present()   0.1%     <- waiting for the GPU
+inside Lock()      0.0%     <- waiting for a buffer
+everything else   99.8%     <- ~14 ms/frame of pure CPU work
+```
+
+322,000 triangles a frame at ~68 fps is about 20M triangles/sec. Your GPU is
+asleep. It is waiting for one core of your CPU, and has been for twenty years.
+
+**Then the real result.** The forest detail slider does not do what you think.
+Turn it to minimum and a quarter of all draw calls disappear — genuinely, the
+probe counted them. And the frame time does not move. At all:
+
+```
+page          FOREST MAX  FOREST MIN   change
++0x17D000          7.54%       7.45%    -0.09   <- hottest page in the game
++0x19B000          1.47%       1.38%    -0.09
++0x186000          1.27%       1.38%    +0.11
+```
+
+The slider changes what gets **drawn**. It changes nothing about what gets
+**computed**. Every tree still goes through the quad-tree walk, the grid query
+and the LOD decision every single frame — and when your draw distance is short,
+all that work is calculated and then thrown in the bin. About a tenth of your
+frame time, every frame, deciding things that do not matter.
+
+We have the function disassembled: a 736-byte routine that converts a world-space
+box into forest grid-cell indices with four x87 float-to-int round trips per
+query. That is now a real optimisation target rather than a curiosity — it is
+CPU work, no setting reduces it, and DLL injection into this engine already
+works.
+
+**The three theories that died, in order:**
+
+*Grass is a fill-rate problem.* Alpha-blended billboards, ground-level camera,
+massive overdraw — textbook. The GPU was idle at 0.1%. Dead.
+
+*REDUX's AlphaBlendDistanceFactor of 0.8 is too high.* Reverted it to G5's
+shipped 0.4 and grass got **more** expensive, plus you could suddenly see tanks
+through the grass. So we read the engine instead of theorising, and it computes
+`1.0 / (1.0 - factor)` — the value is where the fade **begins**. 0.8 fades over
+the last 20% of draw distance, 0.4 over the last 60%. The modded value was right
+and the original script was the odd one. Dead, and backwards.
+
+*(Warning for anyone else poking at this: never set that value to 1.0. It is a
+divide by zero.)*
+
+*The Tiger shadow bug is worth 28 fps.* We found a genuine twenty-year-old bug —
+`ShadowHide.script` sets the late Tiger's shadow cutoff, but the model file never
+declared the field, so the assignment failed silently and every Tiger kept the
+engine default of 9999, meaning "never hide this shadow". Fixed it, framerate
+jumped. Then we put the bug **back** to confirm — and the framerate went *up* 4%.
+Noise. The mission has two Tigers in it. Dead.
+
+(The fix stays anyway. It is still wrong, just not expensive. And amusingly
+ZeeWolf's copy already had the missing line — ZW was right and the other build
+was the odd one out.)
+
+**The most useful number of the day** turned out to be the boring one: three runs
+in identical conditions gave 66.8, 69.5 and 68.4 fps. So run-to-run noise is
+±4%, and *anything below that is not a result*. That single number retroactively
+killed the shadow theory and confirmed the grass one.
+
+**What grass actually costs:** 1.8 ms/frame and 33,751 triangles, for
+approximately zero extra draw calls. Real, modest, and the only positive number
+any slider produced all day.
+
+**Method note, since it is the actual lesson:** every one of those three theories
+was plausible reasoning from real evidence. Plausible reasoning about a 2001
+engine is worth approximately nothing. Predict the number *before* the run so the
+theory can fail, and treat anything under the noise floor as zero.
+
+*Tooling: a D3D9 draw-call probe built for this, plus RTTI pulled straight out of
+the shipped DLLs — 4,778 named virtual functions across 300 classes in
+Objects.dll alone, which is what turns a raw address into "CGrass" or
+"CSTForest". Analysis and code by Claude (Opus 5).*
+
+---
+
 ## 2026-08-25 — We disassembled the hot code. The trees were guilty after all.
+
+> **Later the same day — read the newer entry above before posting this one.**
+> Trees are indeed the target, but *not* for the reason this entry implies.
+> Tree **rendering** turned out to cost nothing measurable; the cost is the
+> per-frame tree **management** that runs whether or not anything is drawn.
+> The claim here that the tree draw path is the expense is wrong.
+
 
 Short version: a sampling profiler told us *which DLL* was eating the frame.
 This week we went one level down and disassembled the actual addresses to find

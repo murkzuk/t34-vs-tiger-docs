@@ -11,7 +11,8 @@ Last updated 2026-08-25.
 
 ---
 
-## PHASE 1 — Make it RUN right ◀ WE ARE HERE
+## PHASE 1 — Make it RUN right   ✅ QUESTION ANSWERED 2026-08-25
+###### one checklist item still open — the fog rollout, DeepSeek's
 
 Nothing else is worth doing if the game stutters. And you cannot judge whether a
 visual change is good while the framerate is fighting you.
@@ -21,29 +22,45 @@ visual change is good while the framerate is fighting you.
 | Tree draw distance measured and tuned | **done** — worth 8 fps |
 | Shadow distance measured and tuned | **done** — worth 2 fps |
 | Fog distance measured and balanced against engagement range | **done** — C1M2 |
-| Roll the fog value out to the other dawn/sunset missions | open |
+| Roll the fog value out to the other dawn/sunset missions | **open — DeepSeek.** C1M3 / C2M2 / C2M4 are all still `FogDensity 0.0013`, verified 2026-08-25 |
 | **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 50-54%, not the wrapper (disassembled) |
 
-**ANSWERED, then sharpened by disassembly 2026-08-25:** the profiler's counters
-are cumulative since injection, so the first figures included mission load. The
-true steady-state mix is **Objects.dll 50-54%, Engine.dll 20-24%, d3dx9 5-8%,
-Service.dll 5-6%, J5Script 2%, Behavior.dll 0.5%, and the D3D9 wrapper 0.0%**.
-Engine.dll's share is **SpeedTree tree rendering** (`+0x167000..+0x180000`,
-6.28% of frame time in five pages) - which confirms why the `ModelLOD` pull-back
-was worth 8 fps. Objects.dll has no page-level data yet (module table was full);
-`MAX_MODULES` is now 512 and one fresh run will produce it.
-See `project_tvt_disassembly_2026-08-25.md`.
+**ANSWERED — final, 2026-08-25.** Measured, not reasoned. **TvT is CPU-bound
+with the GPU idle**: 0.1% inside `Present`, 0.0% inside `Lock`, 99.8% CPU, about
+14 ms/frame. 322k triangles/frame is nothing to a modern GPU — it is asleep,
+waiting for one core.
+
+Steady-state split (per-window deltas; the raw counters are cumulative):
+Objects.dll 50-54%, Engine.dll 20-24%, J5Script ~2%, Behavior.dll ~0.5%,
+**D3D9 wrapper 0.0%**.
+
+What each thing actually costs: **grass 1.8 ms (12%)**; **tree *rendering* ~0**
+(forest slider at minimum removes 24% of draw calls and changes frame time by
+nothing); **Tiger shadow bug ~0** (confirmed by reverting it). **Noise floor is
+±4%** — three identical runs gave 66.8 / 69.5 / 68.4 fps.
+
+**The one confirmed target: tree *management* runs whether or not trees are
+drawn.** `Objects.dll+0x17D000` is the hottest page in the game and the forest
+slider does not touch it (7.54% -> 7.45%). ~10% of the frame is spent deciding
+things that are then discarded. Disassembled and identified; the open question
+is why it is called so often. **That is Phase 1 overflow, not a Phase 2 item —
+it gets picked up when it is picked up, and it is read-only work.**
+
+Framerate went **36-40 -> 66-76** over the session. Which change did that is
+**not established**, and no further theories are being built on it.
+
+Write-up: `SESSION_2026-08-25_performance_day.md`.
 
 **Done when:** you know *why* the framerate is what it is, and it is steady at a
 number you are happy with. Not "faster" — *known*.
 
-**The honest state:** 26 → 36-40 recovered. But DeepSeek measured 72 before, so
-**roughly half the drop is older than anything we changed** and guessing has run
-out. The profiler is the next real move.
+**The honest state:** 36-40 -> 66-76, and we now know the *shape* of the
+problem even though not every millisecond is accounted for. Roughly 12 ms of
+the frame is still unlocated. That is fine: the phase asked *why*, not *fix*.
 
 ---
 
-## PHASE 2 — Make it LOOK right
+## PHASE 2 — Make it LOOK right ◀ WE ARE HERE
 
 The 2001 art is what it is. Everything else — light, time of day, weather,
 distance haze — is ours to set, and it is where the biggest visual gain is.
@@ -129,6 +146,6 @@ phase, it gets promoted and this file says why.
 
 ## How to see progress
 
-Phase 1: **4 of 5 done.** Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
+Phase 1: **question answered, 4 of 5 items** (fog rollout open). Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
 
 That is the number to watch — not the 115.

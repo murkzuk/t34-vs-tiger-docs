@@ -4,6 +4,81 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## Performance — where the frame time actually goes (2026-08-25)
+
+Full write-up: `notes/SESSION_2026-08-25_performance_day.md`. Framerate went
+36-40 to 66-76 over the session; the exact cause is **not** established and no
+more theories are being built on it.
+
+**The finding everything rests on:** TvT is CPU-bound with the GPU idle —
+`Present` 0.1%, `Lock` 0.0%, 99.8% of the frame is CPU. Measured every run.
+
+**Noise floor is ±4%** (three identical runs: 66.8 / 69.5 / 68.4 fps). Anything
+below that is not a result. Say so.
+
+- [x] **Build a draw-call probe.** `Tools/drawcall_probe.cpp`, hooks D3D9 and
+  answers "CPU or GPU?" in one run. Every vtable slot verified against the SDK
+  header before building. Killed the fill-rate hypothesis in ninety seconds.
+- [x] **Correct the sampling profiler's numbers.** Its counters are cumulative
+  since injection and never reset, so the headline figures included mission
+  load. True steady state: Objects.dll 50-54%, Engine.dll 20-24%, J5Script ~2%,
+  Behavior.dll ~0.5%, **D3D9 wrapper 0.0%**.
+- [x] **Extract RTTI from the shipped DLLs.** 4778 named virtual functions /
+  300 classes in Objects.dll, 4784/287 Controls, 2703/281 Engine. Any hot
+  address now resolves to a class and vtable slot.
+- [x] **Measure grass.** 1.8 ms/frame, 33,751 triangles, ~0 extra draw calls.
+  Real but modest. In-game Video Options slider controls it.
+- [x] **Measure tree rendering.** NULL RESULT — forest slider at minimum removes
+  24% of draw calls and 27% of buffer traffic and changes frame time by 3.6%,
+  i.e. nothing.
+- [x] **Fix the Tiger shadow bug** (see its own section below). NULL RESULT for
+  framerate — confirmed by reverting it deliberately.
+- [ ] **TRACE THE CALLERS OF `Objects.dll+0x17DD00`.** ← the one confirmed
+  target. Tree management runs whether or not trees are drawn: at forest
+  MINIMUM the hot pages are unchanged (`+0x17D000` 7.54% -> 7.45%). The slider
+  changes what is *drawn*, never what is *computed*, so ~10% of the frame is
+  spent deciding things that are then discarded. The function converts a world
+  box to forest grid-cell indices (four x87 float-to-int round trips per query,
+  called from `CSTForest+0x18ACAE`). **The open question is why it is called so
+  often** — making it faster wins a fraction, making it get called less is where
+  a real win lives, and that is in the caller. Read-only RE, no play sessions.
+- [ ] **Account for the remaining ~12 ms/frame.** Grass is 1.8, tree management
+  ~1.5, and the rest has not been located. Everything obvious is excluded: GPU,
+  lock stalls, draw-call submission, tree rendering, shadows.
+- [ ] Consider `MaxVisDist`/`Density` tuning in `BaseGrass.script` if grass's
+  1.8 ms is ever worth reclaiming. Low priority — it is small.
+
+### Settings facts worth not relearning
+
+- **`AlphaBlendDistanceFactor` is where the alpha fade BEGINS**, not where cheap
+  alpha-test starts. The engine computes `1.0 / (1.0 - factor)` and its own
+  hardcoded default is `0.8`. Lower = wider fade band = more transparency AND
+  more cost. **Never set it to 1.0 — divide by zero.** Currently `0.9`.
+- **DXVK vs dgVoodoo is irrelevant to framerate.** The wrapper is 0.0%.
+- **The `.script` interpreter is not a bottleneck** (~2%), and **the AI is free**
+  (~0.5%, including the LOS hook). Never hold back an AI feature for
+  performance reasons.
+- **SpeedTreeRT.dll itself is 0.04%.** The middleware is free; every bit of the
+  tree cost is G5's own wrapper (`CSTForest`, `CSTTreesQuadTree`, `CTreeKiller`).
+
+## Tiger shadow bug — fixed, and the bug class closed (2026-08-25)
+
+Write-up: `notes/project_tvt_shadow_bug_2026-08-25.md`.
+
+- [x] **Fix `Cu_veh_PzVI_LATEModel::LodForShadowHide`.** `ShadowHide.script:45`
+  set it, but `Models\u_veh_PzVI_LATE.script` never declared the field — the
+  only model file of the set that omits it. Silent "invalid LValue", so every
+  Tiger kept `DefaultLodForShadowHide = 9999` ("never hide") and behaved unlike
+  every other tank. `TankPzVIAusfEUnit::getMeshObjectName()` returns that model
+  unconditionally, so it was every Tiger in the game. **ZeeWolf's copy already
+  had the line.** Worth **zero** framerate — confirmed by reverting it.
+- [x] **Sweep for the same bug class.** Every `Class::Field = value` assignment
+  in both installs checked against whether the field is declared on the class or
+  an ancestor. REDUX (2390 classes): none. ZeeWolf (4957): none. Tool validated
+  against the known bug first, so that is a real negative.
+
+---
+
 ## MAIN LINE — give the AI line of sight (2026-08-19)
 
 Agreed with the user as the single highest-leverage flaw in TvT as a tank sim.

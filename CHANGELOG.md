@@ -6,6 +6,33 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-08-25 (Performance) — Found out where the frame time actually goes, mostly by being wrong
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Spent a session establishing, by measurement rather than reasoning, why TvT runs the way it does. The framerate moved from 36-40 to 66-76 over the day, and I want to be upfront that **we never established which change caused that** — the best remaining guess is that clearing `Cache\Scripts.cache` made earlier pending script edits go live, and I'm deliberately not building anything further on that guess.
+
+The finding everything else rests on: **TvT is CPU-bound with the GPU sitting idle.** A new D3D9 draw-call probe (`Tools/drawcall_probe.cpp`) measures where the game's own thread actually sits, and it is unambiguous — 0.1% inside `Present` waiting for the GPU, 0.0% inside `Lock` waiting for a buffer, and 99.8% doing CPU work, about 14 ms of it per frame. 322,000 triangles a frame at ~68 fps is roughly 20M triangles/sec, which is nothing to a modern GPU; it is asleep, waiting for one core.
+
+The one real target that came out of it: **tree management runs whether or not trees are drawn.** With the forest detail slider at minimum the probe measured a quarter of all draw calls and 27% of buffer traffic gone — and the tree code's share of CPU did not move at all (`Objects.dll+0x17D000`, the hottest page in the game, went 7.54% to 7.45%). The slider changes what is *drawn* and nothing about what is *computed*: every tree still goes through the quad-tree walk, the grid query and the LOD decision every frame, and at short draw distances that work is calculated and discarded. That is roughly a tenth of the frame. The function is disassembled and identified — a 736-byte routine converting a world box to forest grid-cell indices with four x87 float-to-int round trips per query, called from `CSTForest+0x18ACAE`. What is *not* yet known is why it runs so often, which is the question that decides whether it can be fixed; that is the next piece of work and it is read-only.
+
+Three hypotheses died along the way, all recorded in the write-up because the pattern matters more than any of them. Grass is not a fill-rate problem (the GPU was never busy). REDUX's `AlphaBlendDistanceFactor = 0.8` is not too high — reverting it to G5's shipped `0.4` made grass *more* expensive and put visible transparency on tanks, and reading the engine settled it: it computes `1.0 / (1.0 - factor)`, so the value is where the alpha fade *begins*, and `0.8` is the engine's own hardcoded default. It is now `0.9`, and **1.0 must never be used — it is a divide by zero.** And the Tiger shadow bug is not worth 28 fps; putting the bug deliberately back moved the framerate *up* 4%, which is noise.
+
+That shadow bug is real and is fixed regardless. `ShadowHide.script:45` sets `Cu_veh_PzVI_LATEModel::LodForShadowHide = 2.6`, but `Models\u_veh_PzVI_LATE.script` never declared the field — the only model file of the whole set that omits it — so the assignment failed silently and every Tiger kept `DefaultLodForShadowHide = 9999`, meaning "never hide this shadow", behaving unlike every other tank in the game. ZeeWolf's copy already had the missing line. A static sweep then checked every `Class::Field = value` assignment in both installs against whether the field is actually declared, and found nothing else of the kind — 2390 classes in REDUX, 4957 in ZW, both clean, with the sweep validated against the known bug first so that "none" means something.
+
+Two pieces of supporting work worth recording. The sampling profiler's numbers were wrong: its counters are cumulative since injection and never reset, so the headline figures included mission load. Per-window deltas give the true steady state — Objects.dll 50-54%, Engine.dll 20-24%, the `.script` interpreter ~2%, all of the AI ~0.5%, and the D3D9 wrapper **0.0%**, which closes the DXVK-versus-dgVoodoo question for good. And RTTI turns out to survive in all the shipped DLLs, so `pefile` plus `capstone` yields 4778 named virtual functions across 300 classes in Objects.dll alone — which is what turned "Objects.dll is 48% of the frame" into "`CGrass` and `CSTForest` are".
+
+Also established, and probably the most useful number of the day: three runs in identical conditions gave 66.8, 69.5 and 68.4 fps, so **run-to-run noise is ±4% and anything below that is not a result.**
+
+### Why
+
+Phase 1 of the roadmap was never "make it faster" — it was "know *why* the framerate is what it is". Guessing had demonstrably run out: three plausible explanations in a row, each reasoned from real evidence, each wrong the moment it was measured. Building the probe cost an hour and settled in ninety seconds what a day of reasoning had got backwards. The lesson is written into the notes so it survives me: predict the number before the run so the hypothesis can fail, and treat anything under the noise floor as zero.
+
+
+---
+
 ## 2026-07-03 (Skirmish mission sweep) — Same non-unit sun-direction bug fixed in 10 more mission files
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
