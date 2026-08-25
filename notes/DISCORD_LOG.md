@@ -115,6 +115,54 @@ rather than trusting the grep.*
 
 ---
 
+## 2026-08-24 — The tree desync everyone laughed at, and why tanks never sit in shade
+
+Two findings that turn out to be the same finding.
+
+**First: a tank parked under a tree stays fully lit.** The tree's shadow lands on
+the ground and stops there. It never falls on the hull.
+
+That isn't a bug, it's two separate shadow systems that were never joined up:
+
+- **Stencil shadows** are the only ones that can land on *another object*. They're
+  cast by whatever is listed in `StencilShadowSettings` in `Settings.script` —
+  tanks, guns, buildings, inventory items. **Trees aren't in the list.**
+- **Tree shadows** are drawn by a completely different pass that only paints onto
+  terrain, distance-capped by `TreeShadowLodDistance`.
+
+The reason trees aren't in the first list: they don't go through the engine's
+object pipeline at all. The vegetation is **SpeedTree** — the original
+`SpeedTreeRT.dll` and `STTree.dll` are still sitting in the game root, with the
+`.spt` tree definitions in `Models\Trees\`. SpeedTree draws its own projected
+ground shadow, so a tree never enters the engine's stencil pass and has no way
+to reach a tank.
+
+Not fixable in script. The shadow pass lives in the compiled renderer.
+
+**Second — and this is the one that'll ring a bell: it explains the multiplayer
+tree desync.**
+
+Those `.spt` files are 6–15 KB. That's not tree geometry, it's a tree *recipe* —
+SpeedTree **generates the trees at runtime, on each machine**. Nothing about the
+resulting layout is sent over the wire.
+
+So every client grew its own forest. You'd drive a clean line through a gap that
+existed on your screen, while on someone else's machine you were ploughing
+through trunks — and they'd watch trees fall where you could see none. It got
+ridiculed at the time and nobody outside the studio knew why.
+
+It was never a netcode bug. **The trees were never synchronised because they
+were never sent** — each copy of the game invented its own.
+
+One nice detail: the game files show trees are *both* things people argued about.
+Real 3D geometry for trunk and branches, billboards for the leaves, and a full
+billboard impostor at distance.
+
+*Found with DeepSeek, by reading the shipped DLL exports and the shadow settings
+rather than guessing.*
+
+---
+
 ## 2026-08-22 — ZeeWolf's "4GB" executable was never 4GB
 
 `TvsT_fullLOD_HARD_4GB.exe` in the ZW build was compiled **without the
@@ -186,5 +234,3 @@ is *altitude*. The devs never retuned them for tanks.
 - Map size is paid for in terrain detail — stretching a heightfield over a bigger
   world is free to author and costs you every fold of ground smaller than a
   football pitch. Numbers in `project_tvt_map_size_vs_detail`.
-- Trees are SpeedTree v1 and cast shadows onto **terrain only**, never onto
-  tanks — two separate shadow systems, by design.
