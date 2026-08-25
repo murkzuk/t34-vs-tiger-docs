@@ -115,6 +115,56 @@ rather than trusting the grep.*
 
 ---
 
+## 2026-08-24 — A bigger map is free to make and costs you every hill worth hiding behind
+
+If you ever wondered why some maps feel flat and exposed while others give you
+proper hull-down spots, this is why — and it's not the map size, it's what the
+map size is *made of*.
+
+Making a TvT map bigger costs nothing. You keep the same 2049×2049 heightfield,
+put a larger number in `MatrixWidth`, and the engine stretches it. No new terrain
+files, no new work, one number.
+
+But stretching doesn't *add* terrain. It spreads the same samples thinner:
+
+| map | world | heightfield | metres between height samples |
+|---|---|---|---|
+| REDUX Berezov | 9 km | 2049² | **4.39 m** |
+| ZW Zitadelle M4 | 18 km | 2049² | 8.79 m |
+| ZW Zitadelle M1 | 36 km | **4097²** | 8.79 m |
+| ZW Zitadelle M2/M3 | 36 km | 2049² | **17.58 m** |
+
+At 17.6 metres between samples, **every fold of ground smaller than a football
+pitch has been averaged out of existence.** Dead ground, reverse slopes, the
+little rise you'd back a Tiger behind — none of it is in the data any more.
+
+It shows up in play. From the line-of-sight logs, what actually blocks a sight
+line:
+
+| | blocked by terrain | blocked by trees |
+|---|---|---|
+| Berezov (4.4 m samples) | **59%** | 41% |
+| Zitadelle M1 (8.8 m samples) | 24% | **76%** |
+
+On the fine map the *ground* hides tanks. On the coarse one it barely can, so the
+trees end up doing the hiding instead. That's the difference you feel and can't
+name.
+
+**ZeeWolf clearly knew.** Zitadelle M1 is the only mission in his entire set with
+a 4097² heightfield — he doubled the terrain data specifically to hold 8.79 m
+across a 36 km world. (It's also the 32 MB that made that map crash on a 2 GB
+executable, but that's another post.)
+
+One last thing, for scale: Zitadelle M1's 482 fighting units sit in a box about
+**14 × 10.7 km — 11.6% of the map**, and not even centred. The other 1,150 km²
+is empty. The size was never driven by the battle. It's just nearly free, and
+you pay for it in detail rather than in files.
+
+*Measured with Claude, by reading each mission's own `WorldMatricies.script` and
+parsing unit positions straight out of `Content.script`.*
+
+---
+
 ## 2026-08-24 — The tree desync everyone laughed at, and why tanks never sit in shade
 
 Two findings that turn out to be the same finding.
@@ -228,9 +278,3 @@ over Vietnam**. REDUX still carries them — 200 m spacing with a `z` of 30, whi
 is *altitude*. The devs never retuned them for tanks.
 
 ---
-
-## Older / not yet written up
-
-- Map size is paid for in terrain detail — stretching a heightfield over a bigger
-  world is free to author and costs you every fold of ground smaller than a
-  football pitch. Numbers in `project_tvt_map_size_vs_detail`.
