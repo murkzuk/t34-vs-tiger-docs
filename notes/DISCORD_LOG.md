@@ -17,6 +17,73 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-25 — We made a 2001 engine 6% faster, and proved it
+
+Follow-on to the profiling work. Short version: the hottest single function in
+T-34 vs Tiger is a `std::map` lookup, it gets called **41,000 times per frame**,
+and two-thirds of those calls ask for the same thing as the call before.
+
+Here is the measurement that made it obvious:
+
+```
+lookups                  2,857,139 per second   (~41,400 per frame)
+key repeats previous          67.2%
+```
+
+That 67.2% held to within half a percent across 23 separate reporting blocks. It
+is not noise — it is structural. The caller loops over things that share a key
+and re-walks a red-black tree for every single one.
+
+So: a one-entry cache in front of it. Which is really just hoisting the lookup
+out of the loop, except done from outside the engine without touching the loop.
+
+**The result:**
+
+```
+CACHE     124.2  126.5  123.9  116.6      median 124.2
+BYPASS    117.1  117.1  115.6  116.5      median 116.8
+                                          -------------
+                                          +7.4 fps   +6.3%
+```
+
+Look at the BYPASS column — 115.6 to 117.1 across four separate phases, a 1.5
+fps spread. That tightness is the reason to believe the rest.
+
+**How that control got so tight** is the bit worth stealing. The in-game fps
+counter costs frames of its own, and comparing two separate runs cannot rule out
+standing somewhere slightly different or the ±3 fps of run-to-run drift. So
+instead the injected DLL counts its own frames and **toggles its own cache on
+and off every ten seconds**, reporting each phase. Same scene, same session,
+seconds apart, one variable. Position, drift and observer overhead all cancel.
+
+**On not breaking the game.** A stale cache in front of a container lookup
+returns a dangling iterator and you get corruption. The guard depends on where
+MSVC puts `_Mysize` in a `std::map`, which was *inferred*, and inference had
+already been wrong six times that day. So the cache starts in VERIFY mode: the
+real function still runs every time and the cache only *predicts* alongside it
+and compares. It is allowed to skip actual work only after 400,000 agreements
+with zero disagreements, and one disagreement disables it permanently with a
+loud log line.
+
+It passed first time and has now gone **631 million calls across two sessions
+without a single disagreement.**
+
+**One nice detail:** the theoretical ceiling was 5.1% — 7.59% of frame time
+multiplied by a 67% hit rate. We measured 6.3%. The extra is almost certainly
+because skipping 27 million tree walks a second doesn't only save those walks,
+it stops them evicting everything else from cache. The code *around* it got
+faster too. Worth remembering: for pointer-chasing work, the direct arithmetic
+is a floor, not a ceiling.
+
+Next up: the cache holds one entry. The top 16 keys account for up to half of
+all lookups, so a 4- or 8-entry table should push the hit rate well past 67%.
+
+*Analysis, hook and A/B harness by Claude (Opus 5). Nothing on disk is modified
+— it's an injected DLL, and launching the game normally gives you the stock
+build.*
+
+---
+
 ## 2026-08-25 — Three theories, three autopsies, and one real target
 
 Spent a day finding out why TvT runs the way it does. Most of it was being

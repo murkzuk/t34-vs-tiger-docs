@@ -6,6 +6,31 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-08-25 (Crash fix) — Campaign 1 Mission 2 no longer crashes to desktop
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+Fixed a genuine crash-to-desktop in Campaign 1 Mission 2. One AI group — `CC1M2Gr_NGerman_Infantry2` — reached the end of its patrol path and re-entered its own order handler forever: `OnOrderFulfilled` restored the "Patrol" order and called `RepeatOrder`, which at end-of-path fired `OnPathEndReached`, where the mission's override re-armed the attack, which came back round to `ContinueOrder` and started again. The script interpreter warned all the way up — 6,451 `Possible stack overflow` lines — and the process died at stack depth 1,391.
+
+The cause was an accidental side effect of the 2026-08-18 change to `OnOrderFulfilled`, which made groups resume a patrol after being interrupted by a fight. It resumed the patrol even when the patrol was already finished. The fix adds one condition — only resume if there is road left (`m_NextPatrolPoint < m_PatrolPath.size()`) — so an exhausted patrol falls through into the static-group branch immediately below, which parks the group and pointedly does not re-enter `RepeatOrder()`.
+
+Because `UnitGroup.script` is shared by every mission in the game, that patch was applied and tested completely alone, with the game launched normally — no injected hooks, no probes, nothing else changed — so the patch was the only variable. The specific regression to rule out was making the guard too strict and leaving groups inert after combat, which would have undone the point of the 2026-08-18 change. Measured on the confirming run: **80 patrol resumptions and zero groups parked**. Groups attacked mid-patrol still pick their route back up. Stack overflows went from 6,451 to **0**, the offending group's log volume from 1,395 lines to 11, alarms from 143 to 4 (two unrelated tank groups), and the mission ran to a proper ending.
+
+A second patch followed once the first was confirmed: in `Missions\Campaign_1\Mission_2\MissionTasks.script`, the misspelled `ActivateMove(false)` became `ActivateMovement(false)` — the misspelled name does not exist, so the engine had been logging a `[ScriptManager]` error on every mission load, and the correct name was verified to be a real command in `BaseTasks.script` rather than taken on trust — plus a `RadarArmed` one-shot guard so that infantry group re-arms its attack order once instead of every time. That guard is belt-and-braces; patch 01 had already fixed the root cause.
+
+Worth recording a trap in that second patch for anyone who touches it later: the block being replaced is **not unique** on its first six lines, because `CC1M2Gr_NGerman_Infantry1` has a near-identical `OnPathEndReached`. A careless replace silently patches the wrong group. The full nine-line block including the `"AttackGermanInfantry2"` event name is unique and is the correct anchor — confirmed by counting matches before replacing and by checking Infantry1 was untouched afterwards.
+
+### Why
+
+This had all been done before. It was diagnosed on 2026-08-21, written up and reviewed on the 22nd, and then parked without ever being applied — and untracked in both TODO.md and this changelog. Three days later it crashed a live play session, and because an experimental performance cache happened to be injected at the time, real effort went into ruling that out before the actual cause surfaced in the log.
+
+The lesson is bookkeeping rather than code: a diagnosed, written, reviewed fix that isn't on the board does not exist. Both patches are now applied, tested and recorded, and the remaining unapplied siblings from that same 2026-08-22 set (the same `ActivateMove` typo in Campaign 2 Mission 3, and a `MissionsMenu` patch) are on the board rather than in a folder nobody reads.
+
+
+---
+
 ## 2026-08-25 (Performance) — Found out where the frame time actually goes, mostly by being wrong
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

@@ -4,6 +4,63 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## C1M2 crash-to-desktop — FIXED (2026-08-25)
+
+Write-up: `notes/project_tvt_c1m2_recursion_fixed.md`. A real CTD, diagnosed
+2026-08-21, patch written 2026-08-22, **parked and never applied** — then it
+crashed a live play session on the 25th.
+
+```
+Possible stack overflow warnings   6,451  ->  0
+max stack depth                    1,391  ->  none
+CC1M2Gr_NGerman_Infantry2 lines    1,395  ->  11
+[ALARM] No orders in group           143  ->  4 (unrelated tank groups)
+outcome                     crash to desktop -> clean exit, mission completed
+```
+
+- [x] **Patch 01 — `Scripts\Common\UnitGroup.script`, `OnOrderFulfilled()`.**
+  One added condition: only resume a patrol if there is road left
+  (`m_NextPatrolPoint < m_PatrolPath.size()`). An exhausted patrol now falls
+  into the static-group branch, which calls `SetOrder_Stop()` and does not
+  re-enter `RepeatOrder()`. Applied and confirmed **alone**, on its own test
+  run, because this file is shared by every mission.
+- [x] **Regression ruled out.** The risk was leaving groups inert after a fight,
+  undoing the 2026-08-18 resume-after-attack improvement. Measured on the
+  confirming run: **80 patrol resumptions, 0 `SetOrder_Stop`**. Groups attacked
+  mid-patrol still resume their route.
+- [x] **Patch 02 — `Missions\Campaign_1\Mission_2\MissionTasks.script`.**
+  `ActivateMove(false)` -> `ActivateMovement(false)` (the misspelled name does
+  not exist; `ActivateMovement` was verified real in `BaseTasks.script` rather
+  than trusted from the note), plus a `RadarArmed` one-shot guard on
+  `CC1M2Gr_NGerman_Infantry2::OnPathEndReached()`. Belt-and-braces — 01 already
+  fixed the root cause.
+- [ ] **Same `ActivateMove` typo in Campaign 2 Mission 3, line 932**
+  (`ActivateMove(true)`) — patch_03 in `K:\TvTDeepseek\patches\REDUX_2026-08-22\`,
+  **not yet applied**. Cosmetic (a logged error, not a crash), but it is the
+  same one-word fix.
+- [ ] **patch_04 (`MissionsMenu`) from the same parked set** — still unreviewed
+  here. Note the standing warning about array edits in that file: a dangling
+  comma in `MissionsMenu.script` once broke the game load entirely.
+
+### The trap inside patch 02 — read before touching it again
+
+The OLD block for the `RadarArmed` edit is **not unique on its first six
+lines**: `CC1M2Gr_NGerman_Infantry1` (line 432) has a near-identical
+`OnPathEndReached`, and a careless string replace patches the wrong group. The
+full nine-line block including `fireEvent(... "AttackGermanInfantry2" ...)` **is**
+unique and is the correct anchor. Verified by counting matches before replacing
+and by checking Infantry1 was untouched afterwards.
+
+### The bookkeeping lesson
+
+A diagnosed, written, reviewed fix that is not on the board **does not exist**.
+This one sat parked for three days, untracked in both TODO and CHANGELOG, and
+cost a crash plus a wasted test session — the crash initially looked like it
+might have been caused by an injected performance cache being trialled at the
+time, and ruling that out took real work.
+
+---
+
 ## Performance — where the frame time actually goes (2026-08-25)
 
 Full write-up: `notes/SESSION_2026-08-25_performance_day.md`. Framerate went
