@@ -51,6 +51,13 @@ Framerate went **36-40 -> 66-76** over the session. Which change did that is
 
 Write-up: `SESSION_2026-08-25_performance_day.md`.
 
+**PHASE 1 OVERFLOW — done anyway, 2026-08-25.** Having found *why*, the single
+hottest function got fixed too: a one-entry cache in front of
+`Objects.dll+0x17DAB0` (`std::map::lower_bound`, 41,000 calls/frame), worth a
+measured **+6.3%** under controlled self-A/B. Shipped as a launcher option
+alongside line of sight, confirmed in both builds, **~3.6 billion calls across
+4 sessions with 0 mismatches**. See `project_tvt_maplookup_cache.md`.
+
 **Done when:** you know *why* the framerate is what it is, and it is steady at a
 number you are happy with. Not "faster" — *known*.
 
