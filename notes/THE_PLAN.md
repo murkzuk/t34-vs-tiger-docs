@@ -22,9 +22,17 @@ visual change is good while the framerate is fighting you.
 | Shadow distance measured and tuned | **done** — worth 2 fps |
 | Fog distance measured and balanced against engagement range | **done** — C1M2 |
 | Roll the fog value out to the other dawn/sunset missions | open |
-| **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 44.75%, not the wrapper |
+| **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 50-54%, not the wrapper (disassembled) |
 
-**ANSWERED:** ~72% of frame time is the game's own code (Objects.dll 44.75%, Engine.dll 21.07%, Service.dll 5.29%), single-threaded at 562 ms/s on one thread. The D3D9 wrapper is 1.31% — so DXVK vs dgVoodoo barely matters to framerate.
+**ANSWERED, then sharpened by disassembly 2026-08-25:** the profiler's counters
+are cumulative since injection, so the first figures included mission load. The
+true steady-state mix is **Objects.dll 50-54%, Engine.dll 20-24%, d3dx9 5-8%,
+Service.dll 5-6%, J5Script 2%, Behavior.dll 0.5%, and the D3D9 wrapper 0.0%**.
+Engine.dll's share is **SpeedTree tree rendering** (`+0x167000..+0x180000`,
+6.28% of frame time in five pages) - which confirms why the `ModelLOD` pull-back
+was worth 8 fps. Objects.dll has no page-level data yet (module table was full);
+`MAX_MODULES` is now 512 and one fresh run will produce it.
+See `project_tvt_disassembly_2026-08-25.md`.
 
 **Done when:** you know *why* the framerate is what it is, and it is steady at a
 number you are happy with. Not "faster" — *known*.

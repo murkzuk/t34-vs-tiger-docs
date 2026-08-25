@@ -17,6 +17,79 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-25 — We disassembled the hot code. The trees were guilty after all.
+
+Short version: a sampling profiler told us *which DLL* was eating the frame.
+This week we went one level down and disassembled the actual addresses to find
+out *what code*.
+
+**First, we had to correct ourselves.** The profiler's counters turned out to be
+cumulative since injection — never reset — so the numbers we quoted were session
+averages that included mission *loading*. The early reports were 65% `ntdll`,
+which is just file I/O and allocation, and that dragged everything else down.
+Recovering the per-window deltas gives the real steady-state gameplay mix:
+
+```
+Objects.dll   50-54%      <- the game's object/entity code
+Engine.dll    20-24%      <- rendering
+d3dx9_30       5-8%
+Service.dll    5-6%
+J5Script       ~2%        <- the .script interpreter
+Behavior.dll   ~0.5%      <- ALL of the AI
+D3D9.DLL       0.0%       <- the graphics wrapper
+```
+
+Three things fall out of that, and all three are more useful than the number we
+started with:
+
+- **DXVK vs dgVoodoo does not matter.** The wrapper is 0.0% of frame time.
+  That argument is now settled with a measurement rather than an opinion.
+- **The script interpreter is not the bottleneck.** 2%. Anyone optimising
+  `.script` files for speed is polishing the wrong thing.
+- **The AI is free.** `Behavior.dll` is half a percent — which includes the
+  line-of-sight and occlusion work. No performance reason to hold back on AI
+  features, ever.
+
+**Then the disassembly.** Engine.dll's hot pages all cluster in one contiguous
+90 KB block. Every string referenced from that block says the same thing:
+
+```
+RenderedTrees   TreeMapSize   ShadowLOD   RootSystem
+CSTDynamicVB    CSTDynamicIB  FillBillPrimitiveVertexBuffer
+```
+
+`CSTDynamicVB`/`IB` are SpeedTree's dynamic vertex and index buffers. It is the
+tree draw path — **6.28% of total frame time in five 4 KB pages alone**.
+
+Which independently confirms something we had already found the crude way:
+pulling the tree `ModelLOD` distances back was worth 8 fps, and now we know
+exactly why.
+
+The hottest single function is a 2.3 KB routine with a 740-byte stack frame that
+walks a list of 68-byte instance records, reads a one-byte material ID from
+offset `+0x40`, and skips the expensive render-state setup whenever the material
+matches the previous record — a textbook material-sorted batch loop. You can
+read that straight off the assembly, including the `fmul 255.0` converting a
+float colour for the vertex format.
+
+**Still open:** Objects.dll is over half the frame time and we have no
+address-level data for it, because the profiler's module table was capped at 128
+entries and hit that cap exactly. Raised to 512; one more run will produce it.
+
+Waiting for us when it does: an RTTI map already extracted from the shipped
+DLLs — **4,778 named virtual functions across 300 classes** in Objects.dll
+alone, with real names like `CAnyComponentNE@g5` and `IPositionable@g5`. So the
+next run turns raw addresses into class names and vtable slots immediately,
+with no guessing.
+
+*Tooling note: `pefile` + `capstone`, not Ghidra. These 2008 DLLs shipped with
+full MSVC RTTI intact, which is a far better lever than decompilation for
+"what is this address".*
+
+*Disassembly and analysis by Claude (Opus 5).*
+
+---
+
 ## 2026-08-25 — Where the framerate actually goes, measured one thing at a time
 
 Sat at 26 fps and couldn't say when it dropped. So: bisect. Same mission, same
@@ -315,5 +388,3 @@ gear between "much faster than you" and "stopped".
 Also worth knowing: the wingman formation values are **leftovers from Whirlwind
 over Vietnam**. REDUX still carries them — 200 m spacing with a `z` of 30, which
 is *altitude*. The devs never retuned them for tanks.
-
----
