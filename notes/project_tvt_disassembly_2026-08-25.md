@@ -244,3 +244,77 @@ same place, right after `LodForShadowChange`.
 Effect: the late-model Tiger never gets its shadow-hide LOD, so its shadow
 behaves differently from every other tank. One missing line, cosmetic, real.
 NOT yet applied — awaiting the user's go-ahead.
+
+---
+
+# CORRECTION — the grass fill-rate hypothesis was WRONG
+
+I proposed that `AlphaBlendDistanceFactor = 0.8` (a REDUX `//jm` change from
+G5's shipped `0.4`) was widening an expensive alpha-blended band, and that
+reverting it to `0.4` would buy back framerate. **Tested, and it is wrong in
+both directions.**
+
+Measured steady-state (per-window deltas, full grass both runs):
+
+| | grass pages | verdict |
+|---|---|---|
+| `0.8` / `RenderOverShadow true` (jm) | **9.89%** | better |
+| `0.4` / `RenderOverShadow false` (G5) | **12.45%** | worse |
+
+The user also reported the visual symptom independently: *"i can see the tank
+through the grass"*.
+
+## What the value actually does — read from the engine, not guessed
+
+`Objects.dll+0x0EE7D0`, the property registration for `CGrass`:
+
+```asm
+0EE7F9  mov   dword ptr [esp+0x18], 0x3f4ccccd   ; = 0.8f  <- ENGINE's own default
+0EE8F3  fld   dword ptr [0x1039824c]             ; 1.0
+0EE8FD  fsub  st(1)                              ; 1.0 - factor
+0EE909  fdivr dword ptr [0x1039824c]             ; 1.0 / (1.0 - factor)
+```
+
+The engine stores **`1.0 / (1.0 - AlphaBlendDistanceFactor)`**. So the factor is
+where the alpha fade-out *begins*, as a fraction of max view distance:
+
+- `0.8` -> grass fades over the last **20%** of the draw distance
+- `0.4` -> grass fades over the last **60%** — far more semi-transparent grass,
+  which is both uglier (you see tanks through it) and *more* blended pixels
+
+And the engine's hardcoded default is `0.8`, not the `0.4` in G5's own script.
+**jm's change was right, and for exactly the reason the symptom showed.**
+
+### SAFETY: never set `AlphaBlendDistanceFactor = 1.0`
+
+`1.0 / (1.0 - 1.0)` is a division by zero. `0.9` is the practical ceiling (fade
+over the last 10%). Reverted to `0.8`.
+
+## Where the grass trade-off actually stands
+
+| state | fps | grass CPU |
+|---|---|---|
+| grass slider off | **70-90** | absent |
+| grass max, jm settings | 36-40 | 9.89% |
+| grass max, G5 settings | (not measured) | 12.45% |
+
+The doubling from turning grass off is real but the CPU share was only ~10% —
+so most of that win is **GPU fill rate, which the sampling profiler cannot
+see**. Corroborating evidence: the main thread never exceeds ~58% busy in any
+run, so the game is not CPU-bound; it is waiting on the GPU.
+
+**There is no free win here.** It is a straight quantity-vs-framerate trade.
+
+### What is left to try, cheapest first
+
+1. **Slider at the middle rather than max or off.** `MaxVisDist = [20.0, 150.0]`
+   is a min/max pair the slider interpolates, so mid-slider is roughly 85 m of
+   grass. Free, no file edit, and almost certainly the best value-for-effort.
+2. Lower the `150.0` upper bound directly — distant grass at a grazing angle is
+   the worst overdraw and the least visible benefit.
+3. `Density` on the two expensive types (rye 2.9, high grass 2.5).
+
+### Method note for next time
+
+Two values were changed in one edit, so the 9.89% -> 12.45% result cannot be
+attributed between them. Change one thing per measurement.
