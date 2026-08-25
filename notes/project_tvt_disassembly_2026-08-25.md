@@ -201,9 +201,13 @@ Four of those `fld`/`fistp` float-to-int round trips per query (min x, max x,
 min y, max y). On x87 each one is a store-forward with a rounding-mode cost.
 Run per query, per object, per frame — which is exactly the shape of a hot spot.
 
-`"Cache miss"` sits one page further on at `+0x17E908`, in the same subsystem —
-so this grid query *has* a cache in front of it and the cache is missing often
-enough to log about it.
+`"Cache miss"` sits one page further on at `+0x17E908`. **It is not a
+performance logger — corrected after disassembling it.** The call that consumes
+the string is followed by `int3`, so it never returns: it is a fatal assertion
+on a lookup that is expected always to hit. There is no evidence it ever fires,
+and it is not a lead. (The surrounding routine at `+0x17E8A0` is a refcounted
+registry lookup returning a 36-byte record — `inc dword ptr [edx+eax*4]` then
+`base + index*36`.)
 
 ## The immediately actionable part: grass has an in-game slider
 
