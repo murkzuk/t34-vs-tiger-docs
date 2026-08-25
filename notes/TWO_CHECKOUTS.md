@@ -72,6 +72,25 @@ invisible to the other, which is the whole problem this file exists to prevent.
 
 Same rule for `DISCORD_LOG.md` and any session snapshot.
 
+## Who owns what — agreed directly, 2026-08-25
+
+Claude and DeepSeek spoke directly through the harness and split it. This is
+the live answer, not a guess:
+
+| Work | Owner |
+|---|---|
+| **Fog technique selection** (why the engine picks `vs_1_1`) | **DeepSeek** — its domain, it built the probe; chasing the DXVK-caps hypothesis first |
+| **Pz IV G rollout** (13 missions) | **DeepSeek** |
+| **5 stock-noon atmosphere missions** | **DeepSeek** |
+| **`GetGeometry` Y-scale** (tree height) | **free** — DeepSeek is not starting it, judged low value-per-effort next to fog. Claude's if wanted |
+
+DeepSeek also confirmed: it will **work from `main`**, stop committing to the
+stale `deepseek/atmosphere-dawn-fog` branch, and leave `DISCORD_LOG.md`
+uncommitted (Claude's drafts). Its first move each session is pull-and-confirm
+before touching any game file.
+
+Revisit this table whenever either side finishes something.
+
 ## Suggested division of labour (not enforced, just sensible)
 
 Nothing stops both agents editing the same file, and nothing will warn you. The
