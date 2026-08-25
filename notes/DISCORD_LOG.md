@@ -17,6 +17,45 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-25 — Where the framerate actually goes, measured one thing at a time
+
+Sat at 26 fps and couldn't say when it dropped. So: bisect. Same mission, same
+spot, one change per run.
+
+| change | fps |
+|---|---|
+| as found | **26** |
+| trees drawn in 3D: 720 m → 250 m | **34** |
+| shadows: 1050 m → 560 m | 36 |
+| fog back to stock density | 40 |
+
+**Trees are the expensive one.** That mission generates **77,888 of them**, and
+how far out they're drawn in full 3D before dropping to billboards is worth
+**eight frames** on its own.
+
+**Shadows barely matter** — two frames for nearly halving the distance. I'd
+expected more, especially at dawn where a 10° sun throws a 17-metre shadow off
+every tank.
+
+**Fog is the interesting one, because it's backwards.** Thicker fog is *faster*
+— you draw less. But at the stock density you can see **5% at a kilometre**, and
+the log proved what that means: every sight line in the run was under **711 m**,
+and **the AI gunner never fired once**. Nothing was ever far enough away to be
+worth a decision.
+
+Settled on a middle value. Same mission then gave a median sight line of **867 m**
+and a max of **1049 m**, with the gunner engaging normally again — about 340 m
+of engagement range bought back for a couple of frames.
+
+So it's a dial, not a setting: **see further, or run faster.** Worth knowing
+which way you'd rather have it.
+
+*Honest footnote: this only explains about half the drop. The rest predates the
+changes we were testing, and the next step is a proper sampling profiler rather
+than more guessing. Measured with Claude.*
+
+---
+
 ## 2026-08-25 — Why distant tanks never fade into the fog
 
 Long-standing niggle: the ground hazes out with distance but tanks stay dark and
