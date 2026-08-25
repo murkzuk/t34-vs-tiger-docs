@@ -127,6 +127,34 @@ below that is not a result. Say so.
 - **SpeedTreeRT.dll itself is 0.04%.** The middleware is free; every bit of the
   tree cost is G5's own wrapper (`CSTForest`, `CSTTreesQuadTree`, `CTreeKiller`).
 
+
+### SHIPPED — in the launcher, confirmed in both builds
+
+- [x] **Injector now accepts up to 8 DLLs.** It took one, which is why Line of
+  sight and Profiler were mutually exclusive — and making the cache a third
+  exclusive option would have forced a choice between AI line of sight and +6%
+  fps. The hooks touch different engine DLLs (`Behavior.dll` vs `Objects.dll`)
+  and never meet. Each DLL is allow-checked against the list beside **itself**,
+  so the opt-in rail is unchanged. Backup: `K:\tvt_probe\inject.cpp.bak_singledll`.
+- [x] **Launcher checkbox: "Faster trees (map cache - about +6% fps)".**
+  Combinable with Line of sight; Profiler still clears both, deliberately.
+  Backup: `K:\TvTDeepseek\rollback\TvT_Launcher.ps1.before_cache_20260825`.
+- [x] **Confirmed live in ZeeWolf 2015 with both hooks at once.** LOS reported
+  `enforcement live` and its fit check passed on ZW's own terrain
+  (+1.58..+1.59 m, spread 0.01); the cache ran 458,779,776 calls at 66.8% hits,
+  **0 mismatches**, clean exit. The hit rate being ~the same in both builds
+  (66.8% ZW / 67.2% REDUX) shows the access pattern is a property of the engine,
+  not of either mod.
+- [ ] **Multi-entry cache.** The current cache is ONE entry. The top 16 keys
+  cover up to 51% of lookups, so a 4- or 8-entry direct-mapped table should push
+  the hit rate past 67%. Same verify-then-activate safety, same self-A/B to
+  measure it. **Predict the number before the run.**
+
+**Cumulative cache record: ~3.6 billion calls, 4 sessions, 2 game builds,
+0 mismatches.**
+
+---
+
 ## Tiger shadow bug — fixed, and the bug class closed (2026-08-25)
 
 Write-up: `notes/project_tvt_shadow_bug_2026-08-25.md`.

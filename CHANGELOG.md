@@ -6,6 +6,33 @@ This file is human-written, plain prose. For technical details, see [PROJECT_MAP
 
 ---
 
+## 2026-08-25 (Performance, shipped) — "Faster trees" in the launcher, confirmed in both builds
+
+**By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance
+
+### What changed
+
+The map-lookup cache — a one-entry cache in front of the hottest function in the game, worth a measured +6.3% framerate — is now a launcher option rather than a batch file, and it has been confirmed running live in ZeeWolf 2015 alongside line of sight.
+
+Getting there needed one change to the injector. It only ever accepted a single DLL, which is why Line of sight and Profiler were already mutually exclusive in the launcher, and adding the cache as a third exclusive option would have forced a choice between AI line of sight and the framerate. That is an unnecessary choice: the two hooks patch completely different engine DLLs — line of sight goes into `Behavior.dll`, the cache into `Objects.dll` — and never meet. So the injector now takes up to eight, loading each one fully before the next begins, with the process suspended throughout. The opt-in rail survived intact: every DLL is allow-checked against the list sitting beside *itself*, so each still has to authorise itself, and each checks the same list again from inside once loaded. That was verified three ways before anything was wired up — a single bad path still errors as before, a bad second DLL is named correctly rather than blamed on the first, and an install that is not on the list is still refused.
+
+The launcher gained a "Faster trees (map cache - about +6% fps)" checkbox that can be ticked together with Line of sight. The Profiler still clears both, deliberately — measuring while something else is changing the thing being measured is worthless.
+
+Then the confirmation, which is the part that mattered: two injected DLLs coexisting in a real process is not something argument tests can prove. In ZeeWolf, both armed and both worked. Line of sight reported `enforcement live` and its terrain fit check passed on ZW's own map dimensions (+1.58 to +1.59 m across three observer positions, 0.01 m spread) rather than assuming REDUX's — that per-mission fix is still holding. The cache ran 458,779,776 calls at a 66.8% hit rate with zero mismatches, and the game exited cleanly.
+
+That hit rate is worth noting: 66.8% in ZeeWolf against 67.2% in REDUX. Different build, different missions, different terrain, essentially the same number — because the access pattern the cache exploits is a property of the engine itself, not of either mod.
+
+The cumulative record now stands at roughly **3.6 billion calls across four sessions and two game builds, with zero mismatches**.
+
+### Why
+
+The cache had been proven fast and proven correct, but it was still a batch file that had to be run instead of the launcher, which in practice means it would never have been used. Making it a normal option next to line of sight is what turns a measurement into something that actually improves the game. The injector change was the price of not making the user choose between two features that have no reason to conflict.
+
+The safety pattern is what made any of it defensible: the cache verifies its own predictions against the real function 400,000 times before it is allowed to skip a single lookup, and one disagreement disables it permanently. Putting a cache in front of a container lookup inside a binary with no source is otherwise not a reasonable thing to do.
+
+
+---
+
 ## 2026-08-25 (Crash fix) — Campaign 1 Mission 2 no longer crashes to desktop
 
 **By:** murkzuk (jmurkz), with Claude Code (Anthropic) assistance

@@ -103,8 +103,9 @@ So the cache does not trust itself:
 | **DISABLED** | Entered instantly and permanently on the **first** disagreement, logged loudly. Pure pass-through. |
 
 A wrong assumption produces a log line and a normal game, never a corrupted one.
-It passed on the first attempt and has never disagreed once in **631 million
-calls across two sessions.**
+It passed on the first attempt and has never disagreed once in **~3.6 billion
+calls across four sessions and two game builds** — see the cumulative table at
+the end.
 
 The guard requires all four to match: `this` pointer, key, root node
 (`*(this->_Myhead + 4)`), and size (`*(this + 4)`). Size is the load-bearing one
@@ -142,3 +143,99 @@ If the hit rate reached 85%, the arithmetic says ~8% and the observed
 second-order effect suggests more.
 
 **Not yet done, and it should be measured the same way — predicted number first.**
+
+---
+
+# SHIPPED — launcher integration and the ZW confirmation
+
+2026-08-25, same day. The cache is now a launcher option, and it has been
+confirmed working in **both** builds alongside line of sight.
+
+## The blocker: the injector took only one DLL
+
+`tvt_inject.exe` accepted a single DLL, which is why Line of sight and Profiler
+were already mutually exclusive in the launcher. Adding the cache as a third
+exclusive option would have forced a choice between **AI line of sight and +6%
+framerate** — a bad choice, and an unnecessary one, because the two hooks touch
+completely different engine DLLs (`Behavior.dll` and `Objects.dll`) and never
+meet.
+
+So the injector now accepts **up to eight DLLs**, loading each one fully before
+the next begins — so a DLL that arms a loader notification is in place before
+the following one loads. The process stays suspended throughout.
+
+### The safety rail survived the change
+
+Every DLL is allow-checked **against the list beside itself**, not just the
+first one. Each still has to authorise itself, and each checks the same list
+again from inside. Verified before wiring anything up:
+
+```
+single DLL, bad path        -> ERROR: DLL not found: K:
+ope.dll      (backward compatible)
+two DLLs, second bad        -> ERROR: DLL not found: K:
+ope2.dll     (names the right one)
+two real DLLs, bad install  -> REFUSED: not listed in tvt_los_allow.txt
+```
+
+Backup of the single-DLL version: `K:\tvt_probe\inject.cpp.bak_singledll`.
+
+## The launcher
+
+```
+[x] Line of sight  (the AI cannot see through hills or woods)
+[ ] Performance HUD  (fps, draw calls, GPU - DXVK only)
+[ ] Profiler  (find where the frames go - replaces line of sight)
+[ ] Faster trees  (map cache - about +6% fps)          <- new
+```
+
+**Line of sight and Faster trees can both be ticked.** The Profiler still clears
+both, deliberately: measuring while something else is changing the thing being
+measured is worthless.
+
+Form grew 24 px and everything below the new row shifted down. Parses clean.
+Backup: `K:\TvTDeepseek
+ollback\TvT_Launcher.ps1.before_cache_20260825`.
+
+## THE CONFIRMATION — both hooks, live, in ZeeWolf
+
+The one thing argument tests could not prove is two injected DLLs coexisting in
+a real process. They do:
+
+```
+LINE OF SIGHT   enforcement live
+                fit check +1.58..+1.59 m (spread 0.01 m) - terrain accepted
+
+MAP CACHE       458,779,776 calls
+                306,386,442 hits   66.8%
+                          0 mismatches
+                clean exit
+```
+
+Two details worth keeping:
+
+**The hit rate is a property of the engine, not of either mod.** 66.8% in ZW
+against 67.2% in REDUX — different build, different missions, different terrain,
+essentially the same number. The access pattern that makes the cache work is
+inherent to how the engine walks trees.
+
+**The LOS fit check passed on ZW's own terrain**, reading ZW's world size and
+height factor rather than assuming REDUX's. That per-mission fix is still
+holding.
+
+## Cumulative record
+
+| session | build | calls | mismatches |
+|---|---|---|---|
+| A/B measurement | REDUX | 366M | 0 |
+| Second A/B | REDUX | 265M | 0 |
+| Full play session | REDUX | 2,471M | 0 |
+| Launcher + LOS together | **ZW** | 459M | 0 |
+| | | **~3.6 billion** | **0** |
+
+Four sessions, two game builds, roughly 3.6 billion calls, and the guard has
+never once been wrong.
+
+**The verify-then-activate pattern is what earned that.** It is the reason it
+was ever defensible to put a cache in front of a container lookup inside a
+binary with no source. Reuse it for anything similar.
