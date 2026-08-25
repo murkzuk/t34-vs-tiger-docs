@@ -22,7 +22,9 @@ visual change is good while the framerate is fighting you.
 | Shadow distance measured and tuned | **done** — worth 2 fps |
 | Fog distance measured and balanced against engagement range | **done** — C1M2 |
 | Roll the fog value out to the other dawn/sunset missions | open |
-| **Sampling profiler — find the rest of the drop** | **open, the big one** |
+| **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 44.75%, not the wrapper |
+
+**ANSWERED:** ~72% of frame time is the game's own code (Objects.dll 44.75%, Engine.dll 21.07%, Service.dll 5.29%), single-threaded at 562 ms/s on one thread. The D3D9 wrapper is 1.31% — so DXVK vs dgVoodoo barely matters to framerate.
 
 **Done when:** you know *why* the framerate is what it is, and it is steady at a
 number you are happy with. Not "faster" — *known*.
@@ -119,6 +121,6 @@ phase, it gets promoted and this file says why.
 
 ## How to see progress
 
-Phase 1: **3 of 5 done.** Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
+Phase 1: **4 of 5 done.** Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
 
 That is the number to watch — not the 115.
