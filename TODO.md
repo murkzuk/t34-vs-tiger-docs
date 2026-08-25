@@ -33,15 +33,24 @@ below that is not a result. Say so.
   i.e. nothing.
 - [x] **Fix the Tiger shadow bug** (see its own section below). NULL RESULT for
   framerate — confirmed by reverting it deliberately.
-- [ ] **TRACE THE CALLERS OF `Objects.dll+0x17DD00`.** ← the one confirmed
-  target. Tree management runs whether or not trees are drawn: at forest
-  MINIMUM the hot pages are unchanged (`+0x17D000` 7.54% -> 7.45%). The slider
-  changes what is *drawn*, never what is *computed*, so ~10% of the frame is
-  spent deciding things that are then discarded. The function converts a world
-  box to forest grid-cell indices (four x87 float-to-int round trips per query,
-  called from `CSTForest+0x18ACAE`). **The open question is why it is called so
-  often** — making it faster wins a fraction, making it get called less is where
-  a real win lives, and that is in the caller. Read-only RE, no play sessions.
+- [x] **Trace the callers of `Objects.dll+0x17DD00`.** DONE — and it was **not**
+  the target. That function runs **once per frame** (linear code, no loop:
+  camera position + radius in, grid-cell range out). The 7.45% belonged to the
+  4 KB *page*, which holds seventeen functions.
+- [x] **Give the profiler 64-byte resolution.** `prof.cpp` now keeps a fine
+  histogram over one configurable range (`FINE_BASE`/`FINE_LEN`, O(1) direct
+  index, no scan). It put **89.65% of the whole region in one bucket**.
+- [ ] **HOOK `Objects.dll+0x17DAB0` — COUNT CALLS AND DISTINCT KEYS PER FRAME.**
+  ← the live target. That 128-byte function is **6.51% of total frame time**,
+  about 87% of the hottest page, and it is a red-black-tree descent — textbook
+  MSVC `std::map::lower_bound` (children `+8`/`+0xC`, int key `+0x10`). Eight
+  instructions; expensive because every hop is a pointer chase, not because the
+  instructions are slow. Six call sites: two in the `CSTForest` block (which is
+  why tree pages stay hot at forest MINIMUM — the lookups happen per tree
+  whatever is drawn), and **two inside the function whose failure path prints
+  `"Cache miss"` — that map IS the cache.** The measurement answers which fix
+  applies: few distinct keys -> flat array; repeating key -> memoise one result;
+  otherwise hoist it out of the per-tree loop. **Measure before patching.**
 - [ ] **Account for the remaining ~12 ms/frame.** Grass is 1.8, tree management
   ~1.5, and the rest has not been located. Everything obvious is excluded: GPU,
   lock stalls, draw-call submission, tree rendering, shadows.

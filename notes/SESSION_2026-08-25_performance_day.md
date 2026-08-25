@@ -28,7 +28,7 @@ same spot, same facing, grass and forest sliders as the only variable.
 
 | | frame cost | verdict |
 |---|---|---|
-| **Tree *management*** (quad-tree, grid query, LOD) | **~10%** | **CONFIRMED TARGET** |
+| **A `std::map` lookup** at `+0x17DAB0`, called from `CSTForest` | **6.51%** in 128 bytes | **CONFIRMED TARGET** |
 | **Grass** | **1.8 ms (12%)** | real, tunable, modest |
 | Tree *rendering* | ~0 | null — 24% of draw calls, no frame time |
 | Tiger shadow bug | ~0 | null — real bug, zero fps |
@@ -54,6 +54,10 @@ reporting it as a finding.
 ---
 
 ## THE TARGET — tree management runs whether or not trees are drawn
+
+> **The finding below stands. The *function* it names does not — see the
+> caller trace at the end of this note. `+0x17DD00` runs once per frame;
+> the real hot code is a `std::map` lookup at `+0x17DAB0`.**
 
 The single most valuable result. `Objects.dll +0x17D000` is the hottest page in
 the game, and the forest slider does not touch it:
@@ -226,7 +230,11 @@ G5's own wrapper around it.
 
 ## Still open
 
-- **Trace the callers of `Objects.dll+0x17DD00`.** The one confirmed target.
+- ~~Trace the callers of `Objects.dll+0x17DD00`.~~ **DONE** — it runs once per
+  frame and was never the target. The real one is the `std::map` lookup at
+  `+0x17DAB0`, 6.51% of the frame in 128 bytes. See the trace at the end.
+- **Hook `+0x17DAB0` and count calls + distinct keys per frame.** The next
+  measurement; it decides which fix is even applicable.
 - **~12 ms/frame unaccounted for.** Grass is 1.8, tree management ~1.5, and the
   rest is not yet located.
 - **What actually caused 36-40 -> 66-76?** Best remaining guess is that clearing
@@ -241,3 +249,120 @@ G5's own wrapper around it.
 - `K:\TvTDeepseek\drawcall_probe\` — probe, launcher, logs
 - `K:\TvTDeepseek\rollback\grass_test_baseline_2026-08-25\` — every run's log, for re-diffing
 - `K:\TvTDeepseek\rollback\shadowhide_2026-08-25\` — before/after of the model file
+
+---
+
+# THE CALLER TRACE — the hottest code in TvT is a `std::map` lookup
+
+Done the same evening, read-only. **This corrects the target named earlier in
+this note.**
+
+## First, three more wrong claims, killed before they were made
+
+**`+0x17DD00` is NOT the hot function.** Its single call site is linear code
+with no loop — camera position and a radius in, grid-cell range out, **once per
+frame**. The morning's claim that it "runs constantly" and was the optimisation
+target was wrong. The error: `+0x17D000` is a 4 KB page holding **seventeen
+functions**, and the page's 7.45% got attributed to the one function that
+happened to have been disassembled.
+
+**The FPU-control-word story.** `+0x17CF10` does `fnstcw`/`fldcw` rounding-mode
+switching — genuinely one of the slowest idioms on modern x86, and called from
+four loop sites. But those instructions sit at `0x17CF5B` and `0x17CF8C`, below
+`0x17D000`, and **page `+0x17C000` never appears in the profiler log at all**.
+Dead.
+
+**The quad-tree recursion.** The caller graph showed `+0x18D0C0` calling itself.
+It does not: that function ends at `0x18D128` (`ret 8`), and the call at
+`0x18D15B` belongs to a *different* function starting at `0x18D130` that the
+boundary detector missed. It is a `std::vector::erase` over 100-byte elements.
+**Consequence: any caller trace beyond one hop is unreliable with the current
+function boundaries.** Treat multi-hop chains as leads, never as fact.
+
+## Then the measurement that settled it
+
+Rather than guess which of seventeen functions was hot, the profiler got a
+**64-byte fine histogram** over `Objects.dll +0x17C000..+0x180000` (`prof.cpp`,
+`g_fine[]` — O(1) direct index per sample, no scan, so it cannot perturb what it
+measures; `FINE_BASE`/`FINE_LEN` are constants, re-point and rebuild).
+
+The result was not ambiguous:
+
+```
+FINE (64-byte buckets in Objects.dll +0x17C000..+0x180000, 367 samples)
+    +0x17DAC0     6.51% of all    89.65% of range   329
+    +0x17E8C0     0.28% of all     3.81% of range    14
+    +0x17D580     0.08% of all     1.09% of range     4
+```
+
+**One bucket holds 89.65% of the region.** And `+0x17C000` is confirmed cold,
+exactly as predicted.
+
+## The function
+
+`Objects.dll+0x17DAB0`, **128 bytes, 6.51% of total frame time** — about 87% of
+the whole hot page. It is a red-black-tree descent, textbook MSVC
+`std::map::lower_bound`:
+
+```asm
+0017DAB1  mov  ecx, dword ptr [ecx]      ; this->_Myhead
+0017DAB3  mov  eax, dword ptr [ecx+4]    ; root
+0017DAC2  mov  esi, dword ptr [edi]      ; the key
+0017DAC4  cmp  dword ptr [eax+0x10], esi ; compare node key      <-- LOOP TOP
+0017DAC7  jl   0x17dad0
+0017DAC9  mov  edx, eax                  ; remember candidate
+0017DACB  mov  eax, dword ptr [eax+8]    ; descend LEFT
+0017DACE  jmp  0x17dad3
+0017DAD0  mov  eax, dword ptr [eax+0xc]  ; descend RIGHT
+0017DAD3  test eax, eax
+0017DAD5  jne  0x17dac4                  ; while node != nil
+```
+
+Node layout: children at `+8`/`+0xC`, integer key at `+0x10`. The hot 64-byte
+bucket `+0x17DAC0` covers exactly the descent loop.
+
+**Eight instructions, and the most expensive code in the game** — not because
+the instructions are slow, but because every node hop is a pointer chase into
+unpredictable memory. It is a cache-miss machine.
+
+### The six call sites
+
+```
++0x17DEDB  in +0x17DD00   (the once-per-frame grid query)
++0x17E320  in +0x17E100
++0x17E8BA  in +0x17E8A0   <- the "Cache miss" function
++0x17E8D3  in +0x17E8A0   <- same, twice
++0x1869B1  in +0x186950   <- CSTForest block
++0x18770B  in +0x1876B0   <- CSTForest block
+```
+
+**The `"Cache miss"` string finally makes sense.** Two call sites are inside the
+function whose failure path prints it — **that map IS the cache**. The assert
+never fires because lookups succeed; they are simply expensive. An earlier
+section of this note dismissed that string as a dead lead. It was pointing at
+the right subsystem the whole time, just not for the stated reason.
+
+The two `CSTForest` call sites are why the tree pages stay hot with the forest
+slider at minimum: **the lookups happen per tree regardless of what is drawn.**
+
+## Why this is better news than geometry
+
+The morning's assumption was that the cost was arithmetic — float conversions,
+grid maths. That is hard to improve. **A data-structure lookup is a different
+class of problem** with well-understood fixes: memoise a repeated key, replace
+the tree with a flat array if the keys are dense, or hoist the lookup out of the
+per-tree loop.
+
+## NEXT — and it is a measurement, not a theory
+
+**Hook `+0x17DAB0`, count calls per frame, record the keys.** That answers with
+no interpretation:
+
+- how many lookups per frame
+- how many **distinct** keys — a handful means an array replaces the tree
+- whether the same key repeats — if so, one cached result kills most of the cost
+
+Same read-only hook pattern already proven twice. One play session.
+
+**Do not skip to patching.** Six theories died today; the count of distinct keys
+decides which fix is even applicable, and it is cheap to measure.
