@@ -17,6 +17,78 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-25 — A twenty-year-old crash, and the fix that was sitting in a folder
+
+Campaign 1 Mission 2 crashes to desktop. Here is what the game's own log says,
+6,451 times, just before it dies:
+
+```
+Possible stack overflow in function RepeatOrder,      stack depth 1389
+Possible stack overflow in function OnPathEndReached, stack depth 1390
+Possible stack overflow in function PopOrder,         stack depth 1391
+```
+
+One AI group — the German infantry patrol — reaches the end of its route and
+then eats its own tail:
+
+```
+OnOrderFulfilled -> restore "Patrol" -> RepeatOrder
+   -> already at end of path -> OnPathEndReached
+   -> mission script re-arms the attack -> ContinueOrder -> round again
+```
+
+That group appears **1,395 times** in the log. The next worst appears 45 times.
+
+**The cause is a fix.** A change made a week earlier let groups resume their
+patrol after being interrupted by a fight — a genuine improvement. But it
+resumed the patrol even when the patrol was already *finished*, and that closed
+the loop. So the fix is one condition: only resume if there is road left.
+
+```
+   if (!m_CurrentOrder.m_PatrolPath.isEmpty()
++      && m_CurrentOrder.m_NextPatrolPoint < m_CurrentOrder.m_PatrolPath.size())
+```
+
+An exhausted patrol now falls through into the branch below, which parks the
+group and deliberately does not call `RepeatOrder()` again.
+
+**Results, from a full mission played to a proper ending:**
+
+```
+stack overflows       6,451  ->  0
+that group's log      1,395  ->  11 lines
+alarms                  143  ->  4  (two unrelated tank groups)
+outcome               crash  ->  clean exit
+```
+
+**The part worth copying:** that file is shared by *every mission in the game*,
+so it was applied and tested completely alone — game launched normally, no
+hooks, no probes, nothing else changed. And the specific regression to rule out
+was obvious in advance: make the guard too strict and groups go inert after
+combat, undoing the very improvement that caused the bug. So that got measured
+rather than eyeballed — **80 patrol resumptions, 0 groups parked.** Mid-patrol
+groups still pick their route back up.
+
+**Now the embarrassing bit, which is the actual lesson.** None of that diagnosis
+was new. It was worked out four days earlier, written up and reviewed three days
+earlier, and then parked in a `patches\` folder and recorded on no list
+anywhere. It sat there until it crashed a live session.
+
+Worse: an experimental performance hook happened to be attached at the time, so
+the crash looked like it might have been self-inflicted, and real effort went
+into clearing that before anyone read far enough down the game's own log to find
+`Possible stack overflow` staring back.
+
+A diagnosed, written, reviewed fix that isn't on the board does not exist.
+
+*(Also fixed while in there: `ActivateMove` — a command that does not exist and
+never has — should be `ActivateMovement`. It had been logging an error on every
+single mission load. The same typo is still sitting in Campaign 2 Mission 3.)*
+
+*Diagnosis, patch and verification by Claude (Opus 5).*
+
+---
+
 ## 2026-08-25 — We made a 2001 engine 6% faster, and proved it
 
 Follow-on to the profiling work. Short version: the hottest single function in
