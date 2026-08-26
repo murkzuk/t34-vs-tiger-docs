@@ -741,6 +741,54 @@ This is why raising `StencilShadowColor` fixed hull detail and did **nothing**
 for the tank commander: he was not in a cast shadow, he was simply facing away
 from the sun.
 
+### What can cast onto what — `StencilShadowSettings`
+
+Only objects listed in `Scripts\Common\Settings.script` (~L64) cast a stencil
+shadow, and **stencil is the only shadow that can fall onto another object**:
+
+```
+StencilShadowSettings = [
+    [ [], [CLASSIFICATOR_SHADOW] ],
+    [ [], ["INVENTORY_ITEM"]  ],
+    ...
+];
+```
+
+That is tanks, guns, buildings. **Trees are not in it**, and cannot be added
+usefully — see below.
+
+### Why a tank parked under a tree stays fully lit
+
+Trees are classified as terrain (`CLASSIFICATOR_TERRAINFOREST`) and their
+shadows are drawn by a **separate vegetation pass that only touches the
+terrain**, gated by `TreeShadowLodDistance` (default 500) and `TreeLightKoef` in
+`BaseAtmosphere.script`.
+
+So a tree shadow is terrain-only *by design*. It has no path onto a dynamic
+mesh. This is an engine limitation, not a settings mistake, and **it is not
+script-fixable** — the pass lives in the compiled renderer.
+
+Worth knowing before anyone spends a day trying to make woods provide visual
+cover: they never will, however the shadow colours are set. (The AI *does* see
+through foliage correctly — that is the separate line-of-sight work.)
+
+### The trees are SpeedTreeRT v1
+
+`SpeedTreeRT.dll` + `STTree.dll` in the game root, `Models\Trees\*.spt` as
+procedural definitions (6-15 KB each - the geometry is generated at runtime, not
+baked). Textures split into `*Bark.tex` (3D trunk/branch geometry),
+`*Frond/Leaves/Needles*.tex` (billboard foliage) and `*_Billboard.tex` (the
+full-tree impostor at distance).
+
+So a tree is **both** mesh and billboard. There is real geometry to cast from —
+but SpeedTreeRT renders its own projected ground shadow, separate from the
+engine's stencil pass, which is the whole reason tree shadows never reach tanks.
+
+**Procedural generation also means per-client tree layout.** In multiplayer each
+client generated its own tree positions, so one player drove through gaps
+another player's client had filled with trunks. The layout was never
+synchronised.
+
 ### RULE: `ShadowColor` and `StencilShadowColor` must match within a mission
 
 They are the same physical shadow drawn by two different renderers. If they

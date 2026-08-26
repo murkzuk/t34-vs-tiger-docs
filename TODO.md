@@ -4,6 +4,42 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## Knowledge-base audit — findings that never reached a reference doc (2026-08-26)
+
+The user's point: *"I should not have to prompt you to add this, it ought to be
+automatic as I am sure we have missed a lot of findings over the last 2 weeks."*
+Correct, and the audit confirms it.
+
+**The structural problem:** `notes/` is session-scoped and dated
+(`SESSION_2026-08-25`, `project_tvt_*_2026-08-25`). `Documentation/` is the
+durable reference. Findings land in the first and are never promoted to the
+second. **23 of 24 project notes are referenced from no reference doc at all.**
+
+- [x] **`Documentation/TvT_Performance.md` created.** An entire domain had no
+  reference doc - two days of profiling, disassembly, the map cache, the tools
+  and the method lessons existed only in dated notes.
+- [x] **Tree-shadow knowledge folded into authoring section 14.** Proof of the
+  problem: `project_tvt_tree_shadow_limitation.md` documented
+  `StencilShadowSettings` (`Settings.script` L64) two days before section 14 was
+  written, and section 14 was written without consulting it.
+- [ ] **Promote the rest.** Candidates, by destination:
+  - authoring doc: `atmosphere_understanding`, `atmosphere_lighting_plan`,
+    `dawn_rollout`, `c1m2_tigers_passive_by_design`, `pz4g_full_unit_swap`
+  - performance doc: `lod_distances`, `tree_lod_tuning`, `speedtree_harvest`,
+    `settreesize_hook_spec`, `resolution_finding`
+  - engine/lineage: `wov_disabled_features`
+  - **status, not reference - leave in notes:** `commercial_question`,
+    `pb_campaign_reference`, `big_map_2d_campaign_layer`, `acquisition_parked`,
+    the `SESSION_*` and `fps_bisect` files
+- [ ] **Sweep the fortnight before 2026-08-25** for findings that never landed
+  anywhere. The audit above only covers what is *in* notes; work discussed in
+  session and never written down at all will not show up this way.
+
+**The discipline, going forward:** a finding is not recorded until it is in a
+`Documentation/*.md` reference. A dated note is a working file, not a record.
+
+---
+
 ## Shadow consistency across missions (2026-08-26)
 
 Model written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 14.
