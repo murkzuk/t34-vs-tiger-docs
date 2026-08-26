@@ -85,3 +85,69 @@ build where the Tiger I's 88 does not. Either leave it flat (consistent with its
 siblings) or change the whole table as part of a considered pass.
 
 See `TvT_Unshipped_Content.md` for the King Tiger itself.
+
+---
+
+# CORRECTION 2026-08-26: ZW's bias is REAL — it is in handling and gunnery
+
+An earlier section of this document said the flat penetration tables were "not a
+nationality bias" and that the user's read was unsupported. **That conclusion was
+drawn from the penetration table alone and was wrong about the wider picture.**
+
+The user maintained ZeeWolf had a bias. Compared class-for-class against the
+**untouched 2001 original**, they are right and it is not subtle.
+
+## The control: REDUX *is* the original
+
+On these fields REDUX is the 2001 release essentially untouched — the only
+difference found across three tanks is the Tiger's `MaxPower`, 1600 -> 1500,
+which is a REDUX *nerf* to the Tiger. So "REDUX vs ZW" is genuinely
+"original vs ZW".
+
+## AI main-gun accuracy (`FireDeviation`, lower = more accurate)
+
+```
+                    ORIGINAL      ZW
+Tiger  AI gun         1.2    ->  0.05      24x MORE accurate
+T-34/85 AI gun        1.25   ->  1.55      24% LESS accurate
+T-34/76 AI gun        1.5    ->  1.6        7% LESS accurate
+```
+
+## Player main gun
+
+```
+Tiger  player gun     0.005  ->  0.005     unchanged - still pinpoint
+T-34/85 player gun    0.005  ->  0.15      30x LESS accurate
+```
+
+**Play the Tiger in ZW and you shoot exactly as G5 intended. Play the T-34/85
+and you are thirty times less accurate.**
+
+## Mobility and sensors
+
+```
+Tiger      MaxSpeed        2200  ->  2730     +24%
+           Mass           56000  -> 40000     29% LIGHTER (real Tiger I is 57 t)
+           MaxRadarDistance 1500 ->  2600     sees 1.7x further
+           AttackDistanceMax 1000 -> 2600     engages 2.6x further
+           FirePeriod      12000 ->  7000     fires 1.7x more often
+           FirePeriodRandAdd 8000 -> 2000     far more consistent
+T-34/85    DirectionSpeedH    17 ->     8     turret traverse HALVED
+           Mass            40000 -> 48000     heavier
+T-34/76    DirectionSpeedH    36 ->     7     turret traverse cut 5x
+```
+
+## The measurement trap that nearly produced a wrong answer twice
+
+A first pass grepped the **first** `FireDeviation` in each file and reported
+T-34/85 going 0.005 -> 0.15. A second pass reported 0.15 -> 0.005. Both were
+"right" and both were useless: **a unit file contains separate gun classes for
+the AI and the player** (`CTankT34_85_44Gun` vs `CTankT34_85_44PlayerGun`), each
+with its own value. Always compare per class.
+
+## What this means for the realism work
+
+The penetration pass is now the *second* priority. **Restoring ZW's handling and
+gunnery to the original values is simpler, better evidenced, and fixes the thing
+that is actually felt in play** - it is a revert to G5's numbers rather than a
+rebalance, so there is no design judgement to make.

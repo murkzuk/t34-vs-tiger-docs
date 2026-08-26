@@ -60,7 +60,26 @@ Every REDUX mission sits at or below ZW's dimmest.
 
 ## TOMORROW'S LIST (2026-08-26 — in rough priority order)
 
-### 1. Ballistic realism pass on ZW — USER WANTS THIS, route not yet chosen
+### 1. ZW's handling & gunnery bias — REVERT TO ORIGINAL (do this before penetration)
+- [ ] **The user was right that ZeeWolf had a bias, and it is in handling and
+  gunnery, not penetration.** Compared class-for-class against the untouched
+  2001 original:
+  - AI Tiger gun `FireDeviation` **1.2 -> 0.05** (24x MORE accurate); AI T-34s
+    made *less* accurate.
+  - **Player** Tiger gun unchanged at 0.005; **player T-34/85 0.005 -> 0.15**,
+    thirty times worse.
+  - Tiger: +24% speed, 29% lighter (56 t -> 40 t), sees 1500 -> 2600 m, engages
+    1000 -> 2600 m, fires every 12 s -> 7 s.
+  - T-34/85 turret traverse **halved** (17 -> 8); T-34/76 **cut 5x** (36 -> 7).
+- [ ] **This is a REVERT, not a rebalance** — REDUX is the 2001 original on these
+  fields (one exception: Tiger `MaxPower` 1600 -> 1500, a REDUX nerf). So there
+  is no design judgement to make, unlike the penetration question.
+- **Compare PER CLASS.** A unit file has separate AI and player gun classes
+  (`CTankT34_85_44Gun` vs `...PlayerGun`); grepping the first match gives
+  contradictory answers. This trap produced two opposite wrong readings.
+- [ ] Sweep the rest of ZW's roster the same way — only three tanks were checked.
+
+### 2. Ballistic realism pass on ZW — route not yet chosen
 - [ ] **Pick a route first, it is a design decision.** **A:** adopt REDUX's
   tables wholesale (genuinely real numbers, but ZW's Tiger 88 goes 175 -> 120 at
   point blank and every engagement changes). **B:** keep ZW's power levels and
@@ -73,7 +92,7 @@ Every REDUX mission sits at or below ZW's dimmest.
 - **Do NOT fix the Pak 43 alone** — see `TvT_Penetration_Tables.md`.
 - **REDUX needs nothing here.** Its tables are already the real figures.
 
-### 2. The King Tiger unit class
+### 3. The King Tiger unit class
 - [ ] ~1,800 lines, adapted from `TankPzVITigerE1Unit.script` (1,772 lines,
   70 classes). **14 class names are already dictated** by the shared files, and
   all armour/hitpoint constants exist. Point the mesh at `Cu_veh_KingTigerModel`,
@@ -83,20 +102,20 @@ Every REDUX mission sits at or below ZW's dimmest.
   (confirmed 2026-08-26) but are not grouped, so the turret will not swap to its
   damaged state.
 
-### 3. MS2 — the gate to ADDING geometry
+### 4. MS2 — the gate to ADDING geometry
 - [ ] **Identify the `vcount * 24` block** (flag `0x40000`, 6 floats/vertex,
   almost certainly tangent+binormal). This is what stands between "reshape
   existing geometry" and "add geometry" — i.e. the King Tiger vision-port idea.
 - [ ] Test the writer on a **skinned** mesh; the confirmed test was a static box.
 - [ ] Does a shape change need the companion **`.rmap`** regenerating?
 
-### 4. Lighting
+### 5. Lighting
 - [ ] The **ambient pass** across the other 11 campaign missions — still the
   biggest open quality job. Include `AntiSunAngle`; it is a contrast control.
 - [ ] **Shadow consistency**: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6 need
   `StencilShadowColor`.
 
-### 5. Performance
+### 6. Performance
 - [ ] **ZW is 36-60 fps and VIEW-DEPENDENT** — that points at frustum content,
   not per-unit cost. Profile the worst view against the best and diff.
 - [ ] `Engine.dll` is 28.5% of the frame and has never been broken down.
