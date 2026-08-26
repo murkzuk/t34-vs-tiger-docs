@@ -109,6 +109,40 @@ King Tiger   u_veh_KingTiger.ms2 ONLY
 Use the Panther as the template - it is the same author solving the same
 problem, completed.
 
+### INTERIORS ARE BORROWED, NOT BUILT - this is the key finding
+
+`SetupExtendMesh(externalModel, interiorModel)` in the unit class merges an
+interior onto a playable hull. **It takes any interior you name; nothing binds
+it to the hull it came from.** And ZeeWolf's own practice was to borrow:
+
+```
+TIGER_E1_Early_Playable        -> Cu_veh_PzVI_MAIN_InsideModel
+TIGER_E1_Early_Playable_II     -> Cu_veh_PzVI_MAIN_InsideModel
+TIGER_E1_Early_Playable_W      -> Cu_veh_PzVI_MAIN_InsideModel
+TIGER_E1_Early_Playable_PzGry  -> Cu_veh_PzVI_MAIN_InsideModel
+TIGER_E1_Mid1                  -> Cu_veh_PzVI_MAIN_InsideModel
+Panther_D_Playable             -> Cu_veh_Panther_D_InsideModel   (the ONLY new one)
+```
+
+**Five playable Tigers, all reusing G5's original Tiger I interior.** He
+modelled a fresh interior once, for the Panther, and never again.
+
+The interior model itself has **`ConfigSets = new Map([])`** - no required named
+parts. It is a plain mesh with materials. The only things the unit class asks of
+it are optional: `SetCockpitDevice(...)` gauge animators and
+`SetHideInCockpitJoints([...])`.
+
+**So a playable King Tiger does NOT need a new interior.** The Tiger II is a
+Henschel turret with the same crew layout as the Tiger I - commander left rear,
+gunner ahead of him, loader right - so borrowing `Cu_veh_PzVI_MAIN_InsideModel`
+is both cheap and the precedented move.
+
+**User's design call, recorded 2026-08-26:** rather than a full interior, model
+only the driver's and commander's vision ports - the only parts actually looked
+at in play. With the borrowing above, that becomes a *refinement on a working
+tank* rather than a prerequisite for one: get it playable on the borrowed
+interior first, then replace the ports if they sit wrong.
+
 ### TWO DIFFERENT JOBS - do not conflate them
 
 **An AI-only King Tiger is genuinely one file.** External mesh, rmap, 16
@@ -116,9 +150,10 @@ textures, armour, hitpoints, bullets, explosions, death string, roster entry and
 editor lines all exist. Write the unit class, uncomment
 `Editor/MenuConfig.script:229-230`, clear the cache.
 
-**A PLAYABLE King Tiger needs two more meshes** - `_Playable` and `_Inside`.
-That is 3D work, an interior modelled from scratch, not scripting. He wired the
-entire system side and stopped before the cockpit.
+**A PLAYABLE King Tiger needs a `_Playable` model class** - but NOT a new
+interior, see above. `PlayerUnit.script:175` names
+`Cu_veh_PzVI_KingTigerII_PlayableModel`, which is never defined; the interior it
+extends with can be G5's Tiger I one, exactly as ZeeWolf did five times.
 
 ### What building the AI version would actually involve
 
