@@ -58,6 +58,49 @@ Every REDUX mission sits at or below ZW's dimmest.
   that bad number cost a later session real time). Kept rather than deleted -
   it is the record of how the format was first worked out.
 
+## TOMORROW'S LIST (2026-08-26 — in rough priority order)
+
+### 1. Ballistic realism pass on ZW — USER WANTS THIS, route not yet chosen
+- [ ] **Pick a route first, it is a design decision.** **A:** adopt REDUX's
+  tables wholesale (genuinely real numbers, but ZW's Tiger 88 goes 175 -> 120 at
+  point blank and every engagement changes). **B:** keep ZW's power levels and
+  add realistic decay (far less disruptive, range starts mattering, still
+  unrealistic up close).
+- [ ] **Source historical figures for the ZW-only guns** — Pak 43, Flak 88,
+  Panther 75 L/70, KV-85, KV-1, KV-1S, SU-122, SU-152, sIG 33, Nashorn, Hummel,
+  Wespe, Marder II, StuG F8, Sturm-Haubitze, Pz II, Pz III L24. No REDUX
+  equivalent, so these need finding and **showing before applying**.
+- **Do NOT fix the Pak 43 alone** — see `TvT_Penetration_Tables.md`.
+- **REDUX needs nothing here.** Its tables are already the real figures.
+
+### 2. The King Tiger unit class
+- [ ] ~1,800 lines, adapted from `TankPzVITigerE1Unit.script` (1,772 lines,
+  70 classes). **14 class names are already dictated** by the shared files, and
+  all armour/hitpoint constants exist. Point the mesh at `Cu_veh_KingTigerModel`,
+  use `GunHvyPaK43`, uncomment `Editor/MenuConfig.script:229-230`, clear cache.
+- [ ] Fill `Turret_A_NormalSet` in the model script — it names only
+  `Body_commander`; the turret, gun, hatches and crew hands all exist in the mesh
+  (confirmed 2026-08-26) but are not grouped, so the turret will not swap to its
+  damaged state.
+
+### 3. MS2 — the gate to ADDING geometry
+- [ ] **Identify the `vcount * 24` block** (flag `0x40000`, 6 floats/vertex,
+  almost certainly tangent+binormal). This is what stands between "reshape
+  existing geometry" and "add geometry" — i.e. the King Tiger vision-port idea.
+- [ ] Test the writer on a **skinned** mesh; the confirmed test was a static box.
+- [ ] Does a shape change need the companion **`.rmap`** regenerating?
+
+### 4. Lighting
+- [ ] The **ambient pass** across the other 11 campaign missions — still the
+  biggest open quality job. Include `AntiSunAngle`; it is a contrast control.
+- [ ] **Shadow consistency**: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6 need
+  `StencilShadowColor`.
+
+### 5. Performance
+- [ ] **ZW is 36-60 fps and VIEW-DEPENDENT** — that points at frustum content,
+  not per-unit cost. Profile the worst view against the best and diff.
+- [ ] `Engine.dll` is 28.5% of the frame and has never been broken down.
+
 ## Ammunition scarcity - nothing in TvT models it (2026-08-26)
 
 - [ ] **`AmmoQty` is used by ZERO missions.** The engine supports per-placement
