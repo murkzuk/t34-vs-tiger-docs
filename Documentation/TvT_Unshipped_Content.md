@@ -109,6 +109,44 @@ King Tiger   u_veh_KingTiger.ms2 ONLY
 Use the Panther as the template - it is the same author solving the same
 problem, completed.
 
+### The exterior IS complete - and is production quality
+
+Verified 2026-08-26, because "is there even an exterior model?" is the first
+thing anyone will ask.
+
+```
+u_veh_KingTiger.ms2     11.35 MB   comparable to Panther_D (10.6) and PzVI_MAIN (17.3)
+16 textures             Yellow, Camo AND Winter liveries, each with normal maps
+                        hull / turret / road wheels / left+right tracks
+27 materials            more than the Tiger I's 22
+```
+
+Material list confirms the geometry: `TUR_Armor_FWD/REAR/TOP/LEFT/RIGHT`,
+`HullArmor_FWD/TOP/RT/LFT/REAR/Bottom`, `Turret_A_Crashed`, crew materials
+(`TankerUniform`, `Tankerm_NCO`, `hum_FleshTone`, `PeakCap`, `Commander`),
+`Hull_Markings`, `Number`, `FLAG` - and `K_RINGSMaterial`, the kill rings on
+the gun barrel. This is a finished asset, not a placeholder.
+
+### The one unfinished piece in the model: ConfigSets
+
+```
+KingTiger    "Turret_A_NormalSet", [ "Body_commander" ]
+Tiger LATE   "Turret_A_NormalSet", [ "Body3", "Body_commander", "Head",
+                                     "Headphones", "LHand1-3", "Luk_A", "Luk_B",
+                                     "Numbers", "Rhand1-3", "Turret_A",
+                                     "Weapon_A", "Weapon_B" ]
+```
+
+The turret group names only the commander - no turret, no gun, no hatches, no
+crew hands. `Body_NormalSet` and the track sets are filled in; the turret one
+was not. ConfigSets group named mesh parts for damage-state swapping, so an
+incomplete one means those parts will not swap when the turret is knocked out.
+
+**This is a text edit, not 3D work** - but confirming the part names requires
+reading inside the `.ms2`, and that tooling is parked
+(see the MS2 importer/exporter notes). Cross-referencing the Tiger LATE naming
+is the cheap first guess.
+
 ### INTERIORS ARE BORROWED, NOT BUILT - this is the key finding
 
 `SetupExtendMesh(externalModel, interiorModel)` in the unit class merges an
