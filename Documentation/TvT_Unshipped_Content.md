@@ -78,7 +78,49 @@ three model files and **no unit class in either**.
 So what is documented above is the complete surviving state. Finishing it means
 completing his work, not waiting for it.
 
-### What building it would actually involve
+### How deeply it was wired in - the system side is DONE
+
+Beyond the model and armour data, `CTankPzVI_KingTigerIIUnit` is referenced by
+name throughout the shared code:
+
+```
+PlayerUnit.script:175   crew-voice table - gunner calls it a heavy target and
+                        asks for AP. Names Cu_veh_PzVI_KingTigerII_PlayableModel
+PlayerUnit.script:240   death-message mapping
+Mission.script:193      sits in the GERMAN UNIT ROSTER, between the Panthers and
+                        the Tiger E1s, alongside every unit that works
+Strings.script:131      msg_DeathKingTigerII -> str_DeathKingTiger
+```
+
+**`Cu_veh_PzVI_KingTigerII_PlayableModel` is named once and never defined.** The
+shipped mesh's class is `Cu_veh_KingTigerModel` - the external/AI model. There
+is no interior mesh.
+
+### The Panther is the finished version of the same plan
+
+```
+Panther D    u_veh_Panther_D.ms2  +  _D_Playable.ms2  +  _D_Inside.ms2
+             Tank_Panther_D.script + Tank_Panther_D_Playable.script + AI + winter
+
+King Tiger   u_veh_KingTiger.ms2 ONLY
+             no Playable mesh, no Inside mesh, no unit class
+```
+
+Use the Panther as the template - it is the same author solving the same
+problem, completed.
+
+### TWO DIFFERENT JOBS - do not conflate them
+
+**An AI-only King Tiger is genuinely one file.** External mesh, rmap, 16
+textures, armour, hitpoints, bullets, explosions, death string, roster entry and
+editor lines all exist. Write the unit class, uncomment
+`Editor/MenuConfig.script:229-230`, clear the cache.
+
+**A PLAYABLE King Tiger needs two more meshes** - `_Playable` and `_Inside`.
+That is 3D work, an interior modelled from scratch, not scripting. He wired the
+entire system side and stopped before the cockpit.
+
+### What building the AI version would actually involve
 
 1. Copy `Scripts/Units/TankPzVIAusfEUnit.script` as the template - it is the
    closest existing heavy.
@@ -88,6 +130,7 @@ completing his work, not waiting for it.
 4. Uncomment the two editor lines in `Scripts/Editor/MenuConfig.script`.
 5. Clear `Cache\Scripts.cache` and place one in a test mission.
 
-**A session's work, not a project** - the expensive parts (mesh, textures,
-armour, router map) are all done. `Bullets.script:67` carries a `//jeff`
+**A session's work for the AI version, not a project** - the expensive parts
+(mesh, textures, armour, router map) are all done. The playable version is a
+different and much larger job, see above. `Bullets.script:67` carries a `//jeff`
 comment, so the user has been through this before.
