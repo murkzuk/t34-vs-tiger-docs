@@ -789,7 +789,21 @@ client generated its own tree positions, so one player drove through gaps
 another player's client had filled with trunks. The layout was never
 synchronised.
 
-### RULE: `ShadowColor` and `StencilShadowColor` must match within a mission
+### RULE (WEAKENED 2026-08-26): `ShadowColor` and `StencilShadowColor`
+
+> **CORRECTION.** This was written as "they must match". **ZeeWolf does not do
+> that**, and ZW is the build whose vehicle shadows read correctly:
+>
+> ```
+> ZW  C2M1   ShadowColor 0.424   StencilShadowColor 0.522   (stencil BRIGHTER)
+> ```
+>
+> He deliberately lifts the vehicle shadow above the terrain shadow, which is
+> what keeps figures standing inside a vehicle's shadow volume readable. Treat
+> "match" as a safe default when a mission never set `StencilShadowColor` at
+> all — not as a rule, and not as a reason to darken a stencil colour that is
+> already working.
+
 
 They are the same physical shadow drawn by two different renderers. If they
 differ, a tank and the ground beside it cast visibly different shadows.
@@ -940,7 +954,84 @@ luminance is cheap to compute from the block endpoint colours and settles the
 question in seconds.
 ---
 
-## 15. Crew figures rendering black — `PlanarShadow`, and the TRADE it costs
+## 14b. `PlanarShadow` — a REAL trade, an UNEXPLAINED conflict, and one dead hypothesis
+
+**Settled 2026-08-26 by the user testing both values, twice each.**
+
+### The trade is real, and the decision is made
+
+```
+PlanarShadow = false   tank SELF-SHADOWS + casts a ground shadow, commander DARK
+PlanarShadow = true    commander readable, tank renders FLAT
+```
+
+**`Models/u_veh_PzVI_LATE.script` is on `false` — the user's choice**, on the
+grounds that the tank fills the screen constantly while the commander is a
+small figure usually seen from behind. *"The less of 2 options."* Do not flip
+it back without asking.
+
+### The conflict, stated honestly and left open
+
+A diff of the model against ZeeWolf's copy shows:
+
+- the two files are identical apart from **turret materials 10 and 12**
+  (`KEYCOLOR` in REDUX, `NORMAL` in ZW)
+- all 22 materials match exactly — `ambient (0,0,0)`, `diffuse (1,1,1)`,
+  `LMDL_Default`
+- **ZW ships `PlanarShadow = true`** — and its Tiger still looks shaded
+
+So ZW gets both. REDUX cannot. The engine DLLs are byte-identical between the
+builds, so the cause is data we have not yet located. **This is unexplained.
+Do not write it up as solved, and do not re-derive the trade as if it were new
+— it is recorded here.**
+
+### DEAD HYPOTHESIS: the anti-sun (tested, false)
+
+The anti-sun is a second directional light from the opposite side, so it lights
+exactly the surfaces the sun misses. REDUX C2M1 was running it far hotter than
+ZW:
+
+```
+                    REDUX (was)       ZW C2M1
+AntiSunColor lum       0.820           0.455
+AntiSunIntensity       0.400           0.200
+  effective            0.328           0.091     REDUX 3.6x stronger
+AntiSunAngle          10.000          60.000     REDUX near-horizontal
+```
+
+Predicted: bringing REDUX to ZW's values would restore the tank's directional
+shading at `PlanarShadow = true`. **It did not.** The user's verdict was
+*"still too light"*. The anti-sun is not the flattener.
+
+The corrected values were **kept anyway** — C2M1 now runs `0.455 lum / 0.200 /
+45 degrees` — because they are better calibrated than the originals and they
+deepen the shaded flanks under `PlanarShadow = false`. That is a tidy-up, not
+a fix. Rollback:
+`K:\TvTDeepseek
+ollback\C2M1_Content_2026-08-26_preantisun.script`.
+
+**Still worth knowing: `AntiSunAngle` is a contrast control, not decoration.**
+At 10 degrees it comes in almost horizontally and rakes a vehicle's shaded
+flanks; ZW sits at 60, near its own sun elevation, so it behaves like sky fill
+on upper surfaces. Include it in any ambient pass over the other missions.
+
+### Method note
+
+Three explanations were offered for the flat tank before the user settled it:
+a missing shadow system, ambient washing out the falloff, then the anti-sun.
+The diff killed the first two in four minutes; a single play test killed the
+third. **Diff the data before theorising** — but note the diff did *not*
+produce the answer here either, and saying so is the point. The honest state
+is "trade is real, cause unknown".
+
+---
+
+## 15. Crew figures rendering black — `PlanarShadow`
+
+> **See 14b above for the settled position.** The trade below is REAL and was
+> confirmed by test; the user chose `false` (self-shadowing, dark commander).
+> What remains unexplained is that ZW ships `true` and still looks shaded.
+> The anti-sun theory was tested and is dead.
 
 Tank commanders rendered as near-black silhouettes while the hull beside them
 was correctly lit in full sun. **Fixed 2026-08-26.** ~50% improvement, matching

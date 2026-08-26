@@ -247,3 +247,179 @@ against a 62% hull.
 - **ZW's collision cost** — 926 cylinder shapes plus `CDynamicIntersector`,
   entirely unexamined.
 - **`MaxVisDistPower` on ZW** — do not touch. ZeeWolf already tuned it well.
+
+
+---
+
+## The frame's biggest single item: waiting on DXVK (measured 2026-08-26)
+
+**~19% of every frame is the game thread blocked on a lock inside DXVK.**
+This had never been seen because nobody had profiled the renderer the user
+actually plays on.
+
+### First: the install runs DXVK, not native D3D9
+
+```
+d3d9.dll                        4.1 MB   = DXVK
+d3d9.dll.dgvoodoo                        = dgVoodoo, renamed aside
+TvsT_fullLOD_HARD_4GB.dxvk-cache
+nvoglv32.dll in the profile              = NVIDIA's VULKAN ICD, not OpenGL
+```
+
+Every earlier conclusion about "the D3D9 path" was drawn on a renderer the
+user was not running. Check this before any graphics-side reasoning.
+
+### The measurement chain
+
+Page-level profiling could only say "a syscall": a 4 KB page of ntdll holds
+**256** syscall stubs, since each `Nt*`/`Zw*` thunk is exactly 16 bytes. Going
+to 16-byte buckets names them, and a stack scan names the caller.
+
+```
+NtWaitForAlertByThreadId   21.06% of the whole frame   (72% of all syscall time)
+registry (OpenKey/OpenKeyEx/QueryKey)   2.66%
+file opens (CreateFile/OpenFile/QueryAttributes)   0.90%
+
+WHO CALLS THEM (first non-ntdll, non-KERNELBASE frame)
+  D3D9.DLL      64.69%      <- DXVK
+  Engine.dll     4.72%
+  dinput8.dll    4.55%
+  advapi32.dll   4.20%      <- the registry traffic
+  dsound.dll     2.97%
+
+  D3D9.DLL +0x099000   36.01%   one page, a third of all syscall time
+```
+
+`NtWaitForAlertByThreadId` is the Windows 10 futex - the primitive under SRW
+locks, modern critical sections and `std::mutex`.
+
+### Why this is consistent with the drawcall probe, not contradicted by it
+
+The probe measured `Present` at **0.02 ms/frame** and `Lock` at **0.00**. So
+these waits are not present-pacing and not buffer locks - they are inside the
+draw submission path, which is what a backed-up DXVK command-stream queue
+looks like. Two instruments, same story.
+
+### The open question
+
+**DXVK earns its overhead on games issuing thousands of draw calls. TvT issues
+454.** Native D3D9 handles that trivially, so DXVK may be paying a threading
+cost for a benefit this engine never collects.
+
+A/B switch: `K:\TvTDeepseek
+enderer_ab.bat` (`native` / `dxvk` / `status`) -
+it only renames `d3d9.dll` and renames it back. Measure with the **drawcall
+probe**, which reports fps on either renderer; the DXVK HUD does not exist on
+native.
+
+Baseline to beat: **112-118 fps, C2M1**, eight consecutive 5 s windows.
+
+### Method notes from this hunt
+
+- **`GetThreadTimes` is tick-based (~15.6 ms) and under-reports threads that
+  block and wake often.** It said the game thread used only 23-59% of a core,
+  which suggested blocking; the drawcall probe's wall-clock measurement said
+  99.6% compute. The probe was right. Do not draw conclusions from thread CPU
+  time alone.
+- **A 4 KB profiler page is not a function, and in ntdll it is 256 syscalls.**
+- **`KERNELBASE`/`kernel32` are never the answer** to "who called this" - every
+  `WaitForSingleObject`, `RegOpenKeyEx` and `CreateFile` passes through them,
+  so they are the first non-ntdll frame on every stack. Skip them.
+- The launch scripts had **no fps readout at all** until `DXVK_HUD` was added
+  on 2026-08-26 - every scripted run before that was unmeasurable by eye.
+
+
+### Measuring fps: three instruments, each with a catch
+
+| instrument | works on | catch |
+|---|---|---|
+| **DXVK HUD** (`DXVK_HUD=fps,frametimes,drawcalls,gpuload`) | DXVK only | invisible on native D3D9 or dgVoodoo |
+| **F9 - the engine's own render stats** | any renderer | **costs fps while displayed** (user, 2026-08-26). Usable for an A/B only if left on in BOTH halves |
+| **drawcall probe** | any renderer | had a real bug until 2026-08-26, see below |
+
+`F9` toggles `CTLCMD_SHOW_STATISTICS` (`Scripts/Common/Game.script:418`). The
+key binding itself is inside `Controls.dll` and is not scriptable.
+
+### PROBE BUG, fixed 2026-08-26: it hooked only the FIRST device
+
+`drawcall_probe.cpp` guarded its device hooks with `!g_device_vt`, so it
+patched one vtable and never looked again.
+
+**Under DXVK every device shares one vtable, so this was invisible for weeks.**
+On native D3D9 the game releases its device and creates another
+(`execution.log`: `m_pDirect3DDevice->Release()`, `Device release counter 1`),
+and the replacement can sit on a *different* vtable - pure vs non-pure,
+hardware vs software vertex processing. The hooks went dead and the probe
+logged `16 vertex buffers created` and then nothing, twice in a row, while the
+game played a full mission.
+
+Now it re-hooks on every new device vtable, and `patch_slot` refuses to record
+its own hook as the "original" (that would be infinite recursion the moment a
+second vtable is patched).
+
+**The general lesson: a tool validated on one renderer is not validated.** The
+failure looked like "native D3D9 does not work" and was actually "the
+measuring instrument does not work on native D3D9".
+
+
+---
+
+## CLOSED DOOR: native D3D9 is the same speed as DXVK (2026-08-26)
+
+**Tested, not reasoned. Do not re-open this.**
+
+```
+                frame     draw calls   triangles    fps (8 x 5 s windows)
+DXVK           8.55 ms       454        365k        112 - 119   avg 115.5
+native D3D9    8.38 ms       466        392k        115 - 119   avg 117.7
+                                                    -----------------------
+                                                    +1.9%  (noise floor +/-4%)
+```
+
+**Prediction was 130-140 fps. Result was 117.7. The prediction was wrong.**
+
+### What that means for the 19% lock wait
+
+The attribution was right - DXVK really is where the waiting happens - but the
+inference drawn from it was wrong. **A wait being large does not make it
+recoverable.** Native D3D9 pays an equivalent cost through a different lock.
+Submitting ~460 draw calls through the D3D9 API on a modern driver stack costs
+what it costs.
+
+**So DXVK is free.** It brings the HUD, the shader cache and Vulkan
+translation at no measured framerate cost. That is now measured rather than
+assumed.
+
+Switch if ever needed: `K:\TvTDeepseekenderer_ab.bat` (`native` / `dxvk` /
+`status`) - it only renames `d3d9.dll`, nothing is deleted.
+
+## Baseline framerates - and the mission that has never been profiled
+
+```
+C2M1 (village)     ~117 fps    466 draw calls   392k tris
+C1M1               92 - 104    190 draw calls   340k tris
+```
+
+**The original complaint was 70-90 fps. Neither profiled mission is anywhere
+near that.** An entire afternoon went into profiling missions that are not
+slow. **Before any further performance work, establish WHICH mission or scene
+actually drops to 70** - that is where the frame time is, and nothing measured
+so far has been looking at it.
+
+### Method lessons banked from this session
+
+- **Profile the thing that is slow.** Obvious, and it was skipped. Ask for the
+  slow case before instrumenting anything.
+- **A tool validated on one renderer is not validated.** The drawcall probe
+  hooked only the first device; under DXVK all devices share a vtable so the
+  bug was invisible for weeks. On native it went silent and looked exactly
+  like "native D3D9 does not work".
+- **When two mechanism-specific fixes both miss, stop guessing the mechanism.**
+  A watchdog that re-checks the hooks once a second fixed it without ever
+  identifying what wiped them (it fired 3 times per startup).
+- **`GetThreadTimes` is tick-based (~15.6 ms) and under-reports blocking
+  threads.** It suggested the game thread was only 23-59% busy; wall-clock
+  measurement said 99.6% compute. Do not conclude from thread CPU time.
+- **A HUD snapshot is not a measurement.** One 52.6 fps screenshot sent the
+  session chasing a 2x discrepancy that did not exist - the probe's 5-second
+  averages showed a steady 114.

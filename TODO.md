@@ -4,54 +4,50 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
-## REDUX missions are lit too darkly — the big one (2026-08-26)
+## Lighting - the commander is SETTLED, the ambient pass is not (2026-08-26)
 
 ```
 REDUX   34 missions, ambient luminance   0.092 .. 0.210
 ZW      40 missions, ambient luminance   0.120 .. 0.609
 ```
 
-**Every REDUX mission sits at or below ZW's dimmest.** Hours were spent
-calibrating against REDUX's own "tuned" missions at lum 0.201 as if that were
-the target; it never was.
+Every REDUX mission sits at or below ZW's dimmest.
 
-- [x] **C2M1 relit** — ambient lum 0.120 -> **0.437**, and the tank commander
-  finally reads. Shadow colours brought back down to 0.38/0.40/0.45 to restore
-  contrast, since ambient now does the fill work (the two had been compensating
-  for each other).
-- [ ] **A considered ambient pass across the other 11 campaign missions.** The
-  highest-value open lighting job, and bigger than the sun elevations were.
-  ZW's brightest missions run `SunIntensity` at 0.7-0.9, not 1.0 — if a mission
-  washes out, lower the sun rather than dropping ambient back.
+- [x] **C2M1 relit** - ambient lum 0.120 -> 0.318, anti-sun brought to ZW's
+  shape (lum 0.455 / intensity 0.200 / angle 45, was 0.820 / 0.400 / 10).
+- [x] **The commander/self-shadow trade is DECIDED.** `PlanarShadow = false`
+  in `Models\u_veh_PzVI_LATE.script` - the user chose self-shadowing and a
+  dark commander, "the less of 2 options". **Do not flip without asking.**
+  Unexplained: ZW ships `true` and still looks shaded. See
+  `TvT_Mission_Authoring_Verified.md` section 14b.
+- [ ] **A considered ambient pass across the other 11 campaign missions.**
+  Still the highest-value open lighting job. ZW's brightest run
+  `SunIntensity` 0.7-0.9, not 1.0 - if a mission washes out, lower the sun
+  rather than dropping ambient. **Include `AntiSunAngle`** - it is a contrast
+  control, and a low angle rakes a vehicle's shaded flanks.
+- [ ] **Shadow consistency**: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6 still need
+  `StencilShadowColor` (five never set it). Note ZW runs stencil *brighter*
+  than `ShadowColor`, so "they must match" is a default, not a rule.
 
-### ONE UNTESTED VALUE IS LIVE
+---
 
-`Models\u_veh_PzVI_LATE.script` commander material (id 6) is on
-`ambient = 1.000000` — a diagnostic set and never run. Either run it and judge,
-or put it back to `0`.
+## PERFORMANCE - next step is a QUESTION, not an experiment (2026-08-26)
 
-### The black commander — a real engine TRADE, not a bug
-
-```
-PlanarShadow = true    commander readable, tank does NOT self-shadow  (ZeeWolf's choice)
-PlanarShadow = false   tank self-shadows, commander black             (CURRENT)
-```
-
-A planar shadow is a flat projection onto the ground and cannot shade the model
-by itself. That is the whole trade.
-
-- [ ] **User's decision, one word.** Claude's view: keep `false` and the
-  self-shadowing — the tank fills the screen constantly, the commander is a small
-  figure usually seen from behind. ZeeWolf chose the other way, which is
-  legitimate rather than better.
-- **Live lead:** at `PlanarShadow = false`, material ambient `0.70` on the
-  commander lit **one tiny triangle of his face**. So material ambient DOES reach
-  him — unresolved whether the limit is *strength* (too weak against a stencil
-  shadow) or *coverage* (that triangle is simply the bit poking out above the
-  shadow volume). The `1.0` value above was set to distinguish them and never run.
-- **The earlier "material ambient does nothing" result was an INVALID TEST** — it
-  was run while `PlanarShadow` was `true`, so nothing was stencil-shadowing him
-  and there was nothing to fill.
+- [ ] **FIND THE SLOW MISSION.** The complaint is 70-90 fps. C2M1 measures
+  ~117, C1M1 92-104. **An afternoon was spent profiling missions that are not
+  slow.** Nothing else here is worth doing until this is answered.
+- [ ] **Ship the map-lookup cache by default.** +6.3%, verified over 42 million
+  calls, 0 mismatches - still only an opt-in launcher checkbox. Cheapest win
+  available.
+- [ ] Multi-entry map cache (4-8 entries vs the current 1). Hit rate is 67%;
+  headroom is ~2%, below the +/-4% noise floor, so probably not worth it alone.
+- [ ] **`Engine.dll` is 28.5% of the frame and has never been broken down.**
+  Hot pages `+0x229000`, `+0x185000`, `+0x17D000`, `+0x168000`. The only large
+  unexplored block left.
+- [x] **CLOSED: native D3D9 vs DXVK.** +1.9%, inside noise. DXVK is free. Do
+  not re-open.
+- [x] **CLOSED: the 19-21% `NtWaitForAlertByThreadId` lock wait.** Real, and
+  not recoverable - native pays the same through a different lock.
 
 ---
 
