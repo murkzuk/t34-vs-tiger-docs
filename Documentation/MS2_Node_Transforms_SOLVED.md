@@ -161,3 +161,59 @@ engine vents in the wrong place.** The cause is a shared parts sheet,
 and exhausts - which a name heuristic cannot know about.
 
 **The mapping is in the file. Do not guess it from names.**
+
+
+---
+
+# SOLVED 2026-08-26: UVs are DirectX-convention and must be flipped
+
+**The user spotted this from the UV editor**, seeing an island running far
+outside the 0-1 square. Measured across the King Tiger:
+
+```
+FrtPlate         V  -0.997 .. -0.002
+Turret_A         V  -0.994 .. -0.023
+Top_Hull_K       V  -0.719 .. -0.444
+TrackLeft        V  -8.000 .. -0.001
+
+104 of 138 textured nodes had UVs outside 0..1 - every V range negative
+```
+
+`.ms2` stores **DirectX-style V, running 0 to -1** (V=0 at the TOP of the
+texture). Blender and OpenGL put V=0 at the BOTTOM. **The importer was passing
+them through raw.** Fix is one character:
+
+```python
+loop[uv_layer].uv = (u, -v)
+```
+
+**Values beyond 1 after flipping are legitimate tiling** - `TrackLeft` reaches
+8.0, once per track-link repeat. Do not "fix" that by clamping to 0-1.
+
+Before the flip the model looked plausible but wrong in ways that took a careful
+eye to name: the turret ring painted across the mudguards, engine vents in the
+wrong place. After it: balkenkreuz correctly on the turret side, grilles on the
+engine deck, bolt detail on the wheel hubs.
+
+## Untextured materials are ARMOUR, not visual geometry
+
+Materials 4, 6, 7, 8, 10 and 14 (`HullArmor_Bottom/FWD/TOP/RT/LFT/REAR`,
+`TUR_Armor_*`) carry **no texture**, because they are the armour/collision
+facets the game uses for penetration. Nine meshes on the King Tiger -
+`EngDeck_CS`, `FloorPlt_CS`, `FrtPlate_CS`, `FrtPlt_L_CS`, `KT_R_plt_CS`,
+`LowHullSides_CS`, `PLTSides_CS`, `Top_Hull_K_CS`, `Turret_A_CM`.
+
+They render as blank plates draped over the tank. **Rule: a material with no
+texture is non-visual geometry - hide it.**
+
+## The complete format, as of 2026-08-26
+
+```
+geometry      positions / normals / UVs / indices     (already worked)
+UVs           DirectX V, negate it
+transforms    frame 0 of each node's 161-frame animation track
+materials     low 16 bits of the 16-byte 'other' record
+textures      .tex are plain DDS; paths + alpha modes are plain text in .script
+alpha         mode NORMAL must be honoured or decals render as black rectangles
+armour        untextured materials = collision facets, hide them
+```

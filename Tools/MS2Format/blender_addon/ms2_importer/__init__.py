@@ -129,7 +129,14 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
             for loop, vi in zip(face.loops, (i0, i1, i2)):
                 if vi < len(node.uvs):
                     u, v = node.uvs[vi]
-                    loop[uv_layer].uv = (u, v)
+                    # [2026-08-26] FLIP V. The .ms2 stores DirectX-style UVs
+                    # with V running 0 to -1 (measured: 104 of the King
+                    # Tiger's 138 textured nodes had UVs outside 0..1, every
+                    # V range negative). Blender/OpenGL puts V=0 at the BOTTOM,
+                    # so V must be negated. Values beyond 1 after flipping are
+                    # legitimate tiling - TrackLeft runs to 8.0, once per
+                    # track-link repeat.
+                    loop[uv_layer].uv = (u, -v)
 
     bm.normal_update()
     bm.to_mesh(mesh)
