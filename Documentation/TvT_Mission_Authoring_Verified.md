@@ -857,6 +857,68 @@ show up in a log** — it is a perfectly valid assignment to a class nothing
 instantiates, so nothing errors. The only way to find it is to cross-check
 configured model classes against the ones units actually ask for.
 
+### Could a modern shadow technique be hooked in? — assessed 2026-08-26
+
+Prompted by a Gemini conversation the user shared. Its structural model of the
+engine was **independently correct** and matched everything above, derived
+without knowledge of this document — two shadow pipelines, `StencilShadowSettings`
+as the gate, `TreeShadowLodDistance` capping the tree pass, foliage physically
+unable to shade a vehicle, and the `vs_1_1` / `vs_2_0` material split. It missed
+only the third system, the per-model fake-shadow blob.
+
+**Its load-bearing performance claim is wrong, and this is the part worth
+remembering.**
+
+> *"If shadows cause a CPU/GPU dip, the culprit is almost exclusively dynamic
+> vehicle/building stencil volumes"* — and therefore emptying
+> `StencilShadowSettings` *"immediately claws back CPU frame time"*.
+
+**Measured, and it does not.** No shadow class appears anywhere in either
+build's profiler hot pages:
+
+```
+REDUX   CGrass, CSTForest, CTreeKiller, CGridObject, a std::map lookup
+ZW      CAbstractObject, CAbstractJoint, CCylinderShape / CDynamicIntersector
+```
+
+`ShadowFar` tuning was worth about 2 fps. **Emptying `StencilShadowSettings`
+would delete every vehicle shadow in the game and buy close to nothing.** It is
+a reasonable inference from how the engine is built; it simply is not what the
+frame is spent on. See `TvT_Performance.md`.
+
+#### The idea that IS worth something
+
+**Screen-space directional shadows** — raymarch the depth buffer toward the sun
+vector, so any pixel whose ray crosses tree-canopy depth gets shaded. Because
+trees and tanks both write depth, **this would let foliage shade a tank**, which
+the engine fundamentally cannot otherwise do. That is a real visual capability,
+not a performance play.
+
+Its honest limit: screen-space only knows what is on screen. Park under a tall
+tree and look down and the canopy leaves the frame, so the shadow fades.
+
+#### Feasibility, grounded in what already exists here
+
+The genuinely hard part of a DIY implementation is reading a D3D9 depth buffer
+from a pixel shader — D3D9 was never designed for it, and it needs vendor FourCC
+formats (`INTZ` on NVIDIA, `DF24` on AMD), interception of
+`CreateDepthStencilSurface`, clear-call tracking and MSAA resolution.
+
+**That is already solved in this install.** `ReShade32.dll` is loaded, the
+shader folder is present, `ReShade.ini` is live, and the user has confirmed
+depth capture works. Reimplementing it inside our own DLL means rewriting
+thousands of lines to reach a capability that is already running.
+
+**The sensible split, if this is ever pursued:** ReShade does depth extraction;
+our injected DLL supplies the sun vector and camera matrices. We already hook
+`SetVertexShaderConstantF` in the fog probe, so feeding a shader is proven
+machinery. A full internal Cascaded Shadow Map means rendering the scene a
+second time from the sun's viewpoint — double the draw calls on the single core
+that is already the bottleneck, which is the wrong trade for this engine.
+
+**NOT STARTED. Recorded so the "killing stencils is free performance" idea does
+not resurface as a new thought in six months.**
+
 ### Before blaming the lighting, check the texture
 
 The commander stayed dark through every lighting change. He was never a lighting

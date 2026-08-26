@@ -159,6 +159,23 @@ GPU idle" transfers between the builds; nothing else does.
 - [ ] ZW's collision cost (926 cylinder shapes + `CDynamicIntersector`) is
   unexamined. Its own thread, not today's.
 
+### Assessed and rejected: "kill the stencil shadows for free performance"
+
+From a shared Gemini conversation, 2026-08-26. Its structural model of the engine
+was independently correct, but its performance claim is **measurably wrong**: no
+shadow class appears in either build's profiler hot pages, and `ShadowFar` tuning
+was worth ~2 fps. Emptying `StencilShadowSettings` would delete every vehicle
+shadow and buy close to nothing.
+
+- [ ] **Worth something instead: screen-space directional shadows.** Raymarch the
+  depth buffer toward the sun so foliage can shade a tank - a capability the
+  engine fundamentally lacks. **Not started.** If pursued: ReShade already does
+  the hard part (readable D3D9 depth needs INTZ/DF24 vendor formats, and
+  `ReShade32.dll` is already loaded here with depth confirmed working), while our
+  DLL supplies the sun vector and matrices - we already hook
+  `SetVertexShaderConstantF`. A full internal CSM means rendering the scene twice
+  on the single core that is already the bottleneck: wrong trade.
+
 **Do NOT tune ZW's grass** - ZeeWolf already did, and did it well.
 **"Faster trees" is near-pointless in ZW** - tick it for REDUX only.
 
