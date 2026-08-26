@@ -4,6 +4,31 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## OPEN: tank commanders render as black silhouettes (2026-08-26)
+
+Written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 15.
+**Not solved.** Seven candidates eliminated by test - texture, material, mesh,
+scene ambient, stencil shadow colour, config-set name, lightmaps. It is
+something in the skinned-mesh render path.
+
+- [ ] **Next step is an OBSERVATION, not a hypothesis:** do other crew figures
+  render dark - infantry, Soviet tankmen, the hull driver? All dark = engine-wide
+  skinned-mesh lighting, a D3D9 shader-path job on the scale of the fog work.
+  Only the Tiger commander = back to the model.
+- [x] **Recorded: skinned meshes are missing 64 shader variants.** `SceneMesh`
+  has 150, `SkinMesh1`/`SkinMesh4` have 86 each, and the 64 missing differ in
+  exactly one character - position 4 `L` instead of `N`. A rendering feature
+  (lightmapping, given `LightMap.fxo` sits alongside) that bone-animated geometry
+  simply cannot use. Not the cause here, but a permanent capability gap.
+
+**Measuring trap recorded:** the texture was first "measured" by averaging DXT1
+endpoint colours across the whole file - 22% against the hull's 62% - and
+reported as the cause. Meaningless: most of a character sheet is dark background
+around the UV islands. The user opened the image and saw it was fine. **Sample
+the region you care about, or just look.**
+
+---
+
 ## Knowledge-base audit — findings that never reached a reference doc (2026-08-26)
 
 The user's point: *"I should not have to prompt you to add this, it ought to be

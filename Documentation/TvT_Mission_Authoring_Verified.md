@@ -876,6 +876,71 @@ doubling the ambient barely moves him, while the same lift visibly improves a
 **Measure the texture before reaching for a lighting lever.** Average DXT1
 luminance is cheap to compute from the block endpoint colours and settles the
 question in seconds.
+---
+
+## 15. Skinned meshes (crew figures) — an open bug and a hard limit
+
+Added 2026-08-26. **The bug below is NOT solved.** Recorded so the next attempt
+does not repeat seven dead ends.
+
+### THE OPEN BUG: tank commanders render as black silhouettes
+
+Every German tank commander renders as a near-black silhouette while the hull he
+is standing in is correctly lit, in bright sunlight.
+
+**Ruled out, each by test rather than reasoning:**
+
+| candidate | how it was eliminated |
+|---|---|
+| the texture | `hum_German_Tankman.tex` is a normal-toned face on a **field-grey** uniform. Looked at directly. |
+| material colours | material 6 is **byte-identical** between the LATE and MAIN models, and its ambient `(0,0,0)` matches the hull's - every material on the tank has ambient 0 |
+| the mesh | switching `getMeshObjectName()` to `Cu_veh_PzVI_MAINModel` - a different `.ms2` entirely - left him just as dark |
+| scene `AmbientLight` | raised 75% (lum 0.120 -> 0.210). Slight improvement, nowhere near enough |
+| `StencilShadowColor` | raised twice, 0.3 -> 0.45 -> 0.56. Fixed **hull** detail, did nothing for him |
+| the `FakeShadowComm` config set | renamed to `set1` to match MAIN. No change. |
+| lightmaps | the Tiger uses no light textures at all |
+
+**What that leaves:** something in the skinned-mesh render path. Crew figures are
+bone-animated (`l_Spine`, `l_Shoulder_Left`, `Body3`, `Head`, `LHand1-3`) and go
+through `SkinMesh1`/`SkinMesh4` shaders, not the `SceneMesh` ones the hull uses.
+
+**The next step is an observation, not another hypothesis:** do *other* crew
+figures render dark - infantry, Soviet tankmen, the hull driver? All dark means
+an engine-wide skinned-mesh lighting problem, which is a D3D9 shader-path
+investigation on the scale of the fog work. Only the Tiger commander means the
+model, and something specific was missed.
+
+### A MEASURING TRAP that wasted four rounds
+
+The texture was first "measured" by averaging DXT1 block endpoint colours across
+the whole file, giving 22% luminance against the hull's 62%, and that was
+reported as the cause. **It was meaningless.** Most of a character sheet is dark
+background around the UV islands; the average described empty space, not the
+face. The user opened the texture and saw immediately that it was fine.
+
+**Sample the region you care about, or just look at the image.** A whole-file
+average of a character texture tells you nothing.
+
+### THE HARD LIMIT: skinned meshes are missing 64 shader variants
+
+Counted in `Shaders\`:
+
+```
+SceneMesh (rigid)     150 variants   has both *N and *L
+SkinMesh1             86 variants    *N only
+SkinMesh4             86 variants    *N only
+
+missing from both skinned sets: 64, and they differ in exactly one
+character - position 4 is L instead of N (positions 1-3 spread evenly)
+```
+
+So whatever feature position 4 `L` selects — `LightMap.fxo` exists alongside, so
+lightmapping is the obvious candidate — **skinned meshes have no shader for it
+and cannot use it.** Rigid geometry can; anything bone-animated cannot.
+
+Not the cause of the commander bug (the Tiger uses no light textures), but a
+real and permanent capability gap worth knowing before designing anything that
+expects crew figures to light like vehicles.
 
 ---
 
