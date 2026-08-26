@@ -940,11 +940,26 @@ luminance is cheap to compute from the block endpoint colours and settles the
 question in seconds.
 ---
 
-## 15. Crew figures rendering black — SOLVED by `PlanarShadow`
+## 15. Crew figures rendering black — `PlanarShadow`, and the TRADE it costs
 
 Tank commanders rendered as near-black silhouettes while the hull beside them
 was correctly lit in full sun. **Fixed 2026-08-26.** ~50% improvement, matching
 ZeeWolf, confirmed in game.
+
+> **CORRECTION, later the same day.** `PlanarShadow = true` fixes the commander
+> but **removes the tank's self-shadowing** — a planar shadow is a flat
+> projection onto the ground and cannot shade the model by itself. It is a
+> genuine engine trade, not a clean fix:
+>
+> ```
+> PlanarShadow = true    commander readable, NO self-shadowing   (ZeeWolf's choice)
+> PlanarShadow = false   self-shadowing, commander black
+> ```
+>
+> The deeper cause turned out to be that **REDUX's missions are lit far too
+> darkly** — ambient luminance 0.092-0.210 against ZW's 0.120-0.609. With C2M1
+> raised to 0.437 the commander reads properly. See section 13 and
+> `TvT_Performance.md`.
 
 ### The fix
 
