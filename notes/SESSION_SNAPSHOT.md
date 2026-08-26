@@ -105,19 +105,27 @@ Working files `K:\TvT_KingTiger\` - `KingTiger_final.blend` is the good one.
 
 Full detail in the docs repo `TODO.md`, which now opens with this.
 
-1. **Ballistic realism pass on ZW.** User wants it; **route not chosen and that
+1. **REVERT ZW's handling & gunnery bias to G5's values.** Decided and scoped;
+   the exact class/field/value list is in the docs repo `TODO.md`.
+   **The control:** StuG III and SU-85 are the same class of vehicle and G5 set
+   both to 1.2. ZW made the StuG **0.02** and left the SU-85 at 1.2 - 60x apart
+   from an identical start. Every German AI gun 3-60x better; every Soviet one
+   worse or untouched; the only player nerf in the game is the T-34/85 (30x).
+   **LEAVE the sensor/engagement ranges alone** - ZW raised those for both sides
+   and that part is genuine modding.
+2. **Ballistic realism pass on ZW (penetration).** User wants it; **route not chosen and that
    is a design decision, not a technical one.** REDUX's tables are already the
    REAL historical figures - leave REDUX alone. ZW gives heavy guns FLAT
    penetration *and* inflates close range 25-45%. See
    `Documentation/TvT_Penetration_Tables.md`.
    **Do not fix the Pak 43 alone** - it would make the King Tiger the only heavy
    in ZW that weakens with range.
-2. **The King Tiger unit class** - ~1,800 lines from the Tiger E1 template. 14
+3. **The King Tiger unit class** - ~1,800 lines from the Tiger E1 template. 14
    class names already dictated by the shared files; all constants exist.
-3. **MS2: identify the `vcount * 24` block** - the gate between reshaping
+4. **MS2: identify the `vcount * 24` block** - the gate between reshaping
    geometry and ADDING it.
-4. **The ambient pass** across the other 11 campaign missions.
-5. **ZW performance** - 36-60 fps and view-dependent, so profile worst view
+5. **The ambient pass** across the other 11 campaign missions.
+6. **ZW performance** - 36-60 fps and view-dependent, so profile worst view
    against best and diff.
 
 ## Build stamps
