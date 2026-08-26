@@ -117,3 +117,51 @@ block, the top 11 sum to 51%.
 
 **Print the whole report block, never a tail of it**, before concluding the
 tooling is wrong.
+
+---
+
+## REDUX grass retuned, 2026-08-26 — the lever pulled
+
+`MaxVisDistPower` was the unpulled lever noted above. Applied ZW's settings to
+REDUX, found power 8 too abrupt, settled on **6**.
+
+```
+                        R      p    effective area
+G5 stock              150      5      3366 m2    1.00x
+ZW                    120      8      1005 m2    3.35x less   (tried, too abrupt)
+REDUX now             120      6      1616 m2    2.08x less   <- KEPT, user approved
+```
+
+**Measured in C1M1** by toggling the in-game grass slider mid-run — same scene,
+same session, so no cross-mission confound:
+
+```
+                SEGMENT 1   SEGMENT 2 (grass off)   change
+fps                  93.0                 103.7    +11.5%
+triangles         339,913               326,566     -3.9%
+CPU ms/frame        10.71                  9.61    -10.3%
+
+grass now costs 13,347 triangles and 1.10 ms/frame
+```
+
+**The model held.** At power 5 in C1M2 grass was **33,751 triangles**; at power
+6 with the shorter distance it is **13,347** — a 2.5x cut against the 2.08x the
+area formula predicted. Close enough that
+`area = 2*pi*R^2 / ((p+1)(p+2))` can be trusted for future tuning.
+
+Grass still takes ~10% of the frame, but that is because C1M1 is a lighter
+mission overall (93 fps vs C1M2's 68) and grassier terrain - a smaller absolute
+cost is a similar slice of a shorter frame.
+
+**User verdict on the look at power 6: fine.** Power 8 was not tested visually
+to a conclusion; 6 was chosen as the safer falloff and approved.
+
+### A comparison that was nearly reported and should NOT have been
+
+The first drawcall run after the change appeared to show **+24.4% fps**. It was
+worthless: the baseline was yesterday's **C1M2** and the new run was **C1M1**.
+The tell was in the data - draw calls **+31%** and triangles **+25%**, when
+cutting grass cannot possibly increase either. Different scene, not a result.
+
+**Check that the before and after are the same mission before reporting any
+delta.** The in-run slider toggle is the way to avoid it entirely.
