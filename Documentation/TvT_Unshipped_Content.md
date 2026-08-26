@@ -1,0 +1,81 @@
+# Unshipped and half-finished content
+
+## The extended vehicle roster is ZEEWOLF'S, not G5's
+
+Checked 2026-08-26, because "G5 planned a Tiger II" is a natural assumption and
+it is wrong.
+
+```
+Original (G5, 2001)   12 death strings in Messages.rsr - exactly the 12 that shipped
+ZW 2015               41 - Panther, KV-85, KV-1, KV-1S, SU-122, SU-152, Nashorn,
+                           Hummel, Wespe, Marder II, PzII C, PzIII L24/L60,
+                           StuG F8, Sturm Haubitz, sIG33B, Studebaker... and KingTiger II
+REDUX                 41 - inherited from ZW
+```
+
+**The original install has no Tiger II anywhere** - not in `Messages.rsr`, not in
+`Piercing.script`, not in `Models/`. G5's own unfinished business is elsewhere
+(see the WoV engine lineage notes); the big roster is ZeeWolf's, and he shipped
+working unit classes for nearly all of it.
+
+**Reading `.rsr` files:** they are **UTF-16LE**, not CP1251. `strings` and a
+CP1251 grep both return nothing, which is why this went unnoticed. Use
+`iconv -f UTF-16LE -t UTF-8`.
+
+## THE KING TIGER IS ~90% BUILT AND ONE FILE FROM WORKING
+
+In `M:\T34vsTiger_ZW2015`. Everything a tank needs exists except the unit class.
+
+| piece | state |
+|---|---|
+| `Models/u_veh_KingTiger.ms2` | 11.9 MB mesh, Nov 2013 |
+| `.rmap` | present - pathfinding footprint done |
+| `Models/u_veh_KingTiger.script` | full material/skin definition |
+| `Textures/` | 16 King Tiger textures |
+| `Armour.script` | full per-facet table, real values |
+| `HitPoints.script` | 8 entries |
+| `Bullets.script` | gun, MG and debris control classes |
+| `Explosions.script` | 28 entries |
+| `Messages.rsr` | `str_DeathKingTiger = "KingTiger II"` |
+| `Editor/MenuConfig.script` | placement entries written but **COMMENTED OUT** (lines 229-230) |
+| **unit class** | **MISSING** - `CTankPzVI_KingTigerIIUnit` is referenced and never defined |
+
+Armour is properly entered, not placeholder:
+
+```
+turret front 185 mm    turret rear/sides 81 mm    turret top 41 mm
+```
+
+Two variants were intended: `CTankPzVI_KingTigerIIUnit` and
+`CTankPzVI_KingTigerII_WUnit` (winter).
+
+### The gun is already there, and it is the correct one
+
+`Piercing.script` has no `KingTiger` constants - but it does not need them.
+**The KwK 43 L/71 is ballistically the same weapon as the towed Pak 43**, and
+`GunHvyPaK43*` is fully defined. The engine already shares guns this way (the
+SU-85 uses the T-34/85's 85 mm).
+
+**But the Pak 43 penetration table is flat and should be fixed if it is reused:**
+
+```
+GunHvyPaK43    100 m: 247    500 m: 247    1000 m: 247    1500 m: 247    8800 m: 144
+TankT34_85_44  100 m: 115    500 m: 105    1000 m: 100    1500 m: 92     2000 m: 85
+```
+
+The near columns were filled with `1.0` and left. `MaxDistance` is also 8800 m -
+right for a towed gun in an artillery role, wrong for a tank gun.
+
+### What building it would actually involve
+
+1. Copy `Scripts/Units/TankPzVIAusfEUnit.script` as the template - it is the
+   closest existing heavy.
+2. Point `getMeshObjectName()` at `Cu_veh_KingTigerModel`.
+3. Reference `CPiercing::GunHvyPaK43*` for the main gun, and give it a real
+   penetration falloff rather than the flat table above.
+4. Uncomment the two editor lines in `Scripts/Editor/MenuConfig.script`.
+5. Clear `Cache\Scripts.cache` and place one in a test mission.
+
+**A session's work, not a project** - the expensive parts (mesh, textures,
+armour, router map) are all done. `Bullets.script:67` carries a `//jeff`
+comment, so the user has been through this before.
