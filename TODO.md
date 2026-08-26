@@ -4,17 +4,22 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
-## OPEN: tank commanders render as black silhouettes (2026-08-26)
+## SOLVED: tank commanders rendered black — `PlanarShadow` (2026-08-26)
 
 Written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 15.
 **Not solved.** Seven candidates eliminated by test - texture, material, mesh,
 scene ambient, stencil shadow colour, config-set name, lightmaps. It is
 something in the skinned-mesh render path.
 
-- [ ] **Next step is an OBSERVATION, not a hypothesis:** do other crew figures
-  render dark - infantry, Soviet tankmen, the hull driver? All dark = engine-wide
-  skinned-mesh lighting, a D3D9 shader-path job on the scale of the fog work.
-  Only the Tiger commander = back to the model.
+- [x] **FIXED.** `PlanarShadow = true` (plus `FakeShadow = true`,
+  `FakeShadowScale = 0.1`) on `u_veh_PzVI_LATE.script` - **ported from ZW, where
+  the commanders are not black.** ~50% improvement, confirmed in game. Found by
+  DIFFING the two builds after the user observed ZW's were better, not by
+  reasoning: same mesh, same DLLs, three model fields different.
+- [ ] **Untested: do the other vehicles need it?** ZeeWolf enabled it on the two
+  Tiger models ONLY - every other vehicle is DEFAULT in both builds, so there is
+  no precedent for a blanket sweep. Test one (PzIVG or a T-34) before applying
+  widely.
 - [x] **Recorded: skinned meshes are missing 64 shader variants.** `SceneMesh`
   has 150, `SkinMesh1`/`SkinMesh4` have 86 each, and the 64 missing differ in
   exactly one character - position 4 `L` instead of `N`. A rendering feature

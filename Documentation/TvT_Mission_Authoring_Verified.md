@@ -940,69 +940,106 @@ luminance is cheap to compute from the block endpoint colours and settles the
 question in seconds.
 ---
 
-## 15. Skinned meshes (crew figures) — an open bug and a hard limit
+## 15. Crew figures rendering black — SOLVED by `PlanarShadow`
 
-Added 2026-08-26. **The bug below is NOT solved.** Recorded so the next attempt
-does not repeat seven dead ends.
+Tank commanders rendered as near-black silhouettes while the hull beside them
+was correctly lit in full sun. **Fixed 2026-08-26.** ~50% improvement, matching
+ZeeWolf, confirmed in game.
 
-### THE OPEN BUG: tank commanders render as black silhouettes
+### The fix
 
-Every German tank commander renders as a near-black silhouette while the hull he
-is standing in is correctly lit, in bright sunlight.
+`Models\u_veh_PzVI_LATE.script` — three static fields:
 
-**Ruled out, each by test rather than reasoning:**
-
-| candidate | how it was eliminated |
-|---|---|
-| the texture | `hum_German_Tankman.tex` is a normal-toned face on a **field-grey** uniform. Looked at directly. |
-| material colours | material 6 is **byte-identical** between the LATE and MAIN models, and its ambient `(0,0,0)` matches the hull's - every material on the tank has ambient 0 |
-| the mesh | switching `getMeshObjectName()` to `Cu_veh_PzVI_MAINModel` - a different `.ms2` entirely - left him just as dark |
-| scene `AmbientLight` | raised 75% (lum 0.120 -> 0.210). Slight improvement, nowhere near enough |
-| `StencilShadowColor` | raised twice, 0.3 -> 0.45 -> 0.56. Fixed **hull** detail, did nothing for him |
-| the `FakeShadowComm` config set | renamed to `set1` to match MAIN. No change. |
-| lightmaps | the Tiger uses no light textures at all |
-
-**What that leaves:** something in the skinned-mesh render path. Crew figures are
-bone-animated (`l_Spine`, `l_Shoulder_Left`, `Body3`, `Head`, `LHand1-3`) and go
-through `SkinMesh1`/`SkinMesh4` shaders, not the `SceneMesh` ones the hull uses.
-
-**The next step is an observation, not another hypothesis:** do *other* crew
-figures render dark - infantry, Soviet tankmen, the hull driver? All dark means
-an engine-wide skinned-mesh lighting problem, which is a D3D9 shader-path
-investigation on the scale of the fog work. Only the Tiger commander means the
-model, and something specific was missed.
-
-### A MEASURING TRAP that wasted four rounds
-
-The texture was first "measured" by averaging DXT1 block endpoint colours across
-the whole file, giving 22% luminance against the hull's 62%, and that was
-reported as the cause. **It was meaningless.** Most of a character sheet is dark
-background around the UV islands; the average described empty space, not the
-face. The user opened the texture and saw immediately that it was fine.
-
-**Sample the region you care about, or just look at the image.** A whole-file
-average of a character texture tells you nothing.
-
-### THE HARD LIMIT: skinned meshes are missing 64 shader variants
-
-Counted in `Shaders\`:
-
-```
-SceneMesh (rigid)     150 variants   has both *N and *L
-SkinMesh1             86 variants    *N only
-SkinMesh4             86 variants    *N only
-
-missing from both skinned sets: 64, and they differ in exactly one
-character - position 4 is L instead of N (positions 1-3 spread evenly)
+```c
+static boolean PlanarShadow          = true;   // was CBaseModel::DefaultPlanarShadow (false)
+static boolean FakeShadow            = true;   // was CBaseModel::DefaultFakeShadow (false)
+static float   FakeShadowScale       = 0.1;    // was CBaseModel::DefaultFakeShadowScale (1.0)
 ```
 
-So whatever feature position 4 `L` selects — `LightMap.fxo` exists alongside, so
-lightmapping is the obvious candidate — **skinned meshes have no shader for it
-and cannot use it.** Rigid geometry can; anything bone-animated cannot.
+**`PlanarShadow` is the one that matters.** The likely mechanism — flagged as
+inference, not verified: with it false the model falls through to stencil shadow
+volumes, and the commander, standing proud of the turret, ends up inside *his
+own tank's* shadow volume. Setting it true gives a flat projected shadow instead
+and skips that self-shadowing.
 
-Not the cause of the commander bug (the Tiger uses no light textures), but a
-real and permanent capability gap worth knowing before designing anything that
-expects crew figures to light like vehicles.
+That also explains why raising `StencilShadowColor` visibly improved the **hull**
+but never the commander: the hull is the caster, the commander is the victim.
+
+### How it was found — and the lesson
+
+**Not by reasoning. By diffing against a build where it works.**
+
+Seven candidates were eliminated first, each by test: the texture, the material
+colours, the mesh itself (switching to a completely different `.ms2` changed
+nothing), scene `AmbientLight`, `StencilShadowColor`, a config-set rename, and
+lightmaps. All dead ends, several hours.
+
+The user then observed that **ZeeWolf's commanders are not completely dark**.
+That single observation turned an open-ended hunt into a three-line diff: same
+mesh, same engine DLLs, same texture brightness where it matters — only three
+model fields differed.
+
+**When something renders wrong in one build and right in another, diff the two
+before theorising.** The engine binaries are byte-identical between REDUX and
+ZW, so any behavioural difference is necessarily in the scripts, models or
+textures, and is therefore findable in minutes.
+
+### Two measurement traps recorded from this hunt
+
+**Averaging a whole character texture tells you nothing.** The texture was first
+"measured" at 22% luminance against the hull's 62% and reported as the cause.
+Meaningless — most of a character sheet is dark background around the UV
+islands. The user opened the image and saw immediately it was a normal face on a
+field-grey uniform.
+
+**Compare like with like instead.** Decoding both builds' copies properly:
+
+```
+              mean   median    p90     p99     max
+REDUX         55.2     61.7    85.7   151.5   255.0
+ZW            33.9     26.3    51.2   151.5   255.0
+```
+
+ZW's is *darker* on average but **p90, p99 and max are identical** — the bright
+pixels, the face and hands, are the same in both. That ruled the texture out
+properly, where the first measurement had wrongly ruled it *in*.
+
+### Scope — ZeeWolf only fixed the Tiger
+
+Swept every vehicle model in both builds:
+
+```
+u_veh_PzVI_LATE     PlanarShadow true in ZW   (now true in REDUX)
+u_veh_PzVI_MAIN     PlanarShadow true in ZW   (still DEFAULT in REDUX - unused model)
+everything else     DEFAULT in BOTH builds
+```
+
+So there is **no precedent for a blanket sweep** — ZeeWolf fixed the player's
+tank and left the rest. Whether the Panzer IV, StuG and T-34 commanders suffer
+the same way is untested; if pursued, test one vehicle rather than applying it
+to all.
+
+### Related: an orphaned setting that is part of the same story
+
+`Scripts\Common\FakeShadows.script` sets `FakeShadow = true` on
+`Cu_veh_PzVI_MAINModel` — but `TankPzVIAusfEUnit::getMeshObjectName()` returns
+`Cu_veh_PzVI_LATEModel` unconditionally, so that line has never had any effect.
+ZeeWolf sidestepped it entirely by setting the field on the LATE model directly.
+**Setting it in the model file is what actually takes effect.**
+
+### The hard limit found along the way
+
+Skinned meshes are missing **64 shader variants** that rigid geometry has:
+
+```
+SceneMesh (rigid)      150 variants   both *N and *L
+SkinMesh1 / SkinMesh4   86 each       *N only
+```
+
+The 64 missing differ in exactly one character — position 4 is `L` instead of
+`N`. Given `LightMap.fxo` sits alongside, `L` is almost certainly lightmapping:
+a rendering feature bone-animated geometry simply cannot use. Not the cause of
+this bug, but a permanent capability gap.
 
 ---
 
