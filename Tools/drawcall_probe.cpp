@@ -166,8 +166,12 @@ static bool patch_slot(void **vt, int slot, void *hook, void **orig,
   DWORD old;
   if (!VirtualProtect(&vt[slot], sizeof(void *), PAGE_EXECUTE_READWRITE, &old))
     return false;
-  *orig = vt[slot];
-  vt[slot] = hook;
+  if (vt[slot] == hook) {           // already ours - a second device on the
+    VirtualProtect(&vt[slot], sizeof(void *), old, &old);  // same vtable
+    return true;
+  }
+  if (vt[slot] != hook) *orig = vt[slot];   // never record our own hook as
+  vt[slot] = hook;                          // the original: infinite recursion
   VirtualProtect(&vt[slot], sizeof(void *), old, &old);
   FlushInstructionCache(GetCurrentProcess(), &vt[slot], sizeof(void *));
   llog("hook: %-28s slot %3d -> %08X (orig %08X)",
@@ -241,6 +245,7 @@ static VBLockFn           g_orig_vb_lock;
 
 static void **g_d3d9_vt, **g_device_vt, **g_vb_vt;
 static bool   g_armed, g_hook_installed;
+static int    g_ndevices;
 
 // ---------------------------------------------------------------------------
 // Triangle arithmetic: PrimitiveCount is already the primitive count, but a
@@ -348,8 +353,22 @@ static HRESULT STDMETHODCALLTYPE HookPresent(
   add64(&g_t_present, t1.QuadPart - t0.QuadPart);
   InterlockedIncrement(&g_frames);
 
+  // jm 2026-08-26: CROSS-CHECK THE CLOCK.  F9, ReShade and the DXVK HUD all
+  // report ~50 fps in C2M1 where this probe reports ~117 - a 2.3x gap. Either
+  // the game presents 2.3x per displayed frame, or this QPC arithmetic is
+  // wrong. GetTickCount is an independent clock, so if the two disagree the
+  // fault is here; if they agree, the frame COUNT is the inflated part.
   double wall_ms = ticks_ms(t1.QuadPart - g_t_window_start);
   if (wall_ms >= REPORT_SECS * 1000.0) {
+    static DWORD tick_prev;
+    DWORD tick_now = GetTickCount();
+    double tick_ms = tick_prev ? (double)(tick_now - tick_prev) : wall_ms;
+    tick_prev = tick_now;
+    llog("CLOCK CHECK: QPC says %.2f s, GetTickCount says %.2f s%s",
+         wall_ms / 1000.0, tick_ms / 1000.0,
+         (tick_ms > wall_ms * 1.25 || tick_ms < wall_ms * 0.8)
+           ? "   <<< THE CLOCKS DISAGREE - the QPC maths is wrong"
+           : "   (clocks agree - so the FRAME COUNT is the inflated part)");
     g_t_window_start = t1.QuadPart;
     report(wall_ms);
   }
@@ -449,13 +468,49 @@ static HRESULT STDMETHODCALLTYPE HookCreateVB(
   return r;
 }
 
+static void reapply_device_hooks(bool quiet)
+{
+  void **vt = g_device_vt;
+  if (!vt) return;
+  patch_slot(vt,  17, (void *)HookPresent,   (void **)&g_orig_present,    "Present");
+  patch_slot(vt,  26, (void *)HookCreateVB,  (void **)&g_orig_create_vb,  "CreateVertexBuffer");
+  patch_slot(vt,  57, (void *)HookSRS,       (void **)&g_orig_srs,        "SetRenderState");
+  patch_slot(vt,  65, (void *)HookSetTex,    (void **)&g_orig_settex,     "SetTexture");
+  patch_slot(vt,  81, (void *)HookDP,        (void **)&g_orig_dp,         "DrawPrimitive");
+  patch_slot(vt,  82, (void *)HookDIP,       (void **)&g_orig_dip,        "DrawIndexedPrimitive");
+  patch_slot(vt,  83, (void *)HookDPUP,      (void **)&g_orig_dpup,       "DrawPrimitiveUP");
+  patch_slot(vt,  84, (void *)HookDIPUP,     (void **)&g_orig_dipup,      "DrawIndexedPrimitiveUP");
+  patch_slot(vt, 100, (void *)HookSetStream, (void **)&g_orig_setstream,  "SetStreamSource");
+}
+
 static HRESULT STDMETHODCALLTYPE HookCreateDevice(
     IDirect3D9 *self, UINT adapter, D3DDEVTYPE type, HWND hwnd, DWORD flags,
     D3DPRESENT_PARAMETERS *pp, IDirect3DDevice9 **ppdev)
 {
   HRESULT r = g_orig_create_device(self, adapter, type, hwnd, flags, pp, ppdev);
-  if (SUCCEEDED(r) && ppdev && *ppdev && !g_device_vt) {
-    g_device_vt = *(void ***)(*ppdev);
+  // jm 2026-08-26: was "!g_device_vt" - hook the FIRST device only. Under DXVK
+  // every device shares one vtable so that was invisible. On NATIVE D3D9 the
+  // game releases its device and creates another (see execution.log,
+  // "Device release counter 1"), and the replacement can sit on a DIFFERENT
+  // vtable - pure vs non-pure, hardware vs software vertex processing. The
+  // hooks then went dead and the probe logged 16 vertex buffers and nothing
+  // else, while the game happily played a full mission. Patch every new one.
+  // jm 2026-08-26 SECOND attempt. First fix re-hooked only when the vtable
+  // ADDRESS changed. That still missed the real case: the game releases its
+  // device and creates another, the freed vtable block is reused at the SAME
+  // address, and native D3D9 re-initialises those slots with the original
+  // function pointers - silently wiping our hooks. Address unchanged, hooks
+  // gone, no re-patch. That is why 16 vertex buffers were counted and then
+  // nothing, while the game went on to play a full mission.
+  //
+  // So: re-patch on EVERY CreateDevice. patch_slot skips any slot already
+  // holding our hook, so this is safe to repeat and cannot recurse.
+  void **new_vt = (SUCCEEDED(r) && ppdev && *ppdev) ? *(void ***)(*ppdev) : NULL;
+  if (new_vt) {
+    g_ndevices++;
+    if (g_device_vt) llog("device #%d created - re-applying hooks (vtable %08X, first was %08X)",
+                          g_ndevices, (DWORD)new_vt, (DWORD)g_device_vt);
+    g_device_vt = new_vt;
     llog("device created %08X  (backbuffer %ux%u, vsync interval %u)",
          (DWORD)*ppdev, pp ? pp->BackBufferWidth : 0,
          pp ? pp->BackBufferHeight : 0, pp ? pp->PresentationInterval : 0);
@@ -551,6 +606,15 @@ static VOID CALLBACK dll_notify(ULONG reason, MY_LDR_DATA *d, PVOID)
   try_patch_create(find_export((BYTE *)d->DllBase, "Direct3DCreate9"));
 }
 
+// jm 2026-08-26: WATCHDOG.  Two separate fixes for "the hooks stop firing on
+// native D3D9" both missed, because each assumed a mechanism.  This assumes
+// none: once a second, check whether our Present hook is still in the vtable,
+// and put every hook back if it is not.  Whatever wipes them - device
+// recreation, a vtable rebuild, a driver thunk swap - this recovers from it.
+//
+// Costs one comparison per second and cannot perturb the measurement.
+static void reapply_device_hooks(bool quiet);
+
 static DWORD WINAPI boot_thread(LPVOID)
 {
   for (int i = 0; i < 400 && !g_hook_installed; i++) {
@@ -558,7 +622,16 @@ static DWORD WINAPI boot_thread(LPVOID)
     if (m) try_patch_create(find_export((BYTE *)m, "Direct3DCreate9"));
     Sleep(25);
   }
-  return 0;
+  int restores = 0;
+  for (;;) {
+    Sleep(1000);
+    if (!g_device_vt) continue;
+    if (g_device_vt[17] != (void *)HookPresent) {
+      restores++;
+      llog("WATCHDOG: hooks were wiped (restore #%d) - re-applying", restores);
+      reapply_device_hooks(false);
+    }
+  }
 }
 
 BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID)

@@ -20,6 +20,8 @@ $BUILDS = @{
 $DLL = 'K:\tvt_los\tvt_los_hook.dll'
 $INJ = 'K:\tvt_probe\tvt_inject.exe'
 $CHK = 'K:\tvt_los\check_los.ps1'
+$PROF = 'K:\tvt_prof\tvt_prof.dll'
+$CACHE = 'K:\TvTDeepseek\maplookup_memo\maplookup_cache.dll'
 
 function Get-Wrapper([string]$root) {
   $p = Join-Path $root 'd3d9.dll'
@@ -39,6 +41,32 @@ function Get-Ini([string]$root,[string]$key,$fallback) {
   $m = Select-String -Path $p -Pattern ("^\s*" + $key + "\s*=\s*(.+?)\s*$") | Select-Object -First 1
   if ($m) { $m.Matches[0].Groups[1].Value } else { $fallback }
 }
+# MouseSensitivity lives in Scripts\GameSettings.script, not the ini. That file
+# is part of the CP1251 script tree, so it is read and written as BYTES mapped
+# 1:1 through Latin-1 - never as text. Both builds' copies are pure ASCII today,
+# but a UTF-8 round trip on a script file is the one mistake that has repeatedly
+# destroyed Cyrillic elsewhere in this project, so the safe path is used anyway.
+function Get-Mouse([string]$root) {
+  $p = Join-Path $root 'Scripts\GameSettings.script'
+  if (-not (Test-Path $p)) { return '' }
+  $enc = [System.Text.Encoding]::GetEncoding(28591)
+  $txt = $enc.GetString([IO.File]::ReadAllBytes($p))
+  if ($txt -match 'MouseSensitivity\s*=\s*([0-9.]+)') { $Matches[1] } else { '' }
+}
+function Set-Mouse([string]$root,[string]$val) {
+  $p = Join-Path $root 'Scripts\GameSettings.script'
+  if (-not (Test-Path $p)) { return $false }
+  $enc = [System.Text.Encoding]::GetEncoding(28591)
+  $txt = $enc.GetString([IO.File]::ReadAllBytes($p))
+  $new = [regex]::Replace($txt, '(MouseSensitivity\s*=\s*)[0-9.]+', ('${1}' + $val), 1)
+  if ($new -eq $txt) { return $false }
+  Copy-Item $p ($p + '.bak_launcher') -Force
+  [IO.File]::WriteAllBytes($p, $enc.GetBytes($new))
+  # A script edit does nothing until the cache is rebuilt.
+  Remove-Item (Join-Path $root 'Cache\Scripts.cache') -Force -ErrorAction SilentlyContinue
+  return $true
+}
+
 function Set-Ini([string]$root,[string]$key,[string]$val) {
   $p = Join-Path $root 'tvt_los.ini'
   if (-not (Test-Path $p)) { return }
@@ -51,7 +79,7 @@ function Set-Ini([string]$root,[string]$key,[string]$val) {
 # ---------------------------------------------------------------- the window
 $f = New-Object System.Windows.Forms.Form
 $f.Text = 'T-34 vs Tiger'
-$f.Size = New-Object System.Drawing.Size(470, 470)
+$f.Size = New-Object System.Drawing.Size(470, 552)
 $f.FormBorderStyle = 'FixedDialog'
 $f.MaximizeBox = $false
 $f.StartPosition = 'CenterScreen'
@@ -88,17 +116,23 @@ $f.Controls.Add($pnlBuild)
 
 Add-Label 'Renderer' 20 74 200 $fontH ([System.Drawing.Color]::White) | Out-Null
 $script:rbDg = New-Object System.Windows.Forms.RadioButton
-$rbDg.Text='dgVoodoo  (the Editor needs this)'; $rbDg.Left=24; $rbDg.Top=98; $rbDg.Width=280
+$rbDg.Text='dgVoodoo  (the Editor needs this)'; $rbDg.Left=24; $rbDg.Top=98; $rbDg.Width=240
 $rbDg.Font=$fontN; $rbDg.ForeColor='Gainsboro'
+# jm 2026-08-26: three renderers now. Native is placed beside DXVK rather
+# than on a third row, so nothing below has to move.
+$script:rbNative = New-Object System.Windows.Forms.RadioButton
+$rbNative.Text='Native D3D9  (no wrapper)'; $rbNative.Width=175
+$rbNative.Font=$fontN; $rbNative.ForeColor='Gainsboro'
 $script:rbDx = New-Object System.Windows.Forms.RadioButton
-$rbDx.Text='DXVK  (usually faster)'; $rbDx.Left=24; $rbDx.Top=120; $rbDx.Width=280
+$rbDx.Text='DXVK  (recommended)'; $rbDx.Left=24; $rbDx.Top=120; $rbDx.Width=240
 $rbDx.Font=$fontN; $rbDx.ForeColor='Gainsboro'
 $pnlRend = New-Object System.Windows.Forms.Panel
 $pnlRend.Left=20; $pnlRend.Top=92; $pnlRend.Width=420; $pnlRend.Height=50
 $pnlRend.BackColor=$f.BackColor
 $script:rbDg.Left=4; $script:rbDg.Top=2
 $script:rbDx.Left=4; $script:rbDx.Top=24
-$pnlRend.Controls.AddRange(@($script:rbDg,$script:rbDx))
+$script:rbNative.Left=243; $script:rbNative.Top=24
+$pnlRend.Controls.AddRange(@($script:rbDg,$script:rbDx,$script:rbNative))
 $f.Controls.Add($pnlRend)
 
 Add-Label 'Options' 20 154 200 $fontH ([System.Drawing.Color]::White) | Out-Null
@@ -110,39 +144,67 @@ $script:cbHud = New-Object System.Windows.Forms.CheckBox
 $cbHud.Text='Performance HUD  (fps, draw calls, GPU - DXVK only)'
 $cbHud.Left=24; $cbHud.Top=200; $cbHud.Width=400
 $cbHud.Font=$fontN; $cbHud.ForeColor='Gainsboro'
-$f.Controls.AddRange(@($cbLos,$cbHud))
+$script:cbProf = New-Object System.Windows.Forms.CheckBox
+$cbProf.Text='Profiler  (find where the frames go - replaces line of sight)'
+$cbProf.Left=24; $cbProf.Top=222; $cbProf.Width=400
+$cbProf.Font=$fontN; $cbProf.ForeColor='Gainsboro'
+$script:cbCache = New-Object System.Windows.Forms.CheckBox
+$cbCache.Text='Faster trees  (map cache - about +6% fps)'
+$cbCache.Left=24; $cbCache.Top=244; $cbCache.Width=400
+$cbCache.Font=$fontN; $cbCache.ForeColor='Gainsboro'
+$f.Controls.AddRange(@($cbLos,$cbHud,$cbProf,$cbCache))
 
-$lblScale = Add-Label 'Forest density (sight_scale)' 24 232 190 $fontN ([System.Drawing.Color]::Gainsboro)
+# The injector now takes SEVERAL dlls, so line of sight and the map cache can
+# run together - they hook different engine DLLs (Behavior.dll and Objects.dll)
+# and never meet. The profiler still excludes both, because measuring while
+# something else is changing the thing you are measuring is worthless.
+$cbProf.Add_CheckedChanged({
+  if ($script:cbProf.Checked) {
+    $script:cbLos.Checked = $false
+    $script:cbCache.Checked = $false
+  } })
+$cbLos.Add_CheckedChanged({ if ($script:cbLos.Checked) { $script:cbProf.Checked = $false } })
+$cbCache.Add_CheckedChanged({ if ($script:cbCache.Checked) { $script:cbProf.Checked = $false } })
+
+$lblScale = Add-Label 'Forest density (sight_scale)' 24 278 190 $fontN ([System.Drawing.Color]::Gainsboro)
 $script:tbScale = New-Object System.Windows.Forms.TextBox
-$tbScale.Left=220; $tbScale.Top=229; $tbScale.Width=70
+$tbScale.Left=220; $tbScale.Top=275; $tbScale.Width=70
 $tbScale.BackColor=[System.Drawing.Color]::FromArgb(50,50,54); $tbScale.ForeColor='White'
 $tbScale.BorderStyle='FixedSingle'
 $f.Controls.Add($tbScale)
-Add-Label 'lower = denser woods' 298 232 160 $fontN ([System.Drawing.Color]::Gray) | Out-Null
+Add-Label 'lower = denser woods' 298 278 160 $fontN ([System.Drawing.Color]::Gray) | Out-Null
+
+$lblMouse = Add-Label 'Gunsight mouse speed' 24 306 190 $fontN ([System.Drawing.Color]::Gainsboro)
+$script:tbMouse = New-Object System.Windows.Forms.TextBox
+$tbMouse.Left=220; $tbMouse.Top=303; $tbMouse.Width=70
+$tbMouse.BackColor=[System.Drawing.Color]::FromArgb(50,50,54); $tbMouse.ForeColor='White'
+$tbMouse.BorderStyle='FixedSingle'
+$f.Controls.Add($tbMouse)
+Add-Label '0.5 = stock, lower = slower' 298 306 160 $fontN ([System.Drawing.Color]::Gray) | Out-Null
 
 # status panel
 $lblState = New-Object System.Windows.Forms.Label
-$lblState.Left=24; $lblState.Top=266; $lblState.Width=410; $lblState.Height=76
+$lblState.Left=24; $lblState.Top=342; $lblState.Width=410; $lblState.Height=76
 $lblState.Font = New-Object System.Drawing.Font('Consolas', 8.5)
 $lblState.ForeColor=[System.Drawing.Color]::FromArgb(150,200,255)
 $f.Controls.Add($lblState)
 
 $btnPlay = New-Object System.Windows.Forms.Button
-$btnPlay.Text='Play'; $btnPlay.Left=24; $btnPlay.Top=350; $btnPlay.Width=180; $btnPlay.Height=44
+$btnPlay.Text='Play'; $btnPlay.Left=24; $btnPlay.Top=424; $btnPlay.Width=180; $btnPlay.Height=44
 $btnPlay.FlatStyle='Flat'; $btnPlay.BackColor=[System.Drawing.Color]::FromArgb(27,94,32)
 $btnPlay.ForeColor='White'; $btnPlay.Font=$fontH
 $btnEdit = New-Object System.Windows.Forms.Button
-$btnEdit.Text='Editor'; $btnEdit.Left=214; $btnEdit.Top=350; $btnEdit.Width=110; $btnEdit.Height=44
+$btnEdit.Text='Editor'; $btnEdit.Left=214; $btnEdit.Top=424; $btnEdit.Width=110; $btnEdit.Height=44
 $btnEdit.FlatStyle='Flat'; $btnEdit.BackColor=[System.Drawing.Color]::FromArgb(55,55,60)
 $btnEdit.ForeColor='White'; $btnEdit.Font=$fontN
 $btnLog = New-Object System.Windows.Forms.Button
-$btnLog.Text='Log'; $btnLog.Left=334; $btnLog.Top=350; $btnLog.Width=100; $btnLog.Height=44
+$btnLog.Text='Log'; $btnLog.Left=334; $btnLog.Top=424; $btnLog.Width=100; $btnLog.Height=44
 $btnLog.FlatStyle='Flat'; $btnLog.BackColor=[System.Drawing.Color]::FromArgb(55,55,60)
 $btnLog.ForeColor='White'; $btnLog.Font=$fontN
 $f.Controls.AddRange(@($btnPlay,$btnEdit,$btnLog))
 
 $lblWarn = New-Object System.Windows.Forms.Label
-$lblWarn.Left=24; $lblWarn.Top=404; $lblWarn.Width=410; $lblWarn.Height=20
+$lblWarn.Left=24; $lblWarn.Top=476; $lblWarn.Width=410; $lblWarn.Height=20
 $lblWarn.Font=$fontN; $lblWarn.ForeColor=[System.Drawing.Color]::Orange
 $f.Controls.Add($lblWarn)
 
@@ -159,8 +221,9 @@ function Refresh-State {
   $b = Current; $root = $b.Root; $exe = Join-Path $root $b.Exe
   $w = Get-Wrapper $root
   $script:loading = $true
-  if ($w -eq 'DXVK') { $rbDx.Checked = $true } elseif ($w -eq 'dgVoodoo') { $rbDg.Checked = $true }
+  if ($w -eq 'DXVK') { $rbDx.Checked = $true } elseif ($w -eq 'dgVoodoo') { $rbDg.Checked = $true } else { $rbNative.Checked = $true }
   $tbScale.Text = (Get-Ini $root 'sight_scale' '100')
+  $script:tbMouse.Text = (Get-Mouse $root)
   $script:loading = $false
 
   $laa = Get-Laa $exe
@@ -190,7 +253,7 @@ function Switch-Wrapper([string]$want) {
   if ($script:loading) { return }
   $b = Current
   if ((Get-Wrapper $b.Root) -eq $want) { return }
-  $arg = if ($want -eq 'DXVK') { 'dxvk' } else { 'dgvoodoo' }
+  $arg = if ($want -eq 'DXVK') { 'dxvk' } elseif ($want -eq 'dgVoodoo') { 'dgvoodoo' } else { 'native' }
   Start-Process cmd.exe -ArgumentList ('/c "' + (Join-Path $b.Root 'wrapper.bat') + '" ' + $arg) -WindowStyle Hidden -Wait
   Refresh-State
 }
@@ -199,10 +262,11 @@ $rbRedux.Add_CheckedChanged({ if ($rbRedux.Checked) { Refresh-State } })
 $rbZw.Add_CheckedChanged({    if ($rbZw.Checked)    { Refresh-State } })
 $rbDx.Add_CheckedChanged({    if ($rbDx.Checked)    { Switch-Wrapper 'DXVK' } })
 $rbDg.Add_CheckedChanged({    if ($rbDg.Checked)    { Switch-Wrapper 'dgVoodoo' } })
+$rbNative.Add_CheckedChanged({ if ($rbNative.Checked) { Switch-Wrapper 'none' } })
 $cbHud.Add_CheckedChanged({ Refresh-State })
 
 $btnLog.Add_Click({
-  $p = Join-Path (Current).Root 'tvt_los.log'
+  $p = Join-Path (Current).Root $(if ($script:cbProf.Checked) {'tvt_prof.log'} else {'tvt_los.log'})
   if (Test-Path $p) { Start-Process notepad.exe $p } else {
     [System.Windows.Forms.MessageBox]::Show('No log yet - play once first.','Log') | Out-Null }
 })
@@ -227,17 +291,61 @@ $btnPlay.Add_Click({
   $s = $tbScale.Text.Trim()
   if ($s -match '^\d+$') { Set-Ini $root 'sight_scale' $s }
 
+  # Mouse speed is a SCRIPT edit, so it also needs the cache cleared - which
+  # Set-Mouse does. Warn, because the next launch then rebuilds it (~2 min).
+  $m = $script:tbMouse.Text.Trim()
+  if ($m -match '^[0-9]*\.?[0-9]+$') {
+    if (Set-Mouse $root $m) {
+      [System.Windows.Forms.MessageBox]::Show(
+        "Mouse speed set to $m.`n`nThe script cache was cleared, so this launch will take about two minutes longer while it rebuilds.",
+        'Mouse speed changed') | Out-Null
+    }
+  }
+
   if ($cbHud.Checked) {
-    $env:DXVK_HUD='fps,drawcalls,gpuload'
+    # jm 2026-08-26: was 'fps,drawcalls,gpuload'. BOTH of those are expensive -
+    # 'drawcalls' makes DXVK count every submission and 'gpuload' queries the
+    # GPU every frame. On a game already CPU-bound on ONE thread that is not
+    # free: the HUD was reading ~52 fps where the drawcall probe measured 114
+    # in the same mission with no HUD. 'fps,frametimes' is cheap.
+    $env:DXVK_HUD='fps,frametimes'
     $env:DXVK_LOG_PATH='K:\dxvk_test'; $env:DXVK_STATE_CACHE_PATH='K:\dxvk_test'
   } else { $env:DXVK_HUD=$null }
 
-  if ($cbLos.Checked) {
-    if (-not ((Test-Path $DLL) -and (Test-Path $INJ))) {
-      [System.Windows.Forms.MessageBox]::Show('The hook is missing - build it with K:\tvt_los\build.bat','Cannot enforce') | Out-Null
+  if ($script:cbProf.Checked) {
+    if (-not ((Test-Path $PROF) -and (Test-Path $INJ))) {
+      [System.Windows.Forms.MessageBox]::Show('Profiler or injector missing - build with K:\\tvt_prof\\build.bat','Cannot profile') | Out-Null
       return }
-    Start-Process powershell -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "' + $CHK + '" -Log "' + (Join-Path $root 'tvt_los.log') + '"') -WindowStyle Hidden
-    Start-Process $INJ -ArgumentList ('"' + $exe + '" "' + $DLL + '"') -WorkingDirectory $root
+    Start-Process $INJ -ArgumentList ('"' + $exe + '" "' + $PROF + '"') -WorkingDirectory $root
+    [System.Windows.Forms.MessageBox]::Show(
+      "Profiler running. Play the mission that feels slow for a minute or two, then quit. The report is tvt_prof.log in the game folder - read the LAST block.",
+      'Profiler') | Out-Null
+  }
+  elseif ($cbLos.Checked -or $script:cbCache.Checked) {
+    # Build the DLL list. The injector loads them in order, each fully before
+    # the next, and allow-checks every one against the list beside it.
+    $dllList = @()
+    if ($cbLos.Checked) {
+      if (-not (Test-Path $DLL)) {
+        [System.Windows.Forms.MessageBox]::Show('The line-of-sight hook is missing - build it with K:\tvt_los\build.bat','Cannot enforce') | Out-Null
+        return }
+      $dllList += $DLL
+    }
+    if ($script:cbCache.Checked) {
+      if (-not (Test-Path $CACHE)) {
+        [System.Windows.Forms.MessageBox]::Show('The map cache is missing - build it with K:\TvTDeepseek\maplookup_memo\build_cache.bat','Cannot enable faster trees') | Out-Null
+        return }
+      $dllList += $CACHE
+    }
+    if (-not (Test-Path $INJ)) {
+      [System.Windows.Forms.MessageBox]::Show('The injector is missing - build it with K:\tvt_probe\build.bat','Cannot inject') | Out-Null
+      return }
+    if ($cbLos.Checked) {
+      Start-Process powershell -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "' + $CHK + '" -Log "' + (Join-Path $root 'tvt_los.log') + '"') -WindowStyle Hidden
+    }
+    $args = '"' + $exe + '"'
+    foreach ($d in $dllList) { $args += ' "' + $d + '"' }
+    Start-Process $INJ -ArgumentList $args -WorkingDirectory $root
   } else {
     Start-Process $exe -WorkingDirectory $root
   }
@@ -248,7 +356,7 @@ $btnPlay.Add_Click({
 # effectively invisible. FlatStyle makes WinForms draw the circle and tick
 # itself, using the control's own colours, so the selection shows. Layout is
 # otherwise exactly as it was.
-foreach ($c in @($rbRedux,$rbZw,$rbDg,$rbDx,$cbLos,$cbHud)) {
+foreach ($c in @($rbRedux,$rbZw,$rbDg,$rbDx,$rbNative,$cbLos,$cbHud,$cbProf,$cbCache)) {
   $c.FlatStyle = 'Flat'
   $c.ForeColor = 'White'
   $c.FlatAppearance.CheckedBackColor = [System.Drawing.Color]::FromArgb(32,32,34)

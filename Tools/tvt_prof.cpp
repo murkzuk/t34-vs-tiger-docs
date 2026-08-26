@@ -178,12 +178,70 @@ static int mod_of(DWORD addr, DWORD *rva)
 // O(1) per sample - a direct index, no scan - so it cannot perturb what it is
 // measuring. Set FINE_BASE/FINE_LEN to the range of interest and rebuild.
 // ---------------------------------------------------------------------------
-static const char *FINE_MOD  = "Objects.dll";
-static const DWORD FINE_BASE = 0x17C000;    // one page below the hot page
-static const DWORD FINE_LEN  = 0x4000;      // 16 KB
-static const int   FINE_SHIFT = 6;          // 64-byte buckets
+// FULL-MODULE MAP: 1 KB buckets across an entire module, so the report is a
+// complete distribution rather than a top-15 list. The question it exists to
+// answer: half the frame is in code that never ranks - is that genuinely
+// smeared across the whole module (unfixable by any single change), or is
+// there concentration nobody has looked at yet? The coverage curve below
+// answers that directly: how many buckets to reach 50 / 80 / 95%.
+static const char *FULL_MOD   = "Objects.dll";
+static const int   FULL_SHIFT = 10;          // 1 KB buckets
+static __int64 g_full[4096];                 // covers 4 MB of .text
+static __int64 g_full_total;
+
+// jm 2026-08-26: re-aimed at ntdll's SYSCALL STUB TABLE. 20.6% of the whole
+// frame lands in ntdll +0x076000..+0x078FFF, which is the Nt*/Zw* thunks -
+// each stub is exactly 16 bytes, so 16-byte buckets name the exact syscall.
+// A 4 KB page here holds 256 different syscalls, which is why the page-level
+// report could only say "a syscall" and not which one.
+static const char *FINE_MOD  = "ntdll.dll";
+static const DWORD FINE_BASE = 0x076000;    // syscall stub table
+static const DWORD FINE_LEN  = 0x03000;     // 12 KB - the three hot pages
+static const int   FINE_SHIFT = 4;          // 16-byte buckets = one stub each
 static __int64 g_fine[FINE_LEN >> FINE_SHIFT];
 static __int64 g_fine_total;
+
+// ---------------------------------------------------------------------------
+// CALLER ATTRIBUTION for the syscall stubs.  jm 2026-08-26
+//
+// 20% of the frame sits in ntdll's Nt*/Zw* stubs, and half of THAT is one
+// call: NtWaitForAlertByThreadId - the Win10 futex under SRW locks, modern
+// critical sections and std::mutex.  The instruction pointer alone cannot say
+// WHOSE lock it is: the game's own code, DXVK's, or the driver's.
+//
+// So when a sample lands in the stub range, walk the captured stack and find
+// the first word that looks like a return address into some module OTHER than
+// ntdll.  That names the caller.  Heuristic, not a real unwind - a stack word
+// can be a stale value rather than a live return address - so read the result
+// as a ranking, not proof.  Anything below a few percent here is noise.
+static const DWORD STK_LO = 0x076000, STK_HI = 0x079000;   // the stub range
+static __int64 g_caller_hits[MAX_MODULES];
+static __int64 g_caller_total, g_caller_none;
+struct CallerB { int mod; DWORD rva; __int64 hits; };
+static CallerB g_cb[512]; static int g_ncb;
+
+static void record_caller(const DWORD *stk, int n)
+{
+  for (int i = 0; i < n; i++) {
+    DWORD rva; int m = mod_of(stk[i], &rva);
+    if (m < 0) continue;
+    if (strcmp(g_mods[m].name, "ntdll.dll") == 0) continue;   // skip ntdll internals
+    if (strcmp(g_mods[m].name, "tvt_prof.dll") == 0) continue; // never ourselves
+    // KERNELBASE/kernel32 are the Win32 wrapper layer, not a caller: every
+    // WaitForSingleObject, RegOpenKeyEx and CreateFile passes through them.
+    // Skip to reach the module that actually wanted the lock.
+    if (_stricmp(g_mods[m].name, "KERNELBASE.dll") == 0) continue;
+    if (_stricmp(g_mods[m].name, "KERNEL32.DLL")   == 0) continue;
+    if (_stricmp(g_mods[m].name, "kernel.appcore.dll") == 0) continue;
+    g_caller_hits[m]++; g_caller_total++;
+    DWORD bk = rva & ~0xFFFu;
+    for (int j = 0; j < g_ncb; j++)
+      if (g_cb[j].mod == m && g_cb[j].rva == bk) { g_cb[j].hits++; return; }
+    if (g_ncb < 512) { g_cb[g_ncb].mod=m; g_cb[g_ncb].rva=bk; g_cb[g_ncb].hits=1; g_ncb++; }
+    return;                       // first non-ntdll frame only
+  }
+  g_caller_none++;
+}
 
 static void record(DWORD eip)
 {
@@ -192,6 +250,10 @@ static void record(DWORD eip)
   int m = mod_of(eip, &rva);
   if (m < 0) { g_unknown++; record_unknown(eip); return; }
   g_mod_hits[m]++;
+  if ((rva >> FULL_SHIFT) < 4096 && strcmp(g_mods[m].name, FULL_MOD) == 0) {
+    g_full[rva >> FULL_SHIFT]++;
+    g_full_total++;
+  }
   if (rva - FINE_BASE < FINE_LEN && strcmp(g_mods[m].name, FINE_MOD) == 0) {
     g_fine[(rva - FINE_BASE) >> FINE_SHIFT]++;
     g_fine_total++;
@@ -279,8 +341,67 @@ static void report(void)
   }
   for (int i = 0; i < g_nbuckets; i++)
     if (g_buckets[i].hits < 0) g_buckets[i].hits = -g_buckets[i].hits;
+  if (g_full_total) {
+    // rank a copy so the coverage curve and the listing agree
+    static __int64 sorted[4096];
+    int n = 0;
+    for (int i = 0; i < 4096; i++) if (g_full[i]) sorted[n++] = g_full[i];
+    for (int a = 1; a < n; a++) {            // insertion sort, descending
+      __int64 v = sorted[a]; int b = a - 1;
+      while (b >= 0 && sorted[b] < v) { sorted[b+1] = sorted[b]; b--; }
+      sorted[b+1] = v;
+    }
+    plog("  FULL MAP of %s  (1 KB buckets, %I64d samples in %d live buckets)",
+         FULL_MOD, g_full_total, n);
+    __int64 run = 0; int at50 = -1, at80 = -1, at95 = -1;
+    for (int i = 0; i < n; i++) {
+      run += sorted[i];
+      if (at50 < 0 && run * 100 >= g_full_total * 50) at50 = i + 1;
+      if (at80 < 0 && run * 100 >= g_full_total * 80) at80 = i + 1;
+      if (at95 < 0 && run * 100 >= g_full_total * 95) at95 = i + 1;
+    }
+    plog("    CONCENTRATION: 50%% of this module is in %d KB, 80%% in %d KB, 95%% in %d KB",
+         at50, at80, at95);
+    plog("    (few KB = concentrated and attackable; hundreds = smeared, no single fix)");
+    for (int pass = 0; pass < 20; pass++) {
+      int best = -1; __int64 bh = 0;
+      for (int i = 0; i < 4096; i++) if (g_full[i] > bh) { bh = g_full[i]; best = i; }
+      if (best < 0 || bh == 0) break;
+      plog("    +0x%06X   %6.2f%% of all   %6.2f%% of module   %I64d",
+           best << FULL_SHIFT, 100.0 * bh / g_total,
+           100.0 * bh / g_full_total, bh);
+      g_full[best] = -g_full[best];
+    }
+    for (int i = 0; i < 4096; i++) if (g_full[i] < 0) g_full[i] = -g_full[i];
+  }
   if (g_fine_total) {
-    plog("  FINE (%d-byte buckets in %s +0x%06X..+0x%06X, %I64d samples)",
+    // Who is actually holding the lock. See record_caller().
+  if (g_caller_total) {
+    plog("  WHO CALLS THE SYSCALLS  (first non-ntdll frame on the stack, %I64d attributed, %I64d unattributed)",
+         g_caller_total, g_caller_none);
+    static char shown_m[MAX_MODULES]; memset(shown_m, 0, sizeof(shown_m));
+    for (int pass = 0; pass < 8; pass++) {
+      int best = -1; __int64 bh = 0;
+      for (int i = 0; i < g_nmods; i++)
+        if (!shown_m[i] && g_caller_hits[i] > bh) { bh = g_caller_hits[i]; best = i; }
+      if (best < 0 || bh == 0) break;
+      plog("    %-22s %7.2f%% of syscall time   %I64d", g_mods[best].name,
+           100.0 * bh / g_caller_total, bh);
+      shown_m[best] = 1;
+    }
+    plog("    -- caller pages --");
+    static char shown_c[512]; memset(shown_c, 0, sizeof(shown_c));
+    for (int pass = 0; pass < 8; pass++) {
+      int best = -1; __int64 bh = 0;
+      for (int i = 0; i < g_ncb; i++)
+        if (!shown_c[i] && g_cb[i].hits > bh) { bh = g_cb[i].hits; best = i; }
+      if (best < 0 || bh == 0) break;
+      plog("    %-18s +0x%06X   %6.2f%%   %I64d", g_mods[g_cb[best].mod].name,
+           g_cb[best].rva, 100.0 * bh / g_caller_total, bh);
+      shown_c[best] = 1;
+    }
+  }
+  plog("  FINE (%d-byte buckets in %s +0x%06X..+0x%06X, %I64d samples)",
          1 << FINE_SHIFT, FINE_MOD, FINE_BASE, FINE_BASE + FINE_LEN, g_fine_total);
     for (int pass = 0; pass < 12; pass++) {
       int best = -1; __int64 bh = 0;
@@ -367,11 +488,29 @@ static DWORD WINAPI Sampler(LPVOID)
           if (SuspendThread(h) != (DWORD)-1) {
             CONTEXT ctx; ctx.ContextFlags = CONTEXT_CONTROL;
             DWORD eip = 0;
-            if (GetThreadContext(h, &ctx)) eip = ctx.Eip;
+            static const int STK_WORDS = 256;
+            DWORD stk[STK_WORDS]; int nstk = 0;
+            if (GetThreadContext(h, &ctx)) {
+              eip = ctx.Eip;
+              // Copy the top of the stack while the thread is frozen. Plain
+              // reads guarded by SEH - no API call, so no lock the suspended
+              // thread could be holding, which is the deadlock this whole
+              // profiler is built to avoid.
+              DWORD rva; int mm = mod_of(eip, &rva);
+              if (mm >= 0 && rva - STK_LO < (STK_HI - STK_LO)
+                  && strcmp(g_mods[mm].name, "ntdll.dll") == 0) {
+                __try {
+                  const DWORD *sp = (const DWORD *)ctx.Esp;
+                  for (int w = 0; w < STK_WORDS; w++) stk[w] = sp[w];
+                  nstk = STK_WORDS;
+                } __except (EXCEPTION_EXECUTE_HANDLER) { nstk = 0; }
+              }
+            }
             ResumeThread(h);            // resume BEFORE doing anything else
             if (eip) {
               EnterCriticalSection(&g_lock);
               record(eip);
+              if (nstk) record_caller(stk, nstk);
               LeaveCriticalSection(&g_lock);
             }
           }
@@ -389,6 +528,8 @@ static DWORD WINAPI Sampler(LPVOID)
     }
     Sleep(period);
   }
+  // Unreachable, but SEH in the loop stops the compiler proving that.
+  return 0;
 }
 
 // ---------------------------------------------------------------- attach

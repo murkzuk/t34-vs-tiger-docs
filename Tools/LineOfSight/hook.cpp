@@ -104,11 +104,55 @@ static int g_last_total;            // object loads seen on the last attempt
 
 static bool     g_crew_watch;       // hook the player's gunner tick
 static bool g_clip_cursor = true;   // keep the mouse inside the game window
+// acquire = off | probe | los. The AI gunner's TARGET CHOICE, as opposed to
+// the range gate which only affects retention.
+static int  g_acquire;          // 0 off, 1 probe (log only), 2 enforce
+static __int64 g_acq_checks, g_acq_blocked, g_acq_nopos;
+static const DWORD CREW_TARGET = 0x060;   // measured, not deduced
+static const DWORD CREW_OWNER  = 0x0E0;
+
 static bool g_gate_probe;       // watch the range gate's call site
 static bool g_gate_enforce;     // and actually reject blocked candidates
 static __int64 g_gate_denied, g_gate_nopair;
 static __int64 g_gate_calls, g_gate_logged;
 static __int64 g_cmdr_calls;   // CAutoCommanderComponent::Update, watch pass
+// Last seen value of the commander's pointer block, so we log CHANGES only -
+// this fires 460,000 times a session and logging every tick is useless.
+// Sweep the whole component, not a guessed handful. 0x400 bytes = 256 DWORDs
+// covers every field the live-object scan found (RadarMaxDistance +0x64,
+// ViewAngle +0x31C, PreferedTargets distance +0x320).
+static const int NCMDR_WATCH = 256;
+static DWORD g_cmdr_prev[NCMDR_WATCH];
+static __int64 g_cmdr_changes, g_cmdr_init_changes;
+
+// The same sweep, on the SHOOTER - which is where the evidence points.
+//
+// A REDUX session: the commander component had ONE instance whose fields never
+// moved, while CAutoShooterComponent::Update ran 133,000 times, its early-exit
+// flag +0x118 cleared from 1 to 0, and the UI gate byte +0x9CD went to 1 for
+// 761 of 1040 samples. The AI gunner acquired and fired repeatedly through all
+// of that. So the target it is tracking lives HERE, not on the commander.
+//
+// Also note +0xE0 is NOT the target: it held one value (2AF81D40) across all
+// 1040 samples while many targets were engaged. An earlier note guessed
+// otherwise from a static read count; the runtime disproves it.
+//
+// Locked to the first instance seen - every AI tank has one of these, and a
+// shared prev-array across instances would report pure noise.
+// jm 2026-08-26: the field-discovery sweep below is REVERSE-ENGINEERING
+// SCAFFOLDING and it is now OFF. It ran 256 readable() calls - i.e. 256
+// VirtualQuery SYSCALLS - on EVERY crew tick, ungated, purely to spot which
+// offset moved when the gunner slewed. That question is answered: the offsets
+// are the named CREW_* constants. Together with the find_endpoints storm it
+// was costing ~10.9 ms a frame (51 fps with the hook, 115 without).
+//
+// Set true only to re-derive offsets after an engine change. Never ship true.
+static bool g_diag_sweep = false;
+static const int NCREW_WATCH = 256;
+static DWORD g_crew_prev[NCREW_WATCH];
+static void *g_crew_watched;
+static __int64 g_crew_changes, g_crew_init_changes;
+
 // True once execution.log shows mission objects loading. Until then the game
 // is sitting in a menu and the identification budget must not be spent.
 static volatile bool g_saw_objects = false;
@@ -146,6 +190,55 @@ static bool readable(const void *p, size_t n)
   if (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) return false;
   return (const BYTE *)p + n <= (const BYTE *)mbi.BaseAddress + mbi.RegionSize;
 }
+
+// Resolve an object's class name from its RTTI, via the vtable's -4 slot.
+// Same walk the crew dump uses; returns "?" rather than faulting on rubbish.
+static const char *rtti_name(DWORD obj, char *buf, int n)
+{
+  buf[0] = 0;
+  if (obj < 0x10000 || !readable((void *)obj, 4)) return "?";
+  DWORD vt = *(const DWORD *)obj;
+  if (!readable((void *)(vt - 4), 4)) return "?";
+  DWORD col = *(const DWORD *)(vt - 4);
+  if (!readable((void *)(col + 0x0C), 4)) return "?";
+  DWORD td = *(const DWORD *)(col + 0x0C);
+  if (!readable((void *)(td + 8), 64)) return "?";
+  lstrcpynA(buf, (const char *)(td + 8), n);
+  return buf;
+}
+
+// Does this look like a live C++ object rather than a float or a counter?
+// An object's first word is its vtable pointer, which must itself be readable.
+static bool is_object(DWORD v)
+{
+  if (v < 0x00100000 || v > 0x7FFF0000 || (v & 3) != 0) return false;
+  if (!readable((void *)v, 4)) return false;
+  DWORD vt = *(const DWORD *)v;
+  return vt >= 0x00100000 && vt < 0x7FFF0000 && readable((void *)vt, 4);
+}
+
+// Hunt a plausible world position inside an object: three consecutive floats
+// that look like map coordinates. Self-validating in the same way the fit check
+// is - rubbish does not accidentally land inside the map bounds with a sane
+// height. Returns the offset, or -1.
+static int find_position(DWORD obj, float *out)
+{
+  if (obj < 0x10000) return -1;
+  const float W = g_terrain.valid() ? g_terrain.world : DEFAULT_WORLD_M;
+  for (int off = 0; off < 0x300; off += 4) {
+    if (!readable((void *)(obj + off), 12)) break;
+    const float *v = (const float *)(obj + off);
+    if (v[0] > 100.0f && v[0] < W && v[1] > 100.0f && v[1] < W &&
+        v[2] > -50.0f && v[2] < 2000.0f) {
+      // Reject a run of identical values - that is a matrix row, not a point.
+      if (v[0] == v[1] || v[1] == v[2]) continue;
+      out[0] = v[0]; out[1] = v[1]; out[2] = v[2];
+      return off;
+    }
+  }
+  return -1;
+}
+
 
 // Last path separator, either kind - a path may arrive with forward slashes
 // and looking for only one of them silently yields the wrong folder.
@@ -621,10 +714,18 @@ static char __fastcall Hook(void *self, void *pad,
     // Carry the gate counters here too. Their own summary only fires every
     // 2000 checks, which left it impossible to tell "ran a few hundred times
     // with nothing to refuse" from "never ran at all".
+    llog("---   shooter: %I64d changes during play (%I64d at construction)",
+         g_crew_changes, g_crew_init_changes);
+    if (g_acquire)
+      llog("---   acquisition: %I64d checked, %I64d would be REFUSED (%.0f%%), "
+           "%I64d skipped (no position)", g_acq_checks, g_acq_blocked,
+           g_acq_checks ? 100.0 * g_acq_blocked / g_acq_checks : 0.0, g_acq_nopos);
     llog("---   gate: %I64d checks, %I64d refused, %I64d unmatched",
          g_gate_calls, g_gate_denied, g_gate_nopair);
-    if (g_crew_watch)
-      llog("---   commander: %I64d updates", g_cmdr_calls);
+  if (g_crew_watch)
+      llog("---   commander: %I64d updates, %I64d changes during play "
+           "(%I64d at construction, not logged)",
+           g_cmdr_calls, g_cmdr_changes, g_cmdr_init_changes);
     // What the marching actually cost. If this is not a visible fraction of
     // wall time, the DLL is not the reason for a framerate.
     if (g_qpc_freq > 0 && g_march_count > 0) {
@@ -679,6 +780,104 @@ static void __fastcall CrewHook(void *self, void *edx, DWORD arg)
 
   EnterCriticalSection(&g_lock);
   g_crew_calls++;
+
+  // Sweep this component for object-shaped fields that change DURING PLAY.
+  // Whichever one moves when the gunner slews onto something new is the target.
+  if (!g_crew_watched) g_crew_watched = self;
+  if (g_diag_sweep && self == g_crew_watched) {
+    const BYTE *ob = (const BYTE *)self;
+    for (int k = 0; k < NCREW_WATCH; k++) {
+      DWORD off = (DWORD)k * 4;
+      DWORD v = readable(ob + off, 4) ? *(const DWORD *)(ob + off) : 0;
+      if (v == g_crew_prev[k]) continue;
+      DWORD was = g_crew_prev[k];
+      g_crew_prev[k] = v;
+      if (!is_object(v) && !is_object(was)) continue;
+      // First 200 updates are construction; log those as a count only.
+      if (g_crew_calls < 200) { g_crew_init_changes++; continue; }
+      g_crew_changes++;
+      char nm[64]; float pos[3];
+      int poff = find_position(v, pos);
+      if (poff >= 0)
+        llog("[TGT] +0x%03X  %08X -> %08X  %s  pos(%.1f, %.1f, %.1f)",
+             off, was, v, rtti_name(v, nm, sizeof(nm)), pos[0], pos[1], pos[2]);
+      else
+        llog("[TGT] +0x%03X  %08X -> %08X  %s",
+             off, was, v, rtti_name(v, nm, sizeof(nm)));
+    }
+
+    // ---- acquisition check ------------------------------------------------
+    // Re-checked periodically as well as on change: a target acquired in the
+    // open can drive behind a crest, and that is exactly the case the player
+    // keeps reporting.
+    if (g_acquire && g_ready && g_terrain.valid() && (g_crew_calls & 0x3F) == 0) {
+      DWORD tgt = readable(ob + CREW_TARGET, 4) ? *(const DWORD *)(ob + CREW_TARGET) : 0;
+      if (is_object(tgt)) {
+        DWORD own = readable(ob + CREW_OWNER, 4) ? *(const DWORD *)(ob + CREW_OWNER) : 0;
+        float tp[3], op[3];
+        if (find_position(tgt, tp) >= 0 && is_object(own) &&
+            find_position(own, op) >= 0) {
+          g_acq_checks++;
+          // Same convention as everywhere else: stand both ends on the
+          // heightfield rather than trusting the model origin, which sits at
+          // mid-model height.
+          float gz = g_terrain.ground(op[0], op[1]);
+          Sight sg = march(&g_terrain, op[0], op[1], gz + 2.0f,
+                           tp[0], tp[1], g_terrain.ground(tp[0], tp[1]) + 1.3f);
+          bool blocked = (sg.factor <= 0.0f) || (frand() > sg.factor);
+          // +0xE0 is NOT the player's tank. Its position came back 3 metres
+          // from the target's, which makes every march trivially clear - so
+          // the first run's "factor 1.00" was measuring nothing.
+          //
+          // Rather than guess again, dump EVERY object this component holds
+          // with its position, once. Whichever one is hundreds of metres from
+          // the target, out where the player actually is, is the observer.
+          if (g_acq_checks == 1) {
+            static const DWORD CAND[] = { 0x000, 0x034, 0x05C, 0x060, 0x068,
+                                          0x070, 0x074, 0x080, 0x084, 0x0E0,
+                                          0x0E4, 0x0E8, 0x114 };
+            llog("[ACQ] --- observer hunt: target is at (%.0f, %.0f) ---",
+                 tp[0], tp[1]);
+            for (int c = 0; c < 13; c++) {
+              DWORD cv = (CAND[c] == 0) ? (DWORD)self
+                       : (readable(ob + CAND[c], 4) ? *(const DWORD *)(ob + CAND[c]) : 0);
+              if (!is_object(cv)) continue;
+              float cp[3]; char cn[64];
+              if (find_position(cv, cp) < 0) continue;
+              float dx = cp[0] - tp[0], dy = cp[1] - tp[1];
+              llog("        +0x%03X %08X %-28s (%.0f, %.0f)  %.0f m from target",
+                   CAND[c], cv, rtti_name(cv, cn, sizeof(cn)),
+                   cp[0], cp[1], sqrtf(dx*dx + dy*dy));
+            }
+          }
+          if (g_acq_checks <= 6)
+            llog("[ACQ] check %I64d: owner(%.0f,%.0f) -> target(%.0f,%.0f)  "
+                 "factor %.2f (%s)", g_acq_checks, op[0], op[1], tp[0], tp[1],
+                 sg.factor, sg.why);
+          if (blocked) {
+            g_acq_blocked++;
+            if (g_acq_blocked <= 40)
+              llog("[ACQ] would REFUSE (%.0f,%.0f) -> (%.0f,%.0f) at %5.0f m, "
+                   "%s, %.0f%% masked",
+                   op[0], op[1], tp[0], tp[1],
+                   sqrtf((tp[0]-op[0])*(tp[0]-op[0]) + (tp[1]-op[1])*(tp[1]-op[1])),
+                   sg.why, (1.0f - sg.factor) * 100.0f);
+            // g_acquire == 2 would clear the target here. Held back until the
+            // positions above are confirmed sane in play.
+          }
+        } else {
+          g_acq_nopos++;
+          if (g_acq_nopos <= 8) {
+            float t2[3], o2[3];
+            int tok = find_position(tgt, t2), ook = is_object(own) ? find_position(own, o2) : -2;
+            llog("[ACQ] skipped: target %08X pos %s   owner %08X pos %s",
+                 tgt, tok >= 0 ? "found" : "NOT FOUND",
+                 own, ook == -2 ? "not an object" : (ook >= 0 ? "found" : "NOT FOUND"));
+          }
+        }
+      }
+    }
+  }
   // The opening burst, then thin right out - this is a per-tick update and the
   // point of this pass is confirmation, not volume.
   // The update bails early most of the time and the range gate sits deep
@@ -687,7 +886,11 @@ static void __fastcall CrewHook(void *self, void *edx, DWORD arg)
   //   1004B225  cmp [esi+0x44], edi   je exit
   //   1004B22E  mov al, [esi+0x11c]   test al,al  je  exit   (must be non-zero)
   //   1004B248  mov al, [esi+0x118]   test al,al  jne exit    (must be zero)
-  if ((g_crew_calls & 0x7F) == 1) {
+  // jm 2026-08-26: gated. These two dumps were 3,788 of 5,252 lines in one ZW
+  // session - 72% of the log - and llog() fflush()es every line, so each is a
+  // WriteFile syscall on the game thread. They exist to show WHICH gate closes
+  // the crew update; that has been read and understood.
+  if (g_diag_sweep && (g_crew_calls & 0x7F) == 1) {
     const BYTE *o = (const BYTE *)self;
     // The gating virtual is UI.dll+0x199650, which is nothing but
     //     mov al, [ecx+0x9cd] ; ret
@@ -826,12 +1029,33 @@ static bool find_endpoints(const float *v, float *obs, float *tgt)
   const float dx = v[0], dy = v[1], dz = v[2];
   const BYTE *base = (const BYTE *)v - 0x100;
 
+  // jm 2026-08-26 PERFORMANCE FIX. This function used to call readable() -
+  // which is a VirtualQuery, i.e. a SYSCALL - once per candidate, up to
+  // 128 + 128*128 = 16512 times PER VISION CHECK. That was costing ~10.9 ms
+  // per frame and halving the framerate: 51 fps with the hook, 115 without.
+  //
+  // The entire scan window is 128 floats from base, so 0x200 + 12 bytes. ONE
+  // VirtualQuery covers all of it. If that whole-window check fails (a window
+  // straddling a region boundary) fall back to the original per-element path,
+  // so behaviour is unchanged - only the cost is.
+  const size_t WINDOW = 128 * 4 + 12;
+  const bool window_ok = readable(base, WINDOW);
+
+  // Collect the candidates ONCE instead of re-testing every one 128 times.
+  const float *cand[128];
+  int ncand = 0;
   for (int i = 0; i < 128; i++) {
     const float *a = (const float *)(base + i * 4);
-    if (!readable(a, 12) || !looks_like_world_pos(a)) continue;
-    for (int j = 0; j < 128; j++) {
-      const float *b = (const float *)(base + j * 4);
-      if (i == j || !readable(b, 12) || !looks_like_world_pos(b)) continue;
+    if (!window_ok && !readable(a, 12)) continue;
+    if (!looks_like_world_pos(a)) continue;
+    cand[ncand++] = a;
+  }
+
+  for (int i = 0; i < ncand; i++) {
+    const float *a = cand[i];
+    for (int j = 0; j < ncand; j++) {
+      const float *b = cand[j];
+      if (a == b) continue;
       if (fabsf((b[0] - a[0]) - dx) < 0.05f &&
           fabsf((b[1] - a[1]) - dy) < 0.05f &&
           fabsf((b[2] - a[2]) - dz) < 0.05f) {
@@ -1013,6 +1237,10 @@ static void read_ini()
   g_sight_scale = pct / 100.0f;
   GetPrivateProfileStringA("los", "crew", "off", buf, sizeof(buf), INI_PATH);
   g_crew_watch = (_stricmp(buf, "watch") == 0);
+  // acquire: off | probe | los
+  GetPrivateProfileStringA("los", "acquire", "probe", buf, sizeof(buf), INI_PATH);
+  g_acquire = (_stricmp(buf, "los") == 0) ? 2 : ((_stricmp(buf, "off") == 0) ? 0 : 1);
+
   GetPrivateProfileStringA("los", "gate", "off", buf, sizeof(buf), INI_PATH);
   g_gate_enforce = (_stricmp(buf, "los") == 0);
 
@@ -1122,7 +1350,7 @@ static void __fastcall CmdrHook(void *self, void *edx, DWORD arg)
 
   EnterCriticalSection(&g_lock);
   g_cmdr_calls++;
-  if (g_cmdr_calls == 1 || (g_cmdr_calls & 0x3FF) == 1) {
+  if (g_cmdr_calls == 1 || (g_diag_sweep && (g_cmdr_calls & 0x3FF) == 1)) {
     const BYTE *o = (const BYTE *)self;
     HMODULE beh = GetModuleHandleA("Behavior.dll");
     DWORD want = (DWORD)beh + CMDR_VTABLE_RVA, got = 0;
@@ -1151,6 +1379,49 @@ static void __fastcall CmdrHook(void *self, void *edx, DWORD arg)
         llog("        nothing found in the first 0x400 bytes - the values are "
              "behind a pointer, dump the pointer fields next");
     }
+    // Log the pointer block on CHANGE only. Whichever field moves when the
+    // gunner starts tracking something new is the chosen target.
+    {
+      // The fixed +0xD8..+0xF4 guess was wrong: that block changed 6 times at
+      // init and then stayed put for 153,545 updates, and +0xE0 turned out to
+      // be a CStringVariable. So stop guessing offsets and SWEEP - watch every
+      // DWORD in the object and report the ones that actually move.
+      //
+      // Only pointer-shaped values are reported. Floats and counters churn
+      // constantly and would bury the signal; a target is an object pointer.
+      for (int k = 0; k < NCMDR_WATCH; k++) {
+        DWORD off = (DWORD)k * 4;
+        DWORD v = readable(o + off, 4) ? *(const DWORD *)(o + off) : 0;
+        if (v == g_cmdr_prev[k]) continue;
+        DWORD was = g_cmdr_prev[k];
+        g_cmdr_prev[k] = v;
+        // A plausible heap pointer, or a clear-to-null. Anything else is a
+        // counter or a float and is not what we are hunting.
+        // A range check alone lets FLOATS through - 12.0f is 0x41400000,
+        // which is in range and 4-aligned. Demand it actually look like an
+        // OBJECT: readable, and its first DWORD is itself a readable pointer,
+        // i.e. a vtable. Floats and counters fail that immediately.
+        bool ptr_now = is_object(v), ptr_was = is_object(was);
+        if (!ptr_now && !ptr_was) continue;
+
+        // The first burst is construction - every field going 0 -> value as
+        // the component is built. That is not acquisition and it swamped two
+        // runs. Log it once, then report only what moves DURING PLAY, with no
+        // cap, because the interesting change may come minutes in.
+        if (g_cmdr_calls < 200) { g_cmdr_init_changes++; continue; }
+        g_cmdr_changes++;   // enough to see the pattern
+        char nm[64]; float pos[3];
+        int poff = find_position(v, pos);
+        if (poff >= 0)
+          llog("[CMDR] +0x%02X  %08X -> %08X  %s  pos(%.1f, %.1f, %.1f) at +0x%03X",
+               off, was, v, rtti_name(v, nm, sizeof(nm)),
+               pos[0], pos[1], pos[2], poff);
+        else
+          llog("[CMDR] +0x%02X  %08X -> %08X  %s  (no position found)",
+               off, was, v, rtti_name(v, nm, sizeof(nm)));
+      }
+    }
+
     llog("[CMDR %6I64d] this %08X vtable %s  radar %.0f %.0f  |%s",
          g_cmdr_calls, (DWORD)self,
          got == want ? "OK" : "MISMATCH",
@@ -1229,6 +1500,9 @@ static DWORD WINAPI Boot(LPVOID)
   read_ini();
   if (g_clip_cursor)
     llog("  mouse held inside the game window (clip_cursor = on)");
+  llog("  acquire = %s (the AI gunner's TARGET CHOICE)",
+       g_acquire == 2 ? "los - blocked targets are dropped"
+                      : (g_acquire ? "probe - logging only, nothing changed" : "off"));
   llog("mode = %s%s",
        g_mode == MODE_LOS ? "los" : g_mode == MODE_DENY_FAR ? "deny_far" : "watch",
        g_mode == MODE_DENY_FAR ? "" : "");

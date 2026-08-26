@@ -726,3 +726,58 @@ gear between "much faster than you" and "stopped".
 Also worth knowing: the wingman formation values are **leftovers from Whirlwind
 over Vietnam**. REDUX still carries them — 200 m spacing with a `z` of 30, which
 is *altitude*. The devs never retuned them for tanks.
+
+
+---
+
+## 2026-08-26 — TvT REDUX: found a 2.35x framerate win, and it was our own code
+
+Long-standing complaint: the game sat around 70-90 fps and sometimes worse,
+with no obvious cause. Turned out the AI line-of-sight hook — our own injected
+DLL, ticked on by default in the launcher — was costing **~10.9 ms a frame**.
+
+```
+BEFORE   LOS on   51 fps      LOS off  115 fps
+AFTER    LOS on  120 fps
+```
+
+The cause was embarrassing and simple. A helper called `readable()` validates a
+pointer with `VirtualQuery` — which is a **syscall**. Two places called it in
+loops:
+
+- `find_endpoints()` — up to **16,512 syscalls per vision check**, in a 128x128
+  nested scan, to validate a window that is only **520 bytes wide**. One
+  `VirtualQuery` covers the whole thing.
+- A `CrewHook` sweep — **256 syscalls per crew tick, ungated**. `g_crew_calls`
+  reached 125,185 in a single session, so roughly 32 million syscalls. This was
+  reverse-engineering scaffolding written to discover which struct offset moved
+  when the gunner slewed onto a target. That question was answered weeks ago.
+  It was never switched off.
+
+Both are now fixed and LOS is free — 120 vs 115 is inside the noise floor.
+Applies to the ZeeWolf 2015 build too, same injected binary.
+
+**The method failure is the more useful lesson.** The evidence was in hand at
+11:40 and got read backwards: comparing a fast run against a slow one, I noticed
+the fast run had no LOS log and concluded *"so LOS wasn't the difference"*. Its
+absence **was** the difference. The rest of the day went into profiling
+renderers, attributing syscalls, and running a native-D3D9-vs-DXVK A/B — all
+downstream of that one misreading, and all of it measuring a configuration that
+didn't have the problem in it.
+
+**When two runs differ, diff the CONFIGURATIONS first** — which hooks, which
+wrapper, which overlay — before profiling either one. An injected DLL is the
+largest variable in the room.
+
+Also learned the hard way today: **instrumentation added during RE has to be
+gated before it ships.** A discovery sweep is not a feature. Both storms here
+were debug code that outlived the question it was written to answer.
+
+Side results from the same day, for anyone chasing similar ghosts:
+- **Native D3D9 vs DXVK: identical** (50 vs 48 fps, F9 on both). DXVK is free.
+- **A 4 KB profiler page in ntdll holds 256 syscalls** — each `Nt*`/`Zw*` stub
+  is exactly 16 bytes. Bucket at 16 bytes to name one. And `KERNELBASE`/
+  `kernel32` are never the answer to "who called this".
+- **The engine's anti-aliasing is hard-disabled on any NVIDIA card** by a 2001
+  string check. Enabling it breaks rendering outright — no terrain, invisible
+  tanks, and not one line in any log.
