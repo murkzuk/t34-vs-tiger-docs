@@ -17,6 +17,111 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-26 - Why you have never seen the sun in this game
+
+Three findings from a day on lighting, and they interlock.
+
+**1. You cannot look up.** The commander's view is hard-limited:
+
+```c
+CommanderCameraLink.SetMaxVertAngle(Math_PI*(10.0f/180.0f));
+```
+
+Ten degrees. That is the ceiling, everywhere - the unit declarations agree at
+`MaxVertAngle = 0.17` radians. So anything higher in the sky simply cannot be
+seen from a tank.
+
+**2. Every campaign mission puts the sun at 63-67 degrees.** Which is why nobody
+has ever seen it. It has been up there for twenty years, permanently out of
+frame. The one mission where someone got the sun to appear had tuned it to
+*exactly* 10.0 degrees - not luck, that is the view limit.
+
+**3. And the sun vectors are not unit length.** They run 0.34 to 1.25. That
+matters because the sun billboard is placed along `SunDirection * DistanceToSun`,
+and `DistanceToSun` is 2000 in every mission - so a vector of length 0.34 puts
+the sun at **680 m instead of 2000 m**, close enough to sit inside the fog or
+below the skyline. Brightness is a completely separate `SunIntensity` field, so
+normalising moves the sun; it does not brighten it.
+
+All twelve campaign missions normalised, and eight given an actual time of day.
+Shadows in the sunny missions are now about three times longer, which is the
+part you *can* see - because shadow length responds at any sun elevation, even
+one you cannot look at.
+
+---
+
+**Then a complaint that turned into a proper hunt:** *"tank shadows are so dark
+they crush all detail"*.
+
+It turns out TvT has **three separate shadow systems**:
+
+```
+StencilShadowColor    vehicles - the real cast shadow
+ShadowColor           terrain and buildings
+FakeShadow            a cheap dark blob under a vehicle, per model
+```
+
+plus `AmbientLight`, which is not a shadow setting at all - it is the fill light,
+what lights a surface the sun is not hitting. Two different mechanisms produce
+what you would call a shadow:
+
+```
+facing AWAY from the sun    -> AmbientLight only
+facing the sun but BLOCKED  -> sun x ShadowColor / StencilShadowColor
+```
+
+**Six of the twelve missions never set `StencilShadowColor` at all**, so vehicle
+shadows fall back to the engine default of `(0.3, 0.3, 0.3)` - the darkest value
+anywhere in the game and dead neutral grey. Nobody chose that. It is what you get
+when nobody sets it.
+
+The two missions anyone actually finished have `ShadowColor` and
+`StencilShadowColor` set to *identical* values. Every mismatch is an unfinished
+mission. That is now a documented rule: they are the same physical shadow drawn
+by two renderers, and if they differ a tank and the ground beside it cast
+visibly different shadows.
+
+*(Tint them blue, incidentally. What fills a real shadow is skylight. The
+finished missions do exactly that.)*
+
+---
+
+**A bug the log will never tell you about.** No Tiger in the game gets a fake
+shadow. `FakeShadows.script` sets it on `Cu_veh_PzVI_MAINModel` - but every
+Tiger uses `Cu_veh_PzVI_LATEModel`, and `LATE` appears zero times in that file.
+G5 wired the MAIN model, switched the units to LATE, and never updated the
+shadow config.
+
+It never errors, because it is a perfectly valid assignment to a class nothing
+instantiates. The only way to find it is to cross-check configured model classes
+against the ones units actually ask for. There is a second bug of exactly this
+shape in the same area, already fixed.
+
+---
+
+**And the thing that was never a lighting problem at all.** After four rounds of
+lifting shadow values, the tank commander was still nearly black. So we measured
+his texture instead of theorising about it:
+
+```
+hum_German_Tankman.tex    22% average luminance   <- the commander
+u_veh_PzVI_MAIN1.tex      62%                      hull
+u_veh_PzVI_MAIN2.tex      53%                      turret
+```
+
+German panzer crews wore black, and G5 painted him accordingly - average texel
+RGB(60, 56, 44). Light is *multiplied* by texture, so at 22% base no ambient
+value will make him bright without washing out the entire scene. He is supposed
+to be a dark figure.
+
+Four rounds of pulling lighting levers before checking the texture. The lesson is
+the finding: **measure the thing before reasoning about it.**
+
+*Analysis by Claude (Opus 5). All of it is now in the mission authoring
+reference rather than in a session that scrolls away.*
+
+---
+
 ## 2026-08-25 — A twenty-year-old crash, and the fix that was sitting in a folder
 
 Campaign 1 Mission 2 crashes to desktop. Here is what the game's own log says,
