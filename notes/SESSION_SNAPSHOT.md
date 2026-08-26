@@ -101,6 +101,25 @@ user's eyes beat the instrument.**
 
 Working files `K:\TvT_KingTiger\` - `KingTiger_final.blend` is the good one.
 
+## TOMORROW'S LIST - in priority order
+
+Full detail in the docs repo `TODO.md`, which now opens with this.
+
+1. **Ballistic realism pass on ZW.** User wants it; **route not chosen and that
+   is a design decision, not a technical one.** REDUX's tables are already the
+   REAL historical figures - leave REDUX alone. ZW gives heavy guns FLAT
+   penetration *and* inflates close range 25-45%. See
+   `Documentation/TvT_Penetration_Tables.md`.
+   **Do not fix the Pak 43 alone** - it would make the King Tiger the only heavy
+   in ZW that weakens with range.
+2. **The King Tiger unit class** - ~1,800 lines from the Tiger E1 template. 14
+   class names already dictated by the shared files; all constants exist.
+3. **MS2: identify the `vcount * 24` block** - the gate between reshaping
+   geometry and ADDING it.
+4. **The ambient pass** across the other 11 campaign missions.
+5. **ZW performance** - 36-60 fps and view-dependent, so profile worst view
+   against best and diff.
+
 ## Build stamps
 
 ```
