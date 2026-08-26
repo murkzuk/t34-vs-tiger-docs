@@ -709,6 +709,125 @@ the sun; it does not make it brighter.**
 Elevation from a direction vector is `asin(-z / |v|)`; the compass bearing is
 `atan2(y, x)`. To change the time of day without swinging the light round to a
 different side of the map, preserve the bearing and change only the elevation.
+---
+
+## 14. Shadows — three systems, and they must agree
+
+Added 2026-08-26 after a user complaint ("tank shadows are so dark they crush
+all detail") turned into four rounds of pulling the wrong lever. **Read this
+before touching shadow darkness.** The model matters more than any value.
+
+### There are three separate shadow systems, plus one thing that is not a shadow
+
+| | setting | what it draws |
+|---|---|---|
+| 1. Stencil shadow | `StencilShadowColor` | **vehicles** — the real cast shadow |
+| 2. Projected shadow | `ShadowColor` | terrain and buildings |
+| 3. Fake shadow | `FakeShadow` / `FakeShadowScale` | a cheap dark blob under a vehicle, enabled per model in `Scripts\Common\FakeShadows.script` |
+
+`ShadowFar`, `LodForShadowChange`, `LodForShadowHide` and `ShadowDetail` control
+**distance and level of detail**, not darkness.
+
+**`AmbientLight` is not a shadow setting at all.** It is the fill light — how
+bright a surface is when the sun is not hitting it. Two different mechanisms
+produce what a player calls "shadow":
+
+```
+surface FACING AWAY from the sun     -> AmbientLight only
+surface facing the sun but BLOCKED   -> sun x ShadowColor / StencilShadowColor
+```
+
+This is why raising `StencilShadowColor` fixed hull detail and did **nothing**
+for the tank commander: he was not in a cast shadow, he was simply facing away
+from the sun.
+
+### RULE: `ShadowColor` and `StencilShadowColor` must match within a mission
+
+They are the same physical shadow drawn by two different renderers. If they
+differ, a tank and the ground beside it cast visibly different shadows.
+
+**The evidence for the rule is in the shipped missions.** The two anyone
+actually finished have them identical:
+
+```
+C1M2   ShadowColor (0.404, 0.494, 0.545)   Stencil (0.404, 0.494, 0.545)   matched
+C2M2   ShadowColor (0.345, 0.420, 0.467)   Stencil (0.345, 0.420, 0.467)   matched
+```
+
+State of the campaign as of 2026-08-26:
+
+```
+1M1  (0.325 grey)          stencil MISSING -> falls back to 0.3
+1M3  (0.200, 0.200, 0.250) (0.500, 0.500, 0.500)   MISMATCHED by 0.30
+1M4  (0.325 grey)          stencil MISSING
+1M5  (0.847) (0.875)       close - overcast, correctly near-white
+1M6  (0.847) (0.875)       close
+2M1  (0.560, 0.580, 0.630) matched   <- fixed 2026-08-26
+2M5  (0.847) (0.875)       close
+2M3  2M4  2M6              stencil MISSING
+```
+
+**Six of twelve missions never set `StencilShadowColor` at all**, so their
+vehicle shadows fall back to `BaseAtmosphere.script`'s default of
+`(0.3, 0.3, 0.3)` — the darkest value anywhere in the game, and dead neutral
+grey. Nobody chose that; it is what you get when nobody sets it.
+
+### Choosing a value
+
+- **Tint it blue.** What actually fills a real shadow is skylight. Neutral grey
+  reads as dead. The finished missions do this: C1M2 `(0.404, 0.494, 0.545)`.
+- **Overcast wants a high value.** C1M5 / C1M6 / C2M5 use `0.875` — on an
+  overcast day shadows are barely darker than lit ground. Whoever set those
+  understood the setting, and they are the proof it does what we think.
+- **Sunny wants roughly 0.45-0.60.** `0.30` crushes; the user judged `0.45`
+  "better, details becoming visible" and settled around `0.56`.
+
+### Watch the ambient/sun ratio too
+
+`AmbientLight` luminance against `SunIntensity` decides how harsh a mission is:
+
+```
+C2M1   ambient 0.120   SunIntensity 1.000   8.3:1   <- harshest in the game
+C1M2 / C1M3 / C2M2 / C2M4   ambient 0.201   0.35-1.2   the tuned value
+C2M3   ambient 0.092   SunIntensity 0.600
+```
+
+C2M1 paired the **lowest ambient with the highest sun** — two independent
+defaults meeting badly. Raised to `0.210` on 2026-08-26 to match the tuned
+missions.
+
+### FakeShadow — and a bug worth knowing about
+
+`FakeShadows.script` enables a cheap shadow blob per model class. **No Tiger
+gets one.** The file sets `Cu_veh_PzVI_MAINModel::FakeShadow = true`, but
+`TankPzVIAusfEUnit::getMeshObjectName()` returns `Cu_veh_PzVI_LATEModel`
+unconditionally — `LATE` appears zero times in that file.
+
+Same shape as the `LodForShadowHide` bug: G5 wired the MAIN model, switched the
+units to LATE, and never updated the shadow config. **This class of bug does not
+show up in a log** — it is a perfectly valid assignment to a class nothing
+instantiates, so nothing errors. The only way to find it is to cross-check
+configured model classes against the ones units actually ask for.
+
+### Before blaming the lighting, check the texture
+
+The commander stayed dark through every lighting change. He was never a lighting
+problem:
+
+```
+hum_German_Tankman.tex    22% average luminance   <- the commander
+u_veh_PzVI_MAIN1.tex      62%                      hull
+u_veh_PzVI_MAIN2.tex      53%                      turret
+```
+
+German panzer crews wore black and G5 painted him accordingly — average texel
+`RGB(60, 56, 44)`. Light is *multiplied* by texture, so at 22% base even
+doubling the ambient barely moves him, while the same lift visibly improves a
+62% hull.
+
+**Measure the texture before reaching for a lighting lever.** Average DXT1
+luminance is cheap to compute from the block endpoint colours and settles the
+question in seconds.
 
 ---
 

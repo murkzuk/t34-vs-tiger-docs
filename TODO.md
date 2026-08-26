@@ -4,6 +4,43 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## Shadow consistency across missions (2026-08-26)
+
+Model written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 14.
+**Three separate shadow systems**, plus `AmbientLight` which is not a shadow
+setting at all but produces what players call one.
+
+**THE RULE: `ShadowColor` and `StencilShadowColor` must match within a mission.**
+They are the same physical shadow drawn by two different renderers - terrain and
+buildings use the first, vehicles the second. The two missions anyone actually
+finished (C1M2, C2M2) have them identical; every mismatch is an unfinished one.
+
+- [x] **C2M1 harmonised.** Both now `(0.560, 0.580, 0.630)`, blue-tinted.
+  `AmbientLight` also raised `0.120 -> 0.210` - C2M1 had the harshest
+  ambient/sun ratio in the game (8.3:1), pairing the lowest ambient with the
+  highest `SunIntensity`.
+- [ ] **Six missions still need it: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6.** Five never
+  set `StencilShadowColor` at all, so vehicle shadows fall back to
+  `BaseAtmosphere`'s `(0.3, 0.3, 0.3)` - the darkest value in the game and dead
+  neutral grey. **1M3 is mismatched by 0.30** (`0.2` vs `0.5`).
+  1M5/1M6/2M5 are within 0.03 and correctly near-white for overcast.
+- [ ] **No Tiger gets a fake shadow.** `FakeShadows.script` sets
+  `Cu_veh_PzVI_MAINModel::FakeShadow = true` but every Tiger uses
+  `Cu_veh_PzVI_LATEModel` - `LATE` appears zero times in that file. Same shape
+  as the `LodForShadowHide` bug. **This class does not appear in any log** - it
+  is a valid assignment to a class nothing instantiates. One line to fix; left
+  alone while other lighting variables were in flight.
+
+### Not a bug: the commander is meant to be dark
+
+`hum_German_Tankman.tex` is **22% average luminance** against the hull's 62%.
+German panzer crews wore black. Light multiplies texture, so no ambient value
+will make him bright without washing out everything else. Four rounds of
+lighting changes were spent before measuring the texture - **measure the texture
+first**.
+
+---
+
 ## C2M1 second Tiger now follows the player (2026-08-26)
 
 Findings written up in `Documentation/TvT_Mission_Authoring_Verified.md`
