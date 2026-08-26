@@ -25,6 +25,18 @@ engine - our own hook, default-on in the launcher.
 
 **`g_diag_sweep` must never ship true.**
 
+## Build stamps
+
+```
+REDUX   v0.260826
+ZW      v0.260826      matching = the two installs are in step
+```
+
+`VersionID` in `Scripts\GameSettings.script`, shown bottom-right in game.
+**A DLL-only change counts as a ship** - today's whole win was in
+`tvt_los_hook.dll` with no script edit, and the stamp is how "does this build
+have the fix?" gets answered without opening a log.
+
 ## ZW is still 36-60 fps and it is VIEW-DEPENDENT
 
 The user's observation - "depends where I look" - is the diagnostic. A cost that

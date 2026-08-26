@@ -2,6 +2,17 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-26 — version stamps
+
+Both builds bumped to **`v0.260826`** (`VersionID` in
+`Scripts\GameSettings.script`), caches cleared.
+
+Note the rule was extended: **a DLL-only change counts as a ship.** The whole
+win below lives in `tvt_los_hook.dll` with no script edit at all, and "which
+build has the LOS fix in it?" is precisely the question the on-screen stamp
+exists to answer. The launcher injects the same hook into either install, so
+both get bumped together and matching dates mean the two are in step.
+
 ## 2026-08-26 — the LOS hook was costing 55% of the framerate
 
 ```
