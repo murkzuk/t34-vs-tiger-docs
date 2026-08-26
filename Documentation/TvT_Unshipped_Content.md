@@ -66,6 +66,18 @@ TankT34_85_44  100 m: 115    500 m: 105    1000 m: 100    1500 m: 92     2000 m:
 The near columns were filled with `1.0` and left. `MaxDistance` is also 8800 m -
 right for a towed gun in an artillery role, wrong for a tank gun.
 
+### No further build is coming from upstream
+
+**ZeeWolf has died.** The user recalls he was further along with the Tiger II
+than what survives here, but that work is not on these drives - searched
+2026-08-26 across all 19 TvT folders on `M:` plus every archive
+(`- Original.zip`, `REDUX0.001/0.002.zip`, `T34vsTiger.7z`, `MODS.7z`). Only
+`T34vsTiger_ZW2015` and its `- Copy` hold King Tiger files, both with the same
+three model files and **no unit class in either**.
+
+So what is documented above is the complete surviving state. Finishing it means
+completing his work, not waiting for it.
+
 ### What building it would actually involve
 
 1. Copy `Scripts/Units/TankPzVIAusfEUnit.script` as the template - it is the
