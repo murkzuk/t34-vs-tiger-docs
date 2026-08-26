@@ -36,9 +36,11 @@ Every REDUX mission sits at or below ZW's dimmest.
 - [ ] **FIND THE SLOW MISSION.** The complaint is 70-90 fps. C2M1 measures
   ~117, C1M1 92-104. **An afternoon was spent profiling missions that are not
   slow.** Nothing else here is worth doing until this is answered.
-- [ ] **Ship the map-lookup cache by default.** +6.3%, verified over 42 million
-  calls, 0 mismatches - still only an opt-in launcher checkbox. Cheapest win
-  available.
+- [x] **Map-lookup cache stays an OPT-IN CHECKBOX.** User's decision,
+  2026-08-26, asked and answered. +6.3%, verified over 42 million calls with
+  0 mismatches - but it is a live patch to a hot code path, and 6% does not
+  justify injected code in the default play path. **Do not re-propose
+  defaulting it.**
 - [ ] Multi-entry map cache (4-8 entries vs the current 1). Hit rate is 67%;
   headroom is ~2%, below the +/-4% noise floor, so probably not worth it alone.
 - [ ] **`Engine.dll` is 28.5% of the frame and has never been broken down.**
