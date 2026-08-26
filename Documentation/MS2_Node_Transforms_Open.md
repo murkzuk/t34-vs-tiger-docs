@@ -39,13 +39,48 @@ the reader does not decode.
 `Ms2Node` currently carries `name, parent_index, bbox_min/max, positions,
 normals, uvs, indices, weights, joint_idx` - **no matrix**.
 
-## Where to look next
+## PROVEN: the geometry decode is CORRECT
+
+Do not chase this as an importer bug. Parts rendered in isolation come out at
+true dimensions:
+
+```
+Turret_A         3.65 x 2.54 x 1.80 m    a Tiger II Henschel turret
+Weapon_A         5.56 m long             the 8.8 cm L/71 barrel
+WheelLeftMain1   0.79 m                  Tiger II road wheel is 800 mm
+Copula           0.95 m                  cupola ring
+Body_commander   0.36 x 0.76 x 0.99      a torso
+```
+
+`Turret_A` renders as a textbook Henschel turret - sloped sides, flat rear with
+escape hatch and pistol ports, cupola and loader hatch openings. **138 correct
+meshes stacked at the origin is what makes the scene look like scrap.**
+
+## Where to look next - and what is NOT yet established
 
 The stored bbox is exactly the vertex bounds (delta 0.00 on every part tested),
-so it carries no placement information - the transform is elsewhere. The
-strongest candidate is the `other_count` records: `other == 4` on geometry nodes
-here, where the old probe's documented assumption was `1`. Four extra records on
-an animated part is suggestive of a transform payload.
+so it carries no placement information.
+
+`ms2_reader.py:210` does `offset += other_count * 16` with the comment
+*"unidentified"*. `other_count == 4` on these nodes, so 64 bytes.
+
+**A first look at that block does NOT obviously contain a matrix**, and this is
+recorded as an open question rather than an answer:
+
+```
+Weapon_A    2.6446 / 2.3446 / 2.0446 ...  stepping 0.3 m along the barrel axis
+Turret_A    (0, -0.6162, 0) repeating
+Copula      (0, -1.1793, 0) repeating
+```
+
+Evenly spaced points along a gun barrel and repeating single-axis vec3s look
+more like **attachment points** (muzzle flash, smoke, hit positions) than a
+transform. The ints at the block start also repeat the node's vertex count,
+which means the offset arithmetic used for that dump is not fully understood.
+
+**Next step is to instrument `ms2_reader.py` itself** to report the exact file
+offset it reaches after indices, rather than re-deriving it by searching for the
+index bytes as was done here. Then dump from a known-correct position.
 
 **This is the single thing standing between the importer and a usable model
 pipeline.** Without it the tool imports parts; with it, it imports vehicles.
