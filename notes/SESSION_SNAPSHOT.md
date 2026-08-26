@@ -25,6 +25,45 @@ engine - our own hook, default-on in the launcher.
 
 **`g_diag_sweep` must never ship true.**
 
+## MS2 MODEL FORMAT: SOLVED 2026-08-26
+
+The importer went from "imports parts" to "imports finished vehicles" in one
+evening. **Use the addon reader; `ms2_probe.py` is SUPERSEDED** (it desyncs on
+real vehicles, and the "other_count == 4" in older notes came from that desync -
+it is 1).
+
+```
+UVs           DirectX convention - NEGATE V.  loop.uv = (u, -v)
+transforms    frame 0 of each node's 161-frame animation track
+materials     low 16 bits of the 16-byte "other" record: (icount<<16)|mat_index
+textures      .tex ARE plain DDS. Paths + alpha modes are plain text in .script
+alpha         mode NORMAL must be honoured or decals render as BLACK RECTANGLES
+armour        a material with NO texture is collision geometry - hide it
+```
+
+Verified: the King Tiger imports at **10.21 m against the real 10.29 m**,
+assembled and correctly skinned. Tiger I 8.34 m against 8.45 m.
+
+**UVs beyond 1 after flipping are legitimate TILING** - `TrackLeft` runs to 8.0,
+once per track-link repeat. Do not clamp.
+
+### Two instrument traps
+
+- **Blender loads the INSTALLED addon**, not the repo copy
+  (`AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\ms2_importer\`).
+  It was 8 days stale. Copy across and delete `__pycache__`.
+- **`matrix_world` is stale until `bpy.context.view_layer.update()`** - measuring
+  straight after import reported the OLD size and made a working fix look broken.
+
+### How the UV bug was found
+
+Claude decoded geometry, transforms and materials from bytes, rendered three
+times, and **called it correct**. The user opened the UV editor and saw the
+island hanging outside the 0-1 square in seconds. **Second time that day the
+user's eyes beat the instrument.**
+
+Working files `K:\TvT_KingTiger\` - `KingTiger_final.blend` is the good one.
+
 ## Build stamps
 
 ```

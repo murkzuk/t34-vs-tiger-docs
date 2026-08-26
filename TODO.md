@@ -31,6 +31,20 @@ Every REDUX mission sits at or below ZW's dimmest.
 
 ---
 
+## Model tooling - the .ms2 format is SOLVED (2026-08-26)
+
+- [x] **UVs, transforms and material indices all decoded.** The importer now
+  produces assembled, correctly skinned vehicles. See
+  `Documentation/MS2_Node_Transforms_SOLVED.md`.
+- [ ] **Export is still not written.** Reading is solved; writing a `.ms2` back
+  out is untouched, and that is what any actual model *change* would need.
+- [ ] The addon does not yet parse the `.script` for materials itself — the
+  material index is decoded, but resolving it to a texture is done by a
+  standalone script. Folding that in would make File > Import produce a
+  textured vehicle in one step.
+- [ ] `ms2_probe.py` should be deleted or clearly marked superseded; it desyncs
+  on real vehicles and its notes seeded a wrong `other_count` value.
+
 ## Ammunition scarcity - nothing in TvT models it (2026-08-26)
 
 - [ ] **`AmmoQty` is used by ZERO missions.** The engine supports per-placement

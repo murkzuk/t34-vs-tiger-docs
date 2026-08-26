@@ -781,3 +781,70 @@ Side results from the same day, for anyone chasing similar ghosts:
 - **The engine's anti-aliasing is hard-disabled on any NVIDIA card** by a 2001
   string check. Enabling it breaks rendering outright — no terrain, invisible
   tanks, and not one line in any log.
+
+
+---
+
+## 2026-08-26 — T-34 vs Tiger: the .ms2 model format, fully decoded
+
+Long-standing gap: we had a Blender importer for TvT's `.ms2` meshes that could
+read geometry but produced a heap of parts stacked at the origin. It looked
+broken enough that it had been shelved since August.
+
+It wasn't broken. It was skipping three things.
+
+**1. UVs are DirectX convention.** V runs 0 to **-1** (V=0 at the top of the
+texture); Blender and OpenGL put V=0 at the bottom. 104 of the King Tiger's 138
+textured nodes had UVs outside 0..1, every V range negative. The fix is one
+character:
+
+```python
+loop[uv_layer].uv = (u, -v)
+```
+
+Values beyond 1 after flipping are legitimate **tiling** — the track mesh runs
+to 8.0, once per track-link repeat. Don't clamp them.
+
+**2. The node transform is frame 0 of an animation track.** The reader was
+stepping over `d_count*12 + d_count*16` as "unidentified". It's `d_count`
+positions followed by `d_count` quaternions (W first), with `d_count == 161` in
+every vehicle — and `161*28+4 = 4512`, exactly the mystery "fallback block" size
+recorded in earlier notes without ever being named.
+
+Frame 0 is the rest pose (measured: 199 of 220 nodes at identity rotation there,
+more than any other frame). Without it, static parts still look right because
+they're baked in world space, but anything animated is authored around its own
+pivot and collapses to the origin — turret, gun, road wheels.
+
+The tracks are lovely to read once decoded: road wheels holding position while
+their quaternion spins, the gun sliding 0.3 m backwards along its own axis under
+recoil, the turret sitting still at 0.7071 — 90 degrees of traverse.
+
+**3. The material index is packed into a 16-byte record** that was also being
+skipped: `(packed, 0, vcount, 0)` where `packed = (icount << 16) | material_index`.
+The low half indexes the companion `.script`'s ModelSkin array. All 138 geometry
+nodes resolve.
+
+Textures turned out to be the easy part — `.tex` files are **plain DDS** with the
+extension changed, and materials, texture paths and alpha modes are plain text in
+the model's `.script`. Alpha mode matters: markings, unit numbers and the flag
+are alpha-keyed, and rendering them opaque puts black rectangles on the hull.
+
+One more rule: **a material with no texture is armour geometry**, not visual —
+`HullArmor_*`, `TUR_Armor_*`, the collision facets the game uses for penetration.
+Nine of them on this model, rendering as blank plates draped over the tank.
+
+Verified against the real vehicles: the King Tiger imports at **10.21 m** against
+a true 10.29 m with the gun forward; the Tiger I at 8.34 m against 8.45 m.
+
+**Two traps that cost more time than the format did.** Blender loads the
+*installed* copy of an addon, not the one in your repo — ours was 8 days stale,
+so edits silently did nothing until copied across and `__pycache__` deleted. And
+`matrix_world` is stale until `view_layer.update()`, which reported the old
+unassembled size and made a working fix look like a failed one.
+
+**And the honest bit:** I decoded geometry, transforms and materials by reading
+bytes, then rendered the result three times, looked at it, and called it correct.
+The user opened the UV editor and spotted the island hanging outside the 0–1
+square in about ten seconds. Second time that day their eyes beat my
+instrumentation.

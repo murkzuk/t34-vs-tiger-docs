@@ -2,6 +2,41 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-26 — the .ms2 model format, fully decoded
+
+The importer went from "imports parts" to "imports finished vehicles". Three
+things it was skipping:
+
+- **UVs are DirectX convention** — V runs 0 to **-1**, so it must be negated
+  (`loop.uv = (u, -v)`). 104 of the King Tiger's 138 textured nodes had UVs
+  outside 0..1, every V range negative. Values beyond 1 after flipping are
+  legitimate **tiling** (the track mesh runs to 8.0, one per link repeat).
+- **The node transform is frame 0 of an animation track** — `d_count` positions
+  then `d_count` quaternions (W first), `d_count == 161` in every vehicle.
+  `161*28+4 = 4512`, exactly the "fallback block" size earlier notes recorded
+  without naming. Frame 0 measured as the rest pose: 199 of 220 nodes at
+  identity rotation there.
+- **The material index is packed** into the 16-byte record also being skipped:
+  `(icount << 16) | material_index`, low half indexing the `.script`'s ModelSkin
+  array. All 138 geometry nodes resolve.
+
+Supporting facts: `.tex` files are plain **DDS**; materials, texture paths and
+alpha modes are plain text in the model `.script`; **alpha mode `NORMAL` must be
+honoured** or decals render as black rectangles; and **a material with no
+texture is armour/collision geometry**, not visual — hide it.
+
+Verified against the real vehicles: King Tiger imports at **10.21 m** against a
+true 10.29 m, Tiger I at 8.34 m against 8.45 m.
+
+Two instrument traps recorded: **Blender loads the installed addon copy, not the
+repo one** (ours was 8 days stale, so edits silently did nothing), and
+**`matrix_world` is stale until `view_layer.update()`**, which made a working fix
+look like a failure.
+
+`ms2_probe.py` is **superseded** — it desyncs on real vehicles, and the
+`other_count == 4` in older notes came from that desync. It is 1.
+
+
 ## 2026-08-26 — version stamps
 
 Both builds bumped to **`v0.260826`** (`VersionID` in
