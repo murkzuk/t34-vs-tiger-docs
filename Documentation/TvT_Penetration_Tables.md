@@ -151,3 +151,46 @@ The penetration pass is now the *second* priority. **Restoring ZW's handling and
 gunnery to the original values is simpler, better evidenced, and fixes the thing
 that is actually felt in play** - it is a revert to G5's numbers rather than a
 rebalance, so there is no design judgement to make.
+
+## DECIDED 2026-08-26: adopt G5's original accuracy values
+
+The user asked the right question - *is 1.2 accurate, or is this reverting for
+the sake of it?* - and then accepted G5's figures. Recording **why** that is
+sound, so it is not reopened.
+
+**`FireDeviation` is a GAMEPLAY parameter, not a ballistic one.** Three tells:
+
+1. **Machine guns are 0.15, cannons 1.2-1.5.** Physically backwards - a real MG
+   scatters far more than a tank gun. So nobody was modelling dispersion.
+2. **Player 0.005 vs AI 1.2 on the SAME weapon.** The player supplies aiming
+   error through the sight, so the gun must be near-perfect; the AI aims
+   perfectly by definition, so it needs artificial imprecision or it never
+   misses. Two problems, two numbers.
+3. **The AI tiering is a 20% band** - 1.2 for Tiger / StuG III / SU-85, 1.25 for
+   T-34/85, 1.5 for the rest. A modest nod to better platforms and optics.
+
+So **1.2 should not be defended as historically accurate** - it is not that kind
+of number. What is defensible is the *relationship*: G5 put all AI gunners
+within 20% of each other, with a small edge to the better platforms, which
+matches reality (German TZF optics and 1943 crew training were genuinely better,
+worth perhaps 10-30% in first-round hit chance - not 31x).
+
+```
+G5     Tiger 1.2   vs  T-34/85 1.25      4% apart
+ZW     Tiger 0.05  vs  T-34/85 1.55     31x apart
+```
+
+ZW's 0.05 is not a tuned AI value at all - it sits in the *player/MG* band. He
+promoted the AI Tiger to player-grade accuracy and left the AI T-34s alone.
+
+**Decision: restore G5's values.** They are a designed, shipped, playtested
+system. This keeps the work a straight revert with no design judgement.
+
+### Still unmeasured, if rigour is ever wanted
+
+**What 1.2 means in metres.** The units are unknown without engine source. It is
+measurable: park an AI tank at a known range, let it fire ~20 rounds at a static
+target, record the spread. That would convert this from ratios into "groups X
+metres at 1000 m", checkable against Wa Pruef trial data. Not needed for the
+revert; needed only if the values are ever to be re-derived from history rather
+than inherited.

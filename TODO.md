@@ -71,6 +71,10 @@ Every REDUX mission sits at or below ZW's dimmest.
   - Tiger: +24% speed, 29% lighter (56 t -> 40 t), sees 1500 -> 2600 m, engages
     1000 -> 2600 m, fires every 12 s -> 7 s.
   - T-34/85 turret traverse **halved** (17 -> 8); T-34/76 **cut 5x** (36 -> 7).
+- [x] **DECIDED: adopt G5's original values.** `FireDeviation` is a gameplay
+  knob, not ballistics (MGs 0.15 vs cannons 1.2 is physically backwards; player
+  0.005 vs AI 1.2 on the same weapon). G5's AI band is 20% wide with a modest
+  edge to better platforms - defensible. ZW's 0.05 sits in the *player* band.
 - [ ] **This is a REVERT, not a rebalance** — REDUX is the 2001 original on these
   fields (one exception: Tiger `MaxPower` 1600 -> 1500, a REDUX nerf). So there
   is no design judgement to make, unlike the penetration question.
