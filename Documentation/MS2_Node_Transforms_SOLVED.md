@@ -217,3 +217,88 @@ textures      .tex are plain DDS; paths + alpha modes are plain text in .script
 alpha         mode NORMAL must be honoured or decals render as black rectangles
 armour        untextured materials = collision facets, hide them
 ```
+
+
+---
+
+# THE EXPORTER WORKS. Confirmed in the engine, 2026-08-26.
+
+**The G5 engine loaded and rendered a `.ms2` written by our own code.** This is
+the fact everything else was waiting on - the difference between "we understand
+the format" and "the engine accepts our output".
+
+## The test
+
+`Models/4MeterBox.ms2` - an original G5 file dated **December 2005**, used by no
+mission, exposed in the Editor as "Dartboard 4 meters". Its one node `pCube1`
+has 24 vertices and 12 triangles.
+
+Every Z coordinate was multiplied by 3. Vertex and index counts unchanged, file
+size unchanged at 4,499 bytes.
+
+**Result: the Editor's Asset View shows `C4MeterBoxModel` as a 3x tall
+rectangle. Console clean, no errors.** Original restored afterwards, verified by
+md5.
+
+## Step 1 first, and it matters
+
+Before any edit, all 249 models in both builds were read and rewritten unedited:
+
+```
+248 byte-identical
+  0 differ
+  1 reader failure (u_veh_PnzIV_G_AI_.ms2 - does not parse at all, pre-existing)
+```
+
+**If the bytes had not matched we would not have understood the format well
+enough to edit it.** Do this first on any future format work.
+
+## What the writer does, and why
+
+`Tools/MS2Format/ms2_writer.py`. It does NOT regenerate a file. It copies the
+original byte-for-byte and substitutes only the geometry span, so every block of
+known size and unknown meaning - the `vcount*24` tangent data, the 80-byte bind
+poses, the 161-frame animation tracks - is **preserved verbatim rather than
+invented**. It asserts the geometry round-trips before writing anything, and
+refuses an edit that changes byte length.
+
+## The limit, stated plainly
+
+**Vertex and index counts must not change.** Changing them invalidates the
+`vcount`-sized blocks, the bounding box and sphere, and the packed
+`(icount << 16) | material_index` record.
+
+```
+SAFE     move vertices, rescale, rewrite UVs, reshape existing geometry
+NOT YET  add or remove geometry - needs those blocks regenerated
+UNTESTED skinned meshes (the test was a static box)
+UNTESTED whether a collision/.rmap mismatch matters after a shape change
+```
+
+## Prospects, revised
+
+Before this test: "good, but we have never handed the engine a file we wrote."
+That caveat is now gone for in-place geometry editing, which was the
+high-confidence case and is now simply **done**.
+
+Adding geometry remains the next real piece of work, and the `vcount*24` block
+is the thing to identify first - six floats per vertex on every textured node,
+almost certainly tangent and binormal, and computable from positions, UVs and
+normals if so.
+
+## A test-bed lesson that cost two runs
+
+The first attempts used `M:\TvT_INJECT_SANDBOX` and gave a grey screen with no
+log at all. Two causes, both about the test rather than the code:
+
+1. **The exe was launched by full path from another directory.** TvT resolves
+   `Scripts\`, `Models\` and its log path relative to the CURRENT DIRECTORY.
+   Always `cd` into the game folder first - `K:\TvTDeepseek\play_sandbox.bat`
+   does this.
+2. **The sandbox had drifted** - 25 changed script files from earlier injection
+   work, including a `PlayerUnit.script` that would not compile. A broken test
+   bed produces a result that looks exactly like your change failing.
+
+**The Editor turned out to be the better test bed anyway**: it loads models
+directly rather than through a mission, so there is far less between the file
+and the answer.
