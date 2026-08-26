@@ -194,3 +194,88 @@ target, record the spread. That would convert this from ratios into "groups X
 metres at 1000 m", checkable against Wa Pruef trial data. Not needed for the
 revert; needed only if the values are ever to be re-derived from history rather
 than inherited.
+
+---
+
+# THE FULL SWEEP, 19 shared units — the bias is systematic
+
+Compared **class-by-class** against the untouched 2001 original, 2026-08-26.
+141 fields differ across the 19 units present in both builds.
+
+## AI main-gun accuracy (`FireDeviation`, lower = more accurate)
+
+```
+side     unit          class                  ORIGINAL      ZW      change
+German   Pak 40        CGunPak40Gun               1.5      0.5      3x better
+German   Panzer IV     CTankPzIVGGun              1.5      0.10    15x better
+German   Tiger I       CTankPzVIAusfEGun          1.2      0.05    24x better
+German   StuG III      CSAUStuG40Gun              1.2      0.02    60x better
+Soviet   T-34/76       CTankT34_76_42Gun          1.5      1.6      1.07x WORSE
+Soviet   T-34/85       CTankT34_85_44Gun          1.25     1.55     1.24x WORSE
+Soviet   SU-85         CSAUSU85Gun                1.2      1.2      untouched
+```
+
+## Player guns - ONE change in the entire game
+
+```
+Soviet   T-34/85       CTankT34_85_44PlayerGun   0.005     0.15    30x WORSE
+```
+
+Every German player gun is untouched.
+
+## THE CONTROL that removes any doubt
+
+The **StuG III and SU-85 are the same class of vehicle** - casemate tank
+destroyers, no turret, same role, same era. **G5 set both to exactly 1.2.**
+
+```
+                StuG III     SU-85
+G5 original       1.2         1.2      IDENTICAL
+ZW                0.02        1.2      60x apart
+```
+
+Two functionally identical vehicles that the original deliberately set equal;
+the German one made 60x more accurate, the Soviet one left alone. There is no
+gameplay rationale under which that is a balance pass.
+
+## Net effect across all measured fields
+
+```
+German    47 changes better,  9 worse    84% favourable
+Soviet    43 changes better, 28 worse    61% favourable
+```
+
+(Both sides gained from ZW's across-the-board increases to radar and attack
+distances, which is why the Soviet figure is not lower. The accuracy table above
+is where the intent shows.)
+
+## Sensors, mobility and rate of fire, German side
+
+```
+Tiger      MaxSpeed 2200 -> 2730 (+24%)     Mass 56t -> 40t (29% lighter; real 57t)
+           MaxRadarDistance 1500 -> 2600    AttackDistanceMax 1000 -> 2600
+           FirePeriod 12000 -> 7000         FirePeriodRandAdd 8000 -> 2000
+           gun DirectionSpeedH 4.5 -> 6.5   MG FireDeviation 0.15 -> 0.05
+Panzer IV  AttackDistanceMax 1000 -> 2800   MaxRadarDistance 1200 -> 2700
+StuG III   AttackDistanceMax 1000 -> 2000   MaxRadarDistance 1200 -> 2000
+```
+
+## Soviet side, same fields
+
+```
+T-34/85    DirectionSpeedH 17 -> 8 (turret traverse HALVED)   Mass 40t -> 48t
+T-34/76    DirectionSpeedH 36 -> 7 (cut 5x)
+SU-85      gun DirectionSpeedH 5.0 -> 3.0    FirePeriod 8000 -> 9000 (slower)
+ZiS-3      gun DirectionSpeedH 6.0 -> 4.0
+```
+
+## Method note - this trap produced two opposite wrong answers
+
+A unit file contains **separate gun classes for the AI and the player**
+(`CTankT34_85_44Gun` vs `CTankT34_85_44PlayerGun`), each with its own
+`FireDeviation`. Grepping the first match in the file gave "0.005 -> 0.15" on one
+pass and "0.15 -> 0.005" on the next. **Always compare per class.**
+
+Similarly, a first side-classifier filed `GermanSoldierRifleUnit` as Soviet
+because its match list omitted "German". Check the classifier before trusting
+any aggregate.
