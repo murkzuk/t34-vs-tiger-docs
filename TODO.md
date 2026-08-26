@@ -4,6 +4,57 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## REDUX missions are lit too darkly — the big one (2026-08-26)
+
+```
+REDUX   34 missions, ambient luminance   0.092 .. 0.210
+ZW      40 missions, ambient luminance   0.120 .. 0.609
+```
+
+**Every REDUX mission sits at or below ZW's dimmest.** Hours were spent
+calibrating against REDUX's own "tuned" missions at lum 0.201 as if that were
+the target; it never was.
+
+- [x] **C2M1 relit** — ambient lum 0.120 -> **0.437**, and the tank commander
+  finally reads. Shadow colours brought back down to 0.38/0.40/0.45 to restore
+  contrast, since ambient now does the fill work (the two had been compensating
+  for each other).
+- [ ] **A considered ambient pass across the other 11 campaign missions.** The
+  highest-value open lighting job, and bigger than the sun elevations were.
+  ZW's brightest missions run `SunIntensity` at 0.7-0.9, not 1.0 — if a mission
+  washes out, lower the sun rather than dropping ambient back.
+
+### ONE UNTESTED VALUE IS LIVE
+
+`Models\u_veh_PzVI_LATE.script` commander material (id 6) is on
+`ambient = 1.000000` — a diagnostic set and never run. Either run it and judge,
+or put it back to `0`.
+
+### The black commander — a real engine TRADE, not a bug
+
+```
+PlanarShadow = true    commander readable, tank does NOT self-shadow  (ZeeWolf's choice)
+PlanarShadow = false   tank self-shadows, commander black             (CURRENT)
+```
+
+A planar shadow is a flat projection onto the ground and cannot shade the model
+by itself. That is the whole trade.
+
+- [ ] **User's decision, one word.** Claude's view: keep `false` and the
+  self-shadowing — the tank fills the screen constantly, the commander is a small
+  figure usually seen from behind. ZeeWolf chose the other way, which is
+  legitimate rather than better.
+- **Live lead:** at `PlanarShadow = false`, material ambient `0.70` on the
+  commander lit **one tiny triangle of his face**. So material ambient DOES reach
+  him — unresolved whether the limit is *strength* (too weak against a stencil
+  shadow) or *coverage* (that triangle is simply the bit poking out above the
+  shadow volume). The `1.0` value above was set to distinguish them and never run.
+- **The earlier "material ambient does nothing" result was an INVALID TEST** — it
+  was run while `PlanarShadow` was `true`, so nothing was stencil-shadowing him
+  and there was nothing to fill.
+
+---
+
 ## SOLVED: tank commanders rendered black — `PlanarShadow` (2026-08-26)
 
 Written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 15.
