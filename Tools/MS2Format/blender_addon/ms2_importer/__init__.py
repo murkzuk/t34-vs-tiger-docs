@@ -31,6 +31,7 @@ without needing a new file or a script re-run:
                 overlapping duplicates), since flat shading can't
                 misinterpret a normal it never uses.
 """
+import os
 import re
 
 import bpy
@@ -167,6 +168,91 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
     return obj
 
 
+# ---------------------------------------------------------------------------
+# Materials. [2026-08-26]
+#
+# The .ms2 stores only a material INDEX per node. Everything else - the texture
+# path and the alpha mode - is plain text in the companion Models/<name>.script,
+# in its ModelSkin class. And .tex files are plain DDS with the extension
+# changed, so Blender loads them directly once renamed (a .dds copy is created
+# beside the original on demand).
+# ---------------------------------------------------------------------------
+def _parse_model_script(ms2_path):
+    """material id -> (texture path, alpha mode), read from the .script beside
+    the .ms2. Returns {} if there is no companion script."""
+    scr = os.path.splitext(ms2_path)[0] + ".script"
+    if not os.path.exists(scr):
+        return {}
+    try:
+        txt = open(scr, "r", encoding="latin-1").read()
+    except Exception:
+        return {}
+    out = {}
+    for blk in txt.split("new CModelMaterial(")[1:]:
+        mid = re.search(r'"(\d+)",\s*//\s*material id', blk)
+        if not mid:
+            continue
+        tex = re.search(r'"([^"]*)",\s*//\s*texture name', blk)
+        alp = re.search(r'"(\w+)",\s*//\s*alpha mode', blk)
+        out[int(mid.group(1))] = (tex.group(1) if tex else "",
+                                  alp.group(1) if alp else "DISABLE")
+    return out
+
+
+def _texture_image(ms2_path, rel_tex):
+    """Load a .tex as the DDS it actually is. Returns None if not found."""
+    if not rel_tex:
+        return None
+    # <game>/Models/x.ms2  ->  <game>
+    root = os.path.dirname(os.path.dirname(ms2_path))
+    src = os.path.join(root, rel_tex.replace("/", os.sep))
+    if not os.path.exists(src):
+        src = os.path.join(root, "Textures", os.path.basename(rel_tex))
+    if not os.path.exists(src):
+        return None
+    dds = os.path.splitext(src)[0] + ".dds"
+    if not os.path.exists(dds):
+        try:
+            with open(src, "rb") as fi, open(dds, "wb") as fo:
+                fo.write(fi.read())
+        except Exception:
+            return None
+    try:
+        return bpy.data.images.load(dds, check_existing=True)
+    except Exception:
+        return None
+
+
+def _material_for(mi, table, ms2_path, cache):
+    if mi in cache:
+        return cache[mi]
+    rel, alpha = table.get(mi, ("", "DISABLE"))
+    mat = bpy.data.materials.new("ms2_mat_%02d" % mi)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    if bsdf:
+        bsdf.inputs["Roughness"].default_value = 0.85
+    img = _texture_image(ms2_path, rel)
+    if img and bsdf:
+        tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+        tex.image = img
+        mat.node_tree.links.new(bsdf.inputs["Base Color"], tex.outputs["Color"])
+        # Markings, unit numbers, the flag and the barrel kill rings are
+        # alpha-keyed. Ignore this and they render as BLACK RECTANGLES.
+        if alpha and alpha.upper() != "DISABLE":
+            mat.node_tree.links.new(bsdf.inputs["Alpha"], tex.outputs["Alpha"])
+            try:
+                mat.surface_render_method = "DITHERED"
+            except Exception:
+                try:
+                    mat.blend_method = "CLIP"
+                except Exception:
+                    pass
+    mat["ms2_texture"] = rel or "(none - armour/collision facet)"
+    cache[mi] = mat
+    return mat
+
+
 def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTHORED'):
     """Imports a .ms2 file into the current Blender scene. Returns the
     list of created Blender objects, indexed the same way as the
@@ -240,6 +326,29 @@ def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTH
         placed += 1
     if placed:
         print('  rest transforms: %d nodes placed' % placed)
+    # Materials, from the companion .script. A material with NO texture is an
+    # armour/collision facet (HullArmor_*, TUR_Armor_*), not visual geometry -
+    # it renders as a blank plate draped over the vehicle, so hide it.
+    table = _parse_model_script(path)
+    if table:
+        cache, textured, armour = {}, 0, 0
+        for i, node in enumerate(nodes):
+            mi = getattr(node, 'material_index', -1)
+            ob = objects[i]
+            if mi < 0 or ob.type != 'MESH' or not ob.data.vertices:
+                continue
+            mat = _material_for(mi, table, path, cache)
+            ob.data.materials.clear()
+            ob.data.materials.append(mat)
+            if any(n.type == 'TEX_IMAGE' for n in mat.node_tree.nodes):
+                textured += 1
+            else:
+                ob.hide_set(True)
+                ob.hide_render = True
+                armour += 1
+        print('  materials: %d textured, %d armour/collision hidden, %d distinct'
+              % (textured, armour, len(cache)))
+
 
     print("Imported %s: %d nodes (%d with geometry, %d hidden by default "
           "as LOD/Crashed/CM variants)" % (
