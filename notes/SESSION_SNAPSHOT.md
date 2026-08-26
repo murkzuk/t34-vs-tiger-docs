@@ -1,118 +1,137 @@
-# START HERE — snapshot, end of 2026-08-25
+# START HERE — snapshot, end of 2026-08-26
 
-Replaces the 2026-08-23 snapshot. Read this first.
+Replaces the 2026-08-25 snapshot. Read this first.
 
-## NEXT SESSION, IN THIS ORDER — agreed with the user
+## ⚠ ONE UNTESTED VALUE IS LIVE IN THE GAME
 
-### 1. The ZW sweep
-
-ZeeWolf 2015 got almost none of 2026-08-25's attention, and the one thing that
-*was* checked (`LodForShadowHide`) turned out to be already correct there, while
-the grass alpha turned out to be **wrong** there. So neither "ZW is fine" nor
-"ZW needs the same fixes" is safe to assume — it has to be checked item by item.
-
-Compare ZW against every fix REDUX has had, and report which apply:
-
-- `AlphaBlendDistanceFactor` — **known already: see item 2**
-- the `ActivateMove` / `ActivateMovement` typo (REDUX had it in C1M2 and still
-  has it in C2M3 line 932)
-- the `UnitGroup.script` patrol-recursion guard (patch 01) — does ZW's
-  `OnOrderFulfilled` have the same 2026-08-18-style change, and therefore the
-  same crash?
-- the sun-vector normalisation / glare bug
-- the undeclared-static-assignment class (**already swept clean in ZW**, 4957
-  classes, none — no need to repeat)
-- tree `ModelLOD`, `ShadowFar`, `FogDensity` values
-
-Method that works: byte-compare the two trees file by file and eyeball the
-diffs, rather than grepping for one thing at a time.
-
-### 2. The grass alpha fix for ZW
-
-ZW has **two** grass zone maps and only the winter one was ever fixed:
+`Models\u_veh_PzVI_LATE.script`, the commander material (id 6):
 
 ```
-ZW  CBaseGrassC1        (summer)  line 281:  0.4            <- UNFIXED
-ZW  CBaseWinterGrassC1  (winter)  line 529:  0.8  //jm 0.4  <- already raised
-REDUX (single class)              line 276:  0.9
+new Color(1.000000, 1.000000, 1.000000), // ambient
 ```
 
-Summer is most of ZW's missions, and `0.4` fades grass over the last **60%** of
-draw distance — the see-through-tanks effect, plus more blended pixels. The
-engine's own hardcoded default is `0.8`, so G5's `0.4` was arguably always
-wrong.
-
-- **Summer `0.4` -> `0.9`** — the real fix. User agreed.
-- **Winter `0.8` -> `0.9`** — consistency only, marginal, user's call.
-- **`1.0` is forbidden**: the engine computes `1.0 / (1.0 - factor)`.
-
-Byte-level edit (CP1251), backup outside the game folder, clear
-`M:\T34vsTiger_ZW2015\Cache\Scripts.cache`.
-
-### 3. Phase 2 proper
-
-`THE_PLAN.md` says Phase 2, 4 of 7. The unowned item worth taking:
-**the five "stock noon" missions** — pick a time of day per mission and apply
-the recipe that already exists. Largest remaining visible-quality gap, and
-pleasant work after a day of profiling.
-
-Also open in Phase 2: fog reaching distant objects (DeepSeek's), and tree height
-without the redwood effect (unowned).
+**That is a diagnostic value, set and never run.** It was the last thing done
+before the session ended. `1.0` is what the sky materials use. Either run it and
+judge, or set it back to `0.000000` — do not leave it and forget what it was
+for.
 
 ---
 
-## WHERE THINGS STAND
+## THE OPEN QUESTION: the black tank commander
 
-**Framerate: 36-40 -> 66-76**, and the reason is known rather than guessed.
-The one thing that made the difference has **not** been identified — best
-remaining guess is a stale `Cache\Scripts.cache` releasing earlier edits. No
-further theories are being built on it.
+**A real engine trade, not a bug.** Established by test:
 
-### Shipped today
+```
+PlanarShadow = true    commander readable, tank does NOT self-shadow   (ZeeWolf's choice)
+PlanarShadow = false   tank self-shadows, commander goes BLACK         (CURRENT STATE)
+```
 
-- **C1M2 crash-to-desktop FIXED.** Patrol recursion; 6,451 stack overflows -> 0.
-  Both parked patches applied and confirmed by a full mission played to an end.
-- **Map-lookup cache, +6.3%**, launcher option "Faster trees", confirmed in both
-  builds alongside line of sight. ~3.6 billion calls, 4 sessions, 0 mismatches.
-- **Injector now takes up to 8 DLLs** so LOS and the cache run together.
-- Tiger shadow-hide bug fixed (worth zero fps, still a real bug), and that whole
-  bug class swept clean in both builds.
+A planar shadow is a flat projection onto the ground and cannot shade the model
+by itself. That is the whole trade, and it is in
+`Models\u_veh_PzVI_LATE.script`.
 
-### Facts not to relearn
+**The decision is the user's**, and it is one word. Claude's view: keep `false`
+and the self-shadowing — the tank fills the screen constantly, the commander is
+a small figure usually seen from behind. ZeeWolf went the other way, which is a
+legitimate choice rather than a better one.
 
-- **TvT is CPU-bound with the GPU idle** — `Present` 0.1%. Never treat TvT
-  framerate as a GPU problem.
-- **Noise floor is ±4%.** Anything smaller is not a result.
-- **DXVK vs dgVoodoo is irrelevant** (wrapper 0.0%); the `.script` interpreter
-  is ~2%; **all the AI is ~0.5%**, so never hold back an AI feature for
-  performance.
-- **`AlphaBlendDistanceFactor` is where the alpha fade BEGINS**; engine computes
-  `1/(1-x)`; its own default is 0.8; **never 1.0**.
-- A 4 KB profiler page holds ~17 functions — **never attribute a page to a
-  function** without the 64-byte fine histogram (`prof.cpp`, `FINE_BASE`).
+### The live lead when the session ended
 
-### Method lessons that cost real time today
+With `PlanarShadow = false`, material ambient `0.70` on the commander lit **one
+tiny triangle on his face** and nothing else. That is informative:
 
-- **Predict the number before the run**, so a hypothesis can fail. Six died on
-  2026-08-25; two were killed by the user's own observation, not by analysis.
-- **A parked fix that is not on the board does not exist.** The C1M2 crash was
-  diagnosed on the 21st, written on the 22nd, and crashed a live session on the
-  25th because it was tracked nowhere.
-- **When something experimental is attached and the game crashes, read
-  `execution.log` first.** It named the cause immediately; real effort went into
-  suspecting the injected cache instead.
+- material ambient **does** reach him, so the avenue is not closed
+- either it is too weak against a stencil shadow (**strength**), or that triangle
+  is simply the bit poking out above the tank's shadow volume (**coverage**)
 
-### Tooling built today (all in the docs repo `Tools/`)
+`1.0` was set to distinguish those two and never run. **If more of him lights up
+it is strength and a usable value exists. If it is still one triangle it is
+coverage, no value will work, and the trade above is forced.**
 
-`drawcall_probe` (CPU or GPU, one run) · `prof.cpp` with a 64-byte fine
-histogram and a full-module concentration curve · RTTI maps for all three DLLs
-(4778 named vfuncs in Objects.dll) · the self-A/B pattern for any future
-performance claim.
+**Important: the earlier "material ambient does nothing" result was an INVALID
+test** — it was run while `PlanarShadow` was `true`, so he was not being
+stencil-shadowed at all and there was nothing to fill.
 
-### Open, not started
+---
 
-- Multi-entry cache (4-8 entries vs the current 1) — Phase 1 overflow, park it
-  unless Phase 2 stalls
-- `ActivateMove` typo in C2M3 line 932; `patch_04_MissionsMenu.md` unreviewed
-- ~12 ms/frame of the CPU frame still unlocated
-- Fog rollout to C1M3/C2M2/C2M4 — DeepSeek's, still `FogDensity 0.0013`
+## What was fixed today
+
+- **C2M1's second Tiger now follows the player in column.** Was 1,352 m away and
+  inert. `Follow()` not `Formation()` — Formation takes a displacement vector,
+  which is a fixed bearing and therefore echelon by construction. Five separate
+  scripted orders had to be neutralised first.
+- **Sun vectors normalised on all 12 campaign missions**, and 8 given a real
+  time of day (32-55 degrees, was 63-67 everywhere).
+- **Grass retuned** — `MaxVisDistPower` 5 -> 6 and `MaxVisDist` 150 -> 120.
+  2.08x less planted; user approved the look.
+- **`ActivateMove` is gone from both builds** — a command that never existed.
+- **ZW grass alpha fixed** — its summer map was still on G5's `0.4`.
+- **C2M1 relit**: ambient lum 0.120 -> **0.437**, both shadow colours matched at
+  0.38/0.40/0.45.
+
+## The single most useful thing learned today
+
+**REDUX's missions are lit far too darkly, across the board.**
+
+```
+REDUX   34 missions, ambient luminance   0.092 .. 0.210
+ZW      40 missions, ambient luminance   0.120 .. 0.609
+```
+
+Every REDUX mission sits at or below ZW's *dimmest*. Claude spent hours
+calibrating against REDUX's own "tuned" missions at lum 0.201 and treating that
+as the target — it was never the target. **C2M1 is now at 0.437 and the
+commander finally reads.** The other 11 campaign missions are untouched.
+
+**That is the highest-value open job: a considered ambient pass across every
+mission.** Bigger than the sun elevations were.
+
+---
+
+## Where the phases stand
+
+Phase 1: question answered (fog rollout still open, DeepSeek's).
+**Phase 2: 5 of 7** — sun vectors and times of day done; fog-on-objects
+(DeepSeek) and tree height still open.
+
+## Facts not to relearn
+
+- **TvT is CPU-bound, GPU idle** (`Present` 0.1%). Never a GPU problem.
+- **Noise floor is ±4%.** Below that is not a result.
+- **THREE shadow systems** — stencil (vehicles), projected (terrain), fake blob
+  (per model) — plus `AmbientLight`, which is not a shadow setting but produces
+  what players call one. `ShadowColor` and `StencilShadowColor` must MATCH
+  within a mission.
+- **The sun is invisible above ~10 degrees elevation** — that is the hard view
+  limit. Shadow *length* is what the player actually sees.
+- **A 4 KB profiler page holds ~17 functions.** Never attribute a page to a
+  function without the 64-byte fine histogram.
+- **REDUX and ZW have completely different performance problems.** REDUX =
+  vegetation. ZW = objects and collision (496 objects vs 57).
+- **Skinned meshes are missing 64 shader variants** rigid geometry has (every
+  `*L`). A capability gap, permanent.
+
+## Method lessons that cost real time today
+
+- **When something renders wrong in one build and right in another, DIFF THE
+  BUILDS before theorising.** Seven candidates were eliminated over hours; the
+  user's observation that ZW's commanders looked better turned it into a
+  three-line diff. The engine DLLs are byte-identical, so any difference is
+  necessarily in scripts, models or textures.
+- **Check what a change COSTS, not just what it fixes.** `PlanarShadow = true`
+  fixed the commander and silently removed the tank's self-shadowing. Not
+  flagged, and the user found it.
+- **Averaging a whole character texture tells you nothing** — most of the sheet
+  is dark background. Sample the region, or just look at the image.
+- **Check the test is capable of showing the effect** before believing a null
+  result.
+- Every finding goes into `Documentation/*.md` **as the work happens**. A dated
+  note is a working file, not a record.
+
+## Immediate next steps, in order
+
+1. **Settle the commander** — run the `1.0` test, then take the trade.
+2. **The ambient pass** across the other 11 missions (see above).
+3. **Shadow consistency**: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6 still need
+   `StencilShadowColor` — five never set it at all.
+4. Phase 2's last items: fog-on-objects (DeepSeek), tree height.
