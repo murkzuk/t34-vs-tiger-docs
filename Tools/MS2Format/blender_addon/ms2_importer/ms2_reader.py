@@ -49,6 +49,14 @@ class Ms2Node:
         self.is_empty = False
         self.weights = []      # per-vertex (w0,w1,w2,w3)
         self.joint_idx = []    # per-vertex (j0,j1,j2,j3) node indices
+        # [2026-08-26] Rest-pose transform, decoded from frame 0 of the node's
+        # animation track. Without this every object imports at the origin:
+        # static parts are baked in world space so a hull still looks right,
+        # but anything animated (turret, gun, road wheels) is authored around
+        # its own pivot and collapses into a heap.
+        self.rest_pos = (0.0, 0.0, 0.0)
+        self.rest_quat = (1.0, 0.0, 0.0, 0.0)   # (w, x, y, z)
+        self.has_rest = False
         self.binds = []        # (index, 4x4 matrix, vec3) per record
 
 
@@ -215,6 +223,23 @@ def _read_node(data, offset):
 
     d_count = struct.unpack_from('<i', data, offset)[0]
     offset += 4
+    # [2026-08-26] THIS IS THE NODE TRANSFORM, and it used to be skipped.
+    # Every node carries a fixed-length animation track: d_count positions
+    # (vec3) followed by d_count rotations (quaternion, w first). 161 frames
+    # in every vehicle seen so far - 161*28+4 = 4512 bytes, which is exactly
+    # the 'fallback block' size earlier notes recorded without identifying.
+    #
+    # Frame 0 is the rest pose (measured: 199 of the King Tiger's 220 nodes
+    # sit at identity rotation on frame 0, more than any other frame).
+    #
+    # The tracks read as you would expect of a tank: road wheels hold position
+    # while their quaternion spins, Weapon_A slides 0.3 m back along its axis
+    # under recoil, and Turret_A is stationary with a 0.7071 quaternion at 90
+    # degrees of traverse.
+    if d_count > 0:
+        node.rest_pos = struct.unpack_from('<3f', data, offset)
+        node.rest_quat = struct.unpack_from('<4f', data, offset + d_count * 12)
+        node.has_rest = True
     offset += d_count * 12 + d_count * 16
 
     _LAST_SKIN[0] = None

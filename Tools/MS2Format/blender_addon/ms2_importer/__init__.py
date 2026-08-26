@@ -35,7 +35,7 @@ import re
 
 import bpy
 import bmesh
-from mathutils import Vector
+from mathutils import Vector, Matrix, Quaternion
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper
@@ -212,6 +212,27 @@ def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTH
     for i, node in enumerate(nodes):
         if 0 <= node.parent_index < len(objects) and node.parent_index != i:
             objects[i].parent = objects[node.parent_index]
+            # Identity parent-inverse so each node's rest transform below is
+            # interpreted relative to its parent and composes down the chain.
+            objects[i].matrix_parent_inverse = Matrix.Identity(4)
+
+    # [2026-08-26] Apply the rest pose. Before this every object landed at the
+    # origin: static parts are baked in world space so a hull still looked
+    # right, but turret, gun and road wheels - authored around their own pivot
+    # - collapsed into a heap, which read as 'the importer is broken'.
+    # Frame 0 of each node's animation track is the rest pose. See ms2_reader.
+    placed = 0
+    for i, node in enumerate(nodes):
+        if not getattr(node, 'has_rest', False):
+            continue
+        ob = objects[i]
+        ob.location = node.rest_pos
+        ob.rotation_mode = 'QUATERNION'
+        w, x, y, z = node.rest_quat
+        ob.rotation_quaternion = Quaternion((w, x, y, z))
+        placed += 1
+    if placed:
+        print('  rest transforms: %d nodes placed' % placed)
 
     print("Imported %s: %d nodes (%d with geometry, %d hidden by default "
           "as LOD/Crashed/CM variants)" % (
