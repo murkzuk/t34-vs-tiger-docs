@@ -57,6 +57,13 @@ class Ms2Node:
         self.rest_pos = (0.0, 0.0, 0.0)
         self.rest_quat = (1.0, 0.0, 0.0, 0.0)   # (w, x, y, z)
         self.has_rest = False
+        # [2026-08-26] Material index into the companion .script's ModelSkin
+        # Materials array. Packed with the index count in one int32:
+        #     (icount << 16) | material_index
+        # Verified against every textured part of the King Tiger - road wheels
+        # 12, track left 24, track right 25, turret 19, hull 5, kill rings 20,
+        # numbers 21, flag 22, commander's uniform 0.
+        self.material_index = -1
         self.binds = []        # (index, 4x4 matrix, vec3) per record
 
 
@@ -215,6 +222,11 @@ def _read_node(data, offset):
         node.indices = list(struct.unpack_from('<%dH' % icount, data, offset))
         offset += icount * 2
 
+    # [2026-08-26] The 16-byte 'other' record is (packed, 0, vcount, 0), where
+    # packed holds the material index in its low 16 bits. Previously skipped.
+    if other_count > 0 and vcount > 0:
+        packed = struct.unpack_from('<i', data, offset)[0]
+        node.material_index = packed & 0xFFFF
     offset += other_count * 16
 
     node_id, flags_bitmask = struct.unpack_from('<2i', data, offset)

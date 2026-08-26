@@ -111,3 +111,53 @@ transform. **They are not.** `other_count` is 1, not 4 - the 4 came from the old
 `ms2_probe.py`, which desyncs on real vehicles - and those 16 bytes are a
 vertex-count echo. The earlier dump that looked like attachment points was
 landing inside the animation block by accident.
+
+
+---
+
+# SOLVED 2026-08-26: material assignment
+
+The 16-byte record the reader skipped as `other_count * 16` is:
+
+```
+(packed, 0, vcount, 0)          where   packed = (icount << 16) | material_index
+```
+
+The **low 16 bits are an index into the companion `.script`'s ModelSkin
+`Materials` array**; the high 16 bits are just the node's index count again.
+
+Verified against every textured part of the King Tiger:
+
+```
+WheelLeftMain1 -> 12  RdWhls1_Yel      Turret_A      -> 19  Turret_Yel
+TrackLeft      -> 24  Track_Lft_1      Copula        -> 19  Turret_Yel
+TrackRight     -> 25  Track_RT_1       Cupola_Hatch  -> 19  Turret_Yel
+Top_Hull_K     ->  5  Hull1_Yellow1    K_RINGS       -> 20  K_Rings_00
+AFender_L      ->  5  Hull1_Yellow1    Numbers       -> 21  Number_00
+Body_commander ->  0  TankerUniform    Flag          -> 22  Flag
+```
+
+**138 of 138 geometry nodes get a material index**, resolving to 19 distinct
+materials on this model.
+
+## Textures
+
+`.tex` files are **plain DDS** (DXT1, `44 44 53 20` magic). Rename and they open
+anywhere. Materials, texture paths and alpha modes are plain text in
+`Models\<name>.script`'s `CModelMaterial` entries.
+
+**Alpha matters:** materials carry an alpha mode of `DISABLE` or `NORMAL`.
+Markings, unit numbers, the flag and the barrel kill rings are `NORMAL` and
+alpha-keyed - render them opaque and they appear as **black rectangles** on the
+hull and turret.
+
+## A wrong turn worth recording
+
+A first attempt assigned textures by grouping node NAMES - turret subtree gets
+the turret sheet, `Wheel*` the wheels, and so on. It looked plausible and was
+wrong: the user spotted **turret-ring artwork painted across the mudguards, and
+engine vents in the wrong place.** The cause is a shared parts sheet,
+`Pnz_Assy1.tex` (material 11, `Panzer_Assets`), used by fenders, tools, vents
+and exhausts - which a name heuristic cannot know about.
+
+**The mapping is in the file. Do not guess it from names.**
