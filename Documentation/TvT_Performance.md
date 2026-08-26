@@ -390,7 +390,8 @@ what it costs.
 translation at no measured framerate cost. That is now measured rather than
 assumed.
 
-Switch if ever needed: `K:\TvTDeepseekenderer_ab.bat` (`native` / `dxvk` /
+Switch if ever needed: `K:\TvTDeepseek
+enderer_ab.bat` (`native` / `dxvk` /
 `status`) - it only renames `d3d9.dll`, nothing is deleted.
 
 ## Baseline framerates - and the mission that has never been profiled
@@ -423,3 +424,77 @@ so far has been looking at it.
 - **A HUD snapshot is not a measurement.** One 52.6 fps screenshot sent the
   session chasing a 2x discrepancy that did not exist - the probe's 5-second
   averages showed a steady 114.
+
+
+---
+
+## CORRECTION, later on 2026-08-26: the real framerate is ~50, not ~117
+
+Three independent instruments agreed, against the drawcall probe:
+
+```
+DXVK HUD    52.6
+F9          48
+ReShade     52
+------------------
+drawcall probe   114 - 119     <- the outlier
+```
+
+**The probe's fps is inflated by about 2.3x and must not be trusted.** Its
+timing code is textbook-correct (QPC, real frequency, counter reset per block)
+and `g_frames` increments exactly once per `Present`, so either the game
+presents ~2.3x per displayed frame or the QPC arithmetic is wrong. A
+`CLOCK CHECK` line was added to the probe on 2026-08-26 to settle which -
+it prints QPC seconds against `GetTickCount` seconds each block.
+
+**What this voids:** every per-frame figure the probe printed. `8.55 ms/frame`
+is really ~20 ms. `454 draw calls per frame` is only correct if the frame COUNT
+is right and the clock is wrong - unknown until the clock check runs.
+
+**What survives:** the `Present` / `Lock` percentages, because they are ratios
+of times measured the same way. `Present 0.2%`, `Lock 0.0%`, `everything else
+99.6%` still holds. **TvT is still CPU-bound.**
+
+### The A/B conclusion survives too, re-measured properly
+
+```
+DXVK   + F9  =  48
+native + F9  =  50      = +4%, at the noise floor
+```
+
+One instrument, both renderers, LOS on in both. **Native and DXVK are the same
+speed.** The probe reached the same verdict (+1.9%) from wrong absolute
+numbers - a broken instrument can still give a valid ratio, but that is luck,
+not method.
+
+### And the "wrong mission" claim is withdrawn
+
+C2M1 really does run at ~50 fps. It IS a slow mission. The profiler data
+collected on it - `Engine.dll` 28.5%, `Objects.dll` 25.8%, `ntdll` 23.2%, the
+map lookup at 22.5% of its module - was gathered on exactly the right target
+and stands.
+
+## ANTI-ALIASING: enabled, tested, BROKE RENDERING, reverted
+
+`Scripts/Menus/VideoOptionsMenuBase.script` disables AA on any adapter whose
+name contains `"NVIDIA"` - a 2001 workaround still firing on modern cards.
+
+**Enabling it let AntiAliasing reach 3, which produced no terrain and invisible
+tanks.** DXVK logged nothing at all; the failure is silent. So the original
+workaround was right about the engine's MSAA path, not merely about
+GeForce-era hardware.
+
+**The trap that cost the most time:** the value persists to
+`HKCU\Software\G5 Software\T34`. Greying the control out again left the game
+permanently broken with no way to reach the setting - it took re-opening the
+row to undo. **Never gate a persistent setting behind a switch with no way
+back.**
+
+ReShade is already loaded here with SMAA and FXAA, which are a better AA route
+for this game.
+
+### ReShade does NOT attach on native D3D9
+
+Claimed otherwise on the basis of `wrapper.bat`'s comment about the global
+injector. In practice `ReShade.log` recorded nothing for the native run.
+**F9 is the only fps readout that works on every renderer.**
