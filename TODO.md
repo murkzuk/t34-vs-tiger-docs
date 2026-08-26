@@ -31,6 +31,20 @@ Every REDUX mission sits at or below ZW's dimmest.
 
 ---
 
+## Ammunition scarcity - nothing in TvT models it (2026-08-26)
+
+- [ ] **`AmmoQty` is used by ZERO missions.** The engine supports per-placement
+  shell counts (`Object.script:351`, set from a mission's `Content.script`), but
+  no vehicle in the game has a loadout. Historically the T-34/85 carried ~36 HE,
+  14 AP and only **5 sub-calibre** - scarce tungsten held back for the worst
+  targets. That constraint shaped real gunnery and is entirely absent here, for
+  the player and the AI. Per-mission, so it can be tried on one mission first.
+  **First check what the engine does when `AmmoQty` is unset** - unlimited, or a
+  built-in default? Unverified. See `TvT_Mission_Authoring_Verified.md` s.16.
+- [ ] **T-34/85 APCR looks generous.** REDUX gives 153.7 mm at 500 m where the
+  usual figure is 138-140, and keeps it useful to 2000 m where real APCR fell
+  off badly past ~1000. May be deliberate balance - check before changing.
+
 ## PERFORMANCE - next step is a QUESTION, not an experiment (2026-08-26)
 
 - [x] **SOLVED: the 70-90 fps complaint was the LOS HOOK.** It cost ~10.9 ms a

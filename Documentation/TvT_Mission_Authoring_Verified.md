@@ -1190,3 +1190,65 @@ The tell was in the data: draw calls and triangles both went *up* after a change
 that could only reduce them.
 
 ---
+
+
+---
+
+## 16. `AmmoQty` — per-placement ammunition loadouts, and NO mission uses it
+
+Found 2026-08-26 while checking REDUX's T-34/85 against a documentary account
+of the real vehicle.
+
+**Ammunition quantity IS modelled by the engine, but it is a MISSION property,
+not a unit-class one.** `Scripts/Common/Object.script:351`:
+
+```c
+Array AmmoQty = _PropMap.Get("AmmoQty", []);
+for (int i = 0; i < AmmoQty.size(); i++)
+  m_WeaponList[AmmoQty[i][0]].SetAmmoQuantity(AmmoQty[i][1], AmmoQty[i][2]);
+```
+
+So the loadout is set **where a vehicle is placed**, in a mission's
+`Content.script`, per weapon index.
+
+**A grep of every mission returns nothing.** `AmmoQty` is used zero times, so
+the default `[]` applies everywhere and no vehicle in the game has a shell count
+set. (What the engine does when unset - unlimited, or a built-in per-weapon
+default - is **unverified**; check before designing around it.)
+
+### Why this is worth something
+
+The unit class lists shell TYPES with no counts:
+
+```c
+final static Array Ammo = [ CalibreAmmo, SubCalibreAmmo, HEAmmo ];   // T34_85_44
+```
+
+Historically the T-34/85 carried roughly **36 HE, 14 AP and only 5 sub-calibre**
+of ~55 rounds. The tungsten APCR was scarce enough that commanders held it back
+for the most dangerous targets. **None of that scarcity exists in TvT** - the
+constraint that shaped real Soviet gunnery decisions is simply absent, for the
+player and the AI alike.
+
+Setting `AmmoQty` per placement would model it without touching a single unit
+class, and it is per-mission, so it can be tried on one mission first.
+
+### Ballistics cross-check while here
+
+REDUX's `Piercing.script` stands up well against the documentary figures:
+
+```
+                        REDUX            documentary
+AP  at 1000 m           100 mm           102 mm          good
+AP  muzzle              800 m/s          800 m/s         match
+APCR at 500 m           153.7 mm         138-140 mm      REDUX ~10% optimistic
+APCR muzzle             1050 m/s         1200 m/s
+APCR useful to          2000 m           ~1005 m         REDUX generous
+```
+
+`BulletSpeed` entries are written as `800.0*0.8` - a game-wide 0.8 scaling
+factor, so the authored figure is the real muzzle velocity and the engine sees
+80% of it. **Treat the documentary as a lead, not ground truth** - it says
+itself there may be errors, and REDUX's numbers may be deliberate balance. But
+APCR being both harder-hitting at 500 m and useful at twice its real range is
+worth a look, given how sharply real APCR fell off.
