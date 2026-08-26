@@ -4,6 +4,34 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## ZW and REDUX have different performance problems (2026-08-26)
+
+Write-up: `notes/project_tvt_zw_vs_redux_profile.md`. Only "CPU-bound with the
+GPU idle" transfers between the builds; nothing else does.
+
+- [x] **Profile ZW.** Its frame is `CAbstractObject` / `CAbstractJoint` /
+  `CCylinderShape`+`CDynamicIntersector` (collision) at ~40%. **No vegetation
+  page in the top 20.** REDUX's frame is vegetation at ~15% plus the map lookup
+  at 20.4%; in ZW that same lookup is 2.9%.
+- [x] **Why: the component census.** ZW carries 8.7x the objects (496 vs 57),
+  4.6x the joints (2536 vs 550), 6.3x the cylinder shapes - and **one
+  thirteenth the trees** (30 vs 380). Total components 84,143 vs 26,298.
+- [x] **Why ZW's grass costs less, quantified.** 8.84% of frame in REDUX vs
+  1.22% in ZW. Two causes that multiply: ZeeWolf tuned grass down (`MaxVisDist`
+  150->120 and **`MaxVisDistPower` 5->8**, giving 3.35x less planted area), and
+  ZW's longer frame dilutes the share a further 2.2x. 3.35 x 2.2 = 7.4x against
+  7.3x observed.
+- [ ] **UNPULLED LEVER: REDUX `MaxVisDistPower` 5 -> 8.** Should cut REDUX's
+  grass cost ~3x while shortening apparent distance far less than the number
+  suggests - near grass barely changes. **Not tried.** Predict the number first.
+- [ ] ZW's collision cost (926 cylinder shapes + `CDynamicIntersector`) is
+  unexamined. Its own thread, not today's.
+
+**Do NOT tune ZW's grass** - ZeeWolf already did, and did it well.
+**"Faster trees" is near-pointless in ZW** - tick it for REDUX only.
+
+---
+
 ## C1M2 crash-to-desktop — FIXED (2026-08-25)
 
 Write-up: `notes/project_tvt_c1m2_recursion_fixed.md`. A real CTD, diagnosed
