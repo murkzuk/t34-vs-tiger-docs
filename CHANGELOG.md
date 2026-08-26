@@ -2,6 +2,39 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-26 — the .ms2 exporter works, confirmed in the engine
+
+**The G5 Level Editor loaded and rendered a `.ms2` written by our own code.**
+
+Test: `Models/4MeterBox.ms2`, an original G5 file from **December 2005** used by
+no mission, exposed in the Editor as "Dartboard 4 meters". Every Z coordinate
+tripled — Asset View showed `C4MeterBoxModel` as a 3× tall rectangle, console
+clean. Original restored, md5 verified.
+
+**Step 1 first, and it is why this worked on the first attempt:** all 249 models
+in both builds were read and rewritten *unedited*, then diffed —
+**248 byte-identical, 0 differ**, 1 pre-existing reader failure
+(`u_veh_PnzIV_G_AI_.ms2` does not parse at all). Round-trip before you edit.
+
+`Tools/MS2Format/ms2_writer.py` does not regenerate a file. It copies the
+original byte-for-byte and substitutes only the geometry span, so every block of
+known size and unknown meaning — `vcount × 24` tangent data, 80-byte bind poses,
+161-frame animation tracks — is preserved verbatim rather than invented. It
+asserts the geometry round-trips before writing and refuses length-changing
+edits.
+
+**Limit: vertex and index counts must not change.** Moving, rescaling and UV
+edits are safe; adding geometry needs the `vcount × 24` block identified first.
+Skinned meshes untested (the subject was a static box).
+
+Two runs were lost to the test bed rather than the code: the exe was launched by
+full path from another directory (TvT resolves `Scripts\`, `Models\` and its log
+relative to the **current** directory — grey screen, no log), and
+`M:\TvT_INJECT_SANDBOX` had 25 drifted scripts including one that would not
+compile. The sandbox was refreshed from live. **The Level Editor is the better
+test bed** — it loads models directly rather than through a mission.
+
+
 ## 2026-08-26 — the .ms2 model format, fully decoded
 
 The importer went from "imports parts" to "imports finished vehicles". Three

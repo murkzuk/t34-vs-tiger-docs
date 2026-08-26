@@ -25,6 +25,43 @@ engine - our own hook, default-on in the launcher.
 
 **`g_diag_sweep` must never ship true.**
 
+## MS2: THE EXPORTER WORKS - CONFIRMED IN THE ENGINE 2026-08-26
+
+**The G5 Level Editor loaded and rendered a `.ms2` written by our own code.**
+That was the open question; it is closed.
+
+Test: `Models/4MeterBox.ms2` (original G5 file, Dec 2005, used by no mission,
+appears in the Editor as "Dartboard 4 meters"). Every Z tripled -> Asset View
+showed a 3x tall rectangle, console clean. Original restored, md5 verified.
+
+**Step 1 is why it worked first time:** all 249 models in both builds read and
+rewritten UNEDITED - **248 byte-identical, 0 differ**, 1 pre-existing reader
+failure. **Round-trip before you edit.**
+
+`Tools/MS2Format/ms2_writer.py` copies the original byte-for-byte and swaps only
+the geometry span, so unknown-but-sized blocks are preserved, not invented.
+
+```
+SAFE      move vertices, rescale, rewrite UVs, reshape existing geometry
+NOT YET   add/remove geometry - identify the vcount*24 block first
+          (6 floats/vertex, likely tangent+binormal, computable)
+UNTESTED  skinned meshes (the test was a static box)
+UNTESTED  collision / .rmap after a shape change
+HARD LIMIT: vertex and index COUNTS must not change
+```
+
+### TEST-BED RULES - two runs were lost to these
+
+- **Always `cd` into the game folder before launching the exe.** TvT resolves
+  `Scripts\`, `Models\` and its log path relative to the CURRENT DIRECTORY.
+  Launching by full path from elsewhere = grey screen, no log.
+  `K:\TvTDeepseek\play_sandbox.bat` does it correctly.
+- **`M:\TvT_INJECT_SANDBOX` had drifted** - 25 changed scripts, one that would
+  not compile. Refreshed from live 2026-08-26. A broken test bed looks exactly
+  like your change failing.
+- **The Level Editor is the better test bed** - it loads models directly rather
+  than through a mission.
+
 ## MS2 MODEL FORMAT: SOLVED 2026-08-26
 
 The importer went from "imports parts" to "imports finished vehicles" in one

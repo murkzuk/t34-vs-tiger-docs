@@ -848,3 +848,87 @@ bytes, then rendered the result three times, looked at it, and called it correct
 The user opened the UV editor and spotted the island hanging outside the 0–1
 square in about ten seconds. Second time that day their eyes beat my
 instrumentation.
+
+
+---
+
+## 2026-08-26 — T-34 vs Tiger: writing `.ms2` files the engine accepts
+
+Follow-up to decoding the format earlier today. The remaining question was the
+only one that mattered: we could *read* G5's model files, but would the engine
+accept one we *wrote*?
+
+**It does.** The Level Editor loaded and rendered a `.ms2` produced by our own
+code.
+
+### The test
+
+`Models/4MeterBox.ms2` — an original G5 file dated **December 2005**, referenced
+by no mission, exposed in the Editor as "Dartboard 4 meters". One node,
+`pCube1`, 24 vertices, 12 triangles.
+
+Every Z coordinate multiplied by 3. Vertex and index counts unchanged, file size
+unchanged at 4,499 bytes.
+
+Asset View showed `C4MeterBoxModel` as a 3× tall rectangle. Console clean, no
+errors. Original restored afterwards and md5-verified.
+
+### The step that made it work first time
+
+Before touching a single vertex, every model in both installs was read and
+written back **unedited**, then diffed:
+
+```
+249 models    248 byte-identical    0 differ    1 pre-existing reader failure
+```
+
+If those bytes hadn't matched, we wouldn't have understood the format well
+enough to edit it — and we'd have found that out cheaply instead of debugging a
+mystery in the engine. **Round-trip before you edit.** It's the single most
+useful hour in any format work.
+
+### How the writer is built, and why it survived contact
+
+It doesn't regenerate a file. It **copies the original byte-for-byte and
+substitutes only the geometry span.** Every block of known size and unknown
+meaning — the `vcount × 24` data (almost certainly tangents), the 80-byte bind
+poses, the 161-frame animation tracks — is preserved verbatim rather than
+invented. It also asserts the geometry round-trips before writing anything, and
+refuses any edit that changes byte length.
+
+That's a deliberately narrow tool, and the narrowness is why it worked on the
+first attempt.
+
+### The limit, stated honestly
+
+**Vertex and index counts must not change.** They feed the `vcount`-sized
+blocks, the bounding box and sphere, and a packed
+`(icount << 16) | material_index` record.
+
+```
+SAFE      move vertices, rescale, rewrite UVs, reshape existing geometry
+NOT YET   add or remove geometry
+UNTESTED  skinned meshes — the test was a static box
+UNTESTED  whether collision / .rmap matters once a shape changes
+```
+
+Identifying that `vcount × 24` block is the next real piece of work. Six floats
+per vertex on every textured node; if it is tangent + binormal it's computable
+from positions, UVs and normals, and adding geometry opens up.
+
+### Two runs lost to the test bed, not the code
+
+The first attempts used a throwaway sandbox install and gave a **grey screen
+with no log at all**. Neither cause was the model:
+
+1. **The exe was launched by full path from another directory.** TvT resolves
+   `Scripts\`, `Models\` and its log path relative to the **current working
+   directory**. Launch it from elsewhere and it finds nothing and has nowhere to
+   write. Always `cd` into the game folder first.
+2. **The sandbox had drifted** — 25 changed script files from earlier
+   experiments, including one that wouldn't compile. A broken test bed produces
+   a result that looks exactly like your change failing.
+
+**The Level Editor turned out to be the better test bed**: it loads models
+directly rather than through a mission, so there's much less between the file
+and the answer.

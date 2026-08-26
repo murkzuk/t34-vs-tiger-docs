@@ -36,8 +36,19 @@ Every REDUX mission sits at or below ZW's dimmest.
 - [x] **UVs, transforms and material indices all decoded.** The importer now
   produces assembled, correctly skinned vehicles. See
   `Documentation/MS2_Node_Transforms_SOLVED.md`.
-- [ ] **Export is still not written.** Reading is solved; writing a `.ms2` back
-  out is untouched, and that is what any actual model *change* would need.
+- [x] **Export WORKS and is confirmed in the engine.** `ms2_writer.py`; the
+  Editor rendered a file we wrote. Round-trip verified on 249 models
+  (248 byte-identical). **Limit: vertex/index counts must not change.**
+- [ ] **Identify the `vcount * 24` block** — 6 floats per vertex on every
+  textured node, gated by flag `0x40000`. Almost certainly tangent + binormal,
+  and computable from positions/UVs/normals if so. **This is the one thing
+  between "reshape what exists" and "add geometry"**, which is what the King
+  Tiger vision-port idea would need.
+- [ ] Test the writer on a **skinned** mesh — the confirmed test was a static
+  box. Bind poses (80 bytes x count) and 20-byte-per-vertex weights are
+  preserved verbatim, but untested.
+- [ ] Check whether a shape change needs the companion **`.rmap`** regenerating
+  (pathfinding/collision footprint). That format is untouched.
 - [x] **File > Import now produces a finished vehicle in one step.** The addon
   parses the companion `.script` itself, loads `.tex` as the DDS it is, honours
   alpha mode, and auto-hides armour/collision facets. Tested on four vehicles
