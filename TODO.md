@@ -33,9 +33,15 @@ Every REDUX mission sits at or below ZW's dimmest.
 
 ## PERFORMANCE - next step is a QUESTION, not an experiment (2026-08-26)
 
-- [ ] **FIND THE SLOW MISSION.** The complaint is 70-90 fps. C2M1 measures
-  ~117, C1M1 92-104. **An afternoon was spent profiling missions that are not
-  slow.** Nothing else here is worth doing until this is answered.
+- [x] **SOLVED: the 70-90 fps complaint was the LOS HOOK.** It cost ~10.9 ms a
+  frame - 51 fps with it on, 115 with it off. Two `VirtualQuery` (= syscall)
+  storms in `K:\tvt_los\hook.cpp`: `find_endpoints` ran up to 16,512 per vision
+  check, and an ungated `CrewHook` sweep ran 256 per crew tick. **Fixed
+  2026-08-26: LOS on now gives 120 fps, so the hook is free.** See
+  `TvT_Performance.md`.
+- [ ] **Switch off the `[CTRL]`/`[CREW]` debug dumps** in the LOS hook. They
+  fire every 128 crew ticks and wrote 1,800 of 2,300 log lines in one session,
+  each a file write on the game thread. Same category of leftover, much smaller.
 - [x] **Map-lookup cache stays an OPT-IN CHECKBOX.** User's decision,
   2026-08-26, asked and answered. +6.3%, verified over 42 million calls with
   0 mismatches - but it is a live patch to a hot code path, and 6% does not

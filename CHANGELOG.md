@@ -2,6 +2,44 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-26 — the LOS hook was costing 55% of the framerate
+
+```
+BEFORE   LOS on   51 fps      LOS off  115 fps
+AFTER    LOS on  120 fps      the hook is now free
+```
+
+**2.35x, and the answer to the long-standing "70-90 fps feels bad".** It was
+never the 2001 engine - it was our own hook, default-on in the launcher.
+
+`readable()` in `K:\tvt_los\hook.cpp` is a `VirtualQuery`, i.e. a syscall. Two
+places called it in loops:
+
+- `find_endpoints()` - up to `128 + 128*128 = 16,512` syscalls **per vision
+  check**, to validate a window only 520 bytes wide. Now one whole-window check
+  (with a per-element fallback if it straddles a region boundary), and
+  candidates collected once instead of re-validated 128 times in the inner loop.
+- `CrewHook()` - a 256-field sweep, **ungated, every crew tick**
+  (`g_crew_calls` hit 125,185 in one session, so ~32 million syscalls). This was
+  reverse-engineering scaffolding hunting for which offset moved when the gunner
+  slewed; that question was answered long ago and it was never switched off. Now
+  behind `g_diag_sweep`, default `false`.
+
+**Applies to ZW as well** - the launcher injects the same binary into either
+build and `M:\T34vsTiger_ZW2015` is on the allow list.
+
+**Method failure worth recording:** at 11:40 the evidence was already in hand
+and was read backwards - the fast run had no LOS log, and the conclusion drawn
+was "so LOS wasn't the difference". Its absence WAS the difference. The rest of
+the day went into renderers, syscall attribution and a native-vs-DXVK A/B, all
+downstream of that misreading. **When two runs differ, diff the CONFIGURATIONS
+before profiling either one.**
+
+Also this day: anti-aliasing enabled, tested, **broke rendering** (no terrain,
+invisible tanks, silently) and reverted - and the value persists to the
+registry, so closing the menu row left no way back. Native D3D9 vs DXVK
+measured at the noise floor (50 vs 48 with F9 on both); DXVK is free.
+
 This file is human-written, plain prose. For technical details, see [PROJECT_MAP.md](PROJECT_MAP.md) and [llms.txt](llms.txt).
 
 ---

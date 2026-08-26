@@ -498,3 +498,78 @@ for this game.
 Claimed otherwise on the basis of `wrapper.bat`'s comment about the global
 injector. In practice `ReShade.log` recorded nothing for the native run.
 **F9 is the only fps readout that works on every renderer.**
+
+
+---
+
+# THE BIG ONE: the LOS hook was costing 55% of the framerate (FIXED 2026-08-26)
+
+```
+BEFORE    LOS on   51 fps        LOS off  115 fps      the hook cost ~10.9 ms/frame
+AFTER     LOS on  120 fps                              the hook is now FREE
+```
+
+**2.35x.** This is the answer to the long-standing "70-90 fps feels bad"
+complaint. It was never the 2001 engine - it was our own hook.
+
+## The cause: two VirtualQuery storms
+
+`readable()` in `hook.cpp` is a `VirtualQuery`, i.e. an `NtQueryVirtualMemory`
+**syscall**. Two places called it in loops:
+
+```
+find_endpoints()   up to 128 + 128*128 = 16,512 syscalls PER VISION CHECK
+CrewHook() sweep              256 syscalls PER CREW TICK, ungated
+```
+
+`g_crew_calls` reached **125,185 in a single session**, so the second one alone
+was ~32 million syscalls.
+
+### Fix 1 - find_endpoints
+
+The scan window is 128 floats from `base`, so **520 bytes**. One `VirtualQuery`
+covers all of it. Now: one whole-window check, with a fallback to the original
+per-element path if the window straddles a region boundary (behaviour
+unchanged, only the cost). Candidates are also collected once into an array
+rather than re-validated 128 times inside the inner loop.
+
+### Fix 2 - the CrewHook sweep
+
+Pure reverse-engineering scaffolding: *"sweep this component for object-shaped
+fields that change DURING PLAY"* - written to discover which offset moved when
+the gunner slewed. **That question was answered long ago**; the offsets are the
+named `CREW_*` constants. It was never switched off. Now behind
+`g_diag_sweep`, default `false`.
+
+## The method failure that hid this for a whole day
+
+**At 11:40 the evidence was already in hand and was read backwards.** Checking
+why a fast run differed from a slow one, the absence of a LOS log in the fast
+run was noted - and the conclusion drawn was *"so LOS wasn't the difference"*.
+Its absence WAS the difference. The rest of the day went into renderers,
+syscall attribution and a native-vs-DXVK A/B, all downstream of that misreading.
+
+**Rules banked:**
+
+- **When two runs differ, diff the CONFIGURATIONS first** - which hooks, which
+  wrapper, which overlay - before profiling either one. Presence/absence of an
+  injected DLL is the biggest variable there is.
+- **Instrumentation you add during RE must be gated before it ships.** A
+  discovery sweep is not a feature. Both storms here were debug code that
+  outlived its question.
+- **`VirtualQuery` is a syscall.** Never call it per element in a loop. Validate
+  the whole span once.
+- **A user-visible number beats your own instrument.** Three readings said ~50
+  while the probe said ~117; the probe was eventually vindicated, but only
+  because the ~50 readings were a REAL slowdown the probe never had (it does not
+  load LOS). Both numbers were true - of different configurations.
+
+## Still open after this
+
+The profiler data from 2026-08-26 was gathered **without** LOS loaded, so it
+remains valid for the base engine: `Engine.dll` 28.5%, `Objects.dll` 25.8%,
+`ntdll` 23.2%, the map lookup at 22.5% of its module.
+
+Next cheapest win: the `[CTRL]`/`[CREW]` debug dumps still fire every 128 crew
+ticks and wrote **1,800 of 2,300 log lines** in one session, each a file write
+on the game thread. Small next to the storms, but the same category of leftover.
