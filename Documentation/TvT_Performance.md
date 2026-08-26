@@ -573,3 +573,30 @@ remains valid for the base engine: `Engine.dll` 28.5%, `Objects.dll` 25.8%,
 Next cheapest win: the `[CTRL]`/`[CREW]` debug dumps still fire every 128 crew
 ticks and wrote **1,800 of 2,300 log lines** in one session, each a file write
 on the game thread. Small next to the storms, but the same category of leftover.
+
+
+## ZW after the LOS fix: 36-60 fps, and it is VIEW-DEPENDENT
+
+```
+REDUX   412 objects   120 fps      steady
+ZW      646 objects    36-60 fps   varies with where the camera points
+```
+
+The LOS fix applies to ZW (same injected binary) and its debug-dump gating cut
+the LOS log from **5,252 lines to 732** - 613 KB to 66 KB, ~4,500 `fflush()`
+syscalls per session off the game thread. The hook still works: 287 sightings
+denied in that run. ZW errors 155 -> 150, no regressions.
+
+**But ZW is still 36-60 fps, and the user's observation that it "depends where
+I look" is the diagnostic.** A cost that varies with camera direction is
+frustum content - what is being drawn and culled. If ZW's remaining cost were AI
+or collision ticking over every unit it would NOT change with view direction.
+
+That matches ZW's profiler signature from earlier work - `CAbstractObject`,
+`CAbstractJoint`, `CCylinderShape`, `CDynamicIntersector` - against REDUX's
+vegetation signature. **ZW has 1.57x the objects but runs 2.4x slower, so object
+count alone does not explain it.**
+
+**Not started.** If ZW performance is ever picked up, start from the
+view-dependence: profile looking at the worst direction and the best, and diff.
+Do not assume it is the same problem REDUX had.
