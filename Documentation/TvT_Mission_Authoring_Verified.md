@@ -512,6 +512,203 @@ Use the Editor's Navigator panel to *view* `routerzonemap`, `terrainzone` and
 `Cache\Scripts.cache` must be deleted for any `.script` edit to take effect.
 It cannot be deleted while the game is running. A cold rebuild recompiles ~513
 scripts and takes a couple of minutes.
+---
+
+## 10. Unit placement — the matrix, and which way is forward
+
+Added 2026-08-26 while making a second Tiger spawn beside the player in C2M1.
+
+A unit's `new Matrix(...)` in `Content.script` is four rows of four. **The
+translation is the fourth column, not the fourth row:**
+
+```
+new Matrix(
+    xvec.x, xvec.y, xvec.z, origin.x,
+    yvec.x, yvec.y, yvec.z, origin.y,
+    zvec.x, zvec.y, zvec.z, origin.z,
+    0.0,    0.0,    0.0,    1.0
+  ),
+```
+
+**`xvec` — the first row — is the FORWARD axis.** This is not a guess:
+`Scripts\Common\FreePlayerCamera.script` places the chase camera behind the
+player with
+
+```c
+Vector DirectionX   = new Vector(_Target.xvec[0], _Target.xvec[1], 0.0);
+DirectionX.Normalize();
+Vector CameraOrigin = _Target.origin + DirectionX * -20.0;
+```
+
+A camera at `xvec * -20` is 20 m *behind*, so `+xvec` is where the tank is
+looking. `zvec` is near `(0,0,1)` in every shipped unit, i.e. Z is up.
+
+### Placing one unit relative to another
+
+To put a unit N metres directly behind another, copy the leader's three basis
+rows verbatim (so it faces the same way) and offset the origin along the
+normalised ground-plane forward:
+
+```python
+m   = math.hypot(xvec[0], xvec[1])          # ignore the tiny z tilt
+fwd = (xvec[0]/m, xvec[1]/m)
+pos = (origin[0] - fwd[0]*N, origin[1] - fwd[1]*N, origin[2])
+```
+
+**Add `["SurfaceControl", "PutonGround"]`** rather than trusting the copied Z.
+The terrain under the new spot is not the terrain under the old one, and the
+heightfield row order is not what you would guess (see the placement note in the
+project map).
+
+---
+
+## 11. Making a unit follow the player
+
+### Use `Formation`, and put it on the TASK
+
+Groups have a `Formation` **property** (`"Independent"`, plus a
+`FormationDistance`) which arranges units *within* the group. That is not the
+same thing and will not make a unit follow the player.
+
+The follow order lives on the task, from `CBaseAITask`:
+
+```c
+Formation(_LeaderID, _Displacement, _DistanceOptimum, _DistanceMax,
+          _CruiserSpeed, _OvertakeSpeed, _NotifyOnReached, _Oriented)
+```
+
+A working column follower, from `C2M1MPUTigerTask`:
+
+```c
+void Init()
+{
+  CBaseAITankTask::Init();
+  ActivateBehavior(true);
+  ActivateMovement(true);                    // NOT false - see below
+  sendEvent(3.0, getIdentificator(user), "KeepStation", []);
+}
+
+event void KeepStation()
+{
+  Component mission = GetMission();
+  Vector XYRank = new Vector(0.0, -40.0, 0.0);   // (0,-40) = dead astern, 40 m
+  Formation(mission.GetMainPlayerObjectID(), XYRank, 40.0f, 80.0f,
+            0.15f * GetMaxSpeed(), GetMaxSpeed(), false, false);
+  sendEvent(8.0, getIdentificator(user), "KeepStation", []);
+}
+```
+
+**Three things that are not obvious and each cost a session somewhere:**
+
+1. **`Formation` is continuous; `SetOrder_MoveTo` is not.** Re-issuing a MoveTo
+   in a loop can only ever produce drive-arrive-stop-wait, which the player sees
+   as lurching. It is not a navigation problem and not a physics cost — it is
+   the wrong *kind* of order. `Formation` has its own cruise and overtake
+   speeds and the engine holds the slot itself.
+2. **Cruise speed must be set explicitly and LOW.** Passed as `0`, the wrapper
+   defaults it to two thirds of max speed — far faster than a tank actually
+   crawls, so the follower surges and brakes. `0.15 * GetMaxSpeed()` works.
+3. **Never issue `Follow` and `Formation` together.** Two orders arrive per tick
+   and fight; if their distances disagree the unit micro-stutters in place.
+
+**Displacement convention, empirically:** `(0, -40)` is dead astern at 40 m and
+`(-45, -60)` is behind and out to one flank at ~75 m. Note the shipped
+`CWingmanTask` constants are Whirlwind-over-Vietnam leftovers — 200 m spacing
+with `z = 30`, which is *altitude* — so do not copy them as an example. ZW's
+`BaseTasks.script` has retuned values; REDUX's has not.
+
+### A real bug to route around
+
+`BaseTasks.script`'s six-argument `SetOrder_Formation` overload (~line 1320)
+passes `_Displacement`, `_DistanceOptimum` and `_DistanceMax` — which are the
+parameter names of a *different* function. Its own parameters are called
+`_FormationVector`, `_PosDistanceOptimum`, `_PosDistanceMax`. Call the
+eight-argument `Formation()` wrapper instead, which routes to the seven-argument
+overload and is sound.
+
+---
+
+## 12. Scripted escorts are on rails — find every override first
+
+A shipped unit that "just sits there" is usually not broken; it is being told to
+sit there by several places at once. C2M1's second Tiger had **five**, and any
+follow order would have been overwritten within seconds by four of them:
+
+| where | what it did |
+|---|---|
+| its task's `Init()` | `ActivateMovement(false)` — movement off outright |
+| `Content.script` group | `["FirstOrder", "Patrol"]` + `["DelayedOrder", true]` + a `["Path", ...]` |
+| `StartMPU` event | `PopDelayedOrder()` released that patrol at mission start |
+| `CheckDistance` event | a **don't-overtake-the-player gate** issuing its own 4-navpoint route |
+| `StartPhase1` / `2Act` / `3Act` | three more `SetOrder_Move` calls |
+
+**Before changing a unit's behaviour, grep its ID across every file in the
+mission folder.** In C2M1 the Tiger also appeared in `Mission.script`'s
+`GermanKillList`, in a `sendEvent` for a bombing manoeuvre, in two
+`OnUnitExplosion` handlers, and in `PositionWatchers.script`'s `ControlPoints` —
+none of which should be disturbed while changing how it moves.
+
+### Do not strip `FirstOrder` to stop a patrol
+
+Tempting, and it risks the "no orders in group" alarm that produced the C1M2
+recursion crash (see the `UnitGroup.script` bugs in section 4b). **Leave the
+declarative properties alone and stop the order being *popped* instead** —
+comment out the `PopDelayedOrder()` call. The group keeps a valid order
+definition it simply never uses.
+
+Likewise, when removing a scripted move from a combat phase, keep the
+`ActivateRadar` / `ActivateFire` / `SetEnemyReactionType` calls around it. Those
+are what make the unit fight; only the movement order needs to go.
+
+---
+
+## 13. Atmosphere — which layer wins, and the 10-degree ceiling
+
+### `Content.script` overrides `Atmosphere.script`
+
+A mission's `Atmosphere.script` sets fields like `SunDirection`; its
+`Content.script` may then override the same fields inside an `"Atmosphere"`
+object. **`Content.script` is what the engine uses.** They are frequently out of
+sync in shipped missions — C1M4 has opposite signs on the sun's X component
+between the two files, and has since 2001.
+
+**Measure the `Content.script` value.** Reading `Atmosphere.script` alone
+produced a confident, wrong conclusion that a whole fix had never been applied.
+
+### The sun is only visible below ~10 degrees elevation
+
+`Scripts\Common\CockpitControls.script`:
+
+```c
+CommanderCameraLink.SetMaxVertAngle(Math_PI*(10.0f/180.0f));
+CommanderCameraLink.SetMinVertAngle(- Math_PI*(7.0f/180.0f));
+```
+
+The player cannot look higher than **10 degrees**. Unit declarations agree
+(`MaxVertAngle = 0.17` rad = 9.7 degrees). So:
+
+- a sun above ~10 degrees elevation **cannot be seen at all** — it is a light
+  source, not an object
+- what the player *does* see is **shadow length and the angle light strikes
+  hulls**, which respond at any elevation
+- the sun disc itself only enters view at dawn or dusk
+
+G5 shipped every campaign mission with the sun at 63-67 degrees. Normalising
+those vectors made no visible difference precisely because the sun was, and
+remained, out of view — a null result that is fully explained rather than
+mysterious.
+
+### `SunDirection` length is position, not brightness
+
+The sun billboard is placed along `SunDirection * DistanceToSun` (2000 in every
+shipped mission). A vector of length 0.34 therefore puts the sun at ~680 m
+instead of 2000 m — close enough to sit inside fog or below the skyline.
+Brightness is a separate `SunIntensity` field. **Normalising a sun vector moves
+the sun; it does not make it brighter.**
+
+Elevation from a direction vector is `asin(-z / |v|)`; the compass bearing is
+`atan2(y, x)`. To change the time of day without swinging the light round to a
+different side of the map, preserve the bearing and change only the elevation.
 
 ---
 
@@ -538,3 +735,21 @@ scripts and takes a couple of minutes.
 - **Distinguish shipped-content bugs from missing triggers.** A group logging
   `[ALARM] No orders in group` may simply be waiting for a `PositionWatcher`
   event that the player has not triggered yet.
+
+### Added 2026-08-26
+
+**Count braces excluding comments.** A naive `{` versus `}` count raised a false
+alarm on `MissionTasks.script` — the file has commented-out code blocks, so the
+raw counts are unbalanced in the *original* too. Strip `/* */`, `//` and string
+literals before counting, or compare against the untouched backup rather than
+against zero.
+
+**Print the whole report block, never a tail of it.** A `tail -30` silently cut
+the top four entries off a profiler listing and made a correct tool look broken.
+
+**Check the before and after are the same mission.** A framerate comparison
+showed +24% and was worthless — the baseline was C1M2 and the new run was C1M1.
+The tell was in the data: draw calls and triangles both went *up* after a change
+that could only reduce them.
+
+---

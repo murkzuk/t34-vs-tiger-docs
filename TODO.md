@@ -4,6 +4,40 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## C2M1 second Tiger now follows the player (2026-08-26)
+
+Findings written up in `Documentation/TvT_Mission_Authoring_Verified.md`
+sections 10-13.
+
+- [x] **Move it to the player's spawn in column.** Was 1,352 m away; now 40 m
+  dead astern, same heading, `SurfaceControl PutonGround`. Position derived from
+  the player's own matrix - **`xvec` (row 1) is the FORWARD axis**, proven by
+  `FreePlayerCamera.script` placing the chase camera at `xvec * -20`.
+- [x] **Make it follow.** `Formation()` on the TASK (groups only have an
+  *internal* formation property), `(0,-40)` = dead astern, cruise
+  `0.15 * GetMaxSpeed()`, re-issued every 8 s.
+- [x] **Neutralise the five competing orders.** This is why previous attempts
+  failed: `ActivateMovement(false)`, a delayed `Patrol` order, a
+  don't-overtake distance gate issuing its own 4-navpoint route, and three combat
+  phases each issuing `SetOrder_Move`. Radar / fire / aggressive reaction kept.
+- [ ] **Play-test.** Does it keep up at speed? Is 40 m the right spacing? Both
+  are one number. Its kill-list membership, bombing event and position watchers
+  were left untouched and should still work.
+
+### Found in passing, not fixed
+
+- [ ] `BaseTasks.script` six-arg `SetOrder_Formation` (~line 1320) passes
+  `_Displacement` / `_DistanceOptimum` / `_DistanceMax` - the parameter names of
+  a *different* function. Its own are `_FormationVector` / `_PosDistanceOptimum`
+  / `_PosDistanceMax`. Route around it via the eight-arg `Formation()`.
+- [ ] REDUX's `CWingmanTask` still carries Whirlwind-over-Vietnam constants -
+  200 m spacing with `z = 30`, which is *altitude*. ZW's were retuned; REDUX's
+  were not.
+- [ ] C1M4's sun X component has opposite signs in `Atmosphere.script` and
+  `Content.script`, and has since 2001. `Content.script` wins, so harmless.
+
+---
+
 ## ZW and REDUX have different performance problems (2026-08-26)
 
 Write-up: `notes/project_tvt_zw_vs_redux_profile.md`. Only "CPU-bound with the
