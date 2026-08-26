@@ -81,7 +81,57 @@ Every REDUX mission sits at or below ZW's dimmest.
 - **Compare PER CLASS.** A unit file has separate AI and player gun classes
   (`CTankT34_85_44Gun` vs `...PlayerGun`); grepping the first match gives
   contradictory answers. This trap produced two opposite wrong readings.
-- [ ] Sweep the rest of ZW's roster the same way — only three tanks were checked.
+- [x] **Swept — all 19 shared units, class-by-class.** 141 fields differ.
+  `Tools/compare_unit_stats.py` makes it repeatable.
+- [x] **DECIDED: revert accuracy, turret traverse, mass and speed. LEAVE the
+  sensor and engagement ranges ALONE.** ZW raised radar/attack distances for
+  *both* sides (ZiS-3 800 -> 3200 m, SU-85 1200 -> 2400 m) — that is genuine
+  modding, not the thumb on the scale, and G5's originals were myopic. A blanket
+  revert would undo good work along with the loaded values.
+
+### THE REVERT LIST — exactly what to change in ZW
+
+**AI main-gun accuracy** (`FireDeviation`) back to the 2001 values:
+```
+CGunPak40Gun            0.5   -> 1.5
+CTankPzIVGGun           0.10  -> 1.5
+CTankPzVIAusfEGun       0.05  -> 1.2
+CSAUStuG40Gun           0.02  -> 1.2
+CTankT34_76_42Gun       1.6   -> 1.5
+CTankT34_85_44Gun       1.55  -> 1.25
+CSAUSU85Gun             1.2   -> 1.2   (already correct, leave)
+```
+**Tiger machine guns** `FireDeviation` 0.05 -> 0.15 (coax and hull).
+
+**Player gun** — the only player nerf in the game:
+```
+CTankT34_85_44PlayerGun  0.15 -> 0.005
+```
+
+**Turret traverse** (`DirectionSpeedH`):
+```
+CTankT34_85_44Gun   8.0 -> 17.0        CTankT34_76_42Gun  7.0 -> 36.0
+CSAUSU85Gun         3.0 ->  5.0        CGunZis3Gun        4.0 ->  6.0
+CTankPzIVGGun       8.0 -> 14.0        CTankPzVIAusfEGun  6.5 ->  4.5
+```
+
+**Tiger mobility and rate of fire:**
+```
+MaxSpeed          2730  -> 2200        Mass       40000 -> 56000
+FirePeriod        7000  -> 12000       FirePeriodRandAdd  2000 -> 8000
+SuspensionHeight  0.4   -> 0.9         Friction1  1.0   -> 2.0
+```
+
+**T-34 mass:** T-34/85 48000 -> 40000.
+
+**LEAVE ALONE:** `MaxRadarDistance`, `MinRadarDistance`, `AttackDistanceMax`,
+`AttackDistanceMin` — on every unit, both sides.
+
+- [ ] Apply the above, back up `Scripts/Units/` to `K:` first, clear the cache,
+  and test one mission per side before calling it done.
+- [ ] **Check the ZW-only vehicles too** — Panther, KVs, SU-122/152, Nashorn etc.
+  have no original to compare against, so they need judging against the restored
+  values rather than diffed.
 
 ### 2. Ballistic realism pass on ZW — route not yet chosen
 - [ ] **Pick a route first, it is a design decision.** **A:** adopt REDUX's
