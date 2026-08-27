@@ -2,6 +2,66 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (t) — the Axis AI fix WORKS, and the target thrashing has a knob
+
+**The German AI now fights.** After the `UnitGroup.script` one-liner:
+
+```
+German attacks:  0  ->  20
+ZugFalke_2 -> PltSytnik_3     ZugFalke_4 -> PltKutuzov_1
+KGKaiser_1 -> PltZhilin_3     KGKaiser_2 -> PltSamsonov_1
+```
+
+And the general fix is doing the work, not the mission workaround - the two are
+distinguishable by the size of the `Prefered targets` list, and it came out
+**39 single-target acquisitions (the fix) against 13 hand-listed (the
+workaround)**. The BerezovKursk hand-listed array can now come out.
+
+### Target thrashing - measured, and it has a dedicated knob
+
+User: "it is still arguing with itself over tgts". Counted per unit:
+
+```
+PltZhilin_2  13 target switches     PltZhilin_3  10     PltZhilin_1  8
+```
+
+Mostly **Soviet** units, so pre-existing rather than introduced. The cause is
+two settings in `AutoCommander.script`:
+
+```
+             LastTargetDangerAdd   RadarUpdateTime
+REDUX  was   50                    1.0 s
+ZW           30                    4.0 s
+REDUX  now   150                   2.0 s
+```
+
+`LastTargetDangerAdd` is the **only** hysteresis on target choice. At 50 against
+a close-range `TANK` weight of 1000 it was worth 5% - effectively none - and the
+choice was reopened every second. ZW churns far less because it rescans at 4.0 s
+despite *lower* stickiness.
+
+Raised to 150 (~15-27% across the useful weight range) and 2.0 s. **2.0 is a
+deliberate half-step**, not ZW's 4.0, so there is somewhere to go if it is still
+twitchy. REDUX only; ZW's pairing already behaves.
+
+Value-only edits - the Cyrillic comment on `RadarUpdateTime` was left byte-intact
+(108 non-ASCII before and after).
+
+### Friendly fire: much reduced, not gone, and partly explained
+
+Down to 3 incidents, all in the German HQ group: `HQ_2` (Hanomag) shot
+`ZugWeidinger_1` and **its own supply truck**.
+
+`BerezovKursk_HQ_1_Tractor` has **no `BehRadarMask`**, so it is never set to
+`FRIEND -> INVISIBLE_ON_RADAR` and appears to its own side as a targetable
+object. **42 of 102 units in that mission lack the property.** That explains the
+truck.
+
+It does NOT explain `ZugWeidinger_1`, which HAS the mask and was shot anyway. So
+the missing mask is a contributing cause, not the whole story. **Not fixed** -
+adding the property to 42 units is a mission-data pass, and this is a generated
+mission the user has said needs work.
+
 ## 2026-08-27 (s) — the Axis AI fix, one line, in shared script
 
 **Correction to entry (p) first.** That entry blamed
