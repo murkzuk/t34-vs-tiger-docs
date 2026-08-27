@@ -388,7 +388,20 @@ function Refresh-State {
   if (Test-Path $log) {
     $t = (Get-Item $log).LastWriteTime
     $armed = (Select-String -Path $log -Pattern 'enforcement live' -Quiet)
-    $last = "{0}  -  {1}" -f $t.ToString('ddd HH:mm'), $(if ($armed) {'occlusion armed'} else {'DID NOT arm'})
+    # [jm 2026-08-27] Say how OLD this reading is. The panel showed
+    # "Thu 05:28 - DID NOT arm" for a run that had armed fine three hours
+    # later, because this block only ran when the window opened. A stale
+    # reading that looks current is the same failure mode as a hook that
+    # silently does not arm - and that has already cost a session. The
+    # window now also refreshes on focus (see $f.Add_Activated below), so
+    # coming back from the game updates it; the age is belt and braces.
+    $age = [int]((Get-Date) - $t).TotalMinutes
+    $when = if ($age -lt 2) { 'just now' }
+            elseif ($age -lt 60) { "{0} min ago" -f $age }
+            elseif ($age -lt 1440) { "{0}h ago" -f [int]($age / 60) }
+            else { "{0}d ago" -f [int]($age / 1440) }
+    $last = "{0}  ({1})  -  {2}" -f $t.ToString('ddd HH:mm'), $when,
+              $(if ($armed) {'occlusion armed'} else {'DID NOT arm'})
   }
   $lblState.Text = @(
     ("launches  {0}" -f $exe),
@@ -534,4 +547,7 @@ foreach ($c in @($rbRedux,$rbZw,$rbDg,$rbDx,$rbNative,$cbLos,$cbHud,$cbProf,$cbC
 }
 
 Refresh-State
+# Re-read the log every time this window comes back to the front, which is
+# exactly when the game has just exited and the answer has changed.
+$f.Add_Activated({ Refresh-State })
 [void]$f.ShowDialog()

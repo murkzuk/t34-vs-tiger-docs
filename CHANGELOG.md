@@ -2,6 +2,57 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (i) — two corrections: a false comment, and a launcher that lied
+
+Both cosmetic in the sense that neither changes gameplay. Both matter because
+each was a thing that would mislead the next person to look.
+
+### A falsified explanation left in ZW's source
+
+`M:\T34vsTiger_ZW2015\Scripts\Common\BaseSTTree.script` carried a comment saying
+the 480 m tree-LOD band *caused* ZW's 22 fps gunsight. It did not — that change
+was tested and made no measurable difference, and the projection-matrix
+measurement later the same day showed why it could not have. Replaced with the
+measured account: the far plane does not change between views (1141 vs 1138 m),
+only the FOV narrows (45.29 to 4.55 deg), a narrower cone at the same depth is a
+smaller volume, and draw calls rising 7x anyway means LOD is picked by angular
+size. Plus the fact that settles it for trees specifically — **ZW plants 30 to
+REDUX's 380**, so tree LOD cannot be its problem either way.
+
+The `[40, 70, 180, 250]` value is KEPT, on the grounds that matching G5 is right
+on its own merits — not because it fixed anything.
+
+**Comment-only.** Verified byte-for-byte: code with comments stripped is
+identical to the backup, braces 63/63 unchanged, 65 CP1251 bytes preserved
+exactly, 643 CRLF and zero bare LF, U+FFFD count 0 before and after. Backup at
+`K:\TvTDeepseek\rollback\BaseSTTree.script.bak_lodcomment_20260827`.
+`Cache\Scripts.cache` deleted.
+
+Method note: **`grep -c $'\r'` is NOT a reliable CRLF test on this machine** — it
+reported zero CRLF on a file that is 100% CRLF, because grep strips `\r` before
+matching. It briefly looked like the file was one of the pure-LF casualties from
+the earlier incident. Count `b'\r\n'` in Python instead.
+
+### The launcher reported "DID NOT arm" for a run that armed
+
+`TvT_Launcher.ps1` showed `last run Thu 05:28 - DID NOT arm` while
+`tvt_los.log` recorded `enforcement live` at 08:54. Not a wrong test — the
+status block only ran when the window opened, so it was showing a three-hour-old
+answer as if it were current.
+
+- The window now calls `Refresh-State` on `Add_Activated`, so returning from the
+  game re-reads the log.
+- The line also states the reading's age — `Thu 08:54  (3 min ago)  -  occlusion
+  armed` — so a stale value is visible as stale even if a refresh is missed.
+
+Worth fixing because a status line that lies in *either* direction is the same
+failure mode: a run where occlusion silently did not arm looks exactly like the
+AI cheating, and that has already cost a session. Checked and NOT a problem: the
+hook opens its log with `"w"`, so the whole-file search for `enforcement live`
+cannot pick up an older run's success.
+
+Parse-checked with `Parser::ParseFile` — no syntax errors.
+
 ## 2026-08-27 (h) — the projection matrix, measured: two beliefs falsified
 
 Hooked `SetTransform`/`D3DTS_PROJECTION` in the drawcall probe and recovered the
