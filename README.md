@@ -1,4 +1,8 @@
-# Project Redux: T-34 vs. Tiger Preservation
+# TvTPP — the T-34 vs Tiger Preservation Project
+
+> **TvTPP** (T-34 vs Tiger Preservation Project) is the umbrella name for this
+> work: the REDUX build, the tooling, the reverse-engineered format
+> documentation, and the effort to finish what others could not.
 
 This repository is a community-driven effort to preserve, fix, and finally finish T-34 vs. Tiger. After the original developers and publishers ceased to exist, this game became "abandonware." We are here to ensure the "Cogs of War" keep turning.
 
