@@ -2,6 +2,46 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (o) — arming a group is not ordering it to fire
+
+All four German groups logged `StartAttackAxis - engaging targets of
+opportunity` and still made **zero attacks**. Arming them - `ActivateBehavior`,
+`ActivateRadar`, `ActivateFire`, `ERT_AGGRESSIVE` - is not enough. They stay
+under a patrol `SetOrder_MoveTo` that keeps being re-issued (log lines 1358,
+4910) and never break off. The Soviets fire only because they get an explicit
+`SetOrder_Attack`.
+
+**Fixed with `SetOrder_FireNearest()`**, which is a FIRE STYLE, not a movement
+order - `ForEachUnitTask("SetFireStyle_Nearest", [])`. It therefore does not
+fight the advance: the group keeps moving and engages whatever is nearest, and
+it needs no target list, which matters because the Axis has none. **It is used
+nowhere else in the game** - another unused engine capability, like `LockLOD`.
+
+### The see-through wheat is the dust, and it is not a King Tiger problem
+
+The user's diagnosis. `CForestUnitDustTraceEffect` is a
+`CAnimatedParticleGenerator`: base colour alpha **0.3**, nine particles per
+0.2 m of track (`SetTraceStepSize(0.2)`, `SetMaxJumpItems(10)`), fading 0.0
+to 0.4. Alpha-blended dust against alpha-blended grass with no correct sort
+between them produces a tank-shaped hole in the wheat.
+
+Engine-wide, not model-specific: every dust emitter node the effect needs
+(`Corner_*`, `Vapor_*`, `Smoke_*`) is present in the King Tiger, so its dust
+spawns exactly where any other tank's does. **Cheap confirmation: stop the tank.
+No movement, no dust - if the artefact goes with it, that is the answer.** A
+real fix would be render-order work through the D3D9 hook, which is a project,
+not a tweak.
+
+My shadow theory was wrong and should not have been offered: `DefaultPlanarShadow`
+and `DefaultFakeShadow` are both `false`, which one grep would have shown.
+
+### Not ours
+
+`[9]/[10]/[12] entry is invalid` with `Can not assign value (Color(...)) to typed
+variable (int)` - a column-type mismatch in an effects table, firing at log line
+~309 during startup, long before any King Tiger exists. Pre-existing, unrelated,
+recorded so it is not re-investigated.
+
 ## 2026-08-27 (n) — the Axis attack order was aimed at the player
 
 Entry (m) added the German groups to `StartAttack`. The log confirmed they got
