@@ -2,6 +2,74 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (u) — character rigs imported collapsed flat; fixed
+
+The user asked whether the empties looked right on an imported Soviet rifleman.
+They did not - and measuring it found a real bug plus a correction to something
+I had claimed was verified.
+
+### The bug
+
+A character's joint chain imported COLLAPSED. Measured on
+`hum_SovietSoldierRifle`:
+
+```
+                       head z   hand z   foot z   head-to-foot
+as stored               0.924    0.474    0.891      0.033 m     <- flat
+conjugate l_Hips only   1.521    1.799    0.104      1.417 m     <- arms above head
+conjugate the subtree   1.521    1.038    0.104      1.417 m     <- correct
+```
+
+The mesh stands correctly (it is parented to ROOT, unrotated), so only the
+skeleton and anything hanging off it were wrong - which is why the rifle lay on
+the ground. It sits eight joints deep off `l_Hips`.
+
+Cause: `l_Hips` carries `(0.5, -0.5, -0.5, -0.5)`, a 120 degree rotation about
+(1,1,1) - the classic axis swap - mapping the bones' local +Y onto world +X.
+**Every vehicle root is identity**, which is why this never surfaced.
+
+### RIGID PARTS MUST NOT BE CONJUGATED - established before implementing
+
+Rendering the Hummel head-on both ways settles it: as stored the 15 cm sits
+properly in the fighting compartment; conjugated the barrel swings out **through
+the left compartment wall**. Skinned joints are almost certainly stored as
+inverse bind poses while rigid parts are stored forward.
+
+Two discriminators were tried and REJECTED, both by measurement:
+
+- *"the model has weighted meshes"* - vehicles have them too
+- *"the model contains an axis-swap quaternion"* - the Tiger's own
+  `joint_WheelRightMain7_UP` has one and renders correctly
+
+The fix is therefore scoped to the SUBTREE under a skeleton root, matched by
+name (`l_Hips` / `l_Hip` / `l_Hips1`, optionally prefixed as `driver_l_Hips`).
+Subtree-only gives results identical to conjugating everything, so it is
+surgical rather than approximate.
+
+**It also fixes the crew figures riding inside vehicles**, which were collapsed
+too: the T-34/85's commander head moves 1.694 -> 2.191 m (turret height) and its
+driver 0.608 -> 0.892 m (hull height).
+
+### Verified
+
+```
+all four hum_* models        head 1.521, foot 0.104, height 1.417 m
+250 models scanned, 42 contain a character rig
+RIGID geometry changed        0    <- vehicles untouched, before/after compared
+```
+
+### A correction worth keeping
+
+The earlier "vehicle transforms verified" claim was verified for **position and
+scale only**. A bounding box cannot detect a rotation-handedness error on a
+near-symmetric tank, and neither can a render; the legible "460" on the T-34
+turret does not prove it either, since that decal's chain is near-identity.
+**A test that cannot distinguish the hypotheses is not a verification.** The
+character rig is the only asymmetric, deeply-nested thing in the library, and it
+is what finally exposed this.
+
+Add-on zip rebuilt.
+
 ## 2026-08-27 (t) — the Axis AI fix WORKS, and the target thrashing has a knob
 
 **The German AI now fights.** After the `UnitGroup.script` one-liner:

@@ -33,6 +33,7 @@ Format reference (see the findings doc for the full derivation):
         then up to six further optional blocks gated by flags_bitmask
         bits (skipped here by their known exact sizes).
 """
+import re
 import struct
 
 
@@ -373,7 +374,63 @@ def read_ms2(path):
         node, offset = _read_node(data, offset)
         nodes.append(node)
 
+    _fix_character_rigs(nodes)
     return nodes
+
+
+# Skeleton roots are named l_Hips / l_Hip / l_Hips1, and inside vehicles the
+# crew figures use the same names, sometimes prefixed: driver_l_Hips.
+_RIG_ROOT_RE = re.compile(r'(^|_)l_Hips?\d*$')
+
+
+def _fix_character_rigs(nodes):
+    """Conjugate the rest rotations of every CHARACTER SKELETON, in place.
+
+    [2026-08-27] Measured, after "does the empties look right to you?" - they
+    did not. A character's joint chain imports COLLAPSED FLAT: the Soviet
+    rifleman's skeleton is 33 MILLIMETRES from head to foot, lying along +X,
+    while its mesh (parented to ROOT, unrotated) stands correctly in Z. Anything
+    hanging off the chain goes with it, which is why the rifle floats away - it
+    sits eight joints deep.
+
+    Conjugating the chain gives head 1.521 m, hands 1.038 m, feet 0.104 m,
+    rifle 1.020 m: a standing soldier with arms down. All character models agree.
+
+    The cause is `l_Hips` carrying (0.5, -0.5, -0.5, -0.5) - a 120 degree
+    rotation about (1,1,1), the classic axis swap - which maps the bones' local
+    +Y onto world +X. Vehicle roots are identity, so this never showed.
+
+    RIGID PARTS MUST NOT BE TOUCHED. Rendering the Hummel head-on both ways
+    settles it: as stored, the 15 cm sits properly in the fighting compartment;
+    conjugated, the barrel swings out THROUGH the left compartment wall. Almost
+    certainly skinned joints are stored as inverse bind poses while rigid parts
+    are stored forward.
+
+    So this is scoped to the SUBTREE under a skeleton root, never the model:
+
+      - "does the model have weighted meshes" does NOT work - vehicles have them
+      - "does the model contain an axis-swap quaternion" does NOT work either;
+        the Tiger's own `joint_WheelRightMain7_UP` has one and renders correctly
+
+    Scoping by subtree also fixes the crew figures riding inside vehicles, which
+    were collapsed too - the T-34/85's commander head moves 1.694 -> 2.191 m
+    (turret height) and its driver 0.608 -> 0.892 m (hull height).
+    """
+    roots = [i for i, n in enumerate(nodes) if _RIG_ROOT_RE.search(n.name)]
+    if not roots:
+        return 0
+    in_rig = set(roots)
+    changed = True
+    while changed:                      # collect descendants
+        changed = False
+        for i, n in enumerate(nodes):
+            if n.parent_index in in_rig and i not in in_rig:
+                in_rig.add(i)
+                changed = True
+    for i in in_rig:
+        w, x, y, z = nodes[i].rest_quat
+        nodes[i].rest_quat = (w, -x, -y, -z)
+    return len(in_rig)
 
 
 if __name__ == '__main__':
