@@ -2,6 +2,75 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (p) — ROOT CAUSE: the AI's kill list is seeded from the player's own units
+
+Three attempts at making the Axis engage failed in a row. The reason is a bug in
+shared script, not in the mission:
+
+`Scripts/Common/UnitGroup.script`, the retaliation path:
+
+```
+Array KillList = GetMission().GetPlayerObjectsIDList();
+...
+if (!PlayerCaught) KillList = GetEnemyGroupUnitsList(TargetedUnit);
+SetOrder_Attack(KillList, m_EnemyReactionType);
+```
+
+**It seeds the kill list from the PLAYER's own objects.** That is written from
+the SOVIET point of view, where the player always IS the enemy. For a GERMAN
+group it resolves to friendlies. The log shows the consequence directly:
+
+```
+BerezovKursk_HQ_2: attacking BerezovKursk_ZugWeidinger_2
+BerezovKursk_HQ_1: attacking BerezovKursk_ZugWeidinger_1
+BerezovKursk_ZugWeidinger_1::DestroyHuman()
+```
+
+The German HQ shooting - and killing - German ZugWeidinger units. Affiliations
+confirmed from Content.script: FRIEND = German (HQ, ZugFalke, KGKaiser, ZugLex,
+ZugWeidinger, player), ENEMY = Soviet (all Plt*, SovietHQ).
+
+**This is a fourth bug of the same family as the three already fixed in
+`UnitGroup.script`** during the Berezov immobility work. It means *no German AI
+group can engage in any mission*, because the Axis has no valid enemy list -
+only the side opposite the player does.
+
+### Fixed mission-scoped, deliberately
+
+`StartAttackAxis` now names the 37 Soviet combat units explicitly - read out of
+`Content.script` by `Affiliation == ENEMY` - and issues
+`SetOrder_Attack(AxisTargets, ERT_AGGRESSIVE)`, exactly the mechanism that makes
+the Soviet groups fight. **Fixing `UnitGroup.script` itself would touch every
+mission in the game**, and the AI is a separate workstream; this keeps the blast
+radius to one mission.
+
+Known trade: `SetOrder_Attack` overrides the patrol advance, as it does for the
+Soviets.
+
+### What did NOT work, and why it is worth recording
+
+- **Sending the German groups `StartAttack`** - that handler ends in
+  `SetOrder_Attack([GetMission().GetMainPlayerObjectID()], ...)`, i.e. attack
+  the player, who is German. Told them to attack their own side.
+- **A separate `StartAttackAxis` that merely arms them** (`ActivateBehavior`,
+  `ActivateRadar`, `ActivateFire`, `ERT_AGGRESSIVE`) - all four logged
+  "engaging" and made zero attacks. **Arming a group is not ordering it to
+  fire.**
+- **Adding `SetOrder_FireNearest()`** - a fire style rather than a movement
+  order, so it does not fight the advance, and it needs no target list. Still
+  zero attacks, because the underlying enemy list was the problem all along.
+
+Each of those was a reasonable next step and each was wrong. The log line that
+would have pointed here on day one - `BerezovKurskHQ Prefered targets:
+[BerezovKursk_ZugWeidinger_2, ...]`, a German group listing German units - was
+visible in the very first log I read, and I noted it without chasing it.
+
+### Confirmed by the user
+
+The see-through wheat IS the dust: stationary tank, no dust, artefact gone.
+Alpha-blended particles against alpha-blended grass with no sort between them.
+Engine-wide; a real fix is render-order work through the D3D9 hook.
+
 ## 2026-08-27 (o) — arming a group is not ordering it to fire
 
 All four German groups logged `StartAttackAxis - engaging targets of
