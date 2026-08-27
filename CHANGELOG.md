@@ -2,6 +2,68 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (n) — the Axis attack order was aimed at the player
+
+Entry (m) added the German groups to `StartAttack`. The log confirmed they got
+it - all four show `StartAttack - engaging` - and they still never fired. The
+handler itself was the problem:
+
+```
+SetOrder_Attack([GetMission().GetMainPlayerObjectID()], ERT_AGGRESSIVE);
+```
+
+**It orders the group to attack the MAIN PLAYER UNIT, and the player is a German
+Tiger.** That handler was written for the SOVIET groups. Sending it to the
+German groups told them to attack their own side - which is exactly what the log
+had been showing all along in a line I noted and did not chase:
+
+```
+BerezovKurskHQ Prefered targets: [BerezovKursk_ZugWeidinger_2, BerezovKursk_ZugWeidinger_1]
+```
+
+German units listed as targets for a German group. Result: `ERT_AGGRESSIVE`,
+zero attacks, 103 Soviet ones.
+
+**Fixed** with a separate `StartAttackAxis()` on `BerezovKurskBaseGroup` that
+arms the group - `ActivateBehavior`, `ActivateRadar`, `ActivateFire`,
+`ERT_AGGRESSIVE` - and issues **no** `SetOrder_Attack`, so normal radar
+acquisition finds the enemy and the advance is not overridden. The four German
+groups now receive that; the nine Soviet sends are untouched.
+
+`MissionTasks.script` is MIXED line endings (42 CRLF, 412 LF). The edited region
+is CRLF, matched locally rather than per-file.
+
+### Gun rest angle tuned empirically
+
+The sign flip in (m) was the right direction but overshot: the user reported the
+barrel had gone from visibly drooping to slightly above parallel. Tuned frame 0
+from +7.00 to -2.04 deg node angle, putting the barrel at **-0.18 deg** -
+essentially parallel with a hair of droop. Only frame 0 changed; the opposite
+limit is untouched. File size unchanged, every byte outside those 16 identical.
+
+**Method, stated honestly**: there is still no verified model of how the engine
+maps track frames to angles. This is a tune against two user observations
+(-5.14 too low, +5.14 slightly high), not a derivation.
+
+### See-through grass: the user's diagnosis, and a dead end of mine
+
+The user asked why the tank's outline shows through the wheat behind the tracks,
+then suggested the dust was doing it. **They are right that it is not shadows** -
+`DefaultPlanarShadow` and `DefaultFakeShadow` are both `false`, so my
+shadow-silhouette theory was dead on arrival and I should have read the defaults
+before proposing it.
+
+Still worth recording from that dig: **every G5 model carries exactly 2
+`*_FakeShadow` nodes; none of ZeeWolf's hand-built models carry any** (King
+Tiger, TIGER_E1_Mid1, Panther D, Hummel all zero - his modified G5 Panzer IV
+keeps its 30). Inert while the feature is off, but it means enabling fake
+shadows would work for G5's vehicles and silently do nothing for ZeeWolf's.
+
+All dust emitter nodes (`Corner_*`, `Vapor_*`, `Smoke_*`) are present in the
+King Tiger, so its dust spawns where it should. **This is therefore not a King
+Tiger problem** - alpha-blended dust sorting against alpha-blended grass is
+engine-wide and should reproduce behind any tank. Not investigated further.
+
 ## 2026-08-27 (m) — the Axis could never engage, and the "depressed cannon" was a symptom
 
 The user reported the King Tiger's gun sat permanently depressed, and added
