@@ -2,6 +2,43 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (k) — the Tiger II placed in Berezov
+
+Added to `Missions/MyMission/Berezov/Content.script` (REDUX) as
+**`Berezov_KGKaiser_5`**, at (386.0, 6949.5), continuing the Kampfgruppe's
+diagonal from `KGKaiser_4` at (421.0, 6939.5), 36 m clear of it.
+
+**Two edits were needed, not one.** Group membership in this mission is
+EXPLICIT, not by name prefix — the `UnitGroup` object carries
+`["Units", [...]]`, so the unit had to be added there as well or it would have
+sat inert outside the group. Shown in full, since this is the array-edit
+failure mode that broke a load once before:
+
+```
+before: ["Units", ["Berezov_KGKaiser_1", ..., "Berezov_KGKaiser_4"]]
+after:  ["Units", ["Berezov_KGKaiser_1", ..., "Berezov_KGKaiser_4", "Berezov_KGKaiser_5"]]
+```
+
+**Placed as `_5`, deliberately last**, so it cannot become the platoon leader.
+The leader drives the group's route, and the AI here was hard-won — see the
+Berezov immobility work.
+
+**KGKaiser rather than ZugFalke**: both start `ERT_PASSIVE` for the advance and
+switch to `ERT_AGGRESSIVE` later, but KGKaiser is the Kampfgruppe, which is the
+right home for a heavy.
+
+**Drivability checked, not assumed.** `RouterZone_Test.bmp` sampled at the new
+position returns `0x0b` — identical to `KGKaiser_4`, a tank already routing in
+that platoon. Comparing against a known-good unit sidesteps the bitmap
+row-order question entirely (the hmap and zone bitmaps disagree on row order,
+so absolute reads are unreliable).
+
+Verified: brackets 1039/1039, braces 6/6, parens 164/164, no trailing commas,
+0 bare LF, non-ASCII unchanged, 61 GameObjects (was 60). Cache cleared. Backup
+at `K:\TvTDeepseek\rollback\kingtiger_2026-08-27\Berezov__Content.script.bak`.
+
+ZW has no `MyMission/Berezov`, so this is REDUX only.
+
 ## 2026-08-27 (j) — the Tiger II, built into both builds (AI, unattended)
 
 `CTankPzVI_KingTigerIIUnit` now exists in **both** REDUX and ZW2015, byte-identical.
