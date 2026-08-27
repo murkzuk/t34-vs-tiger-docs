@@ -2,6 +2,31 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (d) — the gunsight: 19.6 → 76.9 fps
+
+The T-34 gunsight ran at ~20 fps against ~100 external, same direction — the
+user could not aim and quit the session. Fixed, 3.9×:
+
+```
+tree wind CPU -> GPU       ~30 fps    +50%
+FogFarMax 3000 -> 1500    76.9 fps    +156% on top
+```
+
+**Cause:** a magnified view extends draw distance toward `FogFarMax`. At 3000 m
+against an external `FogFar` of 500 m that is 36× the area. The drawcall probe
+showed it plainly — draw calls 261 → 2105 (8.1×) while triangles only went 3.1×,
+i.e. many more objects each cheap, which is *seeing further*, not higher detail.
+
+`FogFarMax` is set in **`Content.script`, which wins over `Atmosphere.script`** —
+editing the atmosphere file would have done nothing.
+
+Three wrong answers first, all inferred from setting names rather than measured:
+`ModelLOD` (LOD uses true distance, unaffected by zoom), and `FOVDistPower`
+twice — which turns out to **do nothing at all**, a Whirlwind over Vietnam
+leftover read and written only by its own menu row. It is kept in the launcher
+as `Zoom detail *` with a tooltip saying so, so nobody rediscovers it.
+
+
 ## 2026-08-27 (c) — the replacement Panzer IV's twitchy handling
 
 User reported it "turns too quickly, it is jarring". First check compared

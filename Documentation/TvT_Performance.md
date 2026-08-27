@@ -600,3 +600,70 @@ count alone does not explain it.**
 **Not started.** If ZW performance is ever picked up, start from the
 view-dependence: profile looking at the worst direction and the best, and diff.
 Do not assume it is the same problem REDUX had.
+
+---
+
+# THE GUNSIGHT FIX: 19.6 -> 76.9 fps (2026-08-27)
+
+**The T-34 gunsight ran at ~20 fps against ~100 external, same direction. The
+user could not aim and quit the session.** Two changes fixed it, both in ZW.
+
+```
+starting point            19.6 fps
+tree wind CPU -> GPU      ~30 fps     +50%
+FogFarMax 3000 -> 1500    76.9 fps    +156% on top
+                          ---------
+                          3.9x total
+```
+
+## What it actually was
+
+The drawcall probe settled it - external against gunsight, same direction:
+
+```
+                external    gunsight    factor
+draw calls           261       2105      8.1x
+triangles        457,269  1,426,768      3.1x
+frame time       7.50 ms   36.84 ms      4.9x
+```
+
+**Draw calls up 8x but triangles only 3x** - many more objects, each cheap. Not
+higher detail: seeing *further*. **A magnified view extends draw distance toward
+`FogFarMax`.** At 3000 m against an external `FogFar` of 500 m that is 36x the
+area, in mostly-distant low-poly trees.
+
+Halving it to 1500 quarters the area. The trade is visible and defensible: the
+treeline now fades into haze at range, which looks like a humid morning rather
+than a bug.
+
+## `FogFarMax` lives in Content.script, NOT Atmosphere.script
+
+```
+Atmosphere.script    FogFar 500.0    FogFarMax 3000.0
+Content.script       FogFar   3.0    FogFarMax 3000.0    <- this one WINS
+```
+
+Editing `Atmosphere.script` would have changed nothing and produced another
+false negative. This is the same trap recorded during the lighting work.
+
+## Three wrong answers before the right one - all the same shape
+
+1. **`ModelLOD` [40,60,120,480] -> [40,70,180,250]** - no effect. LOD is chosen
+   by true distance, which magnification does not change.
+2. **`FOVDistPower` 5 -> 2** - no effect, because **the setting does nothing at
+   all**. Every reference to it is inside the video options menu, which reads
+   it, displays it and writes it back. Nothing consumes it and it does not
+   appear in the engine's settings dump. A Whirlwind over Vietnam leftover.
+   It is kept visible in the launcher, labelled `Zoom detail *`, with a tooltip
+   saying so - specifically so nobody rediscovers it and assumes it is the
+   answer.
+3. Each of those was **inferred from the name of a setting.** The fix came from
+   the probe, which measured draw calls and triangles and made the mechanism
+   obvious.
+
+## Real, user-facing levers confirmed in the Video menu
+
+`Forest animation` and `Forest distance` are both real sliders and both sit at
+roughly half by default. `Forest animation` maps to `MaxForestAnimatedLod`
+(exposed in the launcher). **`Forest distance` has not been investigated** and
+is the obvious next lever if more is needed.
