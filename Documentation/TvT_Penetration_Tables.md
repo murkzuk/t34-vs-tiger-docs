@@ -279,3 +279,62 @@ pass and "0.15 -> 0.005" on the next. **Always compare per class.**
 Similarly, a first side-classifier filed `GermanSoldierRifleUnit` as Soviet
 because its match list omitted "German". Check the classifier before trusting
 any aggregate.
+
+---
+
+# CORRECTION 2026-08-27: the sensor ranges are NOT even-handed either
+
+The revert deliberately left `MaxRadarDistance` and `AttackDistanceMax` alone,
+on the reasoning that ZW raised them for both sides. **That was decided on a
+partial sample** - the ZiS-3 (800 -> 3200) and SU-85 (1200 -> 2400) were checked
+and looked generous to the Soviets. The T-34s were not checked, because the
+filter used to pick "tanks" matched `Tank`/`SAU`/`Gun` and `T34_85_44` contains
+none of them.
+
+The full picture:
+
+```
+GERMAN TANKS            sees      engages          SOVIET TANKS      sees    engages
+  Panzer IV             2700 m    2800 m             SU-85           2400 m   2400 m
+  Tiger I               2600 m    2600 m             T-34/85         1650 m   1650 m
+  StuG III              2000 m    2000 m             T-34/76          800 m   2600 m
+```
+
+**The Tiger detects at 2600 m; the T-34/85 not until 1650 m.** A 950 m window in
+which the Tiger engages and the Soviet tank does not know it is there. Against
+the Panzer IV it is 2700 vs 1650.
+
+**The T-34/76 is incoherent**: engagement range 2600 m, detection range 800 m -
+it will try to shoot at things it cannot see. It is also **the only vehicle in
+the game whose detection ZW reduced** (1200 -> 800).
+
+For reference, G5's originals were 1200-1500 m detection for every tank on both
+sides, and 900-1000 m engagement.
+
+## First play test after the revert
+
+User, playing Soviet: *"i died pretty quick"* - one run, explicitly not
+conclusive, more play needed. But the sensor asymmetry above is the obvious
+suspect: the gunnery revert fixed *accuracy* while leaving the German side a
+950 m head start on *detection*, which no amount of accuracy helps with.
+
+## OPEN - three options
+
+1. **Revert sensors to G5 too** - everything back to ~1200-1500 m detection.
+   Consistent, but loses ZW's genuinely better engagement ranges.
+2. **Keep ZW's increases, equalise them** - bring Soviet tanks up to German
+   figures (T-34/85 1650 -> 2600, T-34/76 800 -> 2600 detection). Keeps the
+   improvement, removes the tilt.
+3. **Fix only the incoherent one** - T-34/76 detection 800 -> 2600 so it matches
+   its own engagement range. Minimal change.
+
+**Option 2 is the one that matches the stated goal** (keep the modding, remove
+the bias), and it is what the earlier decision was *trying* to do.
+
+## Method note
+
+Two classifier bugs in one session produced two wrong aggregates: a side-
+classifier that omitted "German" filed German infantry as Soviet, and a unit
+filter that matched `Tank`/`SAU`/`Gun` silently dropped both T-34s. **Check what
+a filter excludes, not just what it includes** - a partial sample that looks
+tidy is more dangerous than an obviously broken one.

@@ -33,7 +33,12 @@ add 2000→8000. **T-34/85 mass** 48t→40t.
 the other direction) and `SU-85 FirePeriod` 9000→8000 (the only gun in the game
 ZW made *slower*, and it was Soviet, while the Pak 40 went 10000→5000).
 
-**Deliberately NOT reverted:** sensor and engagement ranges
+**CORRECTED 2026-08-27, same day:** the sensor decision below was made on a
+partial sample and is wrong - see `TvT_Penetration_Tables.md`. The Tiger detects
+at 2600 m against the T-34/85's 1650 m, and the T-34/76 detects at 800 m while
+engaging at 2600 m. Left in place pending a decision.
+
+**Deliberately NOT reverted (see correction above):** sensor and engagement ranges
 (`MaxRadarDistance`, `AttackDistanceMax` etc.). ZW raised those for **both**
 sides — ZiS-3 800→3200 m, SU-85 1200→2400 m — which is genuine modding over G5's
 myopic originals, not bias. Also left: the general rate-of-fire increase applied

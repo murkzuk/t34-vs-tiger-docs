@@ -129,7 +129,18 @@ SuspensionHeight  0.4   -> 0.9         Friction1  1.0   -> 2.0
 
 - [x] **APPLIED 2026-08-27** — 23 changes, each verified against the original.
   ZW stamped `v0.260827`, cache cleared, backup in
-  `K:\TvTDeepseekollback\ZW_Units_2026-08-27_pre_revert\`.
+  `K:\TvTDeepseek
+ollback\ZW_Units_2026-08-27_pre_revert\`.
+- [ ] **DECIDE: the sensor ranges are NOT even-handed after all.** The Tiger
+  detects at 2600 m, the T-34/85 not until 1650 m - a 950 m window where it
+  shoots and you cannot see it. The T-34/76 is incoherent (engages 2600 m,
+  detects 800 m) and is the only vehicle whose vision ZW *reduced*.
+  First Soviet play test after the revert: *"i died pretty quick"* - one run,
+  not conclusive, but this is the obvious suspect.
+  - **Option 2 is recommended** and matches the original intent: keep ZW's
+    better ranges but equalise them (T-34/85 1650 -> 2600, T-34/76 800 -> 2600
+    detection). Alternatives: revert all sensors to G5 (~1200-1500 m), or fix
+    only the incoherent T-34/76.
 - [ ] **TEST: one mission per side.** The T-34/85 should feel transformed —
   turret traverse 8 -> 17 and the player gun back to pinpoint.
 - [ ] **Check the ZW-only vehicles too** — Panther, KVs, SU-122/152, Nashorn etc.
