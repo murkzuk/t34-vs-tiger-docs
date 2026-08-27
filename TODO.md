@@ -31,7 +31,13 @@ penetration test, no facet angle.
 
 ## AXIS AI CANNOT ENGAGE - root cause found, fixed only per-mission (2026-08-27)
 
-- [ ] **`UnitGroup.script` seeds its kill list from the PLAYER's own units.**
+- [x] **FIXED 2026-08-27.** Not the `GetPlayerObjectsIDList` seed - that line is
+  fine. The bug is `GetEnemyGroupUnitsList(TargetedUnit)` one line down, which
+  only the side OPPOSITE the player reaches, and which hands back the wrong
+  side. Emptied so it falls through to the file's own correct fallback: attack
+  the unit actually spotted. Both builds. **36 missions share this file - watch
+  the next few logs.** Original text follows.
+- [ ] ~~`UnitGroup.script` seeds its kill list from the PLAYER's own units.~~
 
   ```
   Array KillList = GetMission().GetPlayerObjectsIDList();

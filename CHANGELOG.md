@@ -2,6 +2,62 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (s) — the Axis AI fix, one line, in shared script
+
+**Correction to entry (p) first.** That entry blamed
+`Array KillList = GetMission().GetPlayerObjectsIDList();`. **That line is fine.**
+The player's own side spots the player, takes the `PlayerCaught` path, and gets a
+correct kill list. The bug is one line further down:
+
+```
+if (!PlayerCaught) KillList = GetEnemyGroupUnitsList(TargetedUnit);
+```
+
+**Only the side OPPOSITE the player ever reaches that branch.** `GetEnemyGroupUnitsList`
+is engine-side (`Behavior.dll`, not readable as script), and the observed
+behaviour is that it hands back *the enemies of the unit passed in* - give it a
+Soviet, get Germans. Hence the German HQ being handed
+`[ZugWeidinger_2, ZugWeidinger_1]` and shooting them, while the German force made
+zero attacks in a log with 103 Soviet ones.
+
+**Fixed** by emptying the list there, which falls through to the line immediately
+below - *this file's own existing fallback*, and simply correct:
+
+```
+if (!PlayerCaught) KillList = [];
+if (KillList.isEmpty()) KillList.add(TargetedUnit);   // attack what we spotted
+```
+
+The player's side is untouched: it never reaches that branch. Applied to both
+builds. It is also side-agnostic - in a mission where the player is Soviet, the
+bug would flip sides, and so does the fix.
+
+CP1251 preserved (21 non-ASCII before and after), CRLF clean, braces 228/228 and
+235/235, parens balanced. Backups `{REDUX,ZW}__UnitGroup.script.bak`.
+
+**36 missions share this file**, so it wants a careful look at the next few logs,
+not just BerezovKursk.
+
+### Testing note
+
+The BerezovKursk workaround from (p) - the hand-listed 37 Soviet targets - is
+**deliberately left in place** for the next run, because the two are
+distinguishable in the log:
+
+- workaround firing -> `Prefered targets: [` 37 Soviet units `]`
+- general fix firing -> `Prefered targets: [` one spotted unit `]`
+
+If the general fix carries it alone, the hand-listed array should come out and
+the group can go back to engaging while advancing, instead of `SetOrder_Attack`
+overriding the patrol.
+
+### Still not done: the threat model
+
+`PreferedTargets` accepts only classificator and distance. There is no field for
+"can my round defeat that armour", so a T-34 and a StuG weigh the same. Making
+engagement depend on penetration needs the binary acquisition hook, parked in
+`notes/project_tvt_acquisition_parked.md`. Not a script fix, and not attempted.
+
 ## 2026-08-27 (r) — the same fix for ZW, where it was much worse
 
 ZW's `AutoCommander.script` is a DIFFERENT, cut-down file - 1,536 bytes against
