@@ -2,6 +2,121 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (j) — the Tiger II, built into both builds (AI, unattended)
+
+`CTankPzVI_KingTigerIIUnit` now exists in **both** REDUX and ZW2015, byte-identical.
+Placeable in the editor, in the German roster, with its own ballistics.
+**Not yet run** — the user was asleep; the game and editor were deliberately not
+launched, so one editor load remains before this is proven.
+
+### The gun got a real falloff curve, and the reason it could be derived
+
+The task said reuse `GunHvyPaK43` — but its table is FLAT (247 mm at 100, 500,
+1000 and 1500 m alike). Checking how G5 built their own tables settled how to fix
+it, and turned up something bigger:
+
+```
+                    REDUX (G5)                  ZW
+Tiger I KwK 36   120 / 110 / 100 / 93     175 / 175 / 175 / 175   flat
+T-34/85          115 / 105 / 100 / 92     145 / 145 / 143 / 136   near-flat
+T-34/76           80 /  70 /  63 /  58     65 /  60 /  43 /  23
+```
+
+**G5's figures are the real published tables** (30 deg from vertical), and their
+bullet speeds are real muzzle velocity x 0.8 — KwK 36 Pzgr 39 is 773 m/s, they
+wrote `770.0*0.8`. **ZW inflated the German gun 46% and made it range-immune
+while gutting the Soviet 76 mm past 500 m** — the same bias already found in
+handling and gunnery, now in penetration.
+
+So the Tiger II was entered against G5's convention, in both builds:
+
+```
+Pzgr 39/43 APCBC   1000 m/s   202 / 185 / 165 / 148 / 132 mm
+Pzgr 40/43 APCR    1130 m/s   237 / 217 / 193 / 171 / 153 mm
+Sprgr 43 HE         750 m/s   (same 8.8 cm HE shell as the Tiger I)
+```
+
+Cross-check: 202/120 = 1.68x the Tiger I at 100 m, exactly the historical ratio.
+
+**`GunHvyPaK43` was left alone** rather than fixed, so no existing unit changes.
+Its flat table still affects the towed Pak 43 and the Nashorn — one line, the
+user's call.
+
+**Consequence to flag: in ZW the Tiger II will be OUT-PENETRATED by ZW's own
+Tiger I beyond about 1200 m**, because ZW's Tiger sits at a flat 175. That is
+ZW's inflation, not the Tiger II's weakness, and reverting it is a separate
+decision about an existing unit.
+
+### How the unit was built
+
+Generated from `TankPzVIAusfEUnit.script` — **G5's own Tiger I**, not one of
+ZeeWolf's five Tiger E1 variants — by renaming 147 distinct `TankPzVIAusfE*`
+tokens and changing four things: mesh, mass, LOD list, header. G5 was chosen so
+both builds get an identical unit sitting on G5's ballistics convention.
+
+- **Mass 69,800 kg** against the Tiger I's 56,000, on the **same 1500 MaxPower**.
+  The Tiger II really did carry 25% more weight on the same Maybach HL230, so
+  the sluggishness falls out of the numbers rather than being dialled in.
+- **Interior borrowed** — `Cu_veh_PzVI_MAIN_InsideModel`, exactly as ZeeWolf did
+  for all five of his Tiger E1 variants.
+- **`SetLods([0])`** because `u_veh_KingTiger.ms2` has NO LOD meshes (verified by
+  reading the model). 72,735 triangles against ZW's TIGER_E1_Mid1 at 65,341 —
+  already in the game in the same condition, so ~11% heavier than an existing
+  vehicle, not a new class of cost.
+- **Sounds are the Tiger's, deliberately.** Renaming produced 21 engine/gearbox
+  classes and 3 gun-load classes that do not exist in `Sounds.script`. The
+  Tiger II used the same HL230 and the same 8.8 cm gun family, so pointing at
+  the Tiger's is correct rather than a stand-in. **Caught by resolving every
+  symbol in the file before shipping, not by running it.**
+
+### Cleaning up prior AI-generated stubs
+
+ZW's shared files carried **19 King Tiger class definitions that were AI-written
+stubs** — the file says so itself (`// === STUB CLASSES FOR KING TIGER ... Paste
+these into Scripts\Common\Bullets.script`). They had no `extends`, no
+`ExplosionId`, no penetration data, and the explosion stubs carried
+`Damage = 0, Radius = 0.0`. `Explosions.script` defined each of them **twice**
+already. They were also in the wrong file: the engine's own convention is classes
+in the unit script (the Tiger E1 has 70 there), registrations in
+`Bullets.script`. All 19 removed; registrations kept and mirrored into REDUX.
+
+### What was added where
+
+| | REDUX | ZW |
+|---|---|---|
+| `Piercing.script` ballistics | added | added |
+| `Armour.script` (real 185/151/81/41) | added | already present |
+| `HitPoints.script` | added | added |
+| Bullet + explosion registrations | added | already present |
+| Unit script | new | new |
+| Model + 23 textures + `.rmap` | copied, 25 MB | already present |
+| German roster | added | already present |
+| Editor placement | added | uncommented |
+| Target identification | added | added |
+
+`Turret_A_NormalSet` in the model script listed only `Body_commander`, so a
+destroyed turret barely changed. Rebuilt from the mesh's actual turret-side
+nodes, excluding the collision mesh, the crashed variant and the camera helpers.
+
+### Verification done, and what is NOT done
+
+Every changed file: **0 bare LF, 0 U+FFFD, balanced braces and brackets, no
+trailing commas, non-ASCII byte counts preserved exactly.** Every class,
+constant and registered ID referenced by live code in the unit script resolves
+in both builds. Both `Scripts.cache` cleared. Versions bumped to
+`REDUX v0.260827b` / `ZW v0.260827d`.
+
+**The game was NOT launched.** Static checks cannot prove it loads. One editor
+load, and `execution.log`, remain.
+
+Backups: `K:\TvTDeepseek\rollback\kingtiger_2026-08-27\`.
+
+Known loose ends, none blocking: the Winter variant
+(`CTankPzVI_KingTigerII_WUnit`) is still undefined and its editor line stays
+commented; `Textures/Pk_CAP.tex` is referenced by ZeeWolf's model script and does
+not exist in either build; and a playable version still needs a
+`Cu_veh_PzVI_KingTigerII_PlayableModel`.
+
 ## 2026-08-27 (i) — two corrections: a false comment, and a launcher that lied
 
 Both cosmetic in the sense that neither changes gameplay. Both matter because
