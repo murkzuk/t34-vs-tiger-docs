@@ -936,6 +936,112 @@ and the answer.
 
 ---
 
+## 2026-08-27 — a King Tiger in T-34 vs Tiger, and why the Germans never shot back
+
+There's a Tiger II in the game now. ZeeWolf built the model years ago — mesh,
+textures, armour values, even the kill rings on the barrel — and never wrote the
+unit class that turns a model into a tank. That class now exists, in both the
+REDUX build and ZeeWolf's, and it's the same file in each: generated from G5's
+own Tiger I by renaming the class hierarchy and changing four things — the mesh,
+the mass, the LOD list, and the header.
+
+Mass 69,800 kg against the Tiger I's 56,000, on the **same** engine power. The
+real Tiger II carried 25% more weight on the same Maybach, so the sluggishness
+falls out of the numbers instead of being dialled in.
+
+**The gun needed real ballistics.** The obvious move was to reuse the towed Pak
+43's data — same weapon — but its penetration table is flat: 247 mm at 100, 500,
+1000 and 1500 m alike. Working out what "correct" looks like meant checking how
+G5 built theirs, and that turned up something else:
+
+```
+                   REDUX (G5)                  ZeeWolf
+Tiger I KwK 36   120 / 110 / 100 / 93     175 / 175 / 175 / 175
+T-34/85          115 / 105 / 100 / 92     145 / 145 / 143 / 136
+T-34/76           80 /  70 /  63 /  58     65 /  60 /  43 /  23
+```
+
+G5's are the real published figures, and their shell velocities are real muzzle
+velocity × 0.8 — KwK 36 Pzgr 39 is 773 m/s and they wrote `770.0*0.8`. The
+German gun in the other build is inflated 46% and made immune to range, while
+the Soviet 76 mm is gutted past 500 m. So the Tiger II went in on G5's
+convention: 202 / 185 / 165 / 148 / 132. Sanity check — that's 1.68× the Tiger I
+at 100 m, which is exactly the historical ratio.
+
+### The gun pointed at the ground
+
+First run in-game, the barrel drooped. The model's animation track turned out to
+hold two values — the gun's elevation limits — and every G5 tank puts the
+positive one in frame 0:
+
+```
+G5 Tiger    +6.5  /  -17.0
+G5 PzIV     +8.0  /  -20.0
+G5 T-34/85  +5.0  /  -20.0
+King Tiger  -7.0  /  +20.0      ← backwards
+```
+
+Flipping the signs put it in G5's family on both numbers. Worth saying that the
+first explanation offered was "different range, not a bug" — and it was shot
+down in one sentence: *if that were true, every tank in the game would drive
+around drooping.* Quite.
+
+### And then nobody shot at anything
+
+Dropping it into a mission, the whole German side turned out never to fire.
+Not the new tank — **none of them, ever.** The log was unambiguous: nine Soviet
+groups engaging, zero German attacks.
+
+Three attempts to fix that failed. The mission never sent the German groups an
+attack order at all, so that was added — they logged "engaging" and did nothing.
+The attack handler turned out to end in this:
+
+```
+SetOrder_Attack([GetMission().GetMainPlayerObjectID()], ERT_AGGRESSIVE);
+```
+
+**Attack the player** — who is German. That handler was written from the Soviet
+side. Telling the German groups to run it told them to attack their own force.
+Arming them instead — radar on, fire on, aggressive — logged "engaging" and
+still produced zero attacks, because arming a group is not ordering it to fire.
+
+The actual cause is one line in shared script:
+
+```
+Array KillList = GetMission().GetPlayerObjectsIDList();
+```
+
+The retaliation logic seeds its kill list from **the player's own objects**.
+That's fine for the Soviets, for whom the player IS the enemy. For a German
+group it resolves to friendlies — and the log shows the German HQ shooting and
+killing its own ZugWeidinger units. No German AI group can properly engage in
+any mission, because only the side opposite the player ever gets a valid enemy
+list.
+
+### One more, if you've ever wondered why the gunner ignores the tank
+
+There's exactly one target-priority table in the game, and it weights purely by
+type and distance. Compare what it matches against what units declare:
+
+```
+units declare :  TANK  HEAVYTANK  ANTITANK  BTR  VEHICLE  HUMAN  SAU  AIR
+table matches :  TANK  ANTITANK  BTR  HUMAN  AIR  TRUCK  ARTILLERY  AA_GUN
+```
+
+Trucks are classified `VEHICLE`. The zero-weight row is spelled `TRUCK`, and
+**no unit in the game is classified TRUCK** — so trucks never got their intended
+weight of zero and fell through to the default. `HEAVYTANK` had no row at all,
+so Tigers carried no weight either. `ARTILLERY` and `AA_GUN` carry the two
+highest weights in the table and match nothing.
+
+In ZeeWolf's build it's worse: 65 of ~127 unit definitions had no weight at all.
+And the Flak 88 is classified `["GER","GROUND"]` with no type at all — the
+deadliest anti-tank gun in the game, invisible to target priority.
+
+All of the above with Claude (Anthropic). The recurring lesson, again: the log
+line that pointed at the friendly-fire bug was visible in the first log read
+that day, noted, and not chased for three more runs.
+
 ## 2026-08-27 — one number in a model file, and 87 of 249 models were wrong
 
 We can open T-34 vs Tiger's `.ms2` models in Blender now. Most of them came in

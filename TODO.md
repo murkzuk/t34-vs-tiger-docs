@@ -4,6 +4,81 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## AI TARGET PRIORITY - fixed at the table, BROKEN at the source (2026-08-27)
+
+`CAutoCommander.PreferedTargets` is the **only** target-priority table in the
+game. It weights purely by classificator and distance - no threat model, no
+penetration test, no facet angle.
+
+- [x] **REDUX: added the missing `HEAVYTANK` and `VEHICLE` rows.** No unit in
+  the game is classified `TRUCK`, so the zero-weight `TRUCK` row was dead and
+  trucks fell through to the default - which is why the gunner picked a truck
+  over a T-34. `ARTILLERY` and `AA_GUN` are dead rows too, carrying the two
+  HIGHEST weights in the table; left in place and labelled.
+- [x] **ZW: 65 of ~127 unit definitions had NO weight at all** (GUN 23, HUMAN
+  15, HEAVYTANK 11, VEHICLE 7, ANTITANK 6, BTR 4). Its file is a different,
+  cut-down one matching only `TANK` and `AIR`. Coverage now 124/127. **Weights
+  scaled to ZW's convention** - close-range TANK is 10000 there against G5's
+  1000, so REDUX's numbers pasted across would have been 10x too weak.
+- [ ] **`GunFlak88` is classified `["GER","GROUND"]` with NO type
+  classificator** - not `GUN`, not `ANTITANK`. The deadliest AT gun in the game
+  is invisible to target priority. One word fixes it; it is a unit-definition
+  edit, so it waits for the user.
+- [ ] **The real job: there is no threat model.** A T-34 and a StuG weigh the
+  same. Making engagement depend on whether the round can defeat the armour is
+  written up in `Documentation/TvT_AI_Engagement_Logic.md` and is a real piece
+  of work, not a table edit.
+
+## AXIS AI CANNOT ENGAGE - root cause found, fixed only per-mission (2026-08-27)
+
+- [ ] **`UnitGroup.script` seeds its kill list from the PLAYER's own units.**
+
+  ```
+  Array KillList = GetMission().GetPlayerObjectsIDList();
+  ```
+
+  Written from the Soviet point of view, where the player always IS the enemy.
+  For a German group it resolves to friendlies - the log shows the German HQ
+  attacking and killing German `ZugWeidinger` units. **No German AI group can
+  engage in any mission.** A fourth bug of the same family as the three already
+  fixed in that file. **NOT fixed** - it would touch every mission in the game.
+- [x] **BerezovKursk worked around**: `StartAttackAxis` names the 37 Soviet
+  combat units explicitly and issues `SetOrder_Attack`, the mechanism proven to
+  work for the Soviet groups. Overrides the patrol advance, as it does for them.
+- Recorded so they are not retried: sending the Germans `StartAttack` (it ends
+  in `SetOrder_Attack` against the *player*, who is German); and merely arming a
+  group with `ActivateFire`/`ActivateRadar`/`ERT_AGGRESSIVE`, which logs
+  "engaging" and produces zero attacks. **Arming is not ordering.**
+
+## TIGER II - in game, AI, both builds (2026-08-27)
+
+- [x] Unit class, ballistics with a real KwK 43 falloff, armour, hit points,
+  registrations, editor entry, roster, target identification. Placed in
+  BerezovKursk as `KGKaiser_5`.
+- [x] **Gun elevation track was inverted.** Every G5 tank puts the POSITIVE
+  limit in frame 0; ZeeWolf's had the signs flipped. Fixed, then tuned to rest
+  at -0.18 deg.
+- [ ] **Winter variant `CTankPzVI_KingTigerII_WUnit` is still undefined**; its
+  editor line stays commented.
+- [ ] **Playable version** needs `Cu_veh_PzVI_KingTigerII_PlayableModel`.
+  Interior can be borrowed, as ZeeWolf did for all five of his Tiger E1s.
+- [ ] `Textures/Pk_CAP.tex` is referenced by the model script and does not
+  exist in either build.
+- [ ] **ZeeWolf's hand-built models carry no `*_FakeShadow` geometry** (King
+  Tiger, TIGER_E1_Mid1, Panther D, Hummel - all zero; every G5 model has 2).
+  Inert while shadows are off, but enabling them would work for G5's vehicles
+  and silently do nothing for his.
+
+## See-through wheat - CONFIRMED as the dust (2026-08-27)
+
+- [ ] User-confirmed: stationary tank, no dust, artefact gone.
+  `CForestUnitDustTraceEffect` is alpha 0.3, nine particles per 0.2 m of track,
+  against alpha-blended grass with no sort between them. **Engine-wide, not
+  model-specific.** A real fix is render-order work through the D3D9 hook -
+  same territory as the fog investigation. Not started.
+
+---
+
 ## Lighting - the commander is SETTLED, the ambient pass is not (2026-08-26)
 
 ```
