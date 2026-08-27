@@ -2,6 +2,34 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (e) — vertical mouse aim: a G5 bug, fixed after 25 years
+
+The user reported gunsight aiming was "about correct laterally but faster
+vertically". `Scripts/Common/PlayerUnit.script`:
+
+```c
+float MouseSpeed = 0.0015f * CGameSettings::MouseSensitivity / 0.5;
+CameraLink.SetMouseSensitivity(MouseSpeed, MouseSpeed);
+```
+
+**`SetMouseSensitivity` takes horizontal and vertical separately, and the game
+passes the same value to both.** A 16:9 monitor has a vertical field of view
+1.78× smaller than horizontal, so an identical angular rate crosses it 1.78×
+sooner — the gun really does move faster vertically.
+
+This is in the 2001 original, REDUX and ZW alike. It was milder on a 4:3 CRT
+(1.33×) but never absent.
+
+**Fix:** new `MouseVerticalScale` in `GameSettings.script`, default **0.5625**
+(1080/1920), applied at all three `SetMouseSensitivity` call sites in both
+builds — the gunsight camera and both commander cameras.
+
+Exposed in the launcher as a **vertical** box beside gunsight mouse speed, with
+a tooltip giving 0.75 for 4:3, 0.42 for 21:9 and 1.0 for the original behaviour.
+Screen dimensions are not reachable from `PlayerUnit`'s script context (they are
+Editor-only), so it is a settable constant rather than derived at runtime.
+
+
 ## 2026-08-27 (d) — the gunsight: 19.6 → 76.9 fps
 
 The T-34 gunsight ran at ~20 fps against ~100 external, same direction — the
