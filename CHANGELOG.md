@@ -2,6 +2,83 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (h) — the projection matrix, measured: two beliefs falsified
+
+Hooked `SetTransform`/`D3DTS_PROJECTION` in the drawcall probe and recovered the
+real planes from the matrix (`zn = -_43/_33`, `zf = _33*zn/(_33-1)`,
+`fovY = 2*atan(1/_22)`). This ends a chain of reasoning-from-script-values.
+
+### 1. `Camera.script` `ZFar` is not what reaches the GPU
+
+```
+              declared      ACTUAL
+REDUX          500.0        ~2565 m
+ZW            6437.38       ~1140 m
+```
+
+Both wrong, in opposite directions. **REDUX draws 2.25x FURTHER than ZW** - the
+reverse of the scripts. The declared `FOV` is equally inert: it appears only in
+the MENU frustum (REDUX 58.69 deg = 90 deg horizontal at 16:9; ZW 39.23 deg =
+its 1.13 rad), never in a gameplay view.
+
+An earlier claim that REDUX has a 500 m visual horizon was wrong. The user said
+"I can see farther than that" and was right.
+
+### 2. The far plane does NOT change in the gunsight
+
+```
+             external            gunsight
+REDUX    69.26 deg / 2567     10.17 deg / 2562
+ZW       45.29 deg / 1141      4.55 deg / 1138
+```
+
+**"A magnified view extends draw distance toward FogFarMax" is FALSE.** Only the
+FOV narrows. `FogFarMax` does set the far plane (REDUX 3000 -> 2565, ZW
+1500 -> 1140), so halving it in ZW really did cut the drawn volume and that
+19.6 -> 76.9 gain stands - but magnification is not the route.
+
+### 3. The real mechanism is LOD escalation
+
+```
+            fov      draw calls   triangles      fps
+REDUX ext  69.26        245         300k       84-103
+REDUX gun  10.17        415         322k      101-112    FASTER
+ZW    ext  45.29     210-256     300-430k     138-153
+ZW    gun   4.55       1612         831k          39     3.5x WORSE
+```
+
+A 10x narrower cone at the same depth is a far smaller volume and cannot hold
+more objects. Draw calls rising 7x anyway means the same objects are drawn at
+higher detail: **LOD is selected by angular/screen size, not true distance.**
+
+That falsifies the reasoning previously used to dismiss `ModelLOD` ("LOD is
+chosen by TRUE distance, which magnification does not change"). It also explains
+why that test showed nothing: **ZW has 30 trees to REDUX's 380**, so tree LOD
+cannot matter in ZW. The objects that matter there are vehicles and buildings.
+
+### 4. The actual answer to "why is REDUX's gunsight faster than ZW's"
+
+Object density, not draw distance. Narrowing the FOV culls; magnification raises
+LOD. REDUX's sparse scene (1/9 of ZW's objects) only pays ~70% more draw calls,
+so culling wins and the gunsight comes out *faster than its own external view*.
+ZW's dense scene pays 7x and is buried.
+
+**Unpulled lever, not tried:** if magnification escalates LOD, ZW's gunsight
+wants shorter **object/vehicle** LOD distances - not tree LOD.
+
+### Method: two runs wasted, and why
+
+The probe carried two hand-copied lists of the same nine `patch_slot` calls. The
+new hook was added to `reapply_device_hooks`, which only runs on device *Reset*;
+the list that runs at startup lives inside `HookCreateDevice`. It compiled
+clean, logged nothing and never installed. The duplicate is now deleted - one
+list - and the probe prints `SetTransform hook VERIFIED in slot 44` at startup
+so an uninstalled hook can never masquerade as a null result again.
+
+A second bug was caught by review before it cost a third run: the guard
+`q > 1.0001f` would have **skipped the gunsight specifically**, since a near
+plane of 0.1 against a far plane of 6437 gives q = 1.0000155.
+
 ## 2026-08-27 (g) — REDUX measured: no gunsight problem, prediction wrong
 
 Yesterday's ZW gunsight fix (`FogFarMax` 3000 -> 1500, 19.6 -> 76.9 fps) left an
