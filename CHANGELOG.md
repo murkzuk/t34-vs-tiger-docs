@@ -2,6 +2,72 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (m) — the Axis could never engage, and the "depressed cannon" was a symptom
+
+The user reported the King Tiger's gun sat permanently depressed, and added
+"I never saw any axis engage". The second remark was the important one.
+
+### No German group was ever sent StartAttack
+
+```
+StartAttack received:  9 Soviet groups (all "engaging")
+                       0 German groups
+German units attacking anything, whole log:  0
+```
+
+`BerezovKursk/PositionWatchers.script` has two 600 m proximity triggers - first
+contact and deep contact - and **both dispatch only to Soviet groups**. The
+German groups get `StartFirstAdvance` only, leaving them `ERT_PASSIVE` for the
+whole mission. They advanced into a shooting gallery.
+
+**Fixed**: `ZugFalke`, `KGKaiser`, `ZugLex` and `ZugWeidinger` now receive
+`StartAttack` at first contact. `BerezovKurskHQ` deliberately left out so the
+HQ is not fighting from the opening move.
+
+**That file is pure LF**, unlike G5's CRLF originals - it is not a G5 file.
+Caught before writing; converting it would have been a silent whole-file change.
+Check line endings per file, not per project.
+
+### The cannon was never broken
+
+An `.ms2` node's 161-frame track is **not an animation with a neutral rest pose -
+it encodes the part's MECHANICAL RANGE**, and the engine interpolates along it
+from whatever it is commanded. Distinct values across the King Tiger's frames:
+
+```
+Gun_A       2 rotations    -7.0 .. +20.0 deg    gun elevation limits
+Turret_A    4 rotations                         traverse limits
+Weapon_A    1 rotation, 29 POSITIONS            recoil travel
+```
+
+Real Tiger II elevation is -8 to +17, so ZeeWolf modelled it accurately. G5 do
+the same - `u_veh_PzVI_LATE` `Weapon_B` spans -17 .. +6.5.
+
+**Frame 0 is one END of that range**, so a part that is never commanded parks at
+that extreme. The King Tiger was sitting at full depression because it had never
+been told to aim - a direct consequence of the mission bug above.
+
+**The model was left alone.** Rewriting frame 0 to raise the resting angle would
+change the gun's maximum depression, which is a real mechanical property. There
+is no script-side alternative either: no `Rest*/Park*/Default*Angle` symbol
+exists in `Objects.dll`, `Behavior.dll` or `Engine.dll`.
+
+### Also fixed: two "Invalid this reference" errors
+
+`GetLeftTrack()`/`GetRightTrack()` return null in the AI branch. Inherited from
+G5's Tiger, which carries the same two calls there - and which already has the
+identical pair commented out further up the same file. Never seen before because
+no mission had ever fielded an AI Tiger; the AI Panzer IV makes the same call at
+a different point in construction and is fine. Commented out in both builds.
+
+### And the importer was cleared
+
+The user asked whether the Blender importer might have flattened the hierarchy,
+making the gun-chain analysis worthless. It does not - it sets
+`objects[i].parent` with an identity parent-inverse - and the analysis never went
+through Blender anyway: `parent_index` was read from the file and the transforms
+composed directly, returning distinct parents a flattened import could not produce.
+
 ## 2026-08-27 (l) — corrected: the live mission is BerezovKursk, not Berezov
 
 Entry (k) put the Tiger II in `MyMission/Berezov`. **The game loads
