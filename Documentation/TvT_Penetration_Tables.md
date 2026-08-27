@@ -359,3 +359,47 @@ because it already out-ranges its German counterpart the StuG III (2000).
 
 **Total for the ZW pass: 26 values changed.** 23 handling/gunnery reverted to
 G5's figures, 3 sensor values equalised upward.
+
+
+---
+
+# 2026-08-27: the replacement Panzer IV's handling — the user was right
+
+The user reported ZW's replacement Panzer IV "turns too quickly, it is jarring".
+A first check compared `MaxRotateSpeed` (2.0 both), road speed (6.2 m/s both) and
+mass (40 t both), found them identical, and said so. **That was the wrong field.**
+
+A full class-by-class dump of the movement classes found it:
+
+```
+                            stock PzIV      ZW replacement
+MaxNegativeAccelleration    Vec(1.5,0,0)    Vec(2.5,0,0)     67% harder
+CollisionRadius             12.0             8.0             33% smaller
+```
+
+**In a tracked vehicle, differential braking is how you pivot.** Harder negative
+acceleration makes turns snap instead of sweep. And across every vehicle in both
+factions:
+
+```
+TankPnzIV_G_AI      decel 2.5     <- the single highest in the game
+everything else     decel 0.1 - 1.5
+stock Panzer IV     decel 1.5
+```
+
+It is not a German-vs-Soviet issue - it is **one unit that was tuned and
+overshot**. Set to 1.5, matching the stock Panzer IV and every other tank.
+`MaxBrakingAccelleration` was checked and is 2.5 on both, so nothing was missed.
+`CollisionRadius` left at 8.0 - most ZW units use 8.0-8.5 and it is the stock
+12.0 that is unusual.
+
+## Method note - the fourth measurement error of the session
+
+"Hull rotation is identical" was true of `MaxRotateSpeed` and false of how the
+vehicle actually turns. **When a user reports a feel difference, dump every
+field of the relevant classes rather than checking the obviously-named one.**
+The four errors this session were all the same shape: a partial view that
+looked conclusive.
+
+The user held their position against a confident measurement and was right, for
+the fourth time.

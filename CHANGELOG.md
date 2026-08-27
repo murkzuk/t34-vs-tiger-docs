@@ -2,6 +2,29 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (c) — the replacement Panzer IV's twitchy handling
+
+User reported it "turns too quickly, it is jarring". First check compared
+`MaxRotateSpeed`, road speed and mass — all identical to stock — and said so.
+Wrong field.
+
+```
+                            stock       ZW replacement
+MaxNegativeAccelleration    1.5         2.5      67% harder braking
+CollisionRadius            12.0         8.0
+```
+
+Differential braking is how a tracked vehicle pivots, so harder deceleration
+makes turns snap rather than sweep. **`TankPnzIV_G_AI` at 2.5 was the highest of
+any vehicle in the game** — everything else sits between 0.1 and 1.5. One unit
+tuned and overshot, not a factional thing. Set to 1.5.
+
+`MaxBrakingAccelleration` verified identical (2.5 both). `CollisionRadius` left
+alone — 8.0-8.5 is normal for ZW units; the stock 12.0 is the outlier.
+
+ZW stamped `v0.260827c`.
+
+
 ## 2026-08-27 (b) — the ZW-ONLY units, which is where the bias actually lived
 
 **The first revert was necessary but incomplete, and a play test proved it.**
