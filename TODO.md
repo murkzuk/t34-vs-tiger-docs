@@ -31,6 +31,60 @@ Every REDUX mission sits at or below ZW's dimmest.
 
 ---
 
+## ZW gunsight and LOD — PARKED 2026-08-27, for another day
+
+Measured that day: ZW's gunsight is 39 fps against 138-153 external, while
+REDUX's is 107 against 83. Cause is LOD escalating with magnification (LOD is
+picked by ANGULAR size, not true distance) multiplied by ZW's ~9x object count.
+Full evidence in `CHANGELOG.md`, entry *the projection matrix, measured*.
+
+**Only the first item below is actually gunsight-specific.** The other two are
+constant costs — they are paid identically in the external view, so they cannot
+produce a gunsight-vs-external differential. Recorded here so that distinction
+is not lost.
+
+- [ ] **GUNSIGHT-SPECIFIC: `LockLOD` on the gunsight camera.** The engine
+  exports `LockLOD`/`UnlockLOD`; the Editor already calls
+  `GetMission().GetCamera().LockLOD(0.99 * LOD)`
+  (`Scripts/Editor/BaseAssetViewer.script:1599`). Pinning LOD while magnified
+  attacks the measured mechanism directly — one change in `PlayerUnit.script`
+  where the gunsight view is set up, plus `UnlockLOD` on exit. No model work.
+  **Unknown: the argument's sense** (the Editor drives it from a slider), so it
+  needs one short test run to establish which direction means less detail.
+  `UnlockLOD` is exported but never called from any script in either build.
+
+- [ ] **NOT gunsight-specific — Tiger LOD distances.** ZW's
+  `TankPzVIAusfEUnit` uses `SetLods([400, 270, 170, 50, 5])` against REDUX's
+  `[300, 170, 50, 5]` — top detail held to 400 m instead of 300, plus an extra
+  band. Same shape as the tree `ModelLOD` 480 m inflation already reverted.
+  One line, safe, but it lowers the whole frame, not the gunsight gap.
+
+- [ ] **NOT gunsight-specific, and BLOCKED — ZW's replacement vehicles have no
+  LOD meshes at all.** Verified by reading the models with our own importer:
+
+  ```
+  G5 original  u_veh_PzVI_MAIN            334 nodes, 165 LOD meshes
+  ZW Tiger E1 Mid1                        186 nodes,   0
+  ZW Tiger E1 Early                       190 nodes,   0
+  ZW Panther D Playable                   190 nodes,   0
+  ```
+
+  So ZeeWolf's `SetLods([0])` on those three units is **correct** — there is
+  nothing to switch down to. Do NOT "restore" the LOD arrays sitting commented
+  out beside those calls; that check is the only reason this was not
+  recommended. These render at full detail at every range in every view, which
+  is a real part of why ZW's frame is long — but it is a constant, not a
+  gunsight effect. Fixing it means BUILDING LOD meshes, which needs the
+  exporter to ADD geometry — blocked on the unidentified `vertex_count * 24`
+  block (6 floats/vertex, flag `0x40000`, almost certainly tangent+binormal).
+  **This is now a concrete reason to solve that block rather than a theoretical
+  one.**
+
+- Ruled out, do not revisit: more `FogFarMax` cutting (done, user reports it
+  looks worse) and tree LOD (ZW has 30 trees to REDUX's 380).
+
+---
+
 ## Model tooling - the .ms2 format is SOLVED (2026-08-26, corrected 2026-08-27)
 
 - [x] **UVs, transforms and material indices all decoded.** The importer now
