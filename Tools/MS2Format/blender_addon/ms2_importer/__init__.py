@@ -10,11 +10,18 @@ it once, and it runs directly inside YOUR Blender, on YOUR version,
 via File > Import > TvT Model (.ms2). No .blend file round-trip, no
 version-upgrade step happening invisibly in between.
 
-Scope is unchanged from the earlier script: static geometry only
-(positions, authored normals, UVs, triangles, node hierarchy). No
-skinning/animation, no shadow-volume/physics data, no materials
-(materials/textures aren't stored in .ms2 at all - see the companion
-Models\\<name>.script file's ModelSkin class).
+Scope has since grown well past the earlier script. It now imports a
+finished, assembled, textured vehicle in one step:
+  - geometry (positions, authored normals, UVs, triangles, hierarchy)
+  - rest transforms, so turrets/guns/wheels sit where they belong
+    rather than collapsing to the origin
+  - submeshes, so a part using several materials is built correctly
+    (see ms2_reader; getting this wrong shreds the upper hull)
+  - materials and textures, read from the companion
+    Models\\<name>.script and its .tex files (which are plain DDS)
+  - skin weights as real vertex groups
+Still out of scope: animation beyond the rest pose, and shadow-volume
+and physics data.
 
 The Redo panel (bottom-left after importing, or F9) exposes several
 options as live diagnostics, not just preferences - in particular
@@ -46,10 +53,10 @@ from . import ms2_reader
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 2, 0),
+    "version": (1, 3, 0),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
-    "description": "Imports mesh geometry and skin weights (positions/normals/UVs/triangles/hierarchy/vertex groups) from T34 vs Tiger's .ms2 model format",
+    "description": "Imports assembled, textured vehicles from T34 vs Tiger's .ms2 model format - geometry, rest transforms, submeshes, materials/textures and skin weights",
     "category": "Import-Export",
 }
 
@@ -105,11 +112,31 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
 
     uv_layer = bm.loops.layers.uv.new("UVMap") if node.uvs else None
 
-    n_tris = len(node.indices) // 3
+    # [2026-08-27] Rebased indices, not the raw ones. A node with more than
+    # one submesh stores each submesh's indices relative to its own
+    # vertex_start; using them as-is aims the later submeshes at the first
+    # one's vertices, which is what made 87 of the 249 models import with the
+    # upper hull shredded into splinters.
+    tri_indices = node.absolute_indices() if hasattr(node, 'absolute_indices') \
+        else list(node.indices)
+
+    n_tris = len(tri_indices) // 3
     dup_skipped = 0
     degenerate = 0
+    face_submesh = []
+    out_of_range = 0
+    n_verts = len(node.positions)
     for t in range(n_tris):
-        i0, i1, i2 = node.indices[t * 3:t * 3 + 3]
+        i0, i1, i2 = tri_indices[t * 3:t * 3 + 3]
+
+        # [2026-08-27] Not optional, and not a format question: ZeeWolf's
+        # replacement Panzer IV has three bytes where a 0x00 became 0x48,
+        # giving two triangles an index of 18432 into an 86- and a 363-vertex
+        # node. Without this the whole import dies on an IndexError for the
+        # sake of two triangles in a 185-node model.
+        if max(i0, i1, i2) >= n_verts:
+            out_of_range += 1
+            continue
 
         if skip_degenerate:
             if i0 == i1 or i1 == i2 or i0 == i2:
@@ -126,6 +153,11 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
             # rather than aborting the whole import.
             dup_skipped += 1
             continue
+        # Track which submesh each surviving face came from, in creation
+        # order, so the per-face material can be assigned after to_mesh.
+        # Faces get skipped above, so face N is not triangle N.
+        face_submesh.append(node.submesh_of_triangle(t)
+                            if hasattr(node, 'submesh_of_triangle') else 0)
         if uv_layer:
             for loop, vi in zip(face.loops, (i0, i1, i2)):
                 if vi < len(node.uvs):
@@ -160,11 +192,17 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
     if dup_skipped or degenerate:
         print("  (%s: skipped %d duplicate, %d degenerate zero-area face(s))"
               % (node.name, dup_skipped, degenerate))
+    if out_of_range:
+        print("  (%s: DAMAGED FILE - skipped %d triangle(s) indexing past the "
+              "node's %d vertices)" % (node.name, out_of_range, n_verts))
     if normal_mode == 'AUTHORED' and not used_authored_normals and node.normals:
         print("  (%s: authored normals not applied - see above)" % node.name)
 
     obj = bpy.data.objects.new(node.name or ("node_%d" % index), mesh)
     obj["ms2_node_index"] = index
+    # Stashed for the material pass, which runs later once the companion
+    # .script has been parsed.
+    obj["ms2_face_submesh"] = face_submesh
     return obj
 
 
@@ -331,16 +369,31 @@ def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTH
     # it renders as a blank plate draped over the vehicle, so hide it.
     table = _parse_model_script(path)
     if table:
-        cache, textured, armour = {}, 0, 0
+        cache, textured, armour, multi = {}, 0, 0, 0
         for i, node in enumerate(nodes):
             mi = getattr(node, 'material_index', -1)
             ob = objects[i]
             if mi < 0 or ob.type != 'MESH' or not ob.data.vertices:
                 continue
-            mat = _material_for(mi, table, path, cache)
+            # [2026-08-27] One slot per submesh, not one per node. The Hummel's
+            # Hull_Body is material 0 (hull) for its lower tub and material 3
+            # (superstructure) for the fighting compartment - as one slot it
+            # took whichever came first and the other half was wrongly skinned.
+            subs = getattr(node, 'submeshes', None) or []
+            mats = [_material_for(s["material_index"], table, path, cache)
+                    for s in subs] or [_material_for(mi, table, path, cache)]
             ob.data.materials.clear()
-            ob.data.materials.append(mat)
-            if any(n.type == 'TEX_IMAGE' for n in mat.node_tree.nodes):
+            for m in mats:
+                ob.data.materials.append(m)
+            if len(mats) > 1:
+                fs = ob.get("ms2_face_submesh") or []
+                for pi, poly in enumerate(ob.data.polygons):
+                    if pi < len(fs):
+                        poly.material_index = min(fs[pi], len(mats) - 1)
+                multi += 1
+            # A node counts as armour/collision only if NO slot has a texture.
+            if any(any(n.type == 'TEX_IMAGE' for n in m.node_tree.nodes)
+                   for m in mats):
                 textured += 1
             else:
                 ob.hide_set(True)
@@ -348,6 +401,8 @@ def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTH
                 armour += 1
         print('  materials: %d textured, %d armour/collision hidden, %d distinct'
               % (textured, armour, len(cache)))
+        if multi:
+            print('  multi-material nodes: %d (submesh indices rebased)' % multi)
 
 
     print("Imported %s: %d nodes (%d with geometry, %d hidden by default "

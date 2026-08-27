@@ -2,6 +2,94 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (f) — the submesh descriptor: why 87 models imported as splinters
+
+The user opened ZeeWolf's Hummel in Blender and reported "the upper part is a
+mess". It was: the hull, tracks, wheels and gun barrel were perfect, and the
+fighting compartment was a fan of splintered triangles radiating out of the
+superstructure.
+
+**The 16-byte "other" record is a submesh descriptor**, four uint32:
+
+```c
+struct SubMesh {
+    uint32 packed;       // (index_count << 16) | material_index
+    uint32 index_start;  // offset into this node's index buffer
+    uint32 vertex_count; // vertices belonging to this submesh
+    uint32 vertex_start; // base vertex - MUST be added to every index
+};
+```
+
+`other_count` is the number of submeshes, one per material the node uses.
+**Indices are stored relative to `vertex_start`.**
+
+The reader had this block as `(packed, 0, vcount, 0)` - correct, but only for
+`other_count == 1`, which is 14,817 of the 15,341 nodes across both builds. The
+other 524 nodes were being read with every submesh after the first pointed at
+the *first* submesh's vertices. That is the splinter fan, and it also meant
+those triangles took the wrong vertices' UVs.
+
+The Hummel's `Hull_Body` is the textbook case: 2349 vertices split 1423 + 926,
+4578 indices split 2862 + 1716, materials 0 (hull) and 3 (superstructure). The
+tell was that its indices only ever reached 1422 while it had 2349 vertices -
+half the vertex array was unreachable.
+
+**Verified on 518 of those 524 nodes**: `index_start` values contiguous from
+zero, index counts summing to exactly `icount`, vertex counts to exactly
+`vcount`. The reader now only trusts a descriptor that accounts for the node
+exactly, so the six that do not (two skinned nodes with garbage in the vertex
+fields, `hum_SSTankman` `lo_Hips` and `KingTiger` `Body_commander`) fall back to
+the old behaviour rather than being made worse.
+
+**87 of 249 models were affected** - both T-34s, both Tigers, the StuG III,
+SU-85, Panzer IV, the aircraft, bridges and buildings.
+
+Materials are now assigned per submesh rather than per node, so a two-material
+node gets both slots and per-face assignment instead of whichever material
+happened to come first.
+
+### The writer was not allowed to change
+
+`ms2_writer` packs `node.indices` straight back out and asserts the result is
+byte-identical to the source. Rebasing in place would have broken export on all
+87 models, so the raw indices are left exactly as read and the rebase lives in a
+separate `absolute_indices()` accessor. **Round-trip re-verified: 249 of 249
+byte-identical, zero errors** - up from 248, because of the next item.
+
+### One damaged file, and it turns out to be an orphan
+
+`u_veh_PnzIV_G_AI_.ms2` (ZW) was the only file in either build that would not
+parse at all: node 179 of 185 has `0x48` sitting in the top byte of `d_count`,
+reading 1,207,959,794 instead of 242. Two triangles elsewhere in the same file
+carry an index of 18432 (`0x4800`) into 86- and 363-vertex nodes - the same
+stray `0x48`. Three corrupt spots in a 185-node model.
+
+`d_count` is now masked to 16 bits (the top half is zero in all 15,340 other
+nodes, and the engine plainly is not reading it either), and out-of-range
+triangles are skipped with a DAMAGED FILE warning instead of killing the import.
+
+The file then walks to exactly its own length, 11,904,835 bytes. **It is an
+orphan**: the trailing underscore is the giveaway - the model the game actually
+loads is `u_veh_PnzIV_G_AI.ms2` without it, which has the companion `.script`
+and renders correctly. So no live asset was ever damaged.
+
+### Housekeeping
+
+- `Tools/MS2Format/ms2_reader.py` was still the 3 July version, with no rest
+  transforms and no material index, while the addon copy had moved on. The two
+  had silently diverged for eight weeks. Now one file, copied to both.
+- `blender_addon/ms2_importer.zip` was also the 3 July build - anyone installing
+  from it got the pre-rest-transform importer. Rebuilt.
+- The user's Blender is **5.2.1 LTS**, so it loads
+  `AppData/Roaming/Blender Foundation/Blender/5.2/scripts/addons/`. That copy is
+  current. Stale copies sit in `4.5` (five superseded AI-written attempts) and
+  `5.1`; neither is loaded, and both are left for the user to remove.
+
+**Lesson, and it is the same one as last week**: a decode validated on the
+common path is not validated. `other_count == 1` covered 97% of nodes, which was
+enough to look completely solved and enough to write a confident comment
+describing the wrong structure.
+
 ## 2026-08-27 (e) — vertical mouse aim: a G5 bug, fixed after 25 years
 
 The user reported gunsight aiming was "about correct laterally but faster

@@ -64,7 +64,40 @@ class Ms2Node:
         # 12, track left 24, track right 25, turret 19, hull 5, kill rings 20,
         # numbers 21, flag 22, commander's uniform 0.
         self.material_index = -1
+        # [2026-08-27] A node can hold SEVERAL submeshes, one per material.
+        # See _read_node for the record layout. Each entry is a dict:
+        #   index_start, index_count, vertex_start, vertex_count, material_index
+        # Empty when the node has no geometry.
+        self.submeshes = []
         self.binds = []        # (index, 4x4 matrix, vec3) per record
+
+    def absolute_indices(self):
+        """`indices` holds the RAW file values, which are relative to each
+        submesh's own vertex_start. This returns them rebased into the
+        node's single shared vertex array, which is what a mesh needs.
+
+        Kept separate rather than fixed in place because ms2_writer packs
+        node.indices straight back out and asserts the result is
+        byte-identical to the source - rebasing in place would break
+        export on every multi-submesh node.
+        """
+        out = list(self.indices)
+        for s in self.submeshes:
+            base = s["vertex_start"]
+            if not base:
+                continue
+            end = min(s["index_start"] + s["index_count"], len(out))
+            for i in range(s["index_start"], end):
+                out[i] += base
+        return out
+
+    def submesh_of_triangle(self, tri):
+        """Which submesh (list position) triangle `tri` belongs to, or 0."""
+        first = tri * 3
+        for k, s in enumerate(self.submeshes):
+            if s["index_start"] <= first < s["index_start"] + s["index_count"]:
+                return k
+        return 0
 
 
 def _read_cstring(data, offset):
@@ -222,18 +255,61 @@ def _read_node(data, offset):
         node.indices = list(struct.unpack_from('<%dH' % icount, data, offset))
         offset += icount * 2
 
-    # [2026-08-26] The 16-byte 'other' record is (packed, 0, vcount, 0), where
-    # packed holds the material index in its low 16 bits. Previously skipped.
+    # [2026-08-27] The 16-byte record is a SUBMESH DESCRIPTOR, four uint32:
+    #
+    #     (index_count << 16) | material_index,   index_start,
+    #     vertex_count,                           vertex_start
+    #
+    # other_count is the number of submeshes, one per material used by the
+    # node. Indices are stored RELATIVE TO vertex_start, so a second submesh
+    # must be rebased - see Ms2Node.absolute_indices.
+    #
+    # The earlier note here read the record as "(packed, 0, vcount, 0)". That
+    # is what it degenerates to when other_count == 1, which is 14,817 of the
+    # 15,341 nodes across both builds - so single-submesh testing could never
+    # have caught it. The remaining 524 nodes, in 87 of 249 models (both
+    # T-34s, both Tigers, the StuG, SU-85, Panzer IV, the aircraft, bridges),
+    # imported as a fan of splinters because the second submesh's triangles
+    # were pointed at the first submesh's vertices.
+    #
+    # Verified on 518 of those 524: index_start values are contiguous from 0,
+    # index counts sum to exactly icount, vertex counts to exactly vcount.
     if other_count > 0 and vcount > 0:
-        packed = struct.unpack_from('<i', data, offset)[0]
-        node.material_index = packed & 0xFFFF
+        subs = []
+        for k in range(other_count):
+            packed, istart, vcount_s, vstart = struct.unpack_from(
+                '<4I', data, offset + k * 16)
+            subs.append({"index_start": istart,
+                         "index_count": (packed >> 16) & 0xFFFF,
+                         "vertex_start": vstart,
+                         "vertex_count": vcount_s,
+                         "material_index": packed & 0xFFFF})
+        # Only trust the descriptor when it accounts for the node exactly.
+        # Two skinned nodes in the library (hum_SSTankman 'lo_Hips',
+        # KingTiger 'Body_commander') carry garbage in the vertex fields;
+        # falling back leaves them exactly as they imported before.
+        consistent = (sum(s["index_count"] for s in subs) == icount and
+                      sum(s["vertex_count"] for s in subs) == vcount and
+                      all(s["vertex_start"] + s["vertex_count"] <= vcount
+                          for s in subs))
+        node.submeshes = subs if consistent else []
+        node.material_index = subs[0]["material_index"]
     offset += other_count * 16
 
     node_id, flags_bitmask = struct.unpack_from('<2i', data, offset)
     node.parent_index = node_id
     offset += 8
 
-    d_count = struct.unpack_from('<i', data, offset)[0]
+    # [2026-08-27] Masked to 16 bits. One file in the library, ZeeWolf's
+    # replacement Panzer IV (u_veh_PnzIV_G_AI_.ms2), has 0x48 sitting in the
+    # top byte of this field on node 179 of 185 - d_count reads as
+    # 1,207,959,794 instead of 242 and the parse dies six nodes from the end.
+    # The engine loads that file perfectly well in-game, so it is not reading
+    # the high half either. With the mask the file walks to exactly its own
+    # length, 11,904,835 bytes, and ends on the usual HullDriver/HullGunlayer/
+    # HullEngine tail. Every other file in both builds is unaffected: the top
+    # 16 bits are zero in all 15,340 other nodes.
+    d_count = struct.unpack_from('<i', data, offset)[0] & 0xFFFF
     offset += 4
     # [2026-08-26] THIS IS THE NODE TRANSFORM, and it used to be skipped.
     # Every node carries a fixed-length animation track: d_count positions

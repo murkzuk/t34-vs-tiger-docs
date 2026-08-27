@@ -31,14 +31,24 @@ Every REDUX mission sits at or below ZW's dimmest.
 
 ---
 
-## Model tooling - the .ms2 format is SOLVED (2026-08-26)
+## Model tooling - the .ms2 format is SOLVED (2026-08-26, corrected 2026-08-27)
 
 - [x] **UVs, transforms and material indices all decoded.** The importer now
   produces assembled, correctly skinned vehicles. See
   `Documentation/MS2_Node_Transforms_SOLVED.md`.
+- [x] **SUBMESH DESCRIPTOR decoded (2026-08-27).** The 16-byte "other" record is
+  `(index_count << 16) | material_index`, `index_start`, `vertex_count`,
+  `vertex_start` - and **indices are relative to `vertex_start`**. `other_count`
+  is the number of submeshes, one per material. Reading it as a single mesh
+  shredded the upper hull of **87 of 249 models** into splinters. Verified on
+  518 of 524 multi-submesh nodes. Rebase lives in `Ms2Node.absolute_indices()`,
+  deliberately NOT in `node.indices`, because the writer asserts those bytes
+  round-trip.
 - [x] **Export WORKS and is confirmed in the engine.** `ms2_writer.py`; the
-  Editor rendered a file we wrote. Round-trip verified on 249 models
-  (248 byte-identical). **Limit: vertex/index counts must not change.**
+  Editor rendered a file we wrote. **Round-trip re-verified 2026-08-27 after the
+  submesh change: 249 of 249 byte-identical** (was 248 - the last one was a
+  damaged orphan file that now parses). **Limit: vertex/index counts must not
+  change.**
 - [ ] **Identify the `vcount * 24` block** — 6 floats per vertex on every
   textured node, gated by flag `0x40000`. Almost certainly tangent + binormal,
   and computable from positions/UVs/normals if so. **This is the one thing
@@ -47,16 +57,29 @@ Every REDUX mission sits at or below ZW's dimmest.
 - [ ] Test the writer on a **skinned** mesh — the confirmed test was a static
   box. Bind poses (80 bytes x count) and 20-byte-per-vertex weights are
   preserved verbatim, but untested.
+- [ ] **Two skinned nodes have garbage in their submesh vertex fields** —
+  `hum_SSTankman` `lo_Hips` and `u_veh_KingTiger` `Body_commander`. Index counts
+  are right, vertex counts are nonsense. The reader falls back safely, but the
+  layout for skinned multi-submesh nodes is not actually understood. **The King
+  Tiger is one of them**, so this needs settling before that model is used.
 - [ ] Check whether a shape change needs the companion **`.rmap`** regenerating
   (pathfinding/collision footprint). That format is untouched.
 - [x] **File > Import now produces a finished vehicle in one step.** The addon
   parses the companion `.script` itself, loads `.tex` as the DDS it is, honours
   alpha mode, and auto-hides armour/collision facets. Tested on four vehicles
   across both builds.
+- [ ] **The auto-hide rule misses crew/module hit boxes.** It catches `_LOD*`,
+  `Crashed`, `_CM` and untextured materials, but `HullDriver`/`HullEngine`/
+  `HullGunlayer` use a *textured* material and render as boxes through the
+  vehicle. `*_FakeShadow` duplicates are also missed (the Panzer IV has 30-odd).
+  Both are currently only hidden by the render harness, not by the addon.
 - [x] **`ms2_probe.py` marked SUPERSEDED** with a header naming its two wrong
   answers (it desyncs on real vehicles; its `other_count` of 4 is really 1, and
   that bad number cost a later session real time). Kept rather than deleted -
   it is the record of how the format was first worked out.
+- [x] **Reader de-duplicated (2026-08-27).** `Tools/MS2Format/ms2_reader.py` had
+  been the 3 July version for eight weeks while the addon copy moved on. One
+  file now. `ms2_importer.zip` was equally stale; rebuilt.
 
 ## TOMORROW'S LIST (2026-08-26 — in rough priority order)
 

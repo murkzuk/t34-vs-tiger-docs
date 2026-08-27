@@ -936,6 +936,57 @@ and the answer.
 
 ---
 
+## 2026-08-27 — one number in a model file, and 87 of 249 models were wrong
+
+We can open T-34 vs Tiger's `.ms2` models in Blender now. Most of them came in
+looking right, so we called the format solved. Then I opened ZeeWolf's Hummel
+and the fighting compartment was a fan of splinters — hull, tracks, wheels and
+the 15cm barrel all perfect, the top half shredded.
+
+The cause turned out to be a block we'd already decoded. Sort of.
+
+Each part of a model can use more than one texture — the Hummel's hull is one
+material for the tub and another for the superstructure. The file stores that as
+a little 16-byte record per material: how many triangles, which material, where
+its triangles start, **and which vertex it starts counting from**.
+
+That last number was the problem. Each chunk numbers its triangles from its own
+starting vertex, not from the top of the part. Ignore it and the superstructure's
+triangles get aimed at the hull tub's vertices. Hence splinters.
+
+Why it hid so long: 14,817 of the 15,341 parts across both builds only use one
+material, and when there's only one chunk that number is always zero. So the
+wrong reading is indistinguishable from the right one 97% of the time — and
+that's more than enough to look completely solved, and to write a confident code
+comment describing the wrong structure. The other 524 parts are in 87 of the 249
+models: both T-34s, both Tigers, the StuG, the SU-85, the Panzer IV, the
+aircraft, the bridges.
+
+The giveaway, once we looked: the Hummel's hull has 2349 vertices, but its
+triangles never referred to anything past 1422. Half the vertices were
+unreachable. A mesh that never touches half its own data is telling you
+something.
+
+Two side findings:
+
+**One file in the whole library is damaged.** ZW's `u_veh_PnzIV_G_AI_.ms2`
+wouldn't parse at all — three places where a `00` byte has become `48`, one of
+them turning a count of 242 into 1.2 billion. But look at the filename: it ends
+in an underscore. The model the game actually loads is the same name *without*
+it. It's an orphan spare sitting in the folder, so nothing in the game was ever
+broken. The importer now shrugs at damaged triangles instead of dying on them.
+
+**The exporter had to be left alone.** Writing `.ms2` files back out works by
+copying the original byte-for-byte and swapping only the geometry, and it checks
+its own work by asserting the bytes round-trip exactly. So the fix could NOT go
+where it naturally wanted to go — correcting the numbers on the way in would
+have broken export on all 87 models. It's a separate accessor instead. Export
+re-verified afterwards at 249 of 249 byte-identical.
+
+Worked out with Claude (Anthropic) this morning. The lesson is one we'd already
+learned once and got caught by again: a decoder validated on the common case is
+not validated. 97% coverage looked exactly like 100%.
+
 ## 2026-08-27 — T-34 vs Tiger: measuring a mod's bias against the original
 
 Long-running suspicion: the ZeeWolf 2015 build of TvT plays as though it has a
