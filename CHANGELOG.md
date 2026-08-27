@@ -2,6 +2,56 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (b) — the ZW-ONLY units, which is where the bias actually lived
+
+**The first revert was necessary but incomplete, and a play test proved it.**
+User died quickly playing Soviet; the log showed why — the mission fields
+`CTankPzVI_E1_AI_Unit`, `CTankPnzIV_G_AIUnit`, `CTankT34_76_42AIUnit`, none of
+which the first pass touched. It could only cover the **19 units with a 2001
+original to diff against**; ZeeWolf's own variants, which his missions actually
+use, were out of scope by construction.
+
+What they were carrying:
+
+```
+Tiger E1              0.001      Panzer IV AI      0.10
+Panther D Playable    0.001      Panzer III L60    0.10
+Panther D              0.01      Hummel            0.10
+Tiger E1 Early         0.01      Nashorn / Pak 43  0.25
+Panther A / StuG F8    0.05      Flak 88            0.5
+Marder / Wespe / sIG   0.05      Tiger AI variants  0.1 - 0.25
+```
+
+**The Tiger E1 was on `0.001`. G5's Tiger is `1.2` — twelve hundred times less
+accurate.** Meanwhile the restored T-34/85 sits at 1.25 and the ZW T-34/76 AI at
+1.6.
+
+**21 values changed**, mapping each ZW-only unit to its G5 counterpart:
+
+```
+Tiger family, Panther, StuG family   -> 1.2   (G5's Tiger / StuG III)
+Panzer IV, Panzer III, SP guns,      -> 1.5   (G5's Panzer IV / Pak 40)
+towed AT (Pak 43, Flak 88/38)
+```
+
+Panther has no G5 equivalent and was treated as Tiger-class. **Soviet artillery
+left alone** at 1.75–4.75 — mortars and howitzers scattering is correct for
+indirect fire.
+
+Backups: `ZW_Units_2026-08-27_pre_revert\` (before pass 1) and
+`ZW_Units_2026-08-27_pre_zwonly\` (before this pass), so either is independently
+reversible. ZW stamped `v0.260827b`.
+
+**Running total for the ZW work: 47 values** — 23 reverted to G5, 3 sensor
+ranges equalised, 21 ZW-only units mapped.
+
+### The lesson
+
+**Check what the missions actually field before measuring anything.** A whole
+pass was spent on units that never appear in play. One `grep` of the execution
+log for instantiated unit classes would have shown it in seconds.
+
+
 ## 2026-08-27 — ZW's handling and gunnery bias reverted to G5's values
 
 **23 changes applied to `M:\T34vsTiger_ZW2015\Scripts\Units\`**, each verified
