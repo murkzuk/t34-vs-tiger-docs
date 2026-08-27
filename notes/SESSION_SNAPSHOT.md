@@ -1,158 +1,111 @@
-# START HERE — snapshot, 2026-08-27 (early hours)
+# START HERE — snapshot 2026-08-27, end of day
 
-Replaces every earlier snapshot. The project is **TvTPP — the T-34 vs Tiger
-Preservation Project**.
-
-# TODAY'S HEADLINE: the gunsight went 19.6 -> 76.9 fps
-
-The T-34 gunsight ran at ~20 fps against ~100 external, same direction. The user
-could not aim and quit a session over it. **3.9x, from two changes in ZW:**
-
-```
-tree wind CPU -> GPU (BaseSTTree.script)   ~30 fps    +50%
-FogFarMax 3000 -> 1500 (C1M2 Content)      76.9 fps   +156% on top
-```
-
-**Cause:** a magnified view extends draw distance toward `FogFarMax`. At 3000 m
-against an external `FogFar` of 500 m that is **36x the area**. The drawcall
-probe showed it: draw calls **261 -> 2105 (8.1x)** while triangles only went
-3.1x - many more cheap objects, i.e. seeing FURTHER, not in more detail.
-
-**`FogFarMax` is set in `Content.script`, which WINS over `Atmosphere.script`.**
-
-## STILL OPEN on this - the user says it looks worse
-
-- [ ] **`FogFarMax` 1500 -> 2000.** Area scales with r^2, so 2000 buys back a
-  third of the view distance and should still leave ~45 fps. 77 is more than
-  needed to aim.
-- [ ] **`FogFar = 3.0` in that Content.script looks like a typo** - the
-  Atmosphere.script copy says 500. If FogFar is where haze reaches full density,
-  3 metres would explain the washed-out look. **This may be the real fix for
-  the appearance, and it costs no frames.**
-- [ ] **REDUX almost certainly has the same gunsight cost** - never checked.
-- [ ] **"Forest distance" is a real Video-menu slider sitting at half** and has
-  never been touched. Next lever if more is needed.
-
-## THREE WRONG ANSWERS FIRST - all inferred from a setting's NAME
-
-1. `ModelLOD` [40,60,120,480] -> [40,70,180,250]: no effect. LOD uses TRUE
-   distance, which magnification does not change.
-2. **`FOVDistPower` DOES NOTHING.** Every reference is inside the video options
-   menu, which reads it, shows it, writes it back. Nothing consumes it; it is
-   not in the engine's settings dump. A Whirlwind over Vietnam leftover. Kept in
-   the launcher as `Zoom detail *` with a tooltip saying so, deliberately, so
-   nobody rediscovers it.
-3. The fix came from **the drawcall probe**, not from reasoning.
+Written for whoever picks this up next (DeepSeek or a fresh Claude session).
+The user is out of plan until Tuesday 2026-09-01. **Everything below is committed
+and pushed**; docs repo `8e6de62`, memory repo `dee0ed7`, both clean.
 
 ---
 
-# ZW's BIAS: 48 values changed, and the first pass missed the point
+## THE HEADLINE: a Tiger II is in the game, and the Axis AI can finally fight
 
-**The user was right that ZeeWolf had a bias. It is in HANDLING and GUNNERY,
-not penetration.** An earlier pass checked only the penetration table and
-wrongly dismissed the claim.
-
-**The control that removes doubt:** StuG III and SU-85 are the same class of
-vehicle and G5 set both to exactly **1.2**. ZW made the StuG **0.02** and left
-the SU-85 at 1.2 - 60x apart from an identical start.
-
-```
-pass 1   23 values reverted to G5 (accuracy, traverse, mass, speed, fire period)
-pass 2    3 sensor ranges equalised (T-34s 1650/800 -> 2600 detection)
-pass 3   21 ZW-ONLY units mapped to G5 counterparts
-pass 4    1 Panzer IV deceleration 2.5 -> 1.5
-```
-
-## The lesson: CHECK WHAT THE MISSIONS ACTUALLY FIELD
-
-Pass 1 fixed the stock units. **The missions field ZeeWolf's own variants** -
-`CTankPzVI_E1_AI_Unit`, `CTankPnzIV_G_AIUnit`, `CTankT34_76_42AIUnit` - which
-pass 1 could not touch because they have no 2001 original to diff against. The
-**Tiger E1 was on FireDeviation 0.001 against G5's 1.2 - twelve hundred times
-more accurate.** One grep of `execution.log` for instantiated unit classes would
-have shown this immediately.
-
-**REDUX is the 2001 original on these fields**, so all of it was a revert with no
-design judgement - unlike the penetration question, which is still open.
-
-Backups: `ZW_Units_2026-08-27_pre_revert\` and `..._pre_zwonly\`.
+Both are new today and both are **live in `M:\T34vsTiger` (REDUX)**. The Tiger II
+is in ZW too. Versions bumped: `REDUX v0.260827b`, `ZW v0.260827d`.
 
 ---
 
-# VERTICAL MOUSE AIM - a G5 bug fixed after 25 years
+## GAME FILES CHANGED TODAY — read before editing anything
 
-`SetMouseSensitivity` takes **separate** horizontal and vertical values and the
-game passed the **same** one to both. A 16:9 monitor's vertical FOV is 1.78x
-smaller, so the gun moves faster vertically. Present in the 2001 original,
-REDUX and ZW.
+Backups for ALL of it: `K:\TvTDeepseek\rollback\kingtiger_2026-08-27\`
 
-New `MouseVerticalScale` in `GameSettings.script`, default **0.5625**
-(1080/1920), applied at all three call sites in **both builds**. Exposed in the
-launcher beside the mouse speed box.
+| file | build | what |
+|---|---|---|
+| `Scripts/Units/TankPzVI_KingTigerIIUnit.script` | both | **NEW** — the Tiger II, 74 KB, generated from G5's Tiger |
+| `Scripts/Common/Piercing.script` | both | Tiger II ballistics, real KwK 43 falloff |
+| `Scripts/Common/Armour.script` | REDUX | Tiger II armour (ZW already had it) |
+| `Scripts/Common/HitPoints.script` | both | Tiger II hit points |
+| `Scripts/Common/Bullets.script` | both | registrations; ZW also had 5 AI-written STUB classes REMOVED |
+| `Scripts/Common/Explosions.script` | both | registrations; ZW had 14 stub/duplicate classes REMOVED |
+| `Scripts/Common/UnitGroup.script` | both | **the Axis AI fix — one line, shared by 36 missions** |
+| `Scripts/Common/AutoCommander.script` | both | target priority rows; REDUX also anti-thrash values |
+| `Scripts/Common/PlayerUnit.script` | both | Tiger II target identification |
+| `Scripts/Common/Mission.script` | REDUX | Tiger II in the German roster |
+| `Scripts/Editor/MenuConfig.script` | both | Tiger II placeable in the editor |
+| `Models/u_veh_KingTiger.*` + 23 textures | REDUX | **copied in** (25 MB); ZW already had them |
+| `Models/u_veh_KingTiger.ms2` | both | gun elevation track corrected (binary edit) |
+| `Missions/MyMission/BerezovKursk/*` | REDUX | Tiger II placed; Axis attack orders |
 
-**The user found this by feel** - "about correct laterally but faster
-vertically" is an exact description of a 1.78x ratio.
-
----
-
-# THE LAUNCHER
-
-`K:\tvt_los\TvT_Launcher.ps1` — **run it with `K:\tvt_los\TvT.bat`.**
-`cmd /c launcher.ps1` does NOT work; cmd cannot execute a .ps1 and just prints
-the source.
-
-Engine tuning section, six registry settings the game never exposes:
-
-```
-Zoom detail *   INERT, labelled      Max lights       real
-Forest anim     real (confirmed)     Texture LOD      real, unlikely to help
-Shadow detail   real, CPU-bound      Forest density   real, blunt
-```
-
-Plus separate **vertical** mouse scale. All tooltips carry the measured numbers.
+**Both `Cache\Scripts.cache` are deleted** — they rebuild on next launch.
 
 ---
 
-# CRITICAL: EDIT GAME FILES AS BYTES
+## PROVEN vs NOT PROVEN
 
-```python
-d = open(p,'rb').read();  open(p,'wb').write(d.replace(old,new,1))
-```
+**Proven in game, from `execution.log`:**
+- Tiger II loads, joins its platoon, is attacked by Soviets
+- German attacks went **0 → 20** after the `UnitGroup.script` fix
+- The general fix does the work: 39 single-target acquisitions vs 13 from the
+  BerezovKursk hand-listed workaround
 
-Python text mode silently converts CRLF -> LF. On 2026-08-27 that damaged **31
-ZW script files** before it was caught - only because one file shrank 2,773
-bytes. **Check the file size after every write.** `grep -c $'\r'` does NOT
-detect it; count `d.count(b'\r\n')` instead.
-
-Both builds are uniformly CRLF (ZW 418/419, REDUX 287/295), so any pure-LF
-`.script` is damage. **REDUX still has 7 pure-LF files** from earlier sessions -
-flagged, not touched, user's call.
-
-Also: `\t` in a Python bytes literal keeps eating `\tvt_los` paths. **Use forward
-slashes.**
+**NOT proven — do these first:**
+1. **The anti-thrash change has never been run.** `LastTargetDangerAdd` 50 → 150
+   and `RadarUpdateTime` 1.0 → 2.0 in REDUX's `AutoCommander.script`. Cheap to
+   check: count target switches per unit in the log; it was 13 for one platoon.
+2. **`UnitGroup.script` is shared by 36 missions.** Only BerezovKursk has been
+   run. Watch the next few logs for anything odd elsewhere.
+3. **The BerezovKursk hand-listed 37 Soviet targets can now come out** — the
+   general fix carries it, and removing it lets the Kampfgruppe fight *while*
+   advancing instead of `SetOrder_Attack` cancelling the patrol.
 
 ---
 
-# TOMORROW'S LIST
+## OPEN, IN PRIORITY ORDER
 
-1. **FogFarMax 1500 -> 2000, and investigate `FogFar = 3.0`** (above).
-2. **The King Tiger unit class** - ~1,800 lines from the Tiger E1 template. 14
-   class names already dictated by the shared files; all constants exist. The
-   `.ms2` format is solved both ways so the model side is no obstacle.
-3. **Penetration realism** - route still unchosen, a design decision. REDUX's
-   tables ARE the real historical figures; leave REDUX alone.
-4. **The ambient pass** across the other 11 campaign missions.
-5. **ZW performance** - 36-60 fps external and view-dependent.
+1. **Friendly fire, 3 incidents, all in the German HQ group.** `HQ_1_Tractor`
+   has no `BehRadarMask` so it is visible to its own side — **42 of 102 units in
+   that mission lack the property**. Does NOT explain `ZugWeidinger_1`, which
+   has it and was shot anyway. Mission-data pass.
+2. **`GunFlak88` is classified `["GER","GROUND"]` with no type classificator** —
+   the deadliest AT gun in the game is invisible to target priority. One word.
+3. **There is no threat model.** `PreferedTargets` weights by type and distance
+   only; a T-34 and a StuG weigh the same. Needs the binary acquisition hook —
+   see `notes/project_tvt_acquisition_parked.md`.
+4. **Tiger II leftovers**: Winter variant undefined; playable version needs
+   `Cu_veh_PzVI_KingTigerII_PlayableModel`; `Textures/Pk_CAP.tex` referenced and
+   absent in both builds.
 
-# FACTS NOT TO RELEARN
+---
 
-- **TvT is CPU-bound, GPU idle (~24%).** Never a GPU problem.
-- **Noise floor +/-4%.**
-- **native D3D9 == DXVK** (50 vs 48 fps with F9 on both). Closed.
-- **Only F9 reads fps on every renderer.** ReShade does NOT attach on native.
-- **The drawcall probe's own fps was once inflated 2.3x** - its clock is now
-  confirmed correct (QPC vs GetTickCount agree each block).
-- **Anti-aliasing BREAKS rendering** (no terrain, invisible tanks, silently) and
-  persists to the registry. Left disabled.
-- **`.ms2` is solved both ways** - importer builds finished vehicles, exporter
-  confirmed accepted by the engine. Counts must not change.
+## THE .MS2 TOOL — two real fixes today, both published
+
+- **Submesh descriptor decoded.** Indices are relative to each submesh's
+  `vertex_start`. Missing it shredded the upper hull of **87 of 249 models**.
+- **Character rigs were importing collapsed flat** (33 mm head-to-foot). Fixed
+  per-subtree under `l_Hips`. Also fixes crew figures inside tanks.
+- Add-on zip rebuilt; user's Blender 5.2 copy verified current, pycache cleared.
+
+**Open**: the `vertex_count * 24` block (flag `0x40000`) is **49% of every model
+file** and still unidentified. **Tested and RULED OUT today: it is not tangent +
+binormal** (mean |dot| 0.51 against computed values — random). Until it is
+understood, the exporter cannot ADD geometry, only reshape what exists with
+vertex/index counts unchanged. That is what blocks importing a new vehicle.
+
+The zeroing experiment (zero the block, see if the Editor still draws it) is
+still the right next test. **The sandbox Editor does not work** — it dies before
+writing an `editor.log`, and there is no evidence it has ever run there. That
+needs sorting first, or the test needs doing another way.
+
+---
+
+## TRAPS THAT COST TIME TODAY
+
+- **Check line endings PER FILE, not per project.** `PositionWatchers.script` is
+  pure LF; `MissionTasks.script` is MIXED (42 CRLF, 412 LF). `grep -c $'\r'` is
+  NOT a reliable CRLF test here — it reported zero on a 100% CRLF file. Count
+  `b'\r\n'` in Python.
+- **There are two Berezov missions.** The game loads `BerezovKursk`. An edit went
+  into `Berezov` and did nothing. Check which mission the log actually names.
+- **A test that cannot distinguish the hypotheses is not a verification.** The
+  "vehicle transforms verified" claim covered position and scale only; a bounding
+  box cannot detect a rotation-handedness error on a near-symmetric tank.
+- **Arming a group is not ordering it to fire.** `ActivateFire` +
+  `ERT_AGGRESSIVE` logs "engaging" and produces zero attacks.
