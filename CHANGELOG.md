@@ -2,6 +2,35 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (l) — corrected: the live mission is BerezovKursk, not Berezov
+
+Entry (k) put the Tiger II in `MyMission/Berezov`. **The game loads
+`MyMission/BerezovKursk`** - every object in `execution.log` is prefixed
+`BerezovKursk_`, and the log showed zero King Tiger mentions because the edited
+mission was never loaded. Two similarly-named missions, and the smaller one was
+edited. Checking which mission the log actually names took ten seconds and
+should have come first.
+
+Now added to `BerezovKursk/Content.script` as **`BerezovKursk_KGKaiser_5`** at
+(7178.6, 8081.5), continuing the Kampfgruppe diagonal from `KGKaiser_4` at
+(7149.9, 8055.2). Same reasoning as before: last in the list so it cannot become
+platoon leader, and added to the group's explicit `["Units", [...]]` array.
+
+This mission's units also carry
+`["BehRadarMask", [["ENEMY", "MainMesh"], ["FRIEND", "INVISIBLE_ON_RADAR"]]]`,
+which Berezov's do not - matched.
+
+Router zone at the new position reads `0x01`, the same as `KGKaiser_3` and
+`KGKaiser_4` either side of it. Map is 9000 m here (Berezov is 10000), read from
+`WorldMatricies.script` rather than assumed.
+
+Verified: brackets 1644/1644, parens 206/206, no trailing commas, 0 bare LF,
+103 GameObjects (was 102). Cache cleared. Backup
+`kingtiger_2026-08-27\BerezovKursk__Content.script.bak`.
+
+The `Berezov` addition from (k) is left in place - it is valid for that mission,
+just not the one being played.
+
 ## 2026-08-27 (k) — the Tiger II placed in Berezov
 
 Added to `Missions/MyMission/Berezov/Content.script` (REDUX) as
