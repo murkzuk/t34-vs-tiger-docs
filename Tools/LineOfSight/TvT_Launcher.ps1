@@ -35,6 +35,30 @@ function Get-Laa([string]$exe) {
     $br.Close(); $fs.Close(); return (($ch -band 0x20) -ne 0)
   } catch { return $false }
 }
+# ---------------------------------------------------------------------------
+# ENGINE TUNING - settings the game stores in the registry and never exposes
+# in its own menus. [2026-08-27]
+#
+# Both builds share ONE key ("T34"), so these are global rather than per-build.
+# The launcher therefore writes them at launch time for whichever build was
+# picked, the same way it does DXVK_HUD.
+#
+# FOVDistPower scales LOD distance by field of view. At 5 (the value found in
+# the wild) zooming a gunsight took draw calls from 261 to 2105 - an 8x
+# explosion - and the frame from 7.5 ms to 36.8 ms. Measured, not guessed.
+#
+# MaxForestAnimatedLod is how many LOD bands compute wind. At 5 that is every
+# tree in view.
+$REGKEY = 'HKCU:\Software\G5 Software\T34'
+function Get-Reg([string]$name, $fallback) {
+  try { return (Get-ItemProperty -Path $REGKEY -Name $name -ErrorAction Stop).$name }
+  catch { return $fallback }
+}
+function Set-Reg([string]$name, $value) {
+  try { Set-ItemProperty -Path $REGKEY -Name $name -Value ([int]$value) -Type DWord -ErrorAction Stop; return $true }
+  catch { return $false }
+}
+
 function Get-Ini([string]$root,[string]$key,$fallback) {
   $p = Join-Path $root 'tvt_los.ini'
   if (-not (Test-Path $p)) { return $fallback }
@@ -46,6 +70,26 @@ function Get-Ini([string]$root,[string]$key,$fallback) {
 # 1:1 through Latin-1 - never as text. Both builds' copies are pure ASCII today,
 # but a UTF-8 round trip on a script file is the one mistake that has repeatedly
 # destroyed Cyrillic elsewhere in this project, so the safe path is used anyway.
+function Get-ScriptFloat([string]$root, [string]$field) {
+  $p = Join-Path $root 'Scripts\GameSettings.script'
+  if (-not (Test-Path $p)) { return '' }
+  $enc = [System.Text.Encoding]::GetEncoding(28591)
+  $txt = $enc.GetString([IO.File]::ReadAllBytes($p))
+  if ($txt -match ($field + '\s*=\s*([0-9.]+)')) { $Matches[1] } else { '' }
+}
+function Set-ScriptFloat([string]$root, [string]$field, [string]$val) {
+  $p = Join-Path $root 'Scripts\GameSettings.script'
+  if (-not (Test-Path $p)) { return $false }
+  $enc = [System.Text.Encoding]::GetEncoding(28591)
+  $txt = $enc.GetString([IO.File]::ReadAllBytes($p))
+  $new = [regex]::Replace($txt, '(' + $field + '\s*=\s*)[0-9.]+', ('${1}' + $val), 1)
+  if ($new -eq $txt) { return $false }
+  Copy-Item $p ($p + '.bak_launcher') -Force
+  [IO.File]::WriteAllBytes($p, $enc.GetBytes($new))
+  Remove-Item (Join-Path $root 'Cache\Scripts.cache') -Force -ErrorAction SilentlyContinue
+  return $true
+}
+
 function Get-Mouse([string]$root) {
   $p = Join-Path $root 'Scripts\GameSettings.script'
   if (-not (Test-Path $p)) { return '' }
@@ -79,7 +123,7 @@ function Set-Ini([string]$root,[string]$key,[string]$val) {
 # ---------------------------------------------------------------- the window
 $f = New-Object System.Windows.Forms.Form
 $f.Text = 'T-34 vs Tiger'
-$f.Size = New-Object System.Drawing.Size(470, 552)
+$f.Size = New-Object System.Drawing.Size(470, 688)
 $f.FormBorderStyle = 'FixedDialog'
 $f.MaximizeBox = $false
 $f.StartPosition = 'CenterScreen'
@@ -180,31 +224,133 @@ $tbMouse.Left=220; $tbMouse.Top=303; $tbMouse.Width=70
 $tbMouse.BackColor=[System.Drawing.Color]::FromArgb(50,50,54); $tbMouse.ForeColor='White'
 $tbMouse.BorderStyle='FixedSingle'
 $f.Controls.Add($tbMouse)
-Add-Label '0.5 = stock, lower = slower' 298 306 160 $fontN ([System.Drawing.Color]::Gray) | Out-Null
+
+
+$lblMouseV = Add-Label 'vertical' 300 306 50 $fontN ([System.Drawing.Color]::Gainsboro)
+$script:tbMouseV = New-Object System.Windows.Forms.TextBox
+$tbMouseV.Left=352; $tbMouseV.Top=303; $tbMouseV.Width=62
+$tbMouseV.BackColor=[System.Drawing.Color]::FromArgb(50,50,54); $tbMouseV.ForeColor='White'
+$tbMouseV.BorderStyle='FixedSingle'
+$f.Controls.Add($tbMouseV)
+
+Add-Label 'Engine tuning' 20 334 200 $fontH ([System.Drawing.Color]::White) | Out-Null
+
+# Settings the game stores but never exposes in its own menus. Two columns so
+# the form does not run off the screen; the explanations live in tooltips.
+$script:tips = New-Object System.Windows.Forms.ToolTip
+$tips.AutoPopDelay = 20000; $tips.InitialDelay = 300; $tips.ReshowDelay = 100
+$tips.SetToolTip($script:tbMouse, @'
+Gunsight and cockpit mouse speed.
+
+0.5 = stock. Lower is slower. This is the HORIZONTAL rate; the box beside
+it scales the vertical rate relative to it.
+'@)
+$tips.SetToolTip($script:tbMouseV, @'
+Vertical mouse scale - fixes a bug that has been in this game since 2001.
+
+The engine takes SEPARATE horizontal and vertical sensitivities, and the
+game passes the same value to both. A widescreen monitor has a smaller
+vertical field of view, so the same rate crosses it sooner - the gun moves
+faster vertically than laterally.
+
+  0.5625  16:9  (1080/1920)  - correct for this monitor
+  0.75    4:3
+  0.42    21:9
+  1.0     the original, wrong, behaviour
+'@)
+
+function Add-Tune($name, $label, $x, $y, $items, $tip) {
+  Add-Label $label ($x) ($y+3) 108 $fontN ([System.Drawing.Color]::Gainsboro) | Out-Null
+  $c = New-Object System.Windows.Forms.ComboBox
+  $c.Left = $x + 112; $c.Top = $y; $c.Width = 62; $c.DropDownStyle = 'DropDownList'
+  $c.BackColor = [System.Drawing.Color]::FromArgb(50,50,54); $c.ForeColor = 'White'
+  $c.FlatStyle = 'Flat'
+  $items | ForEach-Object { [void]$c.Items.Add($_) }
+  $script:f.Controls.Add($c)
+  $script:tips.SetToolTip($c, $tip)
+  return $c
+}
+
+$PCT = @(0,10,25,50,75,100)
+
+$script:cbFov = Add-Tune 'FOVDistPower' 'Zoom detail *' 24 358 (0..5) @'
+*** THIS SETTING DOES NOTHING. Verified 2026-08-27. ***
+
+Every reference to FOVDistPower in the game is inside the video options
+menu - it reads the value, shows it, and writes it back. NOTHING else
+consumes it, and it does not appear in the engine's own settings dump.
+
+It is a leftover, like the helicopter settings inherited from Whirlwind
+over Vietnam. Kept visible only so nobody rediscovers it and assumes it
+is the answer, as happened here.
+
+The gunsight really does cost 8x the draw calls (261 -> 2105, measured).
+The cause is NOT this.
+'@
+
+$script:cbForest = Add-Tune 'MaxForestAnimatedLod' 'Forest anim' 24 384 (0..5) @'
+How many level-of-detail bands compute wind animation.
+
+At 5 that is every tree in view. Moving the wind itself from CPU to GPU
+was worth +50% in the gunsight; this reduces how many trees compute it
+at all. Lower = stiller distant woods, more frames.
+'@
+
+$script:cbShadow = Add-Tune 'ShadowDetail' 'Shadow detail' 24 410 (0..4) @'
+Shadow quality. Stencil shadow volumes are built on the CPU - the
+silhouette extrusion cannot be moved to the GPU - so this is reducible
+but not offloadable.
+
+4 = as found.
+'@
+
+$script:cbLights = Add-Tune 'MaxLightsQty' 'Max lights' 216 358 (1..8) @'
+Maximum simultaneous dynamic lights.
+
+Each one costs per-object work. The engine reported a hardware maximum
+of 8; the game ships with 4.
+'@
+
+$script:cbTexLod = Add-Tune 'TextureBestLOD' 'Texture LOD' 216 384 (0..4) @'
+Highest mip level used. 0 = full resolution textures.
+
+Raising it drops texture detail and VRAM pressure. TvT is CPU-bound with
+the GPU at ~24%, so this is unlikely to buy frames - included for
+completeness.
+'@
+
+$script:cbForestDet = Add-Tune 'ForestDetail' 'Forest density' 216 410 $PCT @'
+How much forest is planted, as a percentage.
+
+Stored as 0-1000 internally; shown here as percent. This is the blunt
+instrument - it removes trees rather than making them cheaper.
+
+100 = as found.
+'@
 
 # status panel
 $lblState = New-Object System.Windows.Forms.Label
-$lblState.Left=24; $lblState.Top=342; $lblState.Width=410; $lblState.Height=76
+$lblState.Left=24; $lblState.Top=478; $lblState.Width=410; $lblState.Height=76
 $lblState.Font = New-Object System.Drawing.Font('Consolas', 8.5)
 $lblState.ForeColor=[System.Drawing.Color]::FromArgb(150,200,255)
 $f.Controls.Add($lblState)
 
 $btnPlay = New-Object System.Windows.Forms.Button
-$btnPlay.Text='Play'; $btnPlay.Left=24; $btnPlay.Top=424; $btnPlay.Width=180; $btnPlay.Height=44
+$btnPlay.Text='Play'; $btnPlay.Left=24; $btnPlay.Top=560; $btnPlay.Width=180; $btnPlay.Height=44
 $btnPlay.FlatStyle='Flat'; $btnPlay.BackColor=[System.Drawing.Color]::FromArgb(27,94,32)
 $btnPlay.ForeColor='White'; $btnPlay.Font=$fontH
 $btnEdit = New-Object System.Windows.Forms.Button
-$btnEdit.Text='Editor'; $btnEdit.Left=214; $btnEdit.Top=424; $btnEdit.Width=110; $btnEdit.Height=44
+$btnEdit.Text='Editor'; $btnEdit.Left=214; $btnEdit.Top=560; $btnEdit.Width=110; $btnEdit.Height=44
 $btnEdit.FlatStyle='Flat'; $btnEdit.BackColor=[System.Drawing.Color]::FromArgb(55,55,60)
 $btnEdit.ForeColor='White'; $btnEdit.Font=$fontN
 $btnLog = New-Object System.Windows.Forms.Button
-$btnLog.Text='Log'; $btnLog.Left=334; $btnLog.Top=424; $btnLog.Width=100; $btnLog.Height=44
+$btnLog.Text='Log'; $btnLog.Left=334; $btnLog.Top=560; $btnLog.Width=100; $btnLog.Height=44
 $btnLog.FlatStyle='Flat'; $btnLog.BackColor=[System.Drawing.Color]::FromArgb(55,55,60)
 $btnLog.ForeColor='White'; $btnLog.Font=$fontN
 $f.Controls.AddRange(@($btnPlay,$btnEdit,$btnLog))
 
 $lblWarn = New-Object System.Windows.Forms.Label
-$lblWarn.Left=24; $lblWarn.Top=476; $lblWarn.Width=410; $lblWarn.Height=20
+$lblWarn.Left=24; $lblWarn.Top=612; $lblWarn.Width=410; $lblWarn.Height=20
 $lblWarn.Font=$fontN; $lblWarn.ForeColor=[System.Drawing.Color]::Orange
 $f.Controls.Add($lblWarn)
 
@@ -224,6 +370,15 @@ function Refresh-State {
   if ($w -eq 'DXVK') { $rbDx.Checked = $true } elseif ($w -eq 'dgVoodoo') { $rbDg.Checked = $true } else { $rbNative.Checked = $true }
   $tbScale.Text = (Get-Ini $root 'sight_scale' '100')
   $script:tbMouse.Text = (Get-Mouse $root)
+  $script:tbMouseV.Text = (Get-ScriptFloat $root 'MouseVerticalScale')
+  $script:cbFov.SelectedItem       = [int](Get-Reg 'FOVDistPower' 0)
+  $script:cbForest.SelectedItem    = [int](Get-Reg 'MaxForestAnimatedLod' 5)
+  $script:cbShadow.SelectedItem    = [int](Get-Reg 'ShadowDetail' 4)
+  $script:cbLights.SelectedItem    = [int](Get-Reg 'MaxLightsQty' 4)
+  $script:cbTexLod.SelectedItem    = [int](Get-Reg 'TextureBestLOD' 0)
+  # *Detail values are stored x1000; shown as percent, snapped to the nearest offered step.
+  $fd = [int](Get-Reg 'ForestDetail' 1000) / 10
+  $script:cbForestDet.SelectedItem = ($PCT | Sort-Object { [Math]::Abs($_ - $fd) } | Select-Object -First 1)
   $script:loading = $false
 
   $laa = Get-Laa $exe
@@ -288,11 +443,26 @@ $btnPlay.Add_Click({
   if (-not (Test-Path $exe)) {
     [System.Windows.Forms.MessageBox]::Show("Missing:`n$exe",'Cannot launch') | Out-Null; return }
 
+  # Engine tuning goes to the registry before launch. Shared key, so it is
+  # written every time rather than assumed to be whatever it was last run.
+  if ($null -ne $script:cbFov.SelectedItem)       { [void](Set-Reg 'FOVDistPower' $script:cbFov.SelectedItem) }
+  if ($null -ne $script:cbForest.SelectedItem)    { [void](Set-Reg 'MaxForestAnimatedLod' $script:cbForest.SelectedItem) }
+  if ($null -ne $script:cbShadow.SelectedItem)    { [void](Set-Reg 'ShadowDetail' $script:cbShadow.SelectedItem) }
+  if ($null -ne $script:cbLights.SelectedItem)    { [void](Set-Reg 'MaxLightsQty' $script:cbLights.SelectedItem) }
+  if ($null -ne $script:cbTexLod.SelectedItem)    { [void](Set-Reg 'TextureBestLOD' $script:cbTexLod.SelectedItem) }
+  if ($null -ne $script:cbForestDet.SelectedItem) { [void](Set-Reg 'ForestDetail' ([int]$script:cbForestDet.SelectedItem * 10)) }
+
   $s = $tbScale.Text.Trim()
   if ($s -match '^\d+$') { Set-Ini $root 'sight_scale' $s }
 
   # Mouse speed is a SCRIPT edit, so it also needs the cache cleared - which
   # Set-Mouse does. Warn, because the next launch then rebuilds it (~2 min).
+  # Vertical scale corrects a G5 bug: the engine takes separate horizontal and
+  # vertical mouse sensitivities and the game passed the SAME value to both, so
+  # on a widescreen monitor the gun moves faster vertically. 0.5625 = 1080/1920.
+  $mv = $script:tbMouseV.Text.Trim()
+  if ($mv -match '^[0-9]*\.?[0-9]+$') { [void](Set-ScriptFloat $root 'MouseVerticalScale' $mv) }
+
   $m = $script:tbMouse.Text.Trim()
   if ($m -match '^[0-9]*\.?[0-9]+$') {
     if (Set-Mouse $root $m) {

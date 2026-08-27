@@ -996,3 +996,87 @@ only vehicle in the game whose vision was *reduced*. First Soviet run after the
 accuracy fix was still a quick death, and that's the obvious suspect.
 
 Fixing accuracy while leaving a 950-metre detection head start doesn't help much.
+
+
+---
+
+## 2026-08-27 — T-34 vs Tiger: a 20 fps gunsight, and a mouse bug from 2001
+
+Two fixes worth writing up, one performance and one that has been wrong since
+the game shipped.
+
+### The gunsight ran at 20 fps
+
+External view of a treeline: ~100 fps. Switch to the T-34 gunsight, same
+direction, don't move: **~20 fps.** Unaimable — I quit a session over it.
+
+Counterintuitive, because zooming shows *fewer* objects. The drawcall probe
+settled it:
+
+```
+                external    gunsight
+draw calls           261       2105     8.1x
+triangles        457,269  1,426,768     3.1x
+frame time       7.50 ms   36.84 ms
+```
+
+**Draw calls up 8x but triangles only 3x** — many more objects, each cheap.
+That's not more detail, that's *seeing further*. A magnified view extends draw
+distance toward **`FogFarMax`**, which that mission had at **3000 m** against an
+external `FogFar` of 500. Area scales with the square of radius, so it was
+pulling in **36x the ground**.
+
+Halving `FogFarMax` to 1500 quarters that. Combined with moving SpeedTree wind
+from CPU to GPU (this engine is CPU-bound with the GPU idling at 24%, so CPU
+wind is the worst available choice), the gunsight went **19.6 → 76.9 fps**.
+
+**Two traps for anyone doing the same:**
+
+`FogFarMax` is set in **both** `Atmosphere.script` and `Content.script`, and
+**`Content.script` wins.** Editing the atmosphere file changes nothing and gives
+you a false negative.
+
+And **`FOVDistPower` does nothing at all.** It's in the registry, it has a video
+menu row, and it sounds exactly like the setting you want. Every reference to it
+lives inside that menu — it reads the value, displays it, writes it back, and
+*nothing consumes it*. A leftover from Whirlwind over Vietnam, which shares this
+engine. I burned two attempts on it.
+
+Three wrong answers came before the right one, and all three were **inferred
+from a setting's name** rather than measured. The probe found it in one run.
+
+### The mouse bug — 25 years old
+
+Separately: aiming felt right laterally and too fast vertically.
+
+`Scripts/Common/PlayerUnit.script`:
+
+```c
+float MouseSpeed = 0.0015f * CGameSettings::MouseSensitivity / 0.5;
+CameraLink.SetMouseSensitivity(MouseSpeed, MouseSpeed);
+```
+
+**`SetMouseSensitivity` takes separate horizontal and vertical sensitivities.
+The game passes the same value to both.**
+
+A 16:9 monitor's vertical field of view is 1.78x smaller than horizontal, so the
+same angular rate crosses it 1.78x sooner. The gun really does move faster
+vertically — and it always has. On a 4:3 CRT in 2001 it was 1.33x, so it was
+milder, but it was never right.
+
+Fixed with a `MouseVerticalScale` constant, default 0.5625 (1080/1920), applied
+at all three camera call sites. 0.75 for 4:3, 0.42 for 21:9.
+
+Worth saying: I found that one **by feel**, not by reading code. "About correct
+laterally but faster vertically" turned out to be an exact description of a
+1.78x ratio.
+
+### And a warning about editing these files
+
+TvT's scripts are CP1251 *and* CRLF. Reading one with Python's text mode
+silently converts the line endings, and writing it back saves LF only — I
+damaged **31 files** before noticing, and only noticed because one shrank by
+2,773 bytes.
+
+**Edit them as bytes**, and **check the file size after every write.**
+`grep -c $'\r'` will happily tell you everything is fine when it isn't.
