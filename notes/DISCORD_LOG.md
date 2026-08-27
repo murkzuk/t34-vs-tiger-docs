@@ -932,3 +932,67 @@ with no log at all**. Neither cause was the model:
 **The Level Editor turned out to be the better test bed**: it loads models
 directly rather than through a mission, so there's much less between the file
 and the answer.
+
+
+---
+
+## 2026-08-27 — T-34 vs Tiger: measuring a mod's bias against the original
+
+Long-running suspicion: the ZeeWolf 2015 build of TvT plays as though it has a
+thumb on the scale. Settled it by diffing every unit against the **untouched
+2001 original**, class by class.
+
+**First, the control.** REDUX (the base I mod) turned out to be the 2001 release
+essentially untouched on these fields — one Tiger `MaxPower` nerf and nothing
+else. So "REDUX vs ZW" really is "original vs ZW".
+
+**AI main-gun accuracy** (`FireDeviation`, lower = more accurate):
+
+```
+German   Pak 40      1.5  -> 0.5     3x better
+         Panzer IV   1.5  -> 0.10   15x better
+         Tiger I     1.2  -> 0.05   24x better
+         StuG III    1.2  -> 0.02   60x better
+Soviet   T-34/76     1.5  -> 1.6     worse
+         T-34/85     1.25 -> 1.55    worse
+         SU-85       1.2  -> 1.2     untouched
+```
+
+**Player guns — exactly one change in the entire game:** the T-34/85's,
+`0.005 -> 0.15`. Thirty times less accurate. Every German player gun untouched.
+
+**The control that removes all doubt:** the StuG III and SU-85 are the same class
+of vehicle — casemate tank destroyers, no turret, same role, same era — and G5
+set both to **exactly 1.2**. ZW made the StuG **0.02** and left the SU-85 at 1.2.
+Sixty times apart from an identical start. There's no balance rationale for that.
+
+Plus: Tiger +24% engine RPM, mass 56 t -> 40 t (real Tiger I is 57 t), fires
+every 7 s instead of 12, while the T-34/85's turret traverse was **halved** and
+the T-34/76's **cut fivefold**.
+
+**23 values restored to G5's**, verified per class against the original.
+
+### Two things worth passing on
+
+**`FireDeviation` is a gameplay knob, not ballistics.** Machine guns sit at 0.15
+and cannons at 1.2 — physically backwards. And the *same weapon* is 0.005 for
+the player and 1.2 for the AI, because the player supplies aiming error through
+the sight while the AI aims perfectly by definition. So 1.2 shouldn't be defended
+as "historically accurate". What's defensible is G5's *relationship*: all AI
+gunners inside a 20% band with a small edge to better platforms — roughly a real
+German optics and training advantage of 10–30%, not 31×.
+
+**Check what your filter EXCLUDES.** Two classifier bugs in one session produced
+two confidently wrong aggregates: a side-classifier whose German list omitted
+"German" filed German infantry as Soviet, and a unit filter matching
+`Tank`/`SAU`/`Gun` silently dropped both T-34s — which led to declaring the
+sensor ranges "even-handed" when they aren't. A partial sample that looks tidy is
+more dangerous than an obviously broken one.
+
+That second bug mattered: the Tiger detects at **2600 m** and the T-34/85 not
+until **1650 m**, a 950 m window where it shoots and you can't see it. The
+T-34/76 is worse — it engages at 2600 m while detecting at 800 m, and it's the
+only vehicle in the game whose vision was *reduced*. First Soviet run after the
+accuracy fix was still a quick death, and that's the obvious suspect.
+
+Fixing accuracy while leaving a 950-metre detection head start doesn't help much.
