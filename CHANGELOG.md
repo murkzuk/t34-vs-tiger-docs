@@ -2,6 +2,50 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 — ZW's handling and gunnery bias reverted to G5's values
+
+**23 changes applied to `M:\T34vsTiger_ZW2015\Scripts\Units\`**, each verified
+against the untouched 2001 original. ZW stamped `v0.260827`, cache cleared.
+Backup: `K:\TvTDeepseek\rollback\ZW_Units_2026-08-27_pre_revert\` (87 files).
+
+**AI main-gun accuracy** (`FireDeviation`) — every German gun had been made
+3–60× more accurate than G5 set it, every Soviet gun worse or untouched:
+```
+CGunPak40Gun        0.5  -> 1.5      CTankT34_76_42Gun   1.6  -> 1.5
+CTankPzIVGGun       0.10 -> 1.5      CTankT34_85_44Gun   1.55 -> 1.25
+CTankPzVIAusfEGun   0.05 -> 1.2      Tiger coax + hull MG 0.05 -> 0.15
+CSAUStuG40Gun       0.02 -> 1.2
+```
+
+**The only player-gun nerf in the game:**
+`CTankT34_85_44PlayerGun` **0.15 -> 0.005** — the player's T-34/85 had been made
+thirty times less accurate while every German player gun was left untouched.
+
+**Turret traverse** (`DirectionSpeedH`): T-34/85 8→17, T-34/76 7→36, SU-85 3→5,
+ZiS-3 4→6, Panzer IV 8→14, Tiger 6.5→4.5.
+
+**Tiger mobility and rate of fire:** mass 40t→56t (real Tiger I is 57 t),
+suspension 0.4→0.9, engine max RPM 2730→2200, fire period 7000→12000, random
+add 2000→8000. **T-34/85 mass** 48t→40t.
+
+**Also reverted on the user's call:** `T-34/85 MaxPower` 1800→1400 (ZW had
+*buffed* the Soviet engine — keeping it would have been a thumb on the scale in
+the other direction) and `SU-85 FirePeriod` 9000→8000 (the only gun in the game
+ZW made *slower*, and it was Soviet, while the Pak 40 went 10000→5000).
+
+**Deliberately NOT reverted:** sensor and engagement ranges
+(`MaxRadarDistance`, `AttackDistanceMax` etc.). ZW raised those for **both**
+sides — ZiS-3 800→3200 m, SU-85 1200→2400 m — which is genuine modding over G5's
+myopic originals, not bias. Also left: the general rate-of-fire increase applied
+to both sides, both halftracks' mass halving, and the AI-driving fields
+(`AutoDriverAnglePower` etc.), which look like real AI improvements.
+
+Method: edited **per class**, because a unit file holds separate AI and player
+gun classes with the same field name. Dry-run first (21 of 21 expected values
+found exactly where predicted), then applied, then re-compared against the
+original to confirm. `Tools/compare_unit_stats.py` makes the check repeatable.
+
+
 ## 2026-08-26 — the .ms2 exporter works, confirmed in the engine
 
 **The G5 Level Editor loaded and rendered a `.ms2` written by our own code.**

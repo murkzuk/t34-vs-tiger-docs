@@ -127,8 +127,11 @@ SuspensionHeight  0.4   -> 0.9         Friction1  1.0   -> 2.0
 **LEAVE ALONE:** `MaxRadarDistance`, `MinRadarDistance`, `AttackDistanceMax`,
 `AttackDistanceMin` — on every unit, both sides.
 
-- [ ] Apply the above, back up `Scripts/Units/` to `K:` first, clear the cache,
-  and test one mission per side before calling it done.
+- [x] **APPLIED 2026-08-27** — 23 changes, each verified against the original.
+  ZW stamped `v0.260827`, cache cleared, backup in
+  `K:\TvTDeepseekollback\ZW_Units_2026-08-27_pre_revert\`.
+- [ ] **TEST: one mission per side.** The T-34/85 should feel transformed —
+  turret traverse 8 -> 17 and the player gun back to pinpoint.
 - [ ] **Check the ZW-only vehicles too** — Panther, KVs, SU-122/152, Nashorn etc.
   have no original to compare against, so they need judging against the restored
   values rather than diffed.
