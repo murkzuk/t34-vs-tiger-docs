@@ -2,6 +2,51 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (q) — the gunner picks trucks because no unit is classified TRUCK
+
+User: "every time i point the gunner to a t34 it picks inf or a truck, ignoring
+the tank that can kill it."
+
+`Scripts/Common/AutoCommander.script` holds the ONLY target-priority table in
+the game - `CAutoCommander.PreferedTargets`, weighting purely by classificator
+and distance. Comparing what it matches against what units actually declare:
+
+```
+classificators units declare :  GROUND TANK HEAVYTANK ANTITANK BTR VEHICLE HUMAN SAU AIR AIRPLANE
+tokens the table matches     :  TANK ANTITANK BTR HUMAN AIR TRUCK ARTILLERY AA_GUN BLD_WAR
+```
+
+**Three rows match nothing in the game, and two classificators have no row:**
+
+- **`VEHICLE`** - `TruckOpelBlitzUnit`, `TruckZis5Unit` - **had no entry**. The
+  table's zero-weight row is spelled `TRUCK`, and **no unit in the game is
+  classified TRUCK**. So trucks never received their intended weight of zero and
+  fell through to the default. That is the truck the gunner keeps choosing.
+- **`HEAVYTANK`** - `TankPzVIAusfEUnit`, `TankPzVI_KingTigerIIUnit` - **had no
+  entry either**, so the heaviest threats on the field carried no weight at all.
+- **`ARTILLERY` and `AA_GUN` are dead rows** carrying the two HIGHEST weights in
+  the table (200 and 250). Their formatting differs from every other row, so
+  they were added later against classificators that were never used.
+
+**Fixed** by adding the two missing rows: `HEAVYTANK` at 120/1000 (just above
+`TANK`, being the biggest threat present) and `VEHICLE` at 0/0, which is what
+the dead `TRUCK` row was always meant to do. The dead rows are left in place and
+labelled rather than deleted.
+
+CP1251 preserved exactly (108 non-ASCII bytes before and after), CRLF clean,
+brackets 80/80, no trailing commas. Backup `AutoCommander.script.bak`.
+
+**This is the player's own crew** (`RadarMaxDistance = 1500`), which is what the
+user was describing. Not yet applied to ZW.
+
+Context that was already on record and worth re-reading before going further:
+`Documentation/TvT_AI_Engagement_Logic.md` establishes that this table weights
+**only by classificator and distance** - there is no threat model, no
+penetration test, no facet angle. `notes/project_tvt_acquisition_parked.md`
+records the binary-side acquisition hunt being PARKED after three wrong field
+identifications, with the ruled-out list. Neither needed re-deriving; the answer
+this time was in the script layer.
+
 ## 2026-08-27 (p) — ROOT CAUSE: the AI's kill list is seeded from the player's own units
 
 Three attempts at making the Axis engage failed in a row. The reason is a bug in
