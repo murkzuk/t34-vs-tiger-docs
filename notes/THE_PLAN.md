@@ -23,6 +23,7 @@ visual change is good while the framerate is fighting you.
 | Shadow distance measured and tuned | **done** — worth 2 fps |
 | Fog distance measured and balanced against engagement range | **done** — C1M2 |
 | Roll the fog value out to the other dawn/sunset missions | **open — DeepSeek.** C1M3 / C2M2 / C2M4 are all still `FogDensity 0.0013`, verified 2026-08-25 |
+| REDUX gunsight cost — does it share ZW's? | **closed 2026-08-27, MEASURED** — gunsight 107 fps vs 83 external, *29% faster*, on DOUBLE ZW's `FogFarMax`. Predicted a 3-5x drop; wrong. Nothing changed. The ZW finding does not generalise |
 | **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 50-54%, not the wrapper (disassembled) |
 
 **ANSWERED — final, 2026-08-25.** Measured, not reasoned. **TvT is CPU-bound

@@ -2,6 +2,66 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (g) — REDUX measured: no gunsight problem, prediction wrong
+
+Yesterday's ZW gunsight fix (`FogFarMax` 3000 -> 1500, 19.6 -> 76.9 fps) left an
+open item: *"REDUX was never checked and almost certainly pays the same cost."*
+
+**Measured. It does not.** REDUX C1M2, same session, same direction, LOS hook
+armed (confirmed in `tvt_los.log`, not assumed):
+
+```
+external   83 fps
+gunsight  107 fps      <- 29% FASTER
+```
+
+The prediction, stated before the run, was a **3-5x drop**, with an explicit
+falsification line: *"if the gunsight is within about 1.5x of external, the
+mechanism doesn't dominate and we do nothing."* It cleared that line in the
+opposite direction. **Nothing was changed. The item is closed.**
+
+### The finding is narrower than it looked
+
+REDUX C1M2 runs `FogFarMax 3000` - **double** ZW's post-fix 1500 - and is **39%
+faster than ZW** (107 vs 76.9). Twice the fog distance, more frames.
+
+So *"high `FogFarMax` costs gunsight frames"* is **not a property of the
+engine**. The 8x draw-call jump measured through the probe yesterday was real,
+and so was the 3.9x gain from halving the value - but both were **specific to
+ZW**, not something REDUX shares.
+
+Two candidate explanations were checked and both are ruled out:
+
+- **Mission content**: the two `Campaign_1/Mission_2/Content.script` files are
+  83,615 and 83,302 bytes - within 0.4% - with identical vegetation references.
+- **Tree LOD**: both builds now run `ModelLOD = [40, 70, 180, 250]`.
+
+**What is actually different about ZW is not established, and no further
+theories are being built on it.**
+
+### A wrong comment is sitting in ZW's live source
+
+`M:\T34vsTiger_ZW2015\Scripts\Common\BaseSTTree.script` carries a comment
+asserting that ZW's 480 m tree LOD *caused* the 22 fps gunsight. **That was
+tested and made no difference**, and the reason it cannot be the cause is sound:
+LOD is selected by TRUE distance, which magnification does not change. The
+comment records a hypothesis that was falsified later the same day and never
+corrected. Flagged for the user; it is a comment-only edit to a live game file,
+so it waits for their go-ahead.
+
+### Launcher status line is stale
+
+`TvT_Launcher.ps1` showed `last run Thu 05:28 - DID NOT arm` while the hook had
+in fact armed at 08:54. It reads that once at startup and never refreshes. A
+status line that lies in *either* direction is the exact failure mode that cost
+a session in August - it is worth making it refresh or timestamp itself
+honestly.
+
+**The lesson is the one already on the board**: predict the number first, name
+what would prove you wrong, and let the measurement settle it. Three wrong
+answers on this setting came from reasoning about names; this fourth one came
+from over-generalising a real measurement taken on a different build.
+
 ## 2026-08-27 (f) — the submesh descriptor: why 87 models imported as splinters
 
 The user opened ZeeWolf's Hummel in Blender and reported "the upper part is a

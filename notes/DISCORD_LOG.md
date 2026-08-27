@@ -1053,6 +1053,18 @@ Fixing accuracy while leaving a 950-metre detection head start doesn't help much
 
 ## 2026-08-27 — T-34 vs Tiger: a 20 fps gunsight, and a mouse bug from 2001
 
+> **AMENDED 2026-08-27, later the same day — read this before posting the
+> above.** The gunsight fix is real and the numbers are real, but the
+> explanation below is too broad. We then measured the *other* build,
+> REDUX, which runs **double** the `FogFarMax` value — and its gunsight is
+> **faster** than its external view (107 vs 83 fps). So this is something
+> specific to the ZeeWolf build, not a property of the engine. Mission
+> content and tree LOD were both checked and ruled out; what is actually
+> different is not established. If this gets posted, post it as "here is a
+> thing that fixed one build, and we do not yet know why the other build
+> never had it" — which is the more honest and, frankly, more interesting
+> story anyway.
+
 Two fixes worth writing up, one performance and one that has been wrong since
 the game shipped.
 
