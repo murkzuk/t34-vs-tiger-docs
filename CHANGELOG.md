@@ -2,6 +2,42 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-27 (r) — the same fix for ZW, where it was much worse
+
+ZW's `AutoCommander.script` is a DIFFERENT, cut-down file - 1,536 bytes against
+REDUX's 2,039 - and its table matched only **`TANK`** and **`AIR`**. Measured
+against what ZW's units actually declare:
+
+```
+65 of ~127 unit definitions had NO priority weight at all
+   GUN 23    HUMAN 15    HEAVYTANK 11    VEHICLE 7    ANTITANK 6    BTR 4
+```
+
+`SAU` needed no row - every SAU unit also declares `TANK` or `HEAVYTANK`.
+
+Added `HEAVYTANK`, `ANTITANK`, `GUN`, `BTR`, `HUMAN`, `VEHICLE`. **Weights
+scaled to ZW's own convention, not copied from REDUX**: ZeeWolf runs close-range
+`TANK` at 10000 where G5 uses 1000, so REDUX's numbers pasted in would have made
+every added row ten times too weak. The ratios now match G5's original.
+
+`GUN` is ZW-only - REDUX has no unit classified that way - and covers 23 towed
+guns, most of them AT-capable, so it mirrors `ANTITANK`.
+
+**Coverage: 58 -> 124 of 127.** ZeeWolf also raised `RadarMaxDistance` to 3100
+(G5: 1500) and `RadarUpdateTime` to 4.0 (G5: 1.0); both left alone.
+
+CP1251 preserved exactly (123 non-ASCII before and after), CRLF clean, brackets
+59/59, no trailing commas. Backup `ZW__AutoCommander.script.bak`.
+
+### The three still uncovered, one of which matters
+
+- `Animal_HorseUnit` - classified `GROUND` only. Correct; nothing should target it.
+- **`GunFlak88` x2 - classified `["GER", "GROUND"]` and nothing else.** The 88 has
+  **no type classificator at all** - not `GUN`, not `ANTITANK` - so the most
+  dangerous anti-tank gun in the game is invisible to the priority system.
+  **NOT changed**: that is a unit-definition edit affecting who gets shot at,
+  rather than a table correction. One word (`"GUN"`) fixes it when the user wants it.
+
 ## 2026-08-27 (q) — the gunner picks trucks because no unit is classified TRUCK
 
 User: "every time i point the gunner to a t34 it picks inf or a truck, ignoring
