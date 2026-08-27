@@ -131,7 +131,10 @@ SuspensionHeight  0.4   -> 0.9         Friction1  1.0   -> 2.0
   ZW stamped `v0.260827`, cache cleared, backup in
   `K:\TvTDeepseek
 ollback\ZW_Units_2026-08-27_pre_revert\`.
-- [ ] **DECIDE: the sensor ranges are NOT even-handed after all.** The Tiger
+- [x] **FIXED 2026-08-27 (option 2, equalise upward).** T-34/85 1650 -> 2600
+  detection and engagement; T-34/76 detection 800 -> 2600. Both T-34s now see as
+  far as a Tiger; ZW's better engagement ranges kept. Verified.
+- [ ] ~~DECIDE: the sensor ranges are NOT even-handed after all.~~ The Tiger
   detects at 2600 m, the T-34/85 not until 1650 m - a 950 m window where it
   shoots and you cannot see it. The T-34/76 is incoherent (engages 2600 m,
   detects 800 m) and is the only vehicle whose vision ZW *reduced*.

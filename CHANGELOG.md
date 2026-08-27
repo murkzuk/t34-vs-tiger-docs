@@ -33,10 +33,17 @@ add 2000→8000. **T-34/85 mass** 48t→40t.
 the other direction) and `SU-85 FirePeriod` 9000→8000 (the only gun in the game
 ZW made *slower*, and it was Soviet, while the Pak 40 went 10000→5000).
 
-**CORRECTED 2026-08-27, same day:** the sensor decision below was made on a
-partial sample and is wrong - see `TvT_Penetration_Tables.md`. The Tiger detects
-at 2600 m against the T-34/85's 1650 m, and the T-34/76 detects at 800 m while
-engaging at 2600 m. Left in place pending a decision.
+**CORRECTED AND FIXED 2026-08-27, same day.** The sensor decision below was
+made on a partial sample and was wrong. The Tiger detected at 2600 m against the
+T-34/85's 1650 m - a 950 m window where it engaged and the Soviet tank could not
+see it - and the T-34/76 engaged at 2600 m while detecting at only 800 m, the
+only vehicle in the game whose vision ZW *reduced*.
+
+**Resolved by equalising upward** (option 2 - keep ZW's better ranges, remove
+the tilt): `T-34/85` detection and engagement 1650 -> 2600, `T-34/76` detection
+800 -> 2600. Both T-34s now see as far as a Tiger. SU-85 (2400) and StuG III
+(2000) left as they were - the Soviet vehicle is already the better of that
+pair.
 
 **Deliberately NOT reverted (see correction above):** sensor and engagement ranges
 (`MaxRadarDistance`, `AttackDistanceMax` etc.). ZW raised those for **both**

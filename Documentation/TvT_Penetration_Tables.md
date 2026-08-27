@@ -338,3 +338,24 @@ classifier that omitted "German" filed German infantry as Soviet, and a unit
 filter that matched `Tank`/`SAU`/`Gun` silently dropped both T-34s. **Check what
 a filter excludes, not just what it includes** - a partial sample that looks
 tidy is more dangerous than an obviously broken one.
+
+
+## RESOLVED 2026-08-27 — option 2 applied
+
+```
+unit            detects    engages
+PanzerIV         2700       2800
+Tiger            2600       2600
+T-34/85          2600       2600     was 1650 / 1650
+T-34/76          2600       2600     was  800 / 2600
+SU-85            2400       2400     unchanged
+StuG III         2000       2000     unchanged
+```
+
+Both T-34s now see as far as a Tiger, and the T-34/76 no longer engages at a
+range it cannot detect at. ZW's raised engagement ranges are kept - this removed
+the tilt without undoing the improvement. The SU-85 (2400) was left alone
+because it already out-ranges its German counterpart the StuG III (2000).
+
+**Total for the ZW pass: 26 values changed.** 23 handling/gunnery reverted to
+G5's figures, 3 sensor values equalised upward.
