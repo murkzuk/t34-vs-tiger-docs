@@ -1,6 +1,9 @@
 # C2M1 "Tigers Shake Kurtenki" — Historical TOD
 
-Status: **applied to ZW build** on 2026-08-28 (golden dawn). REDUX untouched.
+Status: **applied to ZW build only** on 2026-08-28 (golden dawn). REDUX C2M1 is
+NOT the same mission — "Securing Kurtenki REDUX by Murkz" (July 1943, a different
+scenario the user has tinkered with). Do NOT mirror the 1944 dawn to it; leave it
+alone per user.
 Backup: `K:\TvTDeepseek\rollback\C2M1_ZW_2026-08-28_pre_goldendawn\`
 
 ## Historical determination
