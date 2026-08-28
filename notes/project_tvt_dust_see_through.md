@@ -1,6 +1,6 @@
 # Dust see-through (tank-shaped hole in wheat) — investigation + proposed fix
 
-Status: **built + wired** 2026-08-28 (`dustfix.dll` + launcher toggle). Untested in-game.
+Status: **investigated end-to-end** 2026-08-28. Fix **NOT found** — confirmed render-order/sorting bug. Additive + ZWRITE-off + UP-hook all tried, all failed; game restored.
 
 ## Built (2026-08-28)
 
@@ -31,30 +31,40 @@ no dust, artefact gone).
   `"ADDITIVE"`. There is **no script-level "no depth write" mode**, so the fix
   cannot be a one-line material edit; it has to be D3D9-level.
 
-## Mechanism (hypothesis, high confidence)
+## Mechanism — CONFIRMED by D3D9 probe (2026-08-28)
 
-Two alpha-blended passes (dust on the effects layer, wheat on the vegetation
-layer) with **no correct cross-layer sort**, and the dust **writes depth**
-(`ZWRITEENABLE = 1`). Where a dust particle overlaps the wheat, the wheat's depth
-test then fails → the wheat pixel is dropped → the "tank-shaped hole".
+The probe (`dustfix.dll` rebuilt as a pure logger: SetRenderState + SetTexture +
+DrawIndexedPrimitive, 1.7M draws captured) showed:
 
-## Proposed fix — same D3D9 hook machinery as fogfix
+- **Wheat/grass** = flags `WZAT` (ZWRITE=1, ZENABLE=1, ALPHABLEND=1, ALPHATEST=1),
+  blend `SRCALPHA/INVSRCALPHA` (5,6), ALPHAREF=0, ALPHAFUNC=GREATER (cutout).
+  Drawn in a tight loop **last** in the frame. **It writes depth while
+  alpha-blended** — the anti-pattern.
+- **Dust/effects** = flags `-ZAT` (ZWRITE=0, no depth write), blend 5,6 normal or
+  5,2 additive. **It does NOT write depth.**
 
-At `Draw*` time, for **alpha-blended draws** (`ALPHABLENDENABLE == 1`), force
-`ZWRITEENABLE = 0`. This is the textbook rule: transparent objects must not write
-depth. Ship it as a toggle in a new `dustfix.dll` (or extend fogfix) and A/B test.
+So the original hypothesis was **backwards**: the *dust* never wrote depth; the
+*wheat* does. The wheat draws after the dust and is semi-transparent, so the dust
+shows through it — but the exact mechanism that makes it read as a clean "hole"
+(not just brighter) is not fully pinned without a dust-in-order capture.
 
-Render states to hook/track (D3D9):
-`ZENABLE` (7), `ZWRITEENABLE` (14), `ALPHABLENDENABLE` (27), `SRCBLEND` (19),
-`DESTBLEND` (20).
+## What was tried (all failed to fix it)
 
-Risk to check when testing: **water** is also alpha-blended. If disabling ZWRITE
-for all alpha-blended draws breaks water, scope the fix to the effects layer /
-`Effect_01.tex` instead of all alpha-blended draws.
+1. Force `ZWRITEENABLE=0` for all alpha-blended draws (dustfix) — 31,649 forces,
+   no change (wheat's depth-write is a no-op, it draws last).
+2. Also hook `DrawPrimitiveUP`/`DrawIndexedPrimitiveUP` — dust goes through
+   `DrawIndexedPrimitive` (DP 2, DIP 1.5M, DPUP 0), so a red herring.
+3. Dust transparency `NORMAL`→`ADDITIVE` (order-independent blend) — dust got
+   lighter, hole unchanged. **Reverted.**
 
-## Next steps
+## Where this lands
 
-1. Build the fix with a live counter (how many alpha-blended draws had ZWRITE=1).
-2. A/B test in ZW: drive a tank through wheat; confirm the hole is gone and water
-   still looks right.
-3. Backup-first before touching `fogfix.cpp` or the game files, per standing rule.
+This is the render-order / transparent-pass sorting bug Claude flagged on
+2026-08-27 ("render-order work through the D3D9 hook … a project, not a tweak").
+The real fix is to sort the transparent pass (wheat + dust together) back-to-front
+— buffer and re-issue draw calls — which is real work, not a one-liner. Data
+captured below is the hand-off for that effort.
+
+Probe artifacts: `K:\TvTDeepseek\dustfix\dustfix.cpp` (probe) + `dustfix.log`
+(per-texture dump + draw-order ring buffer). Game files restored (additive
+reverted, cache cleared).
