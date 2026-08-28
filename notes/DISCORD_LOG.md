@@ -19,7 +19,7 @@ a footnote, and honest about what was AI-assisted.
 
 ## 2026-08-28 - Kurtenki dawns for real
 
-For twenty-five years, "Tigers Shake Kurtenki" opened on a flat grey noon that told you nothing about when or where you were. That's gone.
+"Tigers Shake Kurtenki" opened on a flat grey noon that told you nothing about when or where you were. That's gone.
 
 Kurtenki is a real village — Lioznensky district, Vitebsk Oblast, Belarus, on the old Smolensk road east of Vitebsk. And the mission's premise is straight out of late June 1944: Operation Bagration, the Vitebsk–Orsha offensive, a German Tiger rearguard buying time while Army Group Centre falls apart behind it.
 
@@ -27,9 +27,7 @@ So the time of day got rebuilt from the actual sky. Late June, 55° north, 05:55
 
 The briefing now opens on it too: "LATE JUNE 1944 – VITEBSK FRONT, BELARUS. Operation Bagration is shattering Army Group Centre…"
 
-Same old engine. But when you roll out of the treeline into that sun, you're rolling into a real morning, on a real road, in 1944.
-
-AI-assisted reverse engineering, confirmed in-game. The sun is where the sun actually was.
+AI-DeepSeek reverse engineering, confirmed in-game. The sun is where the sun actually was.
 
 ## 2026-08-28 - Shadows take the fog too
 
