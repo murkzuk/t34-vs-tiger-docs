@@ -1,6 +1,17 @@
 # Dust see-through (tank-shaped hole in wheat) — investigation + proposed fix
 
-Status: **investigated (script side)** 2026-08-28; fix **proposed, not built yet**.
+Status: **built + wired** 2026-08-28 (`dustfix.dll` + launcher toggle). Untested in-game.
+
+## Built (2026-08-28)
+
+- `K:\TvTDeepseek\dustfix\dustfix.dll` (x86) — hooks SetRenderState + Draw* and
+  forces `ZWRITEENABLE=0` for alpha-blended draws; logs
+  `K:\TvTDeepseek\dustfix\dustfix.log` (counters: draws / alpha draws / forced).
+- Launcher toggle "Dust fix" added to `K:\tvt_los\TvT_Launcher.ps1`.
+- **fogfix and dustfix both patch `Direct3DCreate9`, so they cannot run together.**
+  The launcher makes the Fog and Dust toggles mutually exclusive for now. Merging
+  the two fixes into one DLL is the follow-up if both are wanted at once.
+- Backup: `K:\TvTDeepseek\rollback\TvT_Launcher_2026-08-28_pre_dusttoggle.ps1`.
 Claude's 2026-08-27 confirmation stands: the see-through IS the dust (stop the tank,
 no dust, artefact gone).
 
