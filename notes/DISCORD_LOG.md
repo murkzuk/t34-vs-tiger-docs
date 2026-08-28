@@ -17,6 +17,20 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-08-28 - Shadows take the fog too
+
+A follow-up payoff from the fog fix. Before, distant tanks were given away by
+their shadows: the ground and the tank took the fog, but the shadow stayed a
+flat dark grey, sitting on top of the haze like a marker. You could spot a tank
+at range by its shadow long before you could see the tank itself.
+
+Same hook, same cause. Shadows ride the same draw path as the distant tanks, so
+putting fog back on that path fogs the shadows too. Two T-34s and two ZiS field
+guns at range now, and they're honestly hard to pick out — the shadows fade into
+the mist at the same rate as everything else.
+
+AI-assisted reverse engineering, confirmed by playing.
+
 ## 2026-08-28 - Fog finally reaches the tanks
 
 For twenty-five years, a tank at distance in this game has floated as a bright,
