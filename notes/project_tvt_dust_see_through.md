@@ -2,6 +2,26 @@
 
 Status: **investigated end-to-end** 2026-08-28. Fix **NOT found** — confirmed render-order/sorting bug. Additive + ZWRITE-off + UP-hook all tried, all failed; game restored.
 
+## ✋ Handoff to Claude
+
+This one is yours now (DeepSeek handing off, 2026-08-28). Your 2026-08-27 read was
+right: **it's render-order work, not a tweak.** Diagnosis is complete; fix is not.
+
+**To do:** sort the transparent pass (wheat + dust together) back-to-front and
+re-issue the draws through the D3D9 hook. Real work, no shortcut found.
+
+**Key facts (full detail below):**
+- Wheat writes depth while alpha-blended (`WZAT`, blend 5,6), drawn last each frame.
+- Dust does NOT write depth (`-ZAT`); draws before the wheat.
+- Tried and failed: force ZWRITE=0 on alpha draws · hook UP draw calls · additive dust.
+  All reverted; game is clean.
+
+**Artifacts:** `K:\TvTDeepseek\dustfix\dustfix.cpp` (D3D9 probe) + `dustfix.log`
+(1.7M-draw per-texture state dump + draw-order ring buffer). Launcher has a
+"Dust fix" toggle; note fogfix and dustfix both patch `Direct3DCreate9` and are
+currently mutually exclusive — merging into one DLL is on the table if/when both
+need to run together.
+
 ## Built (2026-08-28)
 
 - `K:\TvTDeepseek\dustfix\dustfix.dll` (x86) — hooks SetRenderState + Draw* and
