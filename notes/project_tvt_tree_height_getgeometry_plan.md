@@ -33,6 +33,35 @@ so that's the hook point.
 5. **Then ZW** — same DLL; first confirm ZW's Birch/Linden `TreeSize` values and
    whether ZW has the same "too short" symptom.
 
+## Step 1 result (2026-08-29) — SGeometry layout mapped
+
+Disassembled `GetGeometry` (RVA `0x1DAD0`, prologue `55 8B EC 6A FF` as expected)
+with capstone. It dispatches on a flag bitmask in arg2 (`bl`) to fillers:
+
+| flag bit | filler RVA | fills |
+|---|---|---|
+| 0 | `0x1CC70` | leaf cards — `SGeometry+0x10` count(word), `0x14/0x18/0x1c/0x20/0x24` pointers |
+| 1 | `0x1CF90` | fronds — `0x4c` count, `0x50–0x70` array pointers, `0x3c/0x40` |
+| 2 | `0x1AD30` | **branches** — fills `SIndexedTri` at `SGeometry+0x78` |
+| 3 | `0x1AFB0`/`0x1BD50` | whole-tree billboard — `0xfc–0x11c` |
+
+**Branch mesh (`SIndexedTri` at `SGeometry+0x78`), from filler `0x12d40`:**
+
+- `+0x1c` = word (vertex/index count)
+- `+0x20` = index array pointer
+- **`+0x24` = vertex coordinate array (float xyz, stride 12 bytes)** ← the Y-scale target
+- `+0x28` = word (branch count)
+- `+0x2c` = branch record pointer
+
+The vertex read (`0x12E2F`): `coord = [SIndexedTri+0x24]; x=coord[i*3], y=coord[i*3+1], z=coord[i*3+2]` (stride 12).
+
+**Open (for step 2):** the filler does `1.0 - x` (mirror on first coord = handedness),
+so confirm which axis is "up" (Y or Z) in tree space — pin by testing scale-Y vs
+scale-Z on a birch. Frond (`0x50–0x70`) and leaf-card arrays are there too for a
+complete stretch, but branches are the main structure.
+
+Tooling added: `K:\TvTDeepseek\tree_probe\disasm_geometry*.py` (capstone dumps).
+
 ## Risks (from the spec note)
 
 - LOD box is driven by `SetTreeSize`, not the geometry → a taller tree may pop when
