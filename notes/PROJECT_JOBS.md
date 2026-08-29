@@ -7,28 +7,28 @@ Compiled 2026-08-29 from THE_PLAN.md, TODO.md, and this week's notes. Sorted by 
 
 ## PHASE 2 — Make it LOOK right (current phase)
 
-- [x] Understand the atmosphere system (3-layer, compass, sun vectors)
-- [x] Fix the 20-year sun-vector glare bug
-- [x] Dawn/sunset rollout — C1M2, C1M3, C2M2, C2M4
-- [x] Winter overcast rollout — 4 ZW missions
-- [x] Fog reaching distant objects (fogfix) — DeepSeek, both builds
-- [x] Stock-noon mission: C2M1 ZW (golden dawn + briefing + v0.260828b)
-- [x] Stock-noon mission: C1M1 ZW (06:15 clear morning)
-- [ ] Stock-noon missions: **C1M4, C2M3, C2M6** (historical TOD, same method)
+- [x] ==Understand the atmosphere system (3-layer, compass, sun vectors)==
+- [x] ==Fix the 20-year sun-vector glare bug==
+- [x] ==Dawn/sunset rollout — C1M2, C1M3, C2M2, C2M4==
+- [x] ==Winter overcast rollout — 4 ZW missions==
+- [x] ==Fog reaching distant objects (fogfix) — DeepSeek, both builds==
+- [x] ==Stock-noon mission: C2M1 ZW (golden dawn + briefing + v0.260828b)==
+- [x] ==Stock-noon mission: C1M1 ZW (06:15 clear morning)==
+- [x] Stock-noon missions: **C1M4** (10:00 morning), **C2M3** (sunset), **C2M6** (dawn breakout) — all done 2026-08-29
 - [ ] Tree height without the "redwood" effect — unowned (GetGeometry Y-scale parked)
 - [ ] **Dust see-through wheat** — diagnosed; fix = sort the transparent pass (Claude)
 - [ ] **Distant trees transparent to tanks** — same family as dust (Claude)
 - [ ] **Terrain LOD — distant tanks float above ground, worse in REDUX** — plan recorded
 - [ ] **Camera port REDUX→ZW** — FOV 90°, momentum 0.01, shake off, calm commander mouse. Started, rolled back to isolate the tree issue; re-apply (ZFar change was NOT the tree cause)
 
-## PHASE 1 — Make it RUN right (answered 2026-08-25)
+## ==PHASE 1 — Make it RUN right (answered 2026-08-25)==
 
-- [x] Tree draw distance measured + tuned (8 fps)
-- [x] Shadow distance measured + tuned (2 fps)
-- [x] Fog distance measured + balanced (C1M2)
-- [x] Sampling profiler — it's Objects.dll at 50-54%, CPU-bound, GPU idle
-- [x] Map-lookup cache (Objects.dll hot function) — +6.3%, both builds
-- [ ] Fog rollout to remaining dawn/sunset missions (C1M3 / C2M2 / C2M4 FogDensity)
+- [x] ==Tree draw distance measured + tuned (8 fps)==
+- [x] ==Shadow distance measured + tuned (2 fps)==
+- [x] ==Fog distance measured + balanced (C1M2)==
+- [x] ==Sampling profiler — it's Objects.dll at 50-54%, CPU-bound, GPU idle==
+- [x] ==Map-lookup cache (Objects.dll hot function) — +6.3%, both builds==
+- [x] ==Fog rollout to remaining dawn/sunset missions (C1M3 / C2M2 / C2M4 FogDensity==)
 
 ## PHASE 3 — Make the AI FIGHT right
 
