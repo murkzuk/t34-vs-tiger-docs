@@ -1,46 +1,53 @@
-# Terrain LOD — distant tanks float above ground in FPS view (ZW)
+# Terrain LOD — distant tanks float above ground (worse in REDUX)
 
-Status: **identified, plan recorded** 2026-08-29. Not fixed yet.
+Status: **identified, plan recorded** 2026-08-29. Not fixed yet. **Corrected** from an
+earlier draft that wrongly blamed ZW's MegaTerrain.
 
 ## Symptom
 
-- In **FPS view**, distant tanks float above the terrain.
-- In **binocular/gunsight view**, the same tanks sit correctly ON the terrain.
-- View-dependent → it's a terrain-LOD bug, not a tank-position bug.
+- In **FPS view**, distant tanks float above the terrain; in **bino/gun view** they
+  sit correctly ON the terrain. View-dependent terrain LOD.
+- **More noticeable in REDUX than ZW.**
 
-## Finding
+## Finding (corrected)
 
-- ZW uses a **custom terrain system REDUX does not have**:
-  `Scripts/Common/BaseMegaTerrain.script` ("MegaTerrain", for ZeeWolf's huge
-  9–36 km maps). REDUX uses plain `BaseTerrain.script`.
-- The terrain geometry detail lives in `BaseMegaTerrain.script`:
-  - `MinimumResolution = 1.0`   (range 2–6)
-  - `DesiredResolution = 1.0`   (range 12–24)
-  - `TerrainDetail = 1.0` in `GameSettings.script` (drives shoreline detail etc.)
-- At distance the coarse LOD tessellates the ground *below* the tank's true
-  height → the tank floats. The zoomed bino/gun view uses a finer LOD → correct.
+- The terrain geometry detail knobs are **identical across both builds and both
+  terrain systems**:
+  - `BaseTerrain.script` (REDUX) and `BaseTerrain.script` (ZW) and
+    `BaseMegaTerrain.script` (ZW) all carry:
+    - `MinimumResolution = 1.0` (range 2–6)
+    - `DesiredResolution = 1.0` (range 12–24)
+  - `OnTerrainDetailChanged()` maps `TerrainDetail` (0–1) → these ranges;
+    `GameSettings.TerrainDetail = 1.0` in both, so **detail is already at max.**
+- So this is **not** a ZW MegaTerrain thing, and **not** a simple resolution
+  setting — it's the terrain LOD *distance falloff* (the chunked/patch LOD at
+  range), which is engine-level.
+- Why REDUX shows it more: REDUX's camera is wider (FOV 1.5708 / 90°) and its
+  `ZFar = 500`, so the distant-terrain LOD transitions sit inside the view and are
+  more obvious; ZW's narrower FOV + `ZFar = 6437` hides it more.
 
 ## Headroom
 
-- The engine is CPU-bound; the GPU is mostly idle. Raising terrain detail should
-  be nearly free visually, so this is a "spend idle GPU, don't touch CPU" fix.
+- Engine is CPU-bound, GPU mostly idle. Raising distant terrain detail should be
+  nearly free visually — "spend idle GPU, not CPU".
 
 ## Plan
 
-1. Read `BaseMegaTerrain.script` in full — work out how
-   `MinimumResolution` / `DesiredResolution` / `TerrainDetail` drive the terrain
-   mesh LOD, and which one controls the *distance* falloff (that's the one that
-   fixes floating, not just near detail).
-2. Identify the single value to raise (and by how much) so distant terrain keeps
-   the tank's true height, without a big CPU cost.
-3. Propose it — backup-first, A/B test (same discipline as the camera port).
-4. A/B test: distant tanks should sit ON the terrain in FPS view; check FPS.
-5. Decide scope: MegaTerrain is ZW-only, so this is ZW-only unless REDUX's
-   `BaseTerrain.script` has the same LOD behaviour (check it).
+1. Find the terrain LOD distance falloff — where the engine coarsens distant
+   terrain patches. Likely engine-side (native), but check `BaseTerrain.script`
+   / `BaseMegaTerrain.script` for any distance/cell/patch params first, and the
+   mission `Terrain.script` + `WorldMatricies.script` (cell size / heightmap
+   resolution) second.
+2. Identify the lever that raises *distant* terrain detail (not just near), or the
+   camera/LOD tie that makes the bino/gun view correct but FPS view wrong.
+3. Propose a change — backup-first, A/B test (same discipline as the camera port).
+4. A/B test: distant tanks sit ON the terrain in FPS view; check FPS.
+5. Scope: applies to both builds if the mechanism is shared; verify REDUX first
+   (it's the worse case).
 
 ## Notes
 
-- Same *family* as the dust/tree transparency issues (ZW-specific rendering
-  quirks), but a **separate root cause**: terrain mesh LOD, not alpha-blend sort.
-- Related already-recorded work: camera diff (`ZFar`/FOV/momentum) rolled back;
-  dust render-order bug (handed to Claude).
+- Same *family* as the dust/tree transparency issues (rendering quirks), but a
+  **separate root cause**: terrain mesh LOD at distance, not alpha-blend sort.
+- Related: camera diff (`ZFar`/FOV) was rolled back; REDUX's camera values are the
+  "tuned" ones (FOV 90°, ZFar 500) and are untouched.
