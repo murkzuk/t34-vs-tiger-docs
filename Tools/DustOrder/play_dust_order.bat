@@ -10,7 +10,9 @@ REM
 REM WHAT TO DO
 REM   1. Load a mission where you can see the see-through wheat.
 REM   2. Drive the tank so it throws dust across the wheat, and look at the artefact.
-REM      A few seconds is plenty - it captures the first 8 dust draws it sees.
+REM      Spend a good few seconds WITH THE ARTEFACT ON SCREEN. It now keeps the
+REM      LAST 8 dust draws that happen in frames actually drawing wheat, so the
+REM      menu can no longer use up the capture slots.
 REM   3. EXIT THE GAME NORMALLY (quit to menu, then exit).
 REM      The log is written when the game shuts down, so DO NOT Alt+F4 or kill it,
 REM      or there will be no log.
