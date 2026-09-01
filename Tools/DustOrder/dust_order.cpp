@@ -31,7 +31,9 @@
 #include <tlhelp32.h>
 #include <d3d9.h>
 
-static const char LOG_PATH[] = "K:\\TvTDeepseek\\dust_order\\dust_order.log";
+// Per-PID log. A fixed path meant a throwaway regression run silently overwrote a
+// real gameplay capture (2026-09-01 - 175 KB of the user's run, lost). Never again.
+static char g_log_path[MAX_PATH];
 
 static CRITICAL_SECTION g_lock;
 static FILE *g_log;
@@ -144,6 +146,12 @@ static LONG g_cap_idx, g_cap_fill;
 
 static DWORD g_last_tex;
 static volatile LONG g_total_draws, g_dust_draws;
+// Gameplay gate. The first run spent all 8 windows on MENU draws (frames 2-466)
+// while the user played 34,576 frames. A window is only armed inside a frame that
+// actually drew wheat, and windows now roll so the LAST qualifying ones survive.
+static volatile LONG g_frame_wheat, g_prev_frame_wheat, g_trigger_total;
+static LONG g_win_wheat[WINDOWS];
+#define WHEAT_MIN 200
 
 struct TexRec { DWORD tex; LONG count; DWORD flags; DWORD srcblend, destblend; LONG prims; };
 static TexRec g_tex[768];
@@ -200,8 +208,10 @@ static void record_draw(DWORD primCount)
   DWORD tex = (DWORD)g_cur_tex;
   if (!tex) return;
 
-  bool is_dust = (!g_z_write && g_alpha_blend && g_alpha_test);
-  if (is_dust) InterlockedIncrement(&g_dust_draws);
+  bool is_dust  = (!g_z_write && g_alpha_blend && g_alpha_test);
+  bool is_wheat = ( g_z_write &&  g_alpha_blend && g_alpha_test && primCount <= 8);
+  if (is_dust)  InterlockedIncrement(&g_dust_draws);
+  if (is_wheat) InterlockedIncrement(&g_frame_wheat);
 
   if (tex != g_last_tex) {
     Ev e; fill_ev(&e, tex, primCount);
@@ -212,8 +222,11 @@ static void record_draw(DWORD primCount)
       if (g_cap_fill < WINSZ) g_win[g_cap_idx][g_cap_fill++] = e;
       g_win_len[g_cap_idx] = g_cap_fill;
       if (g_cap_fill >= WINSZ) g_capturing = 0;
-    } else if (is_dust && g_win_count < WINDOWS) {
-      g_cap_idx = g_win_count++;
+    } else if (is_dust && g_prev_frame_wheat >= WHEAT_MIN) {
+      g_cap_idx = (LONG)(g_trigger_total % WINDOWS);   // roll - keep the LAST 8
+      g_trigger_total++;
+      if (g_win_count < WINDOWS) g_win_count++;
+      g_win_wheat[g_cap_idx] = g_prev_frame_wheat;
       LONG n = 0;
       LONG have = (g_pre_head < PRE) ? g_pre_head : PRE;
       for (LONG i = have; i > 0; i--) {
@@ -273,6 +286,8 @@ static PresentFn g_orig_present;
 static HRESULT STDMETHODCALLTYPE HookPresent(IDirect3DDevice9 *self, const RECT *a, const RECT *b, HWND c, const RGNDATA *d)
 {
   InterlockedIncrement(&g_frame);
+  InterlockedExchange(&g_prev_frame_wheat, g_frame_wheat);
+  InterlockedExchange(&g_frame_wheat, 0);
   g_last_tex = 0;   // force a fresh texture event at the start of each frame
   return g_orig_present(self, a, b, c, d);
 }
@@ -545,10 +560,13 @@ BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID)
     g_self = h;
     DisableThreadLibraryCalls(h);
     InitializeCriticalSection(&g_lock);
-    g_log = fopen(LOG_PATH, "w");
+    _snprintf(g_log_path, sizeof(g_log_path) - 1,
+              "K:\\TvTDeepseek\\dust_order\\dust_order_pid%lu.log", GetCurrentProcessId());
+    g_log_path[sizeof(g_log_path) - 1] = 0;
+    g_log = fopen(g_log_path, "w");
     llog("=== dust_order attached (pid %lu) ===", GetCurrentProcessId());
     llog("trigger = a draw with ZWRITE=0 & ALPHABLEND=1 & ALPHATEST=1 (the dust signature)");
-    llog("capturing %d windows of %d events (%d before the trigger, %d after)", WINDOWS, WINSZ, PRE, POST);
+    llog("capturing %d rolling windows of %d events (%d before, %d after), armed only in frames with >=%d wheat draws", WINDOWS, WINSZ, PRE, POST, WHEAT_MIN);
     HMODULE ntdll = GetModuleHandleA("ntdll.dll");
     if (ntdll) {
       LdrRegisterDllNotificationFn reg = (LdrRegisterDllNotificationFn)
@@ -575,12 +593,14 @@ BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID)
       g_ldr_cookie = NULL;
     }
     restore_slots();   // put the IAT back BEFORE we unload, or shutdown crashes
-    llog("=== totals: %ld draws, %ld dust-signature draws, %ld frames, %ld windows captured ===",
-         g_total_draws, g_dust_draws, g_frame, g_win_count);
+    llog("=== totals: %ld draws, %ld dust-signature draws, %ld frames ===", g_total_draws, g_dust_draws, g_frame);
+    llog("=== %ld triggers fired in wheat-heavy frames (>=%d wheat draws); keeping the last %ld ===",
+         g_trigger_total, WHEAT_MIN, g_win_count);
     LONG nw = g_win_count; if (nw > WINDOWS) nw = WINDOWS;
     for (LONG w = 0; w < nw; w++) {
       llog("%s", "");
-      llog("=== window %ld  (trigger at row %ld) ===", w, g_win_trigger[w]);
+      llog("=== window %ld  (trigger at row %ld, %ld wheat draws in the previous frame) ===",
+           w, g_win_trigger[w], g_win_wheat[w]);
       llog("   row  frame  texture   WZATS  blend  aref/afn  zfunc      cwrite cull prims");
       for (LONG i = 0; i < g_win_len[w]; i++) {
         Ev *e = &g_win[w][i];

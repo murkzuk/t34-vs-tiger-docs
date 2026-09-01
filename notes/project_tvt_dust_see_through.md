@@ -167,3 +167,32 @@ the user's. Fixed, then verified WITHOUT the game using `test_gpa.exe`:
 Verification: `test_gpa.exe` (probe-only and full) both exit 0, interception
 confirmed, log 922 bytes. The lesson held - suspect the instrument before the
 subject, and validate it off the game rather than on the user's time.
+
+## Second run: the probe WORKED, the trigger was aimed wrong (2026-09-01)
+
+The hook fired properly this time - **2,330,245 draws, 147,222 dust-signature
+draws, 34,576 frames, 8 windows**. The GetProcAddress fallback did its job (the
+prologue was again unrecognised).
+
+But all 8 windows landed in **frames 2-466** - the menu, 4-6 draws a frame - while
+the user played 34,576 frames. The trigger captured the FIRST 8 dust-signature
+draws, and those are UI elements, not dust over wheat.
+
+Two fixes:
+- **Gameplay gate**: a window only arms inside a frame that actually drew wheat
+  (>= 200 alpha-blended depth-writing draws of <= 8 prims in the previous frame).
+- **Rolling windows**: later triggers overwrite earlier ones, so the LAST 8
+  qualifying captures survive instead of the first 8. Each window now records how
+  many wheat draws its frame had.
+
+One real observation did survive from the menu capture, worth re-checking in
+gameplay: the dust-signature draw ran `ZENABLE=0` (**depth test off entirely**, not
+just depth-write off) and `ZFUNC=LESS` while every neighbouring draw used
+`LESSEQ`. The following draw was back to `LESSEQ`, so nothing leaked *there* - but
+that was a 4-draw menu frame, not the wheat loop.
+
+### Process failure to not repeat
+The log path was fixed, so a throwaway regression run **overwrote the 175 KB
+gameplay capture** before its texture dump had been mined. The totals and window
+analysis survived only because they had already been read. Logs are now
+per-PID (`dust_order_pid<PID>.log`).

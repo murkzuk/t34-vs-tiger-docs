@@ -15,7 +15,8 @@ REM   3. EXIT THE GAME NORMALLY (quit to menu, then exit).
 REM      The log is written when the game shuts down, so DO NOT Alt+F4 or kill it,
 REM      or there will be no log.
 REM
-REM Log: K:\TvTDeepseek\dust_order\dust_order.log
+REM Log: K:\TvTDeepseek\dust_order\dust_order_pid<PID>.log  (one per run - a
+REM      throwaway test run can no longer overwrite a real capture)
 
 set GAME=M:\T34vsTiger\TvsT_fullLOD_HARD_4GB.exe
 if /I "%1"=="zw" set GAME=M:\T34vsTiger_ZW2015\TvsT_fullLOD_HARD_4GB.exe
