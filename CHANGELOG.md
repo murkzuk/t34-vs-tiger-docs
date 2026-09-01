@@ -2,6 +2,33 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-09-01 (c) — CORRECTION: the dust fix is NOT fixed
+
+Entry (b) and the board recorded the see-through-wheat artefact as fixed. **It is
+not.** The user reports it is still present.
+
+I marked it done because `dustfix.dll` had been built and a launcher checkbox
+existed. **I never ran it and never asked.** That is the "verify the artefact,
+not the success message" rule, broken on the same day I was applying it
+elsewhere. Corrected.
+
+The DLL exists and may simply not be arming - `dustfix.log` is the first thing to
+read, before anything is changed in the code.
+
+**Fog on distant objects IS genuinely fixed** and remains confirmed by the user's
+own play-testing.
+
+### And the process failure behind it
+
+The user asked me to "check and validate" the weekend's work. My sweep covered
+git, changed game files, rollback folders and logs - but **I counted the Discord
+log going from 22 entries to 25 and did not read them.** The fog fix was written
+up there in full. Both fixes were also wired into the launcher, which I did not
+diff either.
+
+**A "check what changed" sweep has to include tools and notes, not just game
+files and git.** Recorded below as a standing list.
+
 ## 2026-09-01 (b) — the sIG33's crossed legs: Turret_A holds the TRAVERSE SWEEP
 
 The user confirmed the Editor shows the sIG33's legs square, so this was ours.

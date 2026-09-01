@@ -80,9 +80,9 @@ distance haze — is ours to set, and it is where the biggest visual gain is.
 | Fix the 20-year sun-vector glare bug | **done** |
 | Dawn / sunset on the missions that call for it | **done** — C1M2, C1M3, C2M2, C2M4 |
 | Winter overcast rollout | **done** — 4 ZW missions |
-| The 5 "stock noon" missions | open |
+| The 5 "stock noon" missions | **DONE 2026-08-29 (DeepSeek)** — all five done in **ZW**: C2M1 golden dawn, C1M1 06:15 clear morning, C1M4 10:00, C2M3 sunset, C2M6 dawn breakout. Verified 2026-09-01 against real `Atmosphere.script`/`Content.script` edits, not just the jobs list |
 | Fog reaching distant objects (the `vs_1_1` shader question) | **DONE 2026-08-28 (DeepSeek)** — the distant-LOD vertex shader was computing a fog factor and the engine was DISCARDING it; `fogfix.dll` flips it back on. User-confirmed 2026-09-01 |
-| Tree height without the redwood effect | open, unowned |
+| Tree height without the redwood effect | **PARKED 2026-08-29, BLOCKED** — SGeometry fully mapped (branch verts `+0x90`, count `+0x84`, Z=up; fronds `+0x60`). Blocker: *any* hook on `CSpeedTreeRT::GetGeometry`, even a bare passthrough, makes trees cull/pop by camera angle. Cause unknown. `tree_yscale/yprobe/minhook.dll` are diagnostic — DO NOT SHIP |
 
 **Done when:** every mission has a time of day that matches its briefing, and
 nothing looks obviously wrong at distance.
@@ -155,6 +155,6 @@ phase, it gets promoted and this file says why.
 
 ## How to see progress
 
-Phase 1: **COMPLETE, 5 of 5**. Phase 2: 5 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
+Phase 1: **COMPLETE, 5 of 5**. Phase 2: 6 of 7 (the 7th parked-blocked). Phase 3: 4 of 6. Phase 4: 1 of 4.
 
 That is the number to watch — not the 115.

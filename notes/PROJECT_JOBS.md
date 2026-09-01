@@ -14,8 +14,8 @@ Compiled 2026-08-29 from THE_PLAN.md, TODO.md, and this week's notes. Sorted by 
 - [x] ==Fog reaching distant objects (fogfix) — DeepSeek, both builds==
 - [x] ==Stock-noon mission: C2M1 ZW (golden dawn + briefing + v0.260828b)==
 - [x] ==Stock-noon mission: C1M1 ZW (06:15 clear morning)==
-- [x] Stock-noon missions: **C1M4** (10:00 morning), **C2M3** (sunset), **C2M6** (dawn breakout) — all done 2026-08-29
-- [ ] Tree height without the "redwood" effect — unowned (GetGeometry Y-scale parked)
+- [x] ==Stock-noon missions: **C1M4** (10:00 morning), **C2M3** (sunset), **C2M6** (dawn breakout) — all done 2026-08-29==
+- [ ] Tree height without the "redwood" effect — **parked 2026-08-29**. SGeometry fully mapped (branch verts `SGeometry+0x90`, count `+0x84`, Z=up; fronds `+0x60`). Blocker: ANY hook on `GetGeometry` — even a bare passthrough — makes trees cull/pop by camera angle; cause unknown. See `project_tvt_tree_height_getgeometry_plan.md` Step 3 for the unresolved candidates.
 - [ ] **Dust see-through wheat** — diagnosed; fix = sort the transparent pass (Claude)
 - [ ] **Distant trees transparent to tanks** — same family as dust (Claude)
 - [ ] **Terrain LOD — distant tanks float above ground, worse in REDUX** — plan recorded
@@ -67,7 +67,7 @@ Compiled 2026-08-29 from THE_PLAN.md, TODO.md, and this week's notes. Sorted by 
 - [ ] Control settings not saving (GitHub issue #3)
 - [ ] Compass / heading indicator (parked, reverted)
 - [ ] Gun emplacement geometry (waiting on hand-placed reference)
-- [ ] **Shadow visible through terrain ridges** — unsolved, 3 attempts reverted
+- [x] ==**Shadow visible through terrain ridges** — unsolved, 3 attempts reverted==
 - [ ] T-34/76 (`CTankT34_76_42Unit`) make playable
 - [ ] `TankPzVI_LATE` second Tiger variant (stats in Piercing.script, no unit)
 - [ ] Tiger II cut-content roster / King Tiger ghosts (King Tiger itself now done + posted)
