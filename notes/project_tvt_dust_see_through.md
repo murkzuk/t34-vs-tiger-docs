@@ -88,3 +88,53 @@ captured below is the hand-off for that effort.
 Probe artifacts: `K:\TvTDeepseek\dustfix\dustfix.cpp` (probe) + `dustfix.log`
 (per-texture dump + draw-order ring buffer). Game files restored (additive
 reverted, cache cleared).
+
+---
+
+# 2026-09-01 (Claude) - the old log CANNOT answer this, and the stated mechanism contradicts itself
+
+## Verified, not assumed
+
+`dustfix.log`'s sequence window contains **ZERO dust draws**. The ring buffer keeps
+the last 16384 texture changes, and that is always the wheat loop at the end of the
+frame. All six textures in the captured window are wheat (`WZAT`, blend 5,6).
+
+So all three attempted fixes were aimed at a mechanism that had never been observed.
+That is why they missed - not because the fix was hard.
+
+## The contradiction
+
+On the data we actually have, the stated mechanism cannot work:
+
+- dust never writes depth (`ZWRITE=0`), and
+- dust is said to draw entirely BEFORE the wheat.
+
+Something that writes no depth, drawn before something else, **cannot remove that
+something else's pixels**. So at least one of those two facts is wrong.
+
+## Prediction, recorded BEFORE the run
+
+The capture will show one of:
+
+- **(a) the ordering is not what we think** - dust interleaved with, or after, wheat
+  within a frame; or
+- **(b) a render state set for the dust LEAKS into the wheat draws that follow** -
+  most likely `ZFUNC`, `COLORWRITEENABLE` or `ALPHAREF`.
+
+**I lean (b).** Ordering alone cannot explain a clean hole. If it is (b), the fix is
+small - restore the state before the wheat pass - and NOT the draw-call sorting
+system this note proposed.
+
+**Falsifier:** if the wheat rows after the trigger carry identical state to the wheat
+rows before it, AND dust is strictly before all wheat, then both (a) and (b) are dead
+and the cause is not D3D state at all (look at grass generation instead).
+
+## The tool
+
+`K:\TvTDeepseek\dust_order\` - `dust_order.cpp` / `.dll` / `build.bat` /
+`play_dust_order.bat`. Trigger capture: on a dust-signature draw (ZWRITE=0,
+ALPHABLEND=1, ALPHATEST=1) it freezes 64 events before and 224 after, keeping the
+first 8 such windows so they survive to the log. Every row carries a **frame number**
+(Present is hooked, vtable slot 17) plus ZFUNC / COLORWRITEENABLE / CULLMODE.
+
+Pure observation - changes nothing.
