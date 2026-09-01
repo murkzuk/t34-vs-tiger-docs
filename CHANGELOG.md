@@ -2,6 +2,56 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-09-01 (b) — the sIG33's crossed legs: Turret_A holds the TRAVERSE SWEEP
+
+The user confirmed the Editor shows the sIG33's legs square, so this was ours.
+
+**`Turret_A`'s animation track is the traverse sweep, and frame 0 is one END of
+it** - the same shape as `Gun_A` holding elevation limits (2026-08-27):
+
+```
+sIG33      5 distinct: [-45, -22.5, 0, +22.5, +45]    +-45 deg
+StuG F8    5 distinct: [ -9,  -4.5, 0,  +4.5,  +9]    +-9 deg
+Hummel    21 distinct: [-15 .. +15]                   +-15 deg
+Tiger      4 distinct: [-90, 0, +90, +180]            full rotation
+```
+
+Those match the real vehicles: Hummel +-15, StuG III ~+-10. **Every track
+contains 0.0** - the centred position - and that is what a rest pose wants.
+Taking frame 0 parks the gun at one traverse extreme. On the sIG33 that is 45
+degrees, and because that model parents its WHEELS under `Turret_A`, the wheels
+swing onto the diagonal - which reads as crossed legs.
+
+**Fixed** by centring `Turret_A` when its track contains an identity frame.
+
+```
+              barrel direction   footprint L x W
+sIG33   was   +36.9 deg          3.30 x 3.30
+        now   + 3.9 deg          4.35 x 2.13   (real 15 cm sIG 33: 4.4 x 2.06)
+Hummel  was   +12.6 deg
+        now   - 2.2 deg
+```
+
+The sIG33's wheels now sit on a common axle - x identical, y equal and opposite.
+
+**35 of 250 models changed, 215 untouched.** The direction of change confirms it:
+centring makes guns LONGER and NARROWER, as an un-traversed gun should be -
+leFH18 6.23x4.33 -> 6.92x3.41, HvyK18 7.08x4.97 -> 7.97x3.41.
+
+**Scoped to `Turret_A` by name, deliberately.** The same "frame 0 is an extreme"
+pattern appears on character joints (`l_Elbow` 11 models, `l_Head` 9, shoulders,
+arms, feet - 198 nodes across 73 models). Centring THOSE would undo the
+character-rig fix, so they are not touched.
+
+**The 180-degree cases were the risk** - Tiger, King Tiger, Panther and most tank
+turrets flip end-for-end under this. Rendered and checked: the King Tiger comes
+out correct, gun forward over the glacis, drive sprocket at the front. Its
+length also goes 10.23 -> 10.63 m against a real 10.29 with the gun forward.
+
+Both fixes today came from the same technique: **walk one model's chain from ROOT
+down rather than hunting for a whole-model rule.**
+
+
 ## 2026-09-01 — the guns imported upside down: it was the very first node
 
 The user reported the Flak 88 importing upside down and off centre. The game's

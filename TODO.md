@@ -17,8 +17,14 @@ untouched.** Flak 88 confirmed by render.
 - [ ] **Eyeball the other seven** - Pak43_41, ML19_122mm, ML20_152mm,
   120mmMortar, 82mmMortar, AmmoBunker, TenMeterScale. Expected right, not yet
   looked at.
-- [ ] **The sIG33's crossed legs are a SEPARATE bug.** Its ROOT rotation is
-  zero, so the fix above does not touch it. Walk its chain the same way.
+- [x] **sIG33 crossed legs FIXED 2026-09-01.** `Turret_A`'s track is the
+  TRAVERSE SWEEP and frame 0 is one extreme (+-45 deg there); that model parents
+  its wheels under `Turret_A`, so the wheels swung onto the diagonal. Centred
+  when the track contains an identity frame. 35 of 250 models changed, 215
+  untouched; sIG33 and King Tiger both verified by render.
+- [ ] **Eyeball a few more of the 35** - especially the other 180-degree turrets
+  (Panther, PzIII, KV, T-34 variants). The King Tiger was checked and is right,
+  but they all flip end-for-end under this change.
 - [ ] Unrelated, seen in the same Editor session: `ShadowRender: Unable to
   allocate vertex buffer space for 62612 vertices for joint Turret_A,
   model(u_stat_Flak88.ms2)`.

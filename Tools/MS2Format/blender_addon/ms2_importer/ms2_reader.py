@@ -376,7 +376,53 @@ def read_ms2(path):
 
     _fix_character_rigs(nodes)
     _fix_rotated_root(nodes)
+    _fix_turret_traverse(nodes)
     return nodes
+
+
+def _fix_turret_traverse(nodes):
+    """Centre any Turret_A whose track is a traverse SWEEP. Returns count.
+
+    [2026-09-01] The sIG33 imported with its trail legs crossed and its wheels
+    on opposite diagonal corners. The user confirmed the Editor shows them
+    square, so it was ours.
+
+    `Turret_A`'s animation track is the **traverse sweep**, and frame 0 is one
+    END of it - the same shape as `Gun_A` holding elevation limits:
+
+        sIG33     5 distinct: [-45, -22.5, 0, +22.5, +45]     +-45 deg
+        StuG F8   5 distinct: [ -9,  -4.5, 0,  +4.5,  +9]     +-9 deg
+        Hummel   21 distinct: [-15 .. +15]                    +-15 deg
+        Tiger     4 distinct: [-90, 0, +90, +180]             full rotation
+
+    Those match the real vehicles' traverse figures - Hummel +-15, StuG ~+-10.
+    **Every track contains 0.0**, the centred position, which is what a rest
+    pose should use. Taking frame 0 instead parks the gun at one traverse
+    extreme; on the sIG33 that is 45 degrees, which swings the wheels (parented
+    under Turret_A in that model) onto the diagonal and reads as crossed legs.
+
+    Zeroing gives a straight-ahead gun: sIG33 +36.9 -> +3.9 deg, Hummel
+    +12.6 -> -2.2 deg, and the sIG33's wheels land on a common axle with the
+    model measuring 4.35 x 2.13 x 1.73 m against a real 4.4 x 2.06 x 1.75.
+
+    SCOPED TO `Turret_A` BY NAME, and only when the track actually contains an
+    identity frame. The same "frame 0 is an extreme" pattern also shows on
+    character joints (`l_Elbow`, `l_Head`, ...), and centring THOSE would undo
+    the rig fix - so they are deliberately not touched.
+
+    CAUTION: models whose traverse range includes 180 degrees (Tiger, King
+    Tiger, Panther, most tank turrets) flip end-for-end under this. That is
+    the intended neutral, but it is a visible change - verify by eye.
+    """
+    n = 0
+    for node in nodes:
+        if node.name != "Turret_A" or not node.has_rest:
+            continue
+        if abs(abs(node.rest_quat[0]) - 1.0) < 1e-4:
+            continue                      # already centred
+        node.rest_quat = (1.0, 0.0, 0.0, 0.0)
+        n += 1
+    return n
 
 
 def _fix_rotated_root(nodes):
