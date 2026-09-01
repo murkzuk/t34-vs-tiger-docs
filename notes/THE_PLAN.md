@@ -11,8 +11,9 @@ Last updated 2026-08-25.
 
 ---
 
-## PHASE 1 — Make it RUN right   ✅ QUESTION ANSWERED 2026-08-25
-###### one checklist item still open — the fog rollout, DeepSeek's
+## PHASE 1 — Make it RUN right   ✅ COMPLETE 2026-08-29
+###### the fog rollout landed 2026-08-29 (DeepSeek): FogDensity 0.0013 -> 0.002
+###### on C1M3/C2M2/C2M4, in Content.script. Phase 1 has no open items.
 
 Nothing else is worth doing if the game stutters. And you cannot judge whether a
 visual change is good while the framerate is fighting you.
@@ -22,7 +23,7 @@ visual change is good while the framerate is fighting you.
 | Tree draw distance measured and tuned | **done** — worth 8 fps |
 | Shadow distance measured and tuned | **done** — worth 2 fps |
 | Fog distance measured and balanced against engagement range | **done** — C1M2 |
-| Roll the fog value out to the other dawn/sunset missions | **open — DeepSeek.** C1M3 / C2M2 / C2M4 are all still `FogDensity 0.0013`, verified 2026-08-25 |
+| Roll the fog value out to the other dawn/sunset missions | **DONE 2026-08-29 (DeepSeek)** — 0.0013 -> 0.002 on C1M3 / C2M2 / C2M4, in `Content.script`; validated 2026-09-01 |
 | REDUX gunsight cost — does it share ZW's? | **closed 2026-08-27, MEASURED** — gunsight 107 fps vs 83 external, *29% faster*, on DOUBLE ZW's `FogFarMax`. Predicted a 3-5x drop; wrong. Nothing changed. The ZW finding does not generalise |
 | **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 50-54%, not the wrapper (disassembled) |
 
@@ -154,6 +155,6 @@ phase, it gets promoted and this file says why.
 
 ## How to see progress
 
-Phase 1: **question answered, 4 of 5 items** (fog rollout open). Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
+Phase 1: **COMPLETE, 5 of 5**. Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
 
 That is the number to watch — not the 115.

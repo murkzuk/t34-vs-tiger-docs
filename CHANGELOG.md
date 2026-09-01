@@ -2,6 +2,68 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-08-28/29 — weekend work (DeepSeek-assisted), reviewed and validated 2026-09-01
+
+Work done while the user was off-plan. **Not committed at the time**; this entry
+is the record. Versions `REDUX v0.260828a`, `ZW v0.260828b`.
+
+### Landed
+
+- **REDUX fog rollout** - `FogDensity` 0.0013 -> 0.002 on **C1M3, C2M2, C2M4**.
+  Verified written to **`Content.script`**, which is the file that actually wins
+  at runtime. **This closes THE_PLAN's last open Phase 1 item.**
+- **ZW time-of-day pass** - C1M4 morning, C2M3 sunset, C2M6 dawn, plus C1M1 and
+  C2M1 atmosphere. Values now:
+
+```
+C1M1          ambient 0.200   sun 0.2   fog 0.0005
+C1M4 morning  ambient 0.420   sun 0.2   fog 0.0005
+C2M1          ambient 0.157   sun 0.2   fog 0.0005
+C2M3 sunset   ambient 0.160   sun 0.4   fog 0.0005
+C2M6 dawn     ambient 0.157   sun 0.3
+```
+
+### Tried and reverted - both byte-identical to their backups
+
+- **ZW camera port from REDUX** (`FOV`/`ZFar`/momentum/shake/mouse).
+  `Camera.script` still reads `ZFar 6437.38`. **Just as well** - `ZFar` is the
+  reason ZW's gunsight is expensive and REDUX's is not; porting REDUX's 500 into
+  ZW would have changed far more than camera feel.
+- **ZW `EffectsSkin.script` additive blending.** Zero diff against
+  `EffectsSkin_2026-08-28_pre_additive.script`.
+
+### Validation
+
+All 19 changed files: **0 bare LF, 0 U+FFFD, balanced braces and brackets, 0
+trailing commas.** Both builds run. Friday's work all intact - King Tiger placed
+in BerezovKursk, `StartAttackAxis` wired, the `UnitGroup.script` fix present,
+anti-thrash still at 150.
+
+REDUX's log shows 557 error lines, but **528 are one known, documented,
+pre-existing issue**: `[AbstractJoint] Invalid rotation of collision mesh ...
+(0.5, 0.5, 0.5, 0.5) (must be: 0,0,0,1)`, from the 4 `hum_*` models. Worth
+noting because that is **the same axis-swap quaternion** behind the 2026-08-27
+character-rig import fix - the engine flags those rotations as wrong too.
+
+### Still unverified
+
+The anti-thrash change (`LastTargetDangerAdd` 50 -> 150, `RadarUpdateTime`
+1.0 -> 2.0) has **still never been measured**. The 31 Aug run was C1M1 with zero
+attacks - a lighting check, not a combat test.
+
+### A mistake worth recording
+
+Reviewing this, I bulk-synced 143 files from the live install into the repo's
+`TvT/` mirror on the assumption it was a stale copy of live. **It is not.** The
+mirror holds content the live install does NOT have - `TvT/Common/Intersections.script`
+carries a "Redux Added Missing Models" block absent from live, and
+`TvT/Missions/MyMission/Berezov/Content.script` actually contains
+**BerezovKursk** content (class `BerezovKurskContent`) filed under the wrong
+folder name. The two have diverged in BOTH directions.
+
+Reverted before committing; nothing lost. **Do not bulk-sync that mirror.**
+Reconciling its 143 divergent files is its own job, file by file.
+
 ## 2026-08-27 (u) — character rigs imported collapsed flat; fixed
 
 The user asked whether the empties looked right on an imported Soviet rifleman.

@@ -4,6 +4,29 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## THE `TvT/` MIRROR HAS DIVERGED BOTH WAYS - do not bulk-sync (2026-09-01)
+
+**143 of 951 mirrored files differ from the live REDUX install**, and the
+divergence runs in BOTH directions:
+
+- `TvT/Common/Intersections.script` carries a **"Redux Added Missing Models"**
+  block (barricade / building intersection settings) that the LIVE install does
+  NOT have.
+- `TvT/Missions/MyMission/Berezov/Content.script` actually contains
+  **BerezovKursk** content - class `BerezovKurskContent`, pointing at the
+  BerezovKursk path - filed under the wrong folder name.
+
+A bulk sync from live was attempted on 2026-09-01 and **reverted before
+committing** after those two turned up. Nothing was lost.
+
+- [ ] **Reconcile the mirror file by file.** For each of the 143, decide whether
+  live is ahead (sync it) or the mirror holds REDUX work missing from live
+  (restore it to live instead). This is the only safe way and it is not a
+  five-minute job.
+- [ ] **Fix the misfiled Berezov/BerezovKursk mirror path** while doing it.
+
+---
+
 ## AI TARGET PRIORITY - fixed at the table, BROKEN at the source (2026-08-27)
 
 `CAutoCommander.PreferedTargets` is the **only** target-priority table in the
@@ -101,6 +124,11 @@ Every REDUX mission sits at or below ZW's dimmest.
   dark commander, "the less of 2 options". **Do not flip without asking.**
   Unexplained: ZW ships `true` and still looks shaded. See
   `TvT_Mission_Authoring_Verified.md` section 14b.
+- [x] **REDUX fog rollout DONE 2026-08-29** (DeepSeek) - `FogDensity`
+  0.0013 -> 0.002 on C1M3/C2M2/C2M4, written to `Content.script` which is
+  the file that wins. **This was THE_PLAN's last open Phase 1 item.**
+- [x] **ZW time-of-day pass 2026-08-29** (DeepSeek) - C1M4 morning, C2M3
+  sunset, C2M6 dawn, plus C1M1/C2M1. Validated clean.
 - [ ] **A considered ambient pass across the other 11 campaign missions.**
   Still the highest-value open lighting job. ZW's brightest run
   `SunIntensity` 0.7-0.9, not 1.0 - if a mission washes out, lower the sun
