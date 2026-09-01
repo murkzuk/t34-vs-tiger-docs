@@ -130,13 +130,21 @@ penetration test, no facet angle.
   Inert while shadows are off, but enabling them would work for G5's vehicles
   and silently do nothing for his.
 
-## See-through wheat - CONFIRMED as the dust (2026-08-27)
+## See-through wheat - FIXED 2026-08-28 (DeepSeek), and fog too
 
-- [ ] User-confirmed: stationary tank, no dust, artefact gone.
-  `CForestUnitDustTraceEffect` is alpha 0.3, nine particles per 0.2 m of track,
-  against alpha-blended grass with no sort between them. **Engine-wide, not
-  model-specific.** A real fix is render-order work through the D3D9 hook -
-  same territory as the fog investigation. Not started.
+- [x] **Dust fix DONE.** `K:\TvTDeepseek\dustfix\dustfix.dll`, launcher
+  checkbox *"Dust fix (stop dust punching see-through holes in wheat)"*.
+  Diagnosed 2026-08-27 as alpha-blended dust against alpha-blended grass with no
+  sort between them; built as an injected D3D9 hook, exactly the route predicted.
+- [x] **Fog on distant objects DONE** - a 25-year-old bug and a Phase 2 item.
+  The distant-LOD vertex shader had been computing a fog factor all along and
+  the engine was **discarding** it; `K:\TvTDeepseekogfixogfix.dll` flips
+  it back on, reusing the engine's own density and colour. User-confirmed
+  2026-09-01: distant tanks now sit in the haze instead of popping out.
+
+**Both are opt-in injected DLLs, wired into the launcher and mutually exclusive
+with the profiler - the live install is not modified.** Same architecture as the
+LOS hook. Sources beside each DLL; rebuild with the `build.bat` in that folder.
 
 ---
 

@@ -81,7 +81,7 @@ distance haze — is ours to set, and it is where the biggest visual gain is.
 | Dawn / sunset on the missions that call for it | **done** — C1M2, C1M3, C2M2, C2M4 |
 | Winter overcast rollout | **done** — 4 ZW missions |
 | The 5 "stock noon" missions | open |
-| Fog reaching distant objects (the `vs_1_1` shader question) | open — DeepSeek |
+| Fog reaching distant objects (the `vs_1_1` shader question) | **DONE 2026-08-28 (DeepSeek)** — the distant-LOD vertex shader was computing a fog factor and the engine was DISCARDING it; `fogfix.dll` flips it back on. User-confirmed 2026-09-01 |
 | Tree height without the redwood effect | open, unowned |
 
 **Done when:** every mission has a time of day that matches its briefing, and
@@ -155,6 +155,6 @@ phase, it gets promoted and this file says why.
 
 ## How to see progress
 
-Phase 1: **COMPLETE, 5 of 5**. Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
+Phase 1: **COMPLETE, 5 of 5**. Phase 2: 5 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
 
 That is the number to watch — not the 115.
