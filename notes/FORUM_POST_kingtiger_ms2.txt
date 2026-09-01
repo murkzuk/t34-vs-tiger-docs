@@ -1,0 +1,128 @@
+Posted to the ZW thread (subsim), 2026-08-28. Actual intro as posted:
+
+    After nearly 20 years ZeeWolf's never finished King Tiger is added to his
+    mod as an AI unit. I added this with the aid of Claude and DeepSeek AI. I am
+    not a coder but I can drive an AI enough to get this done.
+    So here it is in all ZW's glory.
+
+--------------------------------------------------------------------------------
+
+[size=18][b]A King Tiger in T-34 vs Tiger — and a Blender tool for the game's models[/b][/size]
+
+Two things to share, and they're related.
+
+[hr]
+
+[size=16][b]1. The Tiger II is in the game[/b][/size]
+
+[img]YOUR_SCREENSHOT_URL_HERE[/img]
+
+That's a Königstiger driving around a T-34 vs Tiger mission, in a German
+Kampfgruppe, with working armour and a 8.8 cm KwK 43.
+
+The model isn't mine — [b]ZeeWolf built it[/b], years ago, for his 2015 build.
+Mesh, 16 textures in yellow/camo/winter, full per-facet armour values, the
+hatches, the cupola, even the kill rings on the barrel. Everything except the
+one thing that turns a model into a tank: the unit class.
+
+He never wrote it, and he's no longer with us to finish it. So it's written now,
+and the Tiger II runs in both my REDUX build and his 2015 one.
+
+[b]What went into it[/b]
+
+The unit class is built from G5's own Tiger I — the class hierarchy renamed and
+four things changed: the mesh, the mass, the LOD list and the header. Everything
+else is G5's code untouched.
+
+Mass is 69,800 kg against the Tiger I's 56,000, on the [i]same[/i] engine power.
+The real Tiger II carried 25% more weight on the same Maybach HL230, so it comes
+out sluggish because of the numbers rather than because anyone dialled it in.
+
+[b]The gun[/b]
+
+The obvious shortcut was to reuse the towed Pak 43's data — ballistically the
+same weapon. But that table is flat: 247 mm at 100, 500, 1000 and 1500 m alike.
+So instead it went in on G5's own convention, which turns out to be the real
+published figures — their Tiger I is 120/110/100/93, and their shell speeds are
+real muzzle velocity × 0.8 (KwK 36 Pzgr 39 is 773 m/s and they wrote 770.0*0.8).
+
+[code]Pzgr 39/43 APCBC   1000 m/s   202 / 185 / 165 / 148 / 132 mm
+Pzgr 40/43 APCR    1130 m/s   237 / 217 / 193 / 171 / 153 mm[/code]
+
+Sanity check: 202/120 is 1.68× the Tiger I at 100 m, which is exactly the
+historical ratio.
+
+[b]It pointed at the ground for a while[/b]
+
+First run in game, the barrel drooped badly. The model's animation track holds
+two values — the gun's elevation limits — and every G5 tank puts the positive
+one in frame 0. This one had the signs the wrong way round:
+
+[code]G5 Tiger    +6.5  /  -17.0
+G5 PzIV     +8.0  /  -20.0
+G5 T-34/85  +5.0  /  -20.0
+King Tiger  -7.0  /  +20.0    <-- backwards[/code]
+
+Flipping them put it back inside G5's family on both numbers.
+
+[hr]
+
+[size=16][b]2. A Blender add-on for the game's .ms2 models[/b][/size]
+
+The other half. T-34 vs Tiger's models are a proprietary format with no spec and
+no source — everything below was worked out by reading the files.
+
+[b]You can now open any of the game's models in Blender, assembled and textured,
+in one step.[/b] File > Import > TvT Model (.ms2).
+
+[list]
+[*]Geometry, hierarchy, authored normals, UVs
+[*]Rest transforms, so turrets, guns and road wheels sit where they belong
+[*]Materials and textures, read from the companion .script (the .tex files are
+plain DDS, if you ever wondered)
+[*]Skin weights as real vertex groups
+[/list]
+
+It writes them back out too, in a form the game's own Editor accepts — although
+with a hard limit for now: vertex and index counts can't change. Moving
+vertices, rescaling and rewriting UVs are all fine; adding geometry isn't yet.
+
+[b]Download and install[/b]
+
+[url=https://github.com/murkzuk/t34-vs-tiger-docs/blob/main/Tools/MS2Format/blender_addon/ms2_importer.zip]ms2_importer.zip[/url] — use the "Download raw file" button, don't unzip it.
+
+In Blender: [b]Edit > Preferences > Add-ons > the ▾ menu > Install from Disk[/b],
+pick the zip, tick the box. Blender 2.80 or newer; developed against 5.2.
+
+Instructions and format notes are here:
+[url=https://github.com/murkzuk/t34-vs-tiger-docs/tree/main/Tools/MS2Format]Tools/MS2Format[/url]
+
+[b]One thing worth knowing if you try it[/b]
+
+For a long time a third of the models imported with the upper hull shredded into
+splinters. The cause turned out to be a 16-byte record that we'd decoded wrongly:
+a part can use several materials, and each chunk numbers its triangles from
+[i]its own[/i] starting vertex. Ignore that and the superstructure's triangles
+get aimed at the hull's vertices.
+
+It hid because 14,817 of the 15,341 parts across both builds only use one
+material — and with one chunk, the wrong reading and the right one are identical.
+97% coverage looked exactly like 100%. The other 524 parts are in 87 of the 249
+models: both T-34s, both Tigers, the StuG, the SU-85, the Panzer IV, the
+aircraft, the bridges.
+
+[hr]
+
+[size=16][b]Credits, honestly[/b][/size]
+
+[list]
+[*][b]G5 Software[/b] — the engine and the original game, 2001
+[*][b]ZeeWolf[/b] — the Tiger II model and a great deal else. This is his work
+finished, not replaced
+[*]The unit class, the ballistics, the format reverse-engineering and the Blender
+add-on were done by me working with [b]Claude (Anthropic)[/b] — I'm not going to
+pretend otherwise, and the format work in particular would have taken months alone
+[/list]
+
+Happy to answer questions, and if anyone wants a model opened up or a variant
+built, say so.
