@@ -89,3 +89,57 @@ would GREY the scene, not WHITE it. The white is therefore probably NOT the DLL.
 ## Cloud rollout status (unrelated but adjacent)
 - Clouds (CCloud) ported to REDUX: C2M1 ✓, C1M5 (rolled back — overcast), C1M1 ✓.
 - Cloud SHADOWS: dormant native feature (see `project_tvt_clouds_cloud_shadows.md`).
+
+---
+
+# SOLVED 2026-09-01 - the sky texture FAILS TO LOAD
+
+## The cause
+
+`execution.log` says it outright:
+
+    Unable to load texture Textures/Sky_01.tex
+
+The dome renders untextured, which is white. That single line explains every
+symptom at once: swapping the texture changed nothing (both candidates were
+oversized), the fog tests changed nothing, and the material change changed nothing.
+
+**Nobody read the game's own log for this bug.** It had been sitting there.
+
+## Why it fails: dimensions, not format
+
+REDUX has four 2024 sky replacements at **8192x2048**. The engine will not load
+them. Format is NOT the issue - the working Sky_02 is also DXT5.
+
+| sky | dimensions | date | missions |
+|---|---|---|---|
+| Sky_01 | 8192x2048 | 2024-04 | C1M1, CF3, CF5, CF6, MP test, OldTest |
+| Sky_04 | 8192x2048 | 2024-10 | C1M4 |
+| Sky_07 | 8192x2048 | 2024-10 | C2M1, DM4 |
+| Sky_08 | 8192x2048 | 2024-10 | C2M2 |
+
+Every other sky is 2048x512 and loads. **ZW is unaffected** - all its skies are
+2048x512, which is why the bug never appeared there.
+
+## The fix
+
+Restored the four `.tex.orig` files (2006-2007 originals, 2048x512) over the
+oversized ones. The 2024 hi-res versions are preserved in
+`K:\TvTDeepseekollback\skies_2024_hires\` - they could be downscaled to
+2048x512 later to keep the better artwork at a size the engine accepts.
+
+## Two corrections to my own reasoning
+
+1. **The `diffuse 0.8017` theory was WRONG.** I argued Sky_01's non-zero diffuse
+   over-lit the dome to white. The cache proved the change went live and the sky
+   stayed white. **Reverted** to 0.801660 so this run tests one variable only.
+
+2. **The "C1M4 control" was never verified.** I treated C1M4 as a working control
+   because the user had not complained about it - and built the whole diffuse
+   argument on that. C1M4 uses Sky_04, which is also oversized, so it is affected
+   too. An absence of complaint is not a measurement.
+
+## Lesson
+
+For any in-game visual bug, read `execution.log` BEFORE forming a hypothesis. The
+answer was one grep away and I went three hypotheses deep without looking.
