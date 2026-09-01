@@ -138,3 +138,32 @@ first 8 such windows so they survive to the log. Every row carries a **frame num
 (Present is hooked, vtable slot 17) plus ZFUNC / COLORWRITEENABLE / CULLMODE.
 
 Pure observation - changes nothing.
+
+## First run FAILED - and it found three real defects (2026-09-01)
+
+The capture hooked nothing: 0 draws, 0 frames, and a **328 MB log**. All mine, not
+the user's. Fixed, then verified WITHOUT the game using `test_gpa.exe`:
+
+1. **The shipped d3d9.dll is PACKED.** `M:\T34vsTiger\d3d9.dll` is a 483 KB
+   wrapper (Dec 2025) with blank section names. Its `Direct3DCreate9` export points
+   at bytes that read **00 00 00 00 ...** at runtime - it decrypts on demand. No
+   prologue byte-pattern can ever match it, which is why the MSVC/GCC check failed.
+   (dustfix worked on 08-28 because a GCC-built d3d9 was in place then.)
+   **Fix: hook `GetProcAddress` instead.** The game imports NO d3d9 statically
+   (checked: not the exe, not Engine/Objects/Controls/Behavior/Service/J5Script/
+   STTree) - it resolves dynamically, so patching the IAT slot for GetProcAddress
+   catches it with no byte patterns anywhere. Verified: the returned pointer lands
+   inside our DLL, and a control export still passes through untouched.
+
+2. **The retry loop spun with no sleep and logged every pass** - that is the 328 MB.
+   Now one-shot logging plus `Sleep(50)`.
+
+3. **The loader notification was never unregistered.** After the DLL unloads the
+   loader still calls into it - an access violation at process exit, which is
+   exactly when the log is written. Caught in probe-only mode, with no d3d9 loaded
+   at all. **`dustfix.cpp` has this same defect** and should be fixed if reused.
+   The IAT slots are now restored on detach for the same reason.
+
+Verification: `test_gpa.exe` (probe-only and full) both exit 0, interception
+confirmed, log 922 bytes. The lesson held - suspect the instrument before the
+subject, and validate it off the game rather than on the user's time.

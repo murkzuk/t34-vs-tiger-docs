@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <tlhelp32.h>
 #include <d3d9.h>
 
 static const char LOG_PATH[] = "K:\\TvTDeepseek\\dust_order\\dust_order.log";
@@ -312,7 +313,7 @@ static IDirect3D9 *WINAPI HookD3D9Create(UINT SDKVersion)
   return d;
 }
 
-static volatile LONG g_hook_installed, g_logged_missing;
+static volatile LONG g_hook_installed, g_logged_missing, g_logged_prologue;
 
 static void patch_create9(BYTE *create)
 {
@@ -322,19 +323,170 @@ static void patch_create9(BYTE *create)
   const char *n = NULL;
   if (memcmp(create, MSVC_PROLOGUE, 5) == 0) n = "msvc";
   else if (memcmp(create, GCC_PROLOGUE, 5) == 0) n = "gcc";
-  if (!n) { llog("Direct3DCreate9 prologue not recognized - NOT patching"); return; }
+  if (!n) {
+    // Log ONCE, with the actual bytes. The 2026-09-01 run flooded a 328 MB log
+    // because this logged on every retry of a spinning boot thread.
+    if (!InterlockedExchange(&g_logged_prologue, 1)) {
+      llog("Direct3DCreate9 prologue NOT recognized at %08X - falling back to the GetProcAddress hook", (DWORD)create);
+      llog("  runtime bytes: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+           create[0],create[1],create[2],create[3],create[4],create[5],create[6],create[7],
+           create[8],create[9],create[10],create[11],create[12],create[13],create[14],create[15]);
+    }
+    return;
+  }
   llog("Direct3DCreate9 prologue verified (%s)", n);
   if (patch_jump(create, 5, (void *)HookD3D9Create, (void **)&g_orig_d3d9create, "Direct3DCreate9"))
     InterlockedExchange(&g_hook_installed, 1);
 }
 
+// --- prologue-agnostic path: intercept GetProcAddress ------------------------
+// The game imports NO d3d9 statically (checked 2026-09-01: not the exe, not
+// Engine/Objects/Controls/Behavior/Service/J5Script/STTree). It resolves
+// Direct3DCreate9 dynamically, and the shipped d3d9.dll is a packed wrapper whose
+// on-disk bytes do not match what runs. So patch the IAT slot for GetProcAddress
+// in every module instead - no byte patterns anywhere.
+
+typedef FARPROC (WINAPI *GetProcAddressFn)(HMODULE, LPCSTR);
+static GetProcAddressFn g_real_gpa = GetProcAddress;
+static volatile LONG g_gpa_hits;
+
+static FARPROC WINAPI HookGetProcAddress(HMODULE mod, LPCSTR name)
+{
+  FARPROC real = g_real_gpa(mod, name);
+  // ordinals have a zero high word - only inspect real string names
+  if (real && name && ((DWORD_PTR)name >> 16) != 0 && strcmp(name, "Direct3DCreate9") == 0) {
+    if (!g_orig_d3d9create) {
+      g_orig_d3d9create = (D3D9CreateFn)real;
+      InterlockedExchange(&g_hook_installed, 1);
+      llog("GetProcAddress(\"Direct3DCreate9\") -> %08X  [intercepted, hook #%ld]",
+           (DWORD)real, InterlockedIncrement(&g_gpa_hits));
+    }
+    return (FARPROC)HookD3D9Create;
+  }
+  return real;
+}
+
+// patch the kernel32!GetProcAddress slot in one module's import table.
+//
+// Every RVA is bounds-checked against SizeOfImage and the whole walk sits inside
+// SEH: a module can be notified while still mid-initialisation, and a PACKED
+// module (the shipped d3d9.dll is one) may have no valid import table at that
+// moment. Without this the probe access-violated - caught 2026-09-01 in
+// test_gpa.exe rather than in the user's game.
+static HMODULE g_self;
+
+// Every IAT slot we redirect, so DETACH can restore it. Without this the slots keep
+// pointing into this DLL after it unloads and the process access-violates during
+// shutdown - caught 2026-09-01 in test_gpa.exe, and it would have crashed the game
+// on exit, exactly when the log is written.
+#define MAXSLOTS 256
+static DWORD_PTR *g_slot_addr[MAXSLOTS];
+static GetProcAddressFn g_slot_prev[MAXSLOTS];
+static LONG g_slot_count;
+
+static void remember_slot(DWORD_PTR *addr, GetProcAddressFn prev)
+{
+  if (g_slot_count >= MAXSLOTS) return;
+  g_slot_addr[g_slot_count] = addr;
+  g_slot_prev[g_slot_count] = prev;
+  g_slot_count++;
+}
+
+static void restore_slots(void)
+{
+  int n = 0;
+  for (LONG i = 0; i < g_slot_count; i++) {
+    if (!g_slot_addr[i] || !g_slot_prev[i]) continue;
+    __try {
+      DWORD old;
+      if (VirtualProtect(g_slot_addr[i], sizeof(void *), PAGE_READWRITE, &old)) {
+        if (*g_slot_addr[i] == (DWORD_PTR)HookGetProcAddress) {
+          *g_slot_addr[i] = (DWORD_PTR)g_slot_prev[i];
+          n++;
+        }
+        VirtualProtect(g_slot_addr[i], sizeof(void *), old, &old);
+      }
+    } __except (EXCEPTION_EXECUTE_HANDLER) { }
+  }
+  llog("IAT: restored %d of %ld GetProcAddress slot(s)", n, g_slot_count);
+}
+
+static int patch_iat_gpa(BYTE *base)
+{
+  if (!base || (HMODULE)base == g_self) return 0;   // never patch our own imports
+  int patched = 0;
+  __try {
+    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)base;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return 0;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(base + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE) return 0;
+    DWORD imgsz = nt->OptionalHeader.SizeOfImage;
+    IMAGE_DATA_DIRECTORY *dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+    DWORD irva = dir->VirtualAddress;
+    if (!irva || irva >= imgsz) return 0;
+
+    IMAGE_IMPORT_DESCRIPTOR *imp = (IMAGE_IMPORT_DESCRIPTOR *)(base + irva);
+    for (; imp->Name; imp++) {
+      if ((BYTE *)imp + sizeof(*imp) > base + imgsz) break;
+      DWORD orva = imp->OriginalFirstThunk, frva = imp->FirstThunk;
+      if (!frva || frva >= imgsz) continue;
+      if (orva >= imgsz) orva = 0;
+      IMAGE_THUNK_DATA *oft = (IMAGE_THUNK_DATA *)(base + (orva ? orva : frva));
+      IMAGE_THUNK_DATA *ft  = (IMAGE_THUNK_DATA *)(base + frva);
+      for (; oft->u1.AddressOfData; oft++, ft++) {
+        if ((BYTE *)oft + sizeof(*oft) > base + imgsz) break;
+        if ((BYTE *)ft  + sizeof(*ft)  > base + imgsz) break;
+        if (oft->u1.Ordinal & IMAGE_ORDINAL_FLAG) continue;
+        DWORD nrva = (DWORD)oft->u1.AddressOfData;
+        if (nrva + sizeof(IMAGE_IMPORT_BY_NAME) >= imgsz) continue;   // bound import / garbage
+        IMAGE_IMPORT_BY_NAME *ibn = (IMAGE_IMPORT_BY_NAME *)(base + nrva);
+        if (strcmp((const char *)ibn->Name, "GetProcAddress") != 0) continue;
+        if ((void *)ft->u1.Function == (void *)HookGetProcAddress) continue;
+        DWORD old;
+        if (VirtualProtect(&ft->u1.Function, sizeof(void *), PAGE_READWRITE, &old)) {
+          GetProcAddressFn was = (GetProcAddressFn)ft->u1.Function;
+          if (was && was != (GetProcAddressFn)HookGetProcAddress) g_real_gpa = was;
+          ft->u1.Function = (DWORD_PTR)HookGetProcAddress;
+          VirtualProtect(&ft->u1.Function, sizeof(void *), old, &old);
+          remember_slot(&ft->u1.Function, was);   // so DETACH can put it back
+          patched++;
+        }
+      }
+    }
+  }
+  __except (EXCEPTION_EXECUTE_HANDLER) {
+    return patched;   // malformed or mid-load module - skip it, do not take the game down
+  }
+  return patched;
+}
+
+// walk every currently-loaded module (toolhelp snapshot - documented, no PEB structs)
+static void patch_iat_all(const char *when)
+{
+  int total = 0, mods = 0;
+  HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
+  if (snap == INVALID_HANDLE_VALUE) { llog("IAT: snapshot failed (%s)", when); return; }
+  MODULEENTRY32 me; me.dwSize = sizeof(me);
+  if (Module32First(snap, &me)) {
+    do {
+      mods++;
+      total += patch_iat_gpa((BYTE *)me.modBaseAddr);
+    } while (Module32Next(snap, &me));
+  }
+  CloseHandle(snap);
+  llog("IAT: patched %d GetProcAddress slot(s) across %d modules (%s)", total, mods, when);
+}
+
 typedef VOID (CALLBACK *MyDllNotificationFn)(ULONG, MY_LDR_DLL_NOTIFICATION_DATA*, PVOID);
 typedef LONG (NTAPI *LdrRegisterDllNotificationFn)(ULONG, MyDllNotificationFn, PVOID, PVOID*);
+typedef LONG (NTAPI *LdrUnregisterDllNotificationFn)(PVOID);
+static PVOID g_ldr_cookie;   // MUST be unregistered on DETACH - see below
 
 static VOID CALLBACK dll_notify(ULONG reason, MY_LDR_DLL_NOTIFICATION_DATA *data, PVOID)
 {
-  if (reason != 1 || g_hook_installed) return;
+  if (reason != 1) return;
   if (!data || !data->DllBase) return;
+  patch_iat_gpa((BYTE *)data->DllBase);   // every new module gets the GetProcAddress hook
   if (!basename_is_d3d9(data->BaseDllName)) return;
   BYTE *create = find_export((BYTE *)data->DllBase, "Direct3DCreate9");
   if (!create) return;
@@ -354,11 +506,16 @@ static void install_hook(void)
 
 static DWORD WINAPI boot_thread(LPVOID)
 {
+  // Sleep between retries. Without it this spun and logged millions of times -
+  // the 2026-09-01 run produced a 328 MB log and captured nothing.
   DWORD start = GetTickCount();
+  int sweeps = 0;
   while (!g_hook_installed) {
     install_hook();
     if (g_hook_installed) break;
-    if (GetTickCount() - start > 30000) break;
+    if ((sweeps++ % 10) == 0) patch_iat_all("boot retry");
+    if (GetTickCount() - start > 60000) { llog("boot thread giving up after 60s"); break; }
+    Sleep(50);
   }
   return 0;
 }
@@ -385,6 +542,7 @@ static const char *decode_zfunc(DWORD z)
 BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID)
 {
   if (reason == DLL_PROCESS_ATTACH) {
+    g_self = h;
     DisableThreadLibraryCalls(h);
     InitializeCriticalSection(&g_lock);
     g_log = fopen(LOG_PATH, "w");
@@ -395,12 +553,28 @@ BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID)
     if (ntdll) {
       LdrRegisterDllNotificationFn reg = (LdrRegisterDllNotificationFn)
           GetProcAddress(ntdll, "LdrRegisterDllNotification");
-      if (reg) { PVOID c = NULL; reg(0, dll_notify, NULL, &c); llog("loader notification armed"); }
+      if (reg) { reg(0, dll_notify, NULL, &g_ldr_cookie); llog("loader notification armed (cookie %08X)", (DWORD)g_ldr_cookie); }
     }
+    patch_iat_all("attach");
     install_hook();
     if (!g_hook_installed) { HANDLE t = CreateThread(NULL, 0, boot_thread, NULL, 0, NULL); if (t) CloseHandle(t); }
   }
   else if (reason == DLL_PROCESS_DETACH) {
+    // Unregister the loader callback BEFORE anything else. Leaving it armed means
+    // the loader calls into this DLL after it has unloaded - an access violation at
+    // process exit, which is exactly when the log is written. Caught 2026-09-01 by
+    // test_gpa.exe in probe-only mode (crashed with no d3d9 loaded at all).
+    // NOTE: dustfix.cpp has this same defect.
+    if (g_ldr_cookie) {
+      HMODULE nt = GetModuleHandleA("ntdll.dll");
+      if (nt) {
+        LdrUnregisterDllNotificationFn unreg = (LdrUnregisterDllNotificationFn)
+            GetProcAddress(nt, "LdrUnregisterDllNotification");
+        if (unreg) { unreg(g_ldr_cookie); llog("loader notification unregistered"); }
+      }
+      g_ldr_cookie = NULL;
+    }
+    restore_slots();   // put the IAT back BEFORE we unload, or shutdown crashes
     llog("=== totals: %ld draws, %ld dust-signature draws, %ld frames, %ld windows captured ===",
          g_total_draws, g_dust_draws, g_frame, g_win_count);
     LONG nw = g_win_count; if (nw > WINDOWS) nw = WINDOWS;
