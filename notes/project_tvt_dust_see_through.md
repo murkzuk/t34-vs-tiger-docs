@@ -196,3 +196,61 @@ The log path was fixed, so a throwaway regression run **overwrote the 175 KB
 gameplay capture** before its texture dump had been mined. The totals and window
 analysis survived only because they had already been read. Logs are now
 per-PID (`dust_order_pid<PID>.log`).
+
+# CAPTURE SUCCEEDED 2026-09-01 - and my prediction was WRONG
+
+3,170,491 draws / 158,577 dust-signature draws / 32,798 frames / **1135 triggers
+in busy frames, last 8 kept**. Calibration worth keeping: peak wheat was only **18
+draws per frame**, so the original ">=200 wheat draws" gate was 11x too high - that
+is why it fired zero times.
+
+## (b) STATE LEAK - DISPROVEN
+
+I predicted a render state set for the dust would leak into the wheat draws that
+follow, and said I leaned that way. **It does not.** Across all 8 windows the wheat
+draws before the trigger and after it are byte-identical in state - same flags,
+same `ALPHAREF 00/GREATER`, same `ZFUNC LESSEQ`, same `COLORWRITEENABLE 0F`, same
+`CULLMODE`. Nothing leaks. Dead.
+
+## (a) ORDERING - CONFIRMED, and the old model was wrong
+
+"Dust draws entirely before the wheat" is **false**. They interleave. From frame
+26403 (window 0), the tail of the frame:
+
+    row 73   11110  prims 14    writes depth
+    row 74   00110  prims 12    >>> NO DEPTH TEST AT ALL <<<
+    row 75   00110  prims 14    >>> NO DEPTH TEST AT ALL <<<
+    row 76   11110  prims 2     WHEAT billboard
+    row 77   11110  prims 2     WHEAT billboard
+    ...
+    row 84   11110  prims 2     WHEAT billboard
+    row 85   00110  prims 32    >>> NO DEPTH TEST AT ALL <<<
+    row 86   11110  prims 2     WHEAT billboard
+
+## The mechanism that actually fits
+
+`00110` = **ZWRITE=0 AND ZENABLE=0**. Depth testing is off *entirely*, not merely
+depth-write. Those draws are alpha-blended and sit **between** the wheat billboards.
+
+A draw with no depth test paints over whatever is already in the framebuffer
+regardless of distance. So the dust paints over wheat that was already drawn, no
+matter how near that wheat is - which is precisely "the dust shows through the
+wheat". Wheat drawn *after* (row 86) still appears normally, so the region reads as
+a dust-shaped hole rather than a uniform tint.
+
+**This explains why all three earlier attempts failed.** They targeted the wrong
+state: dustfix forced `ZWRITEENABLE=0` on alpha draws (31,649 forces, no change) -
+but ZWRITE was already 0. The variable is **ZENABLE**.
+
+It also kills the premise of this note's original plan: sorting the transparent
+pass back-to-front cannot fix a draw that ignores depth altogether.
+
+## Next test (one state, one run)
+
+Force `ZENABLE = D3DZB_TRUE` on draws that have ZENABLE=0 with ALPHABLEND=1, and
+see whether the wheat stops being overpainted. That is the opposite of what was
+tried before, and it is a single render state.
+
+Textures involved in the no-depth-test draws: `1F115E38` (also used as a
+depth-writing grass atlas - shared) and `1F116420` (`--AT` in the dump: 5,581
+draws, no zwrite, no zenable).
