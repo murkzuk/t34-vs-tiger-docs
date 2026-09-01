@@ -22,9 +22,9 @@ untouched.** Flak 88 confirmed by render.
   its wheels under `Turret_A`, so the wheels swung onto the diagonal. Centred
   when the track contains an identity frame. 35 of 250 models changed, 215
   untouched; sIG33 and King Tiger both verified by render.
-- [ ] **Eyeball a few more of the 35** - especially the other 180-degree turrets
-  (Panther, PzIII, KV, T-34 variants). The King Tiger was checked and is right,
-  but they all flip end-for-end under this change.
+- [x] **User checked the other 180-degree turrets 2026-09-01 - all correct.**
+  Panther, PzIII, KV and T-34 variants all come out right with Turret_A centred.
+  The turret fix is verified end to end.
 - [ ] Unrelated, seen in the same Editor session: `ShadowRender: Unable to
   allocate vertex buffer space for 62612 vertices for joint Turret_A,
   model(u_stat_Flak88.ms2)`.

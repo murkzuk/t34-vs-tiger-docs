@@ -48,6 +48,10 @@ turrets flip end-for-end under this. Rendered and checked: the King Tiger comes
 out correct, gun forward over the glacis, drive sprocket at the front. Its
 length also goes 10.23 -> 10.63 m against a real 10.29 with the gun forward.
 
+**VERIFIED 2026-09-01**: the user checked the other 180-degree turrets -
+Panther, PzIII, KV and T-34 variants - and all are correct. The turret fix is
+confirmed across the whole set, not just the King Tiger.
+
 Both fixes today came from the same technique: **walk one model's chain from ROOT
 down rather than hunting for a whole-model rule.**
 
