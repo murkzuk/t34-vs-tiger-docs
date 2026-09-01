@@ -143,3 +143,47 @@ oversized ones. The 2024 hi-res versions are preserved in
 
 For any in-game visual bug, read `execution.log` BEFORE forming a hypothesis. The
 answer was one grep away and I went three hypotheses deep without looking.
+
+## My diffuse test was CONFOUNDED - the two variables were never separated
+
+The texture fix was real (`Unable to load texture Textures/Sky_01.tex` is gone
+from execution.log) but the sky stayed white. Tracing the chain properly:
+
+    Mission.script:97  SetMissionSky(new #SkyObject<CSky01Model>())
+      -> CSky01Model    MeshFile Models/Sky.ms2, SkinClass CSky01ModelSkin
+      -> CSky01ModelSkin  material "0" -> Textures/Sky_01.tex
+
+Everything in that chain checks out: `Sky.ms2` holds one node (`SkyDome`) and
+carries no material-id strings, so it uses index 0, which the skin defines. There
+is no Sky object in `Content.script` at all. `[MaterialManager] Material "19" not
+found` sits between LensFlare and EffectsArray in the log - it is the effects
+chain, NOT the sky. Red herring.
+
+**The mistake:** I tested `diffuse = 0` while the texture was STILL FAILING TO
+LOAD. An untextured dome is white whatever the diffuse is, so that test could
+never have shown anything. I then fixed the texture and reverted the diffuse in
+the same step. Two variables, never separated, and I called the theory dead on
+the strength of an invalid test.
+
+Diffing Sky_01 against the known-good stock Sky_02, diffuse is now the ONLY
+difference:
+
+| | Sky_01 (white) | Sky_02 (works) |
+|---|---|---|
+| ambient | 1,1,1 | 1,1,1 |
+| **diffuse** | **0.8017** | **0.0** |
+| all other fields | identical | identical |
+
+A sky dome is meant to be unlit: ambient (1,1,1) already shows the texture at full
+brightness, and diffuse adds sunlight on top - with SunIntensity 1.0 and SunColor
+(1,1,1) that clips to white. Nine of twelve skies use 0.0; the exceptions are
+Sky_01, Sky_07 (C2M1, DM4) and Sky_12 (C2M6).
+
+Now set to 0.0 **with a loadable texture in place** - the first valid test of it.
+
+### On the SunColor alpha hypothesis
+`Variable SunAlpha not found in script` is the engine asking for a script variable
+called `SunAlpha` that exists nowhere in `Scripts/` or the mission. That the engine
+wants a SEPARATE `SunAlpha` argues that `SunColor`'s own alpha channel is not the
+sun's alpha - which makes the alpha-0 theory less likely, though not disproven.
+It stays as the next candidate if diffuse does not settle it.
