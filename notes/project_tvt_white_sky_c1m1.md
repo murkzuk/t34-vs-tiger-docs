@@ -187,3 +187,55 @@ called `SunAlpha` that exists nowhere in `Scripts/` or the mission. That the eng
 wants a SEPARATE `SunAlpha` argues that `SunColor`'s own alpha channel is not the
 sun's alpha - which makes the alpha-0 theory less likely, though not disproven.
 It stays as the next candidate if diffuse does not settle it.
+
+## Diffuse DISPROVEN by ZW; fog is the live candidate
+
+Diffed the whole sky chain against ZW, which runs the same engine and has a
+working sky:
+
+    REDUX:   String RouterMapFile = "Models/Sky.rmap";
+    ZW:    //String RouterMapFile = "Models/Sky.rmap";
+    REDUX:  diffuse 0.000000   (my change)
+    ZW:     diffuse 0.801660   <- and ZW's sky WORKS
+
+`Sky.ms2` is byte-identical between the builds (md5 8d53a17d).
+
+**Both of my theories are dead:**
+- **diffuse** - ZW renders correctly at 0.801660, the very value I called the bug.
+  Reverted to stock.
+- **the missing .rmap** - `Sky.rmap` is missing in BOTH builds, and so is nearly
+  every other `.rmap` (only `u_veh_KingTiger.rmap` exists). The working Sky_02 has
+  an active RouterMapFile line pointing at the same missing file. Not fatal.
+
+### What fits every observation instead: fog
+
+`fogfix` is active - `fogfix.log` was written at 07:31, the same session as the
+07:25 `execution.log`, and it reports **848 fog-on restores, 377 shaders tracked**.
+Its entire job is forcing fog back on for geometry the engine had disabled it for.
+The sky dome is the most distant geometry there is.
+
+And C1M1 has the whitest fog of any mission:
+
+| mission | FogColor | FogFar |
+|---|---|---|
+| **C1M1** | **0.976, 0.988, 1.000 - near pure white** | 800 |
+| C1M3 | 0.651, 0.761, 1.000 | 450 |
+| C1M5 | 0.627 grey | 500 |
+| C2M2 | 0.720, 0.750, 0.800 | 450 |
+| ZW C1M1 | 0.918, 0.906, 0.859 (warm) | - |
+
+This explains everything the other theories could not: the white is perfectly
+uniform with no gradient (fog colour is uniform), near terrain is correctly lit,
+distant hills are visibly hazed in the screenshot, texture swaps changed nothing
+(fog paints over the result), and the bug appeared right after fogfix shipped on
+2026-08-28.
+
+**Test in place:** diffuse restored to stock 0.801660 so fog is the ONLY variable,
+and C1M1's four FogColor entries set to an unmistakable blue
+`(0.450, 0.620, 0.850)`. Backup:
+`K:\TvTDeepseekollback\C1M1_Content.script.bak.*`
+
+- Sky turns BLUE -> confirmed, and the fix is simply a sky-appropriate fog colour
+  (fog colour is *meant* to match the sky).
+- Sky stays WHITE -> fog is ruled out properly for the first time, and the next
+  step is a D3D9 capture of the sky-dome draw itself rather than another theory.
