@@ -375,7 +375,50 @@ def read_ms2(path):
         nodes.append(node)
 
     _fix_character_rigs(nodes)
+    _fix_rotated_root(nodes)
     return nodes
+
+
+def _fix_rotated_root(nodes):
+    """Conjugate a ROOT node's rest rotation, in place. Returns True if it did.
+
+    [2026-09-01] The towed guns and mortars imported UPSIDE DOWN - the user
+    reported the Flak 88 that way, and the game's own Asset View renders it
+    correctly, so this was ours.
+
+    Walking the Flak's chain from ROOT found it at the very first node:
+
+        ROOT   rest pos (0, 2.00, 0)   rotation 90 deg
+        Body   rest pos (0, -2.00, 0)  rotation 0 deg
+
+    ROOT carries a 90 degree rotation AND a +2 m lift, and Body carries exactly
+    the inverse translation. Those are meant to cancel; because ROOT also
+    rotates, the cancellation fails and everything below is thrown out and
+    tipped - outriggers ended up 1.82 m in the air with the barrel at 0.43.
+
+    Conjugating ROOT's rotation mirrors it back: legs to -1.82 (just off the
+    ground plane at -2.00) and barrel to -0.43 near the top. Confirmed by
+    rendering - cruciform outriggers flat with their jacks, pedestal centred,
+    barrel horizontal, matching the Editor.
+
+    SAFE BY CONSTRUCTION: only **12 of 250** models have a ROOT rotation at all,
+    every one of them exactly 90 degrees, and they are the guns, the mortars and
+    a handful of test/scenery boxes. On the other 238 the ROOT rotation is
+    identity, and conjugating identity is identity - a no-op.
+
+    NOTE this does NOT explain the sIG33's crossed legs: its ROOT rotation is
+    zero, so that is a separate bug still open.
+    """
+    if not nodes:
+        return False
+    root = nodes[0]
+    if not root.has_rest:
+        return False
+    w, x, y, z = root.rest_quat
+    if abs(abs(w) - 1.0) < 1e-4:        # identity - nothing to do
+        return False
+    root.rest_quat = (w, -x, -y, -z)
+    return True
 
 
 # Skeleton roots are named l_Hips / l_Hip / l_Hips1, and inside vehicles the

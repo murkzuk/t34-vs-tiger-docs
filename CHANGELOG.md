@@ -2,6 +2,64 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-09-01 — the guns imported upside down: it was the very first node
+
+The user reported the Flak 88 importing upside down and off centre. The game's
+own Asset View renders it correctly, so this was ours.
+
+**Walking the chain from ROOT found it at node zero:**
+
+```
+ROOT   rest pos (0,  2.00, 0)   rotation 90 deg
+Body   rest pos (0, -2.00, 0)   rotation  0 deg
+```
+
+ROOT carries a 90 degree rotation AND a +2 m lift; `Body` carries exactly the
+inverse translation. Those are meant to cancel - but because ROOT also rotates,
+the cancellation fails and everything below is thrown out and tipped. The
+cruciform outriggers ended up 1.82 m in the air with the barrel at 0.43.
+
+**Fix: conjugate the ROOT node's rest rotation.** Legs move to -1.82, just off
+the ground plane at -2.00, and the barrel to -0.43 near the top. Confirmed by
+render: outriggers flat with their jacks, pedestal centred, barrel horizontal,
+matching the Editor.
+
+**Safe by construction.** Only **12 of 250** models have a ROOT rotation at all,
+every one exactly 90 degrees: the towed guns, the mortars, and a few test boxes.
+On the other 238 it is identity, and conjugating identity is a no-op. Verified
+by before/after over all 250: **8 models changed, 242 untouched** - every vehicle
+and every character unaffected.
+
+```
+changed: Flak88, Pak43_41, ML19_122mm, ML20_152mm, 120mmMortar,
+         82mmMortar, AmmoBunker, TenMeterScale
+```
+
+**Honest scope**: the Flak 88 is verified by render AND by geometry (legs below
+barrel; 5.01 x 3.49 x 1.97 m against a real 5.8 x 2.3 x 2.1, the extra width
+being deployed outriggers). The other seven changed and are *expected* to be
+right, but have not been eyeballed.
+
+### Four hypotheses died first, and that is the useful part
+
+1. *Models are shredded* - wrong, they are misoriented. The user corrected me.
+2. *The stored bounding boxes are ground truth* - wrong, they are LOCAL space;
+   the known-good Hummel fails that test 60 of 67.
+3. *Do not apply transforms to baked nodes* - **tested and refuted.** Every
+   correct model has baked nodes with non-identity transforms; the Hummel has 15
+   against the broken Flak's 7. Implementing it would have broken the Tiger, the
+   Hummel and both T-34s to fix two guns.
+4. *The Tiger's baked nodes have identity transforms* - tested, they do not.
+
+The answer came from walking one model's chain node by node instead of hunting
+for a whole-model rule.
+
+### Still open
+
+**The sIG33's crossed legs are a DIFFERENT bug** - its ROOT rotation is zero, so
+this fix does not touch it.
+
+
 ## 2026-08-28/29 — weekend work (DeepSeek-assisted), reviewed and validated 2026-09-01
 
 Work done while the user was off-plan. **Not committed at the time**; this entry

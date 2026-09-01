@@ -4,76 +4,29 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
-## MS2 IMPORTER: gun models assemble wrongly — OUR bug, diagnosed not fixed (2026-09-01)
+## MS2 IMPORTER: guns imported upside down — FIXED 2026-09-01
 
-**Confirmed our bug, not the models.** `u_stat_Flak88` renders correctly in the
-game's own Asset View; the importer shows it upside down and off centre. The
-sIG33 comes in with its trail legs crossed.
+**Root cause: the ROOT node.** It carries a 90 degree rotation plus a +2 m lift,
+and `Body` carries the inverse translation; the cancellation fails because of the
+rotation. Fixed by conjugating ROOT's rest rotation (`_fix_rotated_root`).
 
-**Diagnosis.** The Flak's geometry is **already baked in model space**, and the
-node ALSO carries a non-identity rest transform. Applying it double-transforms:
+Only 12 of 250 models have a ROOT rotation, all exactly 90 degrees - the towed
+guns, the mortars, some test boxes. Verified over all 250: **8 changed, 242
+untouched.** Flak 88 confirmed by render.
 
-```
-                WITH rest (current)      IGNORING rest
-LegLF           ( 1.01, 0.97, 1.82)      ( 1.01, 0.18, -1.03)
-LegRR           (-1.01, 3.04, 1.82)      (-1.01, 0.18,  1.04)
-Body            ( 0.00, 2.00, 1.59)      ( 0.00, 0.41,  0.00)
-Turret_A        ( 0.12, 2.43, 0.97)      (-0.43, 1.03,  0.12)
-```
+- [ ] **Eyeball the other seven** - Pak43_41, ML19_122mm, ML20_152mm,
+  120mmMortar, 82mmMortar, AmmoBunker, TenMeterScale. Expected right, not yet
+  looked at.
+- [ ] **The sIG33's crossed legs are a SEPARATE bug.** Its ROOT rotation is
+  zero, so the fix above does not touch it. Walk its chain the same way.
+- [ ] Unrelated, seen in the same Editor session: `ShadowRender: Unable to
+  allocate vertex buffer space for 62612 vertices for joint Turret_A,
+  model(u_stat_Flak88.ms2)`.
 
-Ignoring the transforms gives a coherent gun - cruciform outriggers flat at
-equal height, body above, turret above that, barrel along +X. Applying them
-lifts the legs 1.8 m into the air. This is exactly the case `ms2_reader`'s own
-comment warns about: *"static parts are baked in world space"*.
-
-**NO CLEAN DISCRIMINATOR YET — this is the blocker.** Counting nodes whose
-stored bbox centre is off-origin ("baked") vs at-origin ("pivot"):
-
-```
-Flak 88  (wrong with rest)     13 baked /  1 pivot,  14 non-identity of 20
-Hummel   (needs rest)          17 baked / 50 pivot, 109 non-identity of 115
-Tiger    (needs rest)          80 baked / 70 pivot, 142 non-identity of 335
-```
-
-The Flak is a clear outlier, but the Tiger is 80/70 mixed and assembles
-CORRECTLY with transforms applied to everything - so a per-node "is it baked"
-rule would break the Tiger. **Do not implement one without testing all 250
-models both ways.**
-
-- [ ] Find the real discriminator, or establish that these gun models are simply
-  authored differently and need flagging by name/structure.
-- [x] **TESTED 2026-09-01 AND REFUTED.** The Tiger's baked nodes do NOT all have
-  identity transforms, and neither do any correct model's:
-
-```
-                     baked+identity   BAKED+NON-IDENTITY
-  Tiger  (correct)          71                 9
-  Hummel (correct)           2                15
-  T-34/85(correct)          51                10
-  Flak88 (BROKEN)            6                 7
-  sIG33  (BROKEN)            0                 5
-```
-
-  The Hummel has MORE baked+non-identity nodes than the Flak and assembles
-  perfectly (`TrackLeft`, `Arms_L`, `Hull_Detals` are all in that category).
-  **"Do not apply a transform to a baked node" is therefore NOT the rule** -
-  implementing it would have broken the Tiger, the Hummel and both T-34s to fix
-  two guns. Discriminator still unknown.
-- [ ] Next idea, UNTESTED: the difference may be a single bad node high in the
-  gun's chain rather than a per-node rule. The Flak's `Body` has rest pos
-  (0, -2.00, 0) with identity rotation, and its stored bbox centre is
-  (0, 0.41, 0) but it assembles to (0, 2.00, 1.59) - a shift of +1.59 in BOTH
-  Y and Z, which no single translation explains. Walk the Flak's chain from
-  ROOT down and find the first node whose assembled position stops matching a
-  sane gun, rather than looking for a whole-model rule.
-- [ ] Re-check the sIG33's crossed legs once the Flak is right - likely the same
-  cause.
-- Affected: the `u_stat_*` towed guns. Vehicles and characters are unaffected.
-
-**Unrelated but real, seen in the same Editor session:**
-`ShadowRender: Unable to allocate vertex buffer space for 62612 vertices for
-joint Turret_A, model(u_stat_Flak88.ms2)` - the engine's shadow pass cannot
-handle that node's vertex count.
+**Refuted along the way, do not retry**: "don't apply transforms to baked nodes"
+(every correct model has such nodes - the Hummel has more than the Flak), and
+"the Tiger's baked nodes have identity transforms" (they do not). Stored bboxes
+are LOCAL space and cannot serve as assembly ground truth.
 
 ---
 
