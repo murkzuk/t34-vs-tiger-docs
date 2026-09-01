@@ -2,6 +2,55 @@
 
 All notable changes to this repository. The most recent entry is first.
 
+## 2026-09-01 (d) — Recovered the weekend's uncommitted work
+
+Answering "what else have you missed". The root cause was one habit: I treated
+"check and validate" as an inventory task — counting new material instead of
+reading it. What that hid:
+
+- **25 DeepSeek commits**, unmerged for four days. DeepSeek has no network and
+  asked for the pull+push on 2026-08-28. Merged.
+- **AtmosWysiwyg** — a live WYSIWYG atmosphere editor (injected DLL + web slider
+  panel): sun position, sun colour, ambient, fog distance and fog colour drive the
+  running game instantly. Built and user-verified. Source now in `Tools/AtmosWysiwyg`.
+- **Save-to-mission bake** — the panel writes its values into a mission's
+  `Content.script` with a timestamped backup. Full loop proven: tune live → bake →
+  reload → it sticks.
+- **CAtmosphere reverse-engineered** — setter addresses and member offsets
+  (SunDirection +0x70, AmbientLight +0x90, SunColor +0xA0, fog +0x104..+0x178).
+- **The level editor documented** — it is script-driven (`Scripts/Editor/`, 30
+  files) and can edit almost everything we hand-edit, atmosphere included.
+- **Clouds ported to REDUX** (C2M1 and C1M1) — verified in-game. REDUX had the
+  script but never the `c_cumulus1.tex` texture or the per-mission cloud objects.
+- **Rain + Snow** (WoV Rain Mod 1.1 / Snow Mod 1.1) — ZW bundles it, REDUX never
+  had it. Fully mapped with a port recipe; parked at the user's choice.
+- **White sky in C1M1** — OPEN, escalated to me. Sky texture and fog both ruled
+  out by the user's own tests.
+
+### Corrections made while recovering it
+
+- **Cloud shadows are NOT enabled.** DeepSeek's suggested changelog line said they
+  were; their own note disproves it. `GameSettings.script:49
+  `CloudShadow = true //jm - Hidden WV.exe feature`` is a boolean named after a
+  native **class** (`CCloudShadow`, `GenerateCloudShadowTexture`). The engine never
+  reads it as a flag. It does nothing, in either build.
+- **Map-lookup multi-entry cache: no benefit, closed.** Predicted 85% hit rate,
+  measured ~67% — unchanged from one entry. The pattern is 67%
+  repeat-the-previous-key, not a hot working set. Do not ship it; the one-entry
+  cache stands at +6.3%. (DeepSeek asked me to record this and I had missed it.)
+- **Stock-noon missions: verified, not assumed.** The commit marking them done
+  touched only `PROJECT_JOBS.md`, so I checked the mission files. Genuine — five ZW
+  missions edited 08-28/08-29. Phase 2 is 6 of 7.
+- **Tree height is PARKED and BLOCKED**, not "open, unowned". Any hook on
+  `CSpeedTreeRT::GetGeometry`, even a bare passthrough, makes trees cull by camera
+  angle. `tree_yscale/yprobe/minhook.dll` are diagnostic — do not ship.
+
+### Gotchas recorded
+
+`Console.script` is pure-ASCII CRLF and must be byte-edited. The editor scripts
+`BaseApplication.script` and `Terraformer.script` are CP1251. `ComputeFogColor`
+(`0x5BBB0`) crashes on an overhead sun — write the cached colour at +0x178 instead.
+
 ## 2026-09-01 (c) — CORRECTION: the dust fix is NOT fixed
 
 Entry (b) and the board recorded the see-through-wheat artefact as fixed. **It is
@@ -12,8 +61,10 @@ existed. **I never ran it and never asked.** That is the "verify the artefact,
 not the success message" rule, broken on the same day I was applying it
 elsewhere. Corrected.
 
-The DLL exists and may simply not be arming - `dustfix.log` is the first thing to
-read, before anything is changed in the code.
+**Sharpened 2026-09-01(d):** it is not that the DLL "may not be arming" — it is a
+**pure-observation probe by design**. Its own source header reads: `PURE OBSERVATION -`
+`changes nothing, just logs.` There is no fix in it to arm. The real fix (sort the
+transparent pass back-to-front) has not been written.
 
 **Fog on distant objects IS genuinely fixed** and remains confirmed by the user's
 own play-testing.

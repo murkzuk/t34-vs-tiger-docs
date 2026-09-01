@@ -132,17 +132,29 @@ the game had already called `Direct3DCreate9` by the time it got there, and the
 run produced nothing at all. `LdrRegisterDllNotification` patches during the
 DLL's load and is the only reliable way.
 
-## NEXT — the obvious follow-on
+## NEXT — the obvious follow-on: CLOSED 2026-08-29, NO BENEFIT
 
-**The cache is one entry.** The top 16 keys covered up to 51% of all lookups, so
-a small direct-mapped table (4 or 8 entries, indexed by low bits of the key)
-should push the hit rate well past 67%. Same verify-then-activate safety, same
-self-A/B to measure it.
+**Tested by DeepSeek and closed. Do NOT ship the multi-entry version.**
 
-If the hit rate reached 85%, the arithmetic says ~8% and the observed
-second-order effect suggests more.
+The prediction below was written first, then measured — and it was wrong.
 
-**Not yet done, and it should be measured the same way — predicted number first.**
+| | predicted | measured |
+|---|---|---|
+| hit rate, 8-entry direct-mapped | 85% | **~67% — unchanged from one entry** |
+
+The 8-entry table catches nothing the single entry did not already catch. The
+access pattern is not "a hot working set of 16 keys"; it is **67% repeat-the-
+previous-key, 33% scattered**. A one-entry cache already captures all of the
+repeat-the-previous traffic, and the scattered third has no reuse for a bigger
+table to exploit. The top-16-keys statistic (51% of lookups) was measured over
+the whole run and hid the fact that those hits are mostly *consecutive*.
+
+Build: K:\TvTDeepseek\maplookup_memo\maplookup_cache_multi.* (diagnostic only).
+**The shipped one-entry cache stands unchanged at +6.3%.**
+
+Second entry in the ledger for predict-before-measuring: naming the number first
+is what made this cheap to close instead of shipping a more complex cache that
+buys nothing.
 
 ---
 
