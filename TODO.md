@@ -42,8 +42,30 @@ models both ways.**
 
 - [ ] Find the real discriminator, or establish that these gun models are simply
   authored differently and need flagging by name/structure.
-- [ ] Check whether the baked nodes in the Tiger have IDENTITY transforms (in
-  which case applying-to-all is harmless there and the Flak is the exception).
+- [x] **TESTED 2026-09-01 AND REFUTED.** The Tiger's baked nodes do NOT all have
+  identity transforms, and neither do any correct model's:
+
+```
+                     baked+identity   BAKED+NON-IDENTITY
+  Tiger  (correct)          71                 9
+  Hummel (correct)           2                15
+  T-34/85(correct)          51                10
+  Flak88 (BROKEN)            6                 7
+  sIG33  (BROKEN)            0                 5
+```
+
+  The Hummel has MORE baked+non-identity nodes than the Flak and assembles
+  perfectly (`TrackLeft`, `Arms_L`, `Hull_Detals` are all in that category).
+  **"Do not apply a transform to a baked node" is therefore NOT the rule** -
+  implementing it would have broken the Tiger, the Hummel and both T-34s to fix
+  two guns. Discriminator still unknown.
+- [ ] Next idea, UNTESTED: the difference may be a single bad node high in the
+  gun's chain rather than a per-node rule. The Flak's `Body` has rest pos
+  (0, -2.00, 0) with identity rotation, and its stored bbox centre is
+  (0, 0.41, 0) but it assembles to (0, 2.00, 1.59) - a shift of +1.59 in BOTH
+  Y and Z, which no single translation explains. Walk the Flak's chain from
+  ROOT down and find the first node whose assembled position stops matching a
+  sane gun, rather than looking for a whole-model rule.
 - [ ] Re-check the sIG33's crossed legs once the Flak is right - likely the same
   cause.
 - Affected: the `u_stat_*` towed guns. Vehicles and characters are unaffected.
