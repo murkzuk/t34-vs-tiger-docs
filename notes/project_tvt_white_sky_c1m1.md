@@ -239,3 +239,54 @@ and C1M1's four FogColor entries set to an unmistakable blue
   (fog colour is *meant* to match the sky).
 - Sky stays WHITE -> fog is ruled out properly for the first time, and the next
   step is a D3D9 capture of the sky-dome draw itself rather than another theory.
+
+# CONFIRMED AND FIXED 2026-09-01 - the FOG COLOUR paints the sky
+
+User-verified: setting C1M1's FogColor to blue turned the sky blue, **with the
+clouds and the gradient visible**. The sky texture was rendering the whole time.
+
+## The mechanism
+
+`fogfix` forces fog back on for geometry the engine had disabled it for (its own
+log: **848 fog-on restores, 377 shaders tracked**). The sky dome is the most
+distant geometry in the scene, so it takes the fog colour. C1M1's fog was
+`0.976, 0.988, 1.000` - near pure white. White fog, white sky.
+
+**Fog colour now effectively controls sky appearance.** That is not a bug in
+fogfix - fog colour is *meant* to match the sky - but it means any mission whose
+fog colour was left near-white now renders a white sky.
+
+## Why every earlier theory failed
+
+The texture, the material, the mesh, the `.rmap` and the sun alpha were all fine.
+Nothing in the sky chain was broken:
+
+- The oversized-texture bug WAS real and IS fixed (`Unable to load texture
+  Textures/Sky_01.tex` is gone) - but it was a second, independent bug.
+- `diffuse 0.801660` is disproven by ZW, which uses that exact value and renders
+  correctly. Reverted to stock.
+- `Sky.rmap` is missing in both builds, and in nearly every model script - the
+  working Sky_02 points at the same missing file.
+- `Material "19" not found` belongs to the effects chain, not the sky.
+
+## Rolled out
+
+Missions carrying the identical stock near-white fog, all now
+`(0.450, 0.620, 0.850)`:
+
+| mission | sun elevation | note |
+|---|---|---|
+| C1M1 | 32 deg | user-verified blue |
+| C1M4 | 32 deg | atmosphere byte-identical to C1M1 |
+| C2M3 | 25 deg | one entry was hand-edited to a 3-component form |
+| C2M6 | 45 deg | |
+
+**C1M2 left alone** - its fog is warm near-white (0.953, 0.953, 0.871, luminance
+0.947) on a dawn mission, which is plausibly intentional haze. Flag for the user
+rather than change.
+
+Backups: `K:\TvTDeepseekollback\*_Content.script.bak.20260901_0747*`
+
+**Note:** `Campaign_2/Mission_3/Content.script` is **pure LF**, not CRLF (verified
+against the backup: 0 CRLF, 6065 LF, before and after). Line endings are per-file
+in this project - always check before editing.
