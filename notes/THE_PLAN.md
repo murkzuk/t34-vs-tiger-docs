@@ -1,4 +1,5 @@
 # The plan — five phases, in order
+> **Stopping point 2026-09-01:** see [WHERE_THIS_STANDS.md](WHERE_THIS_STANDS.md)
 
 **Why this exists:** the board has 115 items. That is a list, not a plan, and a
 list gives no sense of direction. This is the ladder: what we are doing, in what

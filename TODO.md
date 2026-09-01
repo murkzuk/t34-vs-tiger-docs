@@ -1,4 +1,5 @@
 # TODO / Backlog — t34-vs-tiger-docs
+> **Stopping point 2026-09-01:** see [WHERE_THIS_STANDS.md](notes/WHERE_THIS_STANDS.md)
 
 Running list of things flagged during work sessions, not yet done. Newest first within each section. See `CHANGELOG.md` for what's already been done.
 
