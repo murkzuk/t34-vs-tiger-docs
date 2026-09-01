@@ -4,6 +4,57 @@ Running list of things flagged during work sessions, not yet done. Newest first 
 
 ---
 
+## MS2 IMPORTER: gun models assemble wrongly — OUR bug, diagnosed not fixed (2026-09-01)
+
+**Confirmed our bug, not the models.** `u_stat_Flak88` renders correctly in the
+game's own Asset View; the importer shows it upside down and off centre. The
+sIG33 comes in with its trail legs crossed.
+
+**Diagnosis.** The Flak's geometry is **already baked in model space**, and the
+node ALSO carries a non-identity rest transform. Applying it double-transforms:
+
+```
+                WITH rest (current)      IGNORING rest
+LegLF           ( 1.01, 0.97, 1.82)      ( 1.01, 0.18, -1.03)
+LegRR           (-1.01, 3.04, 1.82)      (-1.01, 0.18,  1.04)
+Body            ( 0.00, 2.00, 1.59)      ( 0.00, 0.41,  0.00)
+Turret_A        ( 0.12, 2.43, 0.97)      (-0.43, 1.03,  0.12)
+```
+
+Ignoring the transforms gives a coherent gun - cruciform outriggers flat at
+equal height, body above, turret above that, barrel along +X. Applying them
+lifts the legs 1.8 m into the air. This is exactly the case `ms2_reader`'s own
+comment warns about: *"static parts are baked in world space"*.
+
+**NO CLEAN DISCRIMINATOR YET — this is the blocker.** Counting nodes whose
+stored bbox centre is off-origin ("baked") vs at-origin ("pivot"):
+
+```
+Flak 88  (wrong with rest)     13 baked /  1 pivot,  14 non-identity of 20
+Hummel   (needs rest)          17 baked / 50 pivot, 109 non-identity of 115
+Tiger    (needs rest)          80 baked / 70 pivot, 142 non-identity of 335
+```
+
+The Flak is a clear outlier, but the Tiger is 80/70 mixed and assembles
+CORRECTLY with transforms applied to everything - so a per-node "is it baked"
+rule would break the Tiger. **Do not implement one without testing all 250
+models both ways.**
+
+- [ ] Find the real discriminator, or establish that these gun models are simply
+  authored differently and need flagging by name/structure.
+- [ ] Check whether the baked nodes in the Tiger have IDENTITY transforms (in
+  which case applying-to-all is harmless there and the Flak is the exception).
+- [ ] Re-check the sIG33's crossed legs once the Flak is right - likely the same
+  cause.
+- Affected: the `u_stat_*` towed guns. Vehicles and characters are unaffected.
+
+**Unrelated but real, seen in the same Editor session:**
+`ShadowRender: Unable to allocate vertex buffer space for 62612 vertices for
+joint Turret_A, model(u_stat_Flak88.ms2)` - the engine's shadow pass cannot
+handle that node's vertex count.
+
+---
+
 ## THE `TvT/` MIRROR HAS DIVERGED BOTH WAYS - do not bulk-sync (2026-09-01)
 
 **143 of 951 mirrored files differ from the live REDUX install**, and the
