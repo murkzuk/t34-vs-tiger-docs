@@ -17,6 +17,135 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-09-01 — the guns were upside down, and it was the very first line of the file
+
+Our Blender importer for T-34 vs Tiger's models had been quietly wrong about
+artillery. The 88 came in upside down and off centre; the sIG 33 came in with its
+trail legs crossed. Everything else — tanks, halftracks, soldiers — looked fine,
+which is exactly why it went unnoticed.
+
+The check that mattered took a minute: **open the same model in the game's own
+Editor.** It renders correctly there. So the models are fine and the tool was
+wrong. Worth doing before any theorising, and I didn't do it first.
+
+### Four wrong answers before the right one
+
+- *The models are shredded.* No — they're misoriented. Different problem.
+- *The file's stored bounding boxes will tell us where parts belong.* No — they're
+  in local space. The known-good Hummel "fails" that test on 60 of its 67 parts.
+- *Don't apply transforms to parts whose geometry is already baked in place.*
+  Sounded right, tested, **refuted**: every correct model has such parts, and the
+  Hummel has more of them than the broken 88. Implementing it would have broken
+  the Tiger, the Hummel and both T-34s to fix two guns.
+- *Then at least the working models have identity transforms on those parts.*
+  They don't.
+
+What finally worked was giving up on finding a clever whole-model rule and just
+**walking one model's node hierarchy from the root down**, printing each node's
+own transform next to where it actually landed.
+
+### It was visible on line one
+
+```
+ROOT   position (0,  2.00, 0)   rotation 90 degrees
+Body   position (0, -2.00, 0)   rotation  0 degrees
+```
+
+The root carries a 2 metre lift *and* a 90 degree rotation. The next node down
+carries exactly the inverse lift — those two are meant to cancel. But the
+rotation gets applied to that cancelling translation, so it doesn't cancel, and
+everything below is thrown out and tipped over. The gun's cruciform outriggers
+ended up 1.8 metres in the air with the barrel underneath them.
+
+Only **12 of 250** models have any rotation on their root — all exactly 90
+degrees, and they're the towed guns, the mortars, and a few test boxes. So the
+fix is safe by construction: on the other 238 it's a no-op.
+
+### The crossed legs were something else, and more interesting
+
+The sIG 33's root is clean. Its problem is one level down, and it's the same
+shape as something found last week about gun elevation:
+
+**A part's animation track isn't an animation — it's the mechanical range.**
+
+```
+sIG 33     [-45, -22.5, 0, +22.5, +45]     traverse +-45 degrees
+StuG III   [ -9,  -4.5, 0,  +4.5,  +9]     +-9
+Hummel     [-15 ................. +15]     +-15
+Tiger      [-90, 0, +90, +180]             full rotation
+```
+
+Those are the real vehicles' traverse figures. And **frame 0 is one END of the
+range**, not a neutral pose — so reading it as "the rest position" parks every
+gun at a traverse extreme. On the sIG 33 that's 45 degrees, and because that
+model happens to parent its *wheels* under the traversing part, the wheels swing
+onto the diagonal. Crossed legs.
+
+Every one of those tracks contains 0. Using that instead gives a straight-ahead
+gun: the sIG 33 goes from 36.9 degrees off-axis to 3.9, and its footprint from a
+meaningless 3.30 x 3.30 square to 4.35 x 2.13 metres — against a real 15 cm
+sIG 33 at 4.4 x 2.06.
+
+The risky part was tank turrets, whose range includes 180 degrees: they flip
+end-for-end under this. Checked, and they come out right — gun forward over the
+glacis.
+
+### Where it leaves the tool
+
+The importer now opens every model in the game correctly — vehicles assembled and
+textured, soldiers standing with weapons in hand, guns square on their carriages,
+turrets centred — and writes files back out that round-trip byte-identical on all
+249. Four separate bugs found this week; the two today were both found by reading
+one file's hierarchy line by line rather than being clever.
+
+Done with Claude (Anthropic). The three corrections that killed my wrong answers
+all came from the user looking at the screen and saying "no, that's not what I'm
+seeing" — including the one that killed a whole day's assumption: *if that were
+true, every tank in the game would drive around with its gun drooping.*
+
+## 2026-08-28 - Kurtenki dawns for real
+
+"Tigers Shake Kurtenki" opened on a flat grey noon that told you nothing about when or where you were. That's gone.
+
+Kurtenki is a real village — Lioznensky district, Vitebsk Oblast, Belarus, on the old Smolensk road east of Vitebsk. And the mission's premise is straight out of late June 1944: Operation Bagration, the Vitebsk–Orsha offensive, a German Tiger rearguard buying time while Army Group Centre falls apart behind it.
+
+So the time of day got rebuilt from the actual sky. Late June, 55° north, 05:55 in the morning — the sun sits 10° above the horizon in the east-north-east, exactly where it would have been. Long warm amber light, a cool blue pre-dawn sky, and a light morning mist through the trees.
+
+The briefing now opens on it too: "LATE JUNE 1944 – VITEBSK FRONT, BELARUS. Operation Bagration is shattering Army Group Centre…"
+
+AI-DeepSeek reverse engineering, confirmed in-game. The sun is where the sun actually was.
+
+## 2026-08-28 - Shadows take the fog too
+
+A follow-up payoff from the fog fix. Before, distant tanks were given away by
+their shadows: the ground and the tank took the fog, but the shadow stayed a
+flat dark grey, sitting on top of the haze like a marker. You could spot a tank
+at range by its shadow long before you could see the tank itself.
+
+Same hook, same cause. Shadows ride the same draw path as the distant tanks, so
+putting fog back on that path fogs the shadows too. Two T-34s and two ZiS field
+guns at range now, and they're honestly hard to pick out — the shadows fade into
+the mist at the same rate as everything else.
+
+AI-assisted reverse engineering, confirmed by playing.
+
+## 2026-08-28 - Fog finally reaches the tanks
+
+For twenty-five years, a tank at distance in this game has floated as a bright,
+sharp silhouette against the misted terrain — because the engine turned fog
+**off** for the distant level-of-detail pass, while leaving it on for everything
+close.
+
+The fix wasn't a shader rewrite. The distant-LOD vertex shader had been
+computing a fog factor the whole time — the engine was just discarding it. A
+small injected hook flips fog back on for those draws, reusing the engine's own
+fog density and colour, so a distant tank now fades into the haze at exactly the
+same rate as the ground beneath it.
+
+AI-assisted reverse engineering, confirmed by playing. It's the first thing you
+notice in a forest: no more floating, unfogged hulls at range. Real fog, the
+engine's own, all the way to the horizon.
+
 ## 2026-08-26 - Why you have never seen the sun in this game
 
 Three findings from a day on lighting, and they interlock.
