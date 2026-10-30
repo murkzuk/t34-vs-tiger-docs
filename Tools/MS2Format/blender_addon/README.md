@@ -71,6 +71,16 @@ Editor's Asset View**. Two things worth knowing:
 - **add new geometry** and export it — including into a mission, with shadows
 - untouched geometry round-trips byte for byte
 
+Checked by machine, not by hand-picking examples:
+
+    re-export every model untouched     131 of 131 files byte-identical, 0 errors
+                                        (both installs, the whole library)
+    add a pyramid to an unskinned node   65 of 66 models produce a file that parses
+                                        (the 66th, Landscape_test, has no unskinned node)
+
+What that does *not* cover: seeing all of them in the game. Two models have been looked at
+in the engine — one building and one vehicle. The rest is verified at the file level.
+
 ## What does not work yet
 
 - **skinned nodes cannot grow** — tracks, wheels and crew figures carry weights against a
