@@ -63,7 +63,7 @@ from . import ms2_reader
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 4, 0),
+    "version": (1, 5, 0),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
     "description": "Imports assembled, textured vehicles from T34 vs Tiger's .ms2 model format - geometry, rest transforms, submeshes, materials/textures and skin weights",
