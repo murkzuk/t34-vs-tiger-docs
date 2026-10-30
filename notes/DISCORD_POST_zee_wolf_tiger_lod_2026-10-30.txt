@@ -1,0 +1,15 @@
+**ZeeWolf's Tiger I now has a LOD1** 🐅
+
+Halved the triangles at distance: 68,105 → 35,073 (48.5%), brightness matched, his 190 original parts untouched.
+
+Three things the .ms2 format wasn't telling us:
+
+**1.** The int32 at the start of every part — written down for years as "a flag, always 0" — is the LOD level. Written as 0, a level mesh looks identical to the base mesh and the game silently ignores it. That's why my first four levels did nothing at all.
+
+**2.** A level mesh must sit at the origin. Its parent already carries the offset, so copying the transform too applies it twice: the hull sank and both tracks came out 2.9 m from the wheels.
+
+**3.** The "hole" punched through the front plate was not a hole. An unlit render settled it — 754 pixels out of 410,000 differed, all on the silhouette. It was normals pointing the wrong way, because at a recess the nearest bit of original surface can be a different face. Keeping the original normal only where it agrees with the geometry took the level-to-level brightness difference from 8/255 to 0.4/255.
+
+Gone at LOD1: the grille slats and the wheel rim relief. Nothing else.
+
+One catch still open: the game won't actually use it. All four of his playable Tiger variants call SetLods([0]), which switches LOD off because his model never had any. That's the next job — then LOD2 and LOD3 with the same recipe.
