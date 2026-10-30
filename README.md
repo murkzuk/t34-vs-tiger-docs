@@ -8,6 +8,19 @@ This repository is a community-driven effort to preserve, fix, and finally finis
 
 Our mission is to build an open community where anyone — from veteran modders to first-time players — can contribute to making this the definitive WW2 tank simulation.
 
+## ⬇️ Downloads
+
+**[Blender add-on — ms2_importer v1.5.2](https://github.com/murkzuk/t34-vs-tiger-docs/releases/download/ms2-importer-v1.5.2/ms2_importer.zip)**
+
+Imports and exports the game's `.ms2` models: whole vehicles in one step, assembled and
+textured, and written back out again — an untouched round trip is **byte-identical on 184 of
+184** models in the ZeeWolf 2015 build and **133 of 133** in a G5 install. Works in Blender 5.2.
+Install instructions and format notes: [`Tools/MS2Format`](./Tools/MS2Format/README.md).
+
+All published files are on the **[Releases page](../../releases)**. Please download from there
+rather than from the repository tree — the binaries committed to the source tree can lag behind
+the published build.
+
 ## 🤝 How You Can Participate
 
 You don't need to be a coder to help! We want this project to be as open as possible.
@@ -33,7 +46,7 @@ To make this "mountain" easier to climb, we have organized the project into key 
 
 - **[Technical Manuals](./Documentation):** Engine specifications, mission-scripting reference, and project analysis. See below for the highlights.
 - **[Development Tools](./Tools):** Scripts, Maya export manuals, and utilities created for TvT by G5 (the original developers).
-- **[Blender add-on: open the game's models](./Tools/MS2Format):** install [`ms2_importer.zip`](./Tools/MS2Format/blender_addon/ms2_importer.zip) and get **File → Import → TvT Model (.ms2)** — whole vehicles, assembled and textured, in one step. Writing models back out works too. [Install instructions and format notes](./Tools/MS2Format/README.md).
+- **[Blender add-on: open the game's models](./Tools/MS2Format):** download the current build from the [Releases page](../../releases) and get **File → Import → TvT Model (.ms2)** — whole vehicles, assembled and textured, in one step. Writing models back out works too. [Install instructions and format notes](./Tools/MS2Format/README.md).
 - **[Executables](./Executables):** The 4GB LAA patch and essential engine fixes.
 - **[Patches](./Patches):** Ready-to-apply hotfix packages — grab the latest one if you just want fixes without touching the source. See [`RELEASING.md`](./RELEASING.md) for how to publish a new one.
 - **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.
