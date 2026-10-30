@@ -542,11 +542,11 @@ class EXPORT_OT_tvt_ms2(Operator, ExportHelper):
                                    "then copy it over")
             return {'CANCELLED'}
         from . import ms2_export
-        written, skipped = ms2_export.export_ms2(
+        patched, rebuilt, kept = ms2_export.export_ms2(
             self.source_file, self.filepath, list(context.scene.objects),
             log=lambda m: self.report({'WARNING'}, m.strip()))
-        self.report({'INFO'}, "Exported %d node(s), %d skipped, to %s"
-                    % (written, skipped, self.filepath))
+        self.report({'INFO'}, "Exported %d patched, %d rebuilt, %d untouched, to %s"
+                    % (patched, rebuilt, kept, self.filepath))
         return {'FINISHED'}
 
 

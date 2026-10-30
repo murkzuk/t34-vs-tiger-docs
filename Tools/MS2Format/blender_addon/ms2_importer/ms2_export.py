@@ -25,7 +25,7 @@ not change, and the result must re-parse to the same node count.
 import struct
 
 from . import ms2_reader as R
-from . import ms2_writer as W
+from . import ms2_layout as L
 
 
 def _uv_per_vertex(mesh):
@@ -65,12 +65,20 @@ def _find_object(by_index, node):
 
 
 def export_ms2(src, dst, objects=None, log=print):
-    """Write src to dst with geometry replaced from the given Blender objects.
-    Returns (nodes_written, nodes_skipped)."""
+    """Write src to dst with geometry taken from the given Blender objects.
+
+    Per node, independently:
+      counts unchanged -> PATCH the existing bytes in place, so every authored
+                          normal, UV and unknown block survives exactly;
+      counts changed   -> REBUILD the node from the mesh (see rebuild_node).
+
+    Returns (patched, rebuilt, kept)."""
     original = open(src, "rb").read()
-    data = bytearray(original)
     nodes = R.read_ms2(src)
-    _d, _n, spans = W._spans(src)
+    layout = L.walk(original)
+    if len(layout) != len(nodes):
+        raise ValueError("layout walk found %d nodes, reader found %d"
+                         % (len(layout), len(nodes)))
 
     by_index = {}
     for obj in (objects if objects is not None else []):
@@ -84,91 +92,184 @@ def export_ms2(src, dst, objects=None, log=print):
             if idx is not None:
                 by_index[int(idx)] = obj
 
-    written = 0
-    skipped = 0
-    kept_derived = 0
-    derived = []
-    for s in spans:
-        node = s["node"]
-        vcount = s["vcount"]
-        if vcount == 0:
+    out = bytearray(original[:8])
+    patched = rebuilt = kept = 0
+    for i, node_l in enumerate(layout):
+        node = nodes[i]
+        base = bytearray(original[node_l["start"]:node_l["end"]])
+        obj = by_index.get(i)
+        if obj is None or obj.type != "MESH" or node_l["vcount"] == 0:
+            if node_l["vcount"]:
+                kept += 1
+            out += base
             continue
-        obj = _find_object(by_index, node)
-        if obj is None or obj.type != "MESH":
-            skipped += 1
-            continue
+
         mesh = obj.data
-        if len(mesh.vertices) != vcount:
-            log("  %s: vertex count differs in Blender (%d vs %d); v1 cannot add or remove geometry, so this node keeps its source geometry" % (node.name, len(mesh.vertices), vcount))
-            skipped += 1
+        mesh.calc_loop_triangles()
+        nv, ni = len(mesh.vertices), len(mesh.loop_triangles) * 3
+        spans = node_l["spans"]
+
+        # Only a VERTEX count change needs a rebuild. An index mismatch alone means
+        # Blender dropped degenerate triangles on import (Body_commander: 15 of them),
+        # and the source's indices are still the right ones to keep.
+        if nv != node_l["vcount"]:
+            mat = node.submeshes[0]["material_index"] if node.submeshes else node.material_index
+            out += rebuild_node(original, node_l, mesh, max(mat, 0), log=log)
+            rebuilt += 1
+            log("  %s: rebuilt %d->%d vertices, %d->%d indices"
+                % (node.name, node_l["vcount"], nv, node_l["icount"], ni))
             continue
+
+        # ---- patch path: equal length, so write straight into the node bytes
+        rel = {}
+        for label, (off, size) in spans.items():
+            rel[label] = (off - node_l["start"], size)
 
         positions = [(v.co.x, v.co.y, v.co.z) for v in mesh.vertices]
+        for k, p in enumerate(positions):
+            struct.pack_into("<3f", base, rel["positions"][0] + k * 12, *p)
 
         attr = mesh.attributes.get("ms2_normals") if hasattr(mesh, "attributes") else None
-        if attr is None:
-            log("  %s: no ms2_normals attribute, keeping the normals already in the file" % node.name)
-            normals = None
-        else:
-            normals = [tuple(attr.data[i].vector) for i in range(vcount)]
+        if attr is not None and len(attr.data) == nv:
+            for k in range(nv):
+                struct.pack_into("<3f", base, rel["normals"][0] + k * 12, *attr.data[k].vector)
+        elif node.normals:
+            log("  %s: no usable ms2_normals, keeping the file normals" % node.name)
 
         uvs = _uv_per_vertex(mesh)
-        if uvs is None or any(u is None for u in uvs):
-            log("  %s: no usable UV layer, keeping the UVs already in the file" % node.name)
-            uvs = None
+        if uvs is not None and not any(u is None for u in uvs):
+            for k, uv in enumerate(uvs):
+                struct.pack_into("<2f", base, rel["uvs"][0] + k * 8, *uv)
 
-        start = s["start"]
-        buf = bytearray()
-        for p in positions:
-            buf += struct.pack("<3f", *p)
-        if normals is not None:
-            for n in normals:
-                buf += struct.pack("<3f", *n)
-        else:
-            buf += original[start + vcount * 12:start + vcount * 24]
-        if uvs is not None:
-            for uv in uvs:
-                buf += struct.pack("<2f", *uv)
-        else:
-            buf += original[start + vcount * 24:start + vcount * 32]
-        if len(buf) != vcount * 32:
-            raise ValueError("geometry block for %s is %d bytes, expected %d"
-                             % (node.name, len(buf), vcount * 32))
-        data[start:start + len(buf)] = buf
-
-        # Derived header fields: bbox min at geo_start-56, max at -44, sphere at -32.
-        #
-        # [2026-10-30] RECOMPUTED ONLY WHEN THE POSITIONS ACTUALLY MOVED. Measured
-        # on 4MeterBox: recomputing unconditionally produced a sphere radius one
-        # ULP away from G5's own value (0x3d vs 0x37 in the low byte of the last
-        # float, 0.8660254 both ways), because they and we compute the same number
-        # by different arithmetic. A derived field that has not changed does not
-        # need to be republished, and leaving it alone is what lets the
-        # unmodified-export gate be exact rather than approximate.
-        unchanged = (len(node.positions) == vcount and
-                     all(abs(node.positions[i][j] - positions[i][j]) < 1e-9
-                         for i in range(vcount) for j in range(3)))
-        if unchanged:
-            kept_derived += 1
-        else:
+        moved = (len(node.positions) == nv and
+                 any(abs(node.positions[k][j] - positions[k][j]) > 1e-9
+                     for k in range(nv) for j in range(3)))
+        if moved:
             lo, hi, c, r = _bounds(positions)
-            struct.pack_into("<3f", data, start - 56, *lo)
-            struct.pack_into("<3f", data, start - 44, *hi)
-            struct.pack_into("<4f", data, start - 32, c[0], c[1], c[2], r)
-            derived.append((node.name, node.bbox_min, lo, node.bbox_max, hi, r))
-        written += 1
+            struct.pack_into("<3f", base, rel["bbox min"][0], *lo)
+            struct.pack_into("<3f", base, rel["bbox max"][0], *hi)
+            struct.pack_into("<4f", base, rel["bounding sphere"][0], c[0], c[1], c[2], r)
+            log("  %s: geometry moved, bbox and sphere recomputed" % node.name)
+        out += base
+        patched += 1
 
-    if len(data) != len(original):
-        raise ValueError("refusing to write: byte length changed")
-    open(dst, "wb").write(bytes(data))
+    open(dst, "wb").write(bytes(out))
+
+    # verify before returning: the result must re-parse and walk to its own end
     after = R.read_ms2(dst)
     if len(after) != len(nodes):
-        raise ValueError("refusing: output parses to %d nodes, source had %d"
+        raise ValueError("output parses to %d nodes, source had %d"
                          % (len(after), len(nodes)))
-    if derived:
-        log("  bbox/sphere recomputed for %d node(s), left alone for %d"
-            % (len(derived), kept_derived))
-        for name, lo0, lo1, hi0, hi1, r in derived[:5]:
-            log("    %-20s bbox %.3f %.3f %.3f .. %.3f %.3f %.3f  ->  %.3f %.3f %.3f .. %.3f %.3f %.3f"
-                % ((name,) + tuple(lo0) + tuple(hi0) + tuple(lo1) + tuple(hi1)))
-    return written, skipped
+    chk = L.walk(bytes(out))
+    if chk[-1]["end"] != len(out):
+        raise ValueError("output walks to 0x%X but is 0x%X bytes - refusing to trust it"
+                         % (chk[-1]["end"], len(out)))
+    log("  %d patched, %d rebuilt, %d left as they were; %d -> %d bytes"
+        % (patched, rebuilt, kept, len(original), len(out)))
+    return patched, rebuilt, kept
+
+def _mesh_arrays(mesh):
+    """positions, normals, uvs and triangle indices, per vertex."""
+    mesh.calc_loop_triangles()
+    positions = [(v.co.x, v.co.y, v.co.z) for v in mesh.vertices]
+    normals = [(v.normal.x, v.normal.y, v.normal.z) for v in mesh.vertices]
+    uvs = _uv_per_vertex(mesh)
+    if uvs is None or any(u is None for u in uvs):
+        uvs = [(0.0, 0.0)] * len(mesh.vertices)
+    idx = []
+    for tri in mesh.loop_triangles:
+        idx.extend(tri.vertices)
+    return positions, normals, uvs, idx
+
+
+def _unit(a):
+    m = (a[0] ** 2 + a[1] ** 2 + a[2] ** 2) ** 0.5
+    if m < 1e-12:
+        return (1.0, 0.0, 0.0)
+    return (a[0] / m, a[1] / m, a[2] / m)
+
+
+def tangent_basis(positions, uvs, idx, normals):
+    """dP/du then dP/dv per vertex, orthonormalised against the normal - what the
+    0x40000 block turned out to hold. See
+    notes/project_tvt_ms2_0x40000_is_tangent_space.md."""
+    n = len(positions)
+    tan = [[0.0, 0.0, 0.0] for _ in range(n)]
+    bit = [[0.0, 0.0, 0.0] for _ in range(n)]
+    for t in range(0, len(idx) - 2, 3):
+        i0, i1, i2 = idx[t], idx[t + 1], idx[t + 2]
+        if max(i0, i1, i2) >= n:
+            continue
+        p0, p1, p2 = positions[i0], positions[i1], positions[i2]
+        e1 = (p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
+        e2 = (p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2])
+        d1 = (uvs[i1][0] - uvs[i0][0], uvs[i1][1] - uvs[i0][1])
+        d2 = (uvs[i2][0] - uvs[i0][0], uvs[i2][1] - uvs[i0][1])
+        det = d1[0] * d2[1] - d2[0] * d1[1]
+        if abs(det) < 1e-12:
+            continue
+        r = 1.0 / det
+        T = ((e1[0] * d2[1] - e2[0] * d1[1]) * r, (e1[1] * d2[1] - e2[1] * d1[1]) * r,
+             (e1[2] * d2[1] - e2[2] * d1[1]) * r)
+        B = ((e2[0] * d1[0] - e1[0] * d2[0]) * r, (e2[1] * d1[0] - e1[1] * d2[0]) * r,
+             (e2[2] * d1[0] - e1[2] * d2[0]) * r)
+        for v in (i0, i1, i2):
+            for k in range(3):
+                tan[v][k] += T[k]
+                bit[v][k] += B[k]
+    out = []
+    for i in range(n):
+        nn = _unit(normals[i])
+        t = _unit(tan[i])
+        d = t[0] * nn[0] + t[1] * nn[1] + t[2] * nn[2]
+        out.append(_unit((t[0] - nn[0] * d, t[1] - nn[1] * d, t[2] - nn[2] * d)))
+    for i in range(n):
+        nn = _unit(normals[i])
+        b = _unit(bit[i])
+        d = b[0] * nn[0] + b[1] * nn[1] + b[2] * nn[2]
+        out.append(_unit((b[0] - nn[0] * d, b[1] - nn[1] * d, b[2] - nn[2] * d)))
+    return out
+
+
+def rebuild_node(data, node, mesh, material_index, log=print):
+    """Node bytes for a node whose VERTEX count changed."""
+    flags = node["flags"]
+    if flags & 0x10:
+        raise ValueError("node is skinned (0x10): its weights scale with the vertex "
+                         "count and cannot be regenerated here")
+    positions, normals, uvs, idx = _mesh_arrays(mesh)
+    vc, ic = len(positions), len(idx)
+    if vc > 0xFFFF:
+        raise ValueError("vertex count %d exceeds what uint16 indices address" % vc)
+    new_flags = flags & ~0x800
+    out = bytearray()
+    o, size = node["spans"]["name"]
+    out += data[o:o + size]
+    lo, hi, c, r = _bounds(positions)
+    out += struct.pack("<3f", *lo) + struct.pack("<3f", *hi)
+    out += struct.pack("<4f", c[0], c[1], c[2], r)
+    out += struct.pack("<4i", 0, vc, ic, 1)
+    for p in positions:
+        out += struct.pack("<3f", *p)
+    for n in normals:
+        out += struct.pack("<3f", *n)
+    for uv in uvs:
+        out += struct.pack("<2f", *uv)
+    for i in idx:
+        out += struct.pack("<H", i)
+    out += struct.pack("<4I", (((ic & 0xFFFF) << 16) | (material_index & 0xFFFF)), 0, vc, 0)
+    out += struct.pack("<2i", node["parent"], new_flags)
+    o, size = node["spans"]["d_count"]
+    out += data[o:o + size]
+    if "anim track" in node["spans"]:
+        o, size = node["spans"]["anim track"]
+        out += data[o:o + size]
+    for label, bit in (("opt 0x40", 0x40), ("opt 0x200", 0x200), ("opt 0x400", 0x400),
+                       ("opt 0x10000", 0x10000), ("opt 0x4000", 0x4000)):
+        if new_flags & bit and label in node["spans"]:
+            o, size = node["spans"][label]
+            out += data[o:o + size]
+    if new_flags & 0x40000:
+        for t in tangent_basis(positions, uvs, idx, normals):
+            out += struct.pack("<3f", *t)
+    return bytes(out)
