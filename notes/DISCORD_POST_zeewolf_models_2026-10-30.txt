@@ -1,0 +1,36 @@
+**ZeeWolf's models still work. All of them.**
+
+We've been building a Blender import/export tool for TvT's model files. Today we pointed it at
+his mod - the 2015 build - to see whether it works on files that aren't G5's.
+
+It does. Every model in his install - **184 of them, 120 of which G5 never made** - comes out
+of the tool exactly as it went in. Not a byte moved.
+
+Then we did the harder thing: actually changed some and put them back.
+
+• His **4 meter box** (he'd rebuilt it bigger than G5's) - opened in Blender, given an extra
+  bit of geometry, saved, loaded. The editor showed *his* structure, with our addition on top.
+
+• His **T-34/85**, thirteen megabytes of it - out to Blender, a change made to the hull, back
+  in, and the game drew it with the change, at both levels of detail.
+
+• And one of his **own buildings** - an earthwork emplacement that doesn't exist in our version
+  of the game at all. That's the interesting one. It went in as a model the engine had never
+  seen, with his own material file and his own textures, and the editor listed it and drew it
+  like it had always been there.
+
+So his work isn't just readable. It's **editable and usable again**, in a free tool, on any
+machine with Blender installed. No Maya 5. No license. No 2005 hardware.
+
+The tell in the screenshots is a little pyramid on each one. That's ours - we add something
+that isn't in the original, because otherwise you can't prove a model has actually been
+rebuilt rather than quietly copied.
+
+He made these by hand in Maya, one at a time, when that was the only way to do it. Twenty
+years later they open, they edit, and they go back in.
+
+One honest caveat: his models name their parts differently from G5's - his hull is a "Body",
+his running gear is "GearR" and "GearL", there's no "Turret_A" anywhere. Things that look for
+parts by name may not find his. That's the next thing to look at.
+
+If there's a model of his you think we've missed, or one that misbehaves, tell me.
