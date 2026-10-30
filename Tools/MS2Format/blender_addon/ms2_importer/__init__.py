@@ -63,7 +63,7 @@ from . import ms2_reader
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 5, 1),
+    "version": (1, 5, 2),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
     "description": "Imports assembled, textured vehicles from T34 vs Tiger's .ms2 model format - geometry, rest transforms, submeshes, materials/textures and skin weights",
@@ -86,6 +86,8 @@ def _tri_area(p0, p1, p2):
 
 
 _LOD_SUFFIX_RE = re.compile(r'_LOD\d+$', re.IGNORECASE)
+# "TrackLeft_FakeShadow", "Body_Fake_Shadow", and ZW's bare "Fakeshadow" all match
+_FAKE_SHADOW_RE = re.compile(r'fake[_\s]?shadow', re.IGNORECASE)
 
 
 def _is_hidden_by_default(name):
@@ -102,12 +104,22 @@ def _is_hidden_by_default(name):
     ten 40-vertex cylinders buried in its road wheels, and the libraries carry
     134 (G5) and 291 (ZW) of them. They share their parent part's material, so
     the "untextured = armour" rule below never caught them either. Hidden
-    objects still export, so this changes nothing about the round trip."""
+    objects still export, so this changes nothing about the round trip.
+
+    [2026-10-30] "*_FakeShadow" added, one version later. These are real engine
+    geometry - the flattened part the CFakeShadows system draws when a model sets
+    FakeShadow = true - but they sit exactly inside the part they shadow, so in
+    Blender they read as a second hull buried in the first. 142 of them across 32
+    models, 61,541 vertices. Note the flag is a SCRIPT setting, not a property of
+    the mesh: his Tiger carries Body_Fake_Shadow while its FakeShadow flag stays
+    at the default false, so the engine never draws it."""
     if _LOD_SUFFIX_RE.search(name):
         return True
     if 'Crashed' in name:
         return True
     if name.endswith('_CM') or name.endswith('_CS'):
+        return True
+    if _FAKE_SHADOW_RE.search(name):
         return True
     return False
 
@@ -458,9 +470,9 @@ class IMPORT_OT_tvt_ms2(Operator, ImportHelper):
     filter_glob: StringProperty(default="*.ms2", options={'HIDDEN'})
 
     hide_variants: BoolProperty(
-        name="Hide LOD/Crashed/CM/CS variants",
+        name="Hide LOD/Crashed/CM/CS/FakeShadow variants",
         description="Hide (but still import) lower-detail, damage-state, "
-                    "and collision variant nodes (both _CM and _CS) by "
+                    "collision (_CM, _CS) and fake-shadow variant nodes by "
                     "default, since they occupy the same space as the base node",
         default=True,
     )

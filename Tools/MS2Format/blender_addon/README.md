@@ -39,6 +39,7 @@ and would otherwise stack up as visible duplicates. The suffix conventions:
 | `_Crashed` | destroyed damage state |
 | `_CM` | collision mesh |
 | `_CS` | collision shape (added v1.5.1 — the low-poly hit volumes, 134 of them in G5's library and 291 in ZeeWolf's, previously drawn as little cylinders inside the road wheels) |
+| `_FakeShadow` / `_Fake_Shadow` | the flattened shadow proxy the engine can draw instead of a projected shadow (added v1.5.2 — 142 nodes across 32 models, 61,541 verts, sitting inside the part they shadow). Whether the engine actually draws one is a **script** flag, `FakeShadow` in `Scripts\Common\FakeShadows.script`, default false — the node's presence in the mesh proves nothing |
 
 Nothing is discarded: unhide them in the Outliner to inspect or edit them, and they still
 export. Turning off `Hide LOD/Crashed/CM/CS variants` in the Redo panel imports everything
