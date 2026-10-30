@@ -75,3 +75,66 @@ Tooling added: `K:\TvTDeepseek\tree_probe\disasm_geometry*.py` (capstone dumps).
 - `K:\TvTDeepseek\tree_probe\` — `tree_size_probe.{cpp,dll}` (logger, keep),
   `tree_stretch.{cpp,dll}` (superseded, do not ship), `build.bat`, allow-list.
 - New: `tree_yscale.{cpp,dll}` in the same folder, build.bat adapted.
+
+---
+
+## CORRECTION 2026-10-30 — the flag table above is wrong, and "+0x78 = branches" is wrong
+
+Decompiled properly this time (Ghidra 11.1 headless — recipe in
+`decomp/notes/GHIDRA_HEADLESS_RUNS_HERE_2026-10-30.md`). `GetGeometry` at `0x1DAD0` is 181
+bytes and is nothing but four flag tests, so the mapping is not a matter of interpretation:
+
+    if (flags & 1) GetBranchGeometry (this, geom, p3);
+    if (flags & 2) GetFrondGeometry  (this, geom, p4);
+    if (flags & 4) GetLeafGeometry   (this, geom, p5);
+    if (flags & 8) Get360BillboardGeometry(...)  /  GetSimpleBillboardGeometry(...);
+
+| bit | function | RVA | fills |
+|---|---|---|---|
+| 0 | **GetBranchGeometry** | `0x1CC70` | SGeometry `+0x00..0x38` |
+| 1 | **GetFrondGeometry** | `0x1CF90` | `+0x3c..0x74` |
+| 2 | **GetLeafGeometry** | `0x1AD30` | `+0x78`, `+0x7c`, and a second card set at `+0xb4`, `+0xb8` |
+| 3 | Get360 / GetSimpleBillboard | `0x1BD50` / `0x1AFB0` | `+0xf4..0x11c` |
+
+Bits 0 and 2 were swapped in the table above, and **[`+0x78`] is leaf/billboard card data, not the
+branch mesh** — the `1.0 - x` mirror and the stride-12 vertex read at `0x12E2F` that step 1
+recorded both live in the leaf-card path (`GetLeafGeometry` → `FUN_10012d40`).
+
+### The branch block, which is the one that matters
+
+`GetBranchGeometry` copies pointers out of the tree's own vectors (`this+4`) into `SGeometry`:
+
+| SGeometry | source | meaning |
+|---|---|---|
+| `+0x00` | — | LOD level used (int) |
+| `+0x04` | `src+0x34`, per-LOD | index count = `(end-begin)>>1` |
+| `+0x08` | `src+0x34`, per-LOD | **index array** (unsigned short) |
+| `+0x0c` | `FUN_1000f350(tree+4, lod)` | per-LOD helper result |
+| `+0x10` | `src+0x64` | **vertex count** = `(end-begin)>>2 / 3` |
+| `+0x14` | `src+0x54` | stream |
+| `+0x18` | `src+0x84` | stream |
+| `+0x1c` | `src+0x94` | stream |
+| `+0x20` | `src+0xa4` | stream |
+| `+0x24` | `src+0x64` | **vertex coordinates** — float xyz, stride 12 |
+| `+0x28` | `src+0xb4` | stream |
+| `+0x2c` | `src+0xe4` | stream |
+| `+0x30` | `src+0xf4` | stream |
+| `+0x34` | `src+0x104` | stream |
+| `+0x38` | — | float, transition/alpha |
+
+**Step 2 survives**: the coordinate array and its count are confirmed (`+0x24`, count at `+0x10`
+= floats/3), so scaling Y around the base is exactly as planned. Two things the plan did not
+account for:
+
+1. **Those pointers alias the tree's own internal buffers** — they are copied out of `this+4`'s
+   vectors on every call, and the `+0x04`/`+0x08` guards are those vectors' end pointers. Writing
+   through the hook therefore mutates the model's shared arrays, so the factor must be applied
+   **once per loaded species**, not per frame, or every draw stretches it again.
+2. **Leaf cards and fronds have their own coordinate streams** at `+0x78` and `+0x3c`. Stretching
+   only `+0x24` leaves the crown where it was and lengthens the trunk underneath it. Either
+   treat all three streams, or scale the source vectors in `this+4` before the first
+   `GetGeometry` call — which is also the only way to make it a once-per-model operation.
+
+Nine parallel streams in the branch block, and only `+0x24` has the /3 count, which is what
+identifies it as the coordinates. Naming the other eight (normals, texcoords, tangents, colours) is
+now cheap, and worth doing before writing the hook.

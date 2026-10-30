@@ -65,6 +65,25 @@ add-on folder over every model in both installs:
 
 King Tiger alone: 335 nodes, 187 submeshes, 14 distinct materials.
 
+### And in Blender itself, not just in Python
+
+The recovered copy was then run by the real application — `G:\SteamLibrary\steamapps\common\Blender`,
+5.2.3 LTS, `--background --factory-startup`, importing `M:\T34vsTiger\Models\u_veh_PzVI_LATE.ms2`:
+
+    ADDON_VERSION: (1, 3, 0)      BLENDER: 5.2.3 LTS
+    Imported ... 335 nodes (150 with geometry, 181 hidden by default as LOD/Crashed/CM variants)
+      skin weights: 30 objects given vertex groups
+      rest transforms: 335 nodes placed
+      materials: 140 textured, 10 armour/collision hidden, 22 distinct
+      multi-material nodes: 19 (submesh indices rebased)
+    mesh objects 150 total / 33 visible · 102,246 tris · 186 vertex groups · 8 textures (.dds)
+    visible bounding box: 8.337 x 3.750 x 2.851 m
+
+Width 3.750 m against a true 3.755 m. The long axis reads 8.337 rather than the 10.29 m quoted for
+"gun forward" because frame 0 is the **rest** pose — the format note records the turret sitting at
+0.7071, i.e. 90° of traverse — so the barrel is not on the length axis. Worth one measurement with
+the gun swung forward the day the height work starts; it is not evidence of anything wrong here.
+
 ## The one change made to the recovered copy
 
 `ms2_writer.py` used a flat `import ms2_reader as R`, which only resolves when it is run from
