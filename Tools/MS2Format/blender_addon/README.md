@@ -73,10 +73,15 @@ Editor's Asset View**. Two things worth knowing:
 
 Checked by machine, not by hand-picking examples:
 
-    re-export every model untouched     131 of 131 files byte-identical, 0 errors
-                                        (both installs, the whole library)
-    add a pyramid to an unskinned node   65 of 66 models produce a file that parses
+    re-export every model untouched     G5 + sandbox: 131 of 131 byte-identical
+                                        ZeeWolf's mod: 184 of 184 byte-identical
+    add a pyramid to an unskinned node  65 of 66 G5 models produce a parsing file
                                         (the 66th, Landscape_test, has no unskinned node)
+
+ZeeWolf's library is the independent check: 120 of his 184 models never existed in G5's build,
+and three of them were also taken end to end - a re-authored prop, his 12.9 MB T-34/85, and
+one of his own buildings that our install had never contained - imported, edited, exported and
+loaded in the sandbox.
 
 What that does *not* cover: seeing all of them in the game. Two models have been looked at
 in the engine — one building and one vehicle. The rest is verified at the file level.
