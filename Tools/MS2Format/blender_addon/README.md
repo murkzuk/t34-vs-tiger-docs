@@ -81,6 +81,31 @@ Editor's Asset View**. Two things worth knowing:
   game's projected shadow, but the model's own shadow-volume block does not know about them
 - no animation authoring
 
+## Troubleshooting — the five ways it "didn't work" but did
+
+**I added something and it isn't in the Asset View.**
+The editor keeps the model it loaded. Close it completely and relaunch; then check again.
+This one catches everybody, including us, twice.
+
+**My new part casts a shadow but I can't see it.**
+It is on a keyed texel. The visible pass alpha-tests and the shadow pass does not, so the
+geometry draws its shadow and nothing else. UV-map the new faces onto an opaque point of the
+texture — on a fence or wicker texture that means a bright texel, not a hole in the wire.
+
+**It shows in the Asset View but vanishes in a mission, or at distance.**
+LOD siblings. `CenterSection` and `CenterSection_LOD1` are separate nodes; a change made to
+one is drawn only within that node's LOD range. Edit the siblings too.
+
+**The export refuses, saying the node is skinned.**
+That node carries skin weights — tracks, road wheels, crew figures. Their weights index a
+joint table we have not mapped, so the tool refuses rather than writing something wrong. Add
+your geometry to an unskinned node instead: hulls, turrets, guns, buildings and props are all
+fine.
+
+**Everything I added came out as one material.**
+Correct for now. A rebuilt node is written with a single submesh record, so new geometry takes
+the node's original material. Multi-material new geometry is on the list.
+
 ## Credits
 
 Format reverse-engineered from `MayaExp.mll` and the game's own files, with DeepSeek and
