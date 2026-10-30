@@ -1,0 +1,74 @@
+[b]A Blender tool for T-34 vs Tiger models - now v1.5.2, with a download[/b]
+
+Some of you have seen the earlier threads about importing the game's .ms2 models into Blender.
+The tool is now in a state worth sharing properly, so here it is with a permanent download link.
+
+[b]Download / install[/b]
+
+[url=https://github.com/murkzuk/t34-vs-tiger-docs/releases/download/ms2-importer-v1.5.2/ms2_importer.zip]ms2_importer.zip (v1.5.2)[/url]
+
+Blender -> Edit -> Preferences -> Add-ons -> Install from Disk -> pick the zip. Built against
+Blender 5.2. You get [i]File -> Import -> TvT Model (.ms2)[/i] and the matching exporter.
+
+[b]What is actually verified[/b]
+
+Import a model and export it again untouched and the file comes back [b]byte-identical[/b] - not
+"looks right", identical, checked against every model I have: [b]184 of 184[/b] in ZeeWolf's 2015
+build and [b]133 of 133[/b] across a G5 install and a scratch copy. That is the gate every change
+has to pass, because the failure mode here is silent: a model that renders fine in Blender and
+breaks in the engine.
+
+What the tool does:
+
+[list][*]imports geometry, materials, textures, hierarchy, rest transforms and skin weights
+[*]writes edited geometry back - move vertices, reshape panels, rescale parts
+[*]rebuilds a node when the vertex count changes (it regenerates everything that scales with it)
+[*]appends new nodes, which is how you add a part that was never in the model
+[/list]
+
+[b]What I learned about the format, in case it saves someone else the time[/b]
+
+Three things are not written down anywhere and each one cost a day:
+
+[b]1.[/b] The first 4-byte value at the start of every part record is documented, in the only
+notes I could find, as "a flag, always 0". It is not a flag - [b]it is the LOD level[/b]. Nothing
+in the shipped files contradicts the old reading until you look at a model whose levels actually
+work; there, every level mesh carries its own number (_LOD1 = 1, _LOD4 = 4) and 96% of all other
+parts carry 0. Write 0 into an added level and the engine sees another copy of the full-detail
+mesh and quietly ignores it.
+
+[b]2.[/b] A level mesh must sit at the origin. It hangs off the part, and the part already carries
+the part's own offset, so copying the transform onto the level applies it twice - the hull sinks
+and the tracks end up metres away from the wheels. Every one of G5's level meshes is at exactly
+zero while its parent is not.
+
+[b]3.[/b] When a panel rendered black and looked for all the world like a hole punched through the
+armour, it was not geometry at all. Rendering with a flat unlit material proved it: 754 pixels
+differed out of 410,000, all on the silhouette. It was surface directions pointing the wrong way.
+If you ever need to tell a shading fault from missing geometry, an emission render answers it in
+one image.
+
+[b]Where the LOD work stands - honestly[/b]
+
+I built a complete level for ZeeWolf's Tiger I: every part that is drawn gets a cheaper version,
+about [b]48% fewer triangles[/b] at distance, brightness matching to within half a level out of 255
+so the switch does not flash. In the editor's asset viewer it switches exactly as G5's own Tiger
+does.
+
+In a mission it is [b]not[/b] proven. Worse, with that model installed the player's own tank did
+not render at all in third-person view; putting his original file back brought it straight back.
+So ladders built by appending nodes are preview quality for now, and I have written the whole
+thing up rather than pretend otherwise. Importing, exporting and editing existing geometry are
+untouched by that problem.
+
+[b]Notes and source[/b]
+
+The format findings, the performance measurements and the tooling are in the repository:
+[url=https://github.com/murkzuk/t34-vs-tiger-docs]github.com/murkzuk/t34-vs-tiger-docs[/url]
+
+Worth knowing before anyone optimises anything: this engine is [b]CPU-bound with the GPU idle[/b]
+- about 0.1% of frame time is spent waiting for the GPU, and removing a quarter of all draw calls
+changed the frame rate by nothing. Cutting polygons is not where the frames are.
+
+Thanks to G5 for a format that has held up for 25 years, and to ZeeWolf, whose models this was all
+tested against.
