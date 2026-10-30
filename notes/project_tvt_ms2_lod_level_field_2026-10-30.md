@@ -140,6 +140,49 @@ with the decimated surface's own normal** (`dot > 0.25`), otherwise trust the ge
 
 Interpolation quality was never the problem; the wrong-surface samples were.
 
+## Confirmed in game, 2026-10-30
+
+The ladder was deployed to `M:\T34vsTiger_ZW2015` and played in **KurskMission4**, the one
+mission that puts `CTankPzVITigerE1_EarlyUnit` in as `MainPlayerUnit`. **The level switch is
+visible in game.** Six days of "the engine probably uses them" is settled.
+
+What made it work, in order of how much it mattered:
+
+1. the header **LOD level** field written as 1 instead of 0 (otherwise the level is just
+   another copy of the base mesh)
+2. an **identity transform** on every level node (otherwise it floats)
+3. **every drawn part** given a level — the engine switches the model, not the part, so a
+   partial ladder deletes whatever has no level-1 mesh
+4. authored **normals** carried across with an agreement check (otherwise it re-lights)
+
+### SetLods semantics, now measured rather than guessed
+
+`SetLods([150, 60])` on a two-level mesh switches at **60 m**: level 0 inside 60 m, level 1
+beyond. The level index is the number of thresholds strictly below the camera distance,
+clamped to the levels the mesh actually has.
+
+That closes a loop. The 2026-08-23 note recorded that `SetLods([0])` made a tank look
+"rubbish" and blamed "LOD 0 = coarsest". The effect was real; the explanation was not.
+`[0]` has one threshold, zero, so the distance exceeds it everywhere and the engine picks
+the coarsest level the mesh has — at every range. It was never that level 0 is coarse.
+
+### The ZW install is no longer read-only
+
+Files changed, both backed up in `ms2_tool/out/_backup/`:
+
+```
+Models\u_veh_TIGER_E1_Early_Playable.ms2          50ef1f9c306e0b4f -> eb8adb7df01ff744
+Scripts\Units\TankPzVITigerE1_EarlyUnit.script   SetLods([0]) -> SetLods([150, 60]) x4
+Cache\Scripts.cache                              deleted, rebuilt 24.5 MB
+```
+
+Revert: copy the two `.ORIGINAL` files back and delete `Cache\Scripts.cache`. All four playable
+variants (`_Unit`, `_IIUnit`, `_WUnit`, `_PzGryUnit`) share that one mesh file, so they were all
+armed and all revert together.
+
+The engine logs **nothing** about LOD - no switch message, no counter - so the log can confirm
+the mission and the unit but never the switch. That one is eyes only.
+
 ## Status
 
 - The pipeline now reproduces the repair exactly: `bl_lod_test.py` run through the fixed exporter
