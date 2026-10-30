@@ -33,6 +33,7 @@ Format reference (see the findings doc for the full derivation):
         then up to six further optional blocks gated by flags_bitmask
         bits (skipped here by their known exact sizes).
 """
+import re
 import struct
 
 
@@ -49,7 +50,55 @@ class Ms2Node:
         self.is_empty = False
         self.weights = []      # per-vertex (w0,w1,w2,w3)
         self.joint_idx = []    # per-vertex (j0,j1,j2,j3) node indices
+        # [2026-08-26] Rest-pose transform, decoded from frame 0 of the node's
+        # animation track. Without this every object imports at the origin:
+        # static parts are baked in world space so a hull still looks right,
+        # but anything animated (turret, gun, road wheels) is authored around
+        # its own pivot and collapses into a heap.
+        self.rest_pos = (0.0, 0.0, 0.0)
+        self.rest_quat = (1.0, 0.0, 0.0, 0.0)   # (w, x, y, z)
+        self.has_rest = False
+        # [2026-08-26] Material index into the companion .script's ModelSkin
+        # Materials array. Packed with the index count in one int32:
+        #     (icount << 16) | material_index
+        # Verified against every textured part of the King Tiger - road wheels
+        # 12, track left 24, track right 25, turret 19, hull 5, kill rings 20,
+        # numbers 21, flag 22, commander's uniform 0.
+        self.material_index = -1
+        # [2026-08-27] A node can hold SEVERAL submeshes, one per material.
+        # See _read_node for the record layout. Each entry is a dict:
+        #   index_start, index_count, vertex_start, vertex_count, material_index
+        # Empty when the node has no geometry.
+        self.submeshes = []
         self.binds = []        # (index, 4x4 matrix, vec3) per record
+
+    def absolute_indices(self):
+        """`indices` holds the RAW file values, which are relative to each
+        submesh's own vertex_start. This returns them rebased into the
+        node's single shared vertex array, which is what a mesh needs.
+
+        Kept separate rather than fixed in place because ms2_writer packs
+        node.indices straight back out and asserts the result is
+        byte-identical to the source - rebasing in place would break
+        export on every multi-submesh node.
+        """
+        out = list(self.indices)
+        for s in self.submeshes:
+            base = s["vertex_start"]
+            if not base:
+                continue
+            end = min(s["index_start"] + s["index_count"], len(out))
+            for i in range(s["index_start"], end):
+                out[i] += base
+        return out
+
+    def submesh_of_triangle(self, tri):
+        """Which submesh (list position) triangle `tri` belongs to, or 0."""
+        first = tri * 3
+        for k, s in enumerate(self.submeshes):
+            if s["index_start"] <= first < s["index_start"] + s["index_count"]:
+                return k
+        return 0
 
 
 def _read_cstring(data, offset):
@@ -207,14 +256,79 @@ def _read_node(data, offset):
         node.indices = list(struct.unpack_from('<%dH' % icount, data, offset))
         offset += icount * 2
 
+    # [2026-08-27] The 16-byte record is a SUBMESH DESCRIPTOR, four uint32:
+    #
+    #     (index_count << 16) | material_index,   index_start,
+    #     vertex_count,                           vertex_start
+    #
+    # other_count is the number of submeshes, one per material used by the
+    # node. Indices are stored RELATIVE TO vertex_start, so a second submesh
+    # must be rebased - see Ms2Node.absolute_indices.
+    #
+    # The earlier note here read the record as "(packed, 0, vcount, 0)". That
+    # is what it degenerates to when other_count == 1, which is 14,817 of the
+    # 15,341 nodes across both builds - so single-submesh testing could never
+    # have caught it. The remaining 524 nodes, in 87 of 249 models (both
+    # T-34s, both Tigers, the StuG, SU-85, Panzer IV, the aircraft, bridges),
+    # imported as a fan of splinters because the second submesh's triangles
+    # were pointed at the first submesh's vertices.
+    #
+    # Verified on 518 of those 524: index_start values are contiguous from 0,
+    # index counts sum to exactly icount, vertex counts to exactly vcount.
+    if other_count > 0 and vcount > 0:
+        subs = []
+        for k in range(other_count):
+            packed, istart, vcount_s, vstart = struct.unpack_from(
+                '<4I', data, offset + k * 16)
+            subs.append({"index_start": istart,
+                         "index_count": (packed >> 16) & 0xFFFF,
+                         "vertex_start": vstart,
+                         "vertex_count": vcount_s,
+                         "material_index": packed & 0xFFFF})
+        # Only trust the descriptor when it accounts for the node exactly.
+        # Two skinned nodes in the library (hum_SSTankman 'lo_Hips',
+        # KingTiger 'Body_commander') carry garbage in the vertex fields;
+        # falling back leaves them exactly as they imported before.
+        consistent = (sum(s["index_count"] for s in subs) == icount and
+                      sum(s["vertex_count"] for s in subs) == vcount and
+                      all(s["vertex_start"] + s["vertex_count"] <= vcount
+                          for s in subs))
+        node.submeshes = subs if consistent else []
+        node.material_index = subs[0]["material_index"]
     offset += other_count * 16
 
     node_id, flags_bitmask = struct.unpack_from('<2i', data, offset)
     node.parent_index = node_id
     offset += 8
 
-    d_count = struct.unpack_from('<i', data, offset)[0]
+    # [2026-08-27] Masked to 16 bits. One file in the library, ZeeWolf's
+    # replacement Panzer IV (u_veh_PnzIV_G_AI_.ms2), has 0x48 sitting in the
+    # top byte of this field on node 179 of 185 - d_count reads as
+    # 1,207,959,794 instead of 242 and the parse dies six nodes from the end.
+    # The engine loads that file perfectly well in-game, so it is not reading
+    # the high half either. With the mask the file walks to exactly its own
+    # length, 11,904,835 bytes, and ends on the usual HullDriver/HullGunlayer/
+    # HullEngine tail. Every other file in both builds is unaffected: the top
+    # 16 bits are zero in all 15,340 other nodes.
+    d_count = struct.unpack_from('<i', data, offset)[0] & 0xFFFF
     offset += 4
+    # [2026-08-26] THIS IS THE NODE TRANSFORM, and it used to be skipped.
+    # Every node carries a fixed-length animation track: d_count positions
+    # (vec3) followed by d_count rotations (quaternion, w first). 161 frames
+    # in every vehicle seen so far - 161*28+4 = 4512 bytes, which is exactly
+    # the 'fallback block' size earlier notes recorded without identifying.
+    #
+    # Frame 0 is the rest pose (measured: 199 of the King Tiger's 220 nodes
+    # sit at identity rotation on frame 0, more than any other frame).
+    #
+    # The tracks read as you would expect of a tank: road wheels hold position
+    # while their quaternion spins, Weapon_A slides 0.3 m back along its axis
+    # under recoil, and Turret_A is stationary with a 0.7071 quaternion at 90
+    # degrees of traverse.
+    if d_count > 0:
+        node.rest_pos = struct.unpack_from('<3f', data, offset)
+        node.rest_quat = struct.unpack_from('<4f', data, offset + d_count * 12)
+        node.has_rest = True
     offset += d_count * 12 + d_count * 16
 
     _LAST_SKIN[0] = None
@@ -260,7 +374,152 @@ def read_ms2(path):
         node, offset = _read_node(data, offset)
         nodes.append(node)
 
+    _fix_character_rigs(nodes)
+    _fix_rotated_root(nodes)
+    _fix_turret_traverse(nodes)
     return nodes
+
+
+def _fix_turret_traverse(nodes):
+    """Centre any Turret_A whose track is a traverse SWEEP. Returns count.
+
+    [2026-09-01] The sIG33 imported with its trail legs crossed and its wheels
+    on opposite diagonal corners. The user confirmed the Editor shows them
+    square, so it was ours.
+
+    `Turret_A`'s animation track is the **traverse sweep**, and frame 0 is one
+    END of it - the same shape as `Gun_A` holding elevation limits:
+
+        sIG33     5 distinct: [-45, -22.5, 0, +22.5, +45]     +-45 deg
+        StuG F8   5 distinct: [ -9,  -4.5, 0,  +4.5,  +9]     +-9 deg
+        Hummel   21 distinct: [-15 .. +15]                    +-15 deg
+        Tiger     4 distinct: [-90, 0, +90, +180]             full rotation
+
+    Those match the real vehicles' traverse figures - Hummel +-15, StuG ~+-10.
+    **Every track contains 0.0**, the centred position, which is what a rest
+    pose should use. Taking frame 0 instead parks the gun at one traverse
+    extreme; on the sIG33 that is 45 degrees, which swings the wheels (parented
+    under Turret_A in that model) onto the diagonal and reads as crossed legs.
+
+    Zeroing gives a straight-ahead gun: sIG33 +36.9 -> +3.9 deg, Hummel
+    +12.6 -> -2.2 deg, and the sIG33's wheels land on a common axle with the
+    model measuring 4.35 x 2.13 x 1.73 m against a real 4.4 x 2.06 x 1.75.
+
+    SCOPED TO `Turret_A` BY NAME, and only when the track actually contains an
+    identity frame. The same "frame 0 is an extreme" pattern also shows on
+    character joints (`l_Elbow`, `l_Head`, ...), and centring THOSE would undo
+    the rig fix - so they are deliberately not touched.
+
+    CAUTION: models whose traverse range includes 180 degrees (Tiger, King
+    Tiger, Panther, most tank turrets) flip end-for-end under this. That is
+    the intended neutral, but it is a visible change - verify by eye.
+    """
+    n = 0
+    for node in nodes:
+        if node.name != "Turret_A" or not node.has_rest:
+            continue
+        if abs(abs(node.rest_quat[0]) - 1.0) < 1e-4:
+            continue                      # already centred
+        node.rest_quat = (1.0, 0.0, 0.0, 0.0)
+        n += 1
+    return n
+
+
+def _fix_rotated_root(nodes):
+    """Conjugate a ROOT node's rest rotation, in place. Returns True if it did.
+
+    [2026-09-01] The towed guns and mortars imported UPSIDE DOWN - the user
+    reported the Flak 88 that way, and the game's own Asset View renders it
+    correctly, so this was ours.
+
+    Walking the Flak's chain from ROOT found it at the very first node:
+
+        ROOT   rest pos (0, 2.00, 0)   rotation 90 deg
+        Body   rest pos (0, -2.00, 0)  rotation 0 deg
+
+    ROOT carries a 90 degree rotation AND a +2 m lift, and Body carries exactly
+    the inverse translation. Those are meant to cancel; because ROOT also
+    rotates, the cancellation fails and everything below is thrown out and
+    tipped - outriggers ended up 1.82 m in the air with the barrel at 0.43.
+
+    Conjugating ROOT's rotation mirrors it back: legs to -1.82 (just off the
+    ground plane at -2.00) and barrel to -0.43 near the top. Confirmed by
+    rendering - cruciform outriggers flat with their jacks, pedestal centred,
+    barrel horizontal, matching the Editor.
+
+    SAFE BY CONSTRUCTION: only **12 of 250** models have a ROOT rotation at all,
+    every one of them exactly 90 degrees, and they are the guns, the mortars and
+    a handful of test/scenery boxes. On the other 238 the ROOT rotation is
+    identity, and conjugating identity is identity - a no-op.
+
+    NOTE this does NOT explain the sIG33's crossed legs: its ROOT rotation is
+    zero, so that is a separate bug still open.
+    """
+    if not nodes:
+        return False
+    root = nodes[0]
+    if not root.has_rest:
+        return False
+    w, x, y, z = root.rest_quat
+    if abs(abs(w) - 1.0) < 1e-4:        # identity - nothing to do
+        return False
+    root.rest_quat = (w, -x, -y, -z)
+    return True
+
+
+# Skeleton roots are named l_Hips / l_Hip / l_Hips1, and inside vehicles the
+# crew figures use the same names, sometimes prefixed: driver_l_Hips.
+_RIG_ROOT_RE = re.compile(r'(^|_)l_Hips?\d*$')
+
+
+def _fix_character_rigs(nodes):
+    """Conjugate the rest rotations of every CHARACTER SKELETON, in place.
+
+    [2026-08-27] Measured, after "does the empties look right to you?" - they
+    did not. A character's joint chain imports COLLAPSED FLAT: the Soviet
+    rifleman's skeleton is 33 MILLIMETRES from head to foot, lying along +X,
+    while its mesh (parented to ROOT, unrotated) stands correctly in Z. Anything
+    hanging off the chain goes with it, which is why the rifle floats away - it
+    sits eight joints deep.
+
+    Conjugating the chain gives head 1.521 m, hands 1.038 m, feet 0.104 m,
+    rifle 1.020 m: a standing soldier with arms down. All character models agree.
+
+    The cause is `l_Hips` carrying (0.5, -0.5, -0.5, -0.5) - a 120 degree
+    rotation about (1,1,1), the classic axis swap - which maps the bones' local
+    +Y onto world +X. Vehicle roots are identity, so this never showed.
+
+    RIGID PARTS MUST NOT BE TOUCHED. Rendering the Hummel head-on both ways
+    settles it: as stored, the 15 cm sits properly in the fighting compartment;
+    conjugated, the barrel swings out THROUGH the left compartment wall. Almost
+    certainly skinned joints are stored as inverse bind poses while rigid parts
+    are stored forward.
+
+    So this is scoped to the SUBTREE under a skeleton root, never the model:
+
+      - "does the model have weighted meshes" does NOT work - vehicles have them
+      - "does the model contain an axis-swap quaternion" does NOT work either;
+        the Tiger's own `joint_WheelRightMain7_UP` has one and renders correctly
+
+    Scoping by subtree also fixes the crew figures riding inside vehicles, which
+    were collapsed too - the T-34/85's commander head moves 1.694 -> 2.191 m
+    (turret height) and its driver 0.608 -> 0.892 m (hull height).
+    """
+    roots = [i for i, n in enumerate(nodes) if _RIG_ROOT_RE.search(n.name)]
+    if not roots:
+        return 0
+    in_rig = set(roots)
+    changed = True
+    while changed:                      # collect descendants
+        changed = False
+        for i, n in enumerate(nodes):
+            if n.parent_index in in_rig and i not in in_rig:
+                in_rig.add(i)
+                changed = True
+    for i in in_rig:
+        w, x, y, z = nodes[i].rest_quat
+        nodes[i].rest_quat = (w, -x, -y, -z)
+    return len(in_rig)
 
 
 if __name__ == '__main__':
