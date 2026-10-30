@@ -63,7 +63,7 @@ from . import ms2_reader
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 5, 0),
+    "version": (1, 5, 1),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
     "description": "Imports assembled, textured vehicles from T34 vs Tiger's .ms2 model format - geometry, rest transforms, submeshes, materials/textures and skin weights",
@@ -91,17 +91,23 @@ _LOD_SUFFIX_RE = re.compile(r'_LOD\d+$', re.IGNORECASE)
 def _is_hidden_by_default(name):
     """Real .ms2 files use a naming convention where a base node like
     "Body" has sibling variants: "_LOD1/2/4" (lower detail levels),
-    "_Crashed" (damage state), and "_CM" (collision mesh, not meant to
-    be rendered). These occupy the same world-space position as the
-    base node, so importing every one as visible makes intact and
-    wrecked/lower-detail versions all render stacked on top of each
-    other. Everything is still imported (nothing lost) - this just
-    decides what's visible by default."""
+    "_Crashed" (damage state), "_CM" (collision mesh) and "_CS" (collision
+    shape). These occupy the same world-space position as the base node, so
+    importing every one as visible makes intact and wrecked/lower-detail
+    versions all render stacked on top of each other. Everything is still
+    imported (nothing lost) - this just decides what's visible by default.
+
+    [2026-10-30] "_CS" added. It was the one collision convention this missed,
+    so every low-poly hit volume was drawn on top of the model - his Tiger had
+    ten 40-vertex cylinders buried in its road wheels, and the libraries carry
+    134 (G5) and 291 (ZW) of them. They share their parent part's material, so
+    the "untextured = armour" rule below never caught them either. Hidden
+    objects still export, so this changes nothing about the round trip."""
     if _LOD_SUFFIX_RE.search(name):
         return True
     if 'Crashed' in name:
         return True
-    if name.endswith('_CM'):
+    if name.endswith('_CM') or name.endswith('_CS'):
         return True
     return False
 
@@ -452,10 +458,10 @@ class IMPORT_OT_tvt_ms2(Operator, ImportHelper):
     filter_glob: StringProperty(default="*.ms2", options={'HIDDEN'})
 
     hide_variants: BoolProperty(
-        name="Hide LOD/Crashed/CM variants",
+        name="Hide LOD/Crashed/CM/CS variants",
         description="Hide (but still import) lower-detail, damage-state, "
-                    "and collision-mesh variant nodes by default, since "
-                    "they occupy the same space as the base node",
+                    "and collision variant nodes (both _CM and _CS) by "
+                    "default, since they occupy the same space as the base node",
         default=True,
     )
     skip_degenerate: BoolProperty(

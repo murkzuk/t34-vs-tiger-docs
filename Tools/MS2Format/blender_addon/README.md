@@ -30,6 +30,20 @@ Options in the Redo panel (F9) are diagnostics, not just preferences — `Shadin
 tells you instantly whether an artefact is a normals problem (it survives flat shading ⇒ it
 is real geometry).
 
+**Variant nodes are imported but hidden**, because they sit exactly on top of the base part
+and would otherwise stack up as visible duplicates. The suffix conventions:
+
+| suffix | meaning |
+|---|---|
+| `_LOD1` … `_LOD4` | lower-detail levels of the part |
+| `_Crashed` | destroyed damage state |
+| `_CM` | collision mesh |
+| `_CS` | collision shape (added v1.5.1 — the low-poly hit volumes, 134 of them in G5's library and 291 in ZeeWolf's, previously drawn as little cylinders inside the road wheels) |
+
+Nothing is discarded: unhide them in the Outliner to inspect or edit them, and they still
+export. Turning off `Hide LOD/Crashed/CM/CS variants` in the Redo panel imports everything
+visible.
+
 ## Editing — two rules
 
 **1. Edit the MESH, not the object transform.** Tab into Edit Mode and move vertices. The
