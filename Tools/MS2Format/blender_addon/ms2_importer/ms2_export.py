@@ -173,6 +173,22 @@ def export_ms2(src, dst, objects=None, log=print):
         out += base
         patched += 1
 
+    # ---- brand-new nodes: objects carrying "ms2_new_node" = the donor/parent index
+    allobjs = list(objects) if objects is not None else list(by_index.values())
+    extras = [o for o in allobjs if o.get("ms2_new_node") is not None and o.type == "MESH"]
+    for obj in extras:
+        donor_idx = int(obj["ms2_new_node"])
+        donor = layout[donor_idx]
+        dnode = nodes[donor_idx]
+        mat = dnode.submeshes[0]["material_index"] if dnode.submeshes else dnode.material_index
+        out += rebuild_node(original, donor, obj.data, max(mat, 0), log=log,
+                            name=obj.name, parent=donor_idx)
+        rebuilt += 1
+        log("  %s: NEW node, parent %d, %d vertices"
+            % (obj.name, donor_idx, len(obj.data.vertices)))
+    if extras:
+        struct.pack_into("<i", out, 4, len(layout) + len(extras))
+
     open(dst, "wb").write(bytes(out))
 
     # verify before returning: the result must re-parse and walk to its own end
@@ -270,8 +286,14 @@ def tangent_basis(positions, uvs, idx, normals):
     return out
 
 
-def rebuild_node(data, node, mesh, material_index, log=print):
-    """Node bytes for a node whose VERTEX count changed."""
+def rebuild_node(data, node, mesh, material_index, log=print, name=None, parent=None):
+    """Node bytes for a rebuilt node.
+
+    `node` is the DONOR: the source node whose track and non-count-sized blocks are
+    copied. With name/parent given, the same builder emits a BRAND NEW node instead -
+    which is what an added LOD is. Everything count-sized (positions, normals, uvs,
+    indices, bbox, sphere, 0x40000 tangents) is generated; everything else is copied.
+    """
     flags = node["flags"]
     if flags & 0x10:
         raise ValueError("node is skinned (0x10): its weights scale with the vertex "
@@ -282,8 +304,12 @@ def rebuild_node(data, node, mesh, material_index, log=print):
         raise ValueError("vertex count %d exceeds what uint16 indices address" % vc)
     new_flags = flags & ~0x800
     out = bytearray()
-    o, size = node["spans"]["name"]
-    out += data[o:o + size]
+    if name is None:
+        o, size = node["spans"]["name"]
+        out += data[o:o + size]
+    else:
+        raw = name.encode("ascii", "replace")[:63]
+        out += struct.pack("<i", len(raw)) + raw + b"\x00"
     lo, hi, c, r = _bounds(positions)
     out += struct.pack("<3f", *lo) + struct.pack("<3f", *hi)
     out += struct.pack("<4f", c[0], c[1], c[2], r)
@@ -297,7 +323,7 @@ def rebuild_node(data, node, mesh, material_index, log=print):
     for i in idx:
         out += struct.pack("<H", i)
     out += struct.pack("<4I", (((ic & 0xFFFF) << 16) | (material_index & 0xFFFF)), 0, vc, 0)
-    out += struct.pack("<2i", node["parent"], new_flags)
+    out += struct.pack("<2i", node["parent"] if parent is None else parent, new_flags)
     o, size = node["spans"]["d_count"]
     out += data[o:o + size]
     if "anim track" in node["spans"]:
