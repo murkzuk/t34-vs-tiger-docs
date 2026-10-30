@@ -357,7 +357,18 @@ def rebuild_node(data, node, mesh, material_index, log=print, name=None, parent=
     out += data[o:o + size]
     if "anim track" in node["spans"]:
         o, size = node["spans"]["anim track"]
-        out += data[o:o + size]
+        if name is None:
+            out += data[o:o + size]
+        else:
+            # [2026-10-30] A NEW node is parented to the donor PART, which already carries
+            # the part's own transform - so copying the donor's track applies that offset
+            # TWICE and the level floats away from the thing it belongs to. G5's own LOD
+            # children all carry an identity track (frame0 pos 0,0,0 quat 1,0,0,0) while
+            # their bases carry real offsets: Body -0.456, TrackLeft +1.500, Turret_A -0.035.
+            # Written blank here, keeping the frame COUNT so anchors stay in step.
+            frames = size // 28
+            out += b"\x00" * (frames * 12)
+            out += struct.pack("<4f", 1.0, 0.0, 0.0, 0.0) * frames
     for label, bit in (("opt 0x40", 0x40), ("opt 0x200", 0x200), ("opt 0x400", 0x400),
                        ("opt 0x10000", 0x10000), ("opt 0x4000", 0x4000)):
         if new_flags & bit and label in node["spans"]:
