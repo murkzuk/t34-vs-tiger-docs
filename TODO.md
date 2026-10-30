@@ -1,6 +1,819 @@
 # TODO / Backlog — t34-vs-tiger-docs
+> **Stopping point 2026-09-01:** see [WHERE_THIS_STANDS.md](notes/WHERE_THIS_STANDS.md)
 
 Running list of things flagged during work sessions, not yet done. Newest first within each section. See `CHANGELOG.md` for what's already been done.
+
+---
+
+## MS2 IMPORTER: guns imported upside down — FIXED 2026-09-01
+
+**Root cause: the ROOT node.** It carries a 90 degree rotation plus a +2 m lift,
+and `Body` carries the inverse translation; the cancellation fails because of the
+rotation. Fixed by conjugating ROOT's rest rotation (`_fix_rotated_root`).
+
+Only 12 of 250 models have a ROOT rotation, all exactly 90 degrees - the towed
+guns, the mortars, some test boxes. Verified over all 250: **8 changed, 242
+untouched.** Flak 88 confirmed by render.
+
+- [ ] **Eyeball the other seven** - Pak43_41, ML19_122mm, ML20_152mm,
+  120mmMortar, 82mmMortar, AmmoBunker, TenMeterScale. Expected right, not yet
+  looked at.
+- [x] **sIG33 crossed legs FIXED 2026-09-01.** `Turret_A`'s track is the
+  TRAVERSE SWEEP and frame 0 is one extreme (+-45 deg there); that model parents
+  its wheels under `Turret_A`, so the wheels swung onto the diagonal. Centred
+  when the track contains an identity frame. 35 of 250 models changed, 215
+  untouched; sIG33 and King Tiger both verified by render.
+- [x] **User checked the other 180-degree turrets 2026-09-01 - all correct.**
+  Panther, PzIII, KV and T-34 variants all come out right with Turret_A centred.
+  The turret fix is verified end to end.
+- [ ] Unrelated, seen in the same Editor session: `ShadowRender: Unable to
+  allocate vertex buffer space for 62612 vertices for joint Turret_A,
+  model(u_stat_Flak88.ms2)`.
+
+**Refuted along the way, do not retry**: "don't apply transforms to baked nodes"
+(every correct model has such nodes - the Hummel has more than the Flak), and
+"the Tiger's baked nodes have identity transforms" (they do not). Stored bboxes
+are LOCAL space and cannot serve as assembly ground truth.
+
+---
+
+## THE `TvT/` MIRROR HAS DIVERGED BOTH WAYS - do not bulk-sync (2026-09-01)
+
+**143 of 951 mirrored files differ from the live REDUX install**, and the
+divergence runs in BOTH directions:
+
+- `TvT/Common/Intersections.script` carries a **"Redux Added Missing Models"**
+  block (barricade / building intersection settings) that the LIVE install does
+  NOT have.
+- `TvT/Missions/MyMission/Berezov/Content.script` actually contains
+  **BerezovKursk** content - class `BerezovKurskContent`, pointing at the
+  BerezovKursk path - filed under the wrong folder name.
+
+A bulk sync from live was attempted on 2026-09-01 and **reverted before
+committing** after those two turned up. Nothing was lost.
+
+- [ ] **Reconcile the mirror file by file.** For each of the 143, decide whether
+  live is ahead (sync it) or the mirror holds REDUX work missing from live
+  (restore it to live instead). This is the only safe way and it is not a
+  five-minute job.
+- [ ] **Fix the misfiled Berezov/BerezovKursk mirror path** while doing it.
+
+---
+
+## AI TARGET PRIORITY - fixed at the table, BROKEN at the source (2026-08-27)
+
+`CAutoCommander.PreferedTargets` is the **only** target-priority table in the
+game. It weights purely by classificator and distance - no threat model, no
+penetration test, no facet angle.
+
+- [x] **REDUX: added the missing `HEAVYTANK` and `VEHICLE` rows.** No unit in
+  the game is classified `TRUCK`, so the zero-weight `TRUCK` row was dead and
+  trucks fell through to the default - which is why the gunner picked a truck
+  over a T-34. `ARTILLERY` and `AA_GUN` are dead rows too, carrying the two
+  HIGHEST weights in the table; left in place and labelled.
+- [x] **ZW: 65 of ~127 unit definitions had NO weight at all** (GUN 23, HUMAN
+  15, HEAVYTANK 11, VEHICLE 7, ANTITANK 6, BTR 4). Its file is a different,
+  cut-down one matching only `TANK` and `AIR`. Coverage now 124/127. **Weights
+  scaled to ZW's convention** - close-range TANK is 10000 there against G5's
+  1000, so REDUX's numbers pasted across would have been 10x too weak.
+- [ ] **`GunFlak88` is classified `["GER","GROUND"]` with NO type
+  classificator** - not `GUN`, not `ANTITANK`. The deadliest AT gun in the game
+  is invisible to target priority. One word fixes it; it is a unit-definition
+  edit, so it waits for the user.
+- [ ] **The real job: there is no threat model.** A T-34 and a StuG weigh the
+  same. Making engagement depend on whether the round can defeat the armour is
+  written up in `Documentation/TvT_AI_Engagement_Logic.md` and is a real piece
+  of work, not a table edit.
+
+## AXIS AI CANNOT ENGAGE - root cause found, fixed only per-mission (2026-08-27)
+
+- [x] **FIXED 2026-08-27.** Not the `GetPlayerObjectsIDList` seed - that line is
+  fine. The bug is `GetEnemyGroupUnitsList(TargetedUnit)` one line down, which
+  only the side OPPOSITE the player reaches, and which hands back the wrong
+  side. Emptied so it falls through to the file's own correct fallback: attack
+  the unit actually spotted. Both builds. **36 missions share this file - watch
+  the next few logs.** Original text follows.
+- [ ] ~~`UnitGroup.script` seeds its kill list from the PLAYER's own units.~~
+
+  ```
+  Array KillList = GetMission().GetPlayerObjectsIDList();
+  ```
+
+  Written from the Soviet point of view, where the player always IS the enemy.
+  For a German group it resolves to friendlies - the log shows the German HQ
+  attacking and killing German `ZugWeidinger` units. **No German AI group can
+  engage in any mission.** A fourth bug of the same family as the three already
+  fixed in that file. **NOT fixed** - it would touch every mission in the game.
+- [x] **BerezovKursk worked around**: `StartAttackAxis` names the 37 Soviet
+  combat units explicitly and issues `SetOrder_Attack`, the mechanism proven to
+  work for the Soviet groups. Overrides the patrol advance, as it does for them.
+- Recorded so they are not retried: sending the Germans `StartAttack` (it ends
+  in `SetOrder_Attack` against the *player*, who is German); and merely arming a
+  group with `ActivateFire`/`ActivateRadar`/`ERT_AGGRESSIVE`, which logs
+  "engaging" and produces zero attacks. **Arming is not ordering.**
+
+## TIGER II - in game, AI, both builds (2026-08-27)
+
+- [x] Unit class, ballistics with a real KwK 43 falloff, armour, hit points,
+  registrations, editor entry, roster, target identification. Placed in
+  BerezovKursk as `KGKaiser_5`.
+- [x] **Gun elevation track was inverted.** Every G5 tank puts the POSITIVE
+  limit in frame 0; ZeeWolf's had the signs flipped. Fixed, then tuned to rest
+  at -0.18 deg.
+- [ ] **Winter variant `CTankPzVI_KingTigerII_WUnit` is still undefined**; its
+  editor line stays commented.
+- [ ] **Playable version** needs `Cu_veh_PzVI_KingTigerII_PlayableModel`.
+  Interior can be borrowed, as ZeeWolf did for all five of his Tiger E1s.
+- [ ] `Textures/Pk_CAP.tex` is referenced by the model script and does not
+  exist in either build.
+- [ ] **ZeeWolf's hand-built models carry no `*_FakeShadow` geometry** (King
+  Tiger, TIGER_E1_Mid1, Panther D, Hummel - all zero; every G5 model has 2).
+  Inert while shadows are off, but enabling them would work for G5's vehicles
+  and silently do nothing for his.
+
+## See-through wheat - STILL BROKEN; fog on distant objects IS fixed
+
+- [ ] **DUST IS NOT FIXED.** `K:\TvTDeepseek\dustfix\dustfix.dll` was BUILT
+  2026-08-28 and there is a launcher checkbox for it, but **the user reports the
+  artefact is still present**. I marked this done on 2026-09-01 purely because
+  the DLL and checkbox existed - I never tested it and never asked. Wrong, and
+  corrected same day.
+  The diagnosis stands: alpha-blended dust (`CForestUnitDustTraceEffect`, alpha
+  0.3, nine particles per 0.2 m of track) against alpha-blended grass with no
+  sort between them. Confirmed by the user: stationary tank, no dust, artefact
+  gone. **The hook exists but does not solve it** - next step is to find out
+  whether it is even arming (check `dustfix.log`) before touching the code.
+- [x] **Fog on distant objects DONE** - a 25-year-old bug and a Phase 2 item.
+  The distant-LOD vertex shader had been computing a fog factor all along and
+  the engine was **discarding** it; `K:\TvTDeepseekogfixogfix.dll` flips
+  it back on, reusing the engine's own density and colour. User-confirmed
+  2026-09-01: distant tanks now sit in the haze instead of popping out.
+
+**Both are opt-in injected DLLs, wired into the launcher and mutually exclusive
+with the profiler - the live install is not modified.** Same architecture as the
+LOS hook. Sources beside each DLL; rebuild with the `build.bat` in that folder.
+
+---
+
+## Lighting - the commander is SETTLED, the ambient pass is not (2026-08-26)
+
+```
+REDUX   34 missions, ambient luminance   0.092 .. 0.210
+ZW      40 missions, ambient luminance   0.120 .. 0.609
+```
+
+Every REDUX mission sits at or below ZW's dimmest.
+
+- [x] **C2M1 relit** - ambient lum 0.120 -> 0.318, anti-sun brought to ZW's
+  shape (lum 0.455 / intensity 0.200 / angle 45, was 0.820 / 0.400 / 10).
+- [x] **The commander/self-shadow trade is DECIDED.** `PlanarShadow = false`
+  in `Models\u_veh_PzVI_LATE.script` - the user chose self-shadowing and a
+  dark commander, "the less of 2 options". **Do not flip without asking.**
+  Unexplained: ZW ships `true` and still looks shaded. See
+  `TvT_Mission_Authoring_Verified.md` section 14b.
+- [x] **REDUX fog rollout DONE 2026-08-29** (DeepSeek) - `FogDensity`
+  0.0013 -> 0.002 on C1M3/C2M2/C2M4, written to `Content.script` which is
+  the file that wins. **This was THE_PLAN's last open Phase 1 item.**
+- [x] **ZW time-of-day pass 2026-08-29** (DeepSeek) - C1M4 morning, C2M3
+  sunset, C2M6 dawn, plus C1M1/C2M1. Validated clean.
+- [ ] **A considered ambient pass across the other 11 campaign missions.**
+  Still the highest-value open lighting job. ZW's brightest run
+  `SunIntensity` 0.7-0.9, not 1.0 - if a mission washes out, lower the sun
+  rather than dropping ambient. **Include `AntiSunAngle`** - it is a contrast
+  control, and a low angle rakes a vehicle's shaded flanks.
+- [ ] **Shadow consistency**: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6 still need
+  `StencilShadowColor` (five never set it). Note ZW runs stencil *brighter*
+  than `ShadowColor`, so "they must match" is a default, not a rule.
+
+---
+
+## ZW gunsight and LOD — PARKED 2026-08-27, for another day
+
+Measured that day: ZW's gunsight is 39 fps against 138-153 external, while
+REDUX's is 107 against 83. Cause is LOD escalating with magnification (LOD is
+picked by ANGULAR size, not true distance) multiplied by ZW's ~9x object count.
+Full evidence in `CHANGELOG.md`, entry *the projection matrix, measured*.
+
+**Only the first item below is actually gunsight-specific.** The other two are
+constant costs — they are paid identically in the external view, so they cannot
+produce a gunsight-vs-external differential. Recorded here so that distinction
+is not lost.
+
+- [ ] **GUNSIGHT-SPECIFIC: `LockLOD` on the gunsight camera.** The engine
+  exports `LockLOD`/`UnlockLOD`; the Editor already calls
+  `GetMission().GetCamera().LockLOD(0.99 * LOD)`
+  (`Scripts/Editor/BaseAssetViewer.script:1599`). Pinning LOD while magnified
+  attacks the measured mechanism directly — one change in `PlayerUnit.script`
+  where the gunsight view is set up, plus `UnlockLOD` on exit. No model work.
+  **Unknown: the argument's sense** (the Editor drives it from a slider), so it
+  needs one short test run to establish which direction means less detail.
+  `UnlockLOD` is exported but never called from any script in either build.
+
+- [ ] **NOT gunsight-specific — Tiger LOD distances.** ZW's
+  `TankPzVIAusfEUnit` uses `SetLods([400, 270, 170, 50, 5])` against REDUX's
+  `[300, 170, 50, 5]` — top detail held to 400 m instead of 300, plus an extra
+  band. Same shape as the tree `ModelLOD` 480 m inflation already reverted.
+  One line, safe, but it lowers the whole frame, not the gunsight gap.
+
+- [ ] **NOT gunsight-specific, and BLOCKED — ZW's replacement vehicles have no
+  LOD meshes at all.** Verified by reading the models with our own importer:
+
+  ```
+  G5 original  u_veh_PzVI_MAIN            334 nodes, 165 LOD meshes
+  ZW Tiger E1 Mid1                        186 nodes,   0
+  ZW Tiger E1 Early                       190 nodes,   0
+  ZW Panther D Playable                   190 nodes,   0
+  ```
+
+  So ZeeWolf's `SetLods([0])` on those three units is **correct** — there is
+  nothing to switch down to. Do NOT "restore" the LOD arrays sitting commented
+  out beside those calls; that check is the only reason this was not
+  recommended. These render at full detail at every range in every view, which
+  is a real part of why ZW's frame is long — but it is a constant, not a
+  gunsight effect. Fixing it means BUILDING LOD meshes, which needs the
+  exporter to ADD geometry — blocked on the unidentified `vertex_count * 24`
+  block (6 floats/vertex, flag `0x40000`, almost certainly tangent+binormal).
+  **This is now a concrete reason to solve that block rather than a theoretical
+  one.**
+
+- Ruled out, do not revisit: more `FogFarMax` cutting (done, user reports it
+  looks worse) and tree LOD (ZW has 30 trees to REDUX's 380).
+
+---
+
+## Model tooling - the .ms2 format is SOLVED (2026-08-26, corrected 2026-08-27)
+
+- [x] **UVs, transforms and material indices all decoded.** The importer now
+  produces assembled, correctly skinned vehicles. See
+  `Documentation/MS2_Node_Transforms_SOLVED.md`.
+- [x] **SUBMESH DESCRIPTOR decoded (2026-08-27).** The 16-byte "other" record is
+  `(index_count << 16) | material_index`, `index_start`, `vertex_count`,
+  `vertex_start` - and **indices are relative to `vertex_start`**. `other_count`
+  is the number of submeshes, one per material. Reading it as a single mesh
+  shredded the upper hull of **87 of 249 models** into splinters. Verified on
+  518 of 524 multi-submesh nodes. Rebase lives in `Ms2Node.absolute_indices()`,
+  deliberately NOT in `node.indices`, because the writer asserts those bytes
+  round-trip.
+- [x] **Export WORKS and is confirmed in the engine.** `ms2_writer.py`; the
+  Editor rendered a file we wrote. **Round-trip re-verified 2026-08-27 after the
+  submesh change: 249 of 249 byte-identical** (was 248 - the last one was a
+  damaged orphan file that now parses). **Limit: vertex/index counts must not
+  change.**
+- [ ] **Identify the `vcount * 24` block** — 6 floats per vertex on every
+  textured node, gated by flag `0x40000`. Almost certainly tangent + binormal,
+  and computable from positions/UVs/normals if so. **This is the one thing
+  between "reshape what exists" and "add geometry"**, which is what the King
+  Tiger vision-port idea would need.
+- [ ] Test the writer on a **skinned** mesh — the confirmed test was a static
+  box. Bind poses (80 bytes x count) and 20-byte-per-vertex weights are
+  preserved verbatim, but untested.
+- [ ] **Two skinned nodes have garbage in their submesh vertex fields** —
+  `hum_SSTankman` `lo_Hips` and `u_veh_KingTiger` `Body_commander`. Index counts
+  are right, vertex counts are nonsense. The reader falls back safely, but the
+  layout for skinned multi-submesh nodes is not actually understood. **The King
+  Tiger is one of them**, so this needs settling before that model is used.
+- [ ] Check whether a shape change needs the companion **`.rmap`** regenerating
+  (pathfinding/collision footprint). That format is untouched.
+- [x] **File > Import now produces a finished vehicle in one step.** The addon
+  parses the companion `.script` itself, loads `.tex` as the DDS it is, honours
+  alpha mode, and auto-hides armour/collision facets. Tested on four vehicles
+  across both builds.
+- [ ] **The auto-hide rule misses crew/module hit boxes.** It catches `_LOD*`,
+  `Crashed`, `_CM` and untextured materials, but `HullDriver`/`HullEngine`/
+  `HullGunlayer` use a *textured* material and render as boxes through the
+  vehicle. `*_FakeShadow` duplicates are also missed (the Panzer IV has 30-odd).
+  Both are currently only hidden by the render harness, not by the addon.
+- [x] **`ms2_probe.py` marked SUPERSEDED** with a header naming its two wrong
+  answers (it desyncs on real vehicles; its `other_count` of 4 is really 1, and
+  that bad number cost a later session real time). Kept rather than deleted -
+  it is the record of how the format was first worked out.
+- [x] **Reader de-duplicated (2026-08-27).** `Tools/MS2Format/ms2_reader.py` had
+  been the 3 July version for eight weeks while the addon copy moved on. One
+  file now. `ms2_importer.zip` was equally stale; rebuilt.
+
+## TOMORROW'S LIST (2026-08-26 — in rough priority order)
+
+### 1. ZW's handling & gunnery bias — REVERT TO ORIGINAL (do this before penetration)
+- [ ] **The user was right that ZeeWolf had a bias, and it is in handling and
+  gunnery, not penetration.** Compared class-for-class against the untouched
+  2001 original:
+  - AI Tiger gun `FireDeviation` **1.2 -> 0.05** (24x MORE accurate); AI T-34s
+    made *less* accurate.
+  - **Player** Tiger gun unchanged at 0.005; **player T-34/85 0.005 -> 0.15**,
+    thirty times worse.
+  - Tiger: +24% speed, 29% lighter (56 t -> 40 t), sees 1500 -> 2600 m, engages
+    1000 -> 2600 m, fires every 12 s -> 7 s.
+  - T-34/85 turret traverse **halved** (17 -> 8); T-34/76 **cut 5x** (36 -> 7).
+- [x] **DECIDED: adopt G5's original values.** `FireDeviation` is a gameplay
+  knob, not ballistics (MGs 0.15 vs cannons 1.2 is physically backwards; player
+  0.005 vs AI 1.2 on the same weapon). G5's AI band is 20% wide with a modest
+  edge to better platforms - defensible. ZW's 0.05 sits in the *player* band.
+- [ ] **This is a REVERT, not a rebalance** — REDUX is the 2001 original on these
+  fields (one exception: Tiger `MaxPower` 1600 -> 1500, a REDUX nerf). So there
+  is no design judgement to make, unlike the penetration question.
+- **Compare PER CLASS.** A unit file has separate AI and player gun classes
+  (`CTankT34_85_44Gun` vs `...PlayerGun`); grepping the first match gives
+  contradictory answers. This trap produced two opposite wrong readings.
+- [x] **Swept — all 19 shared units, class-by-class.** 141 fields differ.
+  `Tools/compare_unit_stats.py` makes it repeatable.
+- [x] **DECIDED: revert accuracy, turret traverse, mass and speed. LEAVE the
+  sensor and engagement ranges ALONE.** ZW raised radar/attack distances for
+  *both* sides (ZiS-3 800 -> 3200 m, SU-85 1200 -> 2400 m) — that is genuine
+  modding, not the thumb on the scale, and G5's originals were myopic. A blanket
+  revert would undo good work along with the loaded values.
+
+### THE REVERT LIST — exactly what to change in ZW
+
+**AI main-gun accuracy** (`FireDeviation`) back to the 2001 values:
+```
+CGunPak40Gun            0.5   -> 1.5
+CTankPzIVGGun           0.10  -> 1.5
+CTankPzVIAusfEGun       0.05  -> 1.2
+CSAUStuG40Gun           0.02  -> 1.2
+CTankT34_76_42Gun       1.6   -> 1.5
+CTankT34_85_44Gun       1.55  -> 1.25
+CSAUSU85Gun             1.2   -> 1.2   (already correct, leave)
+```
+**Tiger machine guns** `FireDeviation` 0.05 -> 0.15 (coax and hull).
+
+**Player gun** — the only player nerf in the game:
+```
+CTankT34_85_44PlayerGun  0.15 -> 0.005
+```
+
+**Turret traverse** (`DirectionSpeedH`):
+```
+CTankT34_85_44Gun   8.0 -> 17.0        CTankT34_76_42Gun  7.0 -> 36.0
+CSAUSU85Gun         3.0 ->  5.0        CGunZis3Gun        4.0 ->  6.0
+CTankPzIVGGun       8.0 -> 14.0        CTankPzVIAusfEGun  6.5 ->  4.5
+```
+
+**Tiger mobility and rate of fire:**
+```
+MaxSpeed          2730  -> 2200        Mass       40000 -> 56000
+FirePeriod        7000  -> 12000       FirePeriodRandAdd  2000 -> 8000
+SuspensionHeight  0.4   -> 0.9         Friction1  1.0   -> 2.0
+```
+
+**T-34 mass:** T-34/85 48000 -> 40000.
+
+**LEAVE ALONE:** `MaxRadarDistance`, `MinRadarDistance`, `AttackDistanceMax`,
+`AttackDistanceMin` — on every unit, both sides.
+
+- [x] **APPLIED 2026-08-27** — 23 changes, each verified against the original.
+  ZW stamped `v0.260827`, cache cleared, backup in
+  `K:\TvTDeepseek
+ollback\ZW_Units_2026-08-27_pre_revert\`.
+- [x] **FIXED 2026-08-27 (option 2, equalise upward).** T-34/85 1650 -> 2600
+  detection and engagement; T-34/76 detection 800 -> 2600. Both T-34s now see as
+  far as a Tiger; ZW's better engagement ranges kept. Verified.
+- [ ] ~~DECIDE: the sensor ranges are NOT even-handed after all.~~ The Tiger
+  detects at 2600 m, the T-34/85 not until 1650 m - a 950 m window where it
+  shoots and you cannot see it. The T-34/76 is incoherent (engages 2600 m,
+  detects 800 m) and is the only vehicle whose vision ZW *reduced*.
+  First Soviet play test after the revert: *"i died pretty quick"* - one run,
+  not conclusive, but this is the obvious suspect.
+  - **Option 2 is recommended** and matches the original intent: keep ZW's
+    better ranges but equalise them (T-34/85 1650 -> 2600, T-34/76 800 -> 2600
+    detection). Alternatives: revert all sensors to G5 (~1200-1500 m), or fix
+    only the incoherent T-34/76.
+- [ ] **TEST: one mission per side.** The T-34/85 should feel transformed —
+  turret traverse 8 -> 17 and the player gun back to pinpoint.
+- [ ] **Check the ZW-only vehicles too** — Panther, KVs, SU-122/152, Nashorn etc.
+  have no original to compare against, so they need judging against the restored
+  values rather than diffed.
+
+### 2. Ballistic realism pass on ZW — route not yet chosen
+- [ ] **Pick a route first, it is a design decision.** **A:** adopt REDUX's
+  tables wholesale (genuinely real numbers, but ZW's Tiger 88 goes 175 -> 120 at
+  point blank and every engagement changes). **B:** keep ZW's power levels and
+  add realistic decay (far less disruptive, range starts mattering, still
+  unrealistic up close).
+- [ ] **Source historical figures for the ZW-only guns** — Pak 43, Flak 88,
+  Panther 75 L/70, KV-85, KV-1, KV-1S, SU-122, SU-152, sIG 33, Nashorn, Hummel,
+  Wespe, Marder II, StuG F8, Sturm-Haubitze, Pz II, Pz III L24. No REDUX
+  equivalent, so these need finding and **showing before applying**.
+- **Do NOT fix the Pak 43 alone** — see `TvT_Penetration_Tables.md`.
+- **REDUX needs nothing here.** Its tables are already the real figures.
+
+### 3. The King Tiger unit class
+- [ ] ~1,800 lines, adapted from `TankPzVITigerE1Unit.script` (1,772 lines,
+  70 classes). **14 class names are already dictated** by the shared files, and
+  all armour/hitpoint constants exist. Point the mesh at `Cu_veh_KingTigerModel`,
+  use `GunHvyPaK43`, uncomment `Editor/MenuConfig.script:229-230`, clear cache.
+- [ ] Fill `Turret_A_NormalSet` in the model script — it names only
+  `Body_commander`; the turret, gun, hatches and crew hands all exist in the mesh
+  (confirmed 2026-08-26) but are not grouped, so the turret will not swap to its
+  damaged state.
+
+### 4. MS2 — the gate to ADDING geometry
+- [ ] **Identify the `vcount * 24` block** (flag `0x40000`, 6 floats/vertex,
+  almost certainly tangent+binormal). This is what stands between "reshape
+  existing geometry" and "add geometry" — i.e. the King Tiger vision-port idea.
+- [ ] Test the writer on a **skinned** mesh; the confirmed test was a static box.
+- [ ] Does a shape change need the companion **`.rmap`** regenerating?
+
+### 5. Lighting
+- [ ] The **ambient pass** across the other 11 campaign missions — still the
+  biggest open quality job. Include `AntiSunAngle`; it is a contrast control.
+- [ ] **Shadow consistency**: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6 need
+  `StencilShadowColor`.
+
+### 6. Performance
+- [ ] **ZW is 36-60 fps and VIEW-DEPENDENT** — that points at frustum content,
+  not per-unit cost. Profile the worst view against the best and diff.
+- [ ] `Engine.dll` is 28.5% of the frame and has never been broken down.
+
+## Ammunition scarcity - nothing in TvT models it (2026-08-26)
+
+- [ ] **`AmmoQty` is used by ZERO missions.** The engine supports per-placement
+  shell counts (`Object.script:351`, set from a mission's `Content.script`), but
+  no vehicle in the game has a loadout. Historically the T-34/85 carried ~36 HE,
+  14 AP and only **5 sub-calibre** - scarce tungsten held back for the worst
+  targets. That constraint shaped real gunnery and is entirely absent here, for
+  the player and the AI. Per-mission, so it can be tried on one mission first.
+  **First check what the engine does when `AmmoQty` is unset** - unlimited, or a
+  built-in default? Unverified. See `TvT_Mission_Authoring_Verified.md` s.16.
+- [ ] **T-34/85 APCR looks generous.** REDUX gives 153.7 mm at 500 m where the
+  usual figure is 138-140, and keeps it useful to 2000 m where real APCR fell
+  off badly past ~1000. May be deliberate balance - check before changing.
+
+## PERFORMANCE - next step is a QUESTION, not an experiment (2026-08-26)
+
+- [x] **SOLVED: the 70-90 fps complaint was the LOS HOOK.** It cost ~10.9 ms a
+  frame - 51 fps with it on, 115 with it off. Two `VirtualQuery` (= syscall)
+  storms in `K:\tvt_los\hook.cpp`: `find_endpoints` ran up to 16,512 per vision
+  check, and an ungated `CrewHook` sweep ran 256 per crew tick. **Fixed
+  2026-08-26: LOS on now gives 120 fps, so the hook is free.** See
+  `TvT_Performance.md`.
+- [ ] **Switch off the `[CTRL]`/`[CREW]` debug dumps** in the LOS hook. They
+  fire every 128 crew ticks and wrote 1,800 of 2,300 log lines in one session,
+  each a file write on the game thread. Same category of leftover, much smaller.
+- [x] **Map-lookup cache stays an OPT-IN CHECKBOX.** User's decision,
+  2026-08-26, asked and answered. +6.3%, verified over 42 million calls with
+  0 mismatches - but it is a live patch to a hot code path, and 6% does not
+  justify injected code in the default play path. **Do not re-propose
+  defaulting it.**
+- [ ] Multi-entry map cache (4-8 entries vs the current 1). Hit rate is 67%;
+  headroom is ~2%, below the +/-4% noise floor, so probably not worth it alone.
+- [ ] **`Engine.dll` is 28.5% of the frame and has never been broken down.**
+  Hot pages `+0x229000`, `+0x185000`, `+0x17D000`, `+0x168000`. The only large
+  unexplored block left.
+- [x] **CLOSED: native D3D9 vs DXVK.** +1.9%, inside noise. DXVK is free. Do
+  not re-open.
+- [x] **CLOSED: the 19-21% `NtWaitForAlertByThreadId` lock wait.** Real, and
+  not recoverable - native pays the same through a different lock.
+
+---
+
+## SOLVED: tank commanders rendered black — `PlanarShadow` (2026-08-26)
+
+Written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 15.
+**Not solved.** Seven candidates eliminated by test - texture, material, mesh,
+scene ambient, stencil shadow colour, config-set name, lightmaps. It is
+something in the skinned-mesh render path.
+
+- [x] **FIXED.** `PlanarShadow = true` (plus `FakeShadow = true`,
+  `FakeShadowScale = 0.1`) on `u_veh_PzVI_LATE.script` - **ported from ZW, where
+  the commanders are not black.** ~50% improvement, confirmed in game. Found by
+  DIFFING the two builds after the user observed ZW's were better, not by
+  reasoning: same mesh, same DLLs, three model fields different.
+- [ ] **Untested: do the other vehicles need it?** ZeeWolf enabled it on the two
+  Tiger models ONLY - every other vehicle is DEFAULT in both builds, so there is
+  no precedent for a blanket sweep. Test one (PzIVG or a T-34) before applying
+  widely.
+- [x] **Recorded: skinned meshes are missing 64 shader variants.** `SceneMesh`
+  has 150, `SkinMesh1`/`SkinMesh4` have 86 each, and the 64 missing differ in
+  exactly one character - position 4 `L` instead of `N`. A rendering feature
+  (lightmapping, given `LightMap.fxo` sits alongside) that bone-animated geometry
+  simply cannot use. Not the cause here, but a permanent capability gap.
+
+**Measuring trap recorded:** the texture was first "measured" by averaging DXT1
+endpoint colours across the whole file - 22% against the hull's 62% - and
+reported as the cause. Meaningless: most of a character sheet is dark background
+around the UV islands. The user opened the image and saw it was fine. **Sample
+the region you care about, or just look.**
+
+---
+
+## Knowledge-base audit — findings that never reached a reference doc (2026-08-26)
+
+The user's point: *"I should not have to prompt you to add this, it ought to be
+automatic as I am sure we have missed a lot of findings over the last 2 weeks."*
+Correct, and the audit confirms it.
+
+**The structural problem:** `notes/` is session-scoped and dated
+(`SESSION_2026-08-25`, `project_tvt_*_2026-08-25`). `Documentation/` is the
+durable reference. Findings land in the first and are never promoted to the
+second. **23 of 24 project notes are referenced from no reference doc at all.**
+
+- [x] **`Documentation/TvT_Performance.md` created.** An entire domain had no
+  reference doc - two days of profiling, disassembly, the map cache, the tools
+  and the method lessons existed only in dated notes.
+- [x] **Tree-shadow knowledge folded into authoring section 14.** Proof of the
+  problem: `project_tvt_tree_shadow_limitation.md` documented
+  `StencilShadowSettings` (`Settings.script` L64) two days before section 14 was
+  written, and section 14 was written without consulting it.
+- [ ] **Promote the rest.** Candidates, by destination:
+  - authoring doc: `atmosphere_understanding`, `atmosphere_lighting_plan`,
+    `dawn_rollout`, `c1m2_tigers_passive_by_design`, `pz4g_full_unit_swap`
+  - performance doc: `lod_distances`, `tree_lod_tuning`, `speedtree_harvest`,
+    `settreesize_hook_spec`, `resolution_finding`
+  - engine/lineage: `wov_disabled_features`
+  - **status, not reference - leave in notes:** `commercial_question`,
+    `pb_campaign_reference`, `big_map_2d_campaign_layer`, `acquisition_parked`,
+    the `SESSION_*` and `fps_bisect` files
+- [ ] **Sweep the fortnight before 2026-08-25** for findings that never landed
+  anywhere. The audit above only covers what is *in* notes; work discussed in
+  session and never written down at all will not show up this way.
+
+**The discipline, going forward:** a finding is not recorded until it is in a
+`Documentation/*.md` reference. A dated note is a working file, not a record.
+
+---
+
+## Shadow consistency across missions (2026-08-26)
+
+Model written up in `Documentation/TvT_Mission_Authoring_Verified.md` section 14.
+**Three separate shadow systems**, plus `AmbientLight` which is not a shadow
+setting at all but produces what players call one.
+
+**THE RULE: `ShadowColor` and `StencilShadowColor` must match within a mission.**
+They are the same physical shadow drawn by two different renderers - terrain and
+buildings use the first, vehicles the second. The two missions anyone actually
+finished (C1M2, C2M2) have them identical; every mismatch is an unfinished one.
+
+- [x] **C2M1 harmonised.** Both now `(0.560, 0.580, 0.630)`, blue-tinted.
+  `AmbientLight` also raised `0.120 -> 0.210` - C2M1 had the harshest
+  ambient/sun ratio in the game (8.3:1), pairing the lowest ambient with the
+  highest `SunIntensity`.
+- [ ] **Six missions still need it: 1M1, 1M3, 1M4, 2M3, 2M4, 2M6.** Five never
+  set `StencilShadowColor` at all, so vehicle shadows fall back to
+  `BaseAtmosphere`'s `(0.3, 0.3, 0.3)` - the darkest value in the game and dead
+  neutral grey. **1M3 is mismatched by 0.30** (`0.2` vs `0.5`).
+  1M5/1M6/2M5 are within 0.03 and correctly near-white for overcast.
+- [ ] **No Tiger gets a fake shadow.** `FakeShadows.script` sets
+  `Cu_veh_PzVI_MAINModel::FakeShadow = true` but every Tiger uses
+  `Cu_veh_PzVI_LATEModel` - `LATE` appears zero times in that file. Same shape
+  as the `LodForShadowHide` bug. **This class does not appear in any log** - it
+  is a valid assignment to a class nothing instantiates. One line to fix; left
+  alone while other lighting variables were in flight.
+
+### Not a bug: the commander is meant to be dark
+
+`hum_German_Tankman.tex` is **22% average luminance** against the hull's 62%.
+German panzer crews wore black. Light multiplies texture, so no ambient value
+will make him bright without washing out everything else. Four rounds of
+lighting changes were spent before measuring the texture - **measure the texture
+first**.
+
+---
+
+## C2M1 second Tiger now follows the player (2026-08-26)
+
+Findings written up in `Documentation/TvT_Mission_Authoring_Verified.md`
+sections 10-13.
+
+- [x] **Move it to the player's spawn in column.** Was 1,352 m away; now 40 m
+  dead astern, same heading, `SurfaceControl PutonGround`. Position derived from
+  the player's own matrix - **`xvec` (row 1) is the FORWARD axis**, proven by
+  `FreePlayerCamera.script` placing the chase camera at `xvec * -20`.
+- [x] **Make it follow.** `Formation()` on the TASK (groups only have an
+  *internal* formation property), `(0,-40)` = dead astern, cruise
+  `0.15 * GetMaxSpeed()`, re-issued every 8 s.
+- [x] **Neutralise the five competing orders.** This is why previous attempts
+  failed: `ActivateMovement(false)`, a delayed `Patrol` order, a
+  don't-overtake distance gate issuing its own 4-navpoint route, and three combat
+  phases each issuing `SetOrder_Move`. Radar / fire / aggressive reaction kept.
+- [ ] **Play-test.** Does it keep up at speed? Is 40 m the right spacing? Both
+  are one number. Its kill-list membership, bombing event and position watchers
+  were left untouched and should still work.
+
+### Found in passing, not fixed
+
+- [ ] `BaseTasks.script` six-arg `SetOrder_Formation` (~line 1320) passes
+  `_Displacement` / `_DistanceOptimum` / `_DistanceMax` - the parameter names of
+  a *different* function. Its own are `_FormationVector` / `_PosDistanceOptimum`
+  / `_PosDistanceMax`. Route around it via the eight-arg `Formation()`.
+- [ ] REDUX's `CWingmanTask` still carries Whirlwind-over-Vietnam constants -
+  200 m spacing with `z = 30`, which is *altitude*. ZW's were retuned; REDUX's
+  were not.
+- [ ] C1M4's sun X component has opposite signs in `Atmosphere.script` and
+  `Content.script`, and has since 2001. `Content.script` wins, so harmless.
+
+---
+
+## ZW and REDUX have different performance problems (2026-08-26)
+
+Write-up: `notes/project_tvt_zw_vs_redux_profile.md`. Only "CPU-bound with the
+GPU idle" transfers between the builds; nothing else does.
+
+- [x] **Profile ZW.** Its frame is `CAbstractObject` / `CAbstractJoint` /
+  `CCylinderShape`+`CDynamicIntersector` (collision) at ~40%. **No vegetation
+  page in the top 20.** REDUX's frame is vegetation at ~15% plus the map lookup
+  at 20.4%; in ZW that same lookup is 2.9%.
+- [x] **Why: the component census.** ZW carries 8.7x the objects (496 vs 57),
+  4.6x the joints (2536 vs 550), 6.3x the cylinder shapes - and **one
+  thirteenth the trees** (30 vs 380). Total components 84,143 vs 26,298.
+- [x] **Why ZW's grass costs less, quantified.** 8.84% of frame in REDUX vs
+  1.22% in ZW. Two causes that multiply: ZeeWolf tuned grass down (`MaxVisDist`
+  150->120 and **`MaxVisDistPower` 5->8**, giving 3.35x less planted area), and
+  ZW's longer frame dilutes the share a further 2.2x. 3.35 x 2.2 = 7.4x against
+  7.3x observed.
+- [ ] **UNPULLED LEVER: REDUX `MaxVisDistPower` 5 -> 8.** Should cut REDUX's
+  grass cost ~3x while shortening apparent distance far less than the number
+  suggests - near grass barely changes. **Not tried.** Predict the number first.
+- [ ] ZW's collision cost (926 cylinder shapes + `CDynamicIntersector`) is
+  unexamined. Its own thread, not today's.
+
+### Assessed and rejected: "kill the stencil shadows for free performance"
+
+From a shared Gemini conversation, 2026-08-26. Its structural model of the engine
+was independently correct, but its performance claim is **measurably wrong**: no
+shadow class appears in either build's profiler hot pages, and `ShadowFar` tuning
+was worth ~2 fps. Emptying `StencilShadowSettings` would delete every vehicle
+shadow and buy close to nothing.
+
+- [ ] **Worth something instead: screen-space directional shadows.** Raymarch the
+  depth buffer toward the sun so foliage can shade a tank - a capability the
+  engine fundamentally lacks. **Not started.** If pursued: ReShade already does
+  the hard part (readable D3D9 depth needs INTZ/DF24 vendor formats, and
+  `ReShade32.dll` is already loaded here with depth confirmed working), while our
+  DLL supplies the sun vector and matrices - we already hook
+  `SetVertexShaderConstantF`. A full internal CSM means rendering the scene twice
+  on the single core that is already the bottleneck: wrong trade.
+
+**Do NOT tune ZW's grass** - ZeeWolf already did, and did it well.
+**"Faster trees" is near-pointless in ZW** - tick it for REDUX only.
+
+---
+
+## C1M2 crash-to-desktop — FIXED (2026-08-25)
+
+Write-up: `notes/project_tvt_c1m2_recursion_fixed.md`. A real CTD, diagnosed
+2026-08-21, patch written 2026-08-22, **parked and never applied** — then it
+crashed a live play session on the 25th.
+
+```
+Possible stack overflow warnings   6,451  ->  0
+max stack depth                    1,391  ->  none
+CC1M2Gr_NGerman_Infantry2 lines    1,395  ->  11
+[ALARM] No orders in group           143  ->  4 (unrelated tank groups)
+outcome                     crash to desktop -> clean exit, mission completed
+```
+
+- [x] **Patch 01 — `Scripts\Common\UnitGroup.script`, `OnOrderFulfilled()`.**
+  One added condition: only resume a patrol if there is road left
+  (`m_NextPatrolPoint < m_PatrolPath.size()`). An exhausted patrol now falls
+  into the static-group branch, which calls `SetOrder_Stop()` and does not
+  re-enter `RepeatOrder()`. Applied and confirmed **alone**, on its own test
+  run, because this file is shared by every mission.
+- [x] **Regression ruled out.** The risk was leaving groups inert after a fight,
+  undoing the 2026-08-18 resume-after-attack improvement. Measured on the
+  confirming run: **80 patrol resumptions, 0 `SetOrder_Stop`**. Groups attacked
+  mid-patrol still resume their route.
+- [x] **Patch 02 — `Missions\Campaign_1\Mission_2\MissionTasks.script`.**
+  `ActivateMove(false)` -> `ActivateMovement(false)` (the misspelled name does
+  not exist; `ActivateMovement` was verified real in `BaseTasks.script` rather
+  than trusted from the note), plus a `RadarArmed` one-shot guard on
+  `CC1M2Gr_NGerman_Infantry2::OnPathEndReached()`. Belt-and-braces — 01 already
+  fixed the root cause.
+- [ ] **Same `ActivateMove` typo in Campaign 2 Mission 3, line 932**
+  (`ActivateMove(true)`) — patch_03 in `K:\TvTDeepseek\patches\REDUX_2026-08-22\`,
+  **not yet applied**. Cosmetic (a logged error, not a crash), but it is the
+  same one-word fix.
+- [ ] **patch_04 (`MissionsMenu`) from the same parked set** — still unreviewed
+  here. Note the standing warning about array edits in that file: a dangling
+  comma in `MissionsMenu.script` once broke the game load entirely.
+
+### The trap inside patch 02 — read before touching it again
+
+The OLD block for the `RadarArmed` edit is **not unique on its first six
+lines**: `CC1M2Gr_NGerman_Infantry1` (line 432) has a near-identical
+`OnPathEndReached`, and a careless string replace patches the wrong group. The
+full nine-line block including `fireEvent(... "AttackGermanInfantry2" ...)` **is**
+unique and is the correct anchor. Verified by counting matches before replacing
+and by checking Infantry1 was untouched afterwards.
+
+### The bookkeeping lesson
+
+A diagnosed, written, reviewed fix that is not on the board **does not exist**.
+This one sat parked for three days, untracked in both TODO and CHANGELOG, and
+cost a crash plus a wasted test session — the crash initially looked like it
+might have been caused by an injected performance cache being trialled at the
+time, and ruling that out took real work.
+
+---
+
+## Performance — where the frame time actually goes (2026-08-25)
+
+Full write-up: `notes/SESSION_2026-08-25_performance_day.md`. Framerate went
+36-40 to 66-76 over the session; the exact cause is **not** established and no
+more theories are being built on it.
+
+**The finding everything rests on:** TvT is CPU-bound with the GPU idle —
+`Present` 0.1%, `Lock` 0.0%, 99.8% of the frame is CPU. Measured every run.
+
+**Noise floor is ±4%** (three identical runs: 66.8 / 69.5 / 68.4 fps). Anything
+below that is not a result. Say so.
+
+- [x] **Build a draw-call probe.** `Tools/drawcall_probe.cpp`, hooks D3D9 and
+  answers "CPU or GPU?" in one run. Every vtable slot verified against the SDK
+  header before building. Killed the fill-rate hypothesis in ninety seconds.
+- [x] **Correct the sampling profiler's numbers.** Its counters are cumulative
+  since injection and never reset, so the headline figures included mission
+  load. True steady state: Objects.dll 50-54%, Engine.dll 20-24%, J5Script ~2%,
+  Behavior.dll ~0.5%, **D3D9 wrapper 0.0%**.
+- [x] **Extract RTTI from the shipped DLLs.** 4778 named virtual functions /
+  300 classes in Objects.dll, 4784/287 Controls, 2703/281 Engine. Any hot
+  address now resolves to a class and vtable slot.
+- [x] **Measure grass.** 1.8 ms/frame, 33,751 triangles, ~0 extra draw calls.
+  Real but modest. In-game Video Options slider controls it.
+- [x] **Measure tree rendering.** NULL RESULT — forest slider at minimum removes
+  24% of draw calls and 27% of buffer traffic and changes frame time by 3.6%,
+  i.e. nothing.
+- [x] **Fix the Tiger shadow bug** (see its own section below). NULL RESULT for
+  framerate — confirmed by reverting it deliberately.
+- [x] **Trace the callers of `Objects.dll+0x17DD00`.** DONE — and it was **not**
+  the target. That function runs **once per frame** (linear code, no loop:
+  camera position + radius in, grid-cell range out). The 7.45% belonged to the
+  4 KB *page*, which holds seventeen functions.
+- [x] **Give the profiler 64-byte resolution.** `prof.cpp` now keeps a fine
+  histogram over one configurable range (`FINE_BASE`/`FINE_LEN`, O(1) direct
+  index, no scan). It put **89.65% of the whole region in one bucket**.
+- [ ] **HOOK `Objects.dll+0x17DAB0` — COUNT CALLS AND DISTINCT KEYS PER FRAME.**
+  ← the live target. That 128-byte function is **6.51% of total frame time**,
+  about 87% of the hottest page, and it is a red-black-tree descent — textbook
+  MSVC `std::map::lower_bound` (children `+8`/`+0xC`, int key `+0x10`). Eight
+  instructions; expensive because every hop is a pointer chase, not because the
+  instructions are slow. Six call sites: two in the `CSTForest` block (which is
+  why tree pages stay hot at forest MINIMUM — the lookups happen per tree
+  whatever is drawn), and **two inside the function whose failure path prints
+  `"Cache miss"` — that map IS the cache.** The measurement answers which fix
+  applies: few distinct keys -> flat array; repeating key -> memoise one result;
+  otherwise hoist it out of the per-tree loop. **Measure before patching.**
+- [ ] **Account for the remaining ~12 ms/frame.** Grass is 1.8, tree management
+  ~1.5, and the rest has not been located. Everything obvious is excluded: GPU,
+  lock stalls, draw-call submission, tree rendering, shadows.
+- [ ] Consider `MaxVisDist`/`Density` tuning in `BaseGrass.script` if grass's
+  1.8 ms is ever worth reclaiming. Low priority — it is small.
+
+### Settings facts worth not relearning
+
+- **`AlphaBlendDistanceFactor` is where the alpha fade BEGINS**, not where cheap
+  alpha-test starts. The engine computes `1.0 / (1.0 - factor)` and its own
+  hardcoded default is `0.8`. Lower = wider fade band = more transparency AND
+  more cost. **Never set it to 1.0 — divide by zero.** Currently `0.9`.
+- **DXVK vs dgVoodoo is irrelevant to framerate.** The wrapper is 0.0%.
+- **The `.script` interpreter is not a bottleneck** (~2%), and **the AI is free**
+  (~0.5%, including the LOS hook). Never hold back an AI feature for
+  performance reasons.
+- **SpeedTreeRT.dll itself is 0.04%.** The middleware is free; every bit of the
+  tree cost is G5's own wrapper (`CSTForest`, `CSTTreesQuadTree`, `CTreeKiller`).
+
+
+### SHIPPED — in the launcher, confirmed in both builds
+
+- [x] **Injector now accepts up to 8 DLLs.** It took one, which is why Line of
+  sight and Profiler were mutually exclusive — and making the cache a third
+  exclusive option would have forced a choice between AI line of sight and +6%
+  fps. The hooks touch different engine DLLs (`Behavior.dll` vs `Objects.dll`)
+  and never meet. Each DLL is allow-checked against the list beside **itself**,
+  so the opt-in rail is unchanged. Backup: `K:\tvt_probe\inject.cpp.bak_singledll`.
+- [x] **Launcher checkbox: "Faster trees (map cache - about +6% fps)".**
+  Combinable with Line of sight; Profiler still clears both, deliberately.
+  Backup: `K:\TvTDeepseek\rollback\TvT_Launcher.ps1.before_cache_20260825`.
+- [x] **Confirmed live in ZeeWolf 2015 with both hooks at once.** LOS reported
+  `enforcement live` and its fit check passed on ZW's own terrain
+  (+1.58..+1.59 m, spread 0.01); the cache ran 458,779,776 calls at 66.8% hits,
+  **0 mismatches**, clean exit. The hit rate being ~the same in both builds
+  (66.8% ZW / 67.2% REDUX) shows the access pattern is a property of the engine,
+  not of either mod.
+- [ ] **Multi-entry cache.** The current cache is ONE entry. The top 16 keys
+  cover up to 51% of lookups, so a 4- or 8-entry direct-mapped table should push
+  the hit rate past 67%. Same verify-then-activate safety, same self-A/B to
+  measure it. **Predict the number before the run.**
+
+**Cumulative cache record: ~3.6 billion calls, 4 sessions, 2 game builds,
+0 mismatches.**
+
+---
+
+## Tiger shadow bug — fixed, and the bug class closed (2026-08-25)
+
+Write-up: `notes/project_tvt_shadow_bug_2026-08-25.md`.
+
+- [x] **Fix `Cu_veh_PzVI_LATEModel::LodForShadowHide`.** `ShadowHide.script:45`
+  set it, but `Models\u_veh_PzVI_LATE.script` never declared the field — the
+  only model file of the set that omits it. Silent "invalid LValue", so every
+  Tiger kept `DefaultLodForShadowHide = 9999` ("never hide") and behaved unlike
+  every other tank. `TankPzVIAusfEUnit::getMeshObjectName()` returns that model
+  unconditionally, so it was every Tiger in the game. **ZeeWolf's copy already
+  had the line.** Worth **zero** framerate — confirmed by reverting it.
+- [x] **Sweep for the same bug class.** Every `Class::Field = value` assignment
+  in both installs checked against whether the field is declared on the class or
+  an ancestor. REDUX (2390 classes): none. ZeeWolf (4957): none. Tool validated
+  against the known bug first, so that is a real negative.
 
 ---
 

@@ -17,6 +17,92 @@ a footnote, and honest about what was AI-assisted.
 
 ---
 
+## 2026-09-01 — the guns were upside down, and it was the very first line of the file
+
+Our Blender importer for T-34 vs Tiger's models had been quietly wrong about
+artillery. The 88 came in upside down and off centre; the sIG 33 came in with its
+trail legs crossed. Everything else — tanks, halftracks, soldiers — looked fine,
+which is exactly why it went unnoticed.
+
+The check that mattered took a minute: **open the same model in the game's own
+Editor.** It renders correctly there. So the models are fine and the tool was
+wrong. Worth doing before any theorising, and I didn't do it first.
+
+### Four wrong answers before the right one
+
+- *The models are shredded.* No — they're misoriented. Different problem.
+- *The file's stored bounding boxes will tell us where parts belong.* No — they're
+  in local space. The known-good Hummel "fails" that test on 60 of its 67 parts.
+- *Don't apply transforms to parts whose geometry is already baked in place.*
+  Sounded right, tested, **refuted**: every correct model has such parts, and the
+  Hummel has more of them than the broken 88. Implementing it would have broken
+  the Tiger, the Hummel and both T-34s to fix two guns.
+- *Then at least the working models have identity transforms on those parts.*
+  They don't.
+
+What finally worked was giving up on finding a clever whole-model rule and just
+**walking one model's node hierarchy from the root down**, printing each node's
+own transform next to where it actually landed.
+
+### It was visible on line one
+
+```
+ROOT   position (0,  2.00, 0)   rotation 90 degrees
+Body   position (0, -2.00, 0)   rotation  0 degrees
+```
+
+The root carries a 2 metre lift *and* a 90 degree rotation. The next node down
+carries exactly the inverse lift — those two are meant to cancel. But the
+rotation gets applied to that cancelling translation, so it doesn't cancel, and
+everything below is thrown out and tipped over. The gun's cruciform outriggers
+ended up 1.8 metres in the air with the barrel underneath them.
+
+Only **12 of 250** models have any rotation on their root — all exactly 90
+degrees, and they're the towed guns, the mortars, and a few test boxes. So the
+fix is safe by construction: on the other 238 it's a no-op.
+
+### The crossed legs were something else, and more interesting
+
+The sIG 33's root is clean. Its problem is one level down, and it's the same
+shape as something found last week about gun elevation:
+
+**A part's animation track isn't an animation — it's the mechanical range.**
+
+```
+sIG 33     [-45, -22.5, 0, +22.5, +45]     traverse +-45 degrees
+StuG III   [ -9,  -4.5, 0,  +4.5,  +9]     +-9
+Hummel     [-15 ................. +15]     +-15
+Tiger      [-90, 0, +90, +180]             full rotation
+```
+
+Those are the real vehicles' traverse figures. And **frame 0 is one END of the
+range**, not a neutral pose — so reading it as "the rest position" parks every
+gun at a traverse extreme. On the sIG 33 that's 45 degrees, and because that
+model happens to parent its *wheels* under the traversing part, the wheels swing
+onto the diagonal. Crossed legs.
+
+Every one of those tracks contains 0. Using that instead gives a straight-ahead
+gun: the sIG 33 goes from 36.9 degrees off-axis to 3.9, and its footprint from a
+meaningless 3.30 x 3.30 square to 4.35 x 2.13 metres — against a real 15 cm
+sIG 33 at 4.4 x 2.06.
+
+The risky part was tank turrets, whose range includes 180 degrees: they flip
+end-for-end under this. Checked, and they come out right — gun forward over the
+glacis.
+
+### Where it leaves the tool
+
+The importer now opens every model in the game correctly — vehicles assembled and
+textured, soldiers standing with weapons in hand, guns square on their carriages,
+turrets centred — and writes files back out that round-trip byte-identical on all
+249. Four separate bugs found this week; the two today were both found by reading
+one file's hierarchy line by line rather than being clever.
+
+Done with Claude (Anthropic). The three corrections that killed my wrong answers
+all came from the user looking at the screen and saying "no, that's not what I'm
+seeing" — including the one that killed a whole day's assumption: *if that were
+true, every tank in the game would drive around with its gun drooping.*
+
 ## 2026-08-28 - Kurtenki dawns for real
 
 "Tigers Shake Kurtenki" opened on a flat grey noon that told you nothing about when or where you were. That's gone.

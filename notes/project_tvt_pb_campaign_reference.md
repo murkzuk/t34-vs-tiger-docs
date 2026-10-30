@@ -98,3 +98,52 @@ Headline: Part 1 items 1–3 are weeks; Part 2 items 1–3 are the "is this poss
 PARKED, 2026-08-22. Record-only. The user (a non-coder, dyslexic, hyper-pattern-matcher)
 generated the core idea and the PB connection; analysis was shaped/verified with AI
 assistance. Do not begin work without the user explicitly asking.
+
+---
+
+## Reframed 2026-08-25 — a QUESTION being carried, not a destination
+
+The user's own words: *"this just laterally entered my head and it is now a
+question, not a destination as such but a possible destination, if we get the
+many other things fixed/tuned/improved."*
+
+That is the correct way to hold it and should not be argued out of. **A
+destination you are not driving to still does useful work: it breaks ties.**
+When two jobs look equally worth doing, pick the one pointing this way. Costs
+nothing, commits to nothing.
+
+### What is ALREADY groundwork (whether or not PB ever happens)
+
+- **The mission generator** (`Tools/MissionGen/gen_mission.py`) — the single
+  hardest piece of a campaign layer, and it is BUILT. PB's loop needs a mission
+  produced from where the front is; this already produces missions that load and
+  run clean.
+- **The hook as a state bridge** — reading damage / ammo / crew at mission end is
+  now the EASY end of what has been hooked (AI vision, player crew,
+  CAutoCommanderComponent, the D3D9 renderer).
+- **Death with attribution** — `GetLastDamager()`. The carryover data is already
+  computed; nothing writes it down.
+- **Shared terrain** — proven, see [[project-tvt-shared-terrain-test]].
+- **Line of sight + penetration** — not obviously campaign work, but PB only
+  sings if fifty battles are worth fighting. This is what makes them repeatable.
+
+### The surprise: ATMOSPHERE is groundwork too
+
+Trees, fog-on-objects, LOD and the followers are polish with no campaign value.
+**Time-of-day is not.** PB's loop is *days*. A mission carrying a date and an
+hour is a campaign clock, so every dawn and sunset in the atmosphere rollout is
+a day-slot that already knows what time it is. That work sits far closer to PB
+than it looks.
+
+### The one real risk: "when the other things are done" has no end
+
+Polish always finds more polish. One week alone produced fog, trees, shadows,
+followers and ~20 commented-out WoV features, and each spawns three more.
+
+**So if PB stays live it needs a GATE, not a finish line.** Not "when everything
+is done" but *"when THESE THREE are done, decide yes or no."* The three do not
+have to be chosen now. Knowing it will be a decision rather than an arrival is
+what stops the destination receding forever.
+
+Status remains **PARKED**. Do not start without the user asking.
+

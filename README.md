@@ -1,4 +1,8 @@
-# Project Redux: T-34 vs. Tiger Preservation
+# TvTPP — the T-34 vs Tiger Preservation Project
+
+> **TvTPP** (T-34 vs Tiger Preservation Project) is the umbrella name for this
+> work: the REDUX build, the tooling, the reverse-engineered format
+> documentation, and the effort to finish what others could not.
 
 This repository is a community-driven effort to preserve, fix, and finally finish T-34 vs. Tiger. After the original developers and publishers ceased to exist, this game became "abandonware." We are here to ensure the "Cogs of War" keep turning.
 
@@ -29,6 +33,7 @@ To make this "mountain" easier to climb, we have organized the project into key 
 
 - **[Technical Manuals](./Documentation):** Engine specifications, mission-scripting reference, and project analysis. See below for the highlights.
 - **[Development Tools](./Tools):** Scripts, Maya export manuals, and utilities created for TvT by G5 (the original developers).
+- **[Blender add-on: open the game's models](./Tools/MS2Format):** install [`ms2_importer.zip`](./Tools/MS2Format/blender_addon/ms2_importer.zip) and get **File → Import → TvT Model (.ms2)** — whole vehicles, assembled and textured, in one step. Writing models back out works too. [Install instructions and format notes](./Tools/MS2Format/README.md).
 - **[Executables](./Executables):** The 4GB LAA patch and essential engine fixes.
 - **[Patches](./Patches):** Ready-to-apply hotfix packages — grab the latest one if you just want fixes without touching the source. See [`RELEASING.md`](./RELEASING.md) for how to publish a new one.
 - **[Mission Templates](./Templates):** Standardized headers to prevent "Duplicate Class" errors.

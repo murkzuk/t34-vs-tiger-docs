@@ -1,4 +1,5 @@
 # The plan — five phases, in order
+> **Stopping point 2026-09-01:** see [WHERE_THIS_STANDS.md](WHERE_THIS_STANDS.md)
 
 **Why this exists:** the board has 115 items. That is a list, not a plan, and a
 list gives no sense of direction. This is the ladder: what we are doing, in what
@@ -7,11 +8,13 @@ order, and how you know a rung is finished.
 **Read this first each session.** One phase at a time. Work that belongs to a
 later phase gets written down, not started.
 
-Last updated 2026-08-29.
+Last updated 2026-08-25.
 
 ---
 
 ## PHASE 1 — Make it RUN right   ✅ COMPLETE 2026-08-29
+###### the fog rollout landed 2026-08-29 (DeepSeek): FogDensity 0.0013 -> 0.002
+###### on C1M3/C2M2/C2M4, in Content.script. Phase 1 has no open items.
 
 Nothing else is worth doing if the game stutters. And you cannot judge whether a
 visual change is good while the framerate is fighting you.
@@ -21,7 +24,8 @@ visual change is good while the framerate is fighting you.
 | Tree draw distance measured and tuned | **done** — worth 8 fps |
 | Shadow distance measured and tuned | **done** — worth 2 fps |
 | Fog distance measured and balanced against engagement range | **done** — C1M2 |
-| Roll the fog value out to the other dawn/sunset missions | **done 2026-08-29** — C1M3 / C2M2 / C2M4 now `FogDensity 0.002` (REDUX) |
+| Roll the fog value out to the other dawn/sunset missions | **DONE 2026-08-29 (DeepSeek)** — 0.0013 -> 0.002 on C1M3 / C2M2 / C2M4, in `Content.script`; validated 2026-09-01 |
+| REDUX gunsight cost — does it share ZW's? | **closed 2026-08-27, MEASURED** — gunsight 107 fps vs 83 external, *29% faster*, on DOUBLE ZW's `FogFarMax`. Predicted a 3-5x drop; wrong. Nothing changed. The ZW finding does not generalise |
 | **Sampling profiler — find the rest of the drop** | **DONE 2026-08-25** — it is `Objects.dll` at 50-54%, not the wrapper (disassembled) |
 
 **ANSWERED — final, 2026-08-25.** Measured, not reasoned. **TvT is CPU-bound
@@ -77,9 +81,9 @@ distance haze — is ours to set, and it is where the biggest visual gain is.
 | Fix the 20-year sun-vector glare bug | **done** |
 | Dawn / sunset on the missions that call for it | **done** — C1M2, C1M3, C2M2, C2M4 |
 | Winter overcast rollout | **done** — 4 ZW missions |
-| The 5 "stock noon" missions | open |
-| Fog reaching distant objects (the `vs_1_1` shader question) | open — DeepSeek |
-| Tree height without the redwood effect | open, unowned |
+| The 5 "stock noon" missions | **DONE 2026-08-29 (DeepSeek)** — all five done in **ZW**: C2M1 golden dawn, C1M1 06:15 clear morning, C1M4 10:00, C2M3 sunset, C2M6 dawn breakout. Verified 2026-09-01 against real `Atmosphere.script`/`Content.script` edits, not just the jobs list |
+| Fog reaching distant objects (the `vs_1_1` shader question) | **DONE 2026-08-28 (DeepSeek)** — the distant-LOD vertex shader was computing a fog factor and the engine was DISCARDING it; `fogfix.dll` flips it back on. User-confirmed 2026-09-01 |
+| Tree height without the redwood effect | **PARKED 2026-08-29, BLOCKED** — SGeometry fully mapped (branch verts `+0x90`, count `+0x84`, Z=up; fronds `+0x60`). Blocker: *any* hook on `CSpeedTreeRT::GetGeometry`, even a bare passthrough, makes trees cull/pop by camera angle. Cause unknown. `tree_yscale/yprobe/minhook.dll` are diagnostic — DO NOT SHIP |
 
 **Done when:** every mission has a time of day that matches its briefing, and
 nothing looks obviously wrong at distance.
@@ -152,6 +156,6 @@ phase, it gets promoted and this file says why.
 
 ## How to see progress
 
-Phase 1: **5 of 5 — complete.** Phase 2: 4 of 7. Phase 3: 4 of 6. Phase 4: 1 of 4.
+Phase 1: **COMPLETE, 5 of 5**. Phase 2: 6 of 7 (the 7th parked-blocked). Phase 3: 4 of 6. Phase 4: 1 of 4.
 
 That is the number to watch — not the 115.

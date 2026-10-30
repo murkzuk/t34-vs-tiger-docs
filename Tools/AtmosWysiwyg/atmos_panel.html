@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TvT Atmosphere</title>
+<style>
+  body { font: 13px/1.4 system-ui, sans-serif; background:#1a1d24; color:#d8dde4; margin:0; padding:16px; }
+  h1 { font-size:15px; margin:0 0 2px; }
+  .sub { color:#8b93a0; font-size:12px; margin-bottom:14px; }
+  section { background:#232730; border:1px solid #30363f; border-radius:6px; padding:10px 14px; margin-bottom:12px; }
+  h2 { font-size:13px; margin:0 0 8px; color:#aeb6c2; text-transform:uppercase; letter-spacing:.4px; }
+  .row { display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .row label { width:90px; flex:0 0 auto; color:#aeb6c2; }
+  .row input[type=range] { flex:1; }
+  .row .val { width:64px; text-align:right; font-variant-numeric:tabular-nums; color:#7fd1ff; }
+  .row select { flex:1; background:#2d3440; color:#d8dde4; border:1px solid #3b4350; border-radius:4px; padding:5px 8px; }
+  .presets { display:flex; gap:8px; margin-top:10px; }
+  .presets button { background:#2d3440; color:#d8dde4; border:1px solid #3b4350; border-radius:4px; padding:6px 10px; cursor:pointer; }
+  .presets button:hover { background:#3a4250; }
+  .grp { color:#8b93a0; font-size:11px; align-self:center; }
+  #status { color:#8b93a0; font-size:12px; margin-top:12px; }
+</style>
+</head>
+<body>
+<h1>TvT Live Atmosphere</h1>
+<div class="sub">Drag sliders — changes apply to the running game/editor instantly.</div>
+
+<section>
+  <h2>Sun position</h2>
+  <div class="row"><label>Azimuth</label><input type="range" id="sun_azimuth" min="0" max="360" step="1"><span class="val" id="v_sun_azimuth"></span></div>
+  <div class="row"><label>Elevation</label><input type="range" id="sun_elevation" min="20" max="90" step="1"><span class="val" id="v_sun_elevation"></span></div>
+  <div class="sub">Elevation is clamped to 20&deg; minimum by the engine.</div>
+</section>
+
+<section>
+  <h2>Sun colour</h2>
+  <div class="row"><label>Red</label><input type="range" id="sun_color_r" min="0" max="2" step="0.01"><span class="val" id="v_sun_color_r"></span></div>
+  <div class="row"><label>Green</label><input type="range" id="sun_color_g" min="0" max="2" step="0.01"><span class="val" id="v_sun_color_g"></span></div>
+  <div class="row"><label>Blue</label><input type="range" id="sun_color_b" min="0" max="2" step="0.01"><span class="val" id="v_sun_color_b"></span></div>
+</section>
+
+<section>
+  <h2>Ambient light</h2>
+  <div class="row"><label>Red</label><input type="range" id="ambient_r" min="0" max="1" step="0.01"><span class="val" id="v_ambient_r"></span></div>
+  <div class="row"><label>Green</label><input type="range" id="ambient_g" min="0" max="1" step="0.01"><span class="val" id="v_ambient_g"></span></div>
+  <div class="row"><label>Blue</label><input type="range" id="ambient_b" min="0" max="1" step="0.01"><span class="val" id="v_ambient_b"></span></div>
+</section>
+
+<section>
+  <h2>Fog</h2>
+  <div class="row"><label>Near</label><input type="range" id="fog_near" min="0" max="2000" step="1"><span class="val" id="v_fog_near"></span></div>
+  <div class="row"><label>Far</label><input type="range" id="fog_far" min="0" max="10000" step="10"><span class="val" id="v_fog_far"></span></div>
+  <div class="row"><label>Density</label><input type="range" id="fog_density" min="0" max="0.01" step="0.0001"><span class="val" id="v_fog_density"></span></div>
+</section>
+
+<section>
+  <h2>Fog colour (horizon haze)</h2>
+  <div class="row"><label>Red</label><input type="range" id="fog_color_r" min="0" max="1" step="0.01"><span class="val" id="v_fog_color_r"></span></div>
+  <div class="row"><label>Green</label><input type="range" id="fog_color_g" min="0" max="1" step="0.01"><span class="val" id="v_fog_color_g"></span></div>
+  <div class="row"><label>Blue</label><input type="range" id="fog_color_b" min="0" max="1" step="0.01"><span class="val" id="v_fog_color_b"></span></div>
+</section>
+
+<section>
+  <h2>Presets</h2>
+  <div class="presets">
+    <button data-p="dawn">Dawn</button>
+    <button data-p="noon">Noon</button>
+    <button data-p="sunset">Sunset</button>
+    <button data-p="overcast">Overcast</button>
+    <button data-p="clear">Clear</button>
+  </div>
+  <div class="presets" style="margin-top:8px">
+    <span class="grp">Bagration (Jun '44):</span>
+    <button data-p="bagr_dawn">Dawn</button>
+    <button data-p="bagr_morning">Morning</button>
+    <button data-p="bagr_noon">Noon</button>
+    <button data-p="bagr_afternoon">Afternoon</button>
+    <button data-p="bagr_dusk">Dusk</button>
+  </div>
+  <div class="presets" style="margin-top:8px">
+    <span class="grp">Winter War (Jan '40):</span>
+    <button data-p="ww_overcast">Overcast</button>
+    <button data-p="ww_snow">Snow</button>
+  </div>
+</section>
+
+<section>
+  <h2>Save to mission</h2>
+  <div class="row">
+    <label>Mission</label>
+    <select id="mission"></select>
+  </div>
+  <div class="presets" style="margin-top:8px">
+    <button id="save_mission">Save to mission</button>
+  </div>
+  <div class="sub" id="save_status">Bakes the current sliders into that mission's Content.script (auto-backup).</div>
+</section>
+
+<div id="status">…</div>
+
+<script>
+const FIELDS = {
+  sun_azimuth: ['sun_azimuth'],
+  sun_elevation: ['sun_elevation'],
+  sun_color: ['sun_color_r','sun_color_g','sun_color_b'],
+  ambient: ['ambient_r','ambient_g','ambient_b'],
+  fog_near: ['fog_near'],
+  fog_far: ['fog_far'],
+  fog_density: ['fog_density'],
+  fog_color: ['fog_color_r','fog_color_g','fog_color_b'],
+};
+
+const PRESETS = {
+  dawn:     { sun_azimuth:64, sun_elevation:20, sun_color:[1.0,0.6,0.3],  ambient:[0.16,0.16,0.20], fog_near:500,  fog_far:2000, fog_density:0.001, fog_color:[0.85,0.60,0.40] },
+  noon:     { sun_azimuth:181, sun_elevation:58, sun_color:[1.0,0.95,0.9], ambient:[0.30,0.30,0.32], fog_near:1000, fog_far:5000, fog_density:0.001, fog_color:[0.70,0.73,0.80] },
+  sunset:   { sun_azimuth:296, sun_elevation:20, sun_color:[1.0,0.35,0.15], ambient:[0.20,0.12,0.10], fog_near:500,  fog_far:2000, fog_density:0.001, fog_color:[0.90,0.50,0.30] },
+  overcast: { sun_azimuth:178, sun_elevation:20, sun_color:[0.70,0.72,0.80], ambient:[0.28,0.29,0.32], fog_near:300,  fog_far:1500, fog_density:0.002, fog_color:[0.62,0.64,0.68] },
+  clear:    { sun_azimuth:181, sun_elevation:50, sun_color:[1.0,1.0,0.95],  ambient:[0.25,0.27,0.35], fog_near:1000, fog_far:4000, fog_density:0.001, fog_color:[0.60,0.70,0.90] },
+
+  // Bagration — 22 Jun 1944, Belarus (lat 55.02 lon 30.80). Sun az/el computed.
+  bagr_dawn:      { sun_azimuth:65,  sun_elevation:20, sun_color:[1.0,0.55,0.30], ambient:[0.16,0.15,0.18], fog_near:500,  fog_far:2200, fog_density:0.001, fog_color:[0.85,0.58,0.38] },
+  bagr_morning:   { sun_azimuth:88,  sun_elevation:28, sun_color:[1.0,0.85,0.65], ambient:[0.24,0.24,0.28], fog_near:700,  fog_far:3200, fog_density:0.001, fog_color:[0.76,0.78,0.82] },
+  bagr_noon:      { sun_azimuth:181, sun_elevation:58, sun_color:[1.0,0.96,0.90], ambient:[0.30,0.30,0.33], fog_near:1000, fog_far:5000, fog_density:0.001, fog_color:[0.70,0.74,0.80] },
+  bagr_afternoon: { sun_azimuth:272, sun_elevation:27, sun_color:[1.0,0.82,0.62], ambient:[0.27,0.25,0.24], fog_near:700,  fog_far:3200, fog_density:0.001, fog_color:[0.78,0.74,0.70] },
+  bagr_dusk:      { sun_azimuth:296, sun_elevation:20, sun_color:[1.0,0.45,0.20], ambient:[0.18,0.13,0.14], fog_near:500,  fog_far:2200, fog_density:0.001, fog_color:[0.90,0.50,0.30] },
+
+  // Winter War — 15 Jan 1940, Karelia (lat 61). Sun ~8deg (engine clamps to 20); overcast look.
+  ww_overcast: { sun_azimuth:178, sun_elevation:20, sun_color:[0.55,0.60,0.68], ambient:[0.20,0.21,0.24], fog_near:300,  fog_far:1400, fog_density:0.002, fog_color:[0.60,0.62,0.66] },
+  ww_snow:     { sun_azimuth:178, sun_elevation:20, sun_color:[0.72,0.74,0.78], ambient:[0.30,0.31,0.33], fog_near:100,  fog_far:800,  fog_density:0.004, fog_color:[0.78,0.80,0.82] },
+};
+
+function collect() {
+  const s = {};
+  for (const [k, ids] of Object.entries(FIELDS)) {
+    if (ids.length === 1) s[k] = parseFloat(document.getElementById(ids[0]).value);
+    else s[k] = ids.map(id => parseFloat(document.getElementById(id).value));
+  }
+  return s;
+}
+
+function applyToUI(s) {
+  for (const [k, ids] of Object.entries(FIELDS)) {
+    if (ids.length === 1) document.getElementById(ids[0]).value = s[k];
+    else ids.forEach((id, i) => document.getElementById(id).value = s[k][i]);
+  }
+  refreshLabels();
+}
+
+function refreshLabels() {
+  for (const [k, ids] of Object.entries(FIELDS)) {
+    if (ids.length === 1) {
+      document.getElementById('v_' + ids[0]).textContent = (+document.getElementById(ids[0]).value).toFixed(2);
+    } else {
+      ids.forEach((id, i) => {
+        document.getElementById('v_' + id).textContent = (+document.getElementById(id).value).toFixed(2);
+      });
+    }
+  }
+}
+
+let timer = null;
+function send() {
+  document.getElementById('status').textContent = 'sending…';
+  fetch('/state', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(collect()) })
+    .then(r => r.json()).then(() => document.getElementById('status').textContent = 'live ✓')
+    .catch(e => document.getElementById('status').textContent = 'server offline');
+}
+
+document.querySelectorAll('input[type=range]').forEach(el => {
+  el.addEventListener('input', () => {
+    refreshLabels();
+    clearTimeout(timer);
+    timer = setTimeout(send, 80);
+  });
+});
+
+document.querySelectorAll('.presets button').forEach(b => {
+  b.addEventListener('click', () => {
+    applyToUI(PRESETS[b.dataset.p]);
+    send();
+  });
+});
+
+fetch('/state').then(r => r.json()).then(applyToUI).catch(() => refreshLabels());
+
+fetch('/missions').then(r => r.json()).then(list => {
+  const sel = document.getElementById('mission');
+  list.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m.path;
+    o.textContent = m.name;
+    sel.appendChild(o);
+  });
+}).catch(() => document.getElementById('save_status').textContent = 'server offline');
+
+document.getElementById('save_mission').addEventListener('click', () => {
+  const sel = document.getElementById('mission');
+  const status = document.getElementById('save_status');
+  if (!sel.value) { status.textContent = 'no mission selected'; return; }
+  status.textContent = 'saving…';
+  fetch('/save_mission', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mission: sel.value, state: collect() })
+  })
+    .then(r => r.json())
+    .then(j => {
+      if (j.ok) {
+        status.textContent = j.backup
+          ? 'saved ✓  backup: ' + j.backup.split('\\').pop()
+          : 'already matched — nothing to change';
+      } else {
+        status.textContent = 'ERROR: ' + (j.error || 'unknown');
+      }
+    })
+    .catch(e => status.textContent = 'server offline');
+});
+</script>
+</body>
+</html>

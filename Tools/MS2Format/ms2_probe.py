@@ -1,4 +1,27 @@
 """
+*** SUPERSEDED 2026-08-26 - DO NOT USE FOR ANALYSIS ***
+
+Kept only as the record of how the .ms2 format was first worked out. Use
+`blender_addon/ms2_importer/ms2_reader.py`, which parses real vehicles
+correctly and decodes everything this file could not.
+
+THIS FILE PRODUCES CONFIDENT WRONG ANSWERS. Specifically:
+
+  * It DESYNCS at the first geometry node of any real vehicle. On the King
+    Tiger it reads 11 of 220 nodes and then throws.
+  * Its "other_count" is WRONG. It reports 4; the true value is 1. That
+    single bad number was carried into the format notes and sent a later
+    session hunting for a transform matrix in the wrong 64 bytes.
+
+The three things it never found, all decoded 2026-08-26:
+
+  UVs         DirectX convention - V runs 0..-1 and must be negated
+  transforms  frame 0 of each node's 161-frame animation track
+  materials   low 16 bits of the 16-byte "other" record
+
+See Documentation/MS2_Node_Transforms_SOLVED.md.
+"""
+"""
 Empirical .ms2 structure probe (GitHub issue #12, Phase 1).
 
 Not a full parser - a research tool implementing the format understanding

@@ -1,7 +1,21 @@
 # Tree height-only scaling (GetGeometry Y-scale) — PLAN (REDUX first)
 
-Status: **planned** 2026-08-29. Not built yet. Supersedes the parked SetTreeSize
-approach (`project_tvt_settreesize_hook_spec.md` has the Phase 0/1 results).
+Status: **PARKED 2026-08-29 — blocked, revisit later.** Supersedes the parked
+SetTreeSize approach (`project_tvt_settreesize_hook_spec.md` has the Phase 0/1
+results). The reverse-engineering is COMPLETE and recorded below; the blocker is
+an unexplained runtime failure (see "Step 3 result").
+
+## Why parked (read this first on revisit)
+
+The whole SGeometry layout is mapped (branches `+0x90`, count `+0x84`, Z=up;
+fronds `+0x60`; leaf cards; billboard). A scaler was built and its hook's
+calling convention was verified byte-for-byte correct (`ret 0x14`, args on the
+stack). **Yet ANY hook on `CSpeedTreeRT::GetGeometry` — even a bare
+call-original-and-return passthrough (`tree_minhook.dll`) — makes trees cull/pop
+in and out by camera angle** (confirmed by a control test: stock launch is fine).
+Hot-path overhead was ruled out (O(1) hash changed nothing). The mechanism is
+NOT yet understood; see "Step 3 result". Do not ship `tree_yscale.dll` /
+`tree_yprobe.dll` / `tree_minhook.dll` — they are diagnostic only.
 
 ## Goal
 
@@ -62,6 +76,87 @@ complete stretch, but branches are the main structure.
 
 Tooling added: `K:\TvTDeepseek\tree_probe\disasm_geometry*.py` (capstone dumps).
 
+## Step 1b result (2026-08-29, same session — CORRECTION to Step 1)
+
+Deeper disasm of `0x1AD30` (GetGeometry bit2 dispatch) + `0x12d40` (the branch
+filler) **corrects the Step 1 field attribution**:
+
+- The filler's `this` is `[CSpeedTreeRT + 8]` — the tree's **internal geometry
+  object**, NOT the `SIndexedTri` at `SGeometry+0x78`. So `+0x1c/+0x20/+0x24/
+  +0x28/+0x2c` above are fields of that **internal** object, and `+0x24` is the
+  RAW `.spt` input coords (read-only, consumed inside `GetGeometry`).
+- The engine-visible output is a **0x3c-byte `SIndexedTri` copied INLINE at
+  `SGeometry+0x78`** — the filler ends with `rep movsd` (15 dwords = 0x3c bytes)
+  from a cached **per-branch record** (`[geom_obj+0x2c] + branch_index*0x44`) into
+  `SGeometry+0x78`. That record is what the engine draws.
+- The transform (raw coords → cross-expanded output at `[geom_obj+0x10]`) is
+  **cached per branch** via a dirty flag (`[branch_record+0x3c]`). Therefore
+  scaling the raw `+0x24` coords **after** `GetGeometry` returns does nothing —
+  the transform already ran and won't re-run.
+- **Up axis settled:** the transform is a 2×2 matrix on the first TWO coords
+  (X, Y) using a per-vertex 2-component direction `(A0,A1)` at `[geom_obj+0x20]`;
+  the third coord (Z) passes through as height. `1.0 - x` mirrors X (horizontal
+  symmetry). So **Z = up**, X/Y = horizontal pair. (Plan title says "Y-scale" —
+  that's the stale name; the axis is Z.)
+
+**Next:** find the real vertex-array pointer field inside the 0x3c `SIndexedTri`
+(`SGeometry+0x78..+0xb4`). Built `tree_yprobe.dll` (read-only) to dump that
+struct + candidate pointers on the first Birch/Linden `GetGeometry` call. After
+one REDUX run, the log pins the exact pointer offset and the scaler targets it.
+
+## Step 1c result (2026-08-29 — full SGeometry mapped from tree_yprobe log)
+
+`tree_yprobe.dll` dumped a live REDUX Linden (`flags=7` = leaf+frond+branch).
+Verified the hook's compiled code is clean (`ret 0x14`, args on the stack, no
+stack imbalance). Full `SGeometry` decode:
+
+- **Branches** (`SIndexedTri` inline at `SGeometry+0x78`, 0x3c bytes):
+  `+0x0c` = WORD vertex count (42), `+0x18` = **vertex POSITIONS pointer** →
+  `SGeometry+0x90` (float xyz, stride 12). Z = height (branch Z −0.97..9.05).
+  `+0x1c/+0x20` ≈ texcoords, `+0x28/+0x2c/+0x30` ≈ normals/tangents/binormals.
+- **Fronds**: positions pointer at `SGeometry+0x60` (Z 1.4..6.6 — the canopy
+  skeleton), normals at `+0x54/0x58/0x5c`, texcoords at `+0x64`.
+- **Leaf cards**: `+0x10` = count(8)/flag, pointers `+0x18` (corners), `+0x1c`
+  (normal 0,0,−1), `+0x20/0x24` (tangents) — card-local, needs separate handling.
+- **Billboard**: `+0xfc..+0x11c` (LOD far card).
+
+## Step 2 result (2026-08-29) — first scaler build + the hot-path hypothesis
+
+Built `tree_yscale.dll` (K=1.5) scaling branch Z at `SGeometry+0x90`. **Every
+build caused trees to pop in/out by camera angle** — a user control test (stock
+launch) confirmed it was the DLL. First hypothesis was hot-path overhead (an
+O(512) filename-map scan every frame per visible tree). Rebuilt with targets in
+an O(1) open-addressing hash set (recorded at `LoadTree`, `hash_contains` in the
+hook, no map scan / strstr / logging in the hot path; each buffer scaled once).
+**The O(1) fix changed nothing** — the overhead hypothesis is WRONG.
+
+## Step 3 result (2026-08-29) — the blocker: ANY GetGeometry hook breaks trees
+
+Bisected with `tree_minhook.dll` = hook `GetGeometry` and do NOTHING but call the
+original (`g_orig(self, geom, flags, f1, f2, f3)`) — no `LoadTree` hook, no hash,
+no scale, no hot-path logging. **Trees still pop in/out.** So the 5-byte JMP
+trampoline on `GetGeometry` itself is the problem, and the reason is NOT yet
+understood:
+
+- Prologue `55 8B EC 6A FF` verified before patching; export RVA `0x1DAD0`.
+- Disassembled the real export: it ends `ret 0x14` (and a second `ret 0x14` path);
+  the hook's compiled code also ends `ret 0x14`, args read from the correct stack
+  slots, `this` in ECX — byte-for-byte correct calling convention.
+- SEH/EBP chain and stack balance traced and shown correct.
+- The same trampoline pattern works on `LoadTree`/`SetTreeSize` (Phase 0/1) with
+  trees rendering fine; it is `GetGeometry` specifically that breaks.
+- `flags=7` (leaf+frond+branch) in the live call; f1/f2/f3 arrive as NaN from the
+  engine (passed through unchanged).
+
+**Unresolved candidates for revisit:** (1) `GetGeometry` is called far more often
+than estimated (per-LOD/per-branch), so even the trampoline's ~20 cycles tips the
+game's frame budget and its dynamic LOD culls trees — test by counting call rate;
+(2) patching happens while a render thread is mid-call (timing race on
+VirtualProtect) — test by patching from the loader notification before any tree
+renders vs. deferring; (3) the engine reads the export bytes / checksums the
+function; (4) the extra call/ret layer disturbs a render-thread stack assumption.
+None confirmed.
+
 ## Risks (from the spec note)
 
 - LOD box is driven by `SetTreeSize`, not the geometry → a taller tree may pop when
@@ -70,71 +165,65 @@ Tooling added: `K:\TvTDeepseek\tree_probe\disasm_geometry*.py` (capstone dumps).
   tree slightly exceeds its collision box. Minor.
 - Root-system decal (`RootSystemSize`) is separate and unaffected.
 
-## Tooling
+## Tooling (all in `K:\TvTDeepseek\tree_probe\`, none are ship-ready)
 
-- `K:\TvTDeepseek\tree_probe\` — `tree_size_probe.{cpp,dll}` (logger, keep),
-  `tree_stretch.{cpp,dll}` (superseded, do not ship), `build.bat`, allow-list.
-- New: `tree_yscale.{cpp,dll}` in the same folder, build.bat adapted.
-
+- `tree_size_probe.{cpp,dll}` — Phase 0 logger (keep).
+- `tree_stretch.{cpp,dll}` — Phase 1 SetTreeSize override (superseded, do not ship).
+- `tree_yprobe.{cpp,dll}` + `run_yprobe.bat` — read-only GetGeometry dump (worked;
+  produced the full SGeometry map). Diagnostic only.
+- `tree_yscale.{cpp,dll}` + `run_yscale.bat` — the height scaler (K=1.5, O(1) hot
+  path). Builds and hooks correctly but inherits the Step-3 blocker. Do not ship.
+- `tree_minhook.{cpp,dll}` + `run_minhook.bat` — bare GetGeometry passthrough;
+  proves the blocker is the GetGeometry patch itself. Diagnostic only.
+- `build*.bat`, `disasm_geometry*.py` — build + capstone reverse-engineering aids.
+- No game files were modified by any of this — every DLL is runtime-injected and
+  vanishes when the game closes.
 ---
 
-## CORRECTION 2026-10-30 — the flag table above is wrong, and "+0x78 = branches" is wrong
+## Addendum 2026-10-30 — a fresh decompile, and one disagreement with Step 1b/1c
 
-Decompiled properly this time (Ghidra 11.1 headless — recipe in
-`decomp/notes/GHIDRA_HEADLESS_RUNS_HERE_2026-10-30.md`). `GetGeometry` at `0x1DAD0` is 181
-bytes and is nothing but four flag tests, so the mapping is not a matter of interpretation:
+Not a re-run of any of the above: this file is parked, and this came out of unrelated
+work on the `.ms2` format with Ghidra 11.1 headless (recipe in
+`decomp/notes/GHIDRA_HEADLESS_RUNS_HERE_2026-10-30.md`). It is recorded here because it
+**disagrees** with Step 1b/1c, and that disagreement is unresolved.
 
-    if (flags & 1) GetBranchGeometry (this, geom, p3);
-    if (flags & 2) GetFrondGeometry  (this, geom, p4);
-    if (flags & 4) GetLeafGeometry   (this, geom, p5);
-    if (flags & 8) Get360BillboardGeometry(...)  /  GetSimpleBillboardGeometry(...);
+What the decompiler gives, with the DLL's own export symbols demangled:
 
-| bit | function | RVA | fills |
-|---|---|---|---|
-| 0 | **GetBranchGeometry** | `0x1CC70` | SGeometry `+0x00..0x38` |
-| 1 | **GetFrondGeometry** | `0x1CF90` | `+0x3c..0x74` |
-| 2 | **GetLeafGeometry** | `0x1AD30` | `+0x78`, `+0x7c`, and a second card set at `+0xb4`, `+0xb8` |
-| 3 | Get360 / GetSimpleBillboard | `0x1BD50` / `0x1AFB0` | `+0xf4..0x11c` |
+    GetGeometry            0x1DAD0   181 bytes - four flag tests and nothing else
+      bit 0 -> GetBranchGeometry        0x1CC70   796
+      bit 1 -> GetFrondGeometry         0x1CF90   793
+      bit 2 -> GetLeafGeometry          0x1AD30   625
+      bit 3 -> Get360BillboardGeometry  0x1BD50  / GetSimpleBillboardGeometry 0x1AFB0
 
-Bits 0 and 2 were swapped in the table above, and **[`+0x78`] is leaf/billboard card data, not the
-branch mesh** — the `1.0 - x` mirror and the stride-12 vertex read at `0x12E2F` that step 1
-recorded both live in the leaf-card path (`GetLeafGeometry` → `FUN_10012d40`).
+and the `SGeometry` ranges each one writes:
 
-### The branch block, which is the one that matters
+    GetBranchGeometry   +0x00..+0x38   nine pointer slots plus counts
+    GetFrondGeometry    +0x3c..+0x74
+    GetLeafGeometry     +0x78, +0x7c, and a second leaf set at +0xb4, +0xb8
+    Get360 / GetSimple  +0xf4..+0x11c
 
-`GetBranchGeometry` copies pointers out of the tree's own vectors (`this+4`) into `SGeometry`:
+The branch block, read from the object it copies out of (`[CSpeedTreeRT+4]`): `+0x00`
+LOD level, `+0x04` index count, `+0x08` uint16 index array, `+0x10` vertex count
+(= floats/3), `+0x24` the **vertex coordinates** (copied from `+0x64`), and eight
+further parallel streams at `+0x14/+0x18/+0x1c/+0x20/+0x28/+0x2c/+0x30/+0x34`.
 
-| SGeometry | source | meaning |
-|---|---|---|
-| `+0x00` | — | LOD level used (int) |
-| `+0x04` | `src+0x34`, per-LOD | index count = `(end-begin)>>1` |
-| `+0x08` | `src+0x34`, per-LOD | **index array** (unsigned short) |
-| `+0x0c` | `FUN_1000f350(tree+4, lod)` | per-LOD helper result |
-| `+0x10` | `src+0x64` | **vertex count** = `(end-begin)>>2 / 3` |
-| `+0x14` | `src+0x54` | stream |
-| `+0x18` | `src+0x84` | stream |
-| `+0x1c` | `src+0x94` | stream |
-| `+0x20` | `src+0xa4` | stream |
-| `+0x24` | `src+0x64` | **vertex coordinates** — float xyz, stride 12 |
-| `+0x28` | `src+0xb4` | stream |
-| `+0x2c` | `src+0xe4` | stream |
-| `+0x30` | `src+0xf4` | stream |
-| `+0x34` | `src+0x104` | stream |
-| `+0x38` | — | float, transition/alpha |
+**The disagreement.** Step 1b/1c attribute `SGeometry+0x78` to BRANCHES - a 0x3c-byte
+`SIndexedTri` with the count word at `+0x0c` and the positions pointer field at `+0x18`.
+The decompiler says bit 2 is `GetLeafGeometry` and that `+0x78` and `+0xb4` are the two
+leaf-card sets, with the branches in the `+0x00..+0x38` block instead. Both cannot be
+right. Nothing was rebuilt to settle it, because the file is parked and Step 3 says a
+`GetGeometry` hook breaks trees whatever it does.
 
-**Step 2 survives**: the coordinate array and its count are confirmed (`+0x24`, count at `+0x10`
-= floats/3), so scaling Y around the base is exactly as planned. Two things the plan did not
-account for:
+One run settles it: at a `flags=7` call, dump `SGeometry+0x78` and `SGeometry+0x24`
+together. The live probe measured a Z range of -0.97..9.05 at `+0x78` and 42 vertices;
+whichever of the two carries that - and a stride-12 array behind it - is the branch mesh.
 
-1. **Those pointers alias the tree's own internal buffers** — they are copied out of `this+4`'s
-   vectors on every call, and the `+0x04`/`+0x08` guards are those vectors' end pointers. Writing
-   through the hook therefore mutates the model's shared arrays, so the factor must be applied
-   **once per loaded species**, not per frame, or every draw stretches it again.
-2. **Leaf cards and fronds have their own coordinate streams** at `+0x78` and `+0x3c`. Stretching
-   only `+0x24` leaves the crown where it was and lengthens the trunk underneath it. Either
-   treat all three streams, or scale the source vectors in `this+4` before the first
-   `GetGeometry` call — which is also the only way to make it a once-per-model operation.
+**Two consequences that hold either way**, from the same decompile:
 
-Nine parallel streams in the branch block, and only `+0x24` has the /3 count, which is what
-identifies it as the coordinates. Naming the other eight (normals, texcoords, tangents, colours) is
-now cheap, and worth doing before writing the hook.
+* every pointer in the branch block is a *copy* of a vector inside `[CSpeedTreeRT+4]`, so
+  writing through the `SGeometry` copy mutates the model's shared arrays and a per-frame
+  scale compounds. This matches Step 1b's caching note: whatever gets scaled must be
+  scaled once, or the dirty flag at `[branch_record+0x3c]` re-run deliberately.
+* scaling one structure leaves the others at the old height - leaf cards (`+0x78`/`+0xb4`),
+  fronds (`+0x3c`) and the billboard (`+0xf4`) each carry their own coordinate streams.
+  A taller trunk under an unmoved crown is the expected first result, not a bug.

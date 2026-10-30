@@ -512,6 +512,640 @@ Use the Editor's Navigator panel to *view* `routerzonemap`, `terrainzone` and
 `Cache\Scripts.cache` must be deleted for any `.script` edit to take effect.
 It cannot be deleted while the game is running. A cold rebuild recompiles ~513
 scripts and takes a couple of minutes.
+---
+
+## 10. Unit placement — the matrix, and which way is forward
+
+Added 2026-08-26 while making a second Tiger spawn beside the player in C2M1.
+
+A unit's `new Matrix(...)` in `Content.script` is four rows of four. **The
+translation is the fourth column, not the fourth row:**
+
+```
+new Matrix(
+    xvec.x, xvec.y, xvec.z, origin.x,
+    yvec.x, yvec.y, yvec.z, origin.y,
+    zvec.x, zvec.y, zvec.z, origin.z,
+    0.0,    0.0,    0.0,    1.0
+  ),
+```
+
+**`xvec` — the first row — is the FORWARD axis.** This is not a guess:
+`Scripts\Common\FreePlayerCamera.script` places the chase camera behind the
+player with
+
+```c
+Vector DirectionX   = new Vector(_Target.xvec[0], _Target.xvec[1], 0.0);
+DirectionX.Normalize();
+Vector CameraOrigin = _Target.origin + DirectionX * -20.0;
+```
+
+A camera at `xvec * -20` is 20 m *behind*, so `+xvec` is where the tank is
+looking. `zvec` is near `(0,0,1)` in every shipped unit, i.e. Z is up.
+
+### Placing one unit relative to another
+
+To put a unit N metres directly behind another, copy the leader's three basis
+rows verbatim (so it faces the same way) and offset the origin along the
+normalised ground-plane forward:
+
+```python
+m   = math.hypot(xvec[0], xvec[1])          # ignore the tiny z tilt
+fwd = (xvec[0]/m, xvec[1]/m)
+pos = (origin[0] - fwd[0]*N, origin[1] - fwd[1]*N, origin[2])
+```
+
+**Add `["SurfaceControl", "PutonGround"]`** rather than trusting the copied Z.
+The terrain under the new spot is not the terrain under the old one, and the
+heightfield row order is not what you would guess (see the placement note in the
+project map).
+
+---
+
+## 11. Making a unit follow the player
+
+### Use `Formation`, and put it on the TASK
+
+Groups have a `Formation` **property** (`"Independent"`, plus a
+`FormationDistance`) which arranges units *within* the group. That is not the
+same thing and will not make a unit follow the player.
+
+The follow order lives on the task, from `CBaseAITask`:
+
+```c
+Formation(_LeaderID, _Displacement, _DistanceOptimum, _DistanceMax,
+          _CruiserSpeed, _OvertakeSpeed, _NotifyOnReached, _Oriented)
+```
+
+A working column follower, from `C2M1MPUTigerTask`:
+
+```c
+void Init()
+{
+  CBaseAITankTask::Init();
+  ActivateBehavior(true);
+  ActivateMovement(true);                    // NOT false - see below
+  sendEvent(3.0, getIdentificator(user), "KeepStation", []);
+}
+
+event void KeepStation()
+{
+  Component mission = GetMission();
+  Vector XYRank = new Vector(0.0, -40.0, 0.0);   // (0,-40) = dead astern, 40 m
+  Formation(mission.GetMainPlayerObjectID(), XYRank, 40.0f, 80.0f,
+            0.15f * GetMaxSpeed(), GetMaxSpeed(), false, false);
+  sendEvent(8.0, getIdentificator(user), "KeepStation", []);
+}
+```
+
+**Three things that are not obvious and each cost a session somewhere:**
+
+1. **`Formation` is continuous; `SetOrder_MoveTo` is not.** Re-issuing a MoveTo
+   in a loop can only ever produce drive-arrive-stop-wait, which the player sees
+   as lurching. It is not a navigation problem and not a physics cost — it is
+   the wrong *kind* of order. `Formation` has its own cruise and overtake
+   speeds and the engine holds the slot itself.
+2. **Cruise speed must be set explicitly and LOW.** Passed as `0`, the wrapper
+   defaults it to two thirds of max speed — far faster than a tank actually
+   crawls, so the follower surges and brakes. `0.15 * GetMaxSpeed()` works.
+3. **Never issue `Follow` and `Formation` together.** Two orders arrive per tick
+   and fight; if their distances disagree the unit micro-stutters in place.
+
+**Displacement convention, empirically:** `(0, -40)` is dead astern at 40 m and
+`(-45, -60)` is behind and out to one flank at ~75 m. Note the shipped
+`CWingmanTask` constants are Whirlwind-over-Vietnam leftovers — 200 m spacing
+with `z = 30`, which is *altitude* — so do not copy them as an example. ZW's
+`BaseTasks.script` has retuned values; REDUX's has not.
+
+### A real bug to route around
+
+`BaseTasks.script`'s six-argument `SetOrder_Formation` overload (~line 1320)
+passes `_Displacement`, `_DistanceOptimum` and `_DistanceMax` — which are the
+parameter names of a *different* function. Its own parameters are called
+`_FormationVector`, `_PosDistanceOptimum`, `_PosDistanceMax`. Call the
+eight-argument `Formation()` wrapper instead, which routes to the seven-argument
+overload and is sound.
+
+---
+
+## 12. Scripted escorts are on rails — find every override first
+
+A shipped unit that "just sits there" is usually not broken; it is being told to
+sit there by several places at once. C2M1's second Tiger had **five**, and any
+follow order would have been overwritten within seconds by four of them:
+
+| where | what it did |
+|---|---|
+| its task's `Init()` | `ActivateMovement(false)` — movement off outright |
+| `Content.script` group | `["FirstOrder", "Patrol"]` + `["DelayedOrder", true]` + a `["Path", ...]` |
+| `StartMPU` event | `PopDelayedOrder()` released that patrol at mission start |
+| `CheckDistance` event | a **don't-overtake-the-player gate** issuing its own 4-navpoint route |
+| `StartPhase1` / `2Act` / `3Act` | three more `SetOrder_Move` calls |
+
+**Before changing a unit's behaviour, grep its ID across every file in the
+mission folder.** In C2M1 the Tiger also appeared in `Mission.script`'s
+`GermanKillList`, in a `sendEvent` for a bombing manoeuvre, in two
+`OnUnitExplosion` handlers, and in `PositionWatchers.script`'s `ControlPoints` —
+none of which should be disturbed while changing how it moves.
+
+### Do not strip `FirstOrder` to stop a patrol
+
+Tempting, and it risks the "no orders in group" alarm that produced the C1M2
+recursion crash (see the `UnitGroup.script` bugs in section 4b). **Leave the
+declarative properties alone and stop the order being *popped* instead** —
+comment out the `PopDelayedOrder()` call. The group keeps a valid order
+definition it simply never uses.
+
+Likewise, when removing a scripted move from a combat phase, keep the
+`ActivateRadar` / `ActivateFire` / `SetEnemyReactionType` calls around it. Those
+are what make the unit fight; only the movement order needs to go.
+
+---
+
+## 13. Atmosphere — which layer wins, and the 10-degree ceiling
+
+### `Content.script` overrides `Atmosphere.script`
+
+A mission's `Atmosphere.script` sets fields like `SunDirection`; its
+`Content.script` may then override the same fields inside an `"Atmosphere"`
+object. **`Content.script` is what the engine uses.** They are frequently out of
+sync in shipped missions — C1M4 has opposite signs on the sun's X component
+between the two files, and has since 2001.
+
+**Measure the `Content.script` value.** Reading `Atmosphere.script` alone
+produced a confident, wrong conclusion that a whole fix had never been applied.
+
+### The sun is only visible below ~10 degrees elevation
+
+`Scripts\Common\CockpitControls.script`:
+
+```c
+CommanderCameraLink.SetMaxVertAngle(Math_PI*(10.0f/180.0f));
+CommanderCameraLink.SetMinVertAngle(- Math_PI*(7.0f/180.0f));
+```
+
+The player cannot look higher than **10 degrees**. Unit declarations agree
+(`MaxVertAngle = 0.17` rad = 9.7 degrees). So:
+
+- a sun above ~10 degrees elevation **cannot be seen at all** — it is a light
+  source, not an object
+- what the player *does* see is **shadow length and the angle light strikes
+  hulls**, which respond at any elevation
+- the sun disc itself only enters view at dawn or dusk
+
+G5 shipped every campaign mission with the sun at 63-67 degrees. Normalising
+those vectors made no visible difference precisely because the sun was, and
+remained, out of view — a null result that is fully explained rather than
+mysterious.
+
+### `SunDirection` length is position, not brightness
+
+The sun billboard is placed along `SunDirection * DistanceToSun` (2000 in every
+shipped mission). A vector of length 0.34 therefore puts the sun at ~680 m
+instead of 2000 m — close enough to sit inside fog or below the skyline.
+Brightness is a separate `SunIntensity` field. **Normalising a sun vector moves
+the sun; it does not make it brighter.**
+
+Elevation from a direction vector is `asin(-z / |v|)`; the compass bearing is
+`atan2(y, x)`. To change the time of day without swinging the light round to a
+different side of the map, preserve the bearing and change only the elevation.
+---
+
+## 14. Shadows — three systems, and they must agree
+
+Added 2026-08-26 after a user complaint ("tank shadows are so dark they crush
+all detail") turned into four rounds of pulling the wrong lever. **Read this
+before touching shadow darkness.** The model matters more than any value.
+
+### There are three separate shadow systems, plus one thing that is not a shadow
+
+| | setting | what it draws |
+|---|---|---|
+| 1. Stencil shadow | `StencilShadowColor` | **vehicles** — the real cast shadow |
+| 2. Projected shadow | `ShadowColor` | terrain and buildings |
+| 3. Fake shadow | `FakeShadow` / `FakeShadowScale` | a cheap dark blob under a vehicle, enabled per model in `Scripts\Common\FakeShadows.script` |
+
+`ShadowFar`, `LodForShadowChange`, `LodForShadowHide` and `ShadowDetail` control
+**distance and level of detail**, not darkness.
+
+**`AmbientLight` is not a shadow setting at all.** It is the fill light — how
+bright a surface is when the sun is not hitting it. Two different mechanisms
+produce what a player calls "shadow":
+
+```
+surface FACING AWAY from the sun     -> AmbientLight only
+surface facing the sun but BLOCKED   -> sun x ShadowColor / StencilShadowColor
+```
+
+This is why raising `StencilShadowColor` fixed hull detail and did **nothing**
+for the tank commander: he was not in a cast shadow, he was simply facing away
+from the sun.
+
+### What can cast onto what — `StencilShadowSettings`
+
+Only objects listed in `Scripts\Common\Settings.script` (~L64) cast a stencil
+shadow, and **stencil is the only shadow that can fall onto another object**:
+
+```
+StencilShadowSettings = [
+    [ [], [CLASSIFICATOR_SHADOW] ],
+    [ [], ["INVENTORY_ITEM"]  ],
+    ...
+];
+```
+
+That is tanks, guns, buildings. **Trees are not in it**, and cannot be added
+usefully — see below.
+
+### Why a tank parked under a tree stays fully lit
+
+Trees are classified as terrain (`CLASSIFICATOR_TERRAINFOREST`) and their
+shadows are drawn by a **separate vegetation pass that only touches the
+terrain**, gated by `TreeShadowLodDistance` (default 500) and `TreeLightKoef` in
+`BaseAtmosphere.script`.
+
+So a tree shadow is terrain-only *by design*. It has no path onto a dynamic
+mesh. This is an engine limitation, not a settings mistake, and **it is not
+script-fixable** — the pass lives in the compiled renderer.
+
+Worth knowing before anyone spends a day trying to make woods provide visual
+cover: they never will, however the shadow colours are set. (The AI *does* see
+through foliage correctly — that is the separate line-of-sight work.)
+
+### The trees are SpeedTreeRT v1
+
+`SpeedTreeRT.dll` + `STTree.dll` in the game root, `Models\Trees\*.spt` as
+procedural definitions (6-15 KB each - the geometry is generated at runtime, not
+baked). Textures split into `*Bark.tex` (3D trunk/branch geometry),
+`*Frond/Leaves/Needles*.tex` (billboard foliage) and `*_Billboard.tex` (the
+full-tree impostor at distance).
+
+So a tree is **both** mesh and billboard. There is real geometry to cast from —
+but SpeedTreeRT renders its own projected ground shadow, separate from the
+engine's stencil pass, which is the whole reason tree shadows never reach tanks.
+
+**Procedural generation also means per-client tree layout.** In multiplayer each
+client generated its own tree positions, so one player drove through gaps
+another player's client had filled with trunks. The layout was never
+synchronised.
+
+### RULE (WEAKENED 2026-08-26): `ShadowColor` and `StencilShadowColor`
+
+> **CORRECTION.** This was written as "they must match". **ZeeWolf does not do
+> that**, and ZW is the build whose vehicle shadows read correctly:
+>
+> ```
+> ZW  C2M1   ShadowColor 0.424   StencilShadowColor 0.522   (stencil BRIGHTER)
+> ```
+>
+> He deliberately lifts the vehicle shadow above the terrain shadow, which is
+> what keeps figures standing inside a vehicle's shadow volume readable. Treat
+> "match" as a safe default when a mission never set `StencilShadowColor` at
+> all — not as a rule, and not as a reason to darken a stencil colour that is
+> already working.
+
+
+They are the same physical shadow drawn by two different renderers. If they
+differ, a tank and the ground beside it cast visibly different shadows.
+
+**The evidence for the rule is in the shipped missions.** The two anyone
+actually finished have them identical:
+
+```
+C1M2   ShadowColor (0.404, 0.494, 0.545)   Stencil (0.404, 0.494, 0.545)   matched
+C2M2   ShadowColor (0.345, 0.420, 0.467)   Stencil (0.345, 0.420, 0.467)   matched
+```
+
+State of the campaign as of 2026-08-26:
+
+```
+1M1  (0.325 grey)          stencil MISSING -> falls back to 0.3
+1M3  (0.200, 0.200, 0.250) (0.500, 0.500, 0.500)   MISMATCHED by 0.30
+1M4  (0.325 grey)          stencil MISSING
+1M5  (0.847) (0.875)       close - overcast, correctly near-white
+1M6  (0.847) (0.875)       close
+2M1  (0.560, 0.580, 0.630) matched   <- fixed 2026-08-26
+2M5  (0.847) (0.875)       close
+2M3  2M4  2M6              stencil MISSING
+```
+
+**Six of twelve missions never set `StencilShadowColor` at all**, so their
+vehicle shadows fall back to `BaseAtmosphere.script`'s default of
+`(0.3, 0.3, 0.3)` — the darkest value anywhere in the game, and dead neutral
+grey. Nobody chose that; it is what you get when nobody sets it.
+
+### Choosing a value
+
+- **Tint it blue.** What actually fills a real shadow is skylight. Neutral grey
+  reads as dead. The finished missions do this: C1M2 `(0.404, 0.494, 0.545)`.
+- **Overcast wants a high value.** C1M5 / C1M6 / C2M5 use `0.875` — on an
+  overcast day shadows are barely darker than lit ground. Whoever set those
+  understood the setting, and they are the proof it does what we think.
+- **Sunny wants roughly 0.45-0.60.** `0.30` crushes; the user judged `0.45`
+  "better, details becoming visible" and settled around `0.56`.
+
+### Watch the ambient/sun ratio too
+
+`AmbientLight` luminance against `SunIntensity` decides how harsh a mission is:
+
+```
+C2M1   ambient 0.120   SunIntensity 1.000   8.3:1   <- harshest in the game
+C1M2 / C1M3 / C2M2 / C2M4   ambient 0.201   0.35-1.2   the tuned value
+C2M3   ambient 0.092   SunIntensity 0.600
+```
+
+C2M1 paired the **lowest ambient with the highest sun** — two independent
+defaults meeting badly. Raised to `0.210` on 2026-08-26 to match the tuned
+missions.
+
+### FakeShadow — and a bug worth knowing about
+
+`FakeShadows.script` enables a cheap shadow blob per model class. **No Tiger
+gets one.** The file sets `Cu_veh_PzVI_MAINModel::FakeShadow = true`, but
+`TankPzVIAusfEUnit::getMeshObjectName()` returns `Cu_veh_PzVI_LATEModel`
+unconditionally — `LATE` appears zero times in that file.
+
+Same shape as the `LodForShadowHide` bug: G5 wired the MAIN model, switched the
+units to LATE, and never updated the shadow config. **This class of bug does not
+show up in a log** — it is a perfectly valid assignment to a class nothing
+instantiates, so nothing errors. The only way to find it is to cross-check
+configured model classes against the ones units actually ask for.
+
+### Could a modern shadow technique be hooked in? — assessed 2026-08-26
+
+Prompted by a Gemini conversation the user shared. Its structural model of the
+engine was **independently correct** and matched everything above, derived
+without knowledge of this document — two shadow pipelines, `StencilShadowSettings`
+as the gate, `TreeShadowLodDistance` capping the tree pass, foliage physically
+unable to shade a vehicle, and the `vs_1_1` / `vs_2_0` material split. It missed
+only the third system, the per-model fake-shadow blob.
+
+**Its load-bearing performance claim is wrong, and this is the part worth
+remembering.**
+
+> *"If shadows cause a CPU/GPU dip, the culprit is almost exclusively dynamic
+> vehicle/building stencil volumes"* — and therefore emptying
+> `StencilShadowSettings` *"immediately claws back CPU frame time"*.
+
+**Measured, and it does not.** No shadow class appears anywhere in either
+build's profiler hot pages:
+
+```
+REDUX   CGrass, CSTForest, CTreeKiller, CGridObject, a std::map lookup
+ZW      CAbstractObject, CAbstractJoint, CCylinderShape / CDynamicIntersector
+```
+
+`ShadowFar` tuning was worth about 2 fps. **Emptying `StencilShadowSettings`
+would delete every vehicle shadow in the game and buy close to nothing.** It is
+a reasonable inference from how the engine is built; it simply is not what the
+frame is spent on. See `TvT_Performance.md`.
+
+#### The idea that IS worth something
+
+**Screen-space directional shadows** — raymarch the depth buffer toward the sun
+vector, so any pixel whose ray crosses tree-canopy depth gets shaded. Because
+trees and tanks both write depth, **this would let foliage shade a tank**, which
+the engine fundamentally cannot otherwise do. That is a real visual capability,
+not a performance play.
+
+Its honest limit: screen-space only knows what is on screen. Park under a tall
+tree and look down and the canopy leaves the frame, so the shadow fades.
+
+#### Feasibility, grounded in what already exists here
+
+The genuinely hard part of a DIY implementation is reading a D3D9 depth buffer
+from a pixel shader — D3D9 was never designed for it, and it needs vendor FourCC
+formats (`INTZ` on NVIDIA, `DF24` on AMD), interception of
+`CreateDepthStencilSurface`, clear-call tracking and MSAA resolution.
+
+**That is already solved in this install.** `ReShade32.dll` is loaded, the
+shader folder is present, `ReShade.ini` is live, and the user has confirmed
+depth capture works. Reimplementing it inside our own DLL means rewriting
+thousands of lines to reach a capability that is already running.
+
+**The sensible split, if this is ever pursued:** ReShade does depth extraction;
+our injected DLL supplies the sun vector and camera matrices. We already hook
+`SetVertexShaderConstantF` in the fog probe, so feeding a shader is proven
+machinery. A full internal Cascaded Shadow Map means rendering the scene a
+second time from the sun's viewpoint — double the draw calls on the single core
+that is already the bottleneck, which is the wrong trade for this engine.
+
+**NOT STARTED. Recorded so the "killing stencils is free performance" idea does
+not resurface as a new thought in six months.**
+
+### Before blaming the lighting, check the texture
+
+The commander stayed dark through every lighting change. He was never a lighting
+problem:
+
+```
+hum_German_Tankman.tex    22% average luminance   <- the commander
+u_veh_PzVI_MAIN1.tex      62%                      hull
+u_veh_PzVI_MAIN2.tex      53%                      turret
+```
+
+German panzer crews wore black and G5 painted him accordingly — average texel
+`RGB(60, 56, 44)`. Light is *multiplied* by texture, so at 22% base even
+doubling the ambient barely moves him, while the same lift visibly improves a
+62% hull.
+
+**Measure the texture before reaching for a lighting lever.** Average DXT1
+luminance is cheap to compute from the block endpoint colours and settles the
+question in seconds.
+---
+
+## 14b. `PlanarShadow` — a REAL trade, an UNEXPLAINED conflict, and one dead hypothesis
+
+**Settled 2026-08-26 by the user testing both values, twice each.**
+
+### The trade is real, and the decision is made
+
+```
+PlanarShadow = false   tank SELF-SHADOWS + casts a ground shadow, commander DARK
+PlanarShadow = true    commander readable, tank renders FLAT
+```
+
+**`Models/u_veh_PzVI_LATE.script` is on `false` — the user's choice**, on the
+grounds that the tank fills the screen constantly while the commander is a
+small figure usually seen from behind. *"The less of 2 options."* Do not flip
+it back without asking.
+
+### The conflict, stated honestly and left open
+
+A diff of the model against ZeeWolf's copy shows:
+
+- the two files are identical apart from **turret materials 10 and 12**
+  (`KEYCOLOR` in REDUX, `NORMAL` in ZW)
+- all 22 materials match exactly — `ambient (0,0,0)`, `diffuse (1,1,1)`,
+  `LMDL_Default`
+- **ZW ships `PlanarShadow = true`** — and its Tiger still looks shaded
+
+So ZW gets both. REDUX cannot. The engine DLLs are byte-identical between the
+builds, so the cause is data we have not yet located. **This is unexplained.
+Do not write it up as solved, and do not re-derive the trade as if it were new
+— it is recorded here.**
+
+### DEAD HYPOTHESIS: the anti-sun (tested, false)
+
+The anti-sun is a second directional light from the opposite side, so it lights
+exactly the surfaces the sun misses. REDUX C2M1 was running it far hotter than
+ZW:
+
+```
+                    REDUX (was)       ZW C2M1
+AntiSunColor lum       0.820           0.455
+AntiSunIntensity       0.400           0.200
+  effective            0.328           0.091     REDUX 3.6x stronger
+AntiSunAngle          10.000          60.000     REDUX near-horizontal
+```
+
+Predicted: bringing REDUX to ZW's values would restore the tank's directional
+shading at `PlanarShadow = true`. **It did not.** The user's verdict was
+*"still too light"*. The anti-sun is not the flattener.
+
+The corrected values were **kept anyway** — C2M1 now runs `0.455 lum / 0.200 /
+45 degrees` — because they are better calibrated than the originals and they
+deepen the shaded flanks under `PlanarShadow = false`. That is a tidy-up, not
+a fix. Rollback:
+`K:\TvTDeepseek
+ollback\C2M1_Content_2026-08-26_preantisun.script`.
+
+**Still worth knowing: `AntiSunAngle` is a contrast control, not decoration.**
+At 10 degrees it comes in almost horizontally and rakes a vehicle's shaded
+flanks; ZW sits at 60, near its own sun elevation, so it behaves like sky fill
+on upper surfaces. Include it in any ambient pass over the other missions.
+
+### Method note
+
+Three explanations were offered for the flat tank before the user settled it:
+a missing shadow system, ambient washing out the falloff, then the anti-sun.
+The diff killed the first two in four minutes; a single play test killed the
+third. **Diff the data before theorising** — but note the diff did *not*
+produce the answer here either, and saying so is the point. The honest state
+is "trade is real, cause unknown".
+
+---
+
+## 15. Crew figures rendering black — `PlanarShadow`
+
+> **See 14b above for the settled position.** The trade below is REAL and was
+> confirmed by test; the user chose `false` (self-shadowing, dark commander).
+> What remains unexplained is that ZW ships `true` and still looks shaded.
+> The anti-sun theory was tested and is dead.
+
+Tank commanders rendered as near-black silhouettes while the hull beside them
+was correctly lit in full sun. **Fixed 2026-08-26.** ~50% improvement, matching
+ZeeWolf, confirmed in game.
+
+> **CORRECTION, later the same day.** `PlanarShadow = true` fixes the commander
+> but **removes the tank's self-shadowing** — a planar shadow is a flat
+> projection onto the ground and cannot shade the model by itself. It is a
+> genuine engine trade, not a clean fix:
+>
+> ```
+> PlanarShadow = true    commander readable, NO self-shadowing   (ZeeWolf's choice)
+> PlanarShadow = false   self-shadowing, commander black
+> ```
+>
+> The deeper cause turned out to be that **REDUX's missions are lit far too
+> darkly** — ambient luminance 0.092-0.210 against ZW's 0.120-0.609. With C2M1
+> raised to 0.437 the commander reads properly. See section 13 and
+> `TvT_Performance.md`.
+
+### The fix
+
+`Models\u_veh_PzVI_LATE.script` — three static fields:
+
+```c
+static boolean PlanarShadow          = true;   // was CBaseModel::DefaultPlanarShadow (false)
+static boolean FakeShadow            = true;   // was CBaseModel::DefaultFakeShadow (false)
+static float   FakeShadowScale       = 0.1;    // was CBaseModel::DefaultFakeShadowScale (1.0)
+```
+
+**`PlanarShadow` is the one that matters.** The likely mechanism — flagged as
+inference, not verified: with it false the model falls through to stencil shadow
+volumes, and the commander, standing proud of the turret, ends up inside *his
+own tank's* shadow volume. Setting it true gives a flat projected shadow instead
+and skips that self-shadowing.
+
+That also explains why raising `StencilShadowColor` visibly improved the **hull**
+but never the commander: the hull is the caster, the commander is the victim.
+
+### How it was found — and the lesson
+
+**Not by reasoning. By diffing against a build where it works.**
+
+Seven candidates were eliminated first, each by test: the texture, the material
+colours, the mesh itself (switching to a completely different `.ms2` changed
+nothing), scene `AmbientLight`, `StencilShadowColor`, a config-set rename, and
+lightmaps. All dead ends, several hours.
+
+The user then observed that **ZeeWolf's commanders are not completely dark**.
+That single observation turned an open-ended hunt into a three-line diff: same
+mesh, same engine DLLs, same texture brightness where it matters — only three
+model fields differed.
+
+**When something renders wrong in one build and right in another, diff the two
+before theorising.** The engine binaries are byte-identical between REDUX and
+ZW, so any behavioural difference is necessarily in the scripts, models or
+textures, and is therefore findable in minutes.
+
+### Two measurement traps recorded from this hunt
+
+**Averaging a whole character texture tells you nothing.** The texture was first
+"measured" at 22% luminance against the hull's 62% and reported as the cause.
+Meaningless — most of a character sheet is dark background around the UV
+islands. The user opened the image and saw immediately it was a normal face on a
+field-grey uniform.
+
+**Compare like with like instead.** Decoding both builds' copies properly:
+
+```
+              mean   median    p90     p99     max
+REDUX         55.2     61.7    85.7   151.5   255.0
+ZW            33.9     26.3    51.2   151.5   255.0
+```
+
+ZW's is *darker* on average but **p90, p99 and max are identical** — the bright
+pixels, the face and hands, are the same in both. That ruled the texture out
+properly, where the first measurement had wrongly ruled it *in*.
+
+### Scope — ZeeWolf only fixed the Tiger
+
+Swept every vehicle model in both builds:
+
+```
+u_veh_PzVI_LATE     PlanarShadow true in ZW   (now true in REDUX)
+u_veh_PzVI_MAIN     PlanarShadow true in ZW   (still DEFAULT in REDUX - unused model)
+everything else     DEFAULT in BOTH builds
+```
+
+So there is **no precedent for a blanket sweep** — ZeeWolf fixed the player's
+tank and left the rest. Whether the Panzer IV, StuG and T-34 commanders suffer
+the same way is untested; if pursued, test one vehicle rather than applying it
+to all.
+
+### Related: an orphaned setting that is part of the same story
+
+`Scripts\Common\FakeShadows.script` sets `FakeShadow = true` on
+`Cu_veh_PzVI_MAINModel` — but `TankPzVIAusfEUnit::getMeshObjectName()` returns
+`Cu_veh_PzVI_LATEModel` unconditionally, so that line has never had any effect.
+ZeeWolf sidestepped it entirely by setting the field on the LATE model directly.
+**Setting it in the model file is what actually takes effect.**
+
+### The hard limit found along the way
+
+Skinned meshes are missing **64 shader variants** that rigid geometry has:
+
+```
+SceneMesh (rigid)      150 variants   both *N and *L
+SkinMesh1 / SkinMesh4   86 each       *N only
+```
+
+The 64 missing differ in exactly one character — position 4 is `L` instead of
+`N`. Given `LightMap.fxo` sits alongside, `L` is almost certainly lightmapping:
+a rendering feature bone-animated geometry simply cannot use. Not the cause of
+this bug, but a permanent capability gap.
 
 ---
 
@@ -538,3 +1172,83 @@ scripts and takes a couple of minutes.
 - **Distinguish shipped-content bugs from missing triggers.** A group logging
   `[ALARM] No orders in group` may simply be waiting for a `PositionWatcher`
   event that the player has not triggered yet.
+
+### Added 2026-08-26
+
+**Count braces excluding comments.** A naive `{` versus `}` count raised a false
+alarm on `MissionTasks.script` — the file has commented-out code blocks, so the
+raw counts are unbalanced in the *original* too. Strip `/* */`, `//` and string
+literals before counting, or compare against the untouched backup rather than
+against zero.
+
+**Print the whole report block, never a tail of it.** A `tail -30` silently cut
+the top four entries off a profiler listing and made a correct tool look broken.
+
+**Check the before and after are the same mission.** A framerate comparison
+showed +24% and was worthless — the baseline was C1M2 and the new run was C1M1.
+The tell was in the data: draw calls and triangles both went *up* after a change
+that could only reduce them.
+
+---
+
+
+---
+
+## 16. `AmmoQty` — per-placement ammunition loadouts, and NO mission uses it
+
+Found 2026-08-26 while checking REDUX's T-34/85 against a documentary account
+of the real vehicle.
+
+**Ammunition quantity IS modelled by the engine, but it is a MISSION property,
+not a unit-class one.** `Scripts/Common/Object.script:351`:
+
+```c
+Array AmmoQty = _PropMap.Get("AmmoQty", []);
+for (int i = 0; i < AmmoQty.size(); i++)
+  m_WeaponList[AmmoQty[i][0]].SetAmmoQuantity(AmmoQty[i][1], AmmoQty[i][2]);
+```
+
+So the loadout is set **where a vehicle is placed**, in a mission's
+`Content.script`, per weapon index.
+
+**A grep of every mission returns nothing.** `AmmoQty` is used zero times, so
+the default `[]` applies everywhere and no vehicle in the game has a shell count
+set. (What the engine does when unset - unlimited, or a built-in per-weapon
+default - is **unverified**; check before designing around it.)
+
+### Why this is worth something
+
+The unit class lists shell TYPES with no counts:
+
+```c
+final static Array Ammo = [ CalibreAmmo, SubCalibreAmmo, HEAmmo ];   // T34_85_44
+```
+
+Historically the T-34/85 carried roughly **36 HE, 14 AP and only 5 sub-calibre**
+of ~55 rounds. The tungsten APCR was scarce enough that commanders held it back
+for the most dangerous targets. **None of that scarcity exists in TvT** - the
+constraint that shaped real Soviet gunnery decisions is simply absent, for the
+player and the AI alike.
+
+Setting `AmmoQty` per placement would model it without touching a single unit
+class, and it is per-mission, so it can be tried on one mission first.
+
+### Ballistics cross-check while here
+
+REDUX's `Piercing.script` stands up well against the documentary figures:
+
+```
+                        REDUX            documentary
+AP  at 1000 m           100 mm           102 mm          good
+AP  muzzle              800 m/s          800 m/s         match
+APCR at 500 m           153.7 mm         138-140 mm      REDUX ~10% optimistic
+APCR muzzle             1050 m/s         1200 m/s
+APCR useful to          2000 m           ~1005 m         REDUX generous
+```
+
+`BulletSpeed` entries are written as `800.0*0.8` - a game-wide 0.8 scaling
+factor, so the authored figure is the real muzzle velocity and the engine sees
+80% of it. **Treat the documentary as a lead, not ground truth** - it says
+itself there may be errors, and REDUX's numbers may be deliberate balance. But
+APCR being both harder-hitting at 500 m and useful at twice its real range is
+worth a look, given how sharply real APCR fell off.
