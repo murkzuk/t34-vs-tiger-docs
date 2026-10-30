@@ -109,8 +109,20 @@ not work**: it dies before writing `editor.log`, and there is no evidence it has
 
 Also:
 
-* There is **no export operator** in the add-on. Import is `File > Import > TvT Model (.ms2)`;
-  the writer is script-level only.
+* The 5.2 add-on has **no export operator** — import is `File > Import > TvT Model (.ms2)` and
+  the writer is script-level only. **But there IS an export menu entry elsewhere on this machine,
+  and it does not write the format:**
+  `%APPDATA%\Blender Foundation\Blender\4.5\scripts\addons\g5_engine_ms2\` (add-on dated
+  2025-11-06, "G5 Engine MS2 Import/Export", File > Export > MS2). Its own comment: *"This is a
+  simplified version — the actual implementation would need to match the exact MS2 format
+  structure from the Maya plugin."* Its header is `"MS2\0"` + uint32 version + flags + a class
+  name, where a real file has int32 format_version 0 + int32 node_count, and its per-mesh record
+  carries positions and **uint32** face triples — no bbox/sphere, no normals, no UVs, no uint16
+  indices, no submeshes, no hierarchy, no flags bitmask, no animation track. Run it and it emits a
+  206-byte cube file that this project's own inspector rejects at byte 0. Its importer is the same
+  artefact: "search for potential vertex counts", then "fallback: create a simple placeholder".
+  So export is NOT solved by that add-on, and the 2026-08-26 in-engine acceptance belongs to
+  `ms2_writer.py`. Evidence and reproduction: `K:\TvTDeepseek\ms2_tool\README.md`.
 * `Tools/MS2Format/` still holds the July legacy path — a second `ms2_reader.py` (9,561 bytes)
   and `ms2_import_blender.py` for the Blender 2.79 install. Two readers with the same module name
   in one folder is a trap.
