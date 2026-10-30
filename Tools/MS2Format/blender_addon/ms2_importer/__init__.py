@@ -186,6 +186,19 @@ def _create_object_for_node(node, index, skip_degenerate, normal_mode):
             print("  (%s: custom split normals unavailable on this Blender "
                   "version (%s) - falling back to smooth shading)" % (node.name, e))
 
+    # [2026-10-30] Stash the AUTHORED normals as a POINT attribute. Blender's
+    # own normals are derived, so an export cannot read them back; without this
+    # the round trip would silently replace authored normals with recomputed
+    # ones and the file would no longer be byte-identical. Read by ms2_export.
+    if node.normals and len(node.normals) == len(node.positions):
+        try:
+            attr = mesh.attributes.new("ms2_normals", 'FLOAT_VECTOR', 'POINT')
+            for i, n in enumerate(node.normals):
+                attr.data[i].vector = n
+        except Exception as e:
+            print("  (%s: could not stash authored normals (%s) - export will "
+                  "not be able to reproduce this node)" % (node.name, e))
+
     for poly in mesh.polygons:
         poly.use_smooth = (normal_mode != 'FLAT')
 
