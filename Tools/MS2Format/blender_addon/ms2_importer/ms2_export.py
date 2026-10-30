@@ -28,9 +28,20 @@ from . import ms2_reader as R
 from . import ms2_layout as L
 
 
-def _uv_per_vertex(mesh):
-    """ms2 uvs are per-vertex; Blender holds them per-loop. First loop wins."""
+def _uv_per_vertex(mesh, fill=False):
+    """ms2 uvs are per-vertex; Blender holds them per-loop. First loop wins.
+
+    [2026-10-30] DO NOT DISCARD THE WHOLE NODE FOR ONE ORPHANED VERTEX. The importer
+    creates every vertex in the file, including ones no surviving face references, so
+    the per-vertex list can legitimately keep holes. The previous version made the
+    caller throw the whole array away in that case, and the rebuild path then wrote
+    UV (0,0) for every vertex in the node - which rendered a Tiger hull flat white
+    while its turret was perfectly textured, because every triangle sampled one texel.
+    Holes are now filled with a real UV taken from the same node.
+    """
     layer = mesh.uv_layers.active
+    if layer is None and len(mesh.uv_layers):
+        layer = mesh.uv_layers[0]
     if layer is None:
         return None
     out = [None] * len(mesh.vertices)
@@ -39,7 +50,16 @@ def _uv_per_vertex(mesh):
         if out[vi] is None:
             uv = layer.data[i].uv
             out[vi] = (uv[0], -uv[1])
-    return out
+    if not fill:
+        return out                      # holes left in; the caller decides
+    first = None
+    for u in out:
+        if u is not None:
+            first = u
+            break
+    if first is None:
+        return None
+    return [u if u is not None else first for u in out]
 
 
 def _bounds(positions):
@@ -169,12 +189,31 @@ def export_ms2(src, dst, objects=None, log=print):
     return patched, rebuilt, kept
 
 def _mesh_arrays(mesh):
-    """positions, normals, uvs and triangle indices, per vertex."""
+    """positions, normals, uvs and triangle indices, per vertex.
+
+    [2026-10-30] NORMALS COME FROM THE AUTHORED ATTRIBUTE WHERE IT STILL APPLIES.
+    A rebuilt node keeps its old vertices in their original order, so the ms2_normals
+    attribute the importer stashed is still valid for indices below the old count -
+    only the vertices the edit added have no authored normal. Using Blender normals
+    for everything replaced 26,958 of 59,112 authored normal components on one Tiger
+    hull, i.e. it silently re-shaded the whole tank to add a pyramid.
+    """
     mesh.calc_loop_triangles()
     positions = [(v.co.x, v.co.y, v.co.z) for v in mesh.vertices]
     normals = [(v.normal.x, v.normal.y, v.normal.z) for v in mesh.vertices]
-    uvs = _uv_per_vertex(mesh)
-    if uvs is None or any(u is None for u in uvs):
+    attr = mesh.attributes.get("ms2_normals") if hasattr(mesh, "attributes") else None
+    if attr is not None:
+        kept = 0
+        for i in range(min(len(attr.data), len(normals))):
+            n = attr.data[i].vector
+            if abs(n[0]) + abs(n[1]) + abs(n[2]) > 1e-6:
+                normals[i] = (n[0], n[1], n[2])
+                kept += 1
+        if kept:
+            print("  %s: kept %d authored normals, %d vertices computed"
+                  % (mesh.name, kept, len(normals) - kept))
+    uvs = _uv_per_vertex(mesh, fill=True)
+    if uvs is None:
         uvs = [(0.0, 0.0)] * len(mesh.vertices)
     idx = []
     for tri in mesh.loop_triangles:
