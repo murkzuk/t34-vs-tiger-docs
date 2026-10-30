@@ -140,11 +140,40 @@ with the decimated surface's own normal** (`dot > 0.25`), otherwise trust the ge
 
 Interpolation quality was never the problem; the wrong-surface samples were.
 
-## Confirmed in game, 2026-10-30
+## CORRECTION (2026-10-30, later the same day): NOT confirmed in game
 
-The ladder was deployed to `M:\T34vsTiger_ZW2015` and played in **KurskMission4**, the one
-mission that puts `CTankPzVITigerE1_EarlyUnit` in as `MainPlayerUnit`. **The level switch is
-visible in game.** Six days of "the engine probably uses them" is settled.
+The section below was written too early and said the switch was confirmed in game. **It is not,
+and the ladder also broke something.**
+
+What is actually established:
+
+- **In the editor's asset view**, `Cu_veh_TIGER_E1_Early_PlayableModel` has a working LOD
+  slider, and G5's stock Tiger coarsens under it. That much is measured.
+- **In a mission it is unproven.** Watching for the switch in KurskMission4 with the ladder
+  armed and `SetLods([150, 60])`, it was not observed.
+- **Worse: with the 285-node ladder installed, the player's own Tiger did not appear in
+  third-person view** (F6) at all. Restoring ZeeWolf's original `50ef1f9c306e0b4f` brought the
+  tank straight back in the same mission, with the same F6 camera. So the appended-node file
+  renders in the asset viewer and not in mission external view.
+
+Cause unknown. The engine logged no error - `[ReadonlyMesh] Loading complete`,
+`Script Class Cu_veh_TIGER_E1_Early_PlayableModelSkin 2`, nothing about the mesh. Candidates, in
+the order worth testing:
+
+1. the player's tank is drawn through a different path in mission than in the asset viewer (the
+   `SetupExtendMesh` exterior/interior plumbing), and that path rejects something about the
+   appended nodes
+2. node count or total size - 285 nodes and 15 MB against his 190 and 9 MB
+3. a per-node flag on the appended nodes that the asset viewer tolerates and the mission path
+   does not
+
+**The ZW install has been reverted to his originals**
+(`Models\u_veh_TIGER_E1_Early_Playable.ms2` = `50ef1f9c306e0b4f`,
+`Scripts\Units\TankPzVITigerE1_EarlyUnit.script` = `SetLods([0])` x4, cache cleared). The
+ladder still exists at `ms2_tool/out/tiger_lod1_full.ms2` and in the sandbox, ready to be
+re-tested once the external-view problem is understood.
+
+### The section as originally written, kept so the mistake is visible
 
 What made it work, in order of how much it mattered:
 

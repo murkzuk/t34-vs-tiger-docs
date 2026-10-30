@@ -243,6 +243,12 @@ Two content caveats, both measured:
   (the ZW corpus plan and its results) are the two planning documents.
 ## 10. LOD levels: the field nobody had named (added 2026-10-30, late)
 
+> **STATUS 2026-10-30 evening: the ladder works in the editor's asset view and NOT yet in
+> mission. Worse, with the 285-node ladder installed the player's Tiger vanished entirely in
+> third-person view (F6); restoring ZeeWolf's original brought it back. The ZW install has been
+> reverted. The format work below stands; the in-mission claim does not.**
+
+
 The first of the four int32s after the bounding sphere — documented since 2026-07-03 as
 "flag, always 0" — **is the LOD level**. `0` = the base mesh, `n` = a node named `_LODn`.
 Measured: 95.1% of 3,708 shipped LOD nodes match their suffix, 96.4% of all other nodes are 0,
