@@ -81,6 +81,29 @@ parent field, so a correct index permutation is still a corrupted model.
 tool, not a repair tool. The gap/order theory of the LOD failure is dead: the level field was the
 whole answer.
 
+## A level node must also carry an IDENTITY transform
+
+Found when the first complete ladder rendered with every level floating away from its part,
+and again one layer down in the byte-cloner. A level node's parent is the **part itself**, and
+the part already carries the part's own offset, so any transform copied onto the level is
+applied twice.
+
+```
+G5's own files                        our ladder, after the fix
+Body        parent   0  pos -0.456    Body_Hull       parent 113  pos -0.126
+Body_LOD1   parent 194  pos  0.000    Body_Hull_LOD1  parent 183  pos  0.000
+TrackLeft   parent  19  pos  1.500    TrackLeft       parent  10  pos  1.450
+TrackLeft_LOD1 parent 32 pos 0.000    TrackLeft_LOD1  parent  24  pos  0.000
+```
+
+So the rule for any appended level is: **blank anim track — positions 0, quaternion (1,0,0,0) —
+while keeping `d_count` frames**, so anchors stay in step. Both `ms2_export.rebuild_node` (for
+decimated levels) and `ms2_clone.py` (for verbatim clones of skinned parts) now do this;
+rebuilds of an existing node keep the donor's track because their parent does not change.
+
+Symptom if you get it wrong: the part is displaced by exactly its own local offset — a hull
+sinks, or both tracks sit 2.9 m out from the wheels.
+
 ## Status
 
 - The pipeline now reproduces the repair exactly: `bl_lod_test.py` run through the fixed exporter
