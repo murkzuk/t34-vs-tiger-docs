@@ -20,8 +20,18 @@ finished, assembled, textured vehicle in one step:
   - materials and textures, read from the companion
     Models\\<name>.script and its .tex files (which are plain DDS)
   - skin weights as real vertex groups
-Still out of scope: animation beyond the rest pose, and shadow-volume
-and physics data.
+v1.4.0 adds the other half: File > Export > TvT Model (.ms2) writes edited
+geometry back into a file the engine accepts. Positions, normals and UVs come
+from the mesh; everything else - shadow volumes, bind poses, the joint table, the
+per-node animation tracks - is copied from the source file byte for byte. Vertex
+and index COUNTS must not change: that is what keeps the export honest, because
+nothing it does not understand is ever rebuilt. Import a stock model, export it
+untouched, and the result is byte-identical to the original (verified on 165
+geometry nodes across five models). Edit the MESH, not the object transform - the
+rest transform already lives on the object and in the file.
+
+Still out of scope: adding or removing geometry, animation beyond the rest pose,
+and shadow-volume and physics data.
 
 The Redo panel (bottom-left after importing, or F9) exposes several
 options as live diagnostics, not just preferences - in particular
@@ -46,14 +56,14 @@ import bmesh
 from mathutils import Vector, Matrix, Quaternion
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 from . import ms2_reader
 
 bl_info = {
     "name": "T34 vs Tiger .ms2 Importer",
     "author": "murkzuk, with Claude Code (Anthropic) assistance",
-    "version": (1, 3, 0),
+    "version": (1, 4, 0),
     "blender": (2, 80, 0),
     "location": "File > Import > TvT Model (.ms2)",
     "description": "Imports assembled, textured vehicles from T34 vs Tiger's .ms2 model format - geometry, rest transforms, submeshes, materials/textures and skin weights",
@@ -377,6 +387,14 @@ def import_ms2(path, hide_variants=True, skip_degenerate=True, normal_mode='AUTH
         placed += 1
     if placed:
         print('  rest transforms: %d nodes placed' % placed)
+
+    # [2026-10-30] Stamp the source file on every object, so the export operator
+    # knows which .ms2 to patch without asking the user to pick it again.
+    for ob in objects:
+        try:
+            ob["ms2_source"] = path
+        except Exception:
+            pass
     # Materials, from the companion .script. A material with NO texture is an
     # armour/collision facet (HullArmor_*, TUR_Armor_*), not visual geometry -
     # it renders as a blank plate draped over the vehicle, so hide it.
@@ -475,18 +493,83 @@ class IMPORT_OT_tvt_ms2(Operator, ImportHelper):
         return {'FINISHED'}
 
 
+class EXPORT_OT_tvt_ms2(Operator, ExportHelper):
+    """Write edited geometry back into a .ms2 the engine accepts
+
+    v1 keeps vertex and index counts unchanged: positions, normals and UVs are
+    written from the mesh, and everything else - shadow volumes, bind poses, the
+    joint table, the animation tracks - is copied from the source file byte for
+    byte. That is why a model the engine has never seen still loads: only the
+    parts we fully understand are republished.
+
+    EDIT THE MESH, NOT THE OBJECT TRANSFORM. The importer puts each node's rest
+    transform on the object, so an object-level move has nowhere to go in the
+    file's model - the transform is already stored in the node's animation track.
+    """
+    bl_idname = "export_scene.tvt_ms2"
+    bl_label = "Export TvT Model (.ms2)"
+    bl_options = {'REGISTER'}
+
+    filename_ext = ".ms2"
+    filter_glob: StringProperty(default="*.ms2", options={'HIDDEN'})
+
+    source_file: StringProperty(
+        name="Source .ms2",
+        description="The model these objects came from. Everything this export "
+                    "does not rewrite is copied from this file",
+        subtype='FILE_PATH',
+    )
+
+    def invoke(self, context, event):
+        if not self.source_file:
+            for ob in context.scene.objects:
+                src = ob.get("ms2_source")
+                if src:
+                    self.source_file = src
+                    break
+        if self.source_file and not self.filepath:
+            self.filepath = os.path.splitext(self.source_file)[0] + "_edited.ms2"
+        return super().invoke(context, event)
+
+    def execute(self, context):
+        if not self.source_file or not os.path.exists(self.source_file):
+            self.report({'ERROR'}, "No source .ms2 - import a model first, or set "
+                                   "Source .ms2 explicitly")
+            return {'CANCELLED'}
+        if os.path.abspath(self.filepath) == os.path.abspath(self.source_file):
+            self.report({'ERROR'}, "Refusing to overwrite the source in place - "
+                                   "export to a new file, check it in the engine, "
+                                   "then copy it over")
+            return {'CANCELLED'}
+        from . import ms2_export
+        written, skipped = ms2_export.export_ms2(
+            self.source_file, self.filepath, list(context.scene.objects),
+            log=lambda m: self.report({'WARNING'}, m.strip()))
+        self.report({'INFO'}, "Exported %d node(s), %d skipped, to %s"
+                    % (written, skipped, self.filepath))
+        return {'FINISHED'}
+
+
 def menu_func_import(self, context):
     self.layout.operator(IMPORT_OT_tvt_ms2.bl_idname, text="TvT Model (.ms2)")
+
+
+def menu_func_export(self, context):
+    self.layout.operator(EXPORT_OT_tvt_ms2.bl_idname, text="TvT Model (.ms2)")
 
 
 def register():
     bpy.utils.register_class(IMPORT_OT_tvt_ms2)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.utils.register_class(EXPORT_OT_tvt_ms2)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def unregister():
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     bpy.utils.unregister_class(IMPORT_OT_tvt_ms2)
+    bpy.utils.unregister_class(EXPORT_OT_tvt_ms2)
 
 
 if __name__ == "__main__":
