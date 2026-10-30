@@ -104,6 +104,42 @@ rebuilds of an existing node keep the donor's track because their parent does no
 Symptom if you get it wrong: the part is displaced by exactly its own local offset — a hull
 sinks, or both tracks sit 2.9 m out from the wheels.
 
+## When a dark patch looks like a hole, it is usually the normals
+
+The first complete ladder rendered with what looked like a rectangular hole punched through
+the Tiger's front plate, and an armour panel rounded into a pillow. Two wrong conclusions were
+available and one was nearly taken: "COLLAPSE is tearing the geometry".
+
+**The test that settles it: render with an EMISSION shader.** Emission ignores normals entirely,
+so every face comes out the same colour regardless of which way it points. Anything dark in that
+image is geometry that is not there; anything that disappears was shading.
+
+```
+bl_lod_render.py with LOD_SHADE=flat
+  surface pixels LOD0 410,263   LOD1 409,653
+  pixels surface in LOD0 but background in LOD1 (real holes): 754
+  hole bbox: scattered over the whole frame -> silhouette edge, not a panel
+```
+
+754 of 410,263 pixels, all on the silhouette. **There was no hole.**
+
+The cause was the normal transfer: at a recess or a fold, the nearest donor triangle can belong
+to a *different* surface from the one the decimated vertex sits on, and its normal points the
+other way - which renders as an unlit patch, visually indistinguishable from a hole.
+
+The fix is a sanity check, not a better sampler: keep the authored normal **only where it agrees
+with the decimated surface's own normal** (`dot > 0.25`), otherwise trust the geometry.
+
+```
+                     mean luminance LOD0 vs LOD1
+  no transfer / computed normals        (not measured)
+  nearest-vertex authored normals       -7.67
+  barycentric authored normals          -8.34
+  barycentric + agreement check         -0.42     <- fixed
+```
+
+Interpolation quality was never the problem; the wrong-surface samples were.
+
 ## Status
 
 - The pipeline now reproduces the repair exactly: `bl_lod_test.py` run through the fixed exporter
