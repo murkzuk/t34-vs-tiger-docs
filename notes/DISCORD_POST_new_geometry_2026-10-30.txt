@@ -1,0 +1,45 @@
+**T-34 vs Tiger — you can put NEW geometry into the game now**
+
+For everyone who wanted to bolt something onto a 2001 tank and was told it couldn't be
+done: that wall came down today.
+
+For the modders who've been away a while — where we are:
+
+We can open the game's models in Blender, fully assembled and textured, in one step.
+No Maya 5, no export plugin, no .ms2 incantations. That part has been working a while.
+
+What's new is the other direction. Edit a mesh in Blender, save it back, and the game
+loads the result.
+
+Three things we proved today, in the game's own Level Editor:
+
+• An export with no changes at all comes out identical to the original file. Not "close
+  enough" — identical. That's the boring-sounding one, and it's the reason to trust the
+  rest: nothing gets quietly damaged on the way through.
+
+• A model reshaped in Blender saves and loads, with the right shape in the right place.
+
+• The picture below. That little fin is a triangle that does not exist in the original
+  model. Geometry made outside the game, loaded by the game.
+
+What that means for us: new parts. Stowage bins, spare track links, appliqué plates,
+schürzen, aerials, a gun barrel that isn't the one G5 shipped. Eventually, a vehicle that
+was never finished.
+
+Honest caveats, because you've had enough hype in twenty years:
+
+• New triangles are single-sided — they show from one face only. Fine for solid parts;
+  a thin plate needs drawing twice.
+
+• Shadows on brand-new parts: not confirmed yet. Might be free, might need work.
+
+• This is working here, in my sandbox. It is not packaged for you yet — figure weeks,
+  not hours, before I hand out a zip and a readme.
+
+So — a question, and it genuinely decides what I test next:
+
+**If you could add ONE thing to any tank in the game, what would it be?**
+
+Two decades of people wanting this, and now somebody has to choose what goes first.
+
+(All of it worked out with DeepSeek and Claude — the format, the Blender tools, the lot.)
