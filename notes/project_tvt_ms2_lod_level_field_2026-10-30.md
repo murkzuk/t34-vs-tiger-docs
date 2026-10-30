@@ -83,9 +83,14 @@ whole answer.
 
 ## Status
 
-- Staged `M:\TvT_INJECT_SANDBOX\Models\u_veh_TIGER_E1_Early_Playable.ms2`
-  (`64E86B06BF45546D`) has levels 1–4 set on `Body_Hull_LOD1..4`, awaiting a visual confirm in the
-  Asset View.
+- The pipeline now reproduces the repair exactly: `bl_lod_test.py` run through the fixed exporter
+  emits `out/u_veh_TIGER_E1_Early_Playable_lods.ms2`, 190 -> 194 nodes, and it hashes
+  **`64E86B06BF45546D`** — byte-for-byte the file `ms2_setlevel.py` produced by patching. Two
+  independent routes to the same bytes.
+- Staged `M:\TvT_INJECT_SANDBOX\Models\u_veh_TIGER_E1_Early_Playable.ms2` is that file,
+  awaiting a visual confirm in the Asset View.
+- `ms2_oracle.py newnode` PASSES on all four levels (1, 2, 3, 4) and FAILS on the pre-fix backup,
+  so the gate now catches this class of bug instead of blessing it.
 - Backup of the pre-fix staged file: `ms2_tool/out/_backup/TIGER_staged_BEFORE_levels.ms2`.
 - G5's `u_veh_PzVI_LATE.ms2` in the sandbox was restored to stock (`94C574226DAE164A`); copy kept
   at `ms2_tool/out/_backup/PzVI_LATE_sandbox_ORIGINAL.ms2`.
