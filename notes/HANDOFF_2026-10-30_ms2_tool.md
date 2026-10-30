@@ -67,7 +67,8 @@ Recipe and findings: `decomp/notes/GHIDRA_HEADLESS_RUNS_HERE_2026-10-30.md`.
 
 Header: int32 version (always 0), int32 node_count. Then per node:
 
-    name (len-prefixed) · bbox 6f · sphere 4f · counts 4i (flag, vcount, icount, other_count)
+    name (len-prefixed) · bbox 6f · sphere 4f · counts 4i (lod_level, vcount, icount, other_count)
+             *** the first int32 is the LOD LEVEL, not a flag — see section 10 ***
     positions 3f×vcount · normals 3f×vcount · uvs 2f×vcount · indices uint16×icount
     submesh records 4×uint32×other_count   ((icount<<16)|material, index_start, vcount, vertex_start)
     node_id (parent index) · flags_bitmask · d_count (low 16 bits) · anim track d_count×28
@@ -190,9 +191,11 @@ sha256 `5B69F2193E080B6B`, 9,917,350 bytes, **194 nodes**:
     Body_Hull_LOD3     2,036          10.3%   parent 183
     Body_Hull_LOD4     1,152           5.8%   parent 183
 
-Parenting matches the convention (LOD parent = base index). **Open question: does the engine
-actually USE them?** The Asset View always draws LOD0, so it cannot answer. Needs an in-mission
-look at distance — if the convention is wrong the LODs will draw on top of each other (z-fighting).
+Parenting matches the convention (LOD parent = base index). **ANSWERED 2026-10-30 — see §10.**
+The engine does use LOD nodes, and the Asset View does *not* "always draw LOD0": it has an LOD
+slider wired to `Camera.LockLOD()`. What stopped these four from being used was the node-header
+LOD level field, which the exporter wrote as 0 on every added node. The staged file has been
+re-leveled to 1–4 (`64E86B06BF45546D`) and awaits a visual confirm.
 
 Two content caveats, both measured:
 * G5's ladder is 51/34/15/7% of LOD0, but hitting 51% was **impossible**: his hull is 19,704
@@ -238,3 +241,37 @@ Two content caveats, both measured:
   `project_tvt_ms2_rebuild_path_bugs_2026-10-30.md`.
 * `ms2_tool/PLAN.md` (the staged route to a working tool) and `ms2_tool/PLAN_ZW.md`
   (the ZW corpus plan and its results) are the two planning documents.
+## 10. LOD levels: the field nobody had named (added 2026-10-30, late)
+
+The first of the four int32s after the bounding sphere — documented since 2026-07-03 as
+"flag, always 0" — **is the LOD level**. `0` = the base mesh, `n` = a node named `_LODn`.
+Measured: 95.1% of 3,708 shipped LOD nodes match their suffix, 96.4% of all other nodes are 0,
+and `u_veh_PzVI_LATE.ms2` matches on every node. **Level 0 is the FINEST mesh**, so
+`project_tvt_lod_distances.md`'s "LOD 0 = COARSEST" is backwards and is now marked superseded.
+
+`ms2_export.py` used to write `struct.pack("<4i", 0, vc, ic, 1)` for every rebuilt and every new
+node. That is why the four hull LODs appended to ZeeWolf's Tiger did nothing: all four declared
+level 0, so the engine saw one level. Fixed 2026-10-30 — added nodes take the level from the name,
+plain rebuilds keep the donor's own value. `ms2_setlevel.py` repairs files already written.
+
+Two further facts, both learned the hard way:
+
+- **Node order is load-bearing.** A correctly-remapped permutation (`ms2_reorder.py`) renders
+  exploded, with spikes — geometry stretched between the wrong joints. Append nodes; never
+  insert or move them.
+- **The byte-identical gate cannot see any of this.** It exercises the patch path only. Rebuild
+  and new-node output needs `ms2_oracle.py` plus a level-field check.
+
+Two more traps, both live when found:
+
+- **Blender loads the INSTALLED add-on, not the repo copy.** `sys.path.insert` cannot override a
+  package already imported at startup from `%APPDATA%`. A stale install silently ran both
+  sweeps and reported 133/133 on code that did not contain the fix. Run `python pack_addon.py`
+  after any add-on edit; `bl_addon_guard.py` now hard-fails the scripts otherwise.
+- **`export_ms2` compared its output node count to the source count**, so appending a node wrote
+  a correct file and then raised. Now compares to `source + extras`. The append path needed
+  this fix as well as the level fix.
+
+Full write-up: `t34-vs-tiger-docs/notes/project_tvt_ms2_lod_level_field_2026-10-30.md`.
+The editor's LOD slider (the fastest way to see any of it) is in
+`t34-vs-tiger-docs/notes/project_tvt_editor_lod_slider.md`.

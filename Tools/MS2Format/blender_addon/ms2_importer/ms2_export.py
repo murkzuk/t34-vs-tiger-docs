@@ -22,6 +22,7 @@ a mission.
 The writer refuses to produce anything it cannot stand behind: the byte length must
 not change, and the result must re-parse to the same node count.
 """
+import re
 import struct
 
 from . import ms2_reader as R
@@ -192,10 +193,14 @@ def export_ms2(src, dst, objects=None, log=print):
     open(dst, "wb").write(bytes(out))
 
     # verify before returning: the result must re-parse and walk to its own end
+    # [2026-10-30] count the APPENDED nodes too. Comparing against the source count
+    # alone made the new-node path raise on its own success - it wrote a correct file
+    # and then refused to trust it - so adding a part could never have worked here.
+    expected = len(nodes) + len(extras)
     after = R.read_ms2(dst)
-    if len(after) != len(nodes):
-        raise ValueError("output parses to %d nodes, source had %d"
-                         % (len(after), len(nodes)))
+    if len(after) != expected:
+        raise ValueError("output parses to %d nodes, expected %d (source %d + %d new)"
+                         % (len(after), expected, len(nodes), len(extras)))
     chk = L.walk(bytes(out))
     if chk[-1]["end"] != len(out):
         raise ValueError("output walks to 0x%X but is 0x%X bytes - refusing to trust it"
@@ -286,6 +291,25 @@ def tangent_basis(positions, uvs, idx, normals):
     return out
 
 
+_LOD_SUFFIX = re.compile(r"_LOD(\d+)$")
+
+
+def lod_level(name):
+    """The LOD level encoded by a node name, 0 for everything that is not an LOD.
+
+    [2026-10-30] THE FIRST OF THE FOUR INT32s AFTER THE BOUNDING SPHERE IS THE LOD
+    LEVEL, NOT A FLAG. Measured across G5's and ZeeWolf's whole libraries: on the
+    file whose ladder the editor's LOD slider demonstrably switches, every LOD node
+    carries field == its _LOD<n> suffix (_LOD0 -> 0), and 96% of all other nodes
+    carry 0. Writing 0 for an added LOD declares it as level 0 - the base level -
+    so the engine sees one level and never selects it. That is exactly why four
+    appended hull LODs did nothing in the Asset View while G5's stock Tiger
+    coarsened under the same slider.
+    """
+    m = _LOD_SUFFIX.search(name or "")
+    return int(m.group(1)) if m else 0
+
+
 def rebuild_node(data, node, mesh, material_index, log=print, name=None, parent=None):
     """Node bytes for a rebuilt node.
 
@@ -313,7 +337,12 @@ def rebuild_node(data, node, mesh, material_index, log=print, name=None, parent=
     lo, hi, c, r = _bounds(positions)
     out += struct.pack("<3f", *lo) + struct.pack("<3f", *hi)
     out += struct.pack("<4f", c[0], c[1], c[2], r)
-    out += struct.pack("<4i", 0, vc, ic, 1)
+    if name is None:
+        co, _cs = node["spans"]["counts"]
+        level = struct.unpack_from("<i", data, co)[0]      # keep the donor's own
+    else:
+        level = lod_level(name)                            # added node: read the name
+    out += struct.pack("<4i", level, vc, ic, 1)
     for p in positions:
         out += struct.pack("<3f", *p)
     for n in normals:

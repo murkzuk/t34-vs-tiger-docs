@@ -7,6 +7,27 @@
 
 This is Phase 1 of the plan in `Documentation/T34_vs_Tiger_Maya_Export_Manual(V3).md` Section 11 (GitHub issue #12 — eventual goal is a Blender import/export pipeline). Phase 0 covered the Maya-side authoring metadata; this covers the actual on-disk byte format those attributes get serialized into.
 
+## Correction (2026-10-30): the first counts field is the LOD level, not a flag
+
+The row above used to read "`flag` | int32 | Always `0` in every sample checked so far". It is
+not a flag and it is not always zero — **it is the LOD level**, and getting this wrong silently
+disabled every level-of-detail mesh appended to a model.
+
+Measured across G5's 66 models and ZeeWolf's 184: 3,708 nodes carry a `_LOD<n>` name, and 95.1%
+have this field equal to `n` (`_LOD0` → 0). Of the 11,858 nodes that are not LOD levels, 96.4%
+carry 0. In `u_veh_PzVI_LATE.ms2` — the file whose ladder the editor's LOD slider demonstrably
+switches — **every** LOD node matches its suffix with no exceptions. The 12 files that disagree
+are older assets where the field is one lower than the name.
+
+A node written with 0 is therefore *level 0*, i.e. the base mesh, which is why four hull LODs
+appended to a Tiger with the field hard-coded to 0 produced no visible change at all: the engine
+saw five level-0 meshes and had nothing to switch to. Fixed in `ms2_export.py` on 2026-10-30 —
+`lod_level()` reads the name suffix for an added node and preserves the donor's own value on a
+plain rebuild.
+
+Consequence for tooling: anything that emits a node whose name ends `_LODn` must write `n` here.
+See `notes/project_tvt_ms2_lod_level_field_2026-10-30.md`.
+
 ## Correction to an earlier version of this document
 
 An earlier pass of this same investigation concluded that 16 bytes immediately after the bounding-sphere block were "padding, always zero." **That was wrong, caused by a display bug, not a data problem**: those bytes were printed as `round(float_value, 6)`, and several of them are tiny IEEE-754 denormalized floats (e.g. the bit pattern for int32 `24` reinterpreted as a float is `3.36e-44`) that round to display as `0.0` even though the underlying integer is very much not zero. Reading the same bytes as `int32` instead of `float32` revealed real, meaningful data — the actual vertex and triangle-index counts. This is now corrected throughout. Lesson for anyone continuing this work: **always check candidate count/metadata fields as both int32 and float32 before concluding a region is "just zero" — a real integer can look like an all-zero float at low precision display.**
@@ -35,7 +56,7 @@ After a node's name + null terminator, the confirmed layout is:
 | Bounding box max | 3 floats (12 bytes) | |
 | Bounding sphere center | 3 floats (12 bytes) | |
 | Bounding sphere radius | 1 float (4 bytes) | |
-| `flag` | int32 | Always `0` in every sample checked so far |
+| `lod_level` | int32 | **Not a flag — it is the LOD level** (corrected 2026-10-30, see the correction below). `0` for the base mesh and for 96% of all nodes; `n` on a node whose name ends `_LODn` |
 | **`vertex_count`** | int32 | **The real, confirmed vertex count** |
 | **`index_count`** | int32 | **The real, confirmed face-index count** (number of `uint16` values, i.e. `3 × triangle_count`) |
 | `other` | int32 | `1` when the node has real geometry, `0` for an empty container node — meaning unconfirmed beyond that |

@@ -1,5 +1,9 @@
 # LOD distances & the `[0]` always-coarsest bug (2026-08-23)
 
+> **SUPERSEDED IN PART — 2026-10-30.** The "LOD 0 = COARSEST" claim below is backwards; see the
+> correction at the foot of this file. The distance tables and the script inventory are still good.
+
+
 ## How LOD works in G5
 
 - LOD geometry (the actual reduced meshes) is **BAKED into each `.ms2` model** — you
@@ -69,3 +73,36 @@
 - `.script` = CP1251; byte-level edits only; verify EF BF BD count stays 0.
 - Delete `Cache\Scripts.cache` after any script edit (cold rebuild ~2 min).
 - Backups stay in `K:\TvTDeepseek\rollback\`, never inside the game folders.
+## CORRECTION 2026-10-30 — the level numbering here is backwards
+
+Everything above about *distances* stands. The line "**LOD 0 = COARSEST**" does not.
+
+Measured from the bytes: each node header carries a **LOD level** field (the first of the four
+int32s after the bounding sphere, long mislabelled "flag"). Across G5's 66 models and ZW's 184,
+that field equals the node's `_LOD<n>` name suffix on 95.1% of the 3,708 LOD nodes, and
+`u_veh_PzVI_LATE.ms2` — the file whose ladder the editor's LOD slider demonstrably switches —
+matches on every single node. The base mesh is level 0 and the added levels get **higher** numbers
+as they get coarser:
+
+```
+Body            3965 verts  = level 0 (the base mesh, no suffix)
+Body_LOD1       2026        = level 1
+Body_LOD2       1335        = level 2
+Body_LOD3        586        = level 3
+Body_LOD4        266        = level 4  <- coarsest
+```
+
+`Camera.LockLOD()` in the asset viewer agrees: it takes a normalised 0..1 position where 0 is the
+finest mesh (see `project_tvt_editor_lod_slider.md`). So **level 0 is the finest, not the
+coarsest**, and the sentence "`[0]` (single element) = 'LOD 0 always' = the tank renders at its
+lowest-detail mesh at every distance" cannot be right as written.
+
+What is still unverified is how a `SetLods([...])` array maps a distance to a *level*. The
+one-element case `SetLods([0])` may well clamp to the coarsest, which would produce the observed
+"rubbish" look — but it is not because level 0 is coarse. **Do not cite this note's
+"LOD 0 = COARSEST" line; it is superseded.**
+
+Consequence for the changes recorded above: the Pz II (`[0]` -> `[300,100,50,5]`) and Pz IV G
+winter (`[0,200,380,420,580]` -> `[360,180,120,80]`) edits were made on the strength of the
+backwards claim. The Pz IV G one is defensible either way, since an ascending array is wrong under
+any reading. Both remain **untested in-game**, exactly as recorded.
