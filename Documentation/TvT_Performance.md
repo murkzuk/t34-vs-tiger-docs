@@ -746,3 +746,25 @@ transform, and decide which graphics path to sit on. 64-bit is what makes that s
 it is not itself the fix. Hooks still pay for the worst repeated lookups - the one-entry cache in
 front of `Objects.dll+0x17DAB0` was worth +6.3% from outside the engine - but the bulk is not
 reachable that way.
+
+### Closing the wrapper question (2026-10-31, after the A/B attempt)
+
+The test the paragraph above asks for was run, and **it is not worth chasing**:
+
+- **The project's own probe cannot measure the shipped ZW config.** With dgVoodoo's `d3d9.dll` in
+  the folder, `drawcall_probe.dll` refuses to attach - `Direct3DCreate9 prologue unrecognised
+  (55 8B EC 8B 4D)`, fifty-one times, one per load attempt. So no fps and no draw-call count can be
+  collected there at all. Treat any past "measured with the probe" number as valid only for installs
+  without a wrapper DLL.
+- The engine has its **own FPS overlay** (top-left, `FPS: nn.n` above the per-subsystem counters).
+  It renders under native D3D9 and is *absent* under dgVoodoo - screenshot it, no hooks needed.
+- **Native D3D9** (local `d3d9.dll` removed, game on the system loader): 33.3-36.5 fps over 40 s,
+  mean ~34.8, draw calls 393-570, inside `Present` 0.02-0.03 ms/frame (0.1%). Renders correctly,
+  no crash.
+- **dgVoodoo**: one spot overlay reading of 31.6 fps. That is it.
+
+So the wrapper looks like roughly **+10% for removing it** on this machine, which is a *modding*
+win (rename one DLL), not a code or port win, and it sits barely above the ±4% noise floor. A clean
+pass (8-10 overlay samples per arm, no profiler attached) would settle it; it was judged not worth
+the machine time for the size of the prize. What is worth knowing either way: the graphics stack is
+not free here, and the instrument we own cannot see the config most players run.
