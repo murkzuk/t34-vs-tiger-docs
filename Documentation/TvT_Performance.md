@@ -667,3 +667,82 @@ false negative. This is the same trap recorded during the lighting work.
 roughly half by default. `Forest animation` maps to `MaxForestAnimatedLod`
 (exposed in the launcher). **`Forest distance` has not been investigated** and
 is the obvious next lever if more is needed.
+
+---
+
+## ZW profiled on this machine, 2026-10-31 — where the 40% actually is
+
+One sampled session: ZeeWolf's install, ZITADELLE M4 Pokrovka, exactly 90 s of play plus driving,
+`tvt_prof` injected into `TvsT_fullLOD_HARD_4GB.exe` (sampling every 5 ms, 6,703 samples).
+Method, build and log: `K:\TvTDeepseek\zw_perf_2026-10-31` (`build.bat`, `tvt_prof.dll`,
+`tvt_prof_ZW_M4.log`). Nothing was modified in any install except the profiler's own log.
+
+### One thread does everything
+
+    thread 18328   562.5 ms/s      <- the only busy thread
+
+Single-threaded, as suspected. Half a core of pure CPU per second while the GPU waits.
+
+### Module split (share of CPU samples)
+
+    Objects.dll            23.93%
+    Engine.dll             19.63%
+    ntdll.dll              16.14%     <- syscalls
+    win32u.dll              5.13%
+    Service.dll             4.76%
+    Controls.dll            4.59%
+    D3D9.DLL                4.18%
+    UI.dll                  3.94%
+    J5Script.dll            3.46%     <- the script interpreter really is small
+    Behavior.dll            3.31%     <- AI really is small
+    d3dx9_30.dll            3.12%
+    nvwgf2um.dll            2.64%     <- the NVIDIA user-mode driver
+    (outside any module)    2.03%
+
+    game code (Objects+Engine+Service+Controls+UI+J5Script+Behavior)  63.6%
+    OS + graphics stack (ntdll+win32u+D3D9+d3dx9+nvwgf2um)           31.2%
+
+Consistent with the older note: script and AI are not where the frame goes.
+
+### The hot code is small functions called constantly
+
+Objects.dll is **concentrated - 50% of the module inside 13 KB, 80% in 54 KB** - and the top pages
+are per-object maths and pointer plumbing, not game logic:
+
+| page | share of frame | function | what it is |
+|---|---|---|---|
+| Objects+0x002400 | 1.52% | `FUN_100023a0` | builds a 4x4 transform (16 writes, identity rotation) |
+| Objects+0x002800 | 0.90% | `FUN_10002770` | 4x4 float matrix multiply |
+| Objects+0x014800 | 0.67% | `FUN_10014800` | 22 bytes: release a refcounted pointer and null it |
+| Objects+0x017000 | 1.60% | `FUN_10016f70` | release + assign an interface pointer (AddRef/Release) |
+| Objects+0x0C1800 | 1.64% | `FUN_100c1740` | 672 B, part of the same cluster |
+| Objects+0x17D800 | 0.54% | `FUN_1017d7c0` | the `std::map`-style lookup area (2.2% of Objects.dll here) |
+| Objects+0x22C800 | 0.87% | `__trandisp2` | x87 transcendental dispatch - float traps from `sqrt`/`trig` |
+| Engine+0x253000 | 1.54% | `FUN_10252f79` | 3.2 KB, per-frame engine work |
+| Engine+0x229000 | 1.34% | `FUN_10228f00` | 3.8 KB |
+| Behavior+0x181000 | 1.55% | `FUN_10180fc0` | AI/behaviour, larger than the module share suggests locally |
+
+A 22-byte function costing 0.67% of the frame is the signature of millions of calls, not expensive
+work: call overhead plus cold cache. Same for the matrix constructor at 1.5%.
+
+### The graphics stack is NOT free on this machine
+
+47% of all syscall time is attributed to `nvwgf2um.dll+0x497000` - the NVIDIA driver - reached
+through `D3D9.DLL` and `D3D11.DLL`, i.e. through dgVoodoo's D3D9-to-D3D11 translation. Combined
+with `ntdll`'s 16%, roughly a third of CPU time is OS and graphics-stack plumbing.
+
+**This qualifies the older "the D3D9 wrapper is 0.0% of frame time" result**, which was measured on
+REDUX. On ZW, on this machine, the wrapper-plus-driver path is a third of the frame. Cheap test worth
+doing before any code work: run the same scene with the local `d3d9.dll` (dgVoodoo) removed, so the
+game talks to the system D3D9 directly, and compare the module split and fps.
+
+### What this says about the 64-bit port
+
+The port is the right vehicle, but not because of pointer width. The frame is dominated by
+per-object transform maths and refcount plumbing in a single thread, plus a graphics path that
+spends a third of the CPU in the driver and syscalls. Those are **algorithmic and structural**
+problems: inline and SIMD the transform loops, cut virtual calls and refcount churn, cull before you
+transform, and decide which graphics path to sit on. 64-bit is what makes that surgery possible;
+it is not itself the fix. Hooks still pay for the worst repeated lookups - the one-entry cache in
+front of `Objects.dll+0x17DAB0` was worth +6.3% from outside the engine - but the bulk is not
+reachable that way.
