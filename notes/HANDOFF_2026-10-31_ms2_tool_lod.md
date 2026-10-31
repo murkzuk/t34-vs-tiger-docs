@@ -2,6 +2,21 @@
 
 Read this first. It is written for a session with **no memory of the previous one**.
 
+> **UPDATE, later the same day — the problem in this handover is SOLVED. Read
+> `project_tvt_ms2_lod_wrapped_levels_2026-10-31.md` before doing anything described below.**
+>
+> - The ladder's level meshes were never unreachable. A part's level meshes must hang off an
+>   **empty** node that carries the **part's own** transform, with the geometry and the levels on
+>   identity tracks. Wrapped that way, 95 parts switch in mission and the tank coarsens as one.
+> - Phase 0, 1a and 1b below are therefore obsolete. So is the "explicit `_LOD0` name" idea: no
+>   binary contains the string `_LOD`, so the engine never reads node names.
+> - `SetLods` does **not** select by distance in the player's unit path. What selects is the
+>   *number* of entries (`level = min(entries, levels - 1)`); no call at all gives level 0. So
+>   ZeeWolf's four `SetLods([0])` calls must not ship with the ladder - they pin the tank to the
+>   coarse mesh at every range.
+> - The mission tests no longer need eyes at the keyboard: `ms2_tool/edrive.py` drives the game
+>   and captures frames, so a test is unattended and takes ~2 minutes.
+
 ---
 
 ## 1. The task
