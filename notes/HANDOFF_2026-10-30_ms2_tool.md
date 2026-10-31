@@ -243,10 +243,16 @@ Two content caveats, both measured:
   (the ZW corpus plan and its results) are the two planning documents.
 ## 10. LOD levels: the field nobody had named (added 2026-10-30, late)
 
-> **STATUS 2026-10-30 evening: the ladder works in the editor's asset view and NOT yet in
-> mission. Worse, with the 285-node ladder installed the player's Tiger vanished entirely in
-> third-person view (F6); restoring ZeeWolf's original brought it back. The ZW install has been
-> reverted. The format work below stands; the in-mission claim does not.**
+> **STATUS 2026-10-31: measured in the running engine. The ladder still does not switch in
+> mission, but not for the reason assumed - see
+> `notes/project_tvt_ms2_lod_in_mission_2026-10-31.md` for six tests and what each proved.**
+>
+> In short: appending nodes is safe; `SetLods([0])` draws **level 0** (not the coarsest); no
+> array ever made the engine draw our level-1 parts; and G5's own level nodes in the AI Tiger
+> *are* drawn - even at close range, which suggests this build does not select by distance at
+> all. Our ladder differs from G5's working shape in two ways: levels appended at the end of the
+> file instead of adjacent, and no explicit `_LOD0` under an empty parent. The ZW install is
+> restored to stock; the format work below stands.
 
 
 The first of the four int32s after the bounding sphere — documented since 2026-07-03 as
